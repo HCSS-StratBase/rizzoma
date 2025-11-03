@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { deleteDoc, find, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
+import { createIndex, deleteDoc, find, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
 import { csrfProtect } from '../middleware/csrf.js';
 import { CreateTopicSchema, UpdateTopicSchema } from '../schemas/topic.js';
 
@@ -24,15 +24,48 @@ router.get('/', async (req, res): Promise<void> => {
   const myOnly = String((req.query as any).my ?? '0') === '1';
   const q = String((req.query as any).q ?? '').trim().toLowerCase();
   try {
-    // Prefer modern topics docs, fall back to legacy waves view when none
-    const modern = await find<Topic>({ type: 'topic' });
-    const filtered = modern.docs
-      .filter((d) => !myOnly || (req as any).session?.userId === d.authorId)
-      .filter((d) => !q || (d.title?.toLowerCase().includes(q) || (d.content || '').toLowerCase().includes(q)))
-      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    const window = filtered.slice(offset, offset + limit + 1);
-    let topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
-    const hasMore = window.length > limit;
+    // Prefer modern topics docs via Mango query; create minimal index for sort
+    const sessUser = (req as any).session?.userId as string | undefined;
+    const selector: any = { type: 'topic' };
+    if (myOnly && sessUser) selector.authorId = sessUser;
+
+    // Ensure indexes (idempotent)
+    try { await createIndex(['type', 'createdAt'], 'idx_topic_createdAt'); } catch {}
+    if (myOnly) { try { await createIndex(['type', 'authorId', 'createdAt'], 'idx_topic_author_createdAt'); } catch {} }
+
+    let topics: Array<{ id: string | undefined; title: string; createdAt: number }> = [];
+    let hasMore = false;
+
+    if (q) {
+      // For search, fetch extra, then filter client-side for substring match
+      const fetchCount = Math.min(offset + limit + 50, 1000);
+      let docs: Topic[] = [];
+      try {
+        const r = await find<Topic>(selector, { limit: fetchCount, sort: [{ createdAt: 'desc' }] });
+        docs = r.docs || [];
+      } catch {
+        const r = await find<Topic>(selector, { limit: fetchCount });
+        docs = r.docs || [];
+      }
+      const filtered = docs
+        .filter((d) => !q || (d.title?.toLowerCase().includes(q) || (d.content || '').toLowerCase().includes(q)))
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      const window = filtered.slice(offset, offset + limit + 1);
+      topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
+      hasMore = window.length > limit;
+    } else {
+      // No search term: efficient paging using skip/limit
+      let r: { docs: Topic[] };
+      try {
+        r = await find<Topic>(selector, { limit: limit + 1, skip: offset, sort: [{ createdAt: 'desc' }] });
+      } catch {
+        r = await find<Topic>(selector, { limit: limit + 1, skip: offset });
+      }
+      const window = r.docs || [];
+      topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
+      hasMore = window.length > limit;
+    }
+
     if (topics.length === 0 && !myOnly && !q) {
       const legacy = await view('waves_by_creation_date', 'get', { descending: true, limit });
       // Project legacy waves into a minimal topic-like shape so the client can render a list

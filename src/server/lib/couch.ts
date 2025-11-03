@@ -50,13 +50,22 @@ export async function insertDoc<T extends Record<string, any>>(doc: T) {
   return httpJson<{ ok: boolean; id: string; rev: string }>('POST', url, doc, header);
 }
 
-export async function find<T = any>(selector: Record<string, any>, options?: { limit?: number; sort?: Array<Record<string, 'asc' | 'desc'>> }) {
+export async function find<T = any>(selector: Record<string, any>, options?: { limit?: number; skip?: number; sort?: Array<Record<string, 'asc' | 'desc'>> }) {
   const { base, header } = buildAuth(config.couchDbUrl);
   const url = `${base}/${encodeURIComponent(config.couchDbName)}/_find`;
   const body: any = { selector };
   if (options?.limit) body.limit = options.limit;
+  if (typeof options?.skip === 'number') body.skip = options.skip;
   if (options?.sort) body.sort = options.sort;
   return httpJson<{ docs: T[] }>('POST', url, body, header);
+}
+
+export async function createIndex(fields: string[], name?: string) {
+  const { base, header } = buildAuth(config.couchDbUrl);
+  const url = `${base}/${encodeURIComponent(config.couchDbName)}/_index`;
+  const body: any = { index: { fields } };
+  if (name) body.name = name;
+  return httpJson<any>('POST', url, body, header);
 }
 
 export async function getDoc<T = any>(id: string) {
