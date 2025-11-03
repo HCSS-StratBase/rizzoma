@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { createIndex, deleteDoc, find, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
+import { emitEvent } from '../lib/socket.js';
 import { csrfProtect } from '../middleware/csrf.js';
 import { CreateTopicSchema, UpdateTopicSchema } from '../schemas/topic.js';
 
@@ -98,6 +99,7 @@ router.post('/', csrfProtect(), async (req, res): Promise<void> => {
     };
     const r = await insertDoc(doc);
     res.status(201).json({ id: r.id, rev: r.rev });
+    try { emitEvent('topic:created', { id: r.id, title: doc.title, createdAt: doc.createdAt }); } catch {}
     return;
   } catch (e: any) {
     if (e?.issues) {
@@ -140,6 +142,7 @@ router.patch('/:id', csrfProtect(), async (req, res): Promise<void> => {
     };
     const r = await updateDoc(next as any);
     res.json({ id: r.id, rev: r.rev });
+    try { emitEvent('topic:updated', { id: r.id, title: next.title, updatedAt: next.updatedAt }); } catch {}
     return;
   } catch (e: any) {
     if (e?.issues) { res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id }); return; }
@@ -159,6 +162,7 @@ router.delete('/:id', csrfProtect(), async (req, res): Promise<void> => {
     if ((doc as any).authorId && (doc as any).authorId !== (req as any).session.userId) { res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id }); return; }
     const r = await deleteDoc(id, (doc as any)._rev);
     res.json({ id: r.id, rev: r.rev });
+    try { emitEvent('topic:deleted', { id: r.id }); } catch {}
     return;
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }

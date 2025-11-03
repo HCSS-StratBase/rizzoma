@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { csrfProtect } from '../middleware/csrf.js';
 import { deleteDoc, find, getDoc, insertDoc, updateDoc } from '../lib/couch.js';
 import { CreateCommentSchema, UpdateCommentSchema } from '../schemas/comment.js';
+import { emitEvent } from '../lib/socket.js';
 
 type Comment = {
   _id?: string;
@@ -49,6 +50,7 @@ router.post('/topics/:id/comments', csrfProtect(), async (req, res): Promise<voi
     const doc: Comment = { type: 'comment', topicId, authorId: userId, content, createdAt: now, updatedAt: now };
     const r = await insertDoc(doc);
     res.status(201).json({ id: r.id, rev: r.rev });
+    try { emitEvent('comment:created', { id: r.id, topicId, content, createdAt: now, authorId: userId }); } catch {}
     return;
   } catch (e: any) {
     if (e?.issues) { res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id }); return; }
@@ -70,6 +72,7 @@ router.patch('/comments/:id', csrfProtect(), async (req, res): Promise<void> => 
     const next: Comment = { ...existing, content, updatedAt: Date.now() };
     const r = await updateDoc(next);
     res.json({ id: r.id, rev: r.rev });
+    try { emitEvent('comment:updated', { id: r.id, topicId: existing.topicId, updatedAt: (next as any).updatedAt }); } catch {}
     return;
   } catch (e: any) {
     if (e?.issues) { res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id }); return; }
@@ -90,6 +93,7 @@ router.delete('/comments/:id', csrfProtect(), async (req, res): Promise<void> =>
     if (existing.authorId !== userId) { res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id }); return; }
     const r = await deleteDoc(id, (existing as any)._rev);
     res.json({ id: r.id, rev: r.rev });
+    try { emitEvent('comment:deleted', { id: r.id, topicId: existing.topicId }); } catch {}
     return;
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }

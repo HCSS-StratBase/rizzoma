@@ -11,6 +11,8 @@ import { requestLogger } from './lib/logger.js';
 import { errorHandler } from './middleware/error.js';
 import { requestId } from './middleware/requestId.js';
 import { csrfInit } from './middleware/csrf.js';
+import http from 'http';
+import { initSocket } from './lib/socket.js';
 import commentsRouter from './routes/comments.js';
 
 const app = express();
@@ -63,7 +65,13 @@ if (process.env['NODE_ENV'] === 'production') {
   app.use(express.static(staticDir));
 }
 
-app.listen(config.port, () => {
+// Create HTTP server and bind socket.io for realtime events
+const server = http.createServer(app);
+
+// Initialize socket.io with same CORS policy as HTTP
+initSocket(server, allowedOrigins);
+
+server.listen(config.port, () => {
   // eslint-disable-next-line no-console
   console.log(`[server] listening on http://localhost:${config.port}`);
 });
