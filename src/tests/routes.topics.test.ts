@@ -27,6 +27,22 @@ describe('routes: /api/topics', () => {
           { _id: 't1', type: 'topic', title: 'First', createdAt: Date.now() - 2000 },
         ] });
       }
+      if (method === 'POST' && /\/[^/]+$/.test(path)) {
+        // insertDoc for topic create
+        return okResp({ ok: true, id: 't-new', rev: '1-x' }, 201);
+      }
+      if (method === 'GET' && /\/[^/]+$/.test(path)) {
+        // getDoc for update/delete
+        return okResp({ _id: 't1', type: 'topic', title: 'First', authorId: 'u1', createdAt: 1, updatedAt: 1, _rev: '1-a' });
+      }
+      if (method === 'PUT' && /\/[^/]+$/.test(path)) {
+        // updateDoc
+        return okResp({ ok: true, id: 't1', rev: '2-b' });
+      }
+      if (method === 'DELETE' && /\/[^/]+$/.test(path)) {
+        // deleteDoc
+        return okResp({ ok: true, id: 't1', rev: '3-c' });
+      }
       if (method === 'GET' && /_design\/waves_by_creation_date\/_view/.test(path)) {
         return okResp({ rows: [ { key: Date.now() - 5000, value: 'w1' }, { key: Date.now() - 4000, value: 'w2' } ] });
       }
@@ -45,6 +61,36 @@ describe('routes: /api/topics', () => {
     expect(Array.isArray(body.topics)).toBe(true);
     expect(body.topics.length).toBe(1);
     expect(body.hasMore).toBe(true);
+  });
+
+  it('creates a topic (requires CSRF + session)', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const resp = await fetch(`http://127.0.0.1:${port}/api/topics`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-csrf-token': 't' }, body: JSON.stringify({ title: 'New Topic' }) });
+    const body = await resp.json();
+    server.close();
+    expect(resp.status).toBe(201);
+    expect(body.id).toBe('t-new');
+  });
+
+  it('updates a topic (owner required)', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const resp = await fetch(`http://127.0.0.1:${port}/api/topics/t1`, { method: 'PATCH', headers: { 'content-type': 'application/json', 'x-csrf-token': 't' }, body: JSON.stringify({ title: 'Edited' }) });
+    const body = await resp.json();
+    server.close();
+    expect(resp.status).toBe(200);
+    expect(body.rev).toBe('2-b');
+  });
+
+  it('deletes a topic (owner required)', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const resp = await fetch(`http://127.0.0.1:${port}/api/topics/t1`, { method: 'DELETE', headers: { 'x-csrf-token': 't' } });
+    const body = await resp.json();
+    server.close();
+    expect(resp.status).toBe(200);
+    expect(body.rev).toBe('3-c');
   });
 
   it('falls back to legacy view when no modern docs and shapes results', async () => {
