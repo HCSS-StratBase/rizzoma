@@ -10,7 +10,7 @@ import authRouter from './routes/auth.js';
 import { requestLogger } from './lib/logger.js';
 import { errorHandler } from './middleware/error.js';
 import { requestId } from './middleware/requestId.js';
-import { csrfInit, csrfProtect } from './middleware/csrf.js';
+import { csrfInit } from './middleware/csrf.js';
 import commentsRouter from './routes/comments.js';
 
 const app = express();

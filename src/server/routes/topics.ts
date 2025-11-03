@@ -31,12 +31,14 @@ router.get('/', async (req, res): Promise<void> => {
       .filter((d) => !q || (d.title?.toLowerCase().includes(q) || (d.content || '').toLowerCase().includes(q)))
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     const window = filtered.slice(offset, offset + limit + 1);
-    const topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
+    let topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
     const hasMore = window.length > limit;
     if (topics.length === 0 && !myOnly && !q) {
       const legacy = await view('waves_by_creation_date', 'get', { descending: true, limit });
-      topics = legacy.rows.map((r) => ({ waveId: r.value, createdAt: r.key }));
-      return res.json({ topics, hasMore: false });
+      // Project legacy waves into a minimal topic-like shape so the client can render a list
+      topics = legacy.rows.map((r) => ({ id: `legacy:${r.value}`, title: '(legacy) wave', createdAt: r.key }));
+      res.json({ topics, hasMore: false });
+      return;
     }
     res.json({ topics, hasMore });
     return;
