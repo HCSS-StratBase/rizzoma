@@ -1,1 +1,0 @@
-I invite you to the topic{% if waveTopic %} "{{ waveTopic|truncatewords_with_dots(4)|raw }}"{% endif %}

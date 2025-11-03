@@ -1,0 +1,40 @@
+import { randomBytes } from 'crypto';
+
+const TOKEN_COOKIE = 'XSRF-TOKEN';
+const HEADER_NAME = 'x-csrf-token';
+
+export function csrfInit() {
+  return (req: any, res: any, next: any) => {
+    const sess = (req as any).session as any;
+    if (sess && !sess.csrfToken) {
+      sess.csrfToken = randomBytes(16).toString('hex');
+    }
+    if (sess?.csrfToken) {
+      res.cookie(TOKEN_COOKIE, sess.csrfToken, {
+        httpOnly: false,
+        sameSite: 'lax',
+        secure: false,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+    }
+    next();
+  };
+}
+
+export function csrfProtect() {
+  return (req: any, res: any, next: any) => {
+    // allow safe methods
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+    const sess = (req as any).session as any;
+    const token = req.get(HEADER_NAME) || req.headers[HEADER_NAME] || req.body?.csrfToken;
+    if (!sess?.csrfToken || !token || token !== sess.csrfToken) {
+      return res.status(403).json({ error: 'csrf_failed' });
+    }
+    next();
+  };
+}
+
+export function getCsrfTokenFromSession(req: any): string | undefined {
+  return (req as any).session?.csrfToken as string | undefined;
+}
+
