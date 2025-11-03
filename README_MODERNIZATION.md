@@ -37,6 +37,7 @@ As of now, the modern stack is running end‑to‑end in development:
 
 - TypeScript server (Express 4.x) with session auth (Redis), CSRF, request IDs, CORS allowlist and standardized errors
 - Vite + React client with Auth, Topics/Comments CRUD, pagination, search and toasts
+- Vite + React client with Auth, Topics/Comments CRUD, pagination, search and toasts; realtime refresh via Socket.IO
 - CouchDB integration via direct HTTP (Mango `_find` + legacy views as fallback); views deployable via `scripts/deploy-views.js`
 - Docker Compose dev stack (app + CouchDB + Redis + RabbitMQ + Sphinx; optional MinIO)
 - GitHub Actions CI: typecheck, lint and build (and Docker build)
@@ -47,6 +48,7 @@ Remaining Phase‑1 items before a production cut:
 - Add tests: middleware (requestId/csrf/error), routes (auth/topics/comments), and basic client rendering
 - Harden security defaults (secure cookies behind proxy, production CORS allowlist)
 - Optional: realtime updates via socket.io
+  - Implemented: server emits topic/comment events; client refreshes affected views
 
 ## Migration Steps
 

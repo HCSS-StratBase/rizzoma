@@ -12,7 +12,7 @@ Refer to README_MODERNIZATION.md for the migration plan and tips.
 ## Current Status
 
 - Backend: Express 4.x TypeScript server with session auth (Redis store), CSRF protection, request IDs on every response, CORS allowlist, and standardized JSON errors.
-- Frontend: Vite + React client with Auth panel, Topics list (filters, search, pagination with hasMore), Topic detail (edit/delete), Comments (CRUD + pagination), toasts + inline errors, and hash‑based state persistence.
+- Frontend: Vite + React client with Auth panel, Topics list (filters, search, pagination with hasMore), Topic detail (edit/delete), Comments (CRUD + pagination), toasts + inline errors, hash‑based state persistence, and realtime refresh via Socket.IO.
 - Data: CouchDB via direct HTTP (Mango `_find` + legacy views fallback). Views can be deployed with scripts/deploy-views.js.
 - Dev/Infra: Docker Compose stack (app + CouchDB + Redis + RabbitMQ + Sphinx; optional MinIO). Multi‑stage Dockerfile for dev/prod.
 - CI: GitHub Actions workflow for typecheck/lint/build and image build present.
@@ -135,6 +135,7 @@ Active branch: `modernization/phase1`.
 - `src/server/couch_views/*` – CouchDB design docs (copied from legacy)
 - `scripts/deploy-views.js` – Deploy design docs using HTTP API
 - `docker-compose.yml` – Dev orchestration (app + infra)
+- Realtime: Socket.IO server emits topic/comment create/update/delete events; client auto‑refreshes lists/details.
 
 ## Legacy Code
 

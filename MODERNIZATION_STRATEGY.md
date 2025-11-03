@@ -19,7 +19,7 @@ This document outlines the strategy for modernizing the Rizzoma codebase from No
 - Modern tooling configured: TypeScript, ESLint/Prettier, Vite (client), TSX (server)
 - Docker dev environment added (CouchDB, Redis, RabbitMQ, Sphinx, app)
 - CouchDB views copied from legacy and deployable via script
-- TS server + client with Auth, Topics/Comments CRUD, CSRF, requestId, and basic search/pagination
+- TS server + client with Auth, Topics/Comments CRUD, CSRF, requestId, basic search/pagination, and Socket.IO-based realtime refresh
 - Coffee→TS migration tool in place; dry‑run enumerates 500+ CoffeeScript files
 
 Next immediate objectives:
@@ -78,7 +78,7 @@ Next immediate objectives:
 
 ### Real-time Communication
 - ShareJS is abandoned, need alternative OT library
-- SockJS → Socket.io migration
+- SockJS → Socket.io migration (server + client wiring complete for topics/comments refresh)
 - WebRTC implementation needs updates
 
 ### Database Access
