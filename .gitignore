@@ -25,3 +25,10 @@ src/s
 # Data directiories
 data/*
 data/avatars/*
+
+# Modern build artifacts
+node_modules/
+dist/
+coverage/
+npm-debug.log*
+.env
