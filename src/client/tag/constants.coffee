@@ -1,1 +1,0 @@
-module.exports.badCharacters = "()|\\\-!@~&\/^$=№%#+*?,.:; " # bad characters are ()|\-!@~&/^$=№%#+*?,.:; and space
