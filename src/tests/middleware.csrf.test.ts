@@ -1,16 +1,17 @@
 import { csrfInit, csrfProtect } from '../server/middleware/csrf';
 
 describe('middleware: csrf', () => {
-  it('initializes csrf token and sets cookie', (done) => {
+  it('initializes csrf token and sets cookie (non-prod not secure)', (done) => {
     const req: any = { session: {} };
     const cookies: any[] = [];
     const res: any = {
-      cookie: (name: string, value: string, _opts: any) => { cookies.push({ name, value }); },
+      cookie: (name: string, value: string, opts: any) => { cookies.push({ name, value, opts }); },
     };
     const next = () => {
       expect(typeof req.session.csrfToken).toBe('string');
       const xsrf = cookies.find((c) => c.name === 'XSRF-TOKEN');
       expect(xsrf).toBeTruthy();
+      expect(xsrf.opts.secure).toBeFalsy();
       done();
     };
     csrfInit()(req, res, next);
@@ -34,5 +35,19 @@ describe('middleware: csrf', () => {
     const res: any = {};
     csrfProtect()(req, res, () => done());
   });
-});
 
+  it('sets secure cookie in production', (done) => {
+    const prev = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    const req: any = { session: {} };
+    const cookies: any[] = [];
+    const res: any = { cookie: (name: string, value: string, opts: any) => cookies.push({ name, value, opts }) };
+    csrfInit()(req, res, () => {
+      const xsrf = cookies.find((c) => c.name === 'XSRF-TOKEN');
+      expect(xsrf).toBeTruthy();
+      expect(xsrf.opts.secure).toBeTruthy();
+      process.env.NODE_ENV = prev;
+      done();
+    });
+  });
+});

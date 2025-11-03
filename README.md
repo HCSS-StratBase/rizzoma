@@ -57,6 +57,7 @@ API endpoints:
 Security notes:
 - Sessions are cookie‑based. For browser clients, mutating requests (POST/PATCH/DELETE) must include header `x-csrf-token`.
 - Fetch a CSRF token via `GET /api/auth/csrf`. A non‑HttpOnly cookie `XSRF-TOKEN` is also set for convenience.
+ - In production, cookies are marked `secure`; configure reverse proxy and set `ALLOWED_ORIGINS` to a strict allowlist (wildcard is ignored in production).
 
 Service consoles:
 - CouchDB Fauxton: `http://localhost:5984/_utils/` (admin/password)

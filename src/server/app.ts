@@ -20,11 +20,16 @@ const app = express();
 // Middleware
 app.use(helmet());
 // reflect origin from allowlist for credentialed requests
-const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000').split(',').map(s => s.trim()).filter(Boolean);
+const isProd = process.env['NODE_ENV'] === 'production';
+const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true);
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) return cb(null, true);
+    const allowAll = !isProd && allowedOrigins.includes('*');
+    if (allowAll || allowedOrigins.includes(origin)) return cb(null, true);
     return cb(new Error('CORS not allowed'));
   },
   credentials: true,

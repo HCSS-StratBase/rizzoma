@@ -10,10 +10,11 @@ export function csrfInit() {
       sess.csrfToken = randomBytes(16).toString('hex');
     }
     if (sess?.csrfToken) {
+      const isProd = process.env['NODE_ENV'] === 'production';
       res.cookie(TOKEN_COOKIE, sess.csrfToken, {
         httpOnly: false,
         sameSite: 'lax',
-        secure: false,
+        secure: isProd,
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
     }
@@ -37,4 +38,3 @@ export function csrfProtect() {
 export function getCsrfTokenFromSession(req: any): string | undefined {
   return (req as any).session?.csrfToken as string | undefined;
 }
-
