@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, ensureCsrf } from '../lib/api';
+import { subscribeTopicsRefresh } from '../lib/socket';
 import { toast } from './Toast';
 
 type Topic = { id: string; title: string; createdAt: number };
@@ -35,6 +36,13 @@ export function TopicsList({ isAuthed = false, initialMy=false, initialLimit=20,
     }
   };
   useEffect(() => { refresh(); }, []);
+  // realtime updates: refresh on topic events
+  useEffect(() => {
+    const unsub = subscribeTopicsRefresh(() => {
+      refresh();
+    });
+    return () => unsub();
+  }, [myOnly, limit, offset, query]);
   useEffect(() => { refresh(); }, [myOnly, limit, offset, query]);
 
   // write hash on changes

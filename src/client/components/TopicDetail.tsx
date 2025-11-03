@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, ensureCsrf } from '../lib/api';
+import { subscribeTopicDetail } from '../lib/socket';
 import { toast } from './Toast';
 
 type TopicFull = { id: string; title: string; content?: string; createdAt: number };
@@ -25,6 +26,14 @@ export function TopicDetail({ id, isAuthed = false }: { id: string; isAuthed?: b
     if (rc.ok) setComments((rc.data as any)?.comments || []);
   };
   useEffect(() => { load(); }, [id, climit, coffset]);
+  // realtime: reload on topic/comment changes for this topic
+  useEffect(() => {
+    if (!id) return;
+    const unsub = subscribeTopicDetail(id, () => {
+      load();
+    });
+    return () => unsub();
+  }, [id, climit, coffset]);
 
   const save = async () => {
     if (!topic) return;
