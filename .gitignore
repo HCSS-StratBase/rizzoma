@@ -32,3 +32,4 @@ dist/
 coverage/
 npm-debug.log*
 .env
+rizzoma.bundle
