@@ -17,23 +17,25 @@ CMD ["npm", "run", "dev"]
 # Stage 3: Builder
 FROM base AS builder
 COPY package*.json ./
-RUN npm install
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 COPY . .
 RUN npm run build
 
 # Stage 4: Production
 FROM node:20-alpine AS production
-RUN apk add --no-cache tini
+RUN apk add --no-cache tini curl
 WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package*.json ./
-RUN npm install --omit=dev && npm cache clean --force
+RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
 
 USER node
 EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD curl -fsS http://localhost:8000/api/health || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "dist/server/app.js"]

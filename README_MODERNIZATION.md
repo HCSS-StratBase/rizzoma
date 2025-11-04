@@ -223,6 +223,17 @@ docker run -d --name rizzoma-prod \
   -p 8000:8000 rizzoma:prod
 ```
 
+### Compose production profile
+
+Bring up a production-like stack with Docker Compose profiles:
+
+```bash
+docker compose --profile prod up -d app-prod couchdb redis
+docker compose ps
+```
+
+The production image runs as a non-root `node` user and declares a HEALTHCHECK at `/api/health`. Configure `SESSION_SECRET`, `COUCHDB_URL`, `COUCHDB_DB`, `REDIS_URL`, and `ALLOWED_ORIGINS` for your environment.
+
 ## Troubleshooting
 
 ### Common Issues
