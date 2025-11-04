@@ -23,7 +23,6 @@ export function WaveView({ id }: { id: string }) {
   const [linksIn, setLinksIn] = useState<Array<{ fromBlipId: string; waveId: string }>>([]);
   const [newLinkTo, setNewLinkTo] = useState<string>('');
   const [showEditor, setShowEditor] = useState<boolean>(false);
-  
 
   useEffect(() => {
     (async () => {
@@ -159,6 +158,7 @@ export function WaveView({ id }: { id: string }) {
     });
     return () => unsub();
   }, [current]);
+
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
   return (
     <section>
@@ -192,7 +192,15 @@ export function WaveView({ id }: { id: string }) {
             <button onClick={async ()=>{
               const to = newLinkTo.trim(); if (!to) return;
               const r = await api('/api/links', { method: 'POST', body: JSON.stringify({ fromBlipId: current, toBlipId: to, waveId: id }) });
-              if (r.ok) { setNewLinkTo(''); const lr = await api(`/api/blips/${encodeURIComponent(current)}/links`); if (lr.ok) { const d = lr.data as any; setLinksOut((d?.out||[]).map((x:any)=>({toBlipId:String(x.toBlipId), waveId:String(x.waveId)}))); setLinksIn((d?.in||[]).map((x:any)=>({fromBlipId:String(x.fromBlipId), waveId:String(x.waveId)}))); } }
+              if (r.ok) {
+                setNewLinkTo('');
+                const lr = await api(`/api/blips/${encodeURIComponent(current)}/links`);
+                if (lr.ok) {
+                  const d = lr.data as any;
+                  setLinksOut((d?.out||[]).map((x:any)=>({toBlipId:String(x.toBlipId), waveId:String(x.waveId)})));
+                  setLinksIn((d?.in||[]).map((x:any)=>({fromBlipId:String(x.fromBlipId), waveId:String(x.waveId)})));
+                }
+              }
             }}>
               Add link
             </button>
@@ -203,7 +211,15 @@ export function WaveView({ id }: { id: string }) {
               <ul>
                 {linksOut.map((l)=> (
                   <li key={`out:${current}:${l.toBlipId}`}>
-                    → <code>{l.toBlipId}</code> <button onClick={async ()=>{ await api(`/api/links/${encodeURIComponent(current)}/${encodeURIComponent(l.toBlipId)}`, { method: 'DELETE' }); const lr = await api(`/api/blips/${encodeURIComponent(current)}/links`); if (lr.ok) { const d = lr.data as any; setLinksOut((d?.out||[]).map((x:any)=>({toBlipId:String(x.toBlipId), waveId:String(x.waveId)}))); setLinksIn((d?.in||[]).map((x:any)=>({fromBlipId:String(x.fromBlipId), waveId:String(x.waveId)}))); } }}>remove</button>
+                    → <code>{l.toBlipId}</code> <button onClick={async ()=>{
+                      await api(`/api/links/${encodeURIComponent(current)}/${encodeURIComponent(l.toBlipId)}`, { method: 'DELETE' });
+                      const lr = await api(`/api/blips/${encodeURIComponent(current)}/links`);
+                      if (lr.ok) {
+                        const d = lr.data as any;
+                        setLinksOut((d?.out||[]).map((x:any)=>({toBlipId:String(x.toBlipId), waveId:String(x.waveId)})));
+                        setLinksIn((d?.in||[]).map((x:any)=>({fromBlipId:String(x.fromBlipId), waveId:String(x.waveId)})));
+                      }
+                    }}>remove</button>
                   </li>
                 ))}
               </ul>
@@ -221,8 +237,6 @@ export function WaveView({ id }: { id: string }) {
           </div>
         </div>
       ) : null}
-        <button onClick={nextUnread} style={{ background: '#27ae60', color: 'white' }}>Next</button>
-      </div>
       <BlipTreeWithState nodes={blips} unread={new Set(unread)} current={current} openMap={openMap} onToggle={(id, val) => { const next = { ...openMap, [id]: val }; persist(next); }} />
     </section>
   );
@@ -281,3 +295,4 @@ function useInitCurrentSetter(setCurrent: (id: string)=>void) {
     return () => { (window as any).setWaveCurrent = prev; };
   }, [setCurrent]);
 }
+
