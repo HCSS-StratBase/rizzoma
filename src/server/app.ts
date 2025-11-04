@@ -15,6 +15,7 @@ import { sessionMiddleware } from './middleware/session.js';
 import http from 'http';
 import { initSocket } from './lib/socket.js';
 import commentsRouter from './routes/comments.js';
+import wavesRouter from './routes/waves.js';
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.get('/api/deps', async (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/topics', topicsRouter);
 app.use('/api', commentsRouter);
+app.use('/api/waves', wavesRouter);
 
 // Placeholder root
 app.get('/', (_req, res) => {
