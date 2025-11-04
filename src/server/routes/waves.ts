@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { createIndex, find, getDoc, insertDoc, view } from '../lib/couch.js';
-import type { Blip, Wave } from '../schemas/wave.js';
+import { createIndex, find, findOne, getDoc, insertDoc, view } from '../lib/couch.js';
+import type { Blip, Wave, BlipRead } from '../schemas/wave.js';
 
 const router = Router();
 
@@ -71,6 +71,99 @@ router.get('/:id', async (req, res) => {
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'wave_error', requestId: (req as any)?.id });
   }
+});
+
+// compute a depth-first order of blips (preorder)
+function flattenBlips(blips: any[]): string[] {
+  const out: string[] = [];
+  const visit = (n: any) => { if (n && n.id) out.push(String(n.id)); (n.children || []).forEach(visit); };
+  (blips || []).forEach(visit);
+  return out;
+}
+
+// GET /api/waves/:id/unread — list unread blip IDs for current user
+router.get('/:id/unread', async (req, res) => {
+  // @ts-ignore
+  const userId = req.session?.userId as string | undefined;
+  if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
+  const id = req.params.id;
+  try {
+    // get tree
+    const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
+    const waveData: any = await waveResp.json();
+    const order = flattenBlips(waveData.blips || []);
+    await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
+    const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
+    const readSet = new Set((r.docs || []).map((d) => String(d.blipId)));
+    const unread = order.filter((bid) => !readSet.has(bid));
+    res.json({ unread, total: order.length, read: order.length - unread.length });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'unread_error', requestId: (req as any)?.id });
+  }
+});
+
+// GET /api/waves/:id/next?after=blipId — next unread blip id
+router.get('/:id/next', async (req, res) => {
+  // @ts-ignore
+  const userId = req.session?.userId as string | undefined;
+  if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
+  const id = req.params.id;
+  const after = String((req.query as any).after || '');
+  try {
+    const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
+    const waveData: any = await waveResp.json();
+    const order = flattenBlips(waveData.blips || []);
+    await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
+    const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
+    const readSet = new Set((r.docs || []).map((d) => String(d.blipId)));
+    const startIdx = after ? Math.max(0, order.indexOf(after) + 1) : 0;
+    const next = order.slice(startIdx).find((bid) => !readSet.has(bid));
+    res.json({ next: next || null });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'next_error', requestId: (req as any)?.id });
+  }
+});
+
+// POST /api/waves/:waveId/blips/:blipId/read — mark one blip as read
+router.post('/:waveId/blips/:blipId/read', async (req, res) => {
+  // @ts-ignore
+  const userId = req.session?.userId as string | undefined;
+  if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
+  const waveId = req.params.waveId;
+  const blipId = req.params.blipId;
+  try {
+    const keyId = `read:user:${userId}:wave:${waveId}:blip:${blipId}`;
+    // avoid duplicates
+    const existing = await findOne<BlipRead>({ type: 'read', userId, waveId, blipId }).catch(() => null);
+    if (existing) { res.json({ ok: true, id: existing._id }); return; }
+    const doc: BlipRead = { _id: keyId, type: 'read', userId, waveId, blipId, readAt: Date.now() };
+    const r = await insertDoc(doc as any);
+    res.status(201).json({ ok: true, id: r.id, rev: r.rev });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'read_mark_error', requestId: (req as any)?.id });
+  }
+});
+
+// POST /api/waves/:id/read — mark multiple blips as read { blipIds: [] }
+router.post('/:id/read', async (req, res) => {
+  // @ts-ignore
+  const userId = req.session?.userId as string | undefined;
+  if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
+  const id = req.params.id;
+  const blipIds = Array.isArray((req.body || {}).blipIds) ? (req.body as any).blipIds.map((s: any) => String(s)) : [];
+  const results: Array<{ id: string; ok: boolean }> = [];
+  for (const bid of blipIds) {
+    try {
+      const keyId = `read:user:${userId}:wave:${id}:blip:${bid}`;
+      const existing = await findOne<BlipRead>({ type: 'read', userId, waveId: id, blipId: bid }).catch(() => null);
+      if (existing) { results.push({ id: bid, ok: true }); continue; }
+      const r = await insertDoc({ _id: keyId, type: 'read', userId, waveId: id, blipId: bid, readAt: Date.now() } as any);
+      if (r?.ok) results.push({ id: bid, ok: true }); else results.push({ id: bid, ok: false });
+    } catch {
+      results.push({ id: bid, ok: false });
+    }
+  }
+  res.json({ ok: true, count: results.length, results });
 });
 
 export default router;

@@ -23,3 +23,11 @@ export type Blip = {
   updatedAt: number;
 };
 
+export type BlipRead = {
+  _id?: string; // read:user:<userId>:wave:<waveId>:blip:<blipId>
+  type: 'read';
+  userId: string;
+  waveId: string;
+  blipId: string;
+  readAt: number;
+};
