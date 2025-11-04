@@ -22,6 +22,7 @@ type Topic = {
 router.get('/', async (req, res): Promise<void> => {
   const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
   const offset = Math.max(parseInt(String((req.query as any).offset ?? '0'), 10) || 0, 0);
+  const bookmark = String((req.query as any).bookmark || '').trim() || undefined;
   const myOnly = String((req.query as any).my ?? '0') === '1';
   const q = String((req.query as any).q ?? '').trim().toLowerCase();
   try {
@@ -49,27 +50,30 @@ router.get('/', async (req, res): Promise<void> => {
         ],
       };
       try {
-        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, sort: [{ createdAt: 'desc' }] });
+        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, sort: [{ createdAt: 'desc' }], bookmark });
         const window = r.docs || [];
         topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
         hasMore = window.length > limit;
+        return res.json({ topics, hasMore, nextBookmark: r.bookmark });
       } catch {
-        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset });
+        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, bookmark });
         const window = r.docs || [];
         topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
         hasMore = window.length > limit;
+        return res.json({ topics, hasMore, nextBookmark: r.bookmark });
       }
     } else {
       // No search term: efficient paging using skip/limit
-      let r: { docs: Topic[] };
+      let r: { docs: Topic[]; bookmark?: string };
       try {
-        r = await find<Topic>(selector, { limit: limit + 1, skip: offset, sort: [{ createdAt: 'desc' }] });
+        r = await find<Topic>(selector, { limit: limit + 1, skip: offset, sort: [{ createdAt: 'desc' }], bookmark });
       } catch {
-        r = await find<Topic>(selector, { limit: limit + 1, skip: offset });
+        r = await find<Topic>(selector, { limit: limit + 1, skip: offset, bookmark });
       }
       const window = r.docs || [];
       topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
       hasMore = window.length > limit;
+      return res.json({ topics, hasMore, nextBookmark: r.bookmark });
     }
 
     if (topics.length === 0 && !myOnly && !q) {
