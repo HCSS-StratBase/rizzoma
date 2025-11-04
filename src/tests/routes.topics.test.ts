@@ -93,6 +93,16 @@ describe('routes: /api/topics', () => {
     expect(body.rev).toBe('2-b');
   });
 
+  it('searches topics via Mango regex with paging', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const resp = await fetch(`http://127.0.0.1:${port}/api/topics?q=first&limit=2&offset=0`);
+    const body = await resp.json();
+    server.close();
+    expect(resp.status).toBe(200);
+    expect(Array.isArray(body.topics)).toBe(true);
+  });
+
   it('deletes a topic (owner required)', async () => {
     const server = app.listen(0);
     const port = (server.address() as any).port;
