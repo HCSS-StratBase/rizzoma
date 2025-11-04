@@ -14,7 +14,6 @@ This document outlines the strategy for modernizing the Rizzoma codebase from No
 - PRs must provide ample, reviewer-ready descriptions:
   - Summary, Changes (by area), API/Data changes, Risks/Rollback, Testing, Docs updates, and Screenshots/GIF for UI.
 - Prefer `gh pr create … -t … -b …` with a complete body to ensure consistency.
-
 ## Current State Analysis
 
 ### Core Dependencies (Critical Updates Needed)
