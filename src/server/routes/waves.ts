@@ -181,7 +181,6 @@ router.get('/:id/prev', async (req, res) => {
     res.status(500).json({ error: e?.message || 'prev_error', requestId: (req as any)?.id });
   }
 });
-
 // POST /api/waves/:waveId/blips/:blipId/read — mark one blip as read
 router.post('/:waveId/blips/:blipId/read', async (req, res) => {
   // @ts-ignore

@@ -23,6 +23,7 @@ export function WaveView({ id }: { id: string }) {
   const [linksIn, setLinksIn] = useState<Array<{ fromBlipId: string; waveId: string }>>([]);
   const [newLinkTo, setNewLinkTo] = useState<string>('');
   const [showEditor, setShowEditor] = useState<boolean>(false);
+  
 
   useEffect(() => {
     (async () => {
@@ -220,6 +221,8 @@ export function WaveView({ id }: { id: string }) {
           </div>
         </div>
       ) : null}
+        <button onClick={nextUnread} style={{ background: '#27ae60', color: 'white' }}>Next</button>
+      </div>
       <BlipTreeWithState nodes={blips} unread={new Set(unread)} current={current} openMap={openMap} onToggle={(id, val) => { const next = { ...openMap, [id]: val }; persist(next); }} />
     </section>
   );
