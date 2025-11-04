@@ -97,4 +97,35 @@ if (process.env.NODE_ENV !== 'production') {
       res.status(500).json({ error: e?.message || 'materialize_error', requestId: (req as any)?.id });
     }
   });
+
+  // POST /api/waves/materialize — bulk-create minimal wave docs for recent legacy waves
+  router.post('/materialize', async (req, res) => {
+    const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 500);
+    try {
+      const legacy = await view<any>('waves_by_creation_date', 'get', { descending: true as any, limit });
+      const ids: string[] = (legacy.rows || []).map((r: any) => String(r.value));
+      const results: Array<{ id: string; status: 'skipped' | 'created' } & Record<string, any>> = [];
+      for (const wid of ids) {
+        let exists = false;
+        try { await getDoc<Wave>(wid); exists = true; } catch {}
+        if (exists) { results.push({ id: wid, status: 'skipped' }); continue; }
+        // derive createdAt from legacy list key or content timestamps if available
+        const createdAtFromView = Number((legacy.rows || []).find((r: any) => String(r.value) === wid)?.key) || Date.now();
+        const legacyBlips = await view<any>('nonremoved_blips_by_wave_id', 'get', { include_docs: true as any, key: wid as any }).catch(() => ({ rows: [] as any[] }));
+        const docs = (legacyBlips.rows || []).map((row: any) => row.doc || {}).filter(Boolean);
+        const createdAt = docs.reduce((m: number, d: any) => Math.min(m, Number(d.createdAt || d.contentTimestamp || createdAtFromView)), createdAtFromView);
+        const title = `Wave ${wid.slice(0, 6)}`;
+        const wave: Wave = { _id: wid, type: 'wave', title, createdAt, updatedAt: createdAt };
+        try {
+          const r = await insertDoc(wave as any);
+          results.push({ id: wid, status: 'created', rev: r.rev, createdAt, title });
+        } catch (e: any) {
+          results.push({ id: wid, status: 'skipped', error: String(e?.message || e) });
+        }
+      }
+      res.json({ ok: true, count: results.length, results });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'bulk_materialize_error', requestId: (req as any)?.id });
+    }
+  });
 }
