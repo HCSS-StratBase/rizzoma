@@ -272,6 +272,18 @@ The production image runs as a non-root `node` user and declares a HEALTHCHECK a
 - Comments: `GET /api/topics/:id/comments?limit=&offset=&bookmark=` → `{ comments, hasMore, nextBookmark }`
 - Waves: `GET /api/waves?limit=&offset=&q=` → `{ waves, hasMore }`; `GET /api/waves/:id` → `{ id, title, createdAt, blips: [...] }`
 
+### Dev-only Materialization (Milestone A)
+
+During migration, a dev-only endpoint helps create minimal `wave` docs for legacy wave IDs:
+
+```
+POST /api/waves/materialize/:id
+```
+
+- Only available when `NODE_ENV !== 'production'`.
+- Derives `createdAt` from earliest blip `createdAt`/`contentTimestamp`.
+- Sets a placeholder `title` (`Wave <id-prefix>`). You can adjust titles later via the UI/API.
+
 ## Troubleshooting
 
 ### Common Issues

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createIndex, find, getDoc, view } from '../lib/couch.js';
+import { createIndex, find, getDoc, insertDoc, view } from '../lib/couch.js';
 import type { Blip, Wave } from '../schemas/wave.js';
 
 const router = Router();
@@ -74,3 +74,27 @@ router.get('/:id', async (req, res) => {
 });
 
 export default router;
+
+// Dev-only materialization endpoints
+if (process.env.NODE_ENV !== 'production') {
+  // POST /api/waves/materialize/:id — create minimal wave doc if missing (title + createdAt)
+  router.post('/materialize/:id', async (req, res) => {
+    const id = req.params.id;
+    try {
+      // check if exists
+      let exists = false;
+      try { await getDoc<Wave>(id); exists = true; } catch {}
+      if (exists) { res.json({ ok: true, id, existed: true }); return; }
+      // derive basic fields from legacy blips
+      const legacy = await view<any>('nonremoved_blips_by_wave_id', 'get', { include_docs: true as any, key: id as any }).catch(() => ({ rows: [] as any[] }));
+      const docs = (legacy.rows || []).map((row: any) => row.doc || {}).filter(Boolean);
+      const createdAt = docs.reduce((m: number, d: any) => Math.min(m, Number(d.createdAt || d.contentTimestamp || Date.now())), Date.now());
+      const title = `Wave ${id.slice(0, 6)}`;
+      const wave: Wave = { _id: id, type: 'wave', title, createdAt, updatedAt: createdAt };
+      const r = await insertDoc(wave as any);
+      res.status(201).json({ ok: true, id: r.id, rev: r.rev, createdAt, title });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'materialize_error', requestId: (req as any)?.id });
+    }
+  });
+}
