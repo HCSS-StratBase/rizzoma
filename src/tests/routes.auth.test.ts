@@ -1,3 +1,6 @@
+// Use bcryptjs in tests to avoid native binding issues
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+jest.mock('bcrypt', () => require('bcryptjs'));
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { requestId } from '../server/middleware/requestId';
