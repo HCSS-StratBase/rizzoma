@@ -38,22 +38,27 @@ router.get('/', async (req, res): Promise<void> => {
     let hasMore = false;
 
     if (q) {
-      // For search, fetch extra, then filter client-side for substring match
-      const fetchCount = Math.min(offset + limit + 50, 1000);
-      let docs: Topic[] = [];
+      // Server-side search: use Mango regex on title/content + createdAt sort for stable paging
+      const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const qRe = `(?i).*${escapeRe(q)}.*`;
+      const searchSelector: any = {
+        ...selector,
+        $or: [
+          { title: { $regex: qRe } },
+          { content: { $regex: qRe } },
+        ],
+      };
       try {
-        const r = await find<Topic>(selector, { limit: fetchCount, sort: [{ createdAt: 'desc' }] });
-        docs = r.docs || [];
+        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, sort: [{ createdAt: 'desc' }] });
+        const window = r.docs || [];
+        topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
+        hasMore = window.length > limit;
       } catch {
-        const r = await find<Topic>(selector, { limit: fetchCount });
-        docs = r.docs || [];
+        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset });
+        const window = r.docs || [];
+        topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
+        hasMore = window.length > limit;
       }
-      const filtered = docs
-        .filter((d) => !q || (d.title?.toLowerCase().includes(q) || (d.content || '').toLowerCase().includes(q)))
-        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      const window = filtered.slice(offset, offset + limit + 1);
-      topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
-      hasMore = window.length > limit;
     } else {
       // No search term: efficient paging using skip/limit
       let r: { docs: Topic[] };

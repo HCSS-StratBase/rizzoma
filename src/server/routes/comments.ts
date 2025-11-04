@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { csrfProtect } from '../middleware/csrf.js';
-import { deleteDoc, find, getDoc, insertDoc, updateDoc } from '../lib/couch.js';
+import { createIndex, deleteDoc, find, getDoc, insertDoc, updateDoc } from '../lib/couch.js';
 import { CreateCommentSchema, UpdateCommentSchema } from '../schemas/comment.js';
 import { emitEvent } from '../lib/socket.js';
 
@@ -24,11 +24,19 @@ router.get('/topics/:id/comments', async (req, res): Promise<void> => {
     const topicId = req.params.id;
     const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
     const offset = Math.max(parseInt(String((req.query as any).offset ?? '0'), 10) || 0, 0);
-    const r = await find<Comment>({ type: 'comment', topicId });
-    const sorted = r.docs.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-    const window = sorted.slice(offset, offset + limit + 1);
-    const paged = window.slice(0, limit);
-    const rows = paged.map((c) => ({ id: c._id, authorId: c.authorId, content: c.content, createdAt: c.createdAt, updatedAt: c.updatedAt }));
+    // Ensure an index to support topicId + createdAt paging (idempotent)
+    try { await createIndex(['type', 'topicId', 'createdAt'], 'idx_comment_topic_createdAt'); } catch {}
+    // Query CouchDB using Mango with server-side sort + paging
+    let r: { docs: Comment[] };
+    try {
+      r = await find<Comment>({ type: 'comment', topicId }, { limit: limit + 1, skip: offset, sort: [{ createdAt: 'asc' }] });
+    } catch {
+      // Fallback without sort if index not available yet
+      r = await find<Comment>({ type: 'comment', topicId }, { limit: limit + 1, skip: offset });
+    }
+    const window = r.docs || [];
+    const page = window.slice(0, limit);
+    const rows = page.map((c) => ({ id: c._id, authorId: c.authorId, content: c.content, createdAt: c.createdAt, updatedAt: c.updatedAt }));
     const hasMore = window.length > limit;
     res.json({ comments: rows, hasMore });
     return;
