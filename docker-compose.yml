@@ -40,6 +40,11 @@ services:
       SESSION_SECRET: change-me
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     depends_on:
       - redis
       - couchdb
