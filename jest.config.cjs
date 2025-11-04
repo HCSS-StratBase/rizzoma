@@ -30,6 +30,8 @@ module.exports = {
     '^@client/(.*)$': '<rootDir>/src/client/$1',
     '^@shared/(.*)$': '<rootDir>/src/share/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
+    // Allow TS sources to be resolved from ESM-style ".js" import specifiers
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '/build/'],

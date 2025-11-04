@@ -15,12 +15,22 @@ describe('routes: comments edge cases', () => {
   }
 
   beforeEach(() => {
+    const realFetch = global.fetch as any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     global.fetch = (async (url: any, init?: any) => {
       const u = new URL(String(url));
       const path = u.pathname;
       const method = (init?.method || 'GET').toUpperCase();
-      const okResp = (obj: any, status = 200) => ({ ok: status >= 200 && status < 300, status, statusText: 'OK', text: async () => JSON.stringify(obj) } as any);
+      if ((u.hostname === '127.0.0.1' || u.hostname === 'localhost') && path.startsWith('/api/')) {
+        return realFetch(url, init);
+      }
+      const okResp = (obj: any, status = 200) => ({
+        ok: status >= 200 && status < 300,
+        status,
+        statusText: 'OK',
+        text: async () => JSON.stringify(obj),
+        json: async () => obj,
+      } as any);
       const notFound = () => ({ ok: false, status: 404, statusText: 'Not Found', text: async () => JSON.stringify({ error: 'not_found' }) } as any);
 
       if (method === 'GET' && /\/[^/]+$/.test(path)) {
@@ -71,4 +81,3 @@ describe('routes: comments edge cases', () => {
     expect(body.error).toBe('not_found');
   });
 });
-

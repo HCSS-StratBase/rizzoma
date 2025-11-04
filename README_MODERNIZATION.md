@@ -20,11 +20,15 @@ This guide provides step-by-step instructions for modernizing the Rizzoma codeba
    docker compose up -d
    ```
 
-3. **Copy legacy CouchDB views and deploy (optional, requires CouchDB):**
+3. **Copy legacy CouchDB views and deploy (recommended for dev; required for legacy fallbacks):**
    ```bash
    npm run prep:views
-   npm run deploy:views
-   ```
+  npm run deploy:views
+  ```
+
+Note:
+- These design docs enable legacy CouchDB view fallbacks used by the modern API when there are no modern `topic` documents yet. Skipping this step means the topics list may be empty until you create new topics.
+- Ensure CouchDB is running (via `docker compose up -d`) before deploying; otherwise the deploy step will fail.
 
 4. **Run the migration script (dry run first):**
    ```bash

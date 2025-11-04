@@ -12,21 +12,31 @@ describe('routes: /api/topics/:id/comments', () => {
   app.use('/api', commentsRouter);
 
   beforeAll(() => {
+    const realFetch = global.fetch as any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     global.fetch = (async (url: any, init?: any) => {
       const u = new URL(String(url));
       const path = u.pathname;
       const method = (init?.method || 'GET').toUpperCase();
-      const okResp = (obj: any, status = 200) => ({ ok: status >= 200 && status < 300, status, statusText: 'OK', text: async () => JSON.stringify(obj) } as any);
-      if (method === 'POST' && path.match(/\/[^/]+$/)) {
-        // insertDoc
-        return okResp({ ok: true, id: 'c1', rev: '1-abc' }, 201);
+      if ((u.hostname === '127.0.0.1' || u.hostname === 'localhost') && path.startsWith('/api/')) {
+        return realFetch(url, init);
       }
+      const okResp = (obj: any, status = 200) => ({
+        ok: status >= 200 && status < 300,
+        status,
+        statusText: 'OK',
+        text: async () => JSON.stringify(obj),
+        json: async () => obj,
+      } as any);
       if (method === 'POST' && path.endsWith('/_find')) {
         return okResp({ docs: [
           { _id: 'c1', type: 'comment', topicId: 't1', authorId: 'u1', content: 'hello', createdAt: 1, updatedAt: 1 },
           { _id: 'c2', type: 'comment', topicId: 't1', authorId: 'u2', content: 'world', createdAt: 2, updatedAt: 2 },
         ] });
+      }
+      if (method === 'POST' && path.match(/\/[^/]+$/)) {
+        // insertDoc
+        return okResp({ ok: true, id: 'c1', rev: '1-abc' }, 201);
       }
       return okResp({}, 404);
     }) as any;

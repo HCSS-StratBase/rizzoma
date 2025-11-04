@@ -51,6 +51,7 @@
     "coverage",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "src/server/couch_views/**/*"
+    "src/server/couch_views/**/*",
+    "src/share/**/*"
   ]
 }

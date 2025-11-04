@@ -9,7 +9,7 @@ import { StatusBar } from './components/StatusBar';
 
 function App() {
   const [me, setMe] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -32,7 +32,7 @@ function App() {
 
   useEffect(() => {
     const m = route.match(/^#\/topic\/(.+)$/);
-    setCurrentId(m ? m[1] : null);
+    setCurrentId(m ? (m[1] ?? null) : null);
   }, [route]);
 
   // parse hash for list filters and pass as initial props
@@ -65,7 +65,7 @@ function App() {
               onClick={async () => {
                 if (!window.confirm('Logout?')) return;
                 setBusy(true);
-                const r = await api('/api/auth/logout', { method: 'POST' });
+                await api('/api/auth/logout', { method: 'POST' });
                 setBusy(false);
                 setMe(null);
                 window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Logged out', type: 'info' } }));

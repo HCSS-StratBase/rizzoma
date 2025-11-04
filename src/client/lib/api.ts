@@ -2,7 +2,9 @@ export type ApiResponse<T = any> = { ok: boolean; data: T | string | null; statu
 
 export function readCookie(name: string): string | undefined {
   const m = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\/+^])/g, '\\$1') + '=([^;]*)'));
-  return m ? decodeURIComponent(m[1]) : undefined;
+  if (!m) return undefined;
+  const captured = m[1];
+  return captured ? decodeURIComponent(captured) : undefined;
 }
 
 export async function ensureCsrf(): Promise<string | undefined> {

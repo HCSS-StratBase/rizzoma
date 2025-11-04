@@ -12,10 +12,13 @@ Refer to README_MODERNIZATION.md for the migration plan and tips.
 ## Current Status
 
 - Backend: Express 4.x TypeScript server with session auth (Redis store), CSRF protection, request IDs on every response, CORS allowlist, and standardized JSON errors.
+  - Sessions are now applied globally across all API routes (auth, topics, comments).
+  - Mutating requests (POST/PATCH/DELETE) require the `x-csrf-token` header; the UI obtains this automatically.
 - Frontend: Vite + React client with Auth panel, Topics list (filters, search, pagination with hasMore), Topic detail (edit/delete), Comments (CRUD + pagination), toasts + inline errors, hash‑based state persistence, and realtime refresh via Socket.IO.
 - Data: CouchDB via direct HTTP (Mango `_find` + legacy views fallback). Views can be deployed with scripts/deploy-views.js.
 - Dev/Infra: Docker Compose stack (app + CouchDB + Redis + RabbitMQ + Sphinx; optional MinIO). Multi‑stage Dockerfile for dev/prod.
 - CI: GitHub Actions workflow for typecheck/lint/build and image build present.
+  - Jest unit/integration tests for middleware and routes are included; run `npm test`.
 
 See “Deployment Readiness” for what remains to ship a production cut of the new stack.
 
@@ -108,7 +111,8 @@ curl -s http://localhost:8000/api/health
 What works now:
 - End‑to‑end dev flow (Docker) and local build for production image
 - Auth + CSRF + basic rate‑limits; request IDs propagate to client for supportability
-- Topics + Comments CRUD with pagination; basic search on title/content
+- Topics + Comments CRUD with pagination; basic search on title/content; realtime refresh
+- Unit/integration tests pass for middleware and routes (`npm test`)
 
 Gaps to close before production:
 - Replace in‑memory filtering on the topics endpoint with CouchDB Mango queries and/or view queries for search + accurate pagination

@@ -13,13 +13,23 @@ describe('routes: /api/topics', () => {
   app.use('/api/topics', topicsRouter);
 
   beforeAll(() => {
-    // Mock global fetch used by couch helpers
+    // Mock global fetch used by couch helpers, but forward real HTTP requests to the local app server
+    const realFetch = global.fetch as any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     global.fetch = (async (url: any, init?: any) => {
       const u = new URL(String(url));
       const path = u.pathname;
       const method = (init?.method || 'GET').toUpperCase();
-      const okResp = (obj: any, status = 200) => ({ ok: status >= 200 && status < 300, status, statusText: 'OK', text: async () => JSON.stringify(obj) } as any);
+      if ((u.hostname === '127.0.0.1' || u.hostname === 'localhost') && path.startsWith('/api/')) {
+        return realFetch(url, init);
+      }
+      const okResp = (obj: any, status = 200) => ({
+        ok: status >= 200 && status < 300,
+        status,
+        statusText: 'OK',
+        text: async () => JSON.stringify(obj),
+        json: async () => obj,
+      } as any);
       if (method === 'POST' && path.endsWith('/_find')) {
         // Return a couple of topic docs
         return okResp({ docs: [
@@ -101,7 +111,16 @@ describe('routes: /api/topics', () => {
       const u = new URL(String(url));
       const path = u.pathname;
       const method = (init?.method || 'GET').toUpperCase();
-      const okResp = (obj: any, status = 200) => ({ ok: status >= 200 && status < 300, status, statusText: 'OK', text: async () => JSON.stringify(obj) } as any);
+      if ((u.hostname === '127.0.0.1' || u.hostname === 'localhost') && path.startsWith('/api/')) {
+        return (orig as any)(url, init);
+      }
+      const okResp = (obj: any, status = 200) => ({
+        ok: status >= 200 && status < 300,
+        status,
+        statusText: 'OK',
+        text: async () => JSON.stringify(obj),
+        json: async () => obj,
+      } as any);
       if (method === 'POST' && path.endsWith('/_find')) {
         return okResp({ docs: [] });
       }

@@ -16,6 +16,11 @@ jest.mock('connect-redis', () => ({
   default: class RedisStore {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(_opts: any) {}
+    on() {/* no-op */}
+    // minimal required store API
+    get(_sid: string, cb: (err: any, sess?: any) => void) { cb(null, undefined); }
+    set(_sid: string, _sess: any, cb?: (err?: any) => void) { cb?.(); }
+    destroy(_sid: string, cb?: (err?: any) => void) { cb?.(); }
   },
 }));
 
@@ -27,12 +32,22 @@ describe('routes: /api/auth', () => {
     goodHash = await bcrypt.hash('pw123456', 10);
     // Mock global fetch used by couch helpers
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const realFetch = global.fetch as any;
     global.fetch = (async (url: any, init?: any) => {
       const u = new URL(String(url));
       const path = u.pathname;
       const method = (init?.method || 'GET').toUpperCase();
+      if ((u.hostname === '127.0.0.1' || u.hostname === 'localhost') && path.startsWith('/api/')) {
+        return realFetch(url, init);
+      }
       const body = init?.body ? JSON.parse(init.body.toString()) : undefined;
-      const okResp = (obj: any, status = 200) => ({ ok: status >= 200 && status < 300, status, statusText: 'OK', text: async () => JSON.stringify(obj) } as any);
+      const okResp = (obj: any, status = 200) => ({
+        ok: status >= 200 && status < 300,
+        status,
+        statusText: 'OK',
+        text: async () => JSON.stringify(obj),
+        json: async () => obj,
+      } as any);
       if (method === 'POST' && path.endsWith('/_find')) {
         // Branch by selector to simulate existing users and login
         const sel = body?.selector || {};
@@ -91,4 +106,3 @@ describe('routes: /api/auth', () => {
     expect(body.id).toBe('u1');
   });
 });
-

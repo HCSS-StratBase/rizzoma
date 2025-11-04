@@ -27,7 +27,10 @@ export function csrfProtect() {
     // allow safe methods
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
     const sess = (req as any).session as any;
-    const token = req.get(HEADER_NAME) || req.headers[HEADER_NAME] || req.body?.csrfToken;
+    // Only enforce CSRF for authenticated sessions; otherwise let route-level auth return 401
+    if (!sess?.userId) return next();
+    const headerGet = typeof (req as any).get === 'function' ? (req as any).get(HEADER_NAME) : undefined;
+    const token = headerGet || (req as any).headers?.[HEADER_NAME] || (req as any).body?.csrfToken;
     if (!sess?.csrfToken || !token || token !== sess.csrfToken) {
       return res.status(403).json({ error: 'csrf_failed' });
     }

@@ -11,6 +11,7 @@ import { requestLogger } from './lib/logger.js';
 import { errorHandler } from './middleware/error.js';
 import { requestId } from './middleware/requestId.js';
 import { csrfInit } from './middleware/csrf.js';
+import { sessionMiddleware } from './middleware/session.js';
 import http from 'http';
 import { initSocket } from './lib/socket.js';
 import commentsRouter from './routes/comments.js';
@@ -39,6 +40,8 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+// Sessions across API routes (auth, topics, comments)
+app.use(sessionMiddleware());
 app.use(requestId());
 app.use(requestLogger());
 app.use(csrfInit());
