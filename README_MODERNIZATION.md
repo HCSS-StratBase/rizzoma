@@ -32,8 +32,21 @@ Note:
 
 4. **Run the migration script (dry run first):**
    ```bash
-   npm run migrate:coffee -- --dry-run
-   ```
+npm run migrate:coffee -- --dry-run
+```
+
+## Fork Policy & PR Target
+
+Work exclusively on the HCSS fork until the modernized app fully works. Do not open PRs to `rizzoma/rizzoma`.
+
+- Origin remote must point to our fork:
+  - Expected: `origin -> https://github.com/HCSS-StratBase/rizzoma`
+  - Check: `git remote -v`
+- Create PRs explicitly against our fork and base branch `master`:
+  - `gh pr create -R HCSS-StratBase/rizzoma -B master -H <branch> -t "Title" -b "Body..."`
+- Verify PR targets before submit:
+  - `gh pr view <branch> --json url,baseRefName,headRefName`
+- Avoid UI “compare” links that may default to upstream; prefer the CLI command above.
 
 ## Progress Snapshot
 
