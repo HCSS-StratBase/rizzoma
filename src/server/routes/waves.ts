@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createIndex, find, getDoc } from '../lib/couch.js';
+import { createIndex, find, getDoc, view } from '../lib/couch.js';
 import type { Blip, Wave } from '../schemas/wave.js';
 
 const router = Router();
@@ -19,8 +19,15 @@ router.get('/', async (req, res) => {
     } catch {
       r = await find<Wave>(selector, { limit: limit + 1, skip: offset });
     }
-    const list = (r.docs || []).slice(0, limit).map((w) => ({ id: w._id, title: w.title, createdAt: w.createdAt }));
-    const hasMore = (r.docs || []).length > limit;
+    let docs = r.docs || [];
+    let list = docs.slice(0, limit).map((w) => ({ id: w._id, title: w.title, createdAt: w.createdAt }));
+    let hasMore = docs.length > limit;
+    if (list.length === 0) {
+      // Fallback to legacy view by creation date
+      const legacy = await view('waves_by_creation_date', 'get', { descending: true, limit });
+      list = legacy.rows.map((row) => ({ id: String(row.value), title: `Wave ${String(row.value).slice(0, 6)}`, createdAt: Number(row.key) || Date.now() }));
+      hasMore = false;
+    }
     res.json({ waves: list, hasMore });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'waves_error', requestId: (req as any)?.id });
@@ -37,7 +44,7 @@ router.get('/:id', async (req, res) => {
     const r = await find<Blip>({ type: 'blip', waveId: id }, { limit: 5000, sort: [{ createdAt: 'asc' }] }).catch(async () => {
       return find<Blip>({ type: 'blip', waveId: id }, { limit: 5000 });
     });
-    const blips = r.docs || [];
+    const blips = (r.docs || []).map((b) => ({ ...b, createdAt: (b as any).createdAt || (b as any).contentTimestamp || 0 }));
     // Build tree
     const byParent = new Map<string | null, Blip[]>();
     for (const b of blips) {
@@ -55,4 +62,3 @@ router.get('/:id', async (req, res) => {
 });
 
 export default router;
-
