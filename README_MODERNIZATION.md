@@ -48,6 +48,23 @@ Work exclusively on the HCSS fork until the modernized app fully works. Do not o
   - `gh pr view <branch> --json url,baseRefName,headRefName`
 - Avoid UI “compare” links that may default to upstream; prefer the CLI command above.
 
+## PR Content Requirements (Descriptions)
+
+Every PR must include an ample description covering:
+- Summary: one-paragraph overview of the goal and scope.
+- Changes: by area (server/client/tests/docs/infra) with key files noted.
+- API/Data: new endpoints, params, response shapes, design docs or migrations.
+- Risks/Rollback: what could go wrong, and how to revert safely.
+- Testing: unit/integration/e2e coverage and manual steps, if any.
+- Docs: which MDs were updated and what changed.
+- Screenshots/GIF: UI-impacting changes (before/after, or short screencast).
+
+Recommended command to prefill title/body via CLI:
+```
+gh pr create -R HCSS-StratBase/rizzoma -B master -H <branch> \
+  -t "<clear title>" -b "<Summary>\n\n<Changes>\n\n<API/Data>\n\n<Risks/Rollback>\n\n<Testing>\n\n<Docs>\n\n<Screenshots>"
+```
+
 ## Progress Snapshot
 
 As of now, the modern stack is running end‑to‑end in development:
