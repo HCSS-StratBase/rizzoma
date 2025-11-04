@@ -393,6 +393,12 @@ POST /api/waves/materialize/:id
 - Derives `createdAt` from earliest blip `createdAt`/`contentTimestamp`.
 - Sets a placeholder `title` (`Wave <id-prefix>`). You can adjust titles later via the UI/API.
 
+Bulk materialize the most recent legacy waves (dev-only):
+
+```
+POST /api/waves/materialize?limit=50
+```
+
 ## Troubleshooting
 
 ### Common Issues
