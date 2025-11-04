@@ -1,3 +1,0 @@
-module.exports =
-    NO_MORE_OPERATIONS: 1
-    SHOULD_LOAD_NEXT_PART: 2

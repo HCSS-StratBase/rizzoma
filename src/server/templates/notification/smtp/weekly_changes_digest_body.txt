@@ -1,2 +1,0 @@
-{% extends 'notification/smtp/changes_digest_body.txt' %}
-{% block period %}week{% endblock %}

@@ -1,0 +1,125 @@
+services:
+  app:
+    build:
+      context: .
+      target: development
+    container_name: rizzoma-app
+    ports:
+      - "3000:3000"  # Vite dev server
+      - "8000:8000"  # Express API server
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+      ALLOWED_ORIGINS: http://localhost:3000
+      REDIS_URL: redis://redis:6379
+      COUCHDB_URL: http://admin:password@couchdb:5984
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      SESSION_SECRET: dev-secret-change-me
+    depends_on:
+      - redis
+      - couchdb
+      - rabbitmq
+      - sphinx
+    networks:
+      - rizzoma-network
+
+  app-prod:
+    build:
+      context: .
+      target: production
+    container_name: rizzoma-app-prod
+    profiles: ["prod"]
+    environment:
+      NODE_ENV: production
+      COUCHDB_URL: http://admin:password@couchdb:5984
+      COUCHDB_DB: project_rizzoma
+      REDIS_URL: redis://redis:6379
+      SESSION_SECRET: change-me
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - couchdb
+    networks:
+      - rizzoma-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: rizzoma-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - rizzoma-network
+
+  couchdb:
+    image: couchdb:3
+    container_name: rizzoma-couchdb
+    ports:
+      - "5984:5984"
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: password
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+    networks:
+      - rizzoma-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rizzoma-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: password
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - rizzoma-network
+
+  sphinx:
+    build:
+      context: .
+      dockerfile: Dockerfile.sphinx
+    container_name: rizzoma-sphinx
+    ports:
+      - "9312:9312"
+      - "9306:9306"
+    volumes:
+      - sphinx-data:/var/lib/sphinxsearch/data
+      - ./etc/sphinxsearch:/etc/sphinxsearch
+    networks:
+      - rizzoma-network
+
+  # Optional: MinIO for S3-compatible storage
+  minio:
+    image: minio/minio:latest
+    container_name: rizzoma-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - rizzoma-network
+
+networks:
+  rizzoma-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  couchdb-data:
+  rabbitmq-data:
+  sphinx-data:
+  minio-data:

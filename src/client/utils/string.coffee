@@ -1,1 +1,0 @@
-module.exports = require('../../share/utils/string')
