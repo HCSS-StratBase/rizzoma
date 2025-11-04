@@ -12,6 +12,8 @@ export function TopicDetail({ id, isAuthed = false }: { id: string; isAuthed?: b
   const [comment, setComment] = useState('');
   const [climit, setCLimit] = useState(20);
   const [coffset, setCOffset] = useState(0);
+  const [cHasMore, setCHasMore] = useState(false);
+  const [cNextBookmark, setCNextBookmark] = useState<string | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rid, setRid] = useState<string | undefined>(undefined);
@@ -22,8 +24,13 @@ export function TopicDetail({ id, isAuthed = false }: { id: string; isAuthed?: b
     const params = new URLSearchParams();
     params.set('limit', String(climit));
     params.set('offset', String(coffset));
+    if (cNextBookmark) params.set('bookmark', cNextBookmark);
     const rc = await api(`/api/topics/${encodeURIComponent(id)}/comments?` + params.toString());
-    if (rc.ok) setComments((rc.data as any)?.comments || []);
+    if (rc.ok) {
+      setComments((rc.data as any)?.comments || []);
+      setCHasMore(Boolean((rc.data as any)?.hasMore));
+      setCNextBookmark(((rc.data as any)?.nextBookmark) || undefined);
+    }
   };
   useEffect(() => { load(); }, [id, climit, coffset]);
   // realtime: reload on topic/comment changes for this topic
@@ -97,8 +104,8 @@ export function TopicDetail({ id, isAuthed = false }: { id: string; isAuthed?: b
         <h3>Comments</h3>
         <div style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <label>Per page <input style={{ width: 56 }} type="number" min={1} max={100} value={climit} onChange={(e)=>{ setCOffset(0); setCLimit(Math.min(100, Math.max(1, parseInt(e.target.value||'20',10)||20))); }} /></label>
-          <button onClick={()=> setCOffset(Math.max(0, coffset - climit))} disabled={coffset<=0 || busy}>Prev</button>
-          <button onClick={()=> setCOffset(coffset + climit)} disabled={busy || comments.length < climit}>Next</button>
+          <button onClick={()=> { setCNextBookmark(undefined); setCOffset(Math.max(0, coffset - climit)); }} disabled={coffset<=0 || busy}>Prev</button>
+          <button onClick={()=> { setCOffset(coffset + climit); }} disabled={busy || !cHasMore}>Next</button>
           <span style={{ opacity: 0.7 }}>Showing {comments.length} comment(s) from {coffset} to {coffset + comments.length}</span>
         </div>
         {isAuthed ? (

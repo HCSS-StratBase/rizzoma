@@ -23,9 +23,15 @@ This document outlines the strategy for modernizing the Rizzoma codebase from No
 - Coffee→TS migration tool in place; dry‑run enumerates 500+ CoffeeScript files
 
 Next immediate objectives:
-- Replace in‑memory search/pagination with CouchDB Mango/view queries
-- Add unit/integration tests (server middleware + routes; client basics)
-- Verify production image + compose profile and finalize deploy docs
+- Replace in‑memory search/pagination with CouchDB Mango/view queries (DONE in Phase 2)
+- Add unit/integration tests (server middleware + routes; client basics) (IN PROGRESS)
+- Verify production image + compose profile and finalize deploy docs (IN PROGRESS)
+
+Milestone A (Phase 3 start): Waves + Blips (read‑only)
+- Data model: `wave` + `blip` documents (tree via `parentId`), reuse legacy views when helpful
+- API: list waves, get wave + nested blip tree
+- UI: React WaveView with expand/collapse on nested blips
+- Outcome: recognizable Rizzoma waves with nested blips (read‑only)
 
 ## Phase 1: Infrastructure & Build System (Week 1-2)
 1. Create modern package.json with updated dependencies
@@ -44,7 +50,7 @@ Next immediate objectives:
 3. Update authentication libraries (passport 0.6.x)
 4. Replace sockjs with socket.io
 
-## Phase 3: CoffeeScript to TypeScript Migration (Week 5-8)
+## Phase 3: CoffeeScript to TypeScript Migration (Week 5-8) and Parity
 1. Create automated migration scripts using decaffeinate
 2. Start with shared modules (`src/share/`)
 3. Migrate server-side code (`src/server/`)
