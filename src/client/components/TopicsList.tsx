@@ -16,17 +16,21 @@ export function TopicsList({ isAuthed = false, initialMy=false, initialLimit=20,
   const [offset, setOffset] = useState(initialOffset);
   const [query, setQuery] = useState(initialQuery);
   const [hasMore, setHasMore] = useState(false);
+  const [nextBookmark, setNextBookmark] = useState<string | undefined>(undefined);
+  const [prevBookmarks, setPrevBookmarks] = useState<string[]>([]);
 
-  const refresh = async () => {
+  const refresh = async (useBookmark: string | null | undefined = nextBookmark) => {
     const params = new URLSearchParams();
     params.set('limit', String(limit));
     params.set('offset', String(offset));
     if (myOnly) params.set('my', '1');
     if (query) params.set('q', query);
+    if (useBookmark) params.set('bookmark', useBookmark);
     const r = await api('/api/topics?' + params.toString());
     if (r.ok) {
       setTopics((r.data as any)?.topics || []);
       setHasMore(Boolean((r.data as any)?.hasMore));
+      setNextBookmark(((r.data as any)?.nextBookmark) || undefined);
       setError(null);
       setRid(undefined);
     } else {
@@ -44,6 +48,8 @@ export function TopicsList({ isAuthed = false, initialMy=false, initialLimit=20,
     return () => unsub();
   }, [myOnly, limit, offset, query]);
   useEffect(() => { refresh(); }, [myOnly, limit, offset, query]);
+  // reset bookmarks when filters change (except plain offset)
+  useEffect(() => { setNextBookmark(undefined); setPrevBookmarks([]); }, [myOnly, limit, query]);
 
   // write hash on changes
   useEffect(() => {
@@ -73,8 +79,8 @@ export function TopicsList({ isAuthed = false, initialMy=false, initialLimit=20,
       <div style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <label><input type="checkbox" checked={myOnly} onChange={(e) => { setOffset(0); setMyOnly(e.target.checked); }} /> My topics</label>
         <label>Per page <input style={{ width: 56 }} type="number" min={1} max={100} value={limit} onChange={(e)=>{setOffset(0); setLimit(Math.min(100, Math.max(1, parseInt(e.target.value||'20',10)||20)));}} /></label>
-        <button onClick={()=> setOffset(Math.max(0, offset - limit))} disabled={!canPrev || busy}>Prev</button>
-        <button onClick={()=> setOffset(offset + limit)} disabled={busy || !canNext}>Next</button>
+        <button onClick={()=> { setNextBookmark(undefined); setPrevBookmarks([]); setOffset(Math.max(0, offset - limit)); }} disabled={!canPrev || busy}>Prev</button>
+        <button onClick={()=> { if (nextBookmark) setPrevBookmarks((s)=>[...s, nextBookmark]); setOffset(offset + limit); refresh(nextBookmark); }} disabled={busy || !canNext}>Next</button>
         <span style={{ opacity: 0.7 }}>Showing {topics.length} item(s) from {offset} to {offset + topics.length}</span>
       </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>

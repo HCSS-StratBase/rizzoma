@@ -43,6 +43,8 @@ As of now, the modern stack is running end‑to‑end in development:
 - Vite + React client with Auth, Topics/Comments CRUD, pagination, search and toasts
 - Vite + React client with Auth, Topics/Comments CRUD, pagination, search and toasts; realtime refresh via Socket.IO
 - CouchDB integration via direct HTTP (Mango `_find` + legacy views as fallback); views deployable via `scripts/deploy-views.js`
+- Server-side paging & search via Mango for topics/comments with cursor (`nextBookmark`) (Phase 2)
+- Read‑only Waves + nested Blips endpoints and initial client views (Phase 3 Milestone A)
 - Docker Compose dev stack (app + CouchDB + Redis + RabbitMQ + Sphinx; optional MinIO)
 - GitHub Actions CI: typecheck, lint and build (and Docker build)
 
@@ -222,6 +224,23 @@ docker run -d --name rizzoma-prod \
   -e SESSION_SECRET=change-me \
   -p 8000:8000 rizzoma:prod
 ```
+
+### Compose production profile
+
+Bring up a production-like stack with Docker Compose profiles:
+
+```bash
+docker compose --profile prod up -d app-prod couchdb redis
+docker compose ps
+```
+
+The production image runs as a non-root `node` user and declares a HEALTHCHECK at `/api/health`. Configure `SESSION_SECRET`, `COUCHDB_URL`, `COUCHDB_DB`, `REDIS_URL`, and `ALLOWED_ORIGINS` for your environment.
+
+## API Notes (Paging/Search)
+
+- Topics: `GET /api/topics?limit=&offset=&q=&my=1&bookmark=` → `{ topics, hasMore, nextBookmark }`
+- Comments: `GET /api/topics/:id/comments?limit=&offset=&bookmark=` → `{ comments, hasMore, nextBookmark }`
+- Waves: `GET /api/waves?limit=&offset=&q=` → `{ waves, hasMore }`; `GET /api/waves/:id` → `{ id, title, createdAt, blips: [...] }`
 
 ## Troubleshooting
 

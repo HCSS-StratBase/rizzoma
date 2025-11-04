@@ -4,6 +4,8 @@ import { api } from './lib/api';
 import { AuthPanel } from './components/AuthPanel';
 import { TopicsList } from './components/TopicsList';
 import { TopicDetail } from './components/TopicDetail';
+import { WavesList } from './components/WavesList';
+import { WaveView } from './components/WaveView';
 import { Toast } from './components/Toast';
 import { StatusBar } from './components/StatusBar';
 
@@ -31,8 +33,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const m = route.match(/^#\/topic\/(.+)$/);
-    setCurrentId(m ? (m[1] ?? null) : null);
+    const mTopic = route.match(/^#\/topic\/(.+)$/);
+    const mWave = route.match(/^#\/wave\/(.+)$/);
+    setCurrentId(mTopic ? (mTopic[1] ?? null) : mWave ? (mWave[1] ?? null) : null);
   }, [route]);
 
   // parse hash for list filters and pass as initial props
@@ -79,10 +82,14 @@ function App() {
         {error ? <div style={{ color: 'red', marginTop: 8 }}>{error}</div> : null}
       </section>
 
-      {!currentId ? (
-        <TopicsList isAuthed={!!me} initialMy={listParams.my} initialLimit={listParams.limit} initialOffset={listParams.offset} initialQuery={listParams.q} />
-      ) : (
+      {route.startsWith('#/waves') && !currentId ? (
+        <WavesList />
+      ) : route.startsWith('#/wave/') && currentId ? (
+        <WaveView id={currentId} />
+      ) : route.startsWith('#/topic/') && currentId ? (
         <TopicDetail id={currentId} isAuthed={!!me} />
+      ) : (
+        <TopicsList isAuthed={!!me} initialMy={listParams.my} initialLimit={listParams.limit} initialOffset={listParams.offset} initialQuery={listParams.q} />
       )}
       <StatusBar me={me} />
       <Toast />
