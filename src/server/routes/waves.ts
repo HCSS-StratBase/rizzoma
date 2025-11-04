@@ -248,7 +248,6 @@ if (process.env['NODE_ENV'] !== 'production') {
       res.status(500).json({ error: e?.message || 'materialize_error', requestId: (req as any)?.id });
     }
   });
-
   // POST /api/waves/materialize — bulk-create minimal wave docs for recent legacy waves
   router.post('/materialize', async (req, res) => {
     const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 500);
