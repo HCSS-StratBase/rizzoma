@@ -381,6 +381,18 @@ POST /api/waves/seed_sample?depth=2&breadth=2
 - Only available when `NODE_ENV !== 'production'`.
 - Creates a wave `demo:<timestamp>` and a small blip tree for immediate UI testing.
 
+### Dev-only Materialization (Milestone A)
+
+During migration, a dev-only endpoint helps create minimal `wave` docs for legacy wave IDs:
+
+```
+POST /api/waves/materialize/:id
+```
+
+- Only available when `NODE_ENV !== 'production'`.
+- Derives `createdAt` from earliest blip `createdAt`/`contentTimestamp`.
+- Sets a placeholder `title` (`Wave <id-prefix>`). You can adjust titles later via the UI/API.
+
 ## Troubleshooting
 
 ### Common Issues

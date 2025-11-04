@@ -248,6 +248,7 @@ if (process.env['NODE_ENV'] !== 'production') {
     }
   });
   // POST /api/waves/materialize — bulk-create minimal wave docs for recent legacy waves
+  // POST /api/waves/materialize — bulk-create minimal wave docs for recent legacy waves
   router.post('/materialize', async (req, res) => {
     const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 500);
     try {
