@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 import { subscribeTopicDetail } from '../lib/socket';
 import { toast } from './Toast';
+import { formatTimestamp } from '../lib/format';
 
 type TopicFull = { id: string; title: string; content?: string; createdAt: number };
 type Comment = { id: string; authorId: string; content: string; createdAt: number };
@@ -118,8 +119,9 @@ export function TopicDetail({ id, isAuthed = false }: { id: string; isAuthed?: b
         )}
         <ul>
           {comments.map((c) => (
-            <li key={c.id}>
-              {new Date(c.createdAt).toLocaleString()} — {c.content} {' '}
+            <li key={c.id} style={{ padding: 6, borderBottom: '1px solid #eee' }}>
+              <span style={{ color: '#555' }}>{formatTimestamp(c.createdAt)}</span>
+              <span> — {c.content} </span>
               <button onClick={() => delComment(c.id)} disabled={busy}>delete</button>
             </li>
           ))}

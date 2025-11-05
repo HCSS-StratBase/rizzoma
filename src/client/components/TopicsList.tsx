@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 import { subscribeTopicsRefresh } from '../lib/socket';
 import { toast } from './Toast';
+import { formatTimestamp } from '../lib/format';
 
 type Topic = { id: string; title: string; createdAt: number };
 
@@ -104,8 +105,9 @@ export function TopicsList({ isAuthed = false, initialMy=false, initialLimit=20,
       ) : null}
       <ul>
         {topics.map((t) => (
-          <li key={t.id}>
-            {new Date(t.createdAt).toLocaleString()} – {t.title} {' '}
+          <li key={t.id} style={{ padding: 6, borderBottom: '1px solid #eee' }}>
+            <span style={{ color: '#555' }}>{formatTimestamp(t.createdAt)}</span>
+            <span> – {t.title} </span>
             <a href={`#/topic/${t.id}`}>open</a>
           </li>
         ))}
