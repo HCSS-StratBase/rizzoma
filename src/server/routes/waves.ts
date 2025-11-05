@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createIndex, find, getDoc } from '../lib/couch.js';
+import { createIndex, find, getDoc, view } from '../lib/couch.js';
 import type { Blip, Wave } from '../schemas/wave.js';
 
 const router = Router();
@@ -19,8 +19,15 @@ router.get('/', async (req, res) => {
     } catch {
       r = await find<Wave>(selector, { limit: limit + 1, skip: offset });
     }
-    const list = (r.docs || []).slice(0, limit).map((w) => ({ id: w._id, title: w.title, createdAt: w.createdAt }));
-    const hasMore = (r.docs || []).length > limit;
+    let docs = r.docs || [];
+    let list = docs.slice(0, limit).map((w) => ({ id: w._id, title: w.title, createdAt: w.createdAt }));
+    let hasMore = docs.length > limit;
+    if (list.length === 0) {
+      // Fallback to legacy view by creation date
+      const legacy = await view('waves_by_creation_date', 'get', { descending: true, limit });
+      list = legacy.rows.map((row) => ({ id: String(row.value), title: `Wave ${String(row.value).slice(0, 6)}`, createdAt: Number(row.key) || Date.now() }));
+      hasMore = false;
+    }
     res.json({ waves: list, hasMore });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'waves_error', requestId: (req as any)?.id });
@@ -31,28 +38,39 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const id = req.params.id;
   try {
-    const wave = await getDoc<Wave>(id);
-    // fetch blips for this wave
+    let wave: Wave | null = null;
+    try {
+      wave = await getDoc<Wave>(id);
+    } catch (e: any) {
+      // ignore 404; treat as legacy-only wave id
+      if (!String(e?.message || '').startsWith('404')) throw e;
+    }
+    // fetch blips (works for both modern and legacy data)
     await createIndex(['type', 'waveId', 'createdAt'], 'idx_blip_wave_createdAt').catch(() => undefined);
     const r = await find<Blip>({ type: 'blip', waveId: id }, { limit: 5000, sort: [{ createdAt: 'asc' }] }).catch(async () => {
       return find<Blip>({ type: 'blip', waveId: id }, { limit: 5000 });
     });
-    const blips = r.docs || [];
+    let blips = (r.docs || []).map((b) => ({ ...b, createdAt: (b as any).createdAt || (b as any).contentTimestamp || 0 }));
+    // If no blips found try legacy view with include_docs
+    if (blips.length === 0) {
+      const legacy = await view<any>('nonremoved_blips_by_wave_id', 'get', { include_docs: true as any, key: id as any }).catch(() => ({ rows: [] as any[] }));
+      blips = (legacy.rows || []).map((row: any) => ({ ...(row.doc || {}), createdAt: (row.doc && (row.doc.createdAt || row.doc.contentTimestamp)) || 0 }));
+    }
     // Build tree
     const byParent = new Map<string | null, Blip[]>();
     for (const b of blips) {
       const p = (b.parentId ?? null) as string | null;
       if (!byParent.has(p)) byParent.set(p, []);
-      byParent.get(p)!.push(b);
+      byParent.get(p)!.push(b as any);
     }
-    const toNode = (b: Blip): any => ({ id: b._id, content: b.content || '', createdAt: b.createdAt, children: (byParent.get(b._id || '') || []).map(toNode) });
+    const toNode = (b: Blip): any => ({ id: (b as any)._id, content: (b as any).content || '', createdAt: (b as any).createdAt, children: (byParent.get(((b as any)._id) || '') || []).map(toNode) });
     const roots = (byParent.get(null) || []).concat(byParent.get(undefined as any) || []).map(toNode);
-    res.json({ id: wave._id, title: wave.title, createdAt: wave.createdAt, blips: roots });
+    const title = wave?.title || `(legacy) wave ${id.slice(0, 6)}`;
+    const createdAt = wave?.createdAt || (blips[0]?.createdAt || Date.now());
+    res.json({ id, title, createdAt, blips: roots });
   } catch (e: any) {
-    if (String(e?.message || '').startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
     res.status(500).json({ error: e?.message || 'wave_error', requestId: (req as any)?.id });
   }
 });
 
 export default router;
-

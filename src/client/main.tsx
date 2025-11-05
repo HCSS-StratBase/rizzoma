@@ -55,6 +55,9 @@ function App() {
   return (
     <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 720 }}>
       <h1>Rizzoma (Modern)</h1>
+      <nav style={{ marginBottom: 12 }}>
+        <a href="#/">Topics</a> | <a href="#/waves">Waves</a>
+      </nav>
       <p>
         API health: <a href="/api/health" target="_blank" rel="noreferrer">/api/health</a>
       </p>
