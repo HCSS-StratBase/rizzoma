@@ -32,8 +32,38 @@ Note:
 
 4. **Run the migration script (dry run first):**
    ```bash
-   npm run migrate:coffee -- --dry-run
-   ```
+npm run migrate:coffee -- --dry-run
+```
+
+## Fork Policy & PR Target
+
+Work exclusively on the HCSS fork until the modernized app fully works. Do not open PRs to `rizzoma/rizzoma`.
+
+- Origin remote must point to our fork:
+  - Expected: `origin -> https://github.com/HCSS-StratBase/rizzoma`
+  - Check: `git remote -v`
+- Create PRs explicitly against our fork and base branch `master`:
+  - `gh pr create -R HCSS-StratBase/rizzoma -B master -H <branch> -t "Title" -b "Body..."`
+- Verify PR targets before submit:
+  - `gh pr view <branch> --json url,baseRefName,headRefName`
+- Avoid UI “compare” links that may default to upstream; prefer the CLI command above.
+
+## PR Content Requirements (Descriptions)
+
+Every PR must include an ample description covering:
+- Summary: one-paragraph overview of the goal and scope.
+- Changes: by area (server/client/tests/docs/infra) with key files noted.
+- API/Data: new endpoints, params, response shapes, design docs or migrations.
+- Risks/Rollback: what could go wrong, and how to revert safely.
+- Testing: unit/integration/e2e coverage and manual steps, if any.
+- Docs: which MDs were updated and what changed.
+- Screenshots/GIF: UI-impacting changes (before/after, or short screencast).
+
+Recommended command to prefill title/body via CLI:
+```
+gh pr create -R HCSS-StratBase/rizzoma -B master -H <branch> \
+  -t "<clear title>" -b "<Summary>\n\n<Changes>\n\n<API/Data>\n\n<Risks/Rollback>\n\n<Testing>\n\n<Docs>\n\n<Screenshots>"
+```
 
 ## Progress Snapshot
 
@@ -241,6 +271,18 @@ The production image runs as a non-root `node` user and declares a HEALTHCHECK a
 - Topics: `GET /api/topics?limit=&offset=&q=&my=1&bookmark=` → `{ topics, hasMore, nextBookmark }`
 - Comments: `GET /api/topics/:id/comments?limit=&offset=&bookmark=` → `{ comments, hasMore, nextBookmark }`
 - Waves: `GET /api/waves?limit=&offset=&q=` → `{ waves, hasMore }`; `GET /api/waves/:id` → `{ id, title, createdAt, blips: [...] }`
+
+### Dev-only Materialization (Milestone A)
+
+During migration, a dev-only endpoint helps create minimal `wave` docs for legacy wave IDs:
+
+```
+POST /api/waves/materialize/:id
+```
+
+- Only available when `NODE_ENV !== 'production'`.
+- Derives `createdAt` from earliest blip `createdAt`/`contentTimestamp`.
+- Sets a placeholder `title` (`Wave <id-prefix>`). You can adjust titles later via the UI/API.
 
 ## Troubleshooting
 
