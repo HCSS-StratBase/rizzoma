@@ -34,6 +34,38 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/waves/unread_counts?ids=w1,w2,... — per-wave unread/total for current user
+router.get('/unread_counts', async (req, res) => {
+  // @ts-ignore
+  const userId = req.session?.userId as string | undefined;
+  if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
+  try {
+    const idsParam = String((req.query as any).ids || '').trim();
+    const ids = idsParam ? idsParam.split(',').map(s => s.trim()).filter(Boolean).slice(0, 200) : [];
+    const results: Array<{ waveId: string; total: number; unread: number; read: number }> = [];
+    for (const waveId of ids) {
+      // total blips by Mango (simple, dev-friendly)
+      let total = 0;
+      try {
+        const r = await find<Blip>({ type: 'blip', waveId }, { limit: 10000 });
+        total = (r.docs || []).length;
+      } catch {}
+      let read = 0;
+      try {
+        await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
+        const rr = await find<BlipRead>({ type: 'read', userId, waveId }, { limit: 10000 });
+        // unique by blipId to defend against duplicates
+        read = new Set((rr.docs || []).map(d => String(d.blipId))).size;
+      } catch {}
+      const unread = Math.max(0, total - read);
+      results.push({ waveId, total, unread, read });
+    }
+    res.json({ counts: results });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'unread_counts_error', requestId: (req as any)?.id });
+  }
+});
+
 // GET /api/waves/:id — return wave metadata and blip tree
 router.get('/:id', async (req, res) => {
   const id = req.params.id;
