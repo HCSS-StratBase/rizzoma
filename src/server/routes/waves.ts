@@ -279,4 +279,41 @@ if (process.env.NODE_ENV !== 'production') {
       res.status(500).json({ error: e?.message || 'bulk_materialize_error', requestId: (req as any)?.id });
     }
   });
+
+  // POST /api/waves/seed_sample?depth=2&breadth=2 — create a demo wave with nested blips (dev only)
+  router.post('/seed_sample', async (req, res) => {
+    try {
+      const depth = Math.min(Math.max(parseInt(String((req.query as any).depth ?? '2'), 10) || 2, 1), 5);
+      const breadth = Math.min(Math.max(parseInt(String((req.query as any).breadth ?? '2'), 10) || 2, 1), 5);
+      const now = Date.now();
+      const wid = `demo:${now}`;
+      const wave: Wave = { _id: wid, type: 'wave', title: `Demo Wave ${new Date(now).toLocaleString()}`, createdAt: now, updatedAt: now };
+      await insertDoc(wave as any);
+      // generate nested blips
+      type Node = { id: string, parentId: string | null, level: number };
+      const nodes: Node[] = [];
+      const rootId = `${wid}:b1`;
+      nodes.push({ id: rootId, parentId: null, level: 1 });
+      let counter = 1;
+      const makeChildren = (parent: Node, level: number) => {
+        if (level > depth) return;
+        for (let i = 0; i < breadth; i++) {
+          counter += 1;
+          const id = `${wid}:b${counter}`;
+          nodes.push({ id, parentId: parent.id, level });
+          makeChildren({ id, parentId: parent.id, level: level + 1 }, level + 1);
+        }
+      };
+      makeChildren(nodes[0], 2);
+      let ts = now;
+      for (const n of nodes) {
+        ts += 5;
+        const blip: Blip = { _id: n.id, type: 'blip', waveId: wid, parentId: n.parentId, content: `Demo content ${n.id}`, createdAt: ts, updatedAt: ts } as any;
+        await insertDoc(blip as any);
+      }
+      res.status(201).json({ ok: true, id: wid, blips: nodes.length });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'seed_error', requestId: (req as any)?.id });
+    }
+  });
 }

@@ -306,6 +306,17 @@ Bulk materialize the most recent legacy waves (dev-only):
 POST /api/waves/materialize?limit=50
 ```
 
+### Dev-only Sample Wave Seeder (Milestone A)
+
+If your CouchDB lacks legacy blips, create a demo wave with nested blips:
+
+```
+POST /api/waves/seed_sample?depth=2&breadth=2
+```
+
+- Only available when `NODE_ENV !== 'production'`.
+- Creates a wave `demo:<timestamp>` and a small blip tree for immediate UI testing.
+
 ## Troubleshooting
 
 ### Common Issues
