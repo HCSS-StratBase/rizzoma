@@ -271,6 +271,7 @@ The production image runs as a non-root `node` user and declares a HEALTHCHECK a
 - Topics: `GET /api/topics?limit=&offset=&q=&my=1&bookmark=` → `{ topics, hasMore, nextBookmark }`
 - Comments: `GET /api/topics/:id/comments?limit=&offset=&bookmark=` → `{ comments, hasMore, nextBookmark }`
 - Waves: `GET /api/waves?limit=&offset=&q=` → `{ waves, hasMore }`; `GET /api/waves/:id` → `{ id, title, createdAt, blips: [...] }`
+- Waves list counts: `GET /api/waves/unread_counts?ids=w1,w2` → `{ counts: [{ waveId, total, unread, read }] }`
 
 ### Waves Unread/Next (Milestone A)
 
@@ -278,6 +279,10 @@ The production image runs as a non-root `node` user and declares a HEALTHCHECK a
 - `GET /api/waves/:id/next?after=<blipId>` → `{ next: string | null }`
 - `GET /api/waves/:id/prev?before=<blipId>` → `{ prev: string | null }`
 - `POST /api/waves/:waveId/blips/:blipId/read` → `{ ok: true, id, rev }`
+
+Client navigation parameters:
+- `#/wave/:id?goto=first|last` — auto-jumps to first/last unread and scrolls into view
+- `#/wave/:id?focus=<blipId>` — highlights and scrolls to a specific blip
 
 Notes:
 - Read state stored as docs of type `read` (`userId`, `waveId`, `blipId`, `readAt`), indexed on `['type','userId','waveId']`.

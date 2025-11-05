@@ -65,6 +65,9 @@ export function WavesList({ initialLimit = 20, initialOffset = 0, initialQuery =
               <span style={{ color: '#555' }}>{formatTimestamp(w.createdAt)}</span>
               <span>– {w.title}</span>
               <span style={{ marginLeft: 'auto', opacity: 0.8 }}>Unread {c.unread}/{c.total}</span>
+              {c.unread > 0 ? (
+                <a href={`#/wave/${w.id}?goto=first`} style={{ marginLeft: 8, color: '#27ae60' }}>open first unread</a>
+              ) : null}
               <a href={`#/wave/${w.id}`} style={{ marginLeft: 8 }}>open</a>
             </li>
           );
