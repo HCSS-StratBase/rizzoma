@@ -28,6 +28,8 @@ export function WaveView({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
   const [unread, setUnread] = useState<string[]>([]);
+  const [total, setTotal] = useState<number>(0);
+  const [readCount, setReadCount] = useState<number>(0);
   const [current, setCurrent] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,7 +47,11 @@ export function WaveView({ id }: { id: string }) {
       // fetch unread list
       try {
         const ur = await api(`/api/waves/${encodeURIComponent(id)}/unread`);
-        if (ur.ok) setUnread(((ur.data as any)?.unread || []) as string[]);
+        if (ur.ok) {
+          setUnread(((ur.data as any)?.unread || []) as string[]);
+          setTotal(Number(((ur.data as any)?.total) || 0));
+          setReadCount(Number(((ur.data as any)?.read) || 0));
+        }
       } catch {}
     })();
   }, [id]);
@@ -72,6 +78,7 @@ export function WaveView({ id }: { id: string }) {
     // mark as read
     await api(`/api/waves/${encodeURIComponent(id)}/blips/${encodeURIComponent(nextId)}/read`, { method: 'POST' });
     setUnread((u) => u.filter((x) => x !== nextId));
+    setReadCount((c) => c + 1);
     // scroll into view
     setTimeout(() => {
       const el = document.querySelector(`[data-blip-id="${CSS.escape(nextId)}"]`);
@@ -92,19 +99,46 @@ export function WaveView({ id }: { id: string }) {
     }, 50);
   };
 
+  const firstUnread = async () => {
+    if (!unread.length) return;
+    const id0 = unread[0];
+    setCurrent(id0);
+    expandAll();
+    setTimeout(() => {
+      const el = document.querySelector(`[data-blip-id="${CSS.escape(id0)}"]`);
+      if (el && 'scrollIntoView' in el) (el as any).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  };
+
+  const lastUnread = async () => {
+    if (!unread.length) return;
+    const idn = unread[unread.length - 1];
+    setCurrent(idn);
+    expandAll();
+    setTimeout(() => {
+      const el = document.querySelector(`[data-blip-id="${CSS.escape(idn)}"]`);
+      if (el && 'scrollIntoView' in el) (el as any).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  };
+
   // attach keyboard navigation
-  useWaveKeyboardNav(id, nextUnread, prevUnread);
+  useWaveKeyboardNav(id, nextUnread, prevUnread, firstUnread, lastUnread);
 
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
   return (
     <section>
       <a href="#/waves">← Back</a>
       <h2>{title}</h2>
+      <div style={{ marginBottom: 6, fontSize: 14, color: '#444' }}>
+        Unread {unread.length} / {total} (read {readCount}){current ? <span> — Current: <code>{current}</code></span> : null}
+      </div>
       <div style={{ marginBottom: 8, display: 'flex', gap: 8 }}>
         <button onClick={expandAll}>Expand all</button>
         <button onClick={collapseAll}>Collapse all</button>
         <button onClick={prevUnread} title="Previous unread (k)" style={{ background: '#95a5a6', color: 'white' }}>Prev</button>
         <button onClick={nextUnread} title="Next unread (j)" style={{ background: '#27ae60', color: 'white' }}>Next</button>
+        <button onClick={firstUnread} title="First unread (g)">First</button>
+        <button onClick={lastUnread} title="Last unread (G)">Last</button>
       </div>
       <BlipTreeWithState nodes={blips} unread={new Set(unread)} current={current} openMap={openMap} onToggle={(id, val) => { const next = { ...openMap, [id]: val }; persist(next); }} />
     </section>
@@ -134,7 +168,7 @@ function BlipTreeWithState({ nodes, unread, current, openMap, onToggle }: { node
 // j: next unread, k: previous unread (ignores inputs)
 // attach on mount
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function useWaveKeyboardNav(id: string, nextFn: () => void, prevFn: () => void) {
+function useWaveKeyboardNav(id: string, nextFn: () => void, prevFn: () => void, firstFn?: () => void, lastFn?: () => void) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
@@ -142,8 +176,10 @@ function useWaveKeyboardNav(id: string, nextFn: () => void, prevFn: () => void) 
       if (['input', 'textarea', 'select'].includes(tag) || (el?.isContentEditable)) return;
       if (e.key === 'j' || e.key === 'J' || e.key === 'n' || e.key === 'N') { e.preventDefault(); nextFn(); }
       if (e.key === 'k' || e.key === 'K' || e.key === 'p' || e.key === 'P') { e.preventDefault(); prevFn(); }
+      if (e.key === 'g' && firstFn) { e.preventDefault(); firstFn(); }
+      if (e.key === 'G' && lastFn) { e.preventDefault(); lastFn(); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [id, nextFn, prevFn]);
+  }, [id, nextFn, prevFn, firstFn, lastFn]);
 }
