@@ -1,5 +1,10 @@
 ## Handoff Summary — Rizzoma Modernization
 
+PR Ops (Agent‑Only)
+- All PR actions are executed via CLI (no UI): create, update body, resolve conflicts, and merge with squash.
+- Commands: `gh pr create`, `gh pr edit`/`gh api -X PATCH ... -f body=...`, `git merge origin/master && git push`, `gh pr merge --squash --delete-branch --admin`.
+- After each merge, refresh Windows bundle and copy to GDrive (see Backup Policy in AGENTS.md).
+
 Current State
 - Repo target: HCSS-StratBase/rizzoma (origin). Upstream PRs are disallowed until parity.
 - Master:
@@ -33,3 +38,5 @@ Verification (dev)
 - Start: `docker compose up -d couchdb redis`; `npm run prep:views && npm run deploy:views`; `npm run dev`.
 - Waves: UI at http://localhost:3000 → select a wave. Links panel (add/remove) auto-refreshes via sockets.
 - Editor: start server with `EDITOR_ENABLE=1`; Editor snapshot requests visible on network.
+PR Log
+- 2025-11-06: PR #23 merged (squash). Opened PR #24 (Part 2 scaffold).

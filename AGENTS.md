@@ -11,6 +11,14 @@ Primary Rules
 - Keep documentation updated continuously. Prefer modular docs in docs/ to avoid README merge conflicts.
 - After notable pushes/merges, refresh the GDrive backup bundle.
 
+Agent PR Workflow (CLI-only, mandatory)
+- Create PRs via CLI only: `gh pr create -R HCSS-StratBase/rizzoma -B master -H <branch> -t "<title>" -F <body.md>`.
+- Keep PR body updated on every push: `gh api -X PATCH /repos/HCSS-StratBase/rizzoma/pulls/<num> -f body="$(cat body.md)"`.
+- Resolve conflicts locally by merging `origin/master` into the feature branch; do not pause.
+- When green, squash-merge via CLI and auto-delete branch: `gh pr merge <num> --squash --delete-branch --admin`.
+- If a roll‑up supersedes smaller PRs, close them with a note: `gh pr close <num> -c "Superseded by <link>"`.
+- Immediately after merges, update the GDrive backup bundle (see Backup Policy below).
+
 Branch/PR Conventions
 - Branch naming: phaseX/<topic> (e.g., phase4/editor-yjs-tiptap).
 - Target branch: master on HCSS-StratBase/rizzoma.
@@ -45,4 +53,7 @@ Quality/Testing
 
 Escalation
 - Only stop if a credentials/permission wall cannot be bypassed locally. Otherwise, proceed and leave notes in docs/HANDOFF.md.
-
+ 
+Ops Notes (Agent-only reminders)
+- Background execution is expected: continue work, open/merge PRs, and refresh backups without prompting.
+- Prefer smaller, squashed PRs behind feature flags to keep master moving.
