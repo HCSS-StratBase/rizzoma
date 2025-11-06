@@ -293,6 +293,20 @@ const db = new (cradle.Connection)().database('rizzoma');
 - Native `bcrypt` build issues (`node-pre-gyp: not found`):
   - We include `bcrypt` as optional and fall back to `bcryptjs`. Just run `npm install` on Node 20.19.0+; no manual build required.
 
+## GDrive Backup (Repo Bundle)
+
+We maintain a Git bundle on G:\\My Drive\\Rizzoma-backup for redundancy.
+
+CLI (WSL/PowerShell hybrid):
+
+```
+# Create/refresh bundle from C:\\Rizzoma
+git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all
+
+# Copy to GDrive
+powershell.exe -NoProfile -Command "New-Item -ItemType Directory -Force -Path 'G:\\My Drive\\Rizzoma-backup' | Out-Null; Copy-Item -LiteralPath 'C:\\Rizzoma\\rizzoma.bundle' -Destination 'G:\\My Drive\\Rizzoma-backup\\rizzoma.bundle' -Force"
+```
+
 ### Production Build
 
 Build and run the production image (serves API + built client):
