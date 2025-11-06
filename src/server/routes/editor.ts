@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { findOne, getDoc, insertDoc, updateDoc, createIndex } from '../lib/couch.js';
+import { emitEvent } from '../lib/socket.js';
 
 // Feature flag: set EDITOR_ENABLE=1 to enable endpoints
 const ENABLED = process.env['EDITOR_ENABLE'] === '1';
@@ -62,6 +63,7 @@ if (!ENABLED) {
       const doc: YDocSnapshot = existing? { ...existing, snapshotB64, updatedAt: Date.now() } : { type: 'yjs_snapshot', waveId, snapshotB64, updatedAt: Date.now() };
       const r = existing && (existing as any)._id ? await updateDoc(doc as any) : await insertDoc(doc as any);
       res.status(existing ? 200 : 201).json({ ok: true, id: r.id, rev: r.rev });
+      try { emitEvent('editor:snapshot', { waveId }); } catch {}
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'snapshot_save_error' });
     }
@@ -78,6 +80,7 @@ if (!ENABLED) {
       const doc: YDocUpdate = { _id: id, type: 'yjs_update', waveId, seq, updateB64, createdAt: Date.now() };
       const r = await insertDoc(doc as any);
       res.status(201).json({ ok: true, id: r.id, rev: r.rev });
+      try { emitEvent('editor:update', { waveId, seq }); } catch {}
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'update_save_error' });
     }
@@ -85,4 +88,3 @@ if (!ENABLED) {
 }
 
 export default router;
-
