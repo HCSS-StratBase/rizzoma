@@ -387,13 +387,30 @@ docker compose ps
 
 ## Next Steps
 
-After Phase‑1 stabilization:
+After Milestone A (Waves read‑only):
 
-1. Add monitoring/telemetry (OpenTelemetry) and structured logs export
-2. Improve search by indexing and view optimizations
-3. Tighten security (Cookie settings, CSP, helmet hardening)
-4. Add realtime updates for collaborative UX
-5. Consider service boundaries only after functionality parity is reached
+Milestone B — Editor (CRDT)
+- Feature-flagged editor scaffold (server + client). Enable with `EDITOR_ENABLE=1`.
+- Server endpoints (dev):
+  - `GET /api/editor/:waveId/snapshot` → `{ snapshotB64, nextSeq }`
+  - `POST /api/editor/:waveId/snapshot { snapshotB64 }`
+  - `POST /api/editor/:waveId/updates { seq, updateB64 }`
+  - Stored as docs: `yjs_snapshot` and `yjs_update` (base64 payloads), Mango indexes added.
+- Client: dynamic import of TipTap + Yjs if installed; otherwise shows read‑only placeholder.
+
+Two‑Way Linking + Stable Reparenting
+- Data: `link` docs with deterministic `_id` `link:<from>:<to>`; indexes by `fromBlipId` and `toBlipId`.
+- APIs:
+  - `POST /api/links { fromBlipId, toBlipId, waveId }`
+  - `DELETE /api/links/:from/:to`
+  - `GET /api/blips/:id/links` → `{ out, in }`
+- Reparenting (planned): `PATCH /api/blips/:id/reparent { parentId }` updates only parentId; links stay intact.
+
+Operational hardening (ongoing):
+- Monitoring/telemetry (OpenTelemetry) and structured logs export
+- Search improvements (indexes, views)
+- Security tightening (cookies, CSP, helmet)
+- Realtime collaboration UI polish
 
 ## Resources
 

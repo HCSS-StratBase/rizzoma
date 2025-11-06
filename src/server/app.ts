@@ -16,6 +16,8 @@ import http from 'http';
 import { initSocket } from './lib/socket.js';
 import commentsRouter from './routes/comments.js';
 import wavesRouter from './routes/waves.js';
+import editorRouter from './routes/editor.js';
+import linksRouter from './routes/links.js';
 
 const app = express();
 
@@ -63,6 +65,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/topics', topicsRouter);
 app.use('/api', commentsRouter);
 app.use('/api/waves', wavesRouter);
+app.use('/api/editor', editorRouter);
+app.use('/api', linksRouter);
 
 // Placeholder root
 app.get('/', (_req, res) => {
