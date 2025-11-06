@@ -174,7 +174,7 @@ router.get('/:id/prev', async (req, res) => {
     let prev: string | null = null;
     for (let i = startIdx; i >= 0; i--) {
       const bid = order[i];
-      if (!readSet.has(bid)) { prev = bid; break; }
+      if (bid && !readSet.has(bid)) { prev = bid; break; }
     }
     res.json({ prev });
   } catch (e: any) {
@@ -227,7 +227,7 @@ router.post('/:id/read', async (req, res) => {
 export default router;
 
 // Dev-only materialization endpoints
-if (process.env.NODE_ENV !== 'production') {
+if (process.env['NODE_ENV'] !== 'production') {
   // POST /api/waves/materialize/:id — create minimal wave doc if missing (title + createdAt)
   router.post('/materialize/:id', async (req, res) => {
     const id = req.params.id;
@@ -304,7 +304,7 @@ if (process.env.NODE_ENV !== 'production') {
           makeChildren({ id, parentId: parent.id, level: level + 1 }, level + 1);
         }
       };
-      makeChildren(nodes[0], 2);
+      makeChildren(nodes[0]!, 2);
       let ts = now;
       for (const n of nodes) {
         ts += 5;

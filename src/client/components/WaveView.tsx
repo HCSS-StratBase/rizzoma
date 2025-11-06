@@ -5,23 +5,7 @@ import { BlipContent } from './BlipContent';
 
 type BlipNode = { id: string; content: string; createdAt: number; children?: BlipNode[] };
 
-// legacy simple tree component (unused now but kept for reference)
-function BlipTree({ nodes }: { nodes: BlipNode[] }) {
-  const [open, setOpen] = useState<Record<string, boolean>>({});
-  const toggle = (id: string) => setOpen((s) => ({ ...s, [id]: !s[id] }));
-  const render = (n: BlipNode) => (
-    <li key={n.id}>
-      <button onClick={() => toggle(n.id)} style={{ marginRight: 6 }}>{open[n.id] !== false ? '-' : '+'}</button>
-      <span>{new Date(n.createdAt).toLocaleString()} — {n.content || '(empty)'}</span>
-      {n.children && n.children.length > 0 && (open[n.id] !== false) ? (
-        <ul style={{ marginLeft: 18 }}>
-          {n.children.map(render)}
-        </ul>
-      ) : null}
-    </li>
-  );
-  return <ul>{nodes.map(render)}</ul>;
-}
+// legacy simple tree component was removed (superseded by BlipTreeWithState)
 
 export function WaveView({ id }: { id: string }) {
   const [title, setTitle] = useState<string>('');
@@ -119,8 +103,8 @@ export function WaveView({ id }: { id: string }) {
     }, 50);
   };
   const firstUnread = async () => {
-    if (!unread.length) return;
     const id0 = unread[0];
+    if (!id0) return;
     setCurrent(id0);
     expandAll();
     setTimeout(() => {
@@ -130,8 +114,8 @@ export function WaveView({ id }: { id: string }) {
   };
 
   const lastUnread = async () => {
-    if (!unread.length) return;
     const idn = unread[unread.length - 1];
+    if (!idn) return;
     setCurrent(idn);
     expandAll();
     setTimeout(() => {

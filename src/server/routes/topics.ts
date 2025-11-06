@@ -54,13 +54,15 @@ router.get('/', async (req, res): Promise<void> => {
         const window = r.docs || [];
         topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
         hasMore = window.length > limit;
-        return res.json({ topics, hasMore, nextBookmark: r.bookmark });
+        res.json({ topics, hasMore, nextBookmark: r.bookmark });
+        return;
       } catch {
         const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, bookmark });
         const window = r.docs || [];
         topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
         hasMore = window.length > limit;
-        return res.json({ topics, hasMore, nextBookmark: r.bookmark });
+        res.json({ topics, hasMore, nextBookmark: r.bookmark });
+        return;
       }
     } else {
       // No search term: efficient paging using skip/limit
@@ -73,7 +75,8 @@ router.get('/', async (req, res): Promise<void> => {
       const window = r.docs || [];
       topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
       hasMore = window.length > limit;
-      return res.json({ topics, hasMore, nextBookmark: r.bookmark });
+      res.json({ topics, hasMore, nextBookmark: r.bookmark });
+      return;
     }
 
     if (topics.length === 0 && !myOnly && !q) {

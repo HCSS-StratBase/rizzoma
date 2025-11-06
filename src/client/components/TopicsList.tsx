@@ -92,10 +92,10 @@ export function TopicsList({ isAuthed = false, initialMy=false, initialLimit=20,
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <input placeholder="title" value={title} onChange={(e) => setTitle(e.target.value)} />
           <button onClick={create} disabled={busy}>Create</button>
-          <button onClick={refresh} disabled={busy}>Refresh</button>
+          <button onClick={() => refresh()} disabled={busy}>Refresh</button>
         </div>
       ) : (
-        <div style={{ marginBottom: 8, opacity: 0.8 }}>Login to create topics. <button onClick={refresh} disabled={busy}>Refresh</button></div>
+        <div style={{ marginBottom: 8, opacity: 0.8 }}>Login to create topics. <button onClick={() => refresh()} disabled={busy}>Refresh</button></div>
       )}
       {error ? (
         <div style={{ color: 'red', marginBottom: 8, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
