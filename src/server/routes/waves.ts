@@ -124,6 +124,32 @@ router.get('/:id/next', async (req, res) => {
   }
 });
 
+// GET /api/waves/:id/prev?before=blipId — previous unread blip id
+router.get('/:id/prev', async (req, res) => {
+  // @ts-ignore
+  const userId = req.session?.userId as string | undefined;
+  if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
+  const id = req.params.id;
+  const before = String((req.query as any).before || '');
+  try {
+    const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
+    const waveData: any = await waveResp.json();
+    const order = flattenBlips(waveData.blips || []);
+    await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
+    const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
+    const readSet = new Set((r.docs || []).map((d) => String(d.blipId)));
+    const startIdx = before ? Math.max(0, order.indexOf(before) - 1) : order.length - 1;
+    let prev: string | null = null;
+    for (let i = startIdx; i >= 0; i--) {
+      const bid = order[i];
+      if (!readSet.has(bid)) { prev = bid; break; }
+    }
+    res.json({ prev });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'prev_error', requestId: (req as any)?.id });
+  }
+});
+
 // POST /api/waves/:waveId/blips/:blipId/read — mark one blip as read
 router.post('/:waveId/blips/:blipId/read', async (req, res) => {
   // @ts-ignore
@@ -190,6 +216,7 @@ if (process.env.NODE_ENV !== 'production') {
       res.status(500).json({ error: e?.message || 'materialize_error', requestId: (req as any)?.id });
     }
   });
+
   // POST /api/waves/materialize — bulk-create minimal wave docs for recent legacy waves
   router.post('/materialize', async (req, res) => {
     const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 500);

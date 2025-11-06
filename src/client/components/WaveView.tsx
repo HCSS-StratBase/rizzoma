@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 
 type BlipNode = { id: string; content: string; createdAt: number; children?: BlipNode[] };
 
+// legacy simple tree component (unused now but kept for reference)
 function BlipTree({ nodes }: { nodes: BlipNode[] }) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const toggle = (id: string) => setOpen((s) => ({ ...s, [id]: !s[id] }));
@@ -76,7 +77,20 @@ export function WaveView({ id }: { id: string }) {
       if (el && 'scrollIntoView' in el) (el as any).scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 50);
   };
-
+  const prevUnread = async () => {
+    const pr = await api(`/api/waves/${encodeURIComponent(id)}/prev${current ? `?before=${encodeURIComponent(current)}` : ''}`);
+    if (!pr.ok || !(pr.data as any)?.prev) return;
+    const prevId = String((pr.data as any).prev);
+    setCurrent(prevId);
+    expandAll();
+    // do not auto-mark prev as read; leave it highlighted for review
+    setTimeout(() => {
+      const el = document.querySelector(`[data-blip-id="${CSS.escape(prevId)}"]`);
+      if (el && 'scrollIntoView' in el) (el as any).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  };
+  // keyboard shortcuts (j/k next/prev), ignore inputs
+  useWaveKeyboardNav(id, nextUnread, prevUnread);
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
   return (
     <section>
@@ -85,7 +99,8 @@ export function WaveView({ id }: { id: string }) {
       <div style={{ marginBottom: 8, display: 'flex', gap: 8 }}>
         <button onClick={expandAll}>Expand all</button>
         <button onClick={collapseAll}>Collapse all</button>
-        <button onClick={nextUnread} style={{ background: '#27ae60', color: 'white' }}>Next</button>
+        <button onClick={prevUnread} title="Previous unread (k)" style={{ background: '#95a5a6', color: 'white' }}>Prev</button>
+        <button onClick={nextUnread} title="Next unread (j)" style={{ background: '#27ae60', color: 'white' }}>Next</button>
       </div>
       <BlipTreeWithState nodes={blips} unread={new Set(unread)} current={current} openMap={openMap} onToggle={(id, val) => { const next = { ...openMap, [id]: val }; persist(next); }} />
     </section>
@@ -107,5 +122,23 @@ function BlipTreeWithState({ nodes, unread, current, openMap, onToggle }: { node
       </li>
     );
   };
-  return <ul>{nodes.map(render)}</ul>;
+  return <ul style={{ listStyle: 'none', paddingLeft: 0 }}>{nodes.map(render)}</ul>;
+}
+
+// keyboard navigation
+// j: next unread, k: previous unread (ignores inputs)
+// attach on mount
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function useWaveKeyboardNav(id: string, nextFn: () => void, prevFn: () => void) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const tag = (el?.tagName || '').toLowerCase();
+      if (['input', 'textarea', 'select'].includes(tag) || (el?.isContentEditable)) return;
+      if (e.key === 'j' || e.key === 'J' || e.key === 'n' || e.key === 'N') { e.preventDefault(); nextFn(); }
+      if (e.key === 'k' || e.key === 'K' || e.key === 'p' || e.key === 'P') { e.preventDefault(); prevFn(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [id, nextFn, prevFn]);
 }

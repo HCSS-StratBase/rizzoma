@@ -272,6 +272,17 @@ The production image runs as a non-root `node` user and declares a HEALTHCHECK a
 - Comments: `GET /api/topics/:id/comments?limit=&offset=&bookmark=` → `{ comments, hasMore, nextBookmark }`
 - Waves: `GET /api/waves?limit=&offset=&q=` → `{ waves, hasMore }`; `GET /api/waves/:id` → `{ id, title, createdAt, blips: [...] }`
 
+### Waves Unread/Next (Milestone A)
+
+- `GET /api/waves/:id/unread` → `{ unread: string[], total: number, read: number }`
+- `GET /api/waves/:id/next?after=<blipId>` → `{ next: string | null }`
+- `GET /api/waves/:id/prev?before=<blipId>` → `{ prev: string | null }`
+- `POST /api/waves/:waveId/blips/:blipId/read` → `{ ok: true, id, rev }`
+
+Notes:
+- Read state stored as docs of type `read` (`userId`, `waveId`, `blipId`, `readAt`), indexed on `['type','userId','waveId']`.
+- Client highlights unread and supports a “Next” button; keyboard `j`/`k` jumps next/previous unread.
+
 ### Dev-only Materialization (Milestone A)
 
 During migration, a dev-only endpoint helps create minimal `wave` docs for legacy wave IDs:
