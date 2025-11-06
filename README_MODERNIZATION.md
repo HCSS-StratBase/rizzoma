@@ -120,6 +120,15 @@ Note: As we progress, Waves will become the primary UX; Topics remain for migrat
   - PATCH `/api/blips/:id/reparent` { parentId }
   - Only updates `parentId`; link docs remain unchanged.
 
+### Editor (Milestone B, behind flag)
+
+- Enable server endpoints via `EDITOR_ENABLE=1`
+- Client attempts dynamic imports of TipTap + Yjs; if not installed, shows a safe placeholder.
+- Snapshot flow:
+  - On load: `GET /api/editor/:waveId/snapshot` → apply `snapshotB64` (Yjs update) if present
+  - Periodic save (5s): `POST /api/editor/:waveId/snapshot { snapshotB64 }`
+  - Real-time providers can be added later; current integration focuses on persistence and recovery
+
 =======
 >>>>>>> origin/master
 Remaining Phase‑1 items before a production cut:
