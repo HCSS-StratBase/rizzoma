@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { subscribeLinks } from '../lib/socket';
 import { formatTimestamp } from '../lib/format';
 import { BlipContent } from './BlipContent';
 
@@ -142,6 +143,18 @@ export function WaveView({ id }: { id: string }) {
         setLinksIn((d?.in || []).map((x: any) => ({ fromBlipId: String(x.fromBlipId), waveId: String(x.waveId) })));
       }
     })();
+  }, [current]);
+  useEffect(() => {
+    const unsub = subscribeLinks(async () => {
+      if (!current) return;
+      const lr = await api(`/api/blips/${encodeURIComponent(current)}/links`);
+      if (lr.ok) {
+        const d = lr.data as any;
+        setLinksOut((d?.out || []).map((x: any) => ({ toBlipId: String(x.toBlipId), waveId: String(x.waveId) })));
+        setLinksIn((d?.in || []).map((x: any) => ({ fromBlipId: String(x.fromBlipId), waveId: String(x.waveId) })));
+      }
+    });
+    return () => unsub();
   }, [current]);
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
   return (

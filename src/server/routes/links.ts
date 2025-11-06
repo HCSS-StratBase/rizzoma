@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { createIndex, deleteDoc, find, findOne, insertDoc } from '../lib/couch.js';
+import { emitEvent } from '../lib/socket.js';
 
 type LinkDoc = {
   _id?: string;
@@ -32,6 +33,7 @@ router.post('/', async (req, res): Promise<void> => {
     const doc: LinkDoc = { _id: key, type: 'link', fromBlipId, toBlipId, waveId, authorId: userId, createdAt: Date.now() };
     const r = await insertDoc(doc as any);
     res.status(201).json({ ok: true, id: r.id, rev: r.rev });
+    try { emitEvent('link:created', { fromBlipId, toBlipId, waveId }); } catch {}
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'link_create_error', requestId: (req as any)?.id });
   }
@@ -54,6 +56,7 @@ router.delete('/:from/:to', async (req, res): Promise<void> => {
     if (!existing._id || !rev) { res.status(409).json({ error: 'conflict', requestId: (req as any)?.id }); return; }
     const r = await deleteDoc(existing._id, rev);
     res.json({ ok: true, id: r.id, rev: r.rev });
+    try { emitEvent('link:deleted', { fromBlipId: from, toBlipId: to }); } catch {}
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'link_delete_error', requestId: (req as any)?.id });
   }
@@ -72,4 +75,3 @@ router.get('/blips/:id/links', async (req, res): Promise<void> => {
 });
 
 export default router;
-

@@ -37,3 +37,13 @@ export function subscribeTopicDetail(topicId: string, onChange: (ev: string, pay
   };
 }
 
+export function subscribeLinks(onChange: () => void): () => void {
+  const s = getSocket();
+  const handler = () => onChange();
+  s.on('link:created', handler);
+  s.on('link:deleted', handler);
+  return () => {
+    s.off('link:created', handler);
+    s.off('link:deleted', handler);
+  };
+}
