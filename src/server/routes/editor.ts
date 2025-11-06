@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { findOne, getDoc, insertDoc, updateDoc, createIndex } from '../lib/couch.js';
+import { findOne, insertDoc, updateDoc, createIndex } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
 
 // Feature flag: set EDITOR_ENABLE=1 to enable endpoints
