@@ -109,19 +109,13 @@ As of now, the modern stack is running end‑to‑end in development:
 
 Note: As we progress, Waves will become the primary UX; Topics remain for migration and compatibility until editor + migration are complete.
 
-<<<<<<< HEAD
 ### Links & Reparenting (Milestone B+)
 
-- Links (two-way):
-  - POST `/api/links` { fromBlipId, toBlipId, waveId }
-  - DELETE `/api/links/:from/:to`
-  - GET `/api/blips/:id/links` → { out, in }
-- Reparent blips (keep links intact):
-  - PATCH `/api/blips/:id/reparent` { parentId }
-  - Only updates `parentId`; link docs remain unchanged.
+- See `docs/LINKS_REPARENT.md` for API and UI details.
 
-=======
->>>>>>> origin/master
+### Editor (Milestone B, behind flag)
+
+- See `docs/EDITOR.md` for enablement, snapshot flow, and roadmap.
 Remaining Phase‑1 items before a production cut:
 
 - Replace in‑memory filtering for topics search/pagination with CouchDB Mango/view queries

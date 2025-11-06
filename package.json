@@ -102,7 +102,11 @@
     "tsc-alias": "^1.8.8",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3",
-    "vite": "^5.0.10"
+    "vite": "^5.0.10",
+    "@tiptap/react": "^2.5.10",
+    "@tiptap/starter-kit": "^2.5.10",
+    "@tiptap/extension-collaboration": "^2.5.10",
+    "yjs": "^13.6.15"
   },
   "optionalDependencies": {
     "@google-cloud/storage": "^7.7.0",
