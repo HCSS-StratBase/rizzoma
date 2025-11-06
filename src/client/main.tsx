@@ -33,8 +33,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const mTopic = route.match(/^#\/topic\/(.+)$/);
-    const mWave = route.match(/^#\/wave\/(.+)$/);
+    const mTopic = route.match(/^#\/topic\/([^?]+)(?:\?.*)?$/);
+    const mWave = route.match(/^#\/wave\/([^?]+)(?:\?.*)?$/);
     setCurrentId(mTopic ? (mTopic[1] ?? null) : mWave ? (mWave[1] ?? null) : null);
   }, [route]);
 

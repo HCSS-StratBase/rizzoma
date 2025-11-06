@@ -10,17 +10,21 @@ This guide provides step-by-step instructions for modernizing the Rizzoma codeba
 
 ## Quick Start
 
-1. **Install dependencies:**
+1. **Use a compatible Node.js (20.19.0+)**
+   - Recommended via `nvm`: `nvm install 20.19.0 && nvm use 20.19.0`
+   - If you previously installed deps on an older Node, clear caches: `rm -rf node_modules package-lock.json node_modules/.vite`
+
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-2. **Start development environment with Docker:**
+3. **Start development environment with Docker:**
    ```bash
    docker compose up -d
    ```
 
-3. **Copy legacy CouchDB views and deploy (recommended for dev; required for legacy fallbacks):**
+4. **Copy legacy CouchDB views and deploy (recommended for dev; required for legacy fallbacks):**
    ```bash
    npm run prep:views
   npm run deploy:views
@@ -30,10 +34,30 @@ Note:
 - These design docs enable legacy CouchDB view fallbacks used by the modern API when there are no modern `topic` documents yet. Skipping this step means the topics list may be empty until you create new topics.
 - Ensure CouchDB is running (via `docker compose up -d`) before deploying; otherwise the deploy step will fail.
 
-4. **Run the migration script (dry run first):**
+5. **Run the migration script (dry run first):**
    ```bash
 npm run migrate:coffee -- --dry-run
 ```
+
+## Run Waves UI (dev)
+
+Waves (nested blips) are available in read‑only mode with legacy fallbacks.
+
+1. Ensure services are up: `docker compose up -d couchdb redis`
+2. Deploy legacy views (only needs to be done once per DB):
+   ```bash
+   npm run prep:views && npm run deploy:views
+   ```
+3. Start dev servers (server first, then client after API is ready):
+   ```bash
+   npm run dev
+   # This runs: tsx watch API on :8000, then vite on :3000 when API is ready
+   ```
+4. Open http://localhost:3000 and click “Waves”.
+
+API checks (optional):
+- List waves (with legacy view fallback): `curl 'http://localhost:8000/api/waves?limit=20'`
+- Fetch one wave with nested blips: `curl 'http://localhost:8000/api/waves/<waveId>'`
 
 ## Fork Policy & PR Target
 
@@ -77,6 +101,13 @@ As of now, the modern stack is running end‑to‑end in development:
 - Read‑only Waves + nested Blips endpoints and initial client views (Phase 3 Milestone A)
 - Docker Compose dev stack (app + CouchDB + Redis + RabbitMQ + Sphinx; optional MinIO)
 - GitHub Actions CI: typecheck, lint and build (and Docker build)
+
+### Topics vs. Waves (current state)
+
+- Topics: legacy top‑level discussions used by the old UI. We expose list/search/paging using Mango with view fallbacks for compatibility.
+- Waves: modernized representation focused on nested blips (threaded tree). Current Milestone A is read‑only (list/detail), with legacy fallbacks so you can browse existing data now.
+
+Note: As we progress, Waves will become the primary UX; Topics remain for migration and compatibility until editor + migration are complete.
 
 Remaining Phase‑1 items before a production cut:
 
@@ -239,6 +270,19 @@ const db = new (cradle.Connection)().database('rizzoma');
 4. **Run tests:** `npm test`
 5. **Format code:** `npm run format`
 
+## Troubleshooting Dev
+
+- Vite optimize deps errors (missing `node_modules/.vite/deps/chunk-*`):
+  - Fix: `rm -rf node_modules/.vite && npm run dev` (we also set `optimizeDeps.force=true`).
+- `Error: connect ECONNREFUSED 127.0.0.1:8000` from Vite proxy:
+  - Means API isn’t up yet or crashed. Run `npm run dev` (our script waits for `http://localhost:8000` before starting Vite). Check server logs.
+- Port already in use (`EADDRINUSE: :8000`):
+  - Kill the old process: `fuser -k 8000/tcp` (WSL) or `kill -9 $(lsof -ti:8000)`.
+- `connect-redis` ESM import error (default export not found):
+  - We use `import { RedisStore } from 'connect-redis'` (v9+). Ensure you’re on Node ≥ 20.19.0 and reinstalled deps.
+- Native `bcrypt` build issues (`node-pre-gyp: not found`):
+  - We include `bcrypt` as optional and fall back to `bcryptjs`. Just run `npm install` on Node 20.19.0+; no manual build required.
+
 ### Production Build
 
 Build and run the production image (serves API + built client):
@@ -271,6 +315,22 @@ The production image runs as a non-root `node` user and declares a HEALTHCHECK a
 - Topics: `GET /api/topics?limit=&offset=&q=&my=1&bookmark=` → `{ topics, hasMore, nextBookmark }`
 - Comments: `GET /api/topics/:id/comments?limit=&offset=&bookmark=` → `{ comments, hasMore, nextBookmark }`
 - Waves: `GET /api/waves?limit=&offset=&q=` → `{ waves, hasMore }`; `GET /api/waves/:id` → `{ id, title, createdAt, blips: [...] }`
+- Waves list counts: `GET /api/waves/unread_counts?ids=w1,w2` → `{ counts: [{ waveId, total, unread, read }] }`
+
+### Waves Unread/Next (Milestone A)
+
+- `GET /api/waves/:id/unread` → `{ unread: string[], total: number, read: number }`
+- `GET /api/waves/:id/next?after=<blipId>` → `{ next: string | null }`
+- `GET /api/waves/:id/prev?before=<blipId>` → `{ prev: string | null }`
+- `POST /api/waves/:waveId/blips/:blipId/read` → `{ ok: true, id, rev }`
+
+Client navigation parameters:
+- `#/wave/:id?goto=first|last` — auto-jumps to first/last unread and scrolls into view
+- `#/wave/:id?focus=<blipId>` — highlights and scrolls to a specific blip
+
+Notes:
+- Read state stored as docs of type `read` (`userId`, `waveId`, `blipId`, `readAt`), indexed on `['type','userId','waveId']`.
+- Client highlights unread and supports a “Next” button; keyboard `j`/`k` jumps next/previous unread.
 
 ### Dev-only Materialization (Milestone A)
 
@@ -289,6 +349,17 @@ Bulk materialize the most recent legacy waves (dev-only):
 ```
 POST /api/waves/materialize?limit=50
 ```
+
+### Dev-only Sample Wave Seeder (Milestone A)
+
+If your CouchDB lacks legacy blips, create a demo wave with nested blips:
+
+```
+POST /api/waves/seed_sample?depth=2&breadth=2
+```
+
+- Only available when `NODE_ENV !== 'production'`.
+- Creates a wave `demo:<timestamp>` and a small blip tree for immediate UI testing.
 
 ## Troubleshooting
 

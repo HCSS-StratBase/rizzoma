@@ -1,0 +1,85 @@
+0 verbose cli /home/stephan/.nvm/versions/node/v20.18.1/bin/node /home/stephan/.nvm/versions/node/v20.18.1/bin/npm
+1 info using npm@11.6.2
+2 info using node@v20.18.1
+3 silly config load:file:/home/stephan/.nvm/versions/node/v20.18.1/lib/node_modules/npm/npmrc
+4 silly config load:file:/mnt/c/Rizzoma/.npmrc
+5 warn config optional Use `--omit=optional` to exclude optional dependencies, or
+5 warn config `--include=optional` to include them.
+5 warn config
+5 warn config       Default value does install optional deps unless otherwise omitted.
+6 silly config load:file:/home/stephan/.npmrc
+7 silly config load:file:/home/stephan/.nvm/versions/node/v20.18.1/etc/npmrc
+8 verbose title npm install
+9 verbose argv "install" "--omit" "optional"
+10 verbose logfile logs-max:10 dir:/mnt/c/Rizzoma/.npm-cache/_logs/2025-11-06T01_14_35_148Z-
+11 verbose logfile /mnt/c/Rizzoma/.npm-cache/_logs/2025-11-06T01_14_35_148Z-debug-0.log
+12 silly logfile done cleaning log files
+13 http fetch GET https://registry.npmjs.org/npm attempt 1 failed with EAI_AGAIN
+14 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+15 silly idealTree buildDeps
+16 silly fetch manifest @aws-sdk/client-s3@^3.925.0
+17 silly packumentCache full:https://registry.npmjs.org/@aws-sdk%2fclient-s3 cache-miss
+18 http fetch GET https://registry.npmjs.org/@aws-sdk%2fclient-s3 attempt 1 failed with EAI_AGAIN
+19 http fetch GET https://registry.npmjs.org/npm attempt 2 failed with EAI_AGAIN
+20 http fetch GET https://registry.npmjs.org/@aws-sdk%2fclient-s3 attempt 2 failed with EAI_AGAIN
+21 http fetch GET https://registry.npmjs.org/npm attempt 3 failed with EAI_AGAIN
+22 http fetch GET https://registry.npmjs.org/@aws-sdk%2fclient-s3 attempt 3 failed with EAI_AGAIN
+23 silly fetch manifest @mailchimp/mailchimp_transactional@^1.0.59
+24 silly packumentCache full:https://registry.npmjs.org/@mailchimp%2fmailchimp_transactional cache-miss
+25 http fetch GET https://registry.npmjs.org/@mailchimp%2fmailchimp_transactional attempt 1 failed with EAI_AGAIN
+26 http fetch GET https://registry.npmjs.org/@mailchimp%2fmailchimp_transactional attempt 2 failed with EAI_AGAIN
+27 http fetch GET https://registry.npmjs.org/@mailchimp%2fmailchimp_transactional attempt 3 failed with EAI_AGAIN
+28 silly fetch manifest @node-redis/client@^1.0.6
+29 silly packumentCache full:https://registry.npmjs.org/@node-redis%2fclient cache-miss
+30 http fetch GET https://registry.npmjs.org/@node-redis%2fclient attempt 1 failed with EAI_AGAIN
+31 http fetch GET https://registry.npmjs.org/@node-redis%2fclient attempt 2 failed with EAI_AGAIN
+32 http fetch GET https://registry.npmjs.org/@node-redis%2fclient attempt 3 failed with EAI_AGAIN
+33 silly fetch manifest @xmpp/client@^0.14.0
+34 silly packumentCache full:https://registry.npmjs.org/@xmpp%2fclient cache-miss
+35 http fetch GET https://registry.npmjs.org/@xmpp%2fclient attempt 1 failed with EAI_AGAIN
+36 http fetch GET https://registry.npmjs.org/@xmpp%2fclient attempt 2 failed with EAI_AGAIN
+37 http fetch GET https://registry.npmjs.org/@xmpp%2fclient attempt 3 failed with EAI_AGAIN
+38 silly fetch manifest amqplib@^0.10.9
+39 silly packumentCache full:https://registry.npmjs.org/amqplib cache-miss
+40 http fetch GET https://registry.npmjs.org/amqplib attempt 1 failed with EAI_AGAIN
+41 http fetch GET https://registry.npmjs.org/amqplib attempt 2 failed with EAI_AGAIN
+42 http fetch GET https://registry.npmjs.org/amqplib attempt 3 failed with EAI_AGAIN
+43 silly fetch manifest bcryptjs@^2.4.3
+44 silly packumentCache full:https://registry.npmjs.org/bcryptjs cache-miss
+45 http fetch GET https://registry.npmjs.org/bcryptjs attempt 1 failed with EAI_AGAIN
+46 http fetch GET https://registry.npmjs.org/bcryptjs attempt 2 failed with EAI_AGAIN
+47 http fetch GET https://registry.npmjs.org/bcryptjs attempt 3 failed with EAI_AGAIN
+48 silly fetch manifest compression@^1.8.1
+49 silly packumentCache full:https://registry.npmjs.org/compression cache-miss
+50 http fetch GET https://registry.npmjs.org/compression attempt 1 failed with EAI_AGAIN
+51 http fetch GET https://registry.npmjs.org/compression attempt 2 failed with EAI_AGAIN
+52 http fetch GET https://registry.npmjs.org/compression attempt 3 failed with EAI_AGAIN
+53 silly fetch manifest connect-redis@^9.0.0
+54 silly packumentCache full:https://registry.npmjs.org/connect-redis cache-miss
+55 http fetch GET https://registry.npmjs.org/connect-redis attempt 1 failed with EAI_AGAIN
+56 http fetch GET https://registry.npmjs.org/connect-redis attempt 2 failed with EAI_AGAIN
+57 http fetch GET https://registry.npmjs.org/connect-redis attempt 3 failed with EAI_AGAIN
+58 silly fetch manifest cookie-parser@^1.4.7
+59 silly packumentCache full:https://registry.npmjs.org/cookie-parser cache-miss
+60 http fetch GET https://registry.npmjs.org/cookie-parser attempt 1 failed with EAI_AGAIN
+61 http fetch GET https://registry.npmjs.org/cookie-parser attempt 2 failed with EAI_AGAIN
+62 http fetch GET https://registry.npmjs.org/cookie-parser attempt 3 failed with EAI_AGAIN
+63 silly fetch manifest cors@^2.8.5
+64 silly packumentCache full:https://registry.npmjs.org/cors cache-miss
+65 http fetch GET https://registry.npmjs.org/cors attempt 1 failed with EAI_AGAIN
+66 http fetch GET https://registry.npmjs.org/cors attempt 2 failed with EAI_AGAIN
+67 http fetch GET https://registry.npmjs.org/cors attempt 3 failed with EAI_AGAIN
+68 silly fetch manifest date-fns@^4.1.0
+69 silly packumentCache full:https://registry.npmjs.org/date-fns cache-miss
+70 http fetch GET https://registry.npmjs.org/date-fns attempt 1 failed with EAI_AGAIN
+71 http fetch GET https://registry.npmjs.org/date-fns attempt 2 failed with EAI_AGAIN
+72 http fetch GET https://registry.npmjs.org/date-fns attempt 3 failed with EAI_AGAIN
+73 silly fetch manifest dotenv@^17.2.3
+74 silly packumentCache full:https://registry.npmjs.org/dotenv cache-miss
+75 http fetch GET https://registry.npmjs.org/dotenv attempt 1 failed with EAI_AGAIN
+76 http fetch GET https://registry.npmjs.org/dotenv attempt 2 failed with EAI_AGAIN
+77 http fetch GET https://registry.npmjs.org/dotenv attempt 3 failed with EAI_AGAIN
+78 silly fetch manifest express@^5.1.0
+79 silly packumentCache full:https://registry.npmjs.org/express cache-miss
+80 http fetch GET https://registry.npmjs.org/express attempt 1 failed with EAI_AGAIN
+81 http fetch GET https://registry.npmjs.org/express attempt 2 failed with EAI_AGAIN

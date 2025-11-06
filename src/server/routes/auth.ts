@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import session from 'express-session';
-import RedisStore from 'connect-redis';
+import { RedisStore } from 'connect-redis';
 import { createClient } from 'redis';
 import { z } from 'zod';
-import bcrypt from 'bcrypt';
+// Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable
+import { hash as bcryptHash, compare as bcryptCompare } from '../lib/bcrypt.js';
 import rateLimit from 'express-rate-limit';
 import { findOne, insertDoc } from '../lib/couch.js';
 import { getCsrfTokenFromSession } from '../middleware/csrf.js';
@@ -18,7 +19,7 @@ redisClient.connect().catch((e) => console.error('[redis] connect error', e));
 
 router.use(
   session({
-    store: new RedisStore({ client: redisClient as any }) as any,
+    store: new (RedisStore as unknown as any)({ client: redisClient as any }) as any,
     secret: process.env['SESSION_SECRET'] || 'dev-secret-change-me',
     resave: false,
     saveUninitialized: false,
@@ -54,7 +55,7 @@ router.post('/register', authLimiter, async (req, res): Promise<void> => {
     const normalized = email.trim().toLowerCase();
     const existing = await findOne<User>({ type: 'user', email: normalized });
     if (existing) { res.status(409).json({ error: 'email_in_use', requestId: (req as any)?.id }); return; }
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcryptHash(password, 10);
     const now = Date.now();
     const doc: User = { type: 'user', email: normalized, passwordHash, createdAt: now, updatedAt: now };
     const r = await insertDoc(doc);
@@ -75,7 +76,7 @@ router.post('/login', loginLimiter, async (req, res): Promise<void> => {
     const normalized = email.trim().toLowerCase();
     const user = await findOne<User>({ type: 'user', email: normalized });
     if (!user) { res.status(401).json({ error: 'invalid_credentials', requestId: (req as any)?.id }); return; }
-    const ok = await bcrypt.compare(password, user.passwordHash);
+    const ok = await bcryptCompare(password, user.passwordHash);
     if (!ok) { res.status(401).json({ error: 'invalid_credentials', requestId: (req as any)?.id }); return; }
     // @ts-ignore
     req.session.userId = user._id;

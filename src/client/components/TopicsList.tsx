@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 import { subscribeTopicsRefresh } from '../lib/socket';
 import { toast } from './Toast';
+import { formatTimestamp } from '../lib/format';
 
 type Topic = { id: string; title: string; createdAt: number };
 
@@ -17,7 +18,7 @@ export function TopicsList({ isAuthed = false, initialMy=false, initialLimit=20,
   const [query, setQuery] = useState(initialQuery);
   const [hasMore, setHasMore] = useState(false);
   const [nextBookmark, setNextBookmark] = useState<string | undefined>(undefined);
-  const [prevBookmarks, setPrevBookmarks] = useState<string[]>([]);
+  const [, setPrevBookmarks] = useState<string[]>([]);
 
   const refresh = async (useBookmark: string | null | undefined = nextBookmark) => {
     const params = new URLSearchParams();
@@ -91,10 +92,10 @@ export function TopicsList({ isAuthed = false, initialMy=false, initialLimit=20,
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <input placeholder="title" value={title} onChange={(e) => setTitle(e.target.value)} />
           <button onClick={create} disabled={busy}>Create</button>
-          <button onClick={refresh} disabled={busy}>Refresh</button>
+          <button onClick={() => refresh()} disabled={busy}>Refresh</button>
         </div>
       ) : (
-        <div style={{ marginBottom: 8, opacity: 0.8 }}>Login to create topics. <button onClick={refresh} disabled={busy}>Refresh</button></div>
+        <div style={{ marginBottom: 8, opacity: 0.8 }}>Login to create topics. <button onClick={() => refresh()} disabled={busy}>Refresh</button></div>
       )}
       {error ? (
         <div style={{ color: 'red', marginBottom: 8, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -104,8 +105,9 @@ export function TopicsList({ isAuthed = false, initialMy=false, initialLimit=20,
       ) : null}
       <ul>
         {topics.map((t) => (
-          <li key={t.id}>
-            {new Date(t.createdAt).toLocaleString()} – {t.title} {' '}
+          <li key={t.id} style={{ padding: 6, borderBottom: '1px solid #eee' }}>
+            <span style={{ color: '#555' }}>{formatTimestamp(t.createdAt)}</span>
+            <span> – {t.title} </span>
             <a href={`#/topic/${t.id}`}>open</a>
           </li>
         ))}
