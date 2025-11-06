@@ -54,6 +54,26 @@ export function WaveView({ id }: { id: string }) {
           setReadCount(Number(((ur.data as any)?.read) || 0));
         }
       } catch {}
+      // handle goto=first/last or focus parameter from hash
+      try {
+        const hash = window.location.hash || '';
+        const q = (hash.split('?')[1] || '').trim();
+        const params = new URLSearchParams(q);
+        const goto = params.get('goto');
+        const focus = params.get('focus');
+        setTimeout(async () => {
+          if (focus) {
+            setCurrent(focus);
+            expandAll();
+            const el = document.querySelector(`[data-blip-id="${CSS.escape(focus)}"]`);
+            if (el && 'scrollIntoView' in el) (el as any).scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else if (goto === 'first') {
+            await firstUnread();
+          } else if (goto === 'last') {
+            await lastUnread();
+          }
+        }, 80);
+      } catch {}
     })();
   }, [id]);
 
