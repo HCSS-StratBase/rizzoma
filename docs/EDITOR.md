@@ -14,6 +14,7 @@ Status: Milestone B (IN PROGRESS). Feature-flagged; safe to keep merged.
   - Creates a `Y.Doc` and mounts TipTap with Collaboration extension.
   - Snapshot cadence: every 5 seconds encode state and POST to the snapshot endpoint.
   - On load: applies `snapshotB64` via `Y.applyUpdate` if present.
+  - WaveView mount: toggle button in `src/client/components/WaveView.tsx` shows the editor for the current wave. If the server flag is off, a disabled note appears.
 
 - Server: `src/server/routes/editor.ts`
   - `GET /api/editor/:waveId/snapshot` → `{ snapshotB64, nextSeq }`
@@ -27,4 +28,3 @@ Status: Milestone B (IN PROGRESS). Feature-flagged; safe to keep merged.
 - Materialize text for search and indexing.
 - Recovery tools: rebuild a clean snapshot from updates.
 - Basic editor mount in WaveView for selected blip.
-

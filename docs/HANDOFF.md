@@ -13,6 +13,7 @@ Active Work (Milestone B)
   - Client: TipTap + Yjs behind EDITOR_ENABLE=1; snapshot cadence; modular docs.
   - Server: editor endpoints with socket events (editor:snapshot, editor:update).
   - Docs: README links to docs/EDITOR.md and docs/LINKS_REPARENT.md.
+  - 2025-11-06: Mounted Editor in WaveView behind a toggle; small typecheck fixes. Branch pushed.
 
 Next Steps
 1) Resolve PR #23 conflicts (merge master → keep Editor.tsx from PR; keep README links + combine non-overlapping changes).
@@ -33,4 +34,3 @@ Verification (dev)
 - Start: `docker compose up -d couchdb redis`; `npm run prep:views && npm run deploy:views`; `npm run dev`.
 - Waves: UI at http://localhost:3000 → select a wave. Links panel (add/remove) auto-refreshes via sockets.
 - Editor: start server with `EDITOR_ENABLE=1`; Editor snapshot requests visible on network.
-
