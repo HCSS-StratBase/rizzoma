@@ -112,22 +112,11 @@ Note: As we progress, Waves will become the primary UX; Topics remain for migrat
 <<<<<<< HEAD
 ### Links & Reparenting (Milestone B+)
 
-- Links (two-way):
-  - POST `/api/links` { fromBlipId, toBlipId, waveId }
-  - DELETE `/api/links/:from/:to`
-  - GET `/api/blips/:id/links` → { out, in }
-- Reparent blips (keep links intact):
-  - PATCH `/api/blips/:id/reparent` { parentId }
-  - Only updates `parentId`; link docs remain unchanged.
+- See docs/LINKS_REPARENT.md for full details.
 
 ### Editor (Milestone B, behind flag)
 
-- Enable server endpoints via `EDITOR_ENABLE=1`
-- Client attempts dynamic imports of TipTap + Yjs; if not installed, shows a safe placeholder.
-- Snapshot flow:
-  - On load: `GET /api/editor/:waveId/snapshot` → apply `snapshotB64` (Yjs update) if present
-  - Periodic save (5s): `POST /api/editor/:waveId/snapshot { snapshotB64 }`
-  - Real-time providers can be added later; current integration focuses on persistence and recovery
+- See docs/EDITOR.md for enablement, snapshot flow, and roadmap.
 
 =======
 >>>>>>> origin/master
