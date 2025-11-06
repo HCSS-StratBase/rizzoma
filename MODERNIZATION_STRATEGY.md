@@ -34,16 +34,15 @@ This document outlines the strategy for modernizing the Rizzoma codebase from No
 - TS server + client with Auth, Topics/Comments CRUD, CSRF, requestId, basic search/pagination, and Socket.IO-based realtime refresh
 - Coffee→TS migration tool in place; dry‑run enumerates 500+ CoffeeScript files
 
-Next immediate objectives:
-- Replace in‑memory search/pagination with CouchDB Mango/view queries (DONE in Phase 2)
-- Add unit/integration tests (server middleware + routes; client basics) (IN PROGRESS)
-- Verify production image + compose profile and finalize deploy docs (IN PROGRESS)
+Milestones
 
-Milestone A (Phase 3 start): Waves + Blips (read‑only)
-- Data model: `wave` + `blip` documents (tree via `parentId`), reuse legacy views when helpful
-- API: list waves, get wave + nested blip tree
-- UI: React WaveView with expand/collapse on nested blips
-- Outcome: recognizable Rizzoma waves with nested blips (read‑only)
+- Phase 2 (DONE): Mango-backed paging/search for topics/comments; prod hardening.
+- Milestone A (DONE): Waves + Blips (read‑only)
+  - API: list/detail with legacy fallbacks; unread endpoints (/unread, /next, /prev, mark‑read); unread counts.
+  - UI: Waves list with badges; WaveView status bar, Next/Prev + first/last unread, keyboard nav, goto/focus.
+- Milestone B (IN PROGRESS): Editor (CRDT) + Links
+  - Editor endpoints behind flag (EDITOR_ENABLE=1): snapshot/update storage; client scaffold with dynamic imports.
+  - Two‑way linking APIs; WaveView links panel (out/in) with add/remove; reparent endpoint.
 
 ## Phase 1: Infrastructure & Build System (Week 1-2)
 1. Create modern package.json with updated dependencies

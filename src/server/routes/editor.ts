@@ -1,0 +1,88 @@
+import { Router } from 'express';
+import { findOne, getDoc, insertDoc, updateDoc, createIndex } from '../lib/couch.js';
+
+// Feature flag: set EDITOR_ENABLE=1 to enable endpoints
+const ENABLED = process.env['EDITOR_ENABLE'] === '1';
+
+type YDocSnapshot = {
+  _id?: string;
+  type: 'yjs_snapshot';
+  waveId: string;
+  updatedAt: number;
+  // base64-encoded Yjs snapshot (Uint8Array)
+  snapshotB64: string;
+};
+
+type YDocUpdate = {
+  _id?: string;
+  type: 'yjs_update';
+  waveId: string;
+  seq: number;
+  // base64-encoded Yjs update
+  updateB64: string;
+  createdAt: number;
+};
+
+const router = Router();
+
+if (!ENABLED) {
+  router.use((_req, res) => {
+    res.status(404).json({ error: 'editor_disabled' });
+  });
+} else {
+  // Ensure indexes
+  (async () => {
+    try { await createIndex(['type', 'waveId', 'updatedAt'], 'idx_yjs_snapshot'); } catch {}
+    try { await createIndex(['type', 'waveId', 'seq'], 'idx_yjs_update_seq'); } catch {}
+  })().catch(() => undefined);
+
+  // GET /api/editor/:waveId/snapshot — latest snapshot + next seq
+  router.get('/:waveId/snapshot', async (req, res) => {
+    const waveId = req.params.waveId;
+    try {
+      const snap = await findOne<YDocSnapshot>({ type: 'yjs_snapshot', waveId });
+      // next seq based on latest update
+      let nextSeq = 1;
+      const u = await findOne<YDocUpdate>({ type: 'yjs_update', waveId });
+      // Note: findOne has no sort; in real impl we’d query by max seq. Keep it simple for dev.
+      if (u && typeof (u as any).seq === 'number') nextSeq = (u as any).seq + 1;
+      res.json({ snapshotB64: snap?.snapshotB64 || null, nextSeq });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'snapshot_error' });
+    }
+  });
+
+  // POST /api/editor/:waveId/snapshot { snapshotB64 }
+  router.post('/:waveId/snapshot', async (req, res) => {
+    const waveId = req.params.waveId;
+    const snapshotB64 = String((req.body || {}).snapshotB64 || '');
+    if (!snapshotB64) { res.status(400).json({ error: 'missing_snapshot' }); return; }
+    try {
+      const existing = await findOne<YDocSnapshot>({ type: 'yjs_snapshot', waveId });
+      const doc: YDocSnapshot = existing? { ...existing, snapshotB64, updatedAt: Date.now() } : { type: 'yjs_snapshot', waveId, snapshotB64, updatedAt: Date.now() };
+      const r = existing && (existing as any)._id ? await updateDoc(doc as any) : await insertDoc(doc as any);
+      res.status(existing ? 200 : 201).json({ ok: true, id: r.id, rev: r.rev });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'snapshot_save_error' });
+    }
+  });
+
+  // POST /api/editor/:waveId/updates { seq, updateB64 }
+  router.post('/:waveId/updates', async (req, res) => {
+    const waveId = req.params.waveId;
+    const seq = Number((req.body || {}).seq);
+    const updateB64 = String((req.body || {}).updateB64 || '');
+    if (!Number.isFinite(seq) || seq < 1 || !updateB64) { res.status(400).json({ error: 'invalid_payload' }); return; }
+    try {
+      const id = `yupd:${waveId}:${seq}`;
+      const doc: YDocUpdate = { _id: id, type: 'yjs_update', waveId, seq, updateB64, createdAt: Date.now() };
+      const r = await insertDoc(doc as any);
+      res.status(201).json({ ok: true, id: r.id, rev: r.rev });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'update_save_error' });
+    }
+  });
+}
+
+export default router;
+

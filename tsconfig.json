@@ -49,6 +49,7 @@
     "dist",
     "build",
     "coverage",
+    "src/static/js/**/*",
     "**/*.test.ts",
     "**/*.spec.ts",
     "src/server/couch_views/**/*",

@@ -109,6 +109,19 @@ As of now, the modern stack is running end‑to‑end in development:
 
 Note: As we progress, Waves will become the primary UX; Topics remain for migration and compatibility until editor + migration are complete.
 
+<<<<<<< HEAD
+### Links & Reparenting (Milestone B+)
+
+- Links (two-way):
+  - POST `/api/links` { fromBlipId, toBlipId, waveId }
+  - DELETE `/api/links/:from/:to`
+  - GET `/api/blips/:id/links` → { out, in }
+- Reparent blips (keep links intact):
+  - PATCH `/api/blips/:id/reparent` { parentId }
+  - Only updates `parentId`; link docs remain unchanged.
+
+=======
+>>>>>>> origin/master
 Remaining Phase‑1 items before a production cut:
 
 - Replace in‑memory filtering for topics search/pagination with CouchDB Mango/view queries
@@ -283,6 +296,19 @@ const db = new (cradle.Connection)().database('rizzoma');
 - Native `bcrypt` build issues (`node-pre-gyp: not found`):
   - We include `bcrypt` as optional and fall back to `bcryptjs`. Just run `npm install` on Node 20.19.0+; no manual build required.
 
+## GDrive Backup (Repo Bundle)
+
+We maintain a Git bundle on G:\\My Drive\\Rizzoma-backup for redundancy.
+
+CLI (WSL/PowerShell hybrid):
+
+```
+# Create/refresh bundle from C:\\Rizzoma
+git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all
+
+# Copy to GDrive
+powershell.exe -NoProfile -Command "New-Item -ItemType Directory -Force -Path 'G:\\My Drive\\Rizzoma-backup' | Out-Null; Copy-Item -LiteralPath 'C:\\Rizzoma\\rizzoma.bundle' -Destination 'G:\\My Drive\\Rizzoma-backup\\rizzoma.bundle' -Force"
+```
 ### Production Build
 
 Build and run the production image (serves API + built client):
@@ -387,13 +413,30 @@ docker compose ps
 
 ## Next Steps
 
-After Phase‑1 stabilization:
+After Milestone A (Waves read‑only):
 
-1. Add monitoring/telemetry (OpenTelemetry) and structured logs export
-2. Improve search by indexing and view optimizations
-3. Tighten security (Cookie settings, CSP, helmet hardening)
-4. Add realtime updates for collaborative UX
-5. Consider service boundaries only after functionality parity is reached
+Milestone B — Editor (CRDT)
+- Feature-flagged editor scaffold (server + client). Enable with `EDITOR_ENABLE=1`.
+- Server endpoints (dev):
+  - `GET /api/editor/:waveId/snapshot` → `{ snapshotB64, nextSeq }`
+  - `POST /api/editor/:waveId/snapshot { snapshotB64 }`
+  - `POST /api/editor/:waveId/updates { seq, updateB64 }`
+  - Stored as docs: `yjs_snapshot` and `yjs_update` (base64 payloads), Mango indexes added.
+- Client: dynamic import of TipTap + Yjs if installed; otherwise shows read‑only placeholder.
+
+Two‑Way Linking + Stable Reparenting
+- Data: `link` docs with deterministic `_id` `link:<from>:<to>`; indexes by `fromBlipId` and `toBlipId`.
+- APIs:
+  - `POST /api/links { fromBlipId, toBlipId, waveId }`
+  - `DELETE /api/links/:from/:to`
+  - `GET /api/blips/:id/links` → `{ out, in }`
+- Reparenting (planned): `PATCH /api/blips/:id/reparent { parentId }` updates only parentId; links stay intact.
+
+Operational hardening (ongoing):
+- Monitoring/telemetry (OpenTelemetry) and structured logs export
+- Search improvements (indexes, views)
+- Security tightening (cookies, CSP, helmet)
+- Realtime collaboration UI polish
 
 ## Resources
 
