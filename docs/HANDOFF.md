@@ -39,4 +39,5 @@ Verification (dev)
 - Waves: UI at http://localhost:3000 → select a wave. Links panel (add/remove) auto-refreshes via sockets.
 - Editor: start server with `EDITOR_ENABLE=1`; Editor snapshot requests visible on network.
 PR Log
-- 2025-11-06: PR #23 merged (squash). Opened PR #24 (Part 2 scaffold).
+- 2025-11-06: PR #23 merged (squash). Opened PR #24 (Part 2).
+  - Progress: Client now posts materialized editor text with snapshots; server stores `text` and exposes `/api/editor/search`.

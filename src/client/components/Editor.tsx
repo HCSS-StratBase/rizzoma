@@ -60,7 +60,10 @@ export function Editor({ waveId, readOnly = true }: { waveId: string; readOnly?:
           try {
             const update = (Y as any).encodeStateAsUpdate(ydoc) as Uint8Array;
             const b64 = Buffer.from(update).toString('base64');
-            await api(`/api/editor/${encodeURIComponent(waveId)}/snapshot`, { method: 'POST', body: JSON.stringify({ snapshotB64: b64 }) });
+            // try to materialize plain text for search if editor API is present
+            let text: string | undefined = undefined;
+            try { text = (editor as any)?.getText?.() || undefined; } catch {}
+            await api(`/api/editor/${encodeURIComponent(waveId)}/snapshot`, { method: 'POST', body: JSON.stringify({ snapshotB64: b64, text }) });
           } catch {}
         }, 5000);
         stopTimer = () => window.clearInterval(interval);

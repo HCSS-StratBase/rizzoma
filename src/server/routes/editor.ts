@@ -12,6 +12,8 @@ type YDocSnapshot = {
   updatedAt: number;
   // base64-encoded Yjs snapshot (Uint8Array)
   snapshotB64: string;
+  // optional materialized plain text for search
+  text?: string;
 };
 
 type YDocUpdate = {
@@ -57,10 +59,13 @@ if (!ENABLED) {
   router.post('/:waveId/snapshot', async (req, res) => {
     const waveId = req.params.waveId;
     const snapshotB64 = String((req.body || {}).snapshotB64 || '');
+    const text = typeof (req.body || {}).text === 'string' ? String((req.body as any).text) : undefined;
     if (!snapshotB64) { res.status(400).json({ error: 'missing_snapshot' }); return; }
     try {
       const existing = await findOne<YDocSnapshot>({ type: 'yjs_snapshot', waveId });
-      const doc: YDocSnapshot = existing? { ...existing, snapshotB64, updatedAt: Date.now() } : { type: 'yjs_snapshot', waveId, snapshotB64, updatedAt: Date.now() };
+      const doc: YDocSnapshot = existing
+        ? { ...existing, snapshotB64, updatedAt: Date.now(), text: (typeof text === 'string' ? text : (existing as any).text) }
+        : { type: 'yjs_snapshot', waveId, snapshotB64, updatedAt: Date.now(), text };
       const r = existing && (existing as any)._id ? await updateDoc(doc as any) : await insertDoc(doc as any);
       res.status(existing ? 200 : 201).json({ ok: true, id: r.id, rev: r.rev });
       try { emitEvent('editor:snapshot', { waveId }); } catch {}
@@ -83,6 +88,24 @@ if (!ENABLED) {
       try { emitEvent('editor:update', { waveId, seq }); } catch {}
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'update_save_error' });
+    }
+  });
+
+  // GET /api/editor/search?q=foo&limit=20 — find waves with materialized text match
+  router.get('/search', async (req, res) => {
+    try {
+      const q = String((req.query as any).q || '').trim();
+      const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
+      if (!q) { res.json({ results: [] }); return; }
+      // case-insensitive search using Mango regex
+      const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const selector: any = { type: 'yjs_snapshot', text: { $regex: `(?i).*${safe}.*` } };
+      const { find } = await import('../lib/couch.js');
+      const r: any = await (find as any)(selector, { limit });
+      const results = (r?.docs || []).map((d: any) => ({ waveId: d.waveId, updatedAt: d.updatedAt }));
+      res.json({ results });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'editor_search_error' });
     }
   });
 }
