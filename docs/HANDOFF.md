@@ -5,15 +5,14 @@ Current State
 - Master:
   - Milestone A roll-up merged (#21): Waves read-only + unread/nav, counts, materialize + seeder.
   - Milestone B foundation merged (#22): Links APIs, reparent endpoint, WaveView links panel, editor endpoints (flagged).
-- Open PRs:
-  - #23 Milestone B: Editor Part 1 — TipTap + Yjs (flagged) with snapshot save/restore.
+  - Milestone B Part 1 merged (#23, squash): Editor (TipTap + Yjs) snapshot save/restore, WaveView toggle.
+- Open PRs: none.
 
 Active Work (Milestone B)
-- PR #23 (phase4/editor-yjs-tiptap):
-  - Client: TipTap + Yjs behind EDITOR_ENABLE=1; snapshot cadence; modular docs.
-  - Server: editor endpoints with socket events (editor:snapshot, editor:update).
-  - Docs: README links to docs/EDITOR.md and docs/LINKS_REPARENT.md.
-  - 2025-11-06: Mounted Editor in WaveView behind a toggle; small typecheck fixes. Branch pushed.
+- Next branch: phase4/editor-yjs-tiptap-pt2 (to be created)
+  - Materialize editor text for search (server helper + index notes).
+  - Per‑blip editor mount in WaveView (still behind flag).
+  - Tests: routes + minimal client.
 
 Next Steps
 1) Resolve PR #23 conflicts (merge master → keep Editor.tsx from PR; keep README links + combine non-overlapping changes).
