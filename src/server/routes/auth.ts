@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import session from 'express-session';
-import RedisStore from 'connect-redis';
+import { RedisStore } from 'connect-redis';
 import { createClient } from 'redis';
 import { z } from 'zod';
 // Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable
@@ -19,7 +19,7 @@ redisClient.connect().catch((e) => console.error('[redis] connect error', e));
 
 router.use(
   session({
-    store: new RedisStore({ client: redisClient as any }) as any,
+    store: new (RedisStore as unknown as any)({ client: redisClient as any }) as any,
     secret: process.env['SESSION_SECRET'] || 'dev-secret-change-me',
     resave: false,
     saveUninitialized: false,

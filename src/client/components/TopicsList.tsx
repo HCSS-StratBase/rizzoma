@@ -18,7 +18,7 @@ export function TopicsList({ isAuthed = false, initialMy=false, initialLimit=20,
   const [query, setQuery] = useState(initialQuery);
   const [hasMore, setHasMore] = useState(false);
   const [nextBookmark, setNextBookmark] = useState<string | undefined>(undefined);
-  const [prevBookmarks, setPrevBookmarks] = useState<string[]>([]);
+  const [, setPrevBookmarks] = useState<string[]>([]);
 
   const refresh = async (useBookmark: string | null | undefined = nextBookmark) => {
     const params = new URLSearchParams();
