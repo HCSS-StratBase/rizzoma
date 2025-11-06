@@ -16,6 +16,10 @@ export function WaveView({ id }: { id: string }) {
   const [total, setTotal] = useState<number>(0);
   const [readCount, setReadCount] = useState<number>(0);
   const [current, setCurrent] = useState<string | null>(null);
+  useInitCurrentSetter((bid: string) => setCurrent(bid));
+  const [linksOut, setLinksOut] = useState<Array<{ toBlipId: string; waveId: string }>>([]);
+  const [linksIn, setLinksIn] = useState<Array<{ fromBlipId: string; waveId: string }>>([]);
+  const [newLinkTo, setNewLinkTo] = useState<string>('');
 
   useEffect(() => {
     (async () => {
@@ -126,6 +130,19 @@ export function WaveView({ id }: { id: string }) {
 
   // keyboard shortcuts: j/k next/prev, g/G first/last
   useWaveKeyboardNav(id, nextUnread, prevUnread, firstUnread, lastUnread);
+
+  // Load links for current blip when it changes
+  useEffect(() => {
+    (async () => {
+      if (!current) { setLinksOut([]); setLinksIn([]); return; }
+      const r = await api(`/api/blips/${encodeURIComponent(current)}/links`);
+      if (r.ok) {
+        const d = r.data as any;
+        setLinksOut((d?.out || []).map((x: any) => ({ toBlipId: String(x.toBlipId), waveId: String(x.waveId) })));
+        setLinksIn((d?.in || []).map((x: any) => ({ fromBlipId: String(x.fromBlipId), waveId: String(x.waveId) })));
+      }
+    })();
+  }, [current]);
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
   return (
     <section>
@@ -134,7 +151,7 @@ export function WaveView({ id }: { id: string }) {
       <div style={{ marginBottom: 6, fontSize: 14, color: '#444' }}>
         Unread {unread.length} / {total} (read {readCount}){current ? <span> — Current: <code>{current}</code></span> : null}
       </div>
-      <div style={{ marginBottom: 8, display: 'flex', gap: 8 }}>
+      <div style={{ marginBottom: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button onClick={expandAll}>Expand all</button>
         <button onClick={collapseAll}>Collapse all</button>
         <button onClick={prevUnread} title="Previous unread (k)" style={{ background: '#95a5a6', color: 'white' }}>Prev</button>
@@ -142,6 +159,43 @@ export function WaveView({ id }: { id: string }) {
         <button onClick={firstUnread} title="First unread (g)">First</button>
         <button onClick={lastUnread} title="Last unread (G)">Last</button>
       </div>
+      {current ? (
+        <div style={{ marginBottom: 12, padding: 8, border: '1px dashed #ddd', borderRadius: 4 }}>
+          <div style={{ fontWeight: 600, marginBottom: 6 }}>Links for {current}</div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
+            <input placeholder="to blip id" value={newLinkTo} onChange={(e)=> setNewLinkTo(e.target.value)} />
+            <button onClick={async ()=>{
+              const to = newLinkTo.trim(); if (!to) return;
+              const r = await api('/api/links', { method: 'POST', body: JSON.stringify({ fromBlipId: current, toBlipId: to, waveId: id }) });
+              if (r.ok) { setNewLinkTo(''); const lr = await api(`/api/blips/${encodeURIComponent(current)}/links`); if (lr.ok) { const d = lr.data as any; setLinksOut((d?.out||[]).map((x:any)=>({toBlipId:String(x.toBlipId), waveId:String(x.waveId)}))); setLinksIn((d?.in||[]).map((x:any)=>({fromBlipId:String(x.fromBlipId), waveId:String(x.waveId)}))); } }
+            }}>
+              Add link
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontWeight: 600 }}>Outgoing</div>
+              <ul>
+                {linksOut.map((l)=> (
+                  <li key={`out:${current}:${l.toBlipId}`}>
+                    → <code>{l.toBlipId}</code> <button onClick={async ()=>{ await api(`/api/links/${encodeURIComponent(current)}/${encodeURIComponent(l.toBlipId)}`, { method: 'DELETE' }); const lr = await api(`/api/blips/${encodeURIComponent(current)}/links`); if (lr.ok) { const d = lr.data as any; setLinksOut((d?.out||[]).map((x:any)=>({toBlipId:String(x.toBlipId), waveId:String(x.waveId)}))); setLinksIn((d?.in||[]).map((x:any)=>({fromBlipId:String(x.fromBlipId), waveId:String(x.waveId)}))); } }}>remove</button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div style={{ fontWeight: 600 }}>Incoming</div>
+              <ul>
+                {linksIn.map((l)=> (
+                  <li key={`in:${l.fromBlipId}:${current}`}>
+                    ← <code>{l.fromBlipId}</code>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <BlipTreeWithState nodes={blips} unread={new Set(unread)} current={current} openMap={openMap} onToggle={(id, val) => { const next = { ...openMap, [id]: val }; persist(next); }} />
     </section>
   );
@@ -151,7 +205,7 @@ function BlipTreeWithState({ nodes, unread, current, openMap, onToggle }: { node
   const render = (n: BlipNode) => {
     const isOpen = openMap[n.id] !== false;
     return (
-      <li key={n.id} data-blip-id={n.id} style={{ background: current === n.id ? '#e8f8f2' : unread.has(n.id) ? '#e9fbe9' : undefined }}>
+      <li key={n.id} data-blip-id={n.id} style={{ background: current === n.id ? '#e8f8f2' : unread.has(n.id) ? '#e9fbe9' : undefined }} onClick={(e)=>{ if ((e.target as HTMLElement).tagName.toLowerCase() !== 'button') { (window as any).setWaveCurrent?.(n.id); } }}>
         <button onClick={() => onToggle(n.id, !isOpen)} style={{ marginRight: 6 }}>{isOpen ? '-' : '+'}</button>
         <span style={{ color: '#555' }}>{formatTimestamp(n.createdAt)}</span>
         <span> — <BlipContent content={n.content || ''} /></span>
@@ -184,4 +238,19 @@ function useWaveKeyboardNav(id: string, nextFn: () => void, prevFn: () => void, 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [id, nextFn, prevFn, firstFn, lastFn]);
+}
+
+// Provide a simple way for list items to set current blip
+declare global {
+  interface Window { setWaveCurrent?: (id: string) => void }
+}
+
+// initialize setter for current selection on mount
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function useInitCurrentSetter(setCurrent: (id: string)=>void) {
+  useEffect(() => {
+    const prev = (window as any).setWaveCurrent;
+    (window as any).setWaveCurrent = setCurrent;
+    return () => { (window as any).setWaveCurrent = prev; };
+  }, [setCurrent]);
 }
