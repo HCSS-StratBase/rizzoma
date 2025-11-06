@@ -109,17 +109,13 @@ As of now, the modern stack is running end‑to‑end in development:
 
 Note: As we progress, Waves will become the primary UX; Topics remain for migration and compatibility until editor + migration are complete.
 
-<<<<<<< HEAD
 ### Links & Reparenting (Milestone B+)
 
-- See docs/LINKS_REPARENT.md for full details.
+- See `docs/LINKS_REPARENT.md` for API and UI details.
 
 ### Editor (Milestone B, behind flag)
 
-- See docs/EDITOR.md for enablement, snapshot flow, and roadmap.
-
-=======
->>>>>>> origin/master
+- See `docs/EDITOR.md` for enablement, snapshot flow, and roadmap.
 Remaining Phase‑1 items before a production cut:
 
 - Replace in‑memory filtering for topics search/pagination with CouchDB Mango/view queries
