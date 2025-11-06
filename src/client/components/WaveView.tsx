@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { formatTimestamp } from '../lib/format';
+import { BlipContent } from './BlipContent';
 
 type BlipNode = { id: string; content: string; createdAt: number; children?: BlipNode[] };
 
@@ -113,7 +115,8 @@ function BlipTreeWithState({ nodes, unread, current, openMap, onToggle }: { node
     return (
       <li key={n.id} data-blip-id={n.id} style={{ background: current === n.id ? '#e8f8f2' : unread.has(n.id) ? '#e9fbe9' : undefined }}>
         <button onClick={() => onToggle(n.id, !isOpen)} style={{ marginRight: 6 }}>{isOpen ? '-' : '+'}</button>
-        <span>{new Date(n.createdAt).toLocaleString()} — {n.content || '(empty)'}</span>
+        <span style={{ color: '#555' }}>{formatTimestamp(n.createdAt)}</span>
+        <span> — <BlipContent content={n.content || ''} /></span>
         {n.children && n.children.length > 0 && isOpen ? (
           <ul style={{ marginLeft: 18 }}>
             {n.children.map(render)}
