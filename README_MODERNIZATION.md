@@ -109,6 +109,7 @@ As of now, the modern stack is running end‑to‑end in development:
 
 Note: As we progress, Waves will become the primary UX; Topics remain for migration and compatibility until editor + migration are complete.
 
+<<<<<<< HEAD
 ### Links & Reparenting (Milestone B+)
 
 - Links (two-way):
@@ -119,6 +120,8 @@ Note: As we progress, Waves will become the primary UX; Topics remain for migrat
   - PATCH `/api/blips/:id/reparent` { parentId }
   - Only updates `parentId`; link docs remain unchanged.
 
+=======
+>>>>>>> origin/master
 Remaining Phase‑1 items before a production cut:
 
 - Replace in‑memory filtering for topics search/pagination with CouchDB Mango/view queries
@@ -306,7 +309,6 @@ git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all
 # Copy to GDrive
 powershell.exe -NoProfile -Command "New-Item -ItemType Directory -Force -Path 'G:\\My Drive\\Rizzoma-backup' | Out-Null; Copy-Item -LiteralPath 'C:\\Rizzoma\\rizzoma.bundle' -Destination 'G:\\My Drive\\Rizzoma-backup\\rizzoma.bundle' -Force"
 ```
-
 ### Production Build
 
 Build and run the production image (serves API + built client):
