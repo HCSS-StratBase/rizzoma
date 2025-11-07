@@ -164,11 +164,11 @@ export function WaveView({ id }: { id: string }) {
     <section>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2 style={{ margin: 0, padding: 0 }}>{title || 'Wave'}</h2>
-        <button onClick={()=> setShowEditor(v=>!v)} style={{ marginLeft: 'auto' }}>{showEditor ? 'Hide editor' : 'Show editor'}</button>
+        <button onClick={()=> setShowEditor(v=>!v)} style={{ marginLeft: 'auto' }}>{showEditor ? 'Hide editor' : (current ? 'Show editor for current blip' : 'Show editor')}</button>
       </div>
       {showEditor ? (
         <div style={{ margin: '12px 0' }}>
-          <Editor waveId={id} readOnly={false} />
+          <Editor waveId={id} blipId={current ?? undefined} readOnly={false} />
         </div>
       ) : null}
       <a href="#/waves">← Back</a>
