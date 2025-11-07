@@ -16,8 +16,8 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: any) => void }) {
     setBusy(false);
     if (!r.ok) {
       setError(kind === 'login' ? 'Login failed' : 'Register failed');
-      const reqId = (r as unknown as { requestId?: string }).requestId;
-      const idTag = reqId && reqId !== '' ? ` (${reqId})` : '';
+      const reqId = (r as unknown as { requestId?: string | undefined }).requestId;
+      const idTag = (reqId !== undefined && reqId !== '') ? ` (${reqId})` : '';
       toast(`${kind==='login'?'Login':'Register'} failed${idTag}`,'error');
     } else {
       onSignedIn(r.data);
