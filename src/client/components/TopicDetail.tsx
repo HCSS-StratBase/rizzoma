@@ -19,7 +19,7 @@ export function TopicDetail({ id, isAuthed = false }: { id: string; isAuthed?: b
   const [error, setError] = useState<string | null>(null);
   const [rid, setRid] = useState<string | undefined>(undefined);
 
-  const load = async () => {
+  const load = async (): Promise<void> => {
     const r = await api(`/api/topics/${encodeURIComponent(id)}`);
     if (r.ok) { setTopic(r.data as TopicFull); setError(null); setRid(undefined); }
     const params = new URLSearchParams();
@@ -28,9 +28,12 @@ export function TopicDetail({ id, isAuthed = false }: { id: string; isAuthed?: b
     if (cNextBookmark) params.set('bookmark', cNextBookmark);
     const rc = await api(`/api/topics/${encodeURIComponent(id)}/comments?` + params.toString());
     if (rc.ok) {
-      setComments((rc.data as any)?.comments || []);
-      setCHasMore(Boolean((rc.data as any)?.hasMore));
-      setCNextBookmark(((rc.data as any)?.nextBookmark) || undefined);
+      type CommentsResp = { comments: Comment[]; hasMore?: boolean; nextBookmark?: string };
+      const rcData = (rc.data as Partial<CommentsResp> | null) || null;
+      const arr = Array.isArray(rcData?.comments) ? rcData!.comments! : [];
+      setComments(arr);
+      setCHasMore(Boolean(rcData?.hasMore));
+      setCNextBookmark(typeof rcData?.nextBookmark === 'string' && rcData.nextBookmark !== '' ? rcData.nextBookmark : undefined);
     }
   };
   useEffect(() => { load(); }, [id, climit, coffset]);
@@ -43,45 +46,45 @@ export function TopicDetail({ id, isAuthed = false }: { id: string; isAuthed?: b
     return () => unsub();
   }, [id, climit, coffset]);
 
-  const save = async () => {
+  const save = async (): Promise<void> => {
     if (!topic) return;
     await ensureCsrf();
     setBusy(true);
     const r = await api(`/api/topics/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ title: topic.title, content: topic.content || '' }) });
     setBusy(false);
-    if (!r.ok) { setError('Save failed'); setRid(r.requestId); toast(`Save failed${r.requestId?` (${r.requestId})`:''}`,'error'); } else { setError(null); setRid(undefined); toast('Topic saved'); }
+    if (!r.ok) { const idTag = r.requestId ? ` (${r.requestId})` : ''; setError('Save failed'); setRid(r.requestId); toast(`Save failed${idTag}`,'error'); } else { setError(null); setRid(undefined); toast('Topic saved'); }
   };
-  const remove = async () => {
+  const remove = async (): Promise<void> => {
     if (!window.confirm('Delete topic?')) return;
     await ensureCsrf();
     setBusy(true);
     const r = await api(`/api/topics/${encodeURIComponent(id)}`, { method: 'DELETE' });
     setBusy(false);
-    if (!r.ok) { setError('Delete failed'); setRid(r.requestId); toast(`Delete failed${r.requestId?` (${r.requestId})`:''}`,'error'); } else { setError(null); setRid(undefined); toast('Topic deleted'); }
+    if (!r.ok) { const idTag = r.requestId ? ` (${r.requestId})` : ''; setError('Delete failed'); setRid(r.requestId); toast(`Delete failed${idTag}`,'error'); } else { setError(null); setRid(undefined); toast('Topic deleted'); }
     window.location.hash = '#/'
   };
-  const post = async () => {
+  const post = async (): Promise<void> => {
     const content = comment.trim();
     if (!content) { setError('Comment required'); return; }
     await ensureCsrf();
     setBusy(true);
     const r = await api(`/api/topics/${encodeURIComponent(id)}/comments`, { method: 'POST', body: JSON.stringify({ content }) });
     setBusy(false);
-    if (!r.ok) { setError('Failed to post'); setRid(r.requestId); toast(`Comment failed${r.requestId?` (${r.requestId})`:''}`,'error'); return; } else { setError(null); setRid(undefined); toast('Comment posted'); }
+    if (!r.ok) { const idTag = r.requestId ? ` (${r.requestId})` : ''; setError('Failed to post'); setRid(r.requestId); toast(`Comment failed${idTag}`,'error'); return; } else { setError(null); setRid(undefined); toast('Comment posted'); }
     setComment('');
     load();
   };
-  const delComment = async (cid: string) => {
+  const delComment = async (cid: string): Promise<void> => {
     if (!window.confirm('Delete comment?')) return;
     await ensureCsrf();
     setBusy(true);
     const r = await api(`/api/comments/${encodeURIComponent(cid)}`, { method: 'DELETE' });
     setBusy(false);
-    if (!r.ok) { setError('Failed to delete'); setRid(r.requestId); toast(`Delete failed${r.requestId?` (${r.requestId})`:''}`,'error'); return; } else { setError(null); setRid(undefined); toast('Comment deleted'); }
-    setComments((comments || []).filter((c) => c.id !== cid));
+    if (!r.ok) { const idTag = r.requestId ? ` (${r.requestId})` : ''; setError('Failed to delete'); setRid(r.requestId); toast(`Delete failed${idTag}`,'error'); return; } else { setError(null); setRid(undefined); toast('Comment deleted'); }
+    setComments(comments.filter((c) => c.id !== cid));
   };
 
-  if (!topic) return <div>Loading...</div>;
+  if (topic === null) return <div>Loading...</div>;
   return (
     <section>
       <a href="#/">← Back</a>

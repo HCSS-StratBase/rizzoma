@@ -1,26 +1,32 @@
 import { useEffect, useState } from 'react';
 
+type ToastDetail = string | { message: string; type?: 'info' | 'error' };
+declare global {
+  interface WindowEventMap {
+    toast: CustomEvent<ToastDetail>;
+  }
+}
+
 export function Toast() {
   const [msg, setMsg] = useState<string | null>(null);
   const [type, setType] = useState<'info' | 'error'>('info');
 
   useEffect(() => {
-    const onToast = (e: Event) => {
-      const ce = e as CustomEvent<string | { message: string; type?: 'info' | 'error' }>;
-      if (typeof ce.detail === 'string') {
+    const onToast = (e: CustomEvent<ToastDetail>) => {
+      if (typeof e.detail === 'string') {
         setType('info');
-        setMsg(ce.detail);
-      } else if (ce.detail && typeof ce.detail === 'object') {
-        setType(ce.detail.type || 'info');
-        setMsg(ce.detail.message);
+        setMsg(e.detail);
+      } else if (e.detail && typeof e.detail === 'object') {
+        setType(e.detail.type || 'info');
+        setMsg(e.detail.message);
       }
-      setTimeout(() => setMsg(null), 3000);
+      window.setTimeout(() => setMsg(null), 3000);
     };
-    window.addEventListener('toast', onToast as any);
-    return () => window.removeEventListener('toast', onToast as any);
+    window.addEventListener('toast', onToast as EventListener);
+    return () => window.removeEventListener('toast', onToast as EventListener);
   }, []);
 
-  if (!msg) return null;
+  if (msg === null) return null;
   const bg = type === 'error' ? '#fce8e6' : '#e6f4ea';
   const color = type === 'error' ? '#d93025' : '#137333';
   return (
@@ -33,4 +39,3 @@ export function Toast() {
 export function toast(message: string, type: 'info' | 'error' = 'info') {
   window.dispatchEvent(new CustomEvent('toast', { detail: { message, type } }));
 }
-
