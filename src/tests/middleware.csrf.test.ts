@@ -37,8 +37,8 @@ describe('middleware: csrf', () => {
   });
 
   it('sets secure cookie in production', (done) => {
-    const prev = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
+    const prev = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production';
     const req: any = { session: {} };
     const cookies: any[] = [];
     const res: any = { cookie: (name: string, value: string, opts: any) => cookies.push({ name, value, opts }) };
@@ -46,7 +46,7 @@ describe('middleware: csrf', () => {
       const xsrf = cookies.find((c) => c.name === 'XSRF-TOKEN');
       expect(xsrf).toBeTruthy();
       expect(xsrf.opts.secure).toBeTruthy();
-      process.env.NODE_ENV = prev;
+      process.env['NODE_ENV'] = prev;
       done();
     });
   });

@@ -2,6 +2,7 @@
 
 # Stage 1: Base dependencies
 FROM node:20-alpine AS base
+ENV CYPRESS_INSTALL_BINARY=0
 RUN apk add --no-cache python3 make g++ git
 WORKDIR /app
 

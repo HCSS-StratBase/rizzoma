@@ -16,8 +16,8 @@
     "build:server": "node node_modules/typescript/bin/tsc -p tsconfig.server.json && node node_modules/tsc-alias/dist/index.js",
     "build:client": "node node_modules/vite/bin/vite.js build",
     "start": "node dist/server/app.js",
-    "test": "node node_modules/vitest/vitest.mjs run --root . --pool=forks --threads=false",
-    "test:watch": "node node_modules/vitest/vitest.mjs --root .",
+    "test": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts",
+    "test:watch": "node node_modules/vitest/vitest.mjs --config vitest.config.ts",
     "test:e2e": "node node_modules/cypress/bin/cypress run",
     "lint": "node node_modules/eslint/bin/eslint.js src --ext .ts,.tsx",
     "format": "node node_modules/prettier/bin/prettier.cjs --write \"src/**/*.{ts,tsx,json,css,md}\"",
@@ -106,7 +106,8 @@
     "@tiptap/react": "^2.5.10",
     "@tiptap/starter-kit": "^2.5.10",
     "@tiptap/extension-collaboration": "^2.5.10",
-    "yjs": "^13.6.15"
+    "yjs": "^13.6.15",
+    "vitest": "^1.6.1"
   },
   "optionalDependencies": {
     "@google-cloud/storage": "^7.7.0",
