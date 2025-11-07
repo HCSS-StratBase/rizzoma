@@ -62,8 +62,8 @@ export function Editor({ waveId, blipId, readOnly = true }: { waveId: string; bl
             const b64 = Buffer.from(update).toString('base64');
             const text = (editor as any)?.getText?.();
             const body: Record<string, unknown> = { snapshotB64: b64 };
-            if (typeof text === 'string') body.text = text;
-            if (typeof blipId === 'string' && blipId.length > 0) body.blipId = blipId;
+            if (typeof text === 'string') body['text'] = text;
+            if (typeof blipId === 'string' && blipId.length > 0) body['blipId'] = blipId;
             await api(`/api/editor/${encodeURIComponent(waveId)}/snapshot`, { method: 'POST', body: JSON.stringify(body) });
           } catch {}
         }, 5000);
