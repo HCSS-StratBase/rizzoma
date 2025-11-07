@@ -16,7 +16,7 @@ export function Toast() {
       if (typeof e.detail === 'string') {
         setType('info');
         setMsg(e.detail);
-      } else if (e.detail && typeof e.detail === 'object') {
+      } else if (e.detail !== null && typeof e.detail === 'object') {
         setType(e.detail.type || 'info');
         setMsg(e.detail.message);
       }

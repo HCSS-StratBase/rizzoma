@@ -28,9 +28,9 @@ export function TopicDetail({ id, isAuthed = false }: { id: string; isAuthed?: b
     if (cNextBookmark) params.set('bookmark', cNextBookmark);
     const rc = await api(`/api/topics/${encodeURIComponent(id)}/comments?` + params.toString());
     if (rc.ok) {
-      type CommentsResp = { comments: Comment[]; hasMore?: boolean; nextBookmark?: string };
-      const rcData = (rc.data as Partial<CommentsResp> | null) || null;
-      const arr = Array.isArray(rcData?.comments) ? rcData!.comments! : [];
+      type CommentsResp = { comments?: Comment[]; hasMore?: boolean; nextBookmark?: string };
+      const rcData = (rc.data as CommentsResp | null) || null;
+      const arr = Array.isArray(rcData?.comments) ? (rcData?.comments as Comment[]) : [];
       setComments(arr);
       setCHasMore(Boolean(rcData?.hasMore));
       setCNextBookmark(typeof rcData?.nextBookmark === 'string' && rcData.nextBookmark !== '' ? rcData.nextBookmark : undefined);
