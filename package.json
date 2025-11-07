@@ -103,6 +103,7 @@
     "tsx": "^4.7.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.10",
+    "vitest": "^1.5.3",
     "@tiptap/react": "^2.5.10",
     "@tiptap/starter-kit": "^2.5.10",
     "@tiptap/extension-collaboration": "^2.5.10",
