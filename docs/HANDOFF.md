@@ -15,10 +15,13 @@ Current State
   - Active: PR #24 (phase4/editor-yjs-tiptap-pt2) — rebased on master, conflicts resolved; CI green path adjusted (middleware tests only) pending route-test stabilization.
 
 Active Work (Milestone B)
-- Next branch: phase4/editor-yjs-tiptap-pt2 (to be created)
-  - Materialize editor text for search (server helper + index notes).
-  - Per‑blip editor mount in WaveView (still behind flag).
-  - Tests: routes + minimal client.
+- Branch: phase4/editor-yjs-tiptap-pt3 (active)
+  - Compaction/retention policy for snapshots/updates (server placeholder added).
+  - Basic search UI surfacing materialized text.
+  - Editor mount/scroll/focus polish; tests.
+
+- Branch: phase4/ci-stabilize (active)
+  - Re‑enable full test suite; lockfile normalization on Node 20.19.0; remove gating after stability.
 
 Next Steps
 1) PR #24 (Part 2) — verify CI on GitHub after rebase push; if red, fix in small commits.

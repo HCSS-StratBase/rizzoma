@@ -19,9 +19,10 @@ Status: Milestone B (IN PROGRESS). Feature-flagged; safe to keep merged.
   - WaveView mount: toggle button in `src/client/components/WaveView.tsx` shows the editor for the current wave. If the server flag is off, a disabled note appears.
 
 - Server: `src/server/routes/editor.ts`
-  - `GET /api/editor/:waveId/snapshot` → `{ snapshotB64, nextSeq }`
+  - `GET /api/editor/:waveId/snapshot` → `{ snapshotB64, nextSeq }` (accepts optional `?blipId=` to prefer blip‑specific snapshot)
   - `POST /api/editor/:waveId/snapshot { snapshotB64, text?, blipId? }` — saves the latest snapshot and optional plain text and blip context.
   - `POST /api/editor/:waveId/updates { seq, updateB64 }` — stores incremental updates (reserved for realtime providers).
+  - `POST /api/editor/:waveId/compact` — dev/admin placeholder for compaction/retention.
   - `GET /api/editor/search?q=foo&limit=20&blipId=...` — finds waves/blips by materialized text (dev/simple Mango regex).
   - Emits socket events: `editor:snapshot`, `editor:update` (used by clients to refresh state if needed).
 
@@ -31,4 +32,4 @@ Status: Milestone B (IN PROGRESS). Feature-flagged; safe to keep merged.
 - Materialize text for search and indexing. (Initial version implemented client-side; server stores `text` alongside snapshot.)
 - Recovery tools: rebuild a clean snapshot from updates.
 - Basic editor mount in WaveView for selected blip (in progress; initial wave-level mount available behind toggle).
-  - WaveView now passes current blip id to the editor when the toggle is on; persistence remains wave-level but snapshots are tagged with `blipId` for search.
+  - WaveView now passes current blip id to the editor when the toggle is on; persistence prefers per‑blip snapshots when provided.

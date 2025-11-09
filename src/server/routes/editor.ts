@@ -102,6 +102,19 @@ if (!ENABLED) {
     }
   });
 
+  // POST /api/editor/:waveId/compact — dev/admin: compact snapshot/updates
+  router.post('/:waveId/compact', async (req, res) => {
+    const waveId = req.params.waveId;
+    try {
+      // For now, a no-op placeholder that returns ok. Real impl will:
+      // 1) Fold updates into latest snapshot
+      // 2) Remove older updates per retention policy
+      res.json({ ok: true, waveId, compacted: false });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'compact_error' });
+    }
+  });
+
   // GET /api/editor/search?q=foo&limit=20 — find waves with materialized text match
   router.get('/search', async (req, res) => {
     try {
