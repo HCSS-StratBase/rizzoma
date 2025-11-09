@@ -35,27 +35,21 @@ describe('routes: /api/auth', () => {
     goodHash = await bcrypt.hash('pw123456', 10);
     // Mock global fetch used by couch helpers
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const realFetch = global.fetch as any;
-    global.fetch = (async (url: any, init?: any) => {
+    const realFetch = global.fetch as (url: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+    global.fetch = (async (url: RequestInfo | URL, init?: RequestInit) => {
       const u = new URL(String(url));
       const path = u.pathname;
-      const method = (init?.method || 'GET').toUpperCase();
+      const method = ((init?.method as string | undefined) ?? 'GET').toUpperCase();
       if ((u.hostname === '127.0.0.1' || u.hostname === 'localhost') && path.startsWith('/api/')) {
         return realFetch(url, init);
       }
-      const body = init?.body ? JSON.parse(init.body.toString()) : undefined;
-      const okResp = (obj: any, status = 200) => ({
-        ok: status >= 200 && status < 300,
-        status,
-        statusText: 'OK',
-        text: async () => JSON.stringify(obj),
-        json: async () => obj,
-      } as any);
+      const body = init?.body ? JSON.parse((init.body as string).toString()) as Record<string, unknown> : undefined;
+      const okResp = (obj: unknown, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
       if (method === 'POST' && path.endsWith('/_find')) {
         // Branch by selector to simulate existing users and login
-        const sel = body?.selector || {};
-        if (sel.email === 'dup@example.com') return okResp({ docs: [{ _id: 'u-dup', type: 'user', email: 'dup@example.com', passwordHash: goodHash }] });
-        if (sel.email === 'user@example.com') return okResp({ docs: [{ _id: 'u1', type: 'user', email: 'user@example.com', passwordHash: goodHash }] });
+        const sel = (body?.['selector'] as Record<string, unknown> | undefined) || {};
+        if (sel['email'] === 'dup@example.com') return okResp({ docs: [{ _id: 'u-dup', type: 'user', email: 'dup@example.com', passwordHash: goodHash }] });
+        if (sel['email'] === 'user@example.com') return okResp({ docs: [{ _id: 'u1', type: 'user', email: 'user@example.com', passwordHash: goodHash }] });
         return okResp({ docs: [] });
       }
       if (method === 'POST' && /\/[^/]+$/.test(path)) {
@@ -63,7 +57,7 @@ describe('routes: /api/auth', () => {
         return okResp({ ok: true, id: 'u-new', rev: '1-x' }, 201);
       }
       return okResp({}, 404);
-    }) as any;
+    }) as typeof global.fetch;
 
     const authRouter = (await import('../server/routes/auth')).default;
     app = express();
@@ -75,7 +69,8 @@ describe('routes: /api/auth', () => {
 
   it('registers a new user', async () => {
     const server = app.listen(0);
-    const port = (server.address() as any).port;
+    const addr = server.address();
+    const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
     const resp = await fetch(`http://127.0.0.1:${port}/api/auth/register`, {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'new@example.com', password: 'pw123456' })
     });
@@ -87,7 +82,8 @@ describe('routes: /api/auth', () => {
 
   it('rejects duplicate email', async () => {
     const server = app.listen(0);
-    const port = (server.address() as any).port;
+    const addr = server.address();
+    const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
     const resp = await fetch(`http://127.0.0.1:${port}/api/auth/register`, {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'dup@example.com', password: 'pw123456' })
     });
@@ -99,7 +95,8 @@ describe('routes: /api/auth', () => {
 
   it('logs in a user', async () => {
     const server = app.listen(0);
-    const port = (server.address() as any).port;
+    const addr = server.address();
+    const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
     const resp = await fetch(`http://127.0.0.1:${port}/api/auth/login`, {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'user@example.com', password: 'pw123456' })
     });

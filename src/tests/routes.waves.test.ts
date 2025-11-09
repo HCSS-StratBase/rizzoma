@@ -9,22 +9,15 @@ describe('routes: /api/waves', () => {
   app.use('/api/waves', wavesRouter);
 
   beforeAll(() => {
-    const realFetch = global.fetch as any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    global.fetch = (async (url: any, init?: any) => {
+    const realFetch = global.fetch as (url: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+    global.fetch = (async (url: RequestInfo | URL, init?: RequestInit) => {
       const u = new URL(String(url));
       const path = u.pathname;
-      const method = (init?.method || 'GET').toUpperCase();
+      const method = ((init?.method as string | undefined) ?? 'GET').toUpperCase();
       if ((u.hostname === '127.0.0.1' || u.hostname === 'localhost') && path.startsWith('/api/')) {
         return realFetch(url, init);
       }
-      const okResp = (obj: any, status = 200) => ({
-        ok: status >= 200 && status < 300,
-        status,
-        statusText: 'OK',
-        text: async () => JSON.stringify(obj),
-        json: async () => obj,
-      } as any);
+      const okResp = (obj: unknown, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json' } });
       if (method === 'POST' && path.endsWith('/_find')) {
         // List waves (two docs)
         return okResp({ docs: [
@@ -37,12 +30,13 @@ describe('routes: /api/waves', () => {
         return okResp({ _id: 'w1', type: 'wave', title: 'First', createdAt: 1, updatedAt: 1 });
       }
       return okResp({}, 404);
-    }) as any;
+    }) as typeof global.fetch;
   });
 
   it('lists waves with hasMore calculation', async () => {
     const server = app.listen(0);
-    const port = (server.address() as any).port;
+    const addr = server.address();
+    const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
     const resp = await fetch(`http://127.0.0.1:${port}/api/waves?limit=1`);
     const body = await resp.json();
     server.close();
@@ -54,7 +48,8 @@ describe('routes: /api/waves', () => {
 
   it('returns wave and blip tree (empty blips ok)', async () => {
     const server = app.listen(0);
-    const port = (server.address() as any).port;
+    const addr = server.address();
+    const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
     const resp = await fetch(`http://127.0.0.1:${port}/api/waves/w1`);
     const body = await resp.json();
     server.close();
@@ -63,4 +58,3 @@ describe('routes: /api/waves', () => {
     expect(Array.isArray(body.blips)).toBe(true);
   });
 });
-

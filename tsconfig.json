@@ -43,15 +43,16 @@
       "@types/*": ["src/types/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*",
+    "src/tests/**/*"
+  ],
   "exclude": [
     "node_modules",
     "dist",
     "build",
     "coverage",
     "src/static/js/**/*",
-    "**/*.test.ts",
-    "**/*.spec.ts",
     "src/server/couch_views/**/*",
     "src/share/**/*"
   ]

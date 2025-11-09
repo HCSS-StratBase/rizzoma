@@ -2,8 +2,7 @@
 import { vi, afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 // Minimal jest global mapping
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const jestCompat: any = {
+const jestCompat = {
   fn: vi.fn,
   spyOn: vi.spyOn,
   mock: vi.mock,
@@ -12,10 +11,10 @@ const jestCompat: any = {
   resetModules: vi.resetModules,
   clearAllMocks: vi.clearAllMocks,
   restoreAllMocks: vi.restoreAllMocks,
-};
-// @ts-ignore
-globalThis.jest = jestCompat;
+} as const;
+// define a global 'jest' object for legacy tests, without using any
+// Assign compat object to global without augmenting ambient 'jest' module
+(globalThis as unknown as { jest?: typeof jestCompat }).jest = jestCompat;
 
 // Re-export vitest globals for tests that import them
 export { vi, afterAll, afterEach, beforeAll, beforeEach, describe, expect, it };
-
