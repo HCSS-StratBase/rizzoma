@@ -13,13 +13,17 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '20.19.0'
           cache: 'npm'
+      - name: Configure npm
+        run: |
+          npm config set fund false
+          npm config set audit false
       - name: Install dependencies (skip Cypress binary)
         env:
           CYPRESS_INSTALL_BINARY: '0'
         run: |
-          npm install
+          npm install --no-audit --no-fund
       - name: Typecheck
         run: npm run typecheck
       - name: Lint (non-blocking)
