@@ -16,7 +16,9 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: any) => void }) {
     setBusy(false);
     if (!r.ok) {
       setError(kind === 'login' ? 'Login failed' : 'Register failed');
-      toast(`${kind==='login'?'Login':'Register'} failed${r.requestId?` (${r.requestId})`:''}`,'error');
+      const reqId = (r as unknown as { requestId?: string | undefined }).requestId;
+      const idTag = (reqId !== undefined && reqId !== '') ? ` (${reqId})` : '';
+      toast(`${kind==='login'?'Login':'Register'} failed${idTag}`,'error');
     } else {
       onSignedIn(r.data);
       toast(kind==='login'?'Logged in':'Registered','info');
@@ -29,10 +31,10 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: any) => void }) {
       <div style={{ display: 'flex', gap: 8 }}>
         <input placeholder="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <input placeholder="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <button onClick={() => act('login')} disabled={busy}>Login</button>
-        <button onClick={() => act('register')} disabled={busy}>Register</button>
+        <button onClick={() => { void act('login'); }} disabled={busy}>Login</button>
+        <button onClick={() => { void act('register'); }} disabled={busy}>Register</button>
       </div>
-      {error ? <div style={{ color: 'red', marginTop: 8 }}>{error}</div> : null}
+      {error !== null ? <div style={{ color: 'red', marginTop: 8 }}>{error}</div> : null}
     </div>
   );
 }
