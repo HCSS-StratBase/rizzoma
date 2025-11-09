@@ -24,7 +24,7 @@ jobs:
         env:
           CYPRESS_INSTALL_BINARY: '0'
         run: |
-          npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund --no-optional || npm install --no-audit --no-fund --no-optional
       - name: Typecheck
         run: npm run typecheck
       - name: Lint (non-blocking)
