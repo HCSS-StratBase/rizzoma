@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { findOne, insertDoc, updateDoc, createIndex } from '../lib/couch.js';
+import { findOne, find, insertDoc, updateDoc, deleteDoc, createIndex } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
 
 // Feature flag: set EDITOR_ENABLE=1 to enable endpoints
@@ -106,10 +106,41 @@ if (!ENABLED) {
   router.post('/:waveId/compact', async (req, res) => {
     const waveId = req.params.waveId;
     try {
-      // For now, a no-op placeholder that returns ok. Real impl will:
-      // 1) Fold updates into latest snapshot
-      // 2) Remove older updates per retention policy
-      res.json({ ok: true, waveId, compacted: false });
+      const { default: Y } = await import('yjs');
+      // 1) Load latest snapshot (wave-level)
+      let snap: YDocSnapshot | null = null;
+      try { snap = await findOne<YDocSnapshot>({ type: 'yjs_snapshot', waveId }); } catch {}
+      const ydoc = new (Y as any).Doc();
+      if (snap?.snapshotB64) {
+        try { (Y as any).applyUpdate(ydoc, Buffer.from(snap.snapshotB64, 'base64')); } catch {}
+      }
+      // 2) Load updates for wave, apply in seq order
+      try { await createIndex(['type','waveId','seq'], 'idx_yjs_update_seq').catch(() => undefined); } catch {}
+      const r = await find<YDocUpdate>({ type: 'yjs_update', waveId }, { limit: 10000 });
+      const updates = (r.docs || []).slice().sort((a, b) => Number((a as any).seq) - Number((b as any).seq));
+      for (const u of updates) {
+        const b64 = (u as any).updateB64 as string | undefined;
+        if (b64) {
+          try { (Y as any).applyUpdate(ydoc, Buffer.from(b64, 'base64')); } catch {}
+        }
+      }
+      // 3) Write fresh snapshot
+      const comp = (Y as any).encodeStateAsUpdate(ydoc) as Uint8Array;
+      const b64 = Buffer.from(comp).toString('base64');
+      const now = Date.now();
+      const existing = snap;
+      const doc: YDocSnapshot = existing ? { ...existing, snapshotB64: b64, updatedAt: now } : { type: 'yjs_snapshot', waveId, snapshotB64: b64, updatedAt: now };
+      const wr = existing && (existing as any)._id ? await updateDoc(doc as any) : await insertDoc(doc as any);
+      // 4) Retention: remove all updates (simple policy for now)
+      let deleted = 0;
+      for (const u of updates) {
+        try {
+          const id = (u as any)._id as string | undefined;
+          const rev = (u as any)._rev as string | undefined;
+          if (id && rev) { await deleteDoc(id, rev); deleted += 1; }
+        } catch {}
+      }
+      res.json({ ok: true, waveId, snapshotId: wr.id, deleted });
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'compact_error' });
     }
