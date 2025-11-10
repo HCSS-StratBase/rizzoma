@@ -7,12 +7,14 @@ export default defineConfig({
     include: ['src/tests/**/*.test.ts'],
     setupFiles: ['src/tests/setup.ts'],
     pool: 'forks',
-    deps: {
-      // Force Node resolution for CJS server deps instead of Vite pre-bundling
-      external: [
-        'express','qs','body-parser','cookie-parser','cors','express-session',
-        'nano','node-fetch','winston','socket.io','socket.io-client'
-      ],
+    server: {
+      deps: {
+        // Force Node resolution for CJS server deps instead of Vite pre-bundling
+        external: [
+          'express','qs','body-parser','cookie-parser','cors','express-session',
+          'nano','node-fetch','winston','socket.io','socket.io-client'
+        ],
+      },
     },
   },
 });
