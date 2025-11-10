@@ -47,7 +47,6 @@ export function subscribeLinks(onChange: () => void): () => void {
     s.off('link:deleted', handler);
   };
 }
-
 export function subscribeEditor(waveId: string, onChange: () => void): () => void {
   const s = getSocket();
   const handler = (p: any) => { if (!p || p.waveId !== waveId) return; onChange(); };

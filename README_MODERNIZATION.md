@@ -109,17 +109,13 @@ As of now, the modern stack is running end‑to‑end in development:
 
 Note: As we progress, Waves will become the primary UX; Topics remain for migration and compatibility until editor + migration are complete.
 
-<<<<<<< HEAD
 ### Links & Reparenting (Milestone B+)
 
-- See docs/LINKS_REPARENT.md for full details.
+- See `docs/LINKS_REPARENT.md` for API and UI details.
 
 ### Editor (Milestone B, behind flag)
 
-- See docs/EDITOR.md for enablement, snapshot flow, and roadmap.
-
-=======
->>>>>>> origin/master
+- See `docs/EDITOR.md` for enablement, snapshot flow, and roadmap.
 Remaining Phase‑1 items before a production cut:
 
 - Replace in‑memory filtering for topics search/pagination with CouchDB Mango/view queries
@@ -384,6 +380,35 @@ POST /api/waves/seed_sample?depth=2&breadth=2
 
 - Only available when `NODE_ENV !== 'production'`.
 - Creates a wave `demo:<timestamp>` and a small blip tree for immediate UI testing.
+
+### Waves Unread/Next (Milestone A)
+
+- `GET /api/waves/:id/unread` → `{ unread: string[], total: number, read: number }`
+- `GET /api/waves/:id/next?after=<blipId>` → `{ next: string | null }`
+- `GET /api/waves/:id/prev?before=<blipId>` → `{ prev: string | null }`
+- `POST /api/waves/:waveId/blips/:blipId/read` → `{ ok: true, id, rev }`
+
+Notes:
+- Read state stored as docs of type `read` (`userId`, `waveId`, `blipId`, `readAt`), indexed on `['type','userId','waveId']`.
+- Client highlights unread and supports a “Next” button; keyboard `j`/`k` jumps next/previous unread.
+
+### Dev-only Materialization (Milestone A)
+
+During migration, a dev-only endpoint helps create minimal `wave` docs for legacy wave IDs:
+
+```
+POST /api/waves/materialize/:id
+```
+
+- Only available when `NODE_ENV !== 'production'`.
+- Derives `createdAt` from earliest blip `createdAt`/`contentTimestamp`.
+- Sets a placeholder `title` (`Wave <id-prefix>`). You can adjust titles later via the UI/API.
+
+Bulk materialize the most recent legacy waves (dev-only):
+
+```
+POST /api/waves/materialize?limit=50
+```
 
 ## Troubleshooting
 

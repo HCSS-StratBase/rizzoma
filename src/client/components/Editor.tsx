@@ -10,7 +10,7 @@ function b64ToUint8Array(b64: string): Uint8Array {
   } catch { return new Uint8Array(); }
 }
 
-export function Editor({ waveId, readOnly = true }: { waveId: string; readOnly?: boolean }) {
+export function Editor({ waveId, blipId, readOnly = true }: { waveId: string; blipId?: string; readOnly?: boolean }) {
   const [enabled, setEnabled] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const viewRef = useRef<HTMLDivElement | null>(null);
@@ -21,7 +21,7 @@ export function Editor({ waveId, readOnly = true }: { waveId: string; readOnly?:
     (async () => {
       try {
         // Check server flag
-        const snap = await api(`/api/editor/${encodeURIComponent(waveId)}/snapshot`);
+        const snap = await api(`/api/editor/${encodeURIComponent(waveId)}/snapshot${blipId ? `?blipId=${encodeURIComponent(blipId)}` : ''}`);
         if (!snap.ok) { setEnabled(false); return; }
 
         const [{ EditorContent, useEditor }, StarterKit, Collaboration, Y] = await Promise.all([
@@ -60,7 +60,11 @@ export function Editor({ waveId, readOnly = true }: { waveId: string; readOnly?:
           try {
             const update = (Y as any).encodeStateAsUpdate(ydoc) as Uint8Array;
             const b64 = Buffer.from(update).toString('base64');
-            await api(`/api/editor/${encodeURIComponent(waveId)}/snapshot`, { method: 'POST', body: JSON.stringify({ snapshotB64: b64 }) });
+            const text = (editor as any)?.getText?.();
+            const body: Record<string, unknown> = { snapshotB64: b64 };
+            if (typeof text === 'string') body['text'] = text;
+            if (typeof blipId === 'string' && blipId.length > 0) body['blipId'] = blipId;
+            await api(`/api/editor/${encodeURIComponent(waveId)}/snapshot`, { method: 'POST', body: JSON.stringify(body) });
           } catch {}
         }, 5000);
         stopTimer = () => window.clearInterval(interval);
@@ -69,7 +73,7 @@ export function Editor({ waveId, readOnly = true }: { waveId: string; readOnly?:
       }
     })();
     return () => { disposed = true; if (stopTimer) stopTimer(); };
-  }, [waveId, readOnly]);
+  }, [waveId, blipId, readOnly]);
 
   if (!enabled) return <div style={{ opacity: 0.7 }}>(Editor disabled or not installed)</div>;
   if (error) return <div style={{ color: 'red' }}>Editor error: {error}</div>;

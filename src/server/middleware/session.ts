@@ -1,10 +1,10 @@
 import session from 'express-session';
-import RedisStore from 'connect-redis';
+import { RedisStore } from 'connect-redis';
 import { createClient } from 'redis';
 
 const redisUrl = process.env['REDIS_URL'] || 'redis://localhost:6379';
 const redisClient = createClient({ url: redisUrl });
-redisClient.connect().catch((e) => console.error('[redis] connect error', e));
+redisClient.connect().catch((e: unknown) => console.error('[redis] connect error', e));
 
 export function sessionMiddleware() {
   return session({
@@ -21,4 +21,3 @@ export function sessionMiddleware() {
     name: 'rizzoma.sid',
   });
 }
-

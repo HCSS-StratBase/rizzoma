@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import { subscribeLinks } from '../lib/socket';
 import { formatTimestamp } from '../lib/format';
 import { BlipContent } from './BlipContent';
+import { Editor } from './Editor';
 
 type BlipNode = { id: string; content: string; createdAt: number; children?: BlipNode[] };
 
@@ -21,6 +22,7 @@ export function WaveView({ id }: { id: string }) {
   const [linksOut, setLinksOut] = useState<Array<{ toBlipId: string; waveId: string }>>([]);
   const [linksIn, setLinksIn] = useState<Array<{ fromBlipId: string; waveId: string }>>([]);
   const [newLinkTo, setNewLinkTo] = useState<string>('');
+  const [showEditor, setShowEditor] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -156,9 +158,19 @@ export function WaveView({ id }: { id: string }) {
     });
     return () => unsub();
   }, [current]);
+
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
   return (
     <section>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <h2 style={{ margin: 0, padding: 0 }}>{title || 'Wave'}</h2>
+        <button onClick={()=> setShowEditor(v=>!v)} style={{ marginLeft: 'auto' }}>{showEditor ? 'Hide editor' : (current ? 'Show editor for current blip' : 'Show editor')}</button>
+      </div>
+      {showEditor ? (
+        <div style={{ margin: '12px 0' }}>
+          <Editor waveId={id} blipId={current ?? undefined} readOnly={false} />
+        </div>
+      ) : null}
       <a href="#/waves">← Back</a>
       <h2>{title}</h2>
       <div style={{ marginBottom: 6, fontSize: 14, color: '#444' }}>
@@ -180,7 +192,15 @@ export function WaveView({ id }: { id: string }) {
             <button onClick={async ()=>{
               const to = newLinkTo.trim(); if (!to) return;
               const r = await api('/api/links', { method: 'POST', body: JSON.stringify({ fromBlipId: current, toBlipId: to, waveId: id }) });
-              if (r.ok) { setNewLinkTo(''); const lr = await api(`/api/blips/${encodeURIComponent(current)}/links`); if (lr.ok) { const d = lr.data as any; setLinksOut((d?.out||[]).map((x:any)=>({toBlipId:String(x.toBlipId), waveId:String(x.waveId)}))); setLinksIn((d?.in||[]).map((x:any)=>({fromBlipId:String(x.fromBlipId), waveId:String(x.waveId)}))); } }
+              if (r.ok) {
+                setNewLinkTo('');
+                const lr = await api(`/api/blips/${encodeURIComponent(current)}/links`);
+                if (lr.ok) {
+                  const d = lr.data as any;
+                  setLinksOut((d?.out||[]).map((x:any)=>({toBlipId:String(x.toBlipId), waveId:String(x.waveId)})));
+                  setLinksIn((d?.in||[]).map((x:any)=>({fromBlipId:String(x.fromBlipId), waveId:String(x.waveId)})));
+                }
+              }
             }}>
               Add link
             </button>
@@ -191,7 +211,15 @@ export function WaveView({ id }: { id: string }) {
               <ul>
                 {linksOut.map((l)=> (
                   <li key={`out:${current}:${l.toBlipId}`}>
-                    → <code>{l.toBlipId}</code> <button onClick={async ()=>{ await api(`/api/links/${encodeURIComponent(current)}/${encodeURIComponent(l.toBlipId)}`, { method: 'DELETE' }); const lr = await api(`/api/blips/${encodeURIComponent(current)}/links`); if (lr.ok) { const d = lr.data as any; setLinksOut((d?.out||[]).map((x:any)=>({toBlipId:String(x.toBlipId), waveId:String(x.waveId)}))); setLinksIn((d?.in||[]).map((x:any)=>({fromBlipId:String(x.fromBlipId), waveId:String(x.waveId)}))); } }}>remove</button>
+                    → <code>{l.toBlipId}</code> <button onClick={async ()=>{
+                      await api(`/api/links/${encodeURIComponent(current)}/${encodeURIComponent(l.toBlipId)}`, { method: 'DELETE' });
+                      const lr = await api(`/api/blips/${encodeURIComponent(current)}/links`);
+                      if (lr.ok) {
+                        const d = lr.data as any;
+                        setLinksOut((d?.out||[]).map((x:any)=>({toBlipId:String(x.toBlipId), waveId:String(x.waveId)})));
+                        setLinksIn((d?.in||[]).map((x:any)=>({fromBlipId:String(x.fromBlipId), waveId:String(x.waveId)})));
+                      }
+                    }}>remove</button>
                   </li>
                 ))}
               </ul>
@@ -218,7 +246,6 @@ function BlipTreeWithState({ nodes, unread, current, openMap, onToggle }: { node
   const render = (n: BlipNode) => {
     const isOpen = openMap[n.id] !== false;
     return (
-      <li key={n.id} data-blip-id={n.id} style={{ background: current === n.id ? '#e8f8f2' : unread.has(n.id) ? '#e9fbe9' : undefined }} onClick={(e)=>{ if ((e.target as HTMLElement).tagName.toLowerCase() !== 'button') { (window as any).setWaveCurrent?.(n.id); } }}>
       <li key={n.id} data-blip-id={n.id} style={{ background: current === n.id ? '#e8f8f2' : unread.has(n.id) ? '#e9fbe9' : undefined }} onClick={(e)=>{ if ((e.target as HTMLElement).tagName.toLowerCase() !== 'button') { (window as any).setWaveCurrent?.(n.id); } }}>
         <button onClick={() => onToggle(n.id, !isOpen)} style={{ marginRight: 6 }}>{isOpen ? '-' : '+'}</button>
         <span style={{ color: '#555' }}>{formatTimestamp(n.createdAt)}</span>
@@ -268,3 +295,4 @@ function useInitCurrentSetter(setCurrent: (id: string)=>void) {
     return () => { (window as any).setWaveCurrent = prev; };
   }, [setCurrent]);
 }
+
