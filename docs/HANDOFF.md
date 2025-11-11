@@ -12,7 +12,7 @@ Current State
   - Milestone B foundation merged (#22): Links APIs, reparent endpoint, WaveView links panel, editor endpoints (flagged).
   - Milestone B Part 1 merged (#23, squash): Editor (TipTap + Yjs) snapshot save/restore, WaveView toggle.
 Open PRs:
-  - #30 Milestone B+: Editor Realtime (incremental updates + client apply). Branch: `phase4/editor-realtime`.
+  - #32 Milestone B+: Editor Rooms/Presence (room-scoped updates). Branch: `phase4/editor-rooms-presence`.
 
 Active Work (Milestone B)
 - Next branch: phase4/editor-yjs-tiptap-pt2 (to be created)
@@ -21,11 +21,11 @@ Active Work (Milestone B)
   - Tests: routes + minimal client.
 
 Next Steps
-1) PR #30 — verify CI on GitHub; merge with squash when green.
-2) Editor Realtime follow-ups:
-   - Room scoping per wave/blip; presence/awareness.
+1) PR #32 — verify CI on GitHub; merge with squash when green.
+2) Editor follow-ups:
+   - Presence/awareness identity (basic user display) alongside counts.
    - Search materialization polish (indexes, endpoint hardening).
-   - Recovery tools: rebuild snapshot from updates.
+   - Recovery tooling: endpoint added `POST /api/editor/:waveId/rebuild` (blipId optional) — consider admin UI.
 
 Operational Policies (from AGENTS.md)
 - No approval prompts; assume Yes.
