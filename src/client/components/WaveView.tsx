@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { subscribeLinks } from '../lib/socket';
+import { subscribeLinks, subscribeEditorPresence } from '../lib/socket';
 import { formatTimestamp } from '../lib/format';
 import { BlipContent } from './BlipContent';
 import { Editor } from './Editor';
@@ -23,6 +23,8 @@ export function WaveView({ id }: { id: string }) {
   const [linksIn, setLinksIn] = useState<Array<{ fromBlipId: string; waveId: string }>>([]);
   const [newLinkTo, setNewLinkTo] = useState<string>('');
   const [showEditor, setShowEditor] = useState<boolean>(false);
+  const [presentCount, setPresentCount] = useState<number>(0);
+  const [presentUsers, setPresentUsers] = useState<Array<{ userId?: string; name?: string }>>([]);
 
   useEffect(() => {
     (async () => {
@@ -66,6 +68,16 @@ export function WaveView({ id }: { id: string }) {
         }, 80);
       } catch {}
     })();
+  }, [id]);
+
+  // Presence: subscribe to wave-level presence; updates when wave id changes
+  useEffect(() => {
+    const unsubscribe = subscribeEditorPresence(id, undefined, (p) => {
+      setPresentCount(Number(p?.count || 0));
+      const users = Array.isArray(p?.users) ? p.users : [];
+      setPresentUsers(users as any);
+    });
+    return () => { try { unsubscribe(); } catch {} };
   }, [id]);
 
   const persist = (next: Record<string, boolean>) => {
@@ -164,7 +176,12 @@ export function WaveView({ id }: { id: string }) {
     <section>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2 style={{ margin: 0, padding: 0 }}>{title || 'Wave'}</h2>
-        <button onClick={()=> setShowEditor(v=>!v)} style={{ marginLeft: 'auto' }}>{showEditor ? 'Hide editor' : (current ? 'Show editor for current blip' : 'Show editor')}</button>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span title={presentUsers.map(u=>u.name || u.userId || 'anon').join(', ') || 'No users present'}>
+            Present: {presentCount}
+          </span>
+          <button onClick={()=> setShowEditor(v=>!v)}>{showEditor ? 'Hide editor' : (current ? 'Show editor for current blip' : 'Show editor')}</button>
+        </div>
       </div>
       {showEditor ? (
         <div style={{ margin: '12px 0' }}>
@@ -295,4 +312,3 @@ function useInitCurrentSetter(setCurrent: (id: string)=>void) {
     return () => { (window as any).setWaveCurrent = prev; };
   }, [setCurrent]);
 }
-

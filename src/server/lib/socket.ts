@@ -3,8 +3,9 @@ import { Server } from 'socket.io';
 
 let io: Server | undefined;
 
-// Track lightweight presence per room
-const presence = new Map<string, Set<string>>();
+// Track lightweight presence per room { socketId -> identity }
+type PresenceIdentity = { userId?: string; name?: string };
+const presence = new Map<string, Map<string, PresenceIdentity>>();
 
 function roomForWave(waveId: string) { return `ed:wave:${waveId}`; }
 function roomForBlip(waveId: string, blipId: string) { return `ed:blip:${waveId}:${blipId}`; }
@@ -28,15 +29,17 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
       try {
         const waveId = String(p?.waveId || '').trim();
         const blipId = String(p?.blipId || '').trim();
+        const userId = p?.userId ? String(p.userId) : undefined;
+        const name = p?.name ? String(p.name) : undefined;
         if (!waveId) return;
         const rooms: string[] = [roomForWave(waveId)];
         if (blipId) rooms.push(roomForBlip(waveId, blipId));
         rooms.forEach(r => {
           socket.join(r);
-          const set = presence.get(r) || new Set<string>();
-          set.add(socket.id);
-          presence.set(r, set);
-          io?.to(r).emit('editor:presence', { room: r, waveId, blipId: blipId || undefined, count: set.size });
+          const map = presence.get(r) || new Map<string, PresenceIdentity>();
+          map.set(socket.id, { userId, name });
+          presence.set(r, map);
+          io?.to(r).emit('editor:presence', { room: r, waveId, blipId: blipId || undefined, count: map.size, users: Array.from(map.values()).filter(Boolean) });
         });
       } catch {}
     });
@@ -50,18 +53,18 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
         if (blipId) rooms.push(roomForBlip(waveId, blipId));
         rooms.forEach(r => {
           socket.leave(r);
-          const set = presence.get(r);
-          if (set) { set.delete(socket.id); io?.to(r).emit('editor:presence', { room: r, waveId, blipId: blipId || undefined, count: set.size }); }
+          const map = presence.get(r);
+          if (map) { map.delete(socket.id); io?.to(r).emit('editor:presence', { room: r, waveId, blipId: blipId || undefined, count: map.size, users: Array.from(map.values()).filter(Boolean) }); }
         });
       } catch {}
     });
 
     socket.on('disconnect', () => {
       // clear all rooms presence for this socket
-      for (const [r, set] of presence.entries()) {
-        if (set.delete(socket.id)) {
+      for (const [r, map] of presence.entries()) {
+        if (map.delete(socket.id)) {
           const [_, scope, waveId, blipId] = r.split(':');
-          io?.to(r).emit('editor:presence', { room: r, waveId, blipId: scope === 'blip' ? blipId : undefined, count: set.size });
+          io?.to(r).emit('editor:presence', { room: r, waveId, blipId: scope === 'blip' ? blipId : undefined, count: map.size, users: Array.from(map.values()).filter(Boolean) });
         }
       }
     });
