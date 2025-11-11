@@ -60,3 +60,32 @@ export function subscribeEditor(waveId: string, onChange: (payload: any) => void
     s.off('editor:update', handler);
   };
 }
+
+export function subscribeEditorPresence(
+  waveId: string,
+  blipId: string | undefined,
+  onPresence: (payload: { room: string; waveId: string; blipId?: string; count: number; users?: Array<{ userId?: string; name?: string }> }) => void,
+): () => void {
+  const s = getSocket();
+  // Join presence with optional identity by best-effort fetching /api/auth/me
+  (async () => {
+    try {
+      const meResp = await fetch('/api/auth/me', { credentials: 'include' });
+      let userId: string | undefined;
+      try { const body = await meResp.json(); userId = body?.id ? String(body.id) : undefined; } catch {}
+      s.emit('editor:join', { waveId, blipId, userId });
+    } catch {
+      s.emit('editor:join', { waveId, blipId });
+    }
+  })();
+  const handler = (p: any) => {
+    if (!p || p.waveId !== waveId) return;
+    if (p.blipId && blipId && p.blipId !== blipId) return;
+    onPresence(p);
+  };
+  s.on('editor:presence', handler);
+  return () => {
+    try { s.emit('editor:leave', { waveId, blipId }); } catch {}
+    s.off('editor:presence', handler);
+  };
+}

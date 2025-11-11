@@ -13,7 +13,7 @@ Status: Milestone B (IN PROGRESS). Feature-flagged; safe to keep merged.
   - Loads `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-collaboration`, and `yjs` dynamically.
   - Creates a `Y.Doc` and mounts TipTap with Collaboration extension.
 - Realtime: listens to `ydoc` updates and POSTs incremental updates to `/api/editor/:waveId/updates` with a running `seq`. Subscribes to `editor:update` via Socket.IO and applies remote updates.
-  - Room scoping: client emits `editor:join { waveId, blipId?, userId? }` to receive targeted updates; emits `editor:leave` on unmount. Server tracks lightweight presence and broadcasts `editor:presence { room, waveId, blipId?, count, users?: Array<{ userId?: string; name?: string }> }`.
+  - Room scoping: client emits `editor:join { waveId, blipId?, userId? }` to receive targeted updates; emits `editor:leave` on unmount. Server tracks lightweight presence and broadcasts `editor:presence { room, waveId, blipId?, count, users?: Array<{ userId?: string; name?: string }> }`. WaveView shows a “Present: N” badge with a tooltip of names/ids.
 - Snapshot cadence: every 5 seconds, encodes full state and POSTs to `/snapshot` for durability and search.
   - Materialized text: on each snapshot, also POSTs `text` (via `editor.getText()`) for search.
   - Per‑blip context: include optional `blipId` on load/save so search and updates can be scoped to a blip.
