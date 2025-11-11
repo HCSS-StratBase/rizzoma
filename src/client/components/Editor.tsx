@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api';
+import { subscribeEditor } from '../lib/socket';
 
 function b64ToUint8Array(b64: string): Uint8Array {
   try {
@@ -35,6 +36,7 @@ export function Editor({ waveId, blipId, readOnly = true }: { waveId: string; bl
         const ydoc = new Y.Doc();
         const data: any = snap.data || {};
         const snapshotB64: string | null = data?.snapshotB64 || null;
+        let nextSeq: number = Number((data?.nextSeq ?? 1)) || 1;
         if (snapshotB64) {
           try { Y.applyUpdate(ydoc, b64ToUint8Array(snapshotB64)); } catch {}
         }
@@ -56,6 +58,18 @@ export function Editor({ waveId, blipId, readOnly = true }: { waveId: string; bl
           (ReactDOM as any).createRoot(mount).render(el);
         }
 
+        // send incremental updates to server as they occur
+        const onDocUpdate = async (update: Uint8Array) => {
+          try {
+            const b64 = Buffer.from(update).toString('base64');
+            const body: Record<string, unknown> = { seq: nextSeq++, updateB64: b64 };
+            if (typeof blipId === 'string' && blipId.length > 0) body['blipId'] = blipId;
+            await api(`/api/editor/${encodeURIComponent(waveId)}/updates`, { method: 'POST', body: JSON.stringify(body) });
+          } catch { /* ignore */ }
+        };
+        ydoc.on('update', onDocUpdate as any);
+
+        // periodic snapshot persistence for durability/search
         const interval = window.setInterval(async () => {
           try {
             const update = (Y as any).encodeStateAsUpdate(ydoc) as Uint8Array;
@@ -67,7 +81,18 @@ export function Editor({ waveId, blipId, readOnly = true }: { waveId: string; bl
             await api(`/api/editor/${encodeURIComponent(waveId)}/snapshot`, { method: 'POST', body: JSON.stringify(body) });
           } catch {}
         }, 5000);
-        stopTimer = () => window.clearInterval(interval);
+        stopTimer = () => { window.clearInterval(interval); try { ydoc.off('update', onDocUpdate as any); } catch {} };
+
+        // subscribe to server-broadcast updates; apply to local doc
+        const unsubscribe = subscribeEditor(waveId, (p) => {
+          try {
+            if (!p || typeof p.updateB64 !== 'string') return;
+            if (p.blipId && blipId && p.blipId !== blipId) return;
+            const arr = b64ToUint8Array(String(p.updateB64));
+            (Y as any).applyUpdate(ydoc, arr);
+          } catch { /* ignore */ }
+        });
+        stopTimer = ((prev) => () => { try { unsubscribe(); } catch {}; prev?.(); })(stopTimer);
       } catch (e: any) {
         if (!disposed) setError(e?.message || 'editor_init_error');
       }

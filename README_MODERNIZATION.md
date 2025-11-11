@@ -99,6 +99,7 @@ As of now, the modern stack is running end‑to‑end in development:
 - CouchDB integration via direct HTTP (Mango `_find` + legacy views as fallback); views deployable via `scripts/deploy-views.js`
 - Server-side paging & search via Mango for topics/comments with cursor (`nextBookmark`) (Phase 2)
 - Read‑only Waves + nested Blips endpoints and initial client views (Phase 3 Milestone A)
+- Editor realtime (initial): broadcast/apply incremental updates behind EDITOR_ENABLE=1 (see docs/EDITOR.md)
 - Docker Compose dev stack (app + CouchDB + Redis + RabbitMQ + Sphinx; optional MinIO)
 - GitHub Actions CI: typecheck, lint and build (and Docker build)
 
