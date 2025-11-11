@@ -13,6 +13,7 @@ Current State
   - Milestone B Part 1 merged (#23, squash): Editor (TipTap + Yjs) snapshot save/restore, WaveView toggle.
 Open PRs:
   - #27 Build/Test: connect-redis import alignment, bcryptjs types, expand tests (auth+topics). Branch: `phase4/editor-yjs-tiptap-pt2`.
+  - #28 Housekeeping: untrack node_modules (remove accidentally committed files under node_modules/; rely on .gitignore). Branch: `housekeeping/untrack-node_modules`.
 
 Active Work (Milestone B)
 - Next branch: phase4/editor-yjs-tiptap-pt2 (to be created)
