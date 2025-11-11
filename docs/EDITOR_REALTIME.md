@@ -1,12 +1,14 @@
-# Editor Realtime (Yjs)
+# Editor Realtime — Summary
 
-Options:
-- y-websocket server adapter (preferred): rooms per wave/blip; auth; persistence bridge
-- HTTP hybrid: continue snapshot/update cadence; poll/merge (fallback)
+Implemented (behind `EDITOR_ENABLE=1`)
+- Incremental updates → `/api/editor/:waveId/updates` and broadcast/apply via Socket.IO.
+- Snapshots every 5s → `/api/editor/:waveId/snapshot` (with optional `text` for search).
+- Rooms/Presence: join/leave per wave/blip; presence payload includes counts and users.
+- Recovery endpoint: `/api/editor/:waveId/rebuild { blipId? }`.
 
-Tasks:
-- Decide adapter; spike with simple room
-- Server: socket auth + room lifecycle; persistence on intervals
-- Client: provider wiring; awareness minimal; retry/backoff
-- Tests: concurrency + conflict cases; compaction compatibility
-- Rollout: flag gated; perf threshold; revert path
+See `docs/EDITOR.md` for details and API shapes.
+
+Next steps
+- Presence identity polish; inline indicators.
+- Recovery UI; search materialization polish.
+
