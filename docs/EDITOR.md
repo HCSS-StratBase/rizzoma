@@ -10,7 +10,8 @@ Status: Milestone B+ (IN PROGRESS). Feature‑flagged; safe to keep merged.
   - Creates a `Y.Doc` and mounts TipTap with Collaboration extension.
   - Realtime: listens to `ydoc` updates and POSTs incrementals to `/api/editor/:waveId/updates` with a running `seq`; subscribes to `editor:update` and applies remote updates.
   - Room scoping: emits `editor:join { waveId, blipId?, userId? }` on mount; emits `editor:leave` on unmount.
-  - Presence UI: WaveView shows “Present: N” with tooltip of user names/ids (from presence payload).
+- Presence UI: WaveView shows “Present: N” with tooltip of user names/ids (from presence payload).
+ - Recovery UI: WaveView includes a "Rebuild snapshot" action (dev/admin) to call `/api/editor/:waveId/rebuild` (scopes to current blip when selected) and surface results.
   - Snapshots: every 5 seconds posts full snapshot to `/snapshot` (with optional `text`) for durability/search.
   - Per‑blip: optional `blipId` scopes snapshots/updates/search.
 
@@ -30,4 +31,3 @@ Status: Milestone B+ (IN PROGRESS). Feature‑flagged; safe to keep merged.
 - Presence identity polish; inline editor-pane indicators.
 - Recovery UI: admin action to trigger rebuild and surface results.
 - Search materialization polish: indexes + endpoint hardening; client search UI.
-

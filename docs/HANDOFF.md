@@ -18,7 +18,7 @@ Open PRs
 
 Next Work
 - Branch: `phase4/editor-recovery-ui`
-  - Recovery UI: admin action to trigger `/api/editor/:waveId/rebuild` (optionally scoped to blip) and surface results.
+  - Recovery UI: [BASIC DONE] WaveView button to trigger `/api/editor/:waveId/rebuild` (scopes to current blip when selected) and show results. Follow‑up: admin UI surface and status feedback.
   - Search materialization polish: add/create indexes; harden search endpoint; simple client search UI.
   - Editor pane presence UI: optional inline identity indicator (names/ids) in editor container.
   - Tests + docs for each step; keep PRs small and feature‑flagged.
@@ -44,4 +44,3 @@ PR Log
 - 2025‑11‑11: #30 merged (B+: realtime incremental updates)
 - 2025‑11‑11: #32 merged (B+: rooms/presence)
 - 2025‑11‑11: #34 merged (B+: presence identity + UI badge)
-

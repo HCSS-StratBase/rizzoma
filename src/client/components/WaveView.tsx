@@ -180,6 +180,23 @@ export function WaveView({ id }: { id: string }) {
           <span title={presentUsers.map(u=>u.name || u.userId || 'anon').join(', ') || 'No users present'}>
             Present: {presentCount}
           </span>
+          <button
+            onClick={async ()=>{
+              try {
+                const body: any = current ? { blipId: current } : {};
+                const r = await api(`/api/editor/${encodeURIComponent(id)}/rebuild`, { method: 'POST', body: JSON.stringify(body) });
+                if (r.ok) {
+                  const applied = (r.data as any)?.applied;
+                  alert(`Rebuilt snapshot${current?` for blip ${current}`:''}. Applied ${applied ?? 0} updates.`);
+                } else {
+                  alert(`Rebuild failed (${r.status})`);
+                }
+              } catch (e: any) { alert(`Rebuild error: ${e?.message || 'unknown'}`); }
+            }}
+            title="Rebuild snapshot from stored updates (dev/admin)"
+          >
+            Rebuild snapshot
+          </button>
           <button onClick={()=> setShowEditor(v=>!v)}>{showEditor ? 'Hide editor' : (current ? 'Show editor for current blip' : 'Show editor')}</button>
         </div>
       </div>
