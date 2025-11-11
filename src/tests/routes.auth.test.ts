@@ -16,9 +16,8 @@ jest.mock('redis', () => ({
     on: () => void 0,
   }),
 }));
-jest.mock('connect-redis', () => ({
-  __esModule: true,
-  RedisStore: class RedisStore {
+jest.mock('connect-redis', () => {
+  class RedisStoreMock {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(_opts: any) {}
     on() {/* no-op */}
@@ -26,8 +25,13 @@ jest.mock('connect-redis', () => ({
     get(_sid: string, cb: (err: any, sess?: any) => void) { cb(null, undefined); }
     set(_sid: string, _sess: any, cb?: (err?: any) => void) { cb?.(); }
     destroy(_sid: string, cb?: (err?: any) => void) { cb?.(); }
-  },
-}));
+  }
+  return {
+    __esModule: true,
+    default: RedisStoreMock,
+    RedisStore: RedisStoreMock,
+  };
+});
 
 describe('routes: /api/auth', () => {
   let app: express.Express;
