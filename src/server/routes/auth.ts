@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import session from 'express-session';
-import { RedisStore } from 'connect-redis';
+import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
 import { z } from 'zod';
 // Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable
