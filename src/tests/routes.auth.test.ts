@@ -1,6 +1,8 @@
 // Use bcryptjs in tests to avoid native binding issues
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-jest.mock('bcrypt', () => require('bcryptjs'));
+vi.mock('bcrypt', async () => {
+  const mod: any = await import('bcryptjs');
+  return { ...mod, default: mod };
+});
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { requestId } from '../server/middleware/requestId';
@@ -16,7 +18,7 @@ jest.mock('redis', () => ({
 }));
 jest.mock('connect-redis', () => ({
   __esModule: true,
-  default: class RedisStore {
+  RedisStore: class RedisStore {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(_opts: any) {}
     on() {/* no-op */}

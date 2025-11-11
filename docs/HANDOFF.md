@@ -11,8 +11,8 @@ Current State
   - Milestone A roll-up merged (#21): Waves read-only + unread/nav, counts, materialize + seeder.
   - Milestone B foundation merged (#22): Links APIs, reparent endpoint, WaveView links panel, editor endpoints (flagged).
   - Milestone B Part 1 merged (#23, squash): Editor (TipTap + Yjs) snapshot save/restore, WaveView toggle.
-- Open PRs: none.
-  - Active: PR #24 (phase4/editor-yjs-tiptap-pt2) — rebased on master, conflicts resolved; CI green path adjusted (middleware tests only) pending route-test stabilization.
+- Open PRs:
+  - #26 Milestone B: Editor Part 2 — per‑blip snapshots + WaveView mount (sync + cleanup). Branch: `phase4/editor-yjs-tiptap-pt2`. CI: middleware tests; route tests to re‑enable incrementally.
 
 Active Work (Milestone B)
 - Next branch: phase4/editor-yjs-tiptap-pt2 (to be created)
@@ -21,7 +21,7 @@ Active Work (Milestone B)
   - Tests: routes + minimal client.
 
 Next Steps
-1) PR #24 (Part 2) — verify CI on GitHub after rebase push; if red, fix in small commits.
+1) PR #26 (Part 2) — verify CI on GitHub after push; if red, fix in small commits.
 2) Editor Part 2 follow-ups on the same branch:
    - Materialize editor text for search (server helper + index notes).
    - Minimal mount of Editor inside WaveView for selected blip (behind flag). [DONE]
@@ -58,5 +58,5 @@ Actions queued after merge:
 - Re‑enable route tests incrementally and expand vitest include.
 - Refresh bundle and copy to GDrive per AGENTS.md.
 PR Log
-- 2025-11-06: PR #23 merged (squash). Opened PR #24 (Part 2).
-  - Progress: Client now posts materialized editor text with snapshots; server stores `text` and exposes `/api/editor/search`.
+- 2025-11-06: PR #23 merged (squash).
+- 2025-11-11: Opened PR #26 (Part 2) — sync with master, per‑blip Editor and WaveView mount, connect‑redis v9 import, typecheck/tests green locally.
