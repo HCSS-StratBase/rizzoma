@@ -40,8 +40,8 @@ jobs:
       - name: Build
         if: ${{ steps.install.outcome == 'success' }}
         run: npm run build
-      - name: Build Docker image
-        if: ${{ steps.install.outcome == 'success' }}
+      - name: Build Docker image (push-only)
+        if: ${{ steps.install.outcome == 'success' && github.event_name != 'pull_request' }}
         uses: docker/build-push-action@v6
         with:
           context: .
