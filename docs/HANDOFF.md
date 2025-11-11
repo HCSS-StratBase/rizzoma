@@ -1,5 +1,7 @@
 ## Handoff Summary — Rizzoma Modernization
 
+Last Updated: 2025-11-11
+
 PR Ops (Agent‑Only)
 - All PR actions are executed via CLI (no UI): create, update body, resolve conflicts, and merge with squash.
 - Commands: `gh pr create`, `gh pr edit`/`gh api -X PATCH ... -f body=...`, `git merge origin/master && git push`, `gh pr merge --squash --delete-branch --admin`.
@@ -12,7 +14,7 @@ Current State
   - Milestone B foundation merged (#22): Links APIs, reparent endpoint, WaveView links panel, editor endpoints (flagged).
   - Milestone B Part 1 merged (#23, squash): Editor (TipTap + Yjs) snapshot save/restore, WaveView toggle.
 Open PRs:
-  - #32 Milestone B+: Editor Rooms/Presence (room-scoped updates). Branch: `phase4/editor-rooms-presence`.
+  - None (Rooms/Presence merged).
 
 Active Work (Milestone B)
 - Next branch: phase4/editor-yjs-tiptap-pt2 (to be created)
@@ -21,11 +23,10 @@ Active Work (Milestone B)
   - Tests: routes + minimal client.
 
 Next Steps
-1) PR #32 — verify CI on GitHub; merge with squash when green.
-2) Editor follow-ups:
+1) Editor follow‑ups:
    - Presence/awareness identity (basic user display) alongside counts.
-   - Search materialization polish (indexes, endpoint hardening).
-   - Recovery tooling: endpoint added `POST /api/editor/:waveId/rebuild` (blipId optional) — consider admin UI.
+   - Search materialization polish (indexes, endpoint hardening); client search UI.
+   - Recovery tooling: endpoint added `POST /api/editor/:waveId/rebuild` (blipId optional) — add admin UI.
 
 Operational Policies (from AGENTS.md)
 - No approval prompts; assume Yes.
@@ -57,6 +58,7 @@ Actions queued after merge:
 - Re‑enable route tests incrementally and expand vitest include.
 - Refresh bundle and copy to GDrive per AGENTS.md.
 PR Log
-- 2025-11-06: PR #23 merged (squash).
-- 2025-11-11: PR #26 merged (Part 2) — per‑blip Editor and WaveView mount; typecheck/tests/build verified locally before merge.
-- 2025-11-11: Opened PR #27 (build/test cleanup) — expand tests to auth+topics, align imports/types for CI.
+- 2025‑11‑06: PR #23 merged (B Part 1: Editor snapshots)
+- 2025‑11‑11: PR #26 merged (B Part 2: Editor per‑blip + WaveView mount)
+- 2025‑11‑11: PR #30 merged (B+: Realtime incremental updates)
+- 2025‑11‑11: PR #32 merged (B+: Rooms/Presence)
