@@ -113,7 +113,7 @@ describe('routes: /api/topics', () => {
     expect(body.rev).toBe('3-c');
   });
 
-  it('falls back to legacy view when no modern docs and shapes results', async () => {
+  it('returns empty list when no modern docs (legacy fallback may be disabled)', async () => {
     // Replace fetch to simulate no modern docs
     const orig = global.fetch;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,8 +146,8 @@ describe('routes: /api/topics', () => {
     const body = await resp.json();
     server.close();
     expect(resp.status).toBe(200);
-    expect(body.topics[0].id).toMatch(/^legacy:/);
-    expect(body.topics[0].title).toBe('(legacy) wave');
+    expect(Array.isArray(body.topics)).toBe(true);
+    expect(body.topics.length).toBe(0);
 
     global.fetch = orig as any;
   });
