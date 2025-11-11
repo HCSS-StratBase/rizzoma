@@ -1,5 +1,7 @@
 # Rizzoma Modernization Guide
 
+For current project status and the restart checklist, see `docs/HANDOFF.md` and `docs/RESTART.md`.
+
 This guide provides step-by-step instructions for modernizing the Rizzoma codebase from its legacy stack to a modern TypeScript-based architecture.
 
 ## Prerequisites

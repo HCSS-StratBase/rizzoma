@@ -1,5 +1,7 @@
 ## Handoff Summary — Rizzoma Modernization
 
+Last Updated: 2025-11-11
+
 PR Ops (Agent‑Only)
 - All PR actions are executed via CLI (no UI): create, update body, resolve conflicts, and merge with squash.
 - Commands: `gh pr create`, `gh pr edit`/`gh api -X PATCH ... -f body=...`, `git merge origin/master && git push`, `gh pr merge --squash --delete-branch --admin`.
@@ -12,7 +14,7 @@ Current State
   - Milestone B foundation merged (#22): Links APIs, reparent endpoint, WaveView links panel, editor endpoints (flagged).
   - Milestone B Part 1 merged (#23, squash): Editor (TipTap + Yjs) snapshot save/restore, WaveView toggle.
 Open PRs:
-  - #30 Milestone B+: Editor Realtime (incremental updates + client apply). Branch: `phase4/editor-realtime`.
+  - None (Editor Realtime merged).
 
 Active Work (Milestone B)
 - Next branch: phase4/editor-yjs-tiptap-pt2 (to be created)
@@ -21,11 +23,10 @@ Active Work (Milestone B)
   - Tests: routes + minimal client.
 
 Next Steps
-1) PR #30 — verify CI on GitHub; merge with squash when green.
-2) Editor Realtime follow-ups:
+1) Editor Realtime follow‑ups:
    - Room scoping per wave/blip; presence/awareness.
    - Search materialization polish (indexes, endpoint hardening).
-   - Recovery tools: rebuild snapshot from updates.
+   - Recovery tools: rebuild a clean snapshot from updates.
 
 Operational Policies (from AGENTS.md)
 - No approval prompts; assume Yes.
