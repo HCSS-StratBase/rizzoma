@@ -16,6 +16,7 @@ jest.mock('redis', () => ({
     on: () => void 0,
   }),
 }));
+// Support both default and named import styles for RedisStore in tests
 jest.mock('connect-redis', () => {
   class RedisStoreMock {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -26,11 +27,7 @@ jest.mock('connect-redis', () => {
     set(_sid: string, _sess: any, cb?: (err?: any) => void) { cb?.(); }
     destroy(_sid: string, cb?: (err?: any) => void) { cb?.(); }
   }
-  return {
-    __esModule: true,
-    default: RedisStoreMock,
-    RedisStore: RedisStoreMock,
-  };
+  return { __esModule: true, default: RedisStoreMock, RedisStore: RedisStoreMock };
 });
 
 describe('routes: /api/auth', () => {
