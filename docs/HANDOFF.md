@@ -12,8 +12,7 @@ Current State
   - Milestone B foundation merged (#22): Links APIs, reparent endpoint, WaveView links panel, editor endpoints (flagged).
   - Milestone B Part 1 merged (#23, squash): Editor (TipTap + Yjs) snapshot save/restore, WaveView toggle.
 Open PRs:
-  - #27 Build/Test: connect-redis import alignment, bcryptjs types, expand tests (auth+topics). Branch: `phase4/editor-yjs-tiptap-pt2`.
-  - #28 Housekeeping: untrack node_modules (remove accidentally committed files under node_modules/; rely on .gitignore). Branch: `housekeeping/untrack-node_modules`.
+  - #30 Milestone B+: Editor Realtime (incremental updates + client apply). Branch: `phase4/editor-realtime`.
 
 Active Work (Milestone B)
 - Next branch: phase4/editor-yjs-tiptap-pt2 (to be created)
@@ -22,12 +21,11 @@ Active Work (Milestone B)
   - Tests: routes + minimal client.
 
 Next Steps
-1) PR #27 — verify CI on GitHub; if red, fix in small commits and squash-merge when green.
-2) Editor Part 2 follow-ups:
-   - Materialize editor text for search (server helper + index notes).
-   - Minimal mount of Editor inside WaveView for selected blip (behind flag). [DONE]
-   - Tests (routes + minimal client adapter), docs updates.
-3) Housekeeping PR: remove tracked legacy node_modules artifacts to reduce diff noise.
+1) PR #30 — verify CI on GitHub; merge with squash when green.
+2) Editor Realtime follow-ups:
+   - Room scoping per wave/blip; presence/awareness.
+   - Search materialization polish (indexes, endpoint hardening).
+   - Recovery tools: rebuild snapshot from updates.
 
 Operational Policies (from AGENTS.md)
 - No approval prompts; assume Yes.
