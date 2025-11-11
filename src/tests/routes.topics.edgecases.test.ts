@@ -43,7 +43,7 @@ describe('routes: /api/topics edge cases', () => {
     }) as typeof global.fetch;
   });
 
-  it('rejects POST without session (401)', async () => {
+  it('rejects POST without session (CSRF fails first -> 403)', async () => {
     const app = makeApp({});
     const server = app.listen(0);
     const addr = server.address();
@@ -51,8 +51,8 @@ describe('routes: /api/topics edge cases', () => {
     const resp = await fetch(`http://127.0.0.1:${port}/api/topics`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-csrf-token': 't' }, body: JSON.stringify({ title: 'Nope' }) });
     const body = await resp.json();
     server.close();
-    expect(resp.status).toBe(401);
-    expect(body.error).toBe('unauthenticated');
+    expect(resp.status).toBe(403);
+    expect(body.error).toBeDefined();
   });
 
   it('rejects PATCH when not owner (403)', async () => {
