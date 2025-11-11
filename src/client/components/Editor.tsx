@@ -83,7 +83,7 @@ export function Editor({ waveId, blipId, readOnly = true }: { waveId: string; bl
         }, 5000);
         stopTimer = () => { window.clearInterval(interval); try { ydoc.off('update', onDocUpdate as any); } catch {} };
 
-        // subscribe to server-broadcast updates; apply to local doc
+        // subscribe to server-broadcast updates; join room; apply to local doc
         const unsubscribe = subscribeEditor(waveId, (p) => {
           try {
             if (!p || typeof p.updateB64 !== 'string') return;

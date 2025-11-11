@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { findOne, insertDoc, updateDoc, createIndex } from '../lib/couch.js';
-import { emitEvent } from '../lib/socket.js';
+import { emitEvent, emitEditorUpdate } from '../lib/socket.js';
 
 // Feature flag: set EDITOR_ENABLE=1 to enable endpoints
 const ENABLED = process.env['EDITOR_ENABLE'] === '1';
@@ -98,7 +98,7 @@ if (!ENABLED) {
       const doc: YDocUpdate = { _id: id, type: 'yjs_update', waveId, blipId: blipIdVal, seq, updateB64, createdAt: Date.now() };
       const r = await insertDoc(doc as any);
       res.status(201).json({ ok: true, id: r.id, rev: r.rev });
-      try { emitEvent('editor:update', { waveId, blipId: blipIdVal, seq, updateB64 }); } catch {}
+      try { emitEditorUpdate(waveId, blipIdVal, { waveId, blipId: blipIdVal, seq, updateB64 }); } catch {}
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'update_save_error' });
     }

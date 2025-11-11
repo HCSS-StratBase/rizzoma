@@ -49,10 +49,13 @@ export function subscribeLinks(onChange: () => void): () => void {
 }
 export function subscribeEditor(waveId: string, onChange: (payload: any) => void): () => void {
   const s = getSocket();
+  // Join wave-level room for targeted updates
+  s.emit('editor:join', { waveId });
   const handler = (p: any) => { if (!p || p.waveId !== waveId) return; onChange(p); };
   s.on('editor:snapshot', handler);
   s.on('editor:update', handler);
   return () => {
+    try { s.emit('editor:leave', { waveId }); } catch {}
     s.off('editor:snapshot', handler);
     s.off('editor:update', handler);
   };
