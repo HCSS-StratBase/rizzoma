@@ -12,22 +12,23 @@ Status: Milestone B (IN PROGRESS). Feature-flagged; safe to keep merged.
 - Client: `src/client/components/Editor.tsx`
   - Loads `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-collaboration`, and `yjs` dynamically.
   - Creates a `Y.Doc` and mounts TipTap with Collaboration extension.
-  - Snapshot cadence: every 5 seconds encode state and POST to the snapshot endpoint.
+  - Realtime: listens to `ydoc` updates and POSTs incremental updates to `/api/editor/:waveId/updates` with a running `seq`. Subscribes to `editor:update` via Socket.IO and applies remote updates.
+  - Snapshot cadence: every 5 seconds, encodes full state and POSTs to `/snapshot` for durability and search.
   - Materialized text: on each snapshot, also POSTs `text` (via `editor.getText()`) for search.
-  - Per‑blip context (scaffold): client includes optional `blipId` when saving snapshots so search can be scoped to a blip.
+  - Per‑blip context: include optional `blipId` on load/save so search and updates can be scoped to a blip.
   - On load: applies `snapshotB64` via `Y.applyUpdate` if present.
-  - WaveView mount: toggle button in `src/client/components/WaveView.tsx` shows the editor for the current wave. If the server flag is off, a disabled note appears.
+  - WaveView mount: toggle button in `src/client/components/WaveView.tsx` shows the editor for the current wave/current blip.
 
 - Server: `src/server/routes/editor.ts`
-  - `GET /api/editor/:waveId/snapshot` → `{ snapshotB64, nextSeq }`
-  - `POST /api/editor/:waveId/snapshot { snapshotB64, text?, blipId? }` — saves the latest snapshot and optional plain text and blip context.
-  - `POST /api/editor/:waveId/updates { seq, updateB64 }` — stores incremental updates (reserved for realtime providers).
-  - `GET /api/editor/search?q=foo&limit=20&blipId=...` — finds waves/blips by materialized text (dev/simple Mango regex).
-  - Emits socket events: `editor:snapshot`, `editor:update` (used by clients to refresh state if needed).
+  - `GET /api/editor/:waveId/snapshot` → `{ snapshotB64, nextSeq }` (supports `?blipId=`)
+  - `POST /api/editor/:waveId/snapshot { snapshotB64, text?, blipId? }` — persists snapshot and optional plain text.
+  - `POST /api/editor/:waveId/updates { seq, updateB64, blipId? }` — stores incremental updates and broadcasts `editor:update` including `updateB64`.
+  - `GET /api/editor/search?q=foo&limit=20&blipId=...` — finds waves/blips by materialized text (Mango regex; dev‑friendly).
+  - Socket events: `editor:snapshot`, `editor:update`.
 
 ## Roadmap
 
-- Add socket-driven realtime (broadcast incremental updates) after persistence stabilizes.
+- Realtime enhancements: room scoping per wave/blip and presence/awareness.
 - Materialize text for search and indexing. (Initial version implemented client-side; server stores `text` alongside snapshot.)
 - Recovery tools: rebuild a clean snapshot from updates.
 - Basic editor mount in WaveView for selected blip (in progress; initial wave-level mount available behind toggle).

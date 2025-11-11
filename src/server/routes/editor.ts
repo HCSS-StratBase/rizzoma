@@ -21,6 +21,7 @@ type YDocUpdate = {
   _id?: string;
   type: 'yjs_update';
   waveId: string;
+  blipId?: string;
   seq: number;
   // base64-encoded Yjs update
   updateB64: string;
@@ -85,18 +86,19 @@ if (!ENABLED) {
     }
   });
 
-  // POST /api/editor/:waveId/updates { seq, updateB64 }
+  // POST /api/editor/:waveId/updates { seq, updateB64, blipId? }
   router.post('/:waveId/updates', async (req, res) => {
     const waveId = req.params.waveId;
     const seq = Number((req.body || {}).seq);
     const updateB64 = String((req.body || {}).updateB64 || '');
+    const blipIdVal = (req.body && typeof (req.body as any).blipId === 'string') ? String((req.body as any).blipId) : undefined;
     if (!Number.isFinite(seq) || seq < 1 || !updateB64) { res.status(400).json({ error: 'invalid_payload' }); return; }
     try {
       const id = `yupd:${waveId}:${seq}`;
-      const doc: YDocUpdate = { _id: id, type: 'yjs_update', waveId, seq, updateB64, createdAt: Date.now() };
+      const doc: YDocUpdate = { _id: id, type: 'yjs_update', waveId, blipId: blipIdVal, seq, updateB64, createdAt: Date.now() };
       const r = await insertDoc(doc as any);
       res.status(201).json({ ok: true, id: r.id, rev: r.rev });
-      try { emitEvent('editor:update', { waveId, seq }); } catch {}
+      try { emitEvent('editor:update', { waveId, blipId: blipIdVal, seq, updateB64 }); } catch {}
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'update_save_error' });
     }
