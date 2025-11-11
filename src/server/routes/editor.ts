@@ -104,6 +104,50 @@ if (!ENABLED) {
     }
   });
 
+  // POST /api/editor/:waveId/rebuild — rebuild snapshot from stored incremental updates
+  router.post('/:waveId/rebuild', async (req, res) => {
+    const waveId = req.params.waveId;
+    const blipIdVal = (req.body && typeof (req.body as any).blipId === 'string') ? String((req.body as any).blipId) : undefined;
+    try {
+      // Gather updates in ascending seq order
+      const selector: any = blipIdVal ? { type: 'yjs_update', waveId, blipId: blipIdVal } : { type: 'yjs_update', waveId };
+      const { find } = await import('../lib/couch.js');
+      let docs: any[] = [];
+      try {
+        const r = await (find as any)(selector, { sort: [{ seq: 'asc' }], limit: 10000 });
+        docs = Array.isArray(r?.docs) ? r.docs : [];
+      } catch { docs = []; }
+
+      // Build a combined state from updates
+      const { default: Y } = await import('yjs');
+      const ydoc = new (Y as any).Doc();
+      let applied = 0;
+      for (const d of docs) {
+        const b64 = String((d as any)?.updateB64 || '');
+        if (!b64) continue;
+        try {
+          const buf = Buffer.from(b64, 'base64');
+          (Y as any).applyUpdate(ydoc, new Uint8Array(buf));
+          applied++;
+        } catch {}
+      }
+      const combined = (Y as any).encodeStateAsUpdate(ydoc) as Uint8Array;
+      const snapshotB64 = Buffer.from(combined).toString('base64');
+
+      // Persist snapshot
+      const snapSelector: any = blipIdVal ? { type: 'yjs_snapshot', waveId, blipId: blipIdVal } : { type: 'yjs_snapshot', waveId };
+      const existing = await (await import('../lib/couch.js')).findOne<YDocSnapshot>(snapSelector).catch(() => null);
+      const doc: YDocSnapshot = existing
+        ? { ...existing, snapshotB64, updatedAt: Date.now(), blipId: blipIdVal ?? (existing as any).blipId }
+        : { type: 'yjs_snapshot', waveId, blipId: blipIdVal, snapshotB64, updatedAt: Date.now() };
+      const { insertDoc: ins, updateDoc: upd } = await import('../lib/couch.js');
+      const r = existing && (existing as any)?._id ? await (upd as any)(doc as any) : await (ins as any)(doc as any);
+      res.json({ ok: true, id: r.id, rev: r.rev, applied });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'rebuild_error' });
+    }
+  });
+
   // GET /api/editor/search?q=foo&limit=20 — find waves with materialized text match
   router.get('/search', async (req, res) => {
     try {

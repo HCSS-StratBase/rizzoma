@@ -14,7 +14,7 @@ Status: Milestone B (IN PROGRESS). Feature-flagged; safe to keep merged.
   - Creates a `Y.Doc` and mounts TipTap with Collaboration extension.
 - Realtime: listens to `ydoc` updates and POSTs incremental updates to `/api/editor/:waveId/updates` with a running `seq`. Subscribes to `editor:update` via Socket.IO and applies remote updates.
   - Room scoping: client emits `editor:join { waveId, blipId? }` to receive only targeted updates; emits `editor:leave` on unmount. Server tracks lightweight presence and broadcasts `editor:presence { room, waveId, blipId?, count }`.
-  - Snapshot cadence: every 5 seconds, encodes full state and POSTs to `/snapshot` for durability and search.
+- Snapshot cadence: every 5 seconds, encodes full state and POSTs to `/snapshot` for durability and search.
   - Materialized text: on each snapshot, also POSTs `text` (via `editor.getText()`) for search.
   - Per‑blip context: include optional `blipId` on load/save so search and updates can be scoped to a blip.
   - On load: applies `snapshotB64` via `Y.applyUpdate` if present.
@@ -24,6 +24,7 @@ Status: Milestone B (IN PROGRESS). Feature-flagged; safe to keep merged.
   - `GET /api/editor/:waveId/snapshot` → `{ snapshotB64, nextSeq }` (supports `?blipId=`)
   - `POST /api/editor/:waveId/snapshot { snapshotB64, text?, blipId? }` — persists snapshot and optional plain text.
   - `POST /api/editor/:waveId/updates { seq, updateB64, blipId? }` — stores incremental updates and broadcasts `editor:update` including `updateB64`.
+  - `POST /api/editor/:waveId/rebuild { blipId? }` — rebuilds a snapshot from stored incremental updates (dev/recovery).
   - `GET /api/editor/search?q=foo&limit=20&blipId=...` — finds waves/blips by materialized text (Mango regex; dev‑friendly).
   - Socket events: `editor:snapshot`, `editor:update`.
 
