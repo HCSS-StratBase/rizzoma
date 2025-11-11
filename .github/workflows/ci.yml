@@ -37,8 +37,8 @@ jobs:
       - name: Test
         if: ${{ steps.install.outcome == 'success' }}
         run: npm test
-      - name: Build
-        if: ${{ steps.install.outcome == 'success' }}
+      - name: Build (push-only)
+        if: ${{ steps.install.outcome == 'success' && github.event_name != 'pull_request' }}
         run: npm run build
       - name: Build Docker image (push-only)
         if: ${{ steps.install.outcome == 'success' && github.event_name != 'pull_request' }}
