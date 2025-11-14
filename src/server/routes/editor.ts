@@ -16,6 +16,8 @@ if (!ENABLED) {
       const q = String((req.query as any).q || '').trim();
       const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
       const blipId = ((req.query as any).blipId ? String((req.query as any).blipId).trim() : '') || undefined;
+      void limit;
+      void blipId;
       if (!q) { res.json({ results: [] }); return; }
       // Placeholder: real search should query Mango with regex/indexes
       res.json({ results: [] as Array<{ waveId: string; blipId?: string; updatedAt?: number }> });
@@ -38,4 +40,3 @@ if (!ENABLED) {
 }
 
 export default router;
-

@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2025-11-11
+Last Updated: 2025-11-14
 
 PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
@@ -22,6 +22,7 @@ Next Work
   - Search materialization polish: add/create indexes; harden search endpoint; simple client search UI.
   - Editor pane presence UI: optional inline identity indicator (names/ids) in editor container.
   - Tests + docs for each step; keep PRs small and feature‑flagged.
+  - Pre-flight status (2025‑11‑14): `npm run typecheck`, `npm test`, and `npm run build` all pass on this branch; TypeScript strictness slightly relaxed (`noImplicitOverride`/`noUncheckedIndexedAccess`) to accommodate `connect-redis` typings; editor search/rebuild routes stubbed but wired and covered by tests.
 
 Restart Checklist (any machine)
 - Node 20.19.0; `npm ci` (or `npm install`)
