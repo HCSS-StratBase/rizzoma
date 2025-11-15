@@ -13,6 +13,9 @@ Status: Milestone B+ (IN PROGRESS). Feature‑flagged; safe to keep merged.
 - Client: `src/client/components/EditorSearch.tsx`
   - Simple UI at `#/editor/search` to hit `/api/editor/search?q=&limit=` and list `{ waveId, blipId?, updatedAt? }` results.
   - Results link into `WaveView` and focus the matching blip when `blipId` is present.
+- Client: `src/client/components/EditorAdmin.tsx`
+  - Dev-only helper at `#/editor/admin` that calls `/api/editor/search` with a small sample query to surface a few recent snapshots.
+  - Intended for development/debugging; main user-facing search is `EditorSearch`.
 - Presence UI: WaveView shows “Present: N” with tooltip of user names/ids (from presence payload).
  - Recovery UI: WaveView includes a "Rebuild snapshot" action (dev/admin) to call `/api/editor/:waveId/rebuild` (scopes to current blip when selected) and surface results with an inline status line (applied count, errors).
   - Snapshots: every 5 seconds posts full snapshot to `/snapshot` (with optional `text`) for durability/search.
