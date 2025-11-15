@@ -268,6 +268,15 @@ docker compose ps
 
 The production image runs as a non-root `node` user and declares a HEALTHCHECK at `/api/health`. Configure `SESSION_SECRET`, `COUCHDB_URL`, `COUCHDB_DB`, `REDIS_URL`, and `ALLOWED_ORIGINS` for your environment.
 
+### Production Security Checklist (Quick)
+
+Before exposing the modern app to real users:
+- Set a strong `SESSION_SECRET` and avoid the dev default.
+- Set `ALLOWED_ORIGINS` to a strict comma-separated list of allowed frontends (no wildcard in production).
+- Run behind a TLS-terminating proxy and ensure `trust proxy` is configured correctly (already enabled in `src/server/app.ts`).
+- Verify cookies are marked `secure` and `sameSite='lax'` in production (session + CSRF cookies already respect `NODE_ENV`).
+- Confirm `/api/health` is reachable only where appropriate (load balancer / infra checks) and avoid exposing it publicly if not needed.
+
 ## API Notes (Paging/Search)
 
 - Topics: `GET /api/topics?limit=&offset=&q=&my=1&bookmark=` → `{ topics, hasMore, nextBookmark }`

@@ -11,7 +11,7 @@ import { StatusBar } from './components/StatusBar';
 import { EditorSearch } from './components/EditorSearch';
 import { EditorAdmin } from './components/EditorAdmin';
 
-function App() {
+export function App() {
   const [me, setMe] = useState<any>(null);
   const [error] = useState<string | null>(null);
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
@@ -110,3 +110,5 @@ const container = document.getElementById('root');
 if (container) {
   createRoot(container).render(<App />);
 }
+
+export default App;
