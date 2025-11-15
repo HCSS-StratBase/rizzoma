@@ -10,6 +10,8 @@ import { Toast } from './components/Toast';
 import { StatusBar } from './components/StatusBar';
 import { EditorSearch } from './components/EditorSearch';
 import { EditorAdmin } from './components/EditorAdmin';
+import { GreenNavigation } from './components/GreenNavigation';
+import { FEATURES } from '../shared/featureFlags';
 
 export function App() {
   const [me, setMe] = useState<any>(null);
@@ -102,6 +104,7 @@ export function App() {
       )}
       <StatusBar me={me} />
       <Toast />
+      {FEATURES.FOLLOW_GREEN && <GreenNavigation />}
     </div>
   );
 }

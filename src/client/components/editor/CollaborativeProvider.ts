@@ -1,17 +1,21 @@
 import * as Y from 'yjs';
 import { Socket } from 'socket.io-client';
+import { Awareness } from 'y-protocols/awareness';
 
 export class SocketIOProvider {
-  private doc: Y.Doc;
-  private socket: Socket;
-  private blipId: string;
+  doc: Y.Doc;
+  socket: Socket;
+  blipId: string;
+  awareness: Awareness;
   
   constructor(doc: Y.Doc, socket: Socket, blipId: string) {
     this.doc = doc;
     this.socket = socket;
     this.blipId = blipId;
+    this.awareness = new Awareness(doc);
     
     this.setupListeners();
+    this.setupAwareness();
     this.joinRoom();
   }
   
@@ -36,6 +40,23 @@ export class SocketIOProvider {
     });
   }
   
+  private setupAwareness() {
+    // Send awareness updates
+    this.awareness.on('update', ({ added, updated, removed }: any) => {
+      const changedClients = added.concat(updated).concat(removed);
+      this.socket.emit('awareness:update', {
+        blipId: this.blipId,
+        awareness: Array.from(this.awareness.encodeUpdate(changedClients))
+      });
+    });
+    
+    // Receive awareness updates
+    this.socket.on(`awareness:update:${this.blipId}`, (data: { awareness: number[] }) => {
+      const update = new Uint8Array(data.awareness);
+      this.awareness.applyUpdate(update, this);
+    });
+  }
+  
   private joinRoom() {
     this.socket.emit('blip:join', {
       blipId: this.blipId
@@ -48,5 +69,7 @@ export class SocketIOProvider {
     });
     this.socket.off(`blip:update:${this.blipId}`);
     this.socket.off(`blip:sync:${this.blipId}`);
+    this.socket.off(`awareness:update:${this.blipId}`);
+    this.awareness.destroy();
   }
 }

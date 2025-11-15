@@ -4,6 +4,8 @@ import * as Y from 'yjs';
 import { getEditorExtensions, defaultEditorProps } from './EditorConfig';
 import { yjsDocManager } from './YjsDocumentManager';
 import { useCollaboration } from './useCollaboration';
+import { EditorToolbar } from './EditorToolbar';
+import { FEATURES } from '../../shared/featureFlags';
 import './BlipEditor.css';
 
 interface BlipEditorProps {
@@ -65,6 +67,9 @@ export function BlipEditor({
 
   return (
     <div className={`blip-editor ${isReadOnly ? 'read-only' : 'editable'}`}>
+      {FEATURES.RICH_TOOLBAR && !isReadOnly && (
+        <EditorToolbar editor={editor} />
+      )}
       <EditorContent editor={editor} />
     </div>
   );
