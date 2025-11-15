@@ -14,7 +14,7 @@ Status: Milestone B+ (IN PROGRESS). Feature‑flagged; safe to keep merged.
   - Simple UI at `#/editor/search` to hit `/api/editor/search?q=&limit=` and list `{ waveId, blipId?, updatedAt? }` results.
   - Results link into `WaveView` and focus the matching blip when `blipId` is present.
 - Presence UI: WaveView shows “Present: N” with tooltip of user names/ids (from presence payload).
- - Recovery UI: WaveView includes a "Rebuild snapshot" action (dev/admin) to call `/api/editor/:waveId/rebuild` (scopes to current blip when selected) and surface results.
+ - Recovery UI: WaveView includes a "Rebuild snapshot" action (dev/admin) to call `/api/editor/:waveId/rebuild` (scopes to current blip when selected) and surface results with an inline status line (applied count, errors).
   - Snapshots: every 5 seconds posts full snapshot to `/snapshot` (with optional `text`) for durability/search.
   - Per‑blip: optional `blipId` scopes snapshots/updates/search.
 

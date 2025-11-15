@@ -25,6 +25,8 @@ export function WaveView({ id }: { id: string }) {
   const [showEditor, setShowEditor] = useState<boolean>(false);
   const [presentCount, setPresentCount] = useState<number>(0);
   const [presentUsers, setPresentUsers] = useState<Array<{ userId?: string; name?: string }>>([]);
+  const [rebuildStatus, setRebuildStatus] = useState<string | null>(null);
+  const [rebuildError, setRebuildError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -182,16 +184,18 @@ export function WaveView({ id }: { id: string }) {
           </span>
           <button
             onClick={async ()=>{
+              setRebuildStatus(null);
+              setRebuildError(null);
               try {
                 const body: any = current ? { blipId: current } : {};
                 const r = await api(`/api/editor/${encodeURIComponent(id)}/rebuild`, { method: 'POST', body: JSON.stringify(body) });
                 if (r.ok) {
                   const applied = (r.data as any)?.applied;
-                  alert(`Rebuilt snapshot${current?` for blip ${current}`:''}. Applied ${applied ?? 0} updates.`);
+                  setRebuildStatus(`Rebuilt snapshot${current?` for blip ${current}`:''}. Applied ${applied ?? 0} updates.`);
                 } else {
-                  alert(`Rebuild failed (${r.status})`);
+                  setRebuildError(`Rebuild failed (${r.status})`);
                 }
-              } catch (e: any) { alert(`Rebuild error: ${e?.message || 'unknown'}`); }
+              } catch (e: any) { setRebuildError(`Rebuild error: ${e?.message || 'unknown'}`); }
             }}
             title="Rebuild snapshot from stored updates (dev/admin)"
           >
@@ -200,6 +204,8 @@ export function WaveView({ id }: { id: string }) {
           <button onClick={()=> setShowEditor(v=>!v)}>{showEditor ? 'Hide editor' : (current ? 'Show editor for current blip' : 'Show editor')}</button>
         </div>
       </div>
+      {rebuildStatus ? <div style={{ marginTop: 4, fontSize: 12, color: '#2c3e50' }}>{rebuildStatus}</div> : null}
+      {rebuildError ? <div style={{ marginTop: 4, fontSize: 12, color: 'red' }}>{rebuildError}</div> : null}
       {showEditor ? (
         <div style={{ margin: '12px 0' }}>
           <Editor waveId={id} blipId={current ?? undefined} readOnly={false} />

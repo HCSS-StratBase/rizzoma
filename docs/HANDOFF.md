@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2025-11-14
+Last Updated: 2025-11-15
 
 PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
@@ -18,9 +18,9 @@ Open PRs
 
 Next Work
 - Branch: `phase4/editor-recovery-ui`
-  - Recovery UI: [BASIC DONE] WaveView button to trigger `/api/editor/:waveId/rebuild` (scopes to current blip when selected) and show results. Follow‑up: admin UI surface and status feedback.
-  - Search materialization polish: add/create indexes; harden search endpoint; simple client search UI (basic `#/editor/search` view wired to `/api/editor/search`).
-  - Editor pane presence UI: optional inline identity indicator (names/ids) in editor container.
+  - Recovery UI: [BASIC DONE] WaveView button to trigger `/api/editor/:waveId/rebuild` (scopes to current blip when selected) and show inline status (applied count / errors). Follow‑up: richer admin UI surface and history/journal.
+  - Search materialization polish: [BASIC DONE] add/create indexes; harden search endpoint; simple client search UI (basic `#/editor/search` view wired to `/api/editor/search`).
+  - Editor pane presence UI: [BASIC DONE] inline identity indicator in editor container header (count + tooltip of user names/ids).
   - Tests + docs for each step; keep PRs small and feature‑flagged.
   - Pre-flight status (2025‑11‑14): `npm run typecheck`, `npm test`, and `npm run build` all pass on this branch; TypeScript strictness slightly relaxed (`noImplicitOverride`/`noUncheckedIndexedAccess`) to accommodate `connect-redis` typings; editor search/rebuild routes stubbed but wired and covered by tests.
 
