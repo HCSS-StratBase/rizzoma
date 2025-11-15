@@ -8,6 +8,7 @@ import { WavesList } from './components/WavesList';
 import { WaveView } from './components/WaveView';
 import { Toast } from './components/Toast';
 import { StatusBar } from './components/StatusBar';
+import { EditorSearch } from './components/EditorSearch';
 
 function App() {
   const [me, setMe] = useState<any>(null);
@@ -56,7 +57,7 @@ function App() {
     <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 720 }}>
       <h1>Rizzoma (Modern)</h1>
       <nav style={{ marginBottom: 12 }}>
-        <a href="#/">Topics</a> | <a href="#/waves">Waves</a>
+        <a href="#/">Topics</a> | <a href="#/waves">Waves</a> | <a href="#/editor/search">Editor search</a>
       </nav>
       <p>
         API health: <a href="/api/health" target="_blank" rel="noreferrer">/api/health</a>
@@ -85,7 +86,9 @@ function App() {
         {error ? <div style={{ color: 'red', marginTop: 8 }}>{error}</div> : null}
       </section>
 
-      {route.startsWith('#/waves') && !currentId ? (
+      {route.startsWith('#/editor/search') ? (
+        <EditorSearch />
+      ) : route.startsWith('#/waves') && !currentId ? (
         <WavesList />
       ) : route.startsWith('#/wave/') && currentId ? (
         <WaveView id={currentId} />
