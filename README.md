@@ -15,12 +15,18 @@ Refer to README_MODERNIZATION.md for the migration plan and tips.
   - Sessions are now applied globally across all API routes (auth, topics, comments).
   - Mutating requests (POST/PATCH/DELETE) require the `x-csrf-token` header; the UI obtains this automatically.
 - Frontend: Vite + React client with Auth panel, Topics list (filters, search, pagination with hasMore), Topic detail (edit/delete), Comments (CRUD + pagination), toasts + inline errors, hash‑based state persistence, and realtime refresh via Socket.IO.
+  - **NEW**: Rich text editor with TipTap + Yjs for collaborative editing
+  - **NEW**: Inline comments on text selections with highlighting
+  - **NEW**: @mentions with autocomplete dropdown
+  - **NEW**: "Follow the green" navigation for unread changes
+  - **NEW**: Real-time collaborative cursors and presence awareness
 - Data: CouchDB via direct HTTP (Mango `_find` + legacy views fallback). Views can be deployed with scripts/deploy-views.js.
 - Dev/Infra: Docker Compose stack (app + CouchDB + Redis + RabbitMQ + Sphinx; optional MinIO). Multi‑stage Dockerfile for dev/prod.
 - CI: GitHub Actions workflow for typecheck/lint/build and image build present.
   - Vitest unit/integration tests for middleware and routes (auth, topics, comments, waves, editor) are included; run `npm test`.
+- Feature Flags: New features can be toggled via environment variables (`FEAT_ALL=1` enables all).
 
-See “Deployment Readiness” for what remains to ship a production cut of the new stack.
+See "Deployment Readiness" for what remains to ship a production cut of the new stack.
 
 ## Quick Start (Docker)
 
