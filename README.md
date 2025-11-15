@@ -18,7 +18,7 @@ Refer to README_MODERNIZATION.md for the migration plan and tips.
 - Data: CouchDB via direct HTTP (Mango `_find` + legacy views fallback). Views can be deployed with scripts/deploy-views.js.
 - Dev/Infra: Docker Compose stack (app + CouchDB + Redis + RabbitMQ + Sphinx; optional MinIO). Multi‑stage Dockerfile for dev/prod.
 - CI: GitHub Actions workflow for typecheck/lint/build and image build present.
-  - Jest unit/integration tests for middleware and routes are included; run `npm test`.
+  - Vitest unit/integration tests for middleware and routes (auth, topics, comments, waves, editor) are included; run `npm test`.
 
 See “Deployment Readiness” for what remains to ship a production cut of the new stack.
 

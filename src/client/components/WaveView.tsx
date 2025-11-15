@@ -25,6 +25,8 @@ export function WaveView({ id }: { id: string }) {
   const [showEditor, setShowEditor] = useState<boolean>(false);
   const [presentCount, setPresentCount] = useState<number>(0);
   const [presentUsers, setPresentUsers] = useState<Array<{ userId?: string; name?: string }>>([]);
+  const [rebuildStatus, setRebuildStatus] = useState<string | null>(null);
+  const [rebuildError, setRebuildError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -180,9 +182,30 @@ export function WaveView({ id }: { id: string }) {
           <span title={presentUsers.map(u=>u.name || u.userId || 'anon').join(', ') || 'No users present'}>
             Present: {presentCount}
           </span>
+          <button
+            onClick={async ()=>{
+              setRebuildStatus(null);
+              setRebuildError(null);
+              try {
+                const body: any = current ? { blipId: current } : {};
+                const r = await api(`/api/editor/${encodeURIComponent(id)}/rebuild`, { method: 'POST', body: JSON.stringify(body) });
+                if (r.ok) {
+                  const applied = (r.data as any)?.applied;
+                  setRebuildStatus(`Rebuilt snapshot${current?` for blip ${current}`:''}. Applied ${applied ?? 0} updates.`);
+                } else {
+                  setRebuildError(`Rebuild failed (${r.status})`);
+                }
+              } catch (e: any) { setRebuildError(`Rebuild error: ${e?.message || 'unknown'}`); }
+            }}
+            title="Rebuild snapshot from stored updates (dev/admin)"
+          >
+            Rebuild snapshot
+          </button>
           <button onClick={()=> setShowEditor(v=>!v)}>{showEditor ? 'Hide editor' : (current ? 'Show editor for current blip' : 'Show editor')}</button>
         </div>
       </div>
+      {rebuildStatus ? <div style={{ marginTop: 4, fontSize: 12, color: '#2c3e50' }}>{rebuildStatus}</div> : null}
+      {rebuildError ? <div style={{ marginTop: 4, fontSize: 12, color: 'red' }}>{rebuildError}</div> : null}
       {showEditor ? (
         <div style={{ margin: '12px 0' }}>
           <Editor waveId={id} blipId={current ?? undefined} readOnly={false} />
@@ -266,7 +289,7 @@ function BlipTreeWithState({ nodes, unread, current, openMap, onToggle }: { node
       <li key={n.id} data-blip-id={n.id} style={{ background: current === n.id ? '#e8f8f2' : unread.has(n.id) ? '#e9fbe9' : undefined }} onClick={(e)=>{ if ((e.target as HTMLElement).tagName.toLowerCase() !== 'button') { (window as any).setWaveCurrent?.(n.id); } }}>
         <button onClick={() => onToggle(n.id, !isOpen)} style={{ marginRight: 6 }}>{isOpen ? '-' : '+'}</button>
         <span style={{ color: '#555' }}>{formatTimestamp(n.createdAt)}</span>
-        <span> — <BlipContent content={n.content || ''} /></span>
+        <span> — <BlipContent content={n.content || ''} blipId={n.id} /></span>
         {n.children && n.children.length > 0 && isOpen ? (
           <ul style={{ marginLeft: 18 }}>
             {n.children.map(render)}

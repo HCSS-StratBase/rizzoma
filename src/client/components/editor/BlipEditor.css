@@ -1,0 +1,118 @@
+.blip-editor {
+  min-height: 1.5rem;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.blip-editor.editable {
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.blip-editor.read-only {
+  background-color: transparent;
+}
+
+.blip-editor .ProseMirror {
+  outline: none;
+  min-height: 1.5rem;
+}
+
+.blip-editor .ProseMirror p {
+  margin: 0;
+}
+
+.blip-editor .ProseMirror h1 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+.blip-editor .ProseMirror h2 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+.blip-editor .ProseMirror h3 {
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+.blip-editor .ProseMirror ul,
+.blip-editor .ProseMirror ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.blip-editor .ProseMirror blockquote {
+  border-left: 3px solid #e5e7eb;
+  margin: 0.5rem 0;
+  padding-left: 1rem;
+}
+
+.blip-editor .ProseMirror code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+}
+
+.blip-editor .ProseMirror pre {
+  background-color: #f3f4f6;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  overflow-x: auto;
+}
+
+.blip-editor .ProseMirror pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.editable-blip-content {
+  margin: 0.5rem 0;
+}
+
+.editable-blip-content .blip-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editable-blip-content .btn {
+  padding: 0.25rem 0.75rem;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.editable-blip-content .btn-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.editable-blip-content .btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.editable-blip-content .btn-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.editable-blip-content .btn-success:hover {
+  background-color: #059669;
+}
+
+.editable-blip-content .btn-secondary {
+  background-color: #6b7280;
+  color: white;
+}
+
+.editable-blip-content .btn-secondary:hover {
+  background-color: #4b5563;
+}

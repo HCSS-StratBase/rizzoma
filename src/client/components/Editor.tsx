@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api';
-import { subscribeEditor } from '../lib/socket';
+import { subscribeEditor, subscribeEditorPresence } from '../lib/socket';
 
 function b64ToUint8Array(b64: string): Uint8Array {
   try {
@@ -14,6 +14,8 @@ function b64ToUint8Array(b64: string): Uint8Array {
 export function Editor({ waveId, blipId, readOnly = true }: { waveId: string; blipId?: string; readOnly?: boolean }) {
   const [enabled, setEnabled] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [presentCount, setPresentCount] = useState<number>(0);
+  const [presentUsers, setPresentUsers] = useState<Array<{ userId?: string; name?: string }>>([]);
   const viewRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -100,7 +102,25 @@ export function Editor({ waveId, blipId, readOnly = true }: { waveId: string; bl
     return () => { disposed = true; if (stopTimer) stopTimer(); };
   }, [waveId, blipId, readOnly]);
 
+  // Presence: subscribe to editor presence scoped to wave/blip
+  useEffect(() => {
+    const unsub = subscribeEditorPresence(waveId, blipId, (p) => {
+      setPresentCount(Number(p?.count || 0));
+      const users = Array.isArray(p?.users) ? p.users : [];
+      setPresentUsers(users as any);
+    });
+    return () => { try { unsub(); } catch {} };
+  }, [waveId, blipId]);
+
   if (!enabled) return <div style={{ opacity: 0.7 }}>(Editor disabled or not installed)</div>;
   if (error) return <div style={{ color: 'red' }}>Editor error: {error}</div>;
-  return <div ref={viewRef} style={{ border: '1px solid #ddd', padding: 8, borderRadius: 4 }}>Loading editor…</div>;
+  const names = presentUsers.map((u) => u.name || u.userId || 'anon').filter(Boolean);
+  return (
+    <div>
+      <div style={{ marginBottom: 4, fontSize: 12, color: '#555' }} title={names.join(', ') || 'No users present'}>
+        Editor presence: {presentCount}
+      </div>
+      <div ref={viewRef} style={{ border: '1px solid #ddd', padding: 8, borderRadius: 4 }}>Loading editor…</div>
+    </div>
+  );
 }
