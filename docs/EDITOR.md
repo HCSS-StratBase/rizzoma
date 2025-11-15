@@ -31,6 +31,6 @@ Status: Milestone B+ (IN PROGRESS). Feature‑flagged; safe to keep merged.
   - Helper: `emitEditorUpdate(waveId, blipId?, payload)` targets appropriate rooms.
 
 ## Roadmap
-- Presence identity polish; inline editor-pane indicators.
+- Presence identity polish; inline editor-pane indicators (WaveView badge + editor-pane header wired to `editor:presence` payload).
 - Recovery UI: admin action to trigger rebuild and surface results (basic WaveView button + alert wired; consider richer admin surface).
 - Search materialization polish: indexes + endpoint hardening (in place) and richer client search UI (basic search view implemented).
