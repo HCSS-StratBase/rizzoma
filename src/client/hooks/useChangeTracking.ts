@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { FEATURES } from '../shared/featureFlags';
+import { FEATURES } from '@shared/featureFlags';
 
 interface ChangeInfo {
   blipId: string;

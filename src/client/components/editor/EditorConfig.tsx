@@ -10,7 +10,7 @@ import tippy from 'tippy.js';
 import * as Y from 'yjs';
 import { MentionList, MentionListHandle } from './MentionList';
 import { CollaborativeCursor } from './CollaborativeCursors';
-import { FEATURES } from '../../shared/featureFlags';
+import { FEATURES } from '@shared/featureFlags';
 
 export const createYjsDocument = (initialContent?: any): Y.Doc => {
   const ydoc = new Y.Doc();

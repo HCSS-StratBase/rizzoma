@@ -1,10 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '../middleware/auth';
-import { asyncHandler } from '../middleware/errors';
-import { getCouchDB } from '../services/couchdb';
-import { InlineComment } from '../../shared/types/comments';
-import { FEATURES } from '../../shared/featureFlags';
+import { view, insertDoc, getDoc, updateDoc, deleteDoc } from '../lib/couch';
+import { InlineComment } from '@shared/types/comments';
+import { FEATURES } from '@shared/featureFlags';
 
 const router = Router();
 
@@ -20,100 +19,118 @@ const createCommentSchema = z.object({
 });
 
 // Get comments for a blip
-router.get('/blip/:blipId/comments', asyncHandler(async (req, res) => {
-  if (!FEATURES.INLINE_COMMENTS) {
-    return res.status(404).json({ error: 'Feature not enabled' });
-  }
-
-  const { blipId } = req.params;
-  const db = await getCouchDB('inline_comments');
-  
+router.get('/blip/:blipId/comments', async (req, res): Promise<void> => {
   try {
-    const result = await db.view('comments', 'by_blip', {
-      key: blipId,
-      include_docs: true
-    });
+    if (!FEATURES.INLINE_COMMENTS) {
+      res.status(404).json({ error: 'Feature not enabled' });
+      return;
+    }
+
+    const { blipId } = req.params;
     
-    const comments = result.rows.map(row => row.doc);
-    res.json({ comments });
+    try {
+      const result = await view<InlineComment>('comments', 'by_blip', {
+        key: blipId,
+        include_docs: true
+      });
+      
+      const comments = result.rows.map(row => row.doc).filter(Boolean);
+      res.json({ comments });
+    } catch (error) {
+      // If view doesn't exist, return empty array
+      res.json({ comments: [] });
+    }
   } catch (error) {
-    res.json({ comments: [] });
+    console.error('Error in comments route:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-}));
+});
 
 // Create a new comment
-router.post('/comments', requireAuth, asyncHandler(async (req, res) => {
-  if (!FEATURES.INLINE_COMMENTS) {
-    return res.status(404).json({ error: 'Feature not enabled' });
-  }
+router.post('/comments', requireAuth, async (req, res): Promise<void> => {
+  try {
+    if (!FEATURES.INLINE_COMMENTS) {
+      res.status(404).json({ error: 'Feature not enabled' });
+      return;
+    }
 
-  const { blipId, content, range } = createCommentSchema.parse(req.body);
-  const userId = req.user!.id;
-  const userName = req.user!.name || 'Anonymous';
-  
-  const db = await getCouchDB('inline_comments');
-  
-  const comment: InlineComment = {
-    id: `comment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    blipId,
-    userId,
-    userName,
-    content,
-    range,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    resolved: false
-  };
-  
-  await db.insert({
-    ...comment,
-    _id: comment.id,
-    type: 'inline_comment'
-  });
-  
-  res.json({ comment });
-}));
+    const { blipId, content, range } = createCommentSchema.parse(req.body);
+    const userId = req.user!.id;
+    const userName = req.user!.name || 'Anonymous';
+    
+    const commentId = `comment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const comment: InlineComment & { _id: string; type: string } = {
+      _id: commentId,
+      id: commentId,
+      blipId,
+      userId,
+      userName,
+      content,
+      range,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      resolved: false,
+      type: 'inline_comment'
+    };
+    
+    await insertDoc(comment);
+    
+    res.json({ comment });
+  } catch (error) {
+    console.error('Error creating comment:', error);
+    res.status(500).json({ error: 'Failed to create comment' });
+  }
+});
 
 // Resolve/unresolve a comment
-router.patch('/comments/:commentId/resolve', requireAuth, asyncHandler(async (req, res) => {
-  if (!FEATURES.INLINE_COMMENTS) {
-    return res.status(404).json({ error: 'Feature not enabled' });
-  }
+router.patch('/comments/:commentId/resolve', requireAuth, async (req, res): Promise<void> => {
+  try {
+    if (!FEATURES.INLINE_COMMENTS) {
+      res.status(404).json({ error: 'Feature not enabled' });
+      return;
+    }
 
-  const { commentId } = req.params;
-  const { resolved } = z.object({ resolved: z.boolean() }).parse(req.body);
-  
-  const db = await getCouchDB('inline_comments');
-  
-  const doc = await db.get(commentId);
-  await db.insert({
-    ...doc,
-    resolved,
-    updatedAt: Date.now()
-  });
-  
-  res.json({ success: true });
-}));
+    const { commentId } = req.params;
+    const { resolved } = z.object({ resolved: z.boolean() }).parse(req.body);
+    
+    const doc = await getDoc<any>(commentId);
+    await updateDoc({
+      ...doc,
+      resolved,
+      updatedAt: Date.now()
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating comment:', error);
+    res.status(500).json({ error: 'Failed to update comment' });
+  }
+});
 
 // Delete a comment (only by creator)
-router.delete('/comments/:commentId', requireAuth, asyncHandler(async (req, res) => {
-  if (!FEATURES.INLINE_COMMENTS) {
-    return res.status(404).json({ error: 'Feature not enabled' });
-  }
+router.delete('/comments/:commentId', requireAuth, async (req, res): Promise<void> => {
+  try {
+    if (!FEATURES.INLINE_COMMENTS) {
+      res.status(404).json({ error: 'Feature not enabled' });
+      return;
+    }
 
-  const { commentId } = req.params;
-  const userId = req.user!.id;
-  
-  const db = await getCouchDB('inline_comments');
-  
-  const doc = await db.get(commentId);
-  if (doc.userId !== userId) {
-    return res.status(403).json({ error: 'Not authorized' });
+    const { commentId } = req.params;
+    const userId = req.user!.id;
+    
+    const doc = await getDoc<any>(commentId);
+    if (doc.userId !== userId) {
+      res.status(403).json({ error: 'Not authorized' });
+      return;
+    }
+    
+    await deleteDoc(doc._id, doc._rev);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    res.status(500).json({ error: 'Failed to delete comment' });
   }
-  
-  await db.destroy(doc._id, doc._rev);
-  
-  res.json({ success: true });
-}));
+});
 
 export const inlineCommentsRouter = router;

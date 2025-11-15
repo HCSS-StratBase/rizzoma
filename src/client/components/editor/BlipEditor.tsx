@@ -5,7 +5,7 @@ import { getEditorExtensions, defaultEditorProps } from './EditorConfig';
 import { yjsDocManager } from './YjsDocumentManager';
 import { useCollaboration } from './useCollaboration';
 import { EditorToolbar } from './EditorToolbar';
-import { FEATURES } from '../../shared/featureFlags';
+import { FEATURES } from '@shared/featureFlags';
 import './BlipEditor.css';
 
 interface BlipEditorProps {

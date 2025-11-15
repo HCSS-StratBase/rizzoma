@@ -1,6 +1,6 @@
 import { useChangeTracking } from '../hooks/useChangeTracking';
 import { useAuth } from '../hooks/useAuth';
-import { FEATURES } from '../shared/featureFlags';
+import { FEATURES } from '@shared/featureFlags';
 import './editor/FollowGreen.css';
 
 export function GreenNavigation() {

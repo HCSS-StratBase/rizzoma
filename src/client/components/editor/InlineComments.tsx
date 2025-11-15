@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Editor } from '@tiptap/core';
-import { InlineComment } from '../../shared/types/comments';
-import { FEATURES } from '../../shared/featureFlags';
+import { InlineComment } from '@shared/types/comments';
+import { FEATURES } from '@shared/featureFlags';
 import './InlineComments.css';
 
 interface InlineCommentsProps {

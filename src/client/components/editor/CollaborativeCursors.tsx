@@ -3,7 +3,7 @@ import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { DecorationSet, Decoration } from '@tiptap/pm/view';
 import * as Y from 'yjs';
 import { Awareness } from 'y-protocols/awareness';
-import { FEATURES } from '../../shared/featureFlags';
+import { FEATURES } from '@shared/featureFlags';
 import './CollaborativeCursors.css';
 
 export interface CursorUser {
