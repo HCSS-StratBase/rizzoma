@@ -82,11 +82,10 @@ As of now, the modern stack is running end‑to‑end in development:
 
 Remaining Phase‑1 items before a production cut:
 
-- Replace in‑memory filtering for topics search/pagination with CouchDB Mango/view queries
-- Add tests: middleware (requestId/csrf/error), routes (auth/topics/comments), and basic client rendering
-- Harden security defaults (secure cookies behind proxy, production CORS allowlist)
-- Optional: realtime updates via socket.io
-  - Implemented: server emits topic/comment events; client refreshes affected views
+- (DONE) Replace in‑memory filtering for topics search/pagination with CouchDB Mango/view queries.
+- (DONE) Add tests: middleware (requestId/csrf/error), routes (auth/topics/comments/waves/editor), and basic client rendering (App smoke test).
+- (DONE) Harden security defaults (secure cookies behind proxy, production CORS allowlist, quick production security checklist).
+- (DONE) Optional: realtime updates via socket.io (server emits topic/comment events; client refreshes affected views).
 
 ## Migration Steps
 
