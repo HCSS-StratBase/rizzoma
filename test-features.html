@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rizzoma Features Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        .status.success {
+            background: #4caf50;
+            color: white;
+        }
+        .status.error {
+            background: #f44336;
+            color: white;
+        }
+        .status.pending {
+            background: #ff9800;
+            color: white;
+        }
+        .log {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Rizzoma Features Test Suite</h1>
+    <p>This will test all Rizzoma features in an iframe below. Watch the magic happen!</p>
+    
+    <div class="test-section">
+        <h2>Test Status</h2>
+        <div id="status"></div>
+        <div class="log" id="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Live View</h2>
+        <iframe id="testFrame" src="http://localhost:3000"></iframe>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const logEl = document.getElementById('log');
+        const frame = document.getElementById('testFrame');
+        let testWindow;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.textContent += `[${timestamp}] ${message}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        }
+
+        function setStatus(text, type = 'pending') {
+            statusEl.innerHTML = `<span class="status ${type}">${text}</span>`;
+        }
+
+        async function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function runTests() {
+            setStatus('Starting tests...', 'pending');
+            log('🚀 Rizzoma Feature Tests Starting');
+            
+            // Wait for iframe to load
+            await new Promise(resolve => {
+                frame.onload = resolve;
+                if (frame.contentWindow.document.readyState === 'complete') {
+                    resolve();
+                }
+            });
+            
+            testWindow = frame.contentWindow;
+            await wait(2000);
+
+            // Test 1: Check if features are enabled
+            try {
+                const features = await evalInFrame(() => {
+                    return window.FEATURES || {};
+                });
+                log('✅ Features loaded: ' + JSON.stringify(features, null, 2));
+                
+                if (!features.RICH_TOOLBAR || !features.INLINE_COMMENTS) {
+                    log('⚠️ Some features are not enabled! Make sure FEAT_ALL=1 is set', 'error');
+                }
+            } catch (e) {
+                log('❌ Could not check features: ' + e.message, 'error');
+            }
+
+            // Test 2: Check API health
+            try {
+                const health = await fetch('http://localhost:3000/api/health').then(r => r.json());
+                log('✅ API Health: ' + JSON.stringify(health));
+            } catch (e) {
+                log('❌ API Health check failed: ' + e.message, 'error');
+            }
+
+            // Test 3: Navigate to topics
+            log('📍 Navigating to topics list...');
+            await evalInFrame(() => {
+                window.location.hash = '#/';
+            });
+            await wait(2000);
+
+            // Test 4: Check for auth panel
+            const hasAuthPanel = await evalInFrame(() => {
+                return !!document.querySelector('input[type="email"]');
+            });
+            log(hasAuthPanel ? '✅ Auth panel found' : '⚠️ No auth panel visible');
+
+            // Test 5: Look for topics
+            const topicsCount = await evalInFrame(() => {
+                const topics = document.querySelectorAll('a[href*="#/topic/"]');
+                return topics.length;
+            });
+            log(`📝 Found ${topicsCount} topics`);
+
+            // Test 6: Navigate to waves
+            log('🌊 Navigating to waves...');
+            await evalInFrame(() => {
+                window.location.hash = '#/waves';
+            });
+            await wait(2000);
+
+            const wavesCount = await evalInFrame(() => {
+                const waves = document.querySelectorAll('a[href*="#/wave/"]');
+                return waves.length;
+            });
+            log(`🌊 Found ${wavesCount} waves`);
+
+            // Test 7: Check editor search
+            log('🔍 Testing editor search...');
+            await evalInFrame(() => {
+                window.location.hash = '#/editor/search';
+            });
+            await wait(2000);
+
+            const hasSearchUI = await evalInFrame(() => {
+                return !!document.querySelector('input[placeholder*="Search"]');
+            });
+            log(hasSearchUI ? '✅ Editor search UI loaded' : '❌ Editor search not found');
+
+            // Test 8: If there's a topic, test the editor
+            if (topicsCount > 0) {
+                log('📝 Opening first topic to test editor...');
+                await evalInFrame(() => {
+                    const firstTopic = document.querySelector('a[href*="#/topic/"]');
+                    if (firstTopic) {
+                        firstTopic.click();
+                    }
+                });
+                await wait(3000);
+
+                // Check for editor features
+                const editorFeatures = await evalInFrame(() => {
+                    const results = {
+                        hasEditor: !!document.querySelector('.ProseMirror'),
+                        hasToolbar: !!document.querySelector('.editor-toolbar'),
+                        hasGreenNav: !!document.querySelector('.green-navigation'),
+                        toolbarButtons: []
+                    };
+                    
+                    if (results.hasToolbar) {
+                        const buttons = document.querySelectorAll('.editor-toolbar button');
+                        results.toolbarButtons = Array.from(buttons).map(b => b.textContent.trim());
+                    }
+                    
+                    return results;
+                });
+
+                log('🎨 Editor features check:');
+                log(`  - Editor present: ${editorFeatures.hasEditor ? '✅' : '❌'}`);
+                log(`  - Rich toolbar: ${editorFeatures.hasToolbar ? '✅' : '❌'}`);
+                log(`  - Follow green nav: ${editorFeatures.hasGreenNav ? '✅' : '❌'}`);
+                if (editorFeatures.toolbarButtons.length > 0) {
+                    log(`  - Toolbar buttons: ${editorFeatures.toolbarButtons.join(', ')}`);
+                }
+            }
+
+            setStatus('Tests completed!', 'success');
+            log('🎉 All tests completed! Check the results above.');
+        }
+
+        async function evalInFrame(fn) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const result = testWindow.eval(`(${fn.toString()})()`);
+                    resolve(result);
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+
+        // Auto-start tests after page load
+        window.onload = () => {
+            setTimeout(runTests, 1000);
+        };
+    </script>
+</body>
+</html>

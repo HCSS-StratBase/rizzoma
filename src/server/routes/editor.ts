@@ -119,7 +119,7 @@ if (!ENABLED) {
       } catch { docs = []; }
 
       // Build a combined state from updates
-      const { default: Y } = await import('yjs');
+      const Y: any = await import('yjs');
       const ydoc = new (Y as any).Doc();
       let applied = 0;
       for (const d of docs) {
@@ -151,10 +151,19 @@ if (!ENABLED) {
   // GET /api/editor/search?q=foo&limit=20 — find waves with materialized text match
   router.get('/search', async (req, res) => {
     try {
-      const q = String((req.query as any).q || '').trim();
-      const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
+      const rawQ = String((req.query as any).q || '');
+      const q = rawQ.trim();
+      let limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
       const blipIdFilter = ((req.query as any).blipId ? String((req.query as any).blipId).trim() : '') || undefined;
       if (!q) { res.json({ results: [] }); return; }
+      if (q.length > 256) {
+        res.status(400).json({ error: 'query_too_long' });
+        return;
+      }
+      // small safety: avoid too many results when someone passes an extremely small pattern
+      if (q.length < 2) {
+        limit = Math.min(limit, 10);
+      }
       // case-insensitive search using Mango regex
       const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const selector: any = { type: 'yjs_snapshot', text: { $regex: `(?i).*${safe}.*` } };

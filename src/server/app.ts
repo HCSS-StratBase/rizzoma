@@ -19,6 +19,7 @@ import wavesRouter from './routes/waves.js';
 import editorRouter from './routes/editor.js';
 import linksRouter from './routes/links.js';
 import blipsRouter from './routes/blips.js';
+import { inlineCommentsRouter } from './routes/inlineComments.js';
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.use('/api/waves', wavesRouter);
 app.use('/api/editor', editorRouter);
 app.use('/api', linksRouter);
 app.use('/api', blipsRouter);
+app.use('/api', inlineCommentsRouter);
 
 // Placeholder root
 app.get('/', (_req, res) => {

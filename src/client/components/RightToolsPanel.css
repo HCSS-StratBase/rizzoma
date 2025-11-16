@@ -1,0 +1,191 @@
+.right-tools-panel {
+  width: 280px;
+  min-width: 280px;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #ddd;
+  transition: width 0.3s ease;
+}
+
+.right-tools-panel.collapsed {
+  width: 40px;
+  min-width: 40px;
+}
+
+.right-tools-panel.anonymous {
+  opacity: 0.8;
+}
+
+.tools-header {
+  height: 48px;
+  background: #e8e8e8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid #ccc;
+}
+
+.tools-section {
+  padding: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* View Controls */
+.view-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.view-mode-toggle {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.mode-btn:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.mode-btn:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-left: none;
+}
+
+.mode-btn:hover {
+  background: #f0f0f0;
+}
+
+.mode-btn.active {
+  background: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+/* Tool Buttons */
+.tool-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.tool-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.tool-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.action-btn .icon {
+  font-size: 16px;
+  font-weight: 600;
+  color: #666;
+}
+
+/* Topic Management */
+.topic-management {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.manage-btn {
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.manage-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+/* Additional Actions */
+.additional-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.additional-actions .tool-btn {
+  flex: 1;
+  min-width: calc(50% - 4px);
+}
+
+/* Collapsed state */
+.right-tools-panel.collapsed .tools-section,
+.right-tools-panel.collapsed .user-presence {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .right-tools-panel {
+    width: 240px;
+    min-width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .right-tools-panel {
+    width: 200px;
+    min-width: 200px;
+  }
+  
+  .topic-management {
+    grid-template-columns: 1fr;
+  }
+}

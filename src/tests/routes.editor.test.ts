@@ -61,6 +61,8 @@ describe('routes: /api/editor (realtime + search)', () => {
     expect(resp.status).toBe(200);
     expect(Array.isArray(body.results)).toBe(true);
     expect(body.results.length).toBeGreaterThanOrEqual(1);
+    const first = body.results[0];
+    expect(first.waveId).toBe('w1');
+    expect(first.blipId).toBe('b1');
   });
 });
-

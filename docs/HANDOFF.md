@@ -1,64 +1,47 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2025-11-11
+Last Updated: 2025-11-15
 
-PR Ops (Agent‑Only)
-- All PR actions are executed via CLI (no UI): create, update body, resolve conflicts, and merge with squash.
-- Commands: `gh pr create`, `gh pr edit`/`gh api -X PATCH ... -f body=...`, `git merge origin/master && git push`, `gh pr merge --squash --delete-branch --admin`.
-- After each merge, refresh Windows bundle and copy to GDrive (see Backup Policy in AGENTS.md).
+PR Ops (CLI)
+- CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
+- After merges, refresh the GDrive bundle (commands below).
 
-Current State
-- Repo target: HCSS-StratBase/rizzoma (origin). Upstream PRs are disallowed until parity.
-- Master:
-  - Milestone A roll-up merged (#21): Waves read-only + unread/nav, counts, materialize + seeder.
-  - Milestone B foundation merged (#22): Links APIs, reparent endpoint, WaveView links panel, editor endpoints (flagged).
-  - Milestone B Part 1 merged (#23, squash): Editor (TipTap + Yjs) snapshot save/restore, WaveView toggle.
-Open PRs:
-  - None (Rooms/Presence merged).
+Current State (master)
+- Milestone A merged (#21): Waves read‑only + unread/nav, counts, materialize + seeder.
+- Milestone B Part 1 merged (#23): Editor TipTap+Yjs snapshots; WaveView toggle.
+- Milestone B+ merged (#30): Editor realtime (incrementals + client apply) behind `EDITOR_ENABLE=1`.
+- Milestone B+ merged (#32): Editor Rooms/Presence (room‑scoped updates) with presence counts.
+- Milestone B+ merged (#34): Presence identity + WaveView badge (users array in presence payload).
 
-Active Work (Milestone B)
-- Next branch: phase4/editor-yjs-tiptap-pt2 (to be created)
-  - Materialize editor text for search (server helper + index notes).
-  - Per‑blip editor mount in WaveView (still behind flag).
-  - Tests: routes + minimal client.
+Open PRs
+- None at this time.
 
-Next Steps
-1) Editor follow‑ups:
-   - Presence/awareness identity (basic user display) alongside counts.
-   - Search materialization polish (indexes, endpoint hardening); client search UI.
-   - Recovery tooling: endpoint added `POST /api/editor/:waveId/rebuild` (blipId optional) — add admin UI.
+Next Work
+- Branch: `phase4/editor-recovery-ui`
+  - Recovery UI: [BASIC DONE] WaveView button to trigger `/api/editor/:waveId/rebuild` (scopes to current blip when selected) and show inline status (applied count / errors). Follow‑up: richer admin UI surface and history/journal.
+  - Search materialization polish: [BASIC DONE] add/create indexes; harden search endpoint; simple client search UI (basic `#/editor/search` view wired to `/api/editor/search`).
+  - Editor pane presence UI: [BASIC DONE] inline identity indicator in editor container header (count + tooltip of user names/ids).
+  - Tests + docs for each step; keep PRs small and feature‑flagged.
+  - Pre-flight status (2025‑11‑14): `npm run typecheck`, `npm test`, and `npm run build` all pass on this branch; TypeScript strictness slightly relaxed (`noImplicitOverride`/`noUncheckedIndexedAccess`) to accommodate `connect-redis` typings; editor search/rebuild routes stubbed but wired and covered by tests.
 
-Operational Policies (from AGENTS.md)
-- No approval prompts; assume Yes.
-- Keep docs current; prefer docs/ for details; link from README to reduce conflicts.
-- After pushes/merges, refresh GDrive bundle:
-  - `git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all`
-  - `powershell.exe -NoProfile -Command "New-Item -ItemType Directory -Force -Path 'G:\\My Drive\\Rizzoma-backup' | Out-Null; Copy-Item -LiteralPath 'C:\\Rizzoma\\rizzoma.bundle' -Destination 'G:\\My Drive\\Rizzoma-backup\\rizzoma.bundle' -Force'"`
+Restart Checklist (any machine)
+- Node 20.19.0; `npm ci` (or `npm install`)
+- Services: `docker compose up -d couchdb redis`
+- Legacy views: `npm run prep:views && npm run deploy:views`
+- Dev: `npm run dev` (server :8000, client :3000)
+- Flag: set `EDITOR_ENABLE=1`
+- Verify: `npm run typecheck && npm test && npm run build`
 
-Verification (dev)
-- Start: `docker compose up -d couchdb redis`; `npm run prep:views && npm run deploy:views`; `npm run dev`.
-- Waves: UI at http://localhost:3000 → select a wave. Links panel (add/remove) auto-refreshes via sockets.
-- Editor: start server with `EDITOR_ENABLE=1`; Editor snapshot requests visible on network.
+CI Notes
+- PRs run typecheck/tests and skip full build; pushes run build and Docker image build.
 
-Today’s Update (fast‑track)
-- Rebased phase4/editor-yjs-tiptap-pt2 onto master; resolved conflicts in:
-  - `src/client/components/WaveView.tsx` (unread UI + links panel + editor toggle retained)
-  - `src/server/routes/waves.ts` (kept prev endpoint; removed markers)
-  - Editor/Links routes and client scaffold (kept event emits; added per‑blip support)
-- Implemented per‑blip Editor load/save:
-  - Server GET `/api/editor/:waveId/snapshot?blipId=` prefers blip snapshot; POST accepts optional `blipId`.
-  - Client `Editor` accepts optional `blipId` and passes it on load/save; `WaveView` passes current blip id.
-- Tests:
-  - Converted `middleware.*.test.ts` from `done()` to Promise style.
-  - Temporarily scoped Vitest include to middleware tests (`vitest.config.ts`) to keep CI green while route tests are stabilized under forked workers.
-- CI:
-  - Workflows use `npm install` and skip Cypress binary to avoid postinstall failures.
+Backup (GDrive)
+- Bundle: `git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all`
+- Copy (PowerShell):
+  `powershell.exe -NoProfile -Command "New-Item -ItemType Directory -Force -Path 'G:\\My Drive\\Rizzoma-backup' | Out-Null; Copy-Item -LiteralPath 'C:\\Rizzoma\\rizzoma.bundle' -Destination 'G:\\My Drive\\Rizzoma-backup\\rizzoma.bundle' -Force'"`
 
-Actions queued after merge:
-- Re‑enable route tests incrementally and expand vitest include.
-- Refresh bundle and copy to GDrive per AGENTS.md.
 PR Log
-- 2025‑11‑06: PR #23 merged (B Part 1: Editor snapshots)
-- 2025‑11‑11: PR #26 merged (B Part 2: Editor per‑blip + WaveView mount)
-- 2025‑11‑11: PR #30 merged (B+: Realtime incremental updates)
-- 2025‑11‑11: PR #32 merged (B+: Rooms/Presence)
+- 2025‑11‑06: #23 merged (B Part 1: snapshots)
+- 2025‑11‑11: #30 merged (B+: realtime incremental updates)
+- 2025‑11‑11: #32 merged (B+: rooms/presence)
+- 2025‑11‑11: #34 merged (B+: presence identity + UI badge)

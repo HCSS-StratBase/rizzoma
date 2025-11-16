@@ -1,0 +1,134 @@
+.mentions-list {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.mentions-filter {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #ccc;
+}
+
+.mentions-filter button {
+  flex: 1;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.mentions-filter button:hover {
+  background: #f8f8f8;
+}
+
+.mentions-filter button.active {
+  background: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+.mentions-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.mention-item {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.mention-item:hover {
+  border-color: #999;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mention-item.unread {
+  border-left: 3px solid #3498db;
+  background: #f0f8ff;
+}
+
+.mention-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.topic-title {
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.mention-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.author-name {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.mention-text {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.unread-indicator {
+  position: absolute;
+  top: 12px;
+  left: 8px;
+  width: 8px;
+  height: 8px;
+  background: #3498db;
+  border-radius: 50%;
+}
+
+.no-mentions {
+  text-align: center;
+  color: #666;
+  padding: 32px 16px;
+  font-size: 14px;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.login-prompt p {
+  color: #666;
+  font-size: 14px;
+}
+
+.loading {
+  text-align: center;
+  padding: 32px 16px;
+  color: #666;
+  font-size: 14px;
+}

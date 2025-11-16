@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Editor Features</title>
+</head>
+<body>
+  <div id="test-editor"></div>
+  <script type="module">
+    import React from 'react';
+    import ReactDOM from 'react-dom/client';
+    import { BlipEditor } from './components/editor/BlipEditor';
+    import { FEATURES } from '../shared/featureFlags';
+
+    function TestApp() {
+      const [content, setContent] = React.useState('<p>Test content for Rizzoma editor</p>');
+      
+      return React.createElement('div', { style: { padding: 20 } },
+        React.createElement('h1', null, 'Rizzoma Editor Test'),
+        React.createElement('div', null, 
+          React.createElement('h2', null, 'Feature Flags:'),
+          React.createElement('pre', null, JSON.stringify(FEATURES, null, 2))
+        ),
+        React.createElement('div', { style: { marginTop: 20, border: '1px solid #ccc', padding: 10 } },
+          React.createElement(BlipEditor, {
+            content,
+            blipId: 'test-blip-1',
+            isReadOnly: false,
+            onUpdate: setContent,
+            enableCollaboration: false
+          })
+        ),
+        React.createElement('div', { style: { marginTop: 20 } },
+          React.createElement('h3', null, 'Content HTML:'),
+          React.createElement('pre', { style: { background: '#f5f5f5', padding: 10 } }, content)
+        )
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('test-editor'));
+    root.render(React.createElement(TestApp));
+  </script>
+</body>
+</html>

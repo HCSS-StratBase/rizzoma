@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rizzoma Editor Features Test</title>
+  <script>
+    // Set feature flags before module loading
+    window.process = { env: { FEAT_ALL: '1' } };
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module">
+    import React from 'react';
+    import ReactDOM from 'react-dom/client';
+    import { TestEditorApp } from '/src/client/TestEditorApp.tsx';
+    
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(TestEditorApp));
+  </script>
+</body>
+</html>
