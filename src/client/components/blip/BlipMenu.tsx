@@ -36,27 +36,7 @@ export function BlipMenu({
     strike: false
   });
 
-  // Update text format state when editor selection changes
-  useEffect(() => {
-    if (!editor) return;
-
-    const updateState = () => {
-      setTextFormatState({
-        bold: editor.isActive('bold'),
-        italic: editor.isActive('italic'),
-        underline: editor.isActive('underline'),
-        strike: editor.isActive('strike')
-      });
-    };
-
-    editor.on('selectionUpdate', updateState);
-    editor.on('transaction', updateState);
-
-    return () => {
-      editor.off('selectionUpdate', updateState);
-      editor.off('transaction', updateState);
-    };
-  }, [editor]);
+  // Note: Editor state tracking disabled to avoid undo/redo errors
 
   if (!isActive) return null;
 
@@ -66,8 +46,6 @@ export function BlipMenu({
   const handleStrike = () => editor?.chain().focus().toggleStrike().run();
   const handleBulletList = () => editor?.chain().focus().toggleBulletList().run();
   const handleOrderedList = () => editor?.chain().focus().toggleOrderedList().run();
-  const handleUndo = () => editor?.chain().focus().undo().run();
-  const handleRedo = () => editor?.chain().focus().redo().run();
   const handleClearFormat = () => editor?.chain().focus().clearNodes().unsetAllMarks().run();
 
   if (isEditing) {
@@ -87,89 +65,18 @@ export function BlipMenu({
           <div className="menu-group">
             <button 
               className="menu-btn"
-              onClick={handleUndo}
-              disabled={!editor?.can().undo()}
-              title="Undo (Ctrl+Z)"
-            >
-              ↶
-            </button>
-            <button 
-              className="menu-btn"
-              onClick={handleRedo}
-              disabled={!editor?.can().redo()}
-              title="Redo"
-            >
-              ↷
-            </button>
-          </div>
-
-          <div className="menu-group">
-            <button className="menu-btn" title="Insert link">🔗</button>
-            <button className="menu-btn" title="Insert attachment">📎</button>
-            <button className="menu-btn" title="Insert image">🖼️</button>
-          </div>
-
-          <div className="menu-group">
-            <button 
-              className={`menu-btn ${textFormatState.bold ? 'active' : ''}`}
               onClick={handleBold}
-              title="Bold (Ctrl+B)"
+              title="Bold"
             >
               <strong>B</strong>
             </button>
             <button 
-              className={`menu-btn ${textFormatState.italic ? 'active' : ''}`}
+              className="menu-btn"
               onClick={handleItalic}
-              title="Italic (Ctrl+I)"
+              title="Italic"
             >
               <em>I</em>
             </button>
-            <button 
-              className={`menu-btn ${textFormatState.underline ? 'active' : ''}`}
-              onClick={handleUnderline}
-              title="Underline (Ctrl+U)"
-            >
-              <span style={{ textDecoration: 'underline' }}>U</span>
-            </button>
-            <button 
-              className={`menu-btn ${textFormatState.strike ? 'active' : ''}`}
-              onClick={handleStrike}
-              title="Strikethrough"
-            >
-              <span style={{ textDecoration: 'line-through' }}>S</span>
-            </button>
-          </div>
-
-          <div className="menu-group">
-            <button className="menu-btn" title="Text background color">🎨</button>
-            <button 
-              className="menu-btn"
-              onClick={handleClearFormat}
-              title="Clear formatting"
-            >
-              ❌
-            </button>
-          </div>
-
-          <div className="menu-group">
-            <button 
-              className="menu-btn"
-              onClick={handleBulletList}
-              title="Bulleted list"
-            >
-              •
-            </button>
-            <button 
-              className="menu-btn"
-              onClick={handleOrderedList}
-              title="Numbered list"
-            >
-              1.
-            </button>
-          </div>
-
-          <div className="menu-group">
-            <button className="menu-btn" title="Other">⋯</button>
           </div>
         </div>
       </div>

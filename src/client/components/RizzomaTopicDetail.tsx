@@ -310,9 +310,7 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
             onToggleCollapse={handleToggleCollapse}
           />
         ) : (
-          <div style={{ background: 'red', color: 'white', padding: '10px' }}>
-            DEBUG: No rootBlip available!
-          </div>
+          <div>Loading topic content...</div>
         )}
       </div>
     </div>

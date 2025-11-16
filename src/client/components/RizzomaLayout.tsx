@@ -107,17 +107,6 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
         <div className="inner-wave-container">
           {selectedTopicId ? (
             <>
-              <div style={{ background: 'yellow', padding: '10px' }}>DEBUG: selectedTopicId = {selectedTopicId}</div>
-              <div style={{ background: 'orange', color: 'white', padding: '20px' }}>
-                <h2>TEST: This should be RizzomaTopicDetail</h2>
-                <p>TopicID: {selectedTopicId}</p>
-                <div>
-                  <p contentEditable style={{ border: '1px solid black', padding: '10px' }}>
-                    This is a test contenteditable div to simulate editing
-                  </p>
-                  <button>Test Edit Button</button>
-                </div>
-              </div>
               <RizzomaTopicDetail 
                 id={selectedTopicId} 
                 isAuthed={isAuthed} 
@@ -127,7 +116,6 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
             <div className="no-topic-selected">
               <h2>Welcome to Rizzoma</h2>
               <p>Select a topic from the left panel or create a new one</p>
-              <div style={{ background: 'red', color: 'white', padding: '10px' }}>DEBUG: No topic selected</div>
             </div>
           )}
         </div>
