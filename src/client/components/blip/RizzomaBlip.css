@@ -336,3 +336,20 @@
 .rizzoma-blip.highlight {
   animation: highlight 2s ease;
 }
+
+/* Active blip styling (when clicked/selected) */
+.blip-container.active {
+  border: 2px solid #57AAD9;
+  border-radius: 4px;
+  background-color: rgba(87, 170, 217, 0.02);
+}
+
+.blip-container.active .blip-text {
+  background-color: rgba(87, 170, 217, 0.05);
+}
+
+/* Ensure menu appears when blip is active */
+.blip-container.active .blip-menu-container {
+  opacity: 1;
+  transform: translateY(0);
+}

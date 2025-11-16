@@ -43,6 +43,7 @@ export function RizzomaBlip({
   onToggleCollapse
 }: RizzomaBlipProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isActive, setIsActive] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [isExpanded, setIsExpanded] = useState(!blip.isCollapsed);
@@ -52,6 +53,18 @@ export function RizzomaBlip({
   const [selectionCoords, setSelectionCoords] = useState({ x: 0, y: 0 });
   const editorRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const blipContainerRef = useRef<HTMLDivElement>(null);
+
+  // Create inline editor for editing mode
+  const inlineEditor = useEditor({
+    extensions: getEditorExtensions(),
+    content: editedContent,
+    editable: isEditing,
+    editorProps: defaultEditorProps,
+    onUpdate: ({ editor }) => {
+      setEditedContent(editor.getHTML());
+    },
+  });
 
   const hasUnreadChildren = blip.childBlips?.some(child => !child.isRead) ?? false;
   const childCount = blip.childBlips?.length ?? 0;
@@ -66,28 +79,49 @@ export function RizzomaBlip({
     if (blip.permissions.canEdit) {
       setEditedContent(blip.content);
       setIsEditing(true);
+      setIsActive(true);
+      // Update inline editor content and make it editable
+      if (inlineEditor) {
+        inlineEditor.commands.setContent(blip.content);
+        inlineEditor.setEditable(true);
+      }
     }
   };
 
   const handleSaveEdit = async () => {
     try {
+      const currentContent = inlineEditor?.getHTML() || editedContent;
       const response = await fetch(`/api/blips/${blip.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: editedContent }),
+        body: JSON.stringify({ content: currentContent }),
       });
       
       if (!response.ok) {
         throw new Error('Failed to save edit');
       }
       
-      onBlipUpdate?.(blip.id, editedContent);
+      onBlipUpdate?.(blip.id, currentContent);
       setIsEditing(false);
+      setIsActive(false);
+      if (inlineEditor) {
+        inlineEditor.setEditable(false);
+      }
     } catch (error) {
       console.error('Error saving blip edit:', error);
       // TODO: Show error toast
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setIsActive(false);
+    setEditedContent(blip.content);
+    if (inlineEditor) {
+      inlineEditor.commands.setContent(blip.content);
+      inlineEditor.setEditable(false);
     }
   };
 
@@ -189,6 +223,28 @@ export function RizzomaBlip({
     };
   }, [isEditing]);
 
+  // Handle click to make blip active (show menu)
+  const handleBlipClick = () => {
+    setIsActive(true);
+  };
+
+  // Handle click outside to deactivate blip
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (blipContainerRef.current && !blipContainerRef.current.contains(event.target as Node)) {
+        setIsActive(false);
+      }
+    };
+
+    if (isActive) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isActive]);
+
   const handleCreateInlineComment = async () => {
     if (!selectedText || !blip.permissions.canComment) return;
     
@@ -238,13 +294,26 @@ export function RizzomaBlip({
 
   return (
     <div 
-      className={`rizzoma-blip ${isRoot ? 'root-blip' : 'nested-blip'} ${!blip.isRead ? 'unread' : ''}`}
+      ref={blipContainerRef}
+      className={`rizzoma-blip blip-container ${isRoot ? 'root-blip' : 'nested-blip'} ${!blip.isRead ? 'unread' : ''} ${isActive ? 'active' : ''}`}
       data-blip-id={blip.id}
-      style={{ marginLeft: isRoot ? 0 : 20 }}
+      style={{ marginLeft: isRoot ? 0 : 20, position: 'relative' }}
+      onClick={handleBlipClick}
     >
+      {/* Inline Blip Menu */}
+      <BlipMenu
+        isActive={isActive}
+        isEditing={isEditing}
+        canEdit={blip.permissions.canEdit}
+        canComment={blip.permissions.canComment}
+        editor={inlineEditor || undefined}
+        onStartEdit={handleStartEdit}
+        onFinishEdit={handleSaveEdit}
+        onCancel={handleCancelEdit}
+      />
       {/* Blip Header */}
       {!isRoot && (
-        <div className="blip-header">
+        <div className="blip-header" style={{ marginTop: isActive ? '30px' : '0' }}>
           <div className="blip-collapse-control" onClick={handleToggleExpand}>
             {childCount > 0 && (
               <span className="collapse-icon">{isExpanded ? '−' : '+'}</span>
@@ -271,31 +340,13 @@ export function RizzomaBlip({
       )}
 
       {/* Blip Content */}
-      <div className={`blip-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
+      <div 
+        className={`blip-content ${isExpanded ? 'expanded' : 'collapsed'}`}
+        style={{ marginTop: isActive && isRoot ? '30px' : '0' }}
+      >
         {isEditing ? (
           <div className="blip-editor-container" ref={editorRef}>
-            <BlipEditor
-              content={blip.content}
-              blipId={blip.id}
-              isReadOnly={false}
-              onUpdate={handleContentUpdate}
-              enableCollaboration={true}
-              showToolbar={true}
-            />
-            <div className="blip-editor-actions">
-              <button 
-                className="btn-save"
-                onClick={handleSaveEdit}
-              >
-                Done
-              </button>
-              <button 
-                className="btn-cancel"
-                onClick={() => setIsEditing(false)}
-              >
-                Cancel
-              </button>
-            </div>
+            {inlineEditor && <EditorContent editor={inlineEditor} />}
           </div>
         ) : (
           <div className="blip-view-mode">
@@ -304,16 +355,6 @@ export function RizzomaBlip({
               className="blip-text"
               dangerouslySetInnerHTML={{ __html: blip.content }}
             />
-            {blip.permissions.canEdit && (
-              <div className="blip-toolbar-simple">
-                <button 
-                  className="btn-edit"
-                  onClick={handleStartEdit}
-                >
-                  Edit
-                </button>
-              </div>
-            )}
           </div>
         )}
 
