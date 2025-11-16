@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { BlipEditor } from '../editor/BlipEditor';
 import { BlipMenu } from './BlipMenu';
 import { api } from '../../lib/api';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -375,13 +374,12 @@ export function RizzomaBlip({
         {/* Reply Form */}
         {showReplyForm && (
           <div className="blip-reply-form">
-            <BlipEditor
-              content=""
-              blipId={`reply-${blip.id}-${Date.now()}`}
-              isReadOnly={false}
-              onUpdate={setReplyContent}
-              enableCollaboration={false}
-              showToolbar={true}
+            <textarea
+              className="reply-textarea"
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              placeholder="Write your reply..."
+              rows={3}
             />
             <div className="reply-actions">
               <button 
