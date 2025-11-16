@@ -13,6 +13,21 @@ export function RightToolsPanel({ isAuthed, selectedTopicId }: RightToolsPanelPr
   const [viewMode, setViewMode] = useState<'text' | 'mindmap'>('text');
   const [repliesVisible, setRepliesVisible] = useState(true);
 
+  // Mock unread count - in production, calculate from actual data
+  const unreadCount = 3;
+
+  const handleFollowGreen = () => {
+    // Find next unread blip and scroll to it
+    const unreadElements = document.querySelectorAll('.rizzoma-blip.unread');
+    if (unreadElements.length > 0) {
+      unreadElements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Mark as read after a delay
+      setTimeout(() => {
+        unreadElements[0].classList.remove('unread');
+      }, 1000);
+    }
+  };
+
   return (
     <div className={`right-tools-panel ${collapsed ? 'collapsed' : ''} ${!isAuthed ? 'anonymous' : ''}`}>
       <div className="tools-header">
@@ -30,7 +45,10 @@ export function RightToolsPanel({ isAuthed, selectedTopicId }: RightToolsPanelPr
         <>
           {/* Follow the Green Navigation */}
           <div className="tools-section">
-            <FollowTheGreen />
+            <FollowTheGreen 
+              unreadCount={unreadCount}
+              onNavigate={handleFollowGreen}
+            />
           </div>
           
           {/* View Controls */}

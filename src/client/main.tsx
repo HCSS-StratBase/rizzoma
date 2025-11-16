@@ -47,18 +47,28 @@ export function App() {
   // Check if we should use Rizzoma layout based on URL parameter
   const params = new URLSearchParams(window.location.search);
   const useRizzomaLayout = params.get('layout') === 'rizzoma';
+  const isDemoMode = params.get('demo') === 'true';
   
   useEffect(() => {
     console.log('APP MOUNTED - Checking layout:', { 
       search: window.location.search, 
       layout: params.get('layout'), 
       useRizzomaLayout,
+      isDemoMode,
       timestamp: Date.now() 
     });
-  }, []);
+    
+    // Auto-set demo user if in demo mode
+    if (isDemoMode && !me) {
+      setMe({ id: 'demo-user', email: 'demo@rizzoma.com' });
+      setCheckingAuth(false);
+    }
+  }, [isDemoMode]);
 
   // bootstrap auth state
   useEffect(() => {
+    if (isDemoMode) return; // Skip auth check in demo mode
+    
     (async () => {
       try {
         const r = await api('/api/auth/me');
@@ -68,7 +78,7 @@ export function App() {
         setCheckingAuth(false);
       }
     })();
-  }, []);
+  }, [isDemoMode]);
 
   useEffect(() => {
     const onHash = () => setRoute(window.location.hash || '#/');
@@ -96,8 +106,8 @@ export function App() {
   };
   const listParams = parseListParams();
 
-  // Show landing page if not authenticated and using Rizzoma layout
-  if (useRizzomaLayout && !checkingAuth && !me) {
+  // Show landing page if not authenticated and using Rizzoma layout (but skip in demo mode)
+  if (useRizzomaLayout && !checkingAuth && !me && !isDemoMode) {
     return (
       <RizzomaLanding 
         onEnterRizzoma={() => {

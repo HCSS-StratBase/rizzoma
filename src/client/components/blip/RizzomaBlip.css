@@ -107,6 +107,26 @@
   padding: 4px;
   border-radius: 3px;
   min-height: 24px;
+  user-select: text;
+}
+
+/* Inline comment button */
+.inline-comment-btn {
+  position: fixed;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 1000;
+  white-space: nowrap;
+}
+
+.inline-comment-btn:hover {
+  background: #45a049;
 }
 
 /* View Mode */

@@ -84,12 +84,24 @@ export function RizzomaLanding({ onEnterRizzoma }: RizzomaLandingProps) {
               ×
             </button>
             
-            <button className="oauth-btn google-btn">
+            <button 
+              className="oauth-btn google-btn"
+              onClick={() => {
+                setShowLogin(false);
+                if (onEnterRizzoma) onEnterRizzoma();
+              }}
+            >
               <span className="oauth-icon">G</span>
               Sign In With Gmail
             </button>
             
-            <button className="oauth-btn facebook-btn">
+            <button 
+              className="oauth-btn facebook-btn"
+              onClick={() => {
+                setShowLogin(false);
+                if (onEnterRizzoma) onEnterRizzoma();
+              }}
+            >
               <span className="oauth-icon">f</span>
               Sign In With Facebook
             </button>

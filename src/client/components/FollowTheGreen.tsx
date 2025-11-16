@@ -6,8 +6,8 @@ interface FollowTheGreenProps {
   onNavigate: () => void;
 }
 
-export function FollowTheGreen({ unreadCount, onNavigate }: FollowTheGreenProps) {
-  if (!FEATURES.FOLLOW_GREEN || unreadCount === 0) {
+export function FollowTheGreen({ unreadCount = 0, onNavigate }: FollowTheGreenProps) {
+  if (!FEATURES.FOLLOW_GREEN) {
     return null;
   }
 

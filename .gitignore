@@ -33,3 +33,9 @@ coverage/
 npm-debug.log*
 .env
 rizzoma.bundle
+
+# Playwright screenshots
+.playwright-mcp/
+
+# Development logs
+*.log

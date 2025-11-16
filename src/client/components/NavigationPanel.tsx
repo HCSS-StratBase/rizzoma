@@ -5,15 +5,16 @@ interface NavigationPanelProps {
   activeTab: string;
   onTabChange: (tab: any) => void;
   isAuthed: boolean;
+  onNewClick: () => void;
 }
 
-export function NavigationPanel({ activeTab, onTabChange, isAuthed }: NavigationPanelProps) {
+export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick }: NavigationPanelProps) {
   return (
     <div className="navigation-panel">
       <div className="nav-header">
         <button 
           className="nav-button new-button"
-          onClick={() => window.location.hash = '#/new'}
+          onClick={onNewClick}
         >
           <span className="icon">+</span>
           <span className="label">New</span>

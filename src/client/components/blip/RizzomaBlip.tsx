@@ -44,7 +44,11 @@ export function RizzomaBlip({
   const [replyContent, setReplyContent] = useState('');
   const [isExpanded, setIsExpanded] = useState(!blip.isCollapsed);
   const [editedContent, setEditedContent] = useState(blip.content);
+  const [showInlineCommentBtn, setShowInlineCommentBtn] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
+  const [selectionCoords, setSelectionCoords] = useState({ x: 0, y: 0 });
   const editorRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const hasUnreadChildren = blip.childBlips?.some(child => !child.isRead) ?? false;
   const childCount = blip.childBlips?.length ?? 0;
@@ -83,6 +87,58 @@ export function RizzomaBlip({
   const handleCancelReply = () => {
     setReplyContent('');
     setShowReplyForm(false);
+  };
+
+  // Handle text selection for inline comments
+  useEffect(() => {
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || isEditing) {
+        setShowInlineCommentBtn(false);
+        return;
+      }
+
+      const selectedText = selection.toString().trim();
+      if (!selectedText || !contentRef.current) {
+        setShowInlineCommentBtn(false);
+        return;
+      }
+
+      // Check if selection is within this blip's content
+      const range = selection.getRangeAt(0);
+      if (!contentRef.current.contains(range.commonAncestorContainer)) {
+        setShowInlineCommentBtn(false);
+        return;
+      }
+
+      // Get selection coordinates
+      const rect = range.getBoundingClientRect();
+      setSelectedText(selectedText);
+      setSelectionCoords({
+        x: rect.left + rect.width / 2,
+        y: rect.top - 40
+      });
+      setShowInlineCommentBtn(true);
+    };
+
+    document.addEventListener('mouseup', handleSelection);
+    document.addEventListener('selectionchange', handleSelection);
+
+    return () => {
+      document.removeEventListener('mouseup', handleSelection);
+      document.removeEventListener('selectionchange', handleSelection);
+    };
+  }, [isEditing]);
+
+  const handleCreateInlineComment = () => {
+    if (selectedText && blip.permissions.canComment) {
+      // Create a new child blip for the inline comment
+      setShowReplyForm(true);
+      setReplyContent(`Re: "${selectedText}"\n\n`);
+      setShowInlineCommentBtn(false);
+      window.getSelection()?.removeAllRanges();
+      setIsExpanded(true);
+    }
   };
 
   return (
@@ -149,6 +205,7 @@ export function RizzomaBlip({
         ) : (
           <div className="blip-view-mode">
             <div 
+              ref={contentRef}
               className="blip-text"
               dangerouslySetInnerHTML={{ __html: blip.content }}
             />
@@ -234,6 +291,23 @@ export function RizzomaBlip({
             {hasUnreadChildren && ' (unread)'}
           </span>
         </div>
+      )}
+      
+      {/* Inline Comment Button */}
+      {showInlineCommentBtn && blip.permissions.canComment && !isEditing && (
+        <button
+          className="inline-comment-btn"
+          style={{
+            position: 'fixed',
+            left: `${selectionCoords.x}px`,
+            top: `${selectionCoords.y}px`,
+            transform: 'translateX(-50%)'
+          }}
+          onClick={handleCreateInlineComment}
+          title="Add inline comment"
+        >
+          💬 Comment
+        </button>
       )}
     </div>
   );

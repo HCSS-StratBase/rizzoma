@@ -5,6 +5,7 @@ import { MentionsList } from './MentionsList';
 import { TasksList } from './TasksList';
 import { RizzomaTopicDetail } from './RizzomaTopicDetail';
 import { RightToolsPanel } from './RightToolsPanel';
+import { CreateTopicModal } from './CreateTopicModal';
 import './RizzomaLayout.css';
 
 interface RizzomaLayoutProps {
@@ -17,6 +18,16 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('topics');
   const [searchPaneCollapsed, setSearchPaneCollapsed] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const handleNewClick = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleTopicCreated = (topicId: string) => {
+    setSelectedTopicId(topicId);
+    setActiveTab('topics');
+  };
 
   const renderSearchPanel = () => {
     switch (activeTab) {
@@ -66,6 +77,7 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           isAuthed={isAuthed}
+          onNewClick={handleNewClick}
         />
       </div>
       
@@ -109,6 +121,13 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
       <RightToolsPanel 
         isAuthed={isAuthed}
         selectedTopicId={selectedTopicId}
+      />
+      
+      {/* Create Topic Modal */}
+      <CreateTopicModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onTopicCreated={handleTopicCreated}
       />
     </div>
   );
