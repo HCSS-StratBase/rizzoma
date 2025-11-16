@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BlipEditor } from '../editor/BlipEditor';
+import { BlipMenu } from './BlipMenu';
 import { api } from '../../lib/api';
+import { useEditor, EditorContent } from '@tiptap/react';
+import { getEditorExtensions, defaultEditorProps } from '../editor/EditorConfig';
 import './RizzomaBlip.css';
 
 export interface BlipData {

@@ -1,0 +1,172 @@
+.blip-menu-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.blip-menu {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 4px 4px 0 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+}
+
+/* Read-only menu styling */
+.read-only-menu {
+  background: #DDD;
+  color: #333;
+}
+
+.read-only-menu .menu-btn {
+  background: none;
+  border: none;
+  color: #333;
+  padding: 4px 8px;
+  margin: 0 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  height: 22px;
+  line-height: 14px;
+  font-size: 11px;
+}
+
+.read-only-menu .menu-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Edit menu styling */
+.edit-menu {
+  background: #4EA0F1;
+  color: white;
+}
+
+.edit-menu .menu-btn {
+  background: none;
+  border: none;
+  color: white;
+  padding: 4px 8px;
+  margin: 0 1px;
+  border-radius: 2px;
+  cursor: pointer;
+  height: 22px;
+  line-height: 14px;
+  font-size: 11px;
+  min-width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-menu .menu-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.edit-menu .menu-btn:active,
+.edit-menu .menu-btn.active {
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.edit-menu .menu-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.edit-menu .menu-btn:disabled:hover {
+  background: none;
+}
+
+/* Menu groups */
+.menu-group {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  padding-right: 8px;
+}
+
+.menu-group:last-child {
+  border-right: none;
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.read-only-menu .menu-group {
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Special button styles */
+.done-btn {
+  background: rgba(255, 255, 255, 0.2) !important;
+  font-weight: bold;
+  padding: 4px 12px !important;
+}
+
+.done-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.edit-btn {
+  font-weight: bold;
+}
+
+.delete-btn {
+  color: #d32f2f !important;
+}
+
+.gear-btn {
+  position: relative;
+}
+
+/* Dropdown menu */
+.menu-dropdown {
+  position: relative;
+}
+
+/* Format buttons */
+.menu-btn strong,
+.menu-btn em {
+  font-size: 11px;
+}
+
+/* Responsive behavior - hide buttons when container is too narrow */
+@media (max-width: 600px) {
+  .menu-group:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 500px) {
+  .menu-group:nth-last-child(-n+2) {
+    display: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .menu-group:nth-last-child(-n+3) {
+    display: none;
+  }
+}
+
+/* Offset for non-root blips */
+.nested-blip .blip-menu-container {
+  left: 32px;
+}
+
+/* Animation for menu appearance */
+.blip-menu-container {
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.blip-container.active .blip-menu-container {
+  opacity: 1;
+  transform: translateY(0);
+}
