@@ -1,0 +1,318 @@
+/* Rizzoma Blip Styles */
+.rizzoma-blip {
+  position: relative;
+  margin-bottom: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.rizzoma-blip.unread {
+  background-color: #fffae5;
+  border-left: 3px solid #ffd93d;
+  padding-left: 5px;
+}
+
+.rizzoma-blip.nested-blip {
+  border-left: 1px solid #e0e0e0;
+  padding-left: 10px;
+  margin-top: 8px;
+}
+
+/* Blip Header */
+.blip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #666;
+}
+
+.blip-collapse-control {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  margin-left: -20px;
+  justify-content: center;
+}
+
+.collapse-icon {
+  font-size: 14px;
+  font-weight: bold;
+  color: #999;
+  user-select: none;
+  transition: transform 0.2s ease;
+}
+
+.blip-collapse-control:hover .collapse-icon {
+  color: #333;
+  transform: scale(1.2);
+}
+
+.unread-indicator {
+  color: #ff6b6b;
+  font-size: 8px;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+.blip-author {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.author-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.author-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.blip-time {
+  color: #999;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.blip-unread-marker {
+  width: 4px;
+  height: 4px;
+  background-color: #ff6b6b;
+  border-radius: 50%;
+  margin-left: auto;
+}
+
+/* Blip Content */
+.blip-content {
+  position: relative;
+  padding: 4px 0;
+}
+
+.blip-content.collapsed {
+  display: none;
+}
+
+.blip-text {
+  line-height: 1.5;
+  color: #333;
+  padding: 4px;
+  border-radius: 3px;
+  min-height: 24px;
+}
+
+/* View Mode */
+.blip-view-mode {
+  position: relative;
+}
+
+.blip-view-mode:hover .blip-toolbar-simple {
+  opacity: 1;
+}
+
+.blip-toolbar-simple {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.btn-edit {
+  padding: 4px 8px;
+  background: linear-gradient(to bottom, #f8f8f8, #e8e8e8);
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #333;
+  cursor: pointer;
+}
+
+.btn-edit:hover {
+  background: linear-gradient(to bottom, #fff, #f0f0f0);
+  border-color: #999;
+}
+
+/* Editor Container */
+.blip-editor-container {
+  margin: 4px 0;
+}
+
+.blip-editor-container .blip-editor {
+  background-color: #fff;
+  border: 1px solid #4285f4;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.blip-editor-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-save,
+.btn-cancel {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-save {
+  background-color: #4285f4;
+  color: white;
+}
+
+.btn-save:hover {
+  background-color: #3367d6;
+}
+
+.btn-cancel {
+  background-color: #f1f3f4;
+  color: #333;
+}
+
+.btn-cancel:hover {
+  background-color: #e0e0e0;
+}
+
+/* Blip Actions */
+.blip-actions {
+  margin-top: 4px;
+}
+
+.btn-reply {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background: linear-gradient(to bottom, #f8f8f8, #e8e8e8);
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reply:hover {
+  background: linear-gradient(to bottom, #fff, #f0f0f0);
+  border-color: #999;
+}
+
+.btn-reply:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.reply-icon {
+  font-size: 12px;
+  transform: scaleX(-1);
+}
+
+/* Reply Form */
+.blip-reply-form {
+  margin-top: 8px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.reply-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+.btn-send-reply,
+.btn-cancel-reply {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-send-reply {
+  background-color: #34a853;
+  color: white;
+}
+
+.btn-send-reply:hover:not(:disabled) {
+  background-color: #2e8b47;
+}
+
+.btn-send-reply:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-cancel-reply {
+  background-color: #f1f3f4;
+  color: #333;
+}
+
+.btn-cancel-reply:hover {
+  background-color: #e0e0e0;
+}
+
+/* Child Blips */
+.child-blips {
+  margin-top: 8px;
+}
+
+/* Collapsed Info */
+.blip-collapsed-info {
+  padding: 4px 8px;
+  background-color: #f1f3f4;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.blip-collapsed-info:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.collapsed-count {
+  font-style: italic;
+}
+
+/* Root Blip Specific */
+.root-blip {
+  border: none;
+  padding: 0;
+}
+
+.root-blip .blip-text {
+  font-size: 15px;
+  padding: 8px;
+}
+
+/* Animations */
+@keyframes highlight {
+  0% { background-color: #fff3cd; }
+  100% { background-color: transparent; }
+}
+
+.rizzoma-blip.highlight {
+  animation: highlight 2s ease;
+}

@@ -57,6 +57,8 @@ echo -e " ${GREEN}✓${NC}"
 
 # Start the application
 echo -e "\n${YELLOW}🔧 Starting application servers...${NC}"
+# Enable all Rizzoma features for development
+export FEAT_ALL=1
 npm run dev &
 
 # Wait a bit for servers to start

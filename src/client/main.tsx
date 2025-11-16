@@ -11,7 +11,30 @@ import { StatusBar } from './components/StatusBar';
 import { EditorSearch } from './components/EditorSearch';
 import { EditorAdmin } from './components/EditorAdmin';
 import { GreenNavigation } from './components/GreenNavigation';
+import { RizzomaLayout } from './components/RizzomaLayout';
+import { RizzomaLanding } from './components/RizzomaLanding';
 import { FEATURES } from '@shared/featureFlags';
+import './RizzomaApp.css';
+
+// Preserve layout parameter across navigation
+if (new URLSearchParams(window.location.search).get('layout') === 'rizzoma') {
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+  
+  history.pushState = function(...args) {
+    if (args[2] && typeof args[2] === 'string' && !args[2].includes('?')) {
+      args[2] += '?layout=rizzoma';
+    }
+    return originalPushState.apply(history, args);
+  };
+  
+  history.replaceState = function(...args) {
+    if (args[2] && typeof args[2] === 'string' && !args[2].includes('?')) {
+      args[2] += '?layout=rizzoma';
+    }
+    return originalReplaceState.apply(history, args);
+  };
+}
 
 export function App() {
   const [me, setMe] = useState<any>(null);
@@ -19,6 +42,20 @@ export function App() {
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  
+  // Check if we should use Rizzoma layout based on URL parameter
+  const params = new URLSearchParams(window.location.search);
+  const useRizzomaLayout = params.get('layout') === 'rizzoma';
+  
+  useEffect(() => {
+    console.log('APP MOUNTED - Checking layout:', { 
+      search: window.location.search, 
+      layout: params.get('layout'), 
+      useRizzomaLayout,
+      timestamp: Date.now() 
+    });
+  }, []);
 
   // bootstrap auth state
   useEffect(() => {
@@ -27,6 +64,9 @@ export function App() {
         const r = await api('/api/auth/me');
         if (r.ok) setMe(r.data);
       } catch {}
+      finally {
+        setCheckingAuth(false);
+      }
     })();
   }, []);
 
@@ -56,6 +96,35 @@ export function App() {
   };
   const listParams = parseListParams();
 
+  // Show landing page if not authenticated and using Rizzoma layout
+  if (useRizzomaLayout && !checkingAuth && !me) {
+    return (
+      <RizzomaLanding 
+        onEnterRizzoma={() => {
+          // For demo, just set a fake user
+          setMe({ id: 'demo-user', email: 'demo@rizzoma.com' });
+        }}
+      />
+    );
+  }
+
+  // Use Rizzoma layout if requested
+  if (useRizzomaLayout && me) {
+    return (
+      <div className="rizzoma-app">
+        {FEATURES.FOLLOW_GREEN && (
+          <div className="notification-bar">
+            Have your Rizzoma Tasks copied to your Google Calendar automatically. 
+            <a href="#">Disable extension</a>
+          </div>
+        )}
+        <RizzomaLayout isAuthed={!!me} />
+        <Toast />
+      </div>
+    );
+  }
+
+  // Default layout
   return (
     <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 720 }}>
       <h1>Rizzoma (Modern)</h1>

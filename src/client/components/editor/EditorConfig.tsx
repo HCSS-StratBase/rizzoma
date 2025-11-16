@@ -5,11 +5,15 @@ import { Link } from '@tiptap/extension-link';
 import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Mention } from '@tiptap/extension-mention';
+import { TextStyle } from '@tiptap/extension-text-style';
 import { ReactRenderer } from '@tiptap/react';
 import tippy from 'tippy.js';
 import * as Y from 'yjs';
 import { MentionList, MentionListHandle } from './MentionList';
 import { CollaborativeCursor } from './CollaborativeCursors';
+import { Underline } from './extensions/Underline';
+import { TextColor } from './extensions/TextColor';
+import { ImageGadget } from './extensions/ImageGadget';
 import { FEATURES } from '@shared/featureFlags';
 
 export const createYjsDocument = (initialContent?: any): Y.Doc => {
@@ -44,8 +48,14 @@ export const getEditorExtensions = (ydoc?: Y.Doc, provider?: any): any[] => {
   // Add rich editor features if enabled
   if (FEATURES.RICH_TOOLBAR) {
     extensions.push(
+      TextStyle,
+      Underline,
+      TextColor,
       Highlight.configure({
-        multicolor: false,
+        multicolor: true,
+        HTMLAttributes: {
+          class: 'highlight',
+        },
       }),
       Link.configure({
         openOnClick: false,
@@ -54,6 +64,10 @@ export const getEditorExtensions = (ydoc?: Y.Doc, provider?: any): any[] => {
           rel: 'noopener noreferrer',
           target: '_blank',
         },
+      }),
+      ImageGadget.configure({
+        inline: false,
+        allowBase64: true,
       })
     );
   }

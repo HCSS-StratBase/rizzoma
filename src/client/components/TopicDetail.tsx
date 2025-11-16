@@ -3,6 +3,8 @@ import { api, ensureCsrf } from '../lib/api';
 import { subscribeTopicDetail } from '../lib/socket';
 import { toast } from './Toast';
 import { formatTimestamp } from '../lib/format';
+import { FEATURES } from '@shared/featureFlags';
+import { BlipEditor } from './editor/BlipEditor';
 
 type TopicFull = { id: string; title: string; content?: string; createdAt: number };
 type Comment = { id: string; authorId: string; content: string; createdAt: number };
@@ -91,7 +93,19 @@ export function TopicDetail({ id, isAuthed = false }: { id: string; isAuthed?: b
       <h2>Edit Topic</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
         <input placeholder="title" value={topic.title} onChange={(e) => setTopic({ ...(topic as TopicFull), title: e.target.value })} />
-        <textarea placeholder="content" rows={12} value={topic.content || ''} onChange={(e) => setTopic({ ...(topic as TopicFull), content: e.target.value })} />
+        {FEATURES.RICH_TOOLBAR ? (
+          <div style={{ border: '1px solid #ddd', borderRadius: 4, minHeight: 300 }}>
+            <BlipEditor
+              content={topic.content || '<p></p>'}
+              blipId={`topic-${id}`}
+              isReadOnly={false}
+              onUpdate={(newContent) => setTopic({ ...(topic as TopicFull), content: newContent })}
+              enableCollaboration={FEATURES.LIVE_CURSORS}
+            />
+          </div>
+        ) : (
+          <textarea placeholder="content" rows={12} value={topic.content || ''} onChange={(e) => setTopic({ ...(topic as TopicFull), content: e.target.value })} />
+        )}
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={save} disabled={busy}>Save</button>
           <button onClick={remove} disabled={busy}>Delete</button>

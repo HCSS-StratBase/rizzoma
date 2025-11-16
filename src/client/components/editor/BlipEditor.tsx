@@ -5,6 +5,7 @@ import { getEditorExtensions, defaultEditorProps } from './EditorConfig';
 import { yjsDocManager } from './YjsDocumentManager';
 import { useCollaboration } from './useCollaboration';
 import { EditorToolbar } from './EditorToolbar';
+import { InlineComments } from './InlineComments';
 import { FEATURES } from '@shared/featureFlags';
 import './BlipEditor.css';
 
@@ -15,6 +16,7 @@ interface BlipEditorProps {
   onUpdate?: (content: string) => void;
   ydoc?: Y.Doc;
   enableCollaboration?: boolean;
+  showToolbar?: boolean;
 }
 
 export function BlipEditor({ 
@@ -23,13 +25,15 @@ export function BlipEditor({
   isReadOnly = false, 
   onUpdate,
   ydoc,
-  enableCollaboration = false
+  enableCollaboration = false,
+  showToolbar = false
 }: BlipEditorProps): JSX.Element {
   const [localYdoc] = useState(() => ydoc || yjsDocManager.getDocument(blipId));
-  useCollaboration(localYdoc, blipId, enableCollaboration && !isReadOnly);
+  const [comments, setComments] = useState<any[]>([]);
+  const provider = useCollaboration(localYdoc, blipId, enableCollaboration && !isReadOnly);
 
   const editor = useEditor({
-    extensions: getEditorExtensions(localYdoc),
+    extensions: getEditorExtensions(localYdoc, provider),
     content,
     editable: !isReadOnly,
     editorProps: defaultEditorProps,
@@ -67,10 +71,26 @@ export function BlipEditor({
 
   return (
     <div className={`blip-editor ${isReadOnly ? 'read-only' : 'editable'}`}>
-      {FEATURES.RICH_TOOLBAR && !isReadOnly && (
+      {FEATURES.RICH_TOOLBAR && !isReadOnly && showToolbar && (
         <EditorToolbar editor={editor} />
       )}
-      <EditorContent editor={editor} />
+      <div style={{ position: 'relative' }}>
+        <EditorContent editor={editor} />
+        {FEATURES.INLINE_COMMENTS && (
+          <InlineComments 
+            editor={editor}
+            blipId={blipId}
+            comments={comments}
+            onAddComment={(comment) => {
+              // TODO: Send to server
+              setComments([...comments, { ...comment, id: Date.now().toString(), createdAt: Date.now(), updatedAt: Date.now() }]);
+            }}
+            onResolveComment={(commentId) => {
+              setComments(comments.map(c => c.id === commentId ? {...c, resolved: true} : c));
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

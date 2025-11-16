@@ -41,19 +41,54 @@ export class SocketIOProvider {
   }
   
   private setupAwareness() {
+    // Set initial user state
+    const userColors = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4'];
+    const userId = this.doc.clientID.toString();
+    
+    this.awareness.setLocalStateField('user', {
+      id: userId,
+      name: `User ${userId.slice(-4)}`,
+      color: userColors[parseInt(userId) % userColors.length]
+    });
+    
     // Send awareness updates
     this.awareness.on('update', ({ added, updated, removed }: any) => {
       const changedClients = added.concat(updated).concat(removed);
+      const states = this.awareness.getStates();
+      
+      // Create a simple state object to send
+      const stateUpdate: any = {};
+      changedClients.forEach((clientId: number) => {
+        if (states.has(clientId)) {
+          stateUpdate[clientId] = states.get(clientId);
+        }
+      });
+      
       this.socket.emit('awareness:update', {
         blipId: this.blipId,
-        awareness: Array.from(this.awareness.encodeUpdate(changedClients))
+        states: stateUpdate
       });
     });
     
     // Receive awareness updates
-    this.socket.on(`awareness:update:${this.blipId}`, (data: { awareness: number[] }) => {
-      const update = new Uint8Array(data.awareness);
-      this.awareness.applyUpdate(update, this);
+    this.socket.on(`awareness:update:${this.blipId}`, (data: { states: any }) => {
+      // Apply awareness updates from other clients
+      Object.entries(data.states).forEach(([clientIdStr, state]) => {
+        const clientId = parseInt(clientIdStr);
+        if (clientId !== this.doc.clientID) {
+          const currentStates = this.awareness.getStates();
+          if (!currentStates.has(clientId)) {
+            currentStates.set(clientId, state as any);
+          } else {
+            // Merge state
+            const existingState = currentStates.get(clientId) || {};
+            currentStates.set(clientId, { ...existingState, ...(state as any) });
+          }
+        }
+      });
+      
+      // Trigger update event
+      this.awareness.emit('change', [{ added: [], updated: Object.keys(data.states).map(Number), removed: [] }]);
     });
   }
   

@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev": "node node_modules/concurrently/dist/bin/concurrently.js \"npm:dev:*\"",
+    "dev:features": "echo 'Use FEAT_ALL=1 npm run dev instead'",
     "dev:server": "node node_modules/tsx/dist/cli.mjs watch src/server/app.ts",
     "dev:client": "node node_modules/vite/bin/vite.js",
     "build": "npm run build:server && npm run build:client",

@@ -1,5 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Editor } from '@tiptap/core';
+import { Mark } from '@tiptap/pm/model';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { InlineComment } from '@shared/types/comments';
 import { FEATURES } from '@shared/featureFlags';
 import './InlineComments.css';
@@ -12,6 +15,9 @@ interface InlineCommentsProps {
   onResolveComment: (commentId: string) => void;
 }
 
+// Plugin key for decorations
+const commentDecorationsKey = new PluginKey('commentDecorations');
+
 export function InlineComments({ 
   editor, 
   blipId, 
@@ -22,7 +28,8 @@ export function InlineComments({
   const [selectedRange, setSelectedRange] = useState<{start: number; end: number; text: string} | null>(null);
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [commentText, setCommentText] = useState('');
-  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null);
+  const [clickedCommentId, setClickedCommentId] = useState<string | null>(null);
 
   // Add comment button when text is selected
   useEffect(() => {
@@ -46,11 +53,65 @@ export function InlineComments({
     };
   }, [editor]);
 
+  // Create comment decorations plugin
+  useEffect(() => {
+    if (!editor || !FEATURES.INLINE_COMMENTS) return;
+
+    const plugin = new Plugin({
+      key: commentDecorationsKey,
+      state: {
+        init() {
+          return DecorationSet.empty;
+        },
+        apply(tr, set) {
+          // Create decorations for each comment
+          const decorations: Decoration[] = [];
+          
+          comments.forEach(comment => {
+            const decoration = Decoration.inline(
+              comment.range.start,
+              comment.range.end,
+              {
+                class: 'commented-text',
+                'data-comment-id': comment.id,
+                'data-comment-count': '1'
+              },
+              { inclusiveStart: true, inclusiveEnd: true }
+            );
+            decorations.push(decoration);
+          });
+
+          return DecorationSet.create(tr.doc, decorations);
+        }
+      },
+      props: {
+        decorations(state) {
+          return this.getState(state);
+        }
+      }
+    });
+
+    // Add the plugin to the editor
+    const state = editor.state;
+    const newState = state.reconfigure({
+      plugins: [...state.plugins.filter(p => p.key !== commentDecorationsKey), plugin]
+    });
+    editor.view.updateState(newState);
+
+    return () => {
+      // Remove plugin on cleanup
+      const state = editor.state;
+      const newState = state.reconfigure({
+        plugins: state.plugins.filter(p => p.key !== commentDecorationsKey)
+      });
+      editor.view.updateState(newState);
+    };
+  }, [editor, comments]);
+
   // Handle comment submission
   const handleSubmit = useCallback(() => {
     if (!selectedRange || !commentText.trim()) return;
 
-    // Mock user data - in production, get from auth context
     onAddComment({
       blipId,
       userId: 'current-user',
@@ -69,19 +130,12 @@ export function InlineComments({
     editor?.commands.setTextSelection(selectedRange.end);
   }, [selectedRange, commentText, blipId, onAddComment, editor]);
 
-  // Highlight comment ranges in editor
-  useEffect(() => {
-    if (!editor || !FEATURES.INLINE_COMMENTS) return;
-
-    comments.forEach(comment => {
-      // Add decoration to highlight commented text
-      // This would use ProseMirror decorations in a real implementation
-      const { start, end } = comment.range;
-      
-      // For now, we'll add a class to the editor content
-      // In production, use proper ProseMirror decorations
-    });
-  }, [editor, comments]);
+  // Get comments for a specific range
+  const getCommentsAtPosition = (pos: number) => {
+    return comments.filter(comment => 
+      pos >= comment.range.start && pos <= comment.range.end
+    );
+  };
 
   if (!FEATURES.INLINE_COMMENTS) return null;
 
@@ -94,7 +148,6 @@ export function InlineComments({
           onClick={() => setShowCommentForm(true)}
           style={{
             position: 'absolute',
-            // Position near selection - in production, calculate proper position
             top: '0',
             right: '-40px',
           }}
@@ -135,46 +188,54 @@ export function InlineComments({
         </div>
       )}
 
-      {/* Comments sidebar */}
-      <div className="inline-comments-sidebar">
-        {comments.map(comment => (
-          <div 
-            key={comment.id} 
-            className={`inline-comment ${comment.resolved ? 'resolved' : ''}`}
-            onClick={() => {
-              // Highlight the commented text
-              if (editor) {
-                editor.chain()
-                  .setTextSelection({ from: comment.range.start, to: comment.range.end })
-                  .run();
-              }
-              setActiveCommentId(comment.id);
-            }}
-          >
-            <div className="comment-header">
-              <strong>{comment.userName}</strong>
-              <span className="comment-time">
-                {new Date(comment.createdAt).toLocaleString()}
-              </span>
-            </div>
-            <div className="comment-text-preview">
-              "{comment.range.text.substring(0, 30)}..."
-            </div>
-            <div className="comment-content">{comment.content}</div>
-            {!comment.resolved && (
-              <button 
-                className="resolve-button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onResolveComment(comment.id);
-                }}
-              >
-                ✓ Resolve
-              </button>
+      {/* Inline comment indicators and popovers */}
+      {comments.map(comment => {
+        const showPopover = hoveredCommentId === comment.id || clickedCommentId === comment.id;
+        
+        return (
+          <div key={comment.id} className="inline-comment-wrapper">
+            <span
+              className="inline-comment-indicator"
+              onMouseEnter={() => setHoveredCommentId(comment.id)}
+              onMouseLeave={() => setHoveredCommentId(null)}
+              onClick={() => setClickedCommentId(clickedCommentId === comment.id ? null : comment.id)}
+            >
+              {comments.filter(c => 
+                c.range.start === comment.range.start && 
+                c.range.end === comment.range.end
+              ).length}
+            </span>
+            
+            {showPopover && (
+              <div className="inline-comment-popover">
+                <div className={`inline-comment ${comment.resolved ? 'resolved' : ''}`}>
+                  <div className="comment-header">
+                    <strong>{comment.userName}</strong>
+                    <span className="comment-time">
+                      {new Date(comment.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="comment-text-preview">
+                    "{comment.range.text.substring(0, 30)}..."
+                  </div>
+                  <div className="comment-content">{comment.content}</div>
+                  {!comment.resolved && (
+                    <button 
+                      className="resolve-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onResolveComment(comment.id);
+                      }}
+                    >
+                      ✓ Resolve
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
           </div>
-        ))}
-      </div>
+        );
+      })}
     </>
   );
 }
