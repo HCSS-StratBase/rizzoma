@@ -19,6 +19,8 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
   const [activeTab, setActiveTab] = useState<TabType>('topics');
   const [searchPaneCollapsed, setSearchPaneCollapsed] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  console.log('RizzomaLayout render - selectedTopicId:', selectedTopicId);
 
   const handleNewClick = () => {
     setShowCreateModal(true);
@@ -104,14 +106,18 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
       <div className="wave-container">
         <div className="inner-wave-container">
           {selectedTopicId ? (
-            <RizzomaTopicDetail 
-              id={selectedTopicId} 
-              isAuthed={isAuthed} 
-            />
+            <>
+              <div style={{ background: 'yellow', padding: '10px' }}>DEBUG: selectedTopicId = {selectedTopicId}</div>
+              <RizzomaTopicDetail 
+                id={selectedTopicId} 
+                isAuthed={isAuthed} 
+              />
+            </>
           ) : (
             <div className="no-topic-selected">
               <h2>Welcome to Rizzoma</h2>
               <p>Select a topic from the left panel or create a new one</p>
+              <div style={{ background: 'red', color: 'white', padding: '10px' }}>DEBUG: No topic selected</div>
             </div>
           )}
         </div>

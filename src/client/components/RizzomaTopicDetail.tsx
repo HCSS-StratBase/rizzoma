@@ -30,6 +30,7 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
   };
 
   const load = async (): Promise<void> => {
+    console.log('RizzomaTopicDetail load() called for id:', id);
     const r = await api(`/api/topics/${encodeURIComponent(id)}`);
     if (r.ok) { 
       const topicData = r.data as TopicFull;
@@ -38,7 +39,9 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
       // Create root blip from topic
       const rootBlipData: BlipData = {
         id: topicData.id,
-        content: topicData.content || '<p>Click here to start editing your topic...</p>',
+        content: (topicData.content && topicData.content !== '<p></p>') 
+          ? topicData.content 
+          : '<p>Click Edit to add content to this topic...</p>',
         authorId: topicData.authorId || currentUser.id,
         authorName: topicData.authorName || currentUser.name,
         authorAvatar: currentUser.avatar,
@@ -50,8 +53,73 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
           canComment: isAuthed,
           canRead: true
         },
-        childBlips: generateMockChildBlips(topicData.id) // In production, load from API
+        childBlips: [] // Will be populated below
       };
+      
+      // Load child blips from API
+      try {
+        console.log('Loading blips for waveId:', id);
+        const blipsResponse = await api(`/api/blips?waveId=${encodeURIComponent(id)}`);
+        console.log('Blips response:', blipsResponse);
+        if (blipsResponse.ok && blipsResponse.data?.blips) {
+          const blips = blipsResponse.data.blips as Array<any>;
+          
+          // Build blip tree - convert flat list to nested structure
+          const blipMap = new Map<string, BlipData>();
+          
+          // First pass: create all blips
+          blips.forEach(blip => {
+            blipMap.set(blip._id, {
+              id: blip._id,
+              content: blip.content || '<p></p>',
+              authorId: blip.authorId,
+              authorName: blip.authorName || 'Unknown User',
+              authorAvatar: 'https://via.placeholder.com/32',
+              createdAt: blip.createdAt,
+              updatedAt: blip.updatedAt || blip.createdAt,
+              isRead: true, // TODO: Track read status
+              parentBlipId: blip.parentId,
+              permissions: blip.permissions || {
+                canEdit: blip.authorId === currentUser.id,
+                canComment: isAuthed,
+                canRead: true
+              },
+              childBlips: []
+            });
+          });
+          
+          // Second pass: build tree structure
+          const rootChildBlips: BlipData[] = [];
+          blipMap.forEach((blip) => {
+            if (blip.parentBlipId) {
+              const parent = blipMap.get(blip.parentBlipId);
+              if (parent) {
+                parent.childBlips = parent.childBlips || [];
+                parent.childBlips.push(blip);
+              }
+            } else {
+              // Top-level blips (direct replies to topic)
+              rootChildBlips.push(blip);
+            }
+          });
+          
+          // Sort child blips by creation time
+          const sortBlips = (blips: BlipData[]) => {
+            blips.sort((a, b) => a.createdAt - b.createdAt);
+            blips.forEach(blip => {
+              if (blip.childBlips && blip.childBlips.length > 0) {
+                sortBlips(blip.childBlips);
+              }
+            });
+          };
+          sortBlips(rootChildBlips);
+          
+          rootBlipData.childBlips = rootChildBlips;
+        }
+      } catch (error) {
+        console.error('Failed to load blips:', error);
+      }
+      
       setRootBlip(rootBlipData);
       setError(null); 
     } else {
@@ -147,9 +215,24 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
         load();
       }
     } else {
-      // Update child blip - in production this would be an API call
-      console.log('Update blip:', blipId, content);
-      toast('Reply updated');
+      // Update child blip via API
+      setBusy(true);
+      try {
+        const response = await api(`/api/blips/${encodeURIComponent(blipId)}`, {
+          method: 'PUT',
+          body: JSON.stringify({ content })
+        });
+        if (response.ok) {
+          toast('Reply updated');
+          load(); // Reload to show updated content
+        } else {
+          toast('Failed to update reply', 'error');
+        }
+      } catch (error) {
+        console.error('Error updating blip:', error);
+        toast('Failed to update reply', 'error');
+      }
+      setBusy(false);
     }
   };
 
@@ -159,50 +242,31 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
     await ensureCsrf();
     setBusy(true);
     
-    // In production, this would be an API call to create a nested blip
-    console.log('Add reply to:', parentBlipId, content);
-    
-    // Mock: add new blip to tree
-    const newBlip: BlipData = {
-      id: `${parentBlipId}-reply-${Date.now()}`,
-      content,
-      authorId: currentUser.id,
-      authorName: currentUser.name,
-      authorAvatar: currentUser.avatar,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      isRead: true,
-      parentBlipId,
-      permissions: {
-        canEdit: true,
-        canComment: true,
-        canRead: true
+    try {
+      // API call to create a nested blip
+      const response = await api('/api/blips', {
+        method: 'POST',
+        body: JSON.stringify({
+          waveId: id,
+          parentId: parentBlipId === id ? null : parentBlipId,
+          content,
+          authorName: 'Demo User' // Add author name for demo mode
+        })
+      });
+      
+      if (response.ok) {
+        // Reload to show new blip with proper nesting
+        await load();
+        toast('Reply added');
+      } else {
+        toast('Failed to add reply', 'error');
       }
-    };
-    
-    // Update the tree structure (in production, reload from server)
-    const updateBlipTree = (blip: BlipData): BlipData => {
-      if (blip.id === parentBlipId) {
-        return {
-          ...blip,
-          childBlips: [...(blip.childBlips || []), newBlip]
-        };
-      }
-      if (blip.childBlips) {
-        return {
-          ...blip,
-          childBlips: blip.childBlips.map(updateBlipTree)
-        };
-      }
-      return blip;
-    };
-    
-    if (rootBlip) {
-      setRootBlip(updateBlipTree(rootBlip));
+    } catch (error) {
+      console.error('Error adding reply:', error);
+      toast('Failed to add reply', 'error');
     }
     
     setBusy(false);
-    toast('Reply added');
   };
 
   const handleToggleCollapse = (blipId: string): void => {

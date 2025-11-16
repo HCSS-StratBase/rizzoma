@@ -69,7 +69,7 @@ app.use('/api', commentsRouter);
 app.use('/api/waves', wavesRouter);
 app.use('/api/editor', editorRouter);
 app.use('/api', linksRouter);
-app.use('/api', blipsRouter);
+app.use('/api/blips', blipsRouter);
 app.use('/api', inlineCommentsRouter);
 
 // Placeholder root
