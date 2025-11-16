@@ -1,6 +1,6 @@
 # Rizzoma Project Status
 
-## Current Branch: phase4/editor-recovery-ui
+## Current Branch: feature/rizzoma-core-features
 
 ## CRITICAL WORKING PROTOCOL - ALWAYS FOLLOW THIS:
 
@@ -62,28 +62,37 @@ After implementing features:
 
 ## Current Task: Testing with Playwright MCP - IN PROGRESS
 
-### Testing Results (as of 2024-11-16):
+### Testing Results (as of 2025-11-16):
 
-#### Working Features:
+#### Working Features (Verified with Playwright):
 - ✅ 4-pane layout structure implemented
-- ✅ Navigation panel with tabs (Inbox, Topics, Tasks, Contacts)
+- ✅ Navigation panel with tabs (Topics, Mentions, Tasks, Publics, Store, Teams)
 - ✅ Topics list panel with search
 - ✅ Wave/content view panel
 - ✅ Right tools panel with "Follow the green" button
 - ✅ Visual styling matches Rizzoma (teal gradient, etc)
 - ✅ Landing page with login modal
+- ✅ Demo mode authentication bypass (`?layout=rizzoma&demo=true`)
+- ✅ Tab switching updates content correctly
+- ✅ "New Topic" button opens creation modal
+- ✅ Reply button functionality (with API integration)
+- ✅ Edit mode switching (with API integration)
+- ✅ Inline comments creation from text selection
+- ✅ Backend API endpoints for blips (create, update, get)
+- ✅ Topic selection and display
 
-#### Issues Found:
-- ❌ Authentication flow not working (Gmail/Facebook login doesn't proceed)
-- ❌ Demo mode authentication bypass not functioning
-- ❌ Hot module reload issues with Vite
-- ❌ "New Topic" button functionality
-- ❌ Reply button functionality
-- ❌ Edit mode switching
-- ❌ Inline comments (text selection)
-- ❌ @mentions autocomplete
+#### Remaining Features to Implement:
+- ❌ @mentions autocomplete dropdown
 - ❌ Real-time collaborative cursors
-- ❌ Tab switching doesn't update content
+- ❌ Rich text toolbar button actions (Bold, Italic, etc.)
+- ❌ Task creation with ~ key
+- ❌ Tags with # key
+- ❌ Gadgets functionality
+- ❌ Mind map view
+- ❌ Invite/Manage members functionality
+- ❌ Share functionality
+- ❌ Settings (⚙️) functionality
+- ❌ Authentication flow (Gmail/Facebook login)
 
 ### Test Files Created:
 - test-with-playwright-mcp.js (comprehensive test suite)

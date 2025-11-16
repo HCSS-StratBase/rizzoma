@@ -66,21 +66,77 @@ export function RizzomaBlip({
     }
   };
 
-  const handleSaveEdit = () => {
-    onBlipUpdate?.(blip.id, editedContent);
-    setIsEditing(false);
+  const handleSaveEdit = async () => {
+    try {
+      const response = await fetch(`/api/blips/${blip.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: editedContent }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save edit');
+      }
+      
+      onBlipUpdate?.(blip.id, editedContent);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving blip edit:', error);
+      // TODO: Show error toast
+    }
   };
 
   const handleContentUpdate = (newContent: string) => {
     setEditedContent(newContent);
   };
 
-  const handleAddReply = () => {
-    if (replyContent.trim()) {
+  const handleAddReply = async () => {
+    if (!replyContent.trim()) return;
+    
+    try {
+      // Extract waveId from the blip id (format: waveId:blipId)
+      const waveId = blip.id.split(':')[0];
+      
+      const response = await fetch('/api/blips', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          waveId,
+          parentId: blip.id,
+          content: replyContent 
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create reply');
+      }
+      
+      const data = await response.json();
+      
+      // Create a new blip data structure for the reply
+      const newReply: BlipData = {
+        id: data.id,
+        content: replyContent,
+        authorId: 'demo-user', // TODO: Get from auth context
+        authorName: 'Demo User',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        isRead: true,
+        permissions: data.blip.permissions,
+        parentBlipId: blip.id
+      };
+      
       onAddReply?.(blip.id, replyContent);
       setReplyContent('');
       setShowReplyForm(false);
       setIsExpanded(true);
+    } catch (error) {
+      console.error('Error creating reply:', error);
+      // TODO: Show error toast
     }
   };
 
@@ -130,9 +186,45 @@ export function RizzomaBlip({
     };
   }, [isEditing]);
 
-  const handleCreateInlineComment = () => {
-    if (selectedText && blip.permissions.canComment) {
-      // Create a new child blip for the inline comment
+  const handleCreateInlineComment = async () => {
+    if (!selectedText || !blip.permissions.canComment) return;
+    
+    try {
+      // Extract waveId from the blip id (format: waveId:blipId)
+      const waveId = blip.id.split(':')[0];
+      const commentContent = `<blockquote>${selectedText}</blockquote><p></p>`;
+      
+      const response = await fetch('/api/blips', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          waveId,
+          parentId: blip.id,
+          content: commentContent,
+          isInlineComment: true // Flag for inline comments
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create inline comment');
+      }
+      
+      const data = await response.json();
+      
+      // Show reply form with the quoted text
+      setShowReplyForm(true);
+      setReplyContent(`Re: "${selectedText}"\n\n`);
+      setShowInlineCommentBtn(false);
+      window.getSelection()?.removeAllRanges();
+      setIsExpanded(true);
+      
+      // If we have a callback, notify parent
+      onAddReply?.(blip.id, commentContent);
+    } catch (error) {
+      console.error('Error creating inline comment:', error);
+      // Fallback to reply form
       setShowReplyForm(true);
       setReplyContent(`Re: "${selectedText}"\n\n`);
       setShowInlineCommentBtn(false);

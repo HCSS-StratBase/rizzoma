@@ -42,12 +42,12 @@ export function App() {
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  
   // Check if we should use Rizzoma layout based on URL parameter
   const params = new URLSearchParams(window.location.search);
   const useRizzomaLayout = params.get('layout') === 'rizzoma';
   const isDemoMode = params.get('demo') === 'true';
+  
+  const [checkingAuth, setCheckingAuth] = useState(!isDemoMode);
   
   useEffect(() => {
     console.log('APP MOUNTED - Checking layout:', { 
@@ -59,11 +59,11 @@ export function App() {
     });
     
     // Auto-set demo user if in demo mode
-    if (isDemoMode && !me) {
+    if (isDemoMode) {
       setMe({ id: 'demo-user', email: 'demo@rizzoma.com' });
       setCheckingAuth(false);
     }
-  }, [isDemoMode]);
+  }, []);
 
   // bootstrap auth state
   useEffect(() => {
@@ -118,8 +118,8 @@ export function App() {
     );
   }
 
-  // Use Rizzoma layout if requested
-  if (useRizzomaLayout && me) {
+  // Use Rizzoma layout if requested (allow demo mode)
+  if (useRizzomaLayout && (me || isDemoMode)) {
     return (
       <div className="rizzoma-app">
         {FEATURES.FOLLOW_GREEN && (
@@ -128,7 +128,7 @@ export function App() {
             <a href="#">Disable extension</a>
           </div>
         )}
-        <RizzomaLayout isAuthed={!!me} />
+        <RizzomaLayout isAuthed={!!(me || isDemoMode)} />
         <Toast />
       </div>
     );
