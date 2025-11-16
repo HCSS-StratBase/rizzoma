@@ -301,13 +301,19 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
       )}
 
       <div className="topic-content">
-        <RizzomaBlip
-          blip={rootBlip}
-          isRoot={true}
-          onBlipUpdate={handleBlipUpdate}
-          onAddReply={handleAddReply}
-          onToggleCollapse={handleToggleCollapse}
-        />
+        {rootBlip ? (
+          <RizzomaBlip
+            blip={rootBlip}
+            isRoot={true}
+            onBlipUpdate={handleBlipUpdate}
+            onAddReply={handleAddReply}
+            onToggleCollapse={handleToggleCollapse}
+          />
+        ) : (
+          <div style={{ background: 'red', color: 'white', padding: '10px' }}>
+            DEBUG: No rootBlip available!
+          </div>
+        )}
       </div>
     </div>
   );

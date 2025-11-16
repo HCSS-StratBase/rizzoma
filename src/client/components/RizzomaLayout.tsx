@@ -108,6 +108,16 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
           {selectedTopicId ? (
             <>
               <div style={{ background: 'yellow', padding: '10px' }}>DEBUG: selectedTopicId = {selectedTopicId}</div>
+              <div style={{ background: 'orange', color: 'white', padding: '20px' }}>
+                <h2>TEST: This should be RizzomaTopicDetail</h2>
+                <p>TopicID: {selectedTopicId}</p>
+                <div>
+                  <p contentEditable style={{ border: '1px solid black', padding: '10px' }}>
+                    This is a test contenteditable div to simulate editing
+                  </p>
+                  <button>Test Edit Button</button>
+                </div>
+              </div>
               <RizzomaTopicDetail 
                 id={selectedTopicId} 
                 isAuthed={isAuthed} 

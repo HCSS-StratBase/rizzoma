@@ -5,6 +5,7 @@ import { getEditorExtensions, defaultEditorProps } from './EditorConfig';
 import { yjsDocManager } from './YjsDocumentManager';
 import { useCollaboration } from './useCollaboration';
 import { EditorToolbar } from './EditorToolbar';
+import { FloatingToolbar } from './FloatingToolbar';
 import { InlineComments } from './InlineComments';
 import { FEATURES } from '@shared/featureFlags';
 import './BlipEditor.css';
@@ -71,7 +72,10 @@ export function BlipEditor({
 
   return (
     <div className={`blip-editor ${isReadOnly ? 'read-only' : 'editable'}`}>
-      {FEATURES.RICH_TOOLBAR && !isReadOnly && showToolbar && (
+      {/* Floating Toolbar - shows when editor is focused and editable */}
+      <FloatingToolbar editor={editor} isVisible={!isReadOnly && !!editor} />
+      
+      {!isReadOnly && showToolbar && (
         <EditorToolbar editor={editor} />
       )}
       <div style={{ position: 'relative' }}>
