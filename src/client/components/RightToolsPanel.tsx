@@ -2,29 +2,29 @@ import { useState } from 'react';
 import { FollowTheGreen } from './FollowTheGreen';
 import { UserPresence } from './UserPresence';
 import './RightToolsPanel.css';
+import type { WaveUnreadState } from '../hooks/useWaveUnread';
 
 interface RightToolsPanelProps {
   isAuthed: boolean;
-  selectedTopicId: string | null;
+  unreadState?: WaveUnreadState | null;
 }
 
-export function RightToolsPanel({ isAuthed, selectedTopicId }: RightToolsPanelProps) {
+export function RightToolsPanel({ isAuthed, unreadState }: RightToolsPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<'text' | 'mindmap'>('text');
   const [repliesVisible, setRepliesVisible] = useState(true);
 
-  // Mock unread count - in production, calculate from actual data
-  const unreadCount = 3;
+  const unreadCount = unreadState?.unreadIds.length ?? 0;
 
   const handleFollowGreen = () => {
-    // Find next unread blip and scroll to it
     const unreadElements = document.querySelectorAll('.rizzoma-blip.unread');
     if (unreadElements.length > 0) {
-      unreadElements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Mark as read after a delay
-      setTimeout(() => {
-        unreadElements[0].classList.remove('unread');
-      }, 1000);
+      const target = unreadElements[0] as HTMLElement;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const blipId = target.getAttribute('data-blip-id');
+      if (blipId) {
+        void unreadState?.markBlipRead(blipId);
+      }
     }
   };
 

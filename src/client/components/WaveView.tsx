@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { subscribeLinks, subscribeEditorPresence } from '../lib/socket';
+import { subscribeLinks, subscribeBlipEvents } from '../lib/socket';
 import { formatTimestamp } from '../lib/format';
 import { BlipContent } from './BlipContent';
 import { Editor } from './Editor';
+import { toast } from './Toast';
+import { usePresence } from '../hooks/usePresence';
+import { PresenceIndicator } from './PresenceIndicator';
+import { RebuildPanel } from './RebuildPanel';
 
 type BlipNode = { id: string; content: string; createdAt: number; children?: BlipNode[] };
 
@@ -17,16 +21,58 @@ export function WaveView({ id }: { id: string }) {
   const [unread, setUnread] = useState<string[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [readCount, setReadCount] = useState<number>(0);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [unreadError, setUnreadError] = useState<string | null>(null);
   const [current, setCurrent] = useState<string | null>(null);
   useInitCurrentSetter((bid: string) => setCurrent(bid));
   const [linksOut, setLinksOut] = useState<Array<{ toBlipId: string; waveId: string }>>([]);
   const [linksIn, setLinksIn] = useState<Array<{ fromBlipId: string; waveId: string }>>([]);
   const [newLinkTo, setNewLinkTo] = useState<string>('');
   const [showEditor, setShowEditor] = useState<boolean>(false);
-  const [presentCount, setPresentCount] = useState<number>(0);
-  const [presentUsers, setPresentUsers] = useState<Array<{ userId?: string; name?: string }>>([]);
-  const [rebuildStatus, setRebuildStatus] = useState<string | null>(null);
-  const [rebuildError, setRebuildError] = useState<string | null>(null);
+  const wavePresence = usePresence(id);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const me = await api('/api/auth/me');
+        if (me.ok && (me.data as any)?.id) {
+          setUserId(String((me.data as any).id));
+        } else {
+          setUserId(null);
+        }
+      } catch {
+        setUserId(null);
+      }
+    })();
+  }, []);
+
+  const refreshUnread = useCallback(async () => {
+    try {
+      const ur = await api(`/api/waves/${encodeURIComponent(id)}/unread`);
+      if (ur.ok) {
+        const data = ur.data as any;
+        setUnread(Array.isArray(data?.unread) ? (data.unread as any[]).map((x) => String(x)) : []);
+        setTotal(Number(data?.total || 0));
+        setReadCount(Number(data?.read || 0));
+        setUnreadError(null);
+      } else {
+        setUnreadError('Failed to load unread list');
+      }
+    } catch {
+      setUnreadError('Failed to load unread list');
+    }
+  }, [id]);
+
+  const markBlipRead = useCallback(async (blipId: string) => {
+    setUnread((u) => u.filter((x) => x !== blipId));
+    setReadCount((c) => Math.max(0, c + 1));
+    const r = await api(`/api/waves/${encodeURIComponent(id)}/blips/${encodeURIComponent(blipId)}/read`, { method: 'POST' });
+    if (!r.ok) {
+      const idTag = (r as any)?.requestId ? ` (${(r as any).requestId})` : '';
+      toast(`Mark read failed${idTag}`, 'error');
+      await refreshUnread();
+    }
+  }, [id, refreshUnread]);
 
   useEffect(() => {
     (async () => {
@@ -40,15 +86,7 @@ export function WaveView({ id }: { id: string }) {
         const raw = localStorage.getItem(`wave-open:${id}`);
         if (raw) setOpenMap(JSON.parse(raw));
       } catch {}
-      // fetch unread list
-      try {
-        const ur = await api(`/api/waves/${encodeURIComponent(id)}/unread`);
-        if (ur.ok) {
-          setUnread(((ur.data as any)?.unread || []) as string[]);
-          setTotal(Number(((ur.data as any)?.total) || 0));
-          setReadCount(Number(((ur.data as any)?.read) || 0));
-        }
-      } catch {}
+      await refreshUnread();
       // handle goto=first/last or focus parameter from hash
       try {
         const hash = window.location.hash || '';
@@ -72,15 +110,21 @@ export function WaveView({ id }: { id: string }) {
     })();
   }, [id]);
 
-  // Presence: subscribe to wave-level presence; updates when wave id changes
   useEffect(() => {
-    const unsubscribe = subscribeEditorPresence(id, undefined, (p) => {
-      setPresentCount(Number(p?.count || 0));
-      const users = Array.isArray(p?.users) ? p.users : [];
-      setPresentUsers(users as any);
+    const unsub = subscribeBlipEvents(id, (evt) => {
+      if (evt.action === 'read') {
+        if (evt.userId && userId && evt.userId !== userId) return;
+        refreshUnread();
+        return;
+      }
+      if (evt.userId && userId && evt.userId === userId && evt.action !== 'deleted') {
+        // Skip optimistic self-updates except deletions; server truth will sync on next refresh.
+        return;
+      }
+      refreshUnread();
     });
-    return () => { try { unsubscribe(); } catch {} };
-  }, [id]);
+    return () => { try { unsub(); } catch {} };
+  }, [id, userId, refreshUnread]);
 
   const persist = (next: Record<string, boolean>) => {
     setOpenMap(next);
@@ -96,15 +140,13 @@ export function WaveView({ id }: { id: string }) {
 
   const nextUnread = async () => {
     const nr = await api(`/api/waves/${encodeURIComponent(id)}/next${current ? `?after=${encodeURIComponent(current)}` : ''}`);
-    if (!nr.ok || !(nr.data as any)?.next) return;
-    const nextId = String((nr.data as any).next);
+    if (!nr.ok) { toast('Next unread lookup failed', 'error'); return; }
+    const nextId = (nr.data as any)?.next ? String((nr.data as any).next) : null;
+    if (!nextId) return;
     setCurrent(nextId);
     // expand path heuristically: mark the parent chain as open (best-effort: open all)
     expandAll();
-    // mark as read
-    await api(`/api/waves/${encodeURIComponent(id)}/blips/${encodeURIComponent(nextId)}/read`, { method: 'POST' });
-    setUnread((u) => u.filter((x) => x !== nextId));
-    setReadCount((c) => c + 1);
+    await markBlipRead(nextId);
     // scroll into view
     setTimeout(() => {
       const el = document.querySelector(`[data-blip-id="${CSS.escape(nextId)}"]`);
@@ -113,8 +155,9 @@ export function WaveView({ id }: { id: string }) {
   };
   const prevUnread = async () => {
     const pr = await api(`/api/waves/${encodeURIComponent(id)}/prev${current ? `?before=${encodeURIComponent(current)}` : ''}`);
-    if (!pr.ok || !(pr.data as any)?.prev) return;
-    const prevId = String((pr.data as any).prev);
+    if (!pr.ok) { toast('Previous unread lookup failed', 'error'); return; }
+    const prevId = (pr.data as any)?.prev ? String((pr.data as any).prev) : null;
+    if (!prevId) return;
     setCurrent(prevId);
     expandAll();
     // do not auto-mark prev as read; leave it highlighted for review
@@ -179,33 +222,11 @@ export function WaveView({ id }: { id: string }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2 style={{ margin: 0, padding: 0 }}>{title || 'Wave'}</h2>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span title={presentUsers.map(u=>u.name || u.userId || 'anon').join(', ') || 'No users present'}>
-            Present: {presentCount}
-          </span>
-          <button
-            onClick={async ()=>{
-              setRebuildStatus(null);
-              setRebuildError(null);
-              try {
-                const body: any = current ? { blipId: current } : {};
-                const r = await api(`/api/editor/${encodeURIComponent(id)}/rebuild`, { method: 'POST', body: JSON.stringify(body) });
-                if (r.ok) {
-                  const applied = (r.data as any)?.applied;
-                  setRebuildStatus(`Rebuilt snapshot${current?` for blip ${current}`:''}. Applied ${applied ?? 0} updates.`);
-                } else {
-                  setRebuildError(`Rebuild failed (${r.status})`);
-                }
-              } catch (e: any) { setRebuildError(`Rebuild error: ${e?.message || 'unknown'}`); }
-            }}
-            title="Rebuild snapshot from stored updates (dev/admin)"
-          >
-            Rebuild snapshot
-          </button>
+          <PresenceIndicator label="Present" status={wavePresence.status} users={wavePresence.users} />
           <button onClick={()=> setShowEditor(v=>!v)}>{showEditor ? 'Hide editor' : (current ? 'Show editor for current blip' : 'Show editor')}</button>
         </div>
       </div>
-      {rebuildStatus ? <div style={{ marginTop: 4, fontSize: 12, color: '#2c3e50' }}>{rebuildStatus}</div> : null}
-      {rebuildError ? <div style={{ marginTop: 4, fontSize: 12, color: 'red' }}>{rebuildError}</div> : null}
+      <RebuildPanel waveId={id} blipId={current} />
       {showEditor ? (
         <div style={{ margin: '12px 0' }}>
           <Editor waveId={id} blipId={current ?? undefined} readOnly={false} />
@@ -216,6 +237,7 @@ export function WaveView({ id }: { id: string }) {
       <div style={{ marginBottom: 6, fontSize: 14, color: '#444' }}>
         Unread {unread.length} / {total} (read {readCount}){current ? <span> — Current: <code>{current}</code></span> : null}
       </div>
+      {unreadError ? <div style={{ marginBottom: 8, color: 'red', fontSize: 12 }}>{unreadError}</div> : null}
       <div style={{ marginBottom: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button onClick={expandAll}>Expand all</button>
         <button onClick={collapseAll}>Collapse all</button>
@@ -288,6 +310,7 @@ function BlipTreeWithState({ nodes, unread, current, openMap, onToggle }: { node
     return (
       <li key={n.id} data-blip-id={n.id} style={{ background: current === n.id ? '#e8f8f2' : unread.has(n.id) ? '#e9fbe9' : undefined }} onClick={(e)=>{ if ((e.target as HTMLElement).tagName.toLowerCase() !== 'button') { (window as any).setWaveCurrent?.(n.id); } }}>
         <button onClick={() => onToggle(n.id, !isOpen)} style={{ marginRight: 6 }}>{isOpen ? '-' : '+'}</button>
+        {unread.has(n.id) ? <span style={{ padding: '2px 6px', marginRight: 6, background: '#27ae60', color: 'white', borderRadius: 10, fontSize: 11 }}>Unread</span> : null}
         <span style={{ color: '#555' }}>{formatTimestamp(n.createdAt)}</span>
         <span> — <BlipContent content={n.content || ''} blipId={n.id} /></span>
         {n.children && n.children.length > 0 && isOpen ? (
