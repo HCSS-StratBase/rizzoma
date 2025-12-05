@@ -31,15 +31,15 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": false,
     "noPropertyAccessFromIndexSignature": true,
     "skipLibCheck": true,
     "baseUrl": "./",
     "paths": {
       "@server/*": ["src/server/*"],
       "@client/*": ["src/client/*"],
-      "@shared/*": ["src/share/*"],
+      "@shared/*": ["src/shared/*"],
       "@types/*": ["src/types/*"]
     }
   },

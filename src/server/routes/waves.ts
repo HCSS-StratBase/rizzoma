@@ -1,8 +1,11 @@
 import { Router } from 'express';
-import { createIndex, find, findOne, getDoc, insertDoc, view } from '../lib/couch.js';
+import { createIndex, find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
+import { emitEvent } from '../lib/socket.js';
 import type { Blip, Wave, BlipRead } from '../schemas/wave.js';
+import { computeWaveUnreadCounts } from '../lib/unread.js';
 
 const router = Router();
+type FlatBlip = { id: string; updatedAt: number; createdAt?: number; content?: string; children?: FlatBlip[] };
 
 // GET /api/waves?limit&offset&q
 router.get('/', async (req, res) => {
@@ -42,24 +45,11 @@ router.get('/unread_counts', async (req, res) => {
   try {
     const idsParam = String((req.query as any).ids || '').trim();
     const ids = idsParam ? idsParam.split(',').map(s => s.trim()).filter(Boolean).slice(0, 200) : [];
-    const results: Array<{ waveId: string; total: number; unread: number; read: number }> = [];
-    for (const waveId of ids) {
-      // total blips by Mango (simple, dev-friendly)
-      let total = 0;
-      try {
-        const r = await find<Blip>({ type: 'blip', waveId }, { limit: 10000 });
-        total = (r.docs || []).length;
-      } catch {}
-      let read = 0;
-      try {
-        await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
-        const rr = await find<BlipRead>({ type: 'read', userId, waveId }, { limit: 10000 });
-        // unique by blipId to defend against duplicates
-        read = new Set((rr.docs || []).map(d => String(d.blipId))).size;
-      } catch {}
-      const unread = Math.max(0, total - read);
-      results.push({ waveId, total, unread, read });
-    }
+    const counts = await computeWaveUnreadCounts(userId, ids);
+    const results = ids.map((waveId) => {
+      const entry = counts[waveId] || { total: 0, unread: 0, read: 0 };
+      return { waveId, total: entry.total, unread: entry.unread, read: entry.read };
+    });
     res.json({ counts: results });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'unread_counts_error', requestId: (req as any)?.id });
@@ -95,7 +85,13 @@ router.get('/:id', async (req, res) => {
       if (!byParent.has(p)) byParent.set(p, []);
       byParent.get(p)!.push(b as any);
     }
-    const toNode = (b: Blip): any => ({ id: (b as any)._id, content: (b as any).content || '', createdAt: (b as any).createdAt, children: (byParent.get(((b as any)._id) || '') || []).map(toNode) });
+    const toNode = (b: Blip): FlatBlip => ({
+      id: (b as any)._id,
+      content: (b as any).content || '',
+      createdAt: (b as any).createdAt,
+      updatedAt: (b as any).updatedAt || (b as any).createdAt || 0,
+      children: (byParent.get(((b as any)._id) || '') || []).map(toNode),
+    } as any);
     const roots = (byParent.get(null) || []).concat(byParent.get(undefined as any) || []).map(toNode);
     const title = wave?.title || `(legacy) wave ${id.slice(0, 6)}`;
     const createdAt = wave?.createdAt || (blips[0]?.createdAt || Date.now());
@@ -105,10 +101,16 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// compute a depth-first order of blips (preorder)
-function flattenBlips(blips: any[]): string[] {
-  const out: string[] = [];
-  const visit = (n: any) => { if (n && n.id) out.push(String(n.id)); (n.children || []).forEach(visit); };
+// compute a depth-first order of blips (preorder) including timestamps
+function flattenBlips(blips: FlatBlip[]): Array<{ id: string; updatedAt: number }> {
+  const out: Array<{ id: string; updatedAt: number }> = [];
+  const visit = (n: FlatBlip) => {
+    if (n && n.id) {
+      const updatedAt = Number(n.updatedAt ?? n.createdAt ?? 0);
+      out.push({ id: String(n.id), updatedAt });
+    }
+    (n.children || []).forEach(visit);
+  };
   (blips || []).forEach(visit);
   return out;
 }
@@ -123,12 +125,13 @@ router.get('/:id/unread', async (req, res) => {
     // get tree
     const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
     const waveData: any = await waveResp.json();
-    const order = flattenBlips(waveData.blips || []);
+    const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
     await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
-    const readSet = new Set((r.docs || []).map((d) => String(d.blipId)));
-    const unread = order.filter((bid) => !readSet.has(bid));
-    res.json({ unread, total: order.length, read: order.length - unread.length });
+    const readMap = new Map<string, number>();
+    (r.docs || []).forEach((d) => readMap.set(String(d.blipId), Number((d as any).readAt || 0)));
+    const unreadEntries = order.filter((entry) => entry.updatedAt > (readMap.get(entry.id) || 0));
+    res.json({ unread: unreadEntries.map((e) => e.id), total: order.length, read: order.length - unreadEntries.length });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'unread_error', requestId: (req as any)?.id });
   }
@@ -144,13 +147,14 @@ router.get('/:id/next', async (req, res) => {
   try {
     const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
     const waveData: any = await waveResp.json();
-    const order = flattenBlips(waveData.blips || []);
+    const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
     await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
-    const readSet = new Set((r.docs || []).map((d) => String(d.blipId)));
-    const startIdx = after ? Math.max(0, order.indexOf(after) + 1) : 0;
-    const next = order.slice(startIdx).find((bid) => !readSet.has(bid));
-    res.json({ next: next || null });
+    const readMap = new Map<string, number>();
+    (r.docs || []).forEach((d) => readMap.set(String(d.blipId), Number((d as any).readAt || 0)));
+    const startIdx = after ? Math.max(0, order.findIndex((o) => o.id === after) + 1) : 0;
+    const nextEntry = order.slice(startIdx).find((entry) => entry.updatedAt > (readMap.get(entry.id) || 0));
+    res.json({ next: nextEntry?.id || null });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'next_error', requestId: (req as any)?.id });
   }
@@ -166,15 +170,17 @@ router.get('/:id/prev', async (req, res) => {
   try {
     const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
     const waveData: any = await waveResp.json();
-    const order = flattenBlips(waveData.blips || []);
+    const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
     await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
-    const readSet = new Set((r.docs || []).map((d) => String(d.blipId)));
-    const startIdx = before ? Math.max(0, order.indexOf(before) - 1) : order.length - 1;
+    const readMap = new Map<string, number>();
+    (r.docs || []).forEach((d) => readMap.set(String(d.blipId), Number((d as any).readAt || 0)));
+    const startIdx = before ? Math.max(0, order.findIndex((o) => o.id === before) - 1) : order.length - 1;
     let prev: string | null = null;
     for (let i = startIdx; i >= 0; i--) {
-      const bid = order[i];
-      if (bid && !readSet.has(bid)) { prev = bid; break; }
+      const entry = order[i];
+      const readAt = readMap.get(entry.id) || 0;
+      if (entry && entry.updatedAt > readAt) { prev = entry.id; break; }
     }
     res.json({ prev });
   } catch (e: any) {
@@ -190,12 +196,18 @@ router.post('/:waveId/blips/:blipId/read', async (req, res) => {
   const blipId = req.params.blipId;
   try {
     const keyId = `read:user:${userId}:wave:${waveId}:blip:${blipId}`;
-    // avoid duplicates
-    const existing = await findOne<BlipRead>({ type: 'read', userId, waveId, blipId }).catch(() => null);
-    if (existing) { res.json({ ok: true, id: existing._id }); return; }
-    const doc: BlipRead = { _id: keyId, type: 'read', userId, waveId, blipId, readAt: Date.now() };
+    const now = Date.now();
+    const existing = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId, blipId }).catch(() => null);
+    if (existing && existing._id && existing._rev) {
+      const r = await updateDoc({ ...existing, readAt: now } as any);
+      try { emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); } catch {}
+      res.json({ ok: true, id: r.id, rev: r.rev, readAt: now });
+      return;
+    }
+    const doc: BlipRead = { _id: keyId, type: 'read', userId, waveId, blipId, readAt: now };
     const r = await insertDoc(doc as any);
-    res.status(201).json({ ok: true, id: r.id, rev: r.rev });
+    try { emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); } catch {}
+    res.status(201).json({ ok: true, id: r.id, rev: r.rev, readAt: now });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'read_mark_error', requestId: (req as any)?.id });
   }
@@ -212,10 +224,16 @@ router.post('/:id/read', async (req, res) => {
   for (const bid of blipIds) {
     try {
       const keyId = `read:user:${userId}:wave:${id}:blip:${bid}`;
-      const existing = await findOne<BlipRead>({ type: 'read', userId, waveId: id, blipId: bid }).catch(() => null);
-      if (existing) { results.push({ id: bid, ok: true }); continue; }
-      const r = await insertDoc({ _id: keyId, type: 'read', userId, waveId: id, blipId: bid, readAt: Date.now() } as any);
-      if (r?.ok) results.push({ id: bid, ok: true }); else results.push({ id: bid, ok: false });
+      const now = Date.now();
+      const existing = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId: id, blipId: bid }).catch(() => null);
+      if (existing && existing._id && existing._rev) {
+        const r = await updateDoc({ ...existing, readAt: now } as any);
+        if (r?.ok) { results.push({ id: bid, ok: true }); try { emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); } catch {} }
+        else results.push({ id: bid, ok: false });
+        continue;
+      }
+      const r = await insertDoc({ _id: keyId, type: 'read', userId, waveId: id, blipId: bid, readAt: now } as any);
+      if (r?.ok) { results.push({ id: bid, ok: true }); try { emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); } catch {} } else results.push({ id: bid, ok: false });
     } catch {
       results.push({ id: bid, ok: false });
     }

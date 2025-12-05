@@ -1,0 +1,165 @@
+/* Follow the Green - Visual indicators for unread content */
+
+/* Unread blip indicator */
+.blip-unread {
+  position: relative;
+}
+
+.blip-unread::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #4caf50;
+  border-radius: 2px;
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+/* Green highlight for new content */
+.blip-content-new {
+  background: linear-gradient(to right, 
+    transparent 0%, 
+    rgba(76, 175, 80, 0.1) 2%, 
+    rgba(76, 175, 80, 0.1) 98%, 
+    transparent 100%
+  );
+  transition: background 0.3s ease;
+}
+
+/* Active highlight when navigating */
+.blip-highlight-active {
+  background: rgba(76, 175, 80, 0.2);
+  box-shadow: inset 0 0 0 2px #4caf50;
+  animation: highlight-flash 0.6s ease;
+}
+
+/* Time indicator */
+.change-time {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-size: 11px;
+  color: #4caf50;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* Navigation helper */
+.green-navigation {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.green-navigation-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.green-navigation-button:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.green-navigation-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.green-count {
+  background: white;
+  color: #4caf50;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+/* Diff highlighting for changed text */
+.text-added {
+  background-color: rgba(76, 175, 80, 0.3);
+  text-decoration: none;
+}
+
+.text-removed {
+  background-color: rgba(244, 67, 54, 0.3);
+  text-decoration: line-through;
+}
+
+/* Animations */
+@keyframes pulse-green {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes highlight-flash {
+  0% {
+    background: rgba(76, 175, 80, 0.2);
+  }
+  50% {
+    background: rgba(76, 175, 80, 0.4);
+  }
+  100% {
+    background: rgba(76, 175, 80, 0.2);
+  }
+}
+
+/* Integration with editor */
+.editor-with-changes {
+  position: relative;
+}
+
+.editor-change-indicator {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background: #4caf50;
+  border-radius: 50%;
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .green-navigation {
+    bottom: 60px;
+    right: 10px;
+    padding: 8px;
+  }
+  
+  .green-navigation-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}

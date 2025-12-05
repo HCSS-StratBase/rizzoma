@@ -1,0 +1,151 @@
+.navigation-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-header {
+  padding: 16px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-button {
+  width: 100%;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: background-color 0.2s;
+}
+
+.nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.new-button {
+  background: #e74c3c;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.new-button:hover {
+  background: #c0392b;
+}
+
+.nav-tabs {
+  flex: 1;
+  padding: 8px 0;
+  overflow-y: auto;
+}
+
+.nav-tab {
+  width: 100%;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.nav-tab:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-tab.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.nav-tab.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #3498db;
+}
+
+.nav-tab.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nav-tab .icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.nav-tab .label {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.nav-tab .badge {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: #e74c3c;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.nav-tab .lock {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 12px;
+}
+
+.nav-footer {
+  padding: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-help {
+  width: 100%;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.nav-help:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-tab .label,
+  .nav-help .label {
+    display: none;
+  }
+  
+  .nav-tab,
+  .nav-button,
+  .nav-help {
+    padding: 8px;
+  }
+}

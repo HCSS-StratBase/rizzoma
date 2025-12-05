@@ -41,6 +41,6 @@ describe('routes: /api/editor rebuild snapshot', () => {
     server.close();
     expect(resp.status).toBe(200);
     expect(body.ok).toBe(true);
+    expect(typeof body.applied).toBe('number');
   });
 });
-
