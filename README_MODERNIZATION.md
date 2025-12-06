@@ -350,3 +350,13 @@ Next up: continue broadening unread/presence/perf coverage (larger-wave Follow-t
 - [Express Migration Guide](https://expressjs.com/en/guide/migrating-4.html)
 - [Socket.io Documentation](https://socket.io/docs/v4/)
 - [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
+
+## Snapshots
+
+Reference screenshots for manual or Playwright runs live under `snapshots/<feature>/`. Current folders:
+
+- `snapshots/toolbar-inline/` — Inline toolbar parity captures from `npm run test:toolbar-inline`.
+- `snapshots/follow-the-green/` — Follow-the-Green multi-user flows (`npm run test:follow-green`).
+- `snapshots/inline-comments/`, `snapshots/presence/`, `snapshots/uploads/` — Inline comment, presence, and upload route evidence.
+
+Drop PNGs/GIFs from each test pass into the matching folder (or create subfolders per date) so reviewers can diff the modern UI against legacy behavior.
