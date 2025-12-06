@@ -340,8 +340,9 @@ Cross-browser Playwright smoke now covers the inline toolbar overflow/gear actio
 
 - ✅ Added `src/tests/client.followGreenNavigation.test.tsx` to exercise the Follow-the-Green hook plus the toolbar-facing `GreenNavigation` button, ensuring unread badges and highlight flashes stay aligned with the restored inline toolbar.
 - ✅ Documented the inline comment degraded-state banners across `docs/EDITOR_TOOLBAR_PARITY.md` and `INLINE_COMMENTS_VS_REPLIES.md` so popover/toolbars stay in sync when commenting is disabled or APIs fail.
+- ✅ Added `test-follow-green-smoke.mjs` (`npm run test:follow-green`) to spin up two authenticated browsers, seed a wave, trigger a remote edit, and verify the observer follows the unread blip via the RightToolsPanel CTA.
 
-Next up: continue broadening unread/presence/perf coverage (server-backed read state, multi-wave Follow-the-Green flows, and realtime banner telemetry) so the toolbar remains an accurate source of truth.
+Next up: continue broadening unread/presence/perf coverage (larger-wave Follow-the-Green flows, degraded toasts, CI gating, and realtime banner telemetry) so the toolbar remains an accurate source of truth.
 
 ## Resources
 

@@ -34,7 +34,8 @@
     "logs": "docker compose logs -f",
     "logs:app": "docker compose logs -f app",
     "status": "docker compose ps && echo '\nAPI Health:' && curl -s http://localhost:8000/api/health || echo 'API not responding'",
-    "test:toolbar-inline": "node test-toolbar-inline-smoke.mjs"
+    "test:toolbar-inline": "node test-toolbar-inline-smoke.mjs",
+    "test:follow-green": "node test-follow-green-smoke.mjs"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.4",

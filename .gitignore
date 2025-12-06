@@ -13,6 +13,8 @@ src/pulse_index.coffee
 src/server/app_roles/web_payment.coffee
 src/server/app_roles/web_pulse.coffee
 src/pages/
+original-rizzoma/
+original-rizzoma-src/
 
 # Build
 lib/*

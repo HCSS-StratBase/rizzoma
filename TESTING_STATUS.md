@@ -12,7 +12,9 @@ Latest automated runs (Dec 4, 2025):
 - `npm test -- --run src/tests/client.BlipMenu.test.tsx src/tests/client.inlineCommentAnchoring.test.ts` (passes; covers toolbar parity and inline comment anchoring/navigation).
 - `npm test -- --run src/tests/client.copyBlipLink.test.ts src/tests/client.inlineCommentsVisibilityShortcuts.test.ts src/tests/client.inlineCommentsVisibilityStorage.test.ts` (passes; covers inline comment visibility persistence + keyboard shortcuts and link copy helper).
 - `npm test -- --pool=threads --run src/tests/client.followGreenNavigation.test.tsx` (passes; exercises the `useChangeTracking` hook and `GreenNavigation` CTA highlight/scroll behavior; canonical Follow-the-Green flows in the modern Rizzoma layout still rely on manual QA).
-UI smoke for the restored inline toolbar remains outstanding.
+- `npm run test:toolbar-inline` (Playwright smoke; walks the inline toolbar overflow/gear actions and inline comment filters across Chromium/Firefox/WebKit).
+- `npm run test:follow-green` (Playwright smoke; spins up two authenticated sessions, triggers a remote edit via the API, and verifies the observer’s Follow-the-Green CTA jumps to and clears the unread blip).
+UI smoke for additional surfaces remains outstanding.
 
 Standing requirement before claiming parity: rerun the Vitest toolbar/inline comment suites above and a browser/UI smoke pass for the restored inline toolbar and popovers.
 
@@ -70,8 +72,8 @@ Most core Rizzoma features are enabled with targeted coverage; some flows (notab
 - **Technical details**: Socket.io polling transport confirmed, session ID established
 
 #### ✅ E. "Follow the Green" Navigation - PARTIALLY COVERED
-- **What was tested**: `src/tests/client.followGreenNavigation.test.tsx` simulates unread blips, cycles `goToNextUnread`, verifies highlight flashes + scroll handling, and asserts read timestamps persist to `localStorage` so unread badges stay accurate for the `GreenNavigation` harness.
-- **Status**: Hook-level logic and the legacy `GreenNavigation` button now have deterministic coverage; modern Rizzoma layout flows (`RightToolsPanel`/`FollowTheGreen` + `useWaveUnread`) and multi-user/wave-list scenarios still require manual passes and additional tests.
+- **What was tested**: `src/tests/client.followGreenNavigation.test.tsx` simulates unread blips, cycles `goToNextUnread`, verifies highlight flashes + scroll handling, and asserts read timestamps persist to `localStorage` so unread badges stay accurate for the `GreenNavigation` harness. `npm run test:follow-green` drives two real browser sessions, creates a fresh wave via the API, triggers a remote edit, and verifies the observer’s Follow-the-Green CTA jumps to the unread blip and clears the unread state.
+- **Status**: Hook-level logic, the modern layout CTA (`RightToolsPanel` + `FollowTheGreen`), and a multi-user browser smoke now have coverage; degraded-path toasts, large-wave scenarios, and CI gating are still pending.
 
 ## 🔧 Technical Verification
 
@@ -107,7 +109,7 @@ Most core Rizzoma features are enabled with targeted coverage; some flows (notab
 
 **4 out of 5 core features covered in prior manual tests; automated suites are clean for the areas listed above.** The rich text editor now exposes the full toolbar in the Rizzoma layout again; run a fresh UI smoke to validate the restored controls.
 
-Follow-the-Green navigation in the modern Rizzoma layout remains partially untested: only the change-tracking harness has unit coverage, and multi-wave/wave-list/degraded-state flows still need manual and automated coverage.
+Follow-the-Green navigation now has both hook-level coverage and a Playwright multi-user smoke (`npm run test:follow-green`), but degraded-path toasts, large-wave scenarios, and CI gating still need to be tackled.
 
 ---
 

@@ -88,6 +88,7 @@ We will update this list as each legacy capability is restored.
 - `src/tests/client.blipClipboardStore.test.ts` — exercises clipboard interactions to confirm the overflow menu correctly enables/disables paste actions.
 - `src/tests/client.followGreenNavigation.test.tsx` — exercises the Follow-the-Green unread navigation hook (`useChangeTracking`) and `GreenNavigation` button so unread badges, highlight flashes, and toolbar banners stay synchronized with real content changes.
 - `test-toolbar-inline-smoke.mjs` — Playwright-based smoke run (`npm run test:toolbar-inline`) that launches Chromium, exercises the inline toolbar controls (edit/read modes, formatting buttons, overflow toggles), types sample content, and confirms the inline comments nav renders for the active blip.
+- `test-follow-green-smoke.mjs` — Playwright multi-user smoke (`npm run test:follow-green`) that provisions two sessions, seeds a wave/blip via the API, triggers a remote edit, and verifies the observer follows and clears the unread state via the RightToolsPanel CTA.
 
 ## Inline comment degraded states
 Inline comment availability is surfaced in the toolbar itself so users notice outages without drilling into popovers:

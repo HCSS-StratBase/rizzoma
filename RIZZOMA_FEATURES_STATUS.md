@@ -57,7 +57,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - **WaveView toolbar** - Inline unread counter, next/prev/first/last controls, keyboard shortcuts (j/k/g/G) plus optimistic mark-read + rollback on failure.
 - **Follow-the-Green** - `useWaveUnread` hydrates per-wave unread sets, `RizzomaTopicDetail` decorates blips with `isRead`/`unread` classes, and `RightToolsPanel` + `FollowTheGreen` expose the CTA and count; the older `GreenNavigation`/`useChangeTracking` pair remains a test harness only.
 - **PresenceIndicator** - Shared component shows avatars/initials, loading/error text, and overflow counts in both `WaveView` and `Editor`.
-- **Tests** - `routes.waves.unread.test.ts`, `client.followGreenNavigation.test.tsx`, `server.editorPresence.test.ts`, `client.PresenceIndicator.test.tsx`, and `routes.blips.permissions.test.ts` cover the persistence + UI states (with additional Playwright/browser smoke still pending).
+- **Tests** - `routes.waves.unread.test.ts`, `client.followGreenNavigation.test.tsx`, `client.RightToolsPanel.followGreen.test.tsx`, `client.useWaveUnread.test.tsx`, `routes.uploads.edgecases.test.ts`, `server.editorPresence.test.ts`, `client.PresenceIndicator.test.tsx`, and `routes.blips.permissions.test.ts` cover the persistence + UI states. Playwright smokes `test-toolbar-inline-smoke.mjs` and `test-follow-green-smoke.mjs` exercise inline toolbar parity and multi-user Follow-the-Green flows respectively (additional CI gating still pending).
 
 ### Permissions & Auth
 - `requireAuth` now guards topic/blip write endpoints, logs denied operations, and respects actual author IDs.
@@ -124,4 +124,3 @@ With `FEAT_ALL=1` enabled:
 7. **Real-time Updates** - Core realtime flows are active; perf/CI hardening is still in progress.
 
 Most of the core Rizzoma experience is available; see **Still pending** for remaining gaps.
-

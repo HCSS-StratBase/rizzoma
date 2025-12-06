@@ -20,6 +20,7 @@
 - [x] Search materialization polish: finalize Mango/view indexes for `/api/editor/search` (blip-scoped + wave-level) and add result relevance ordering; extend `EditorSearch.tsx` to show snippet context and a “jump to blip” action; add endpoint tests for pagination/bookmark + malformed queries.
   - (2026-03-05) `/api/editor/search` now enforces Mango index creation, adds bookmark-based pagination, sorts by `updatedAt desc`, emits contextual snippets, and guards long queries. `EditorSearch` renders snippets, jump buttons, and load-more pagination via the new `nextBookmark`. Added new Vitest suites (`routes.editor.search.test.ts`, `client.EditorSearch.test.tsx`) covering pagination, malformed queries, snippets, and jump actions.
 - [ ] Follow-the-Green validation: ensure unread navigation works at wave level (next/prev/unread count) with realtime edits; add Playwright/Vitest coverage that edits remote content and verifies navigation highlights update without losing selection.
+  - (2026-03-05) Added `test-follow-green-smoke.mjs` (`npm run test:follow-green`) which registers/logs two users, creates a fresh wave, triggers a remote blip via the API, and validates that the observer’s Follow-the-Green CTA jumps to and clears the unread blip. CI gating, degraded-path toasts, and larger-wave automation remain.
 - [ ] Perf/resilience sweeps: soak-test large waves/blips, inline comments, playback, and realtime updates for latency/memory; add metrics/logging hooks and document thresholds/known limits.
 
 ### Read/unread state and navigation
@@ -65,7 +66,7 @@
 ### Testing and QA coverage
 - [ ] Test every functionality that's added or modified and update that md file accordingly (or create one if there isn't one already!)
 - [ ] Add coverage for Follow-the-Green navigation/unread tracking (wave-level) plus degraded-path toasts for editor actions; re-run full Vitest suite and add browser smoke.
-  - (2026-03-05) Added `src/tests/client.RightToolsPanel.followGreen.test.tsx` and `src/tests/client.useWaveUnread.test.tsx` to cover the modern Follow-the-Green CTA (`RightToolsPanel`/`FollowTheGreen`) and the `useWaveUnread` hook (initial load, optimistic mark-read, and socket `deleted` events). Browser smoke and multi-user flows are still pending.
+  - (2026-03-05) Added `src/tests/client.RightToolsPanel.followGreen.test.tsx` and `src/tests/client.useWaveUnread.test.tsx` to cover the modern Follow-the-Green CTA (`RightToolsPanel`/`FollowTheGreen`) and the `useWaveUnread` hook (initial load, optimistic mark-read, socket `deleted` events, and large-wave stress). `test-follow-green-smoke.mjs` now exercises the multi-user browser flow; degraded-path toasts and CI wiring are still pending.
 - [ ] Gate CI on `npm run test:toolbar-inline` and the Follow-the-Green suite once unread/presence persistence lands so toolbar/unread regressions fail fast.
 - [x] Expand automated regression for BlipMenu parity items and failure-path toasts; add cross-browser (Chromium/Firefox/WebKit) smoke runs.
   - (2025-12-04) `client.BlipMenu.test.tsx` now asserts inline comment error banners render in edit mode and that read-only commenting disables the edit overflow paste actions, covering the failure-path toasts surfaced by the inline toolbar; the existing `npm run test:toolbar-inline` smoke already iterates Chromium/Firefox/WebKit.
