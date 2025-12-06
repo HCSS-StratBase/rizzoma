@@ -20,6 +20,8 @@ import editorRouter from './routes/editor.js';
 import linksRouter from './routes/links.js';
 import blipsRouter from './routes/blips.js';
 import { inlineCommentsRouter } from './routes/inlineComments.js';
+import { uploadsPath, uploadsRouter } from './routes/uploads.js';
+import healthRouter from './routes/health.js';
 
 const app = express();
 
@@ -52,7 +54,7 @@ app.use(requestLogger());
 app.use(csrfInit());
 
 // Health and basic routes
-app.get('/api/health', (_req, res) => { res.json({ status: 'ok' }); });
+app.use('/api', healthRouter);
 app.get('/api/deps', async (_req, res) => {
   try {
     const info = await couchDbInfo();
@@ -71,6 +73,7 @@ app.use('/api/editor', editorRouter);
 app.use('/api', linksRouter);
 app.use('/api/blips', blipsRouter);
 app.use('/api', inlineCommentsRouter);
+app.use('/api/uploads', uploadsRouter);
 
 // Placeholder root
 app.get('/', (_req, res) => {
@@ -82,6 +85,10 @@ if (process.env['NODE_ENV'] === 'production') {
   const staticDir = path.resolve(process.cwd(), 'dist', 'client');
   app.use(express.static(staticDir));
 }
+app.use('/uploads', express.static(uploadsPath, {
+  fallthrough: false,
+  maxAge: '1d',
+}));
 
 // Create HTTP server and bind socket.io for realtime events
 const server = http.createServer(app);

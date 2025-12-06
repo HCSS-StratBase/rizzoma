@@ -15,6 +15,8 @@ describe('routes: /api/topics', () => {
   beforeAll(() => {
     // Mock global fetch used by couch helpers, but forward real HTTP requests to the local app server
     const realFetch = global.fetch as any;
+    const blipMap: Record<string, number> = { t1: 2, t2: 0 };
+    const readMap: Record<string, string[]> = { t1: ['t1-b1'] };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     global.fetch = (async (url: any, init?: any) => {
       const u = new URL(String(url));
@@ -31,6 +33,32 @@ describe('routes: /api/topics', () => {
         json: async () => obj,
       } as any);
       if (method === 'POST' && path.endsWith('/_find')) {
+        const body = JSON.parse(init?.body?.toString() || '{}');
+        const selector = body.selector || {};
+        if (selector.type === 'blip') {
+          const waveId = selector.waveId;
+          const count = waveId ? (blipMap[waveId] ?? 0) : 0;
+          const docs = Array.from({ length: count }, (_v, i) => ({
+            _id: `${waveId}-b${i + 1}`,
+            type: 'blip',
+            waveId,
+            createdAt: Date.now() - i * 1000,
+            updatedAt: Date.now() - i * 1000,
+          }));
+          return okResp({ docs });
+        }
+        if (selector.type === 'read') {
+          const waveId = selector.waveId;
+          const docs = (readMap[waveId] || []).map((bid) => ({
+            _id: `read:${waveId}:${bid}`,
+            type: 'read',
+            userId: 'u1',
+            waveId,
+            blipId: bid,
+            readAt: Date.now(),
+          }));
+          return okResp({ docs });
+        }
         // Return a couple of topic docs
         return okResp({ docs: [
           { _id: 't2', type: 'topic', title: 'Second', createdAt: Date.now() - 1000 },
@@ -71,6 +99,7 @@ describe('routes: /api/topics', () => {
     expect(Array.isArray(body.topics)).toBe(true);
     expect(body.topics.length).toBe(1);
     expect(body.hasMore).toBe(true);
+    expect(body.topics[0]).toHaveProperty('unreadCount');
   });
 
   it('creates a topic (requires CSRF + session)', async () => {

@@ -3,10 +3,16 @@ export interface InlineComment {
   blipId: string;
   userId: string;
   userName: string;
+  userEmail?: string;
+  userAvatar?: string;
+  isAuthenticated?: boolean;
   content: string;
   createdAt: number;
   updatedAt: number;
   resolved: boolean;
+  parentId?: string;
+  rootId?: string;
+  resolvedAt?: number | null;
   
   // Text range the comment is anchored to
   range: {

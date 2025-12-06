@@ -45,30 +45,11 @@ export function App() {
   // Check if we should use Rizzoma layout based on URL parameter
   const params = new URLSearchParams(window.location.search);
   const useRizzomaLayout = params.get('layout') === 'rizzoma';
-  const isDemoMode = params.get('demo') === 'true';
   
-  const [checkingAuth, setCheckingAuth] = useState(!isDemoMode);
-  
-  useEffect(() => {
-    console.log('APP MOUNTED - Checking layout:', { 
-      search: window.location.search, 
-      layout: params.get('layout'), 
-      useRizzomaLayout,
-      isDemoMode,
-      timestamp: Date.now() 
-    });
-    
-    // Auto-set demo user if in demo mode
-    if (isDemoMode) {
-      setMe({ id: 'demo-user', email: 'demo@rizzoma.com' });
-      setCheckingAuth(false);
-    }
-  }, []);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   // bootstrap auth state
   useEffect(() => {
-    if (isDemoMode) return; // Skip auth check in demo mode
-    
     (async () => {
       try {
         const r = await api('/api/auth/me');
@@ -78,7 +59,7 @@ export function App() {
         setCheckingAuth(false);
       }
     })();
-  }, [isDemoMode]);
+  }, []);
 
   useEffect(() => {
     const onHash = () => setRoute(window.location.hash || '#/');
@@ -106,20 +87,19 @@ export function App() {
   };
   const listParams = parseListParams();
 
-  // Show landing page if not authenticated and using Rizzoma layout (but skip in demo mode)
-  if (useRizzomaLayout && !checkingAuth && !me && !isDemoMode) {
+  // Show landing page if not authenticated and using Rizzoma layout
+  if (useRizzomaLayout && !checkingAuth && !me) {
     return (
       <RizzomaLanding 
-        onEnterRizzoma={() => {
-          // For demo, just set a fake user
-          setMe({ id: 'demo-user', email: 'demo@rizzoma.com' });
+        onSignedIn={(user) => {
+          setMe(user);
         }}
       />
     );
   }
 
-  // Use Rizzoma layout if requested (allow demo mode)
-  if (useRizzomaLayout && (me || isDemoMode)) {
+  // Use Rizzoma layout if requested (requires authentication)
+  if (useRizzomaLayout && me) {
     return (
       <div className="rizzoma-app">
         {FEATURES.FOLLOW_GREEN && (
@@ -128,7 +108,7 @@ export function App() {
             <a href="#">Disable extension</a>
           </div>
         )}
-        <RizzomaLayout isAuthed={!!(me || isDemoMode)} />
+        <RizzomaLayout isAuthed />
         <Toast />
       </div>
     );

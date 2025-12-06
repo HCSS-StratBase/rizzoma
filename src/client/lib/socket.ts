@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
 let socket: Socket | undefined;
+const PRESENCE_HEARTBEAT_INTERVAL_MS = 10000;
 
 function getSocket(): Socket {
   if (!socket) {
@@ -72,8 +73,15 @@ export function subscribeEditorPresence(
     try {
       const meResp = await fetch('/api/auth/me', { credentials: 'include' });
       let userId: string | undefined;
-      try { const body = await meResp.json(); userId = body?.id ? String(body.id) : undefined; } catch {}
-      s.emit('editor:join', { waveId, blipId, userId });
+      let name: string | undefined;
+      try {
+        const body = await meResp.json();
+        userId = body?.id ? String(body.id) : undefined;
+        name = typeof body?.name === 'string' && body.name.trim()
+          ? String(body.name).trim()
+          : body?.email ? String(body.email) : undefined;
+      } catch {}
+      s.emit('editor:join', { waveId, blipId, userId, name });
     } catch {
       s.emit('editor:join', { waveId, blipId });
     }
@@ -84,8 +92,40 @@ export function subscribeEditorPresence(
     onPresence(p);
   };
   s.on('editor:presence', handler);
+  const heartbeat = typeof window !== 'undefined'
+    ? window.setInterval(() => {
+      try { s.emit('editor:presence:heartbeat'); } catch {}
+    }, PRESENCE_HEARTBEAT_INTERVAL_MS)
+    : null;
   return () => {
     try { s.emit('editor:leave', { waveId, blipId }); } catch {}
     s.off('editor:presence', handler);
+    if (heartbeat && typeof window !== 'undefined') window.clearInterval(heartbeat);
+  };
+}
+
+export type BlipSocketEvent =
+  | { action: 'created' | 'updated' | 'deleted'; waveId: string; blipId: string; updatedAt?: number; userId?: string }
+  | { action: 'read'; waveId: string; blipId: string; readAt?: number; userId?: string };
+
+export function subscribeBlipEvents(waveId: string, onEvent: (payload: BlipSocketEvent) => void): () => void {
+  const s = getSocket();
+  const handlerFor = (action: BlipSocketEvent['action']) => (p: any) => {
+    if (!p || p.waveId !== waveId || !p.blipId) return;
+    onEvent({ action, waveId: String(p.waveId), blipId: String(p.blipId), updatedAt: p.updatedAt ? Number(p.updatedAt) : undefined, readAt: p.readAt ? Number(p.readAt) : undefined, userId: p.userId ? String(p.userId) : undefined } as BlipSocketEvent);
+  };
+  const created = handlerFor('created');
+  const updated = handlerFor('updated');
+  const deleted = handlerFor('deleted');
+  const read = handlerFor('read');
+  s.on('blip:created', created);
+  s.on('blip:updated', updated);
+  s.on('blip:deleted', deleted);
+  s.on('blip:read', read);
+  return () => {
+    s.off('blip:created', created);
+    s.off('blip:updated', updated);
+    s.off('blip:deleted', deleted);
+    s.off('blip:read', read);
   };
 }

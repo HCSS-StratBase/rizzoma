@@ -23,6 +23,17 @@ You should see all features as `true`.
    - [ ] **Links** (🔗 button)
    - [ ] **Code blocks** ({ } button)
 
+## 2b. Inline Blip Toolbar & Overflow 🛠️
+1. **Read mode surface**
+   - [ ] Hover any blip and confirm the inline toolbar shows **Edit**, **Fold**, **💬 Hide/Show comments**, **Get Link**, **Delete**, and the ⚙️ gear menu.
+   - [ ] Click the 💬 button to toggle inline comments; the title should swap between *Hide Comments* and *Show Comments* and the highlights should follow.
+   - [ ] Open the gear menu and verify you see **Copy comment**, **Playback history**, **Paste as reply**, and **Copy direct link**. When the clipboard is empty, the paste actions should be disabled with helper text.
+2. **Edit mode surface**
+   - [ ] Click **Edit** to enter edit mode. Confirm **Done** returns you to read mode and undo/redo buttons enable/disable as you type.
+   - [ ] Use the inline toolbar buttons (Bold/Italic/Underline/Strike, bullets, highlight) to ensure formatting applies at the cursor.
+   - [ ] Click the ⋯ overflow to verify **Send**, **Copy comment**, **Playback history**, **Paste at cursor**, **Paste as reply**, **Copy direct link**, and **Delete blip** all appear with correct disabled/loading states (paste items disabled when clipboard empty, Delete disabled while request is running).
+   - [ ] If you temporarily disable commenting (e.g., impersonate a read-only viewer), confirm the toolbar shows the red inline comments banner in both edit and read modes so degraded states are obvious.
+
 ## 3. Test @Mentions 👤
 1. In the editor, type `@`
 2. **A dropdown should appear** with user names
@@ -39,6 +50,10 @@ You should see all features as `true`.
 6. The text should be highlighted in yellow
 7. Comments appear in a sidebar
 8. Try resolving a comment with the ✓ button
+9. Use the inline toolbar toggle **or** press `Ctrl+Shift+↑/↓` to hide/show inline comments and confirm the visibility preference persists when reloading.
+10. Check the inline comment navigation rail for **All / Open / Resolved** filters—switching filters should update the list immediately.
+11. Press `Alt+↑` / `Alt+↓` to move between inline comment anchors without losing your current selection.
+12. While resolved threads exist, make sure the navigation shows a **Resolved** badge and that reopening a comment updates the counts.
 
 ## 5. Test "Follow the Green" (Track C) 🟢
 1. Make some edits to create changes

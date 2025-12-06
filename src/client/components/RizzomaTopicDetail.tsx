@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 import { subscribeTopicDetail } from '../lib/socket';
 import { toast } from './Toast';
 import { RizzomaBlip, BlipData } from './blip/RizzomaBlip';
-import { FEATURES } from '@shared/featureFlags';
 import './RizzomaTopicDetail.css';
+import type { WaveUnreadState } from '../hooks/useWaveUnread';
 
 type TopicFull = { 
   id: string; 
@@ -16,7 +16,7 @@ type TopicFull = {
   authorName: string;
 };
 
-export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAuthed?: boolean }) {
+export function RizzomaTopicDetail({ id, isAuthed = false, unreadState }: { id: string; isAuthed?: boolean; unreadState?: WaveUnreadState | null }) {
   const [topic, setTopic] = useState<TopicFull | null>(null);
   const [rootBlip, setRootBlip] = useState<BlipData | null>(null);
   const [busy, setBusy] = useState(false);
@@ -69,6 +69,7 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
           
           // First pass: create all blips
           blips.forEach(blip => {
+            if (blip.deleted) return;
             blipMap.set(blip._id, {
               id: blip._id,
               content: blip.content || '<p></p>',
@@ -77,7 +78,7 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
               authorAvatar: 'https://via.placeholder.com/32',
               createdAt: blip.createdAt,
               updatedAt: blip.updatedAt || blip.createdAt,
-              isRead: true, // TODO: Track read status
+              isRead: true,
               parentBlipId: blip.parentId,
               permissions: blip.permissions || {
                 canEdit: blip.authorId === currentUser.id,
@@ -121,68 +122,17 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
       }
       
       setRootBlip(rootBlipData);
+      if (unreadState) {
+        try {
+          await unreadState.refresh();
+        } catch {
+          // ignore refresh errors here; toast handled inside hook
+        }
+      }
       setError(null); 
     } else {
       setError('Failed to load topic');
     }
-  };
-
-  // Mock data generator - replace with actual API calls
-  const generateMockChildBlips = (parentId: string): BlipData[] => {
-    if (!FEATURES.INLINE_COMMENTS) return [];
-    
-    return [
-      {
-        id: `${parentId}-reply-1`,
-        content: '<p>Great topic! I have some thoughts on this...</p>',
-        authorId: 'user-2',
-        authorName: 'Jane Doe',
-        authorAvatar: 'https://via.placeholder.com/32/e91e63',
-        createdAt: Date.now() - 3600000,
-        updatedAt: Date.now() - 3600000,
-        isRead: true,
-        parentBlipId: parentId,
-        permissions: {
-          canEdit: false,
-          canComment: isAuthed,
-          canRead: true
-        },
-        childBlips: [
-          {
-            id: `${parentId}-reply-1-1`,
-            content: '<p>I agree with your point. Let me add...</p>',
-            authorId: 'user-3',
-            authorName: 'Bob Smith',
-            authorAvatar: 'https://via.placeholder.com/32/3f51b5',
-            createdAt: Date.now() - 1800000,
-            updatedAt: Date.now() - 1800000,
-            isRead: false,
-            parentBlipId: `${parentId}-reply-1`,
-            permissions: {
-              canEdit: false,
-              canComment: isAuthed,
-              canRead: true
-            }
-          }
-        ]
-      },
-      {
-        id: `${parentId}-reply-2`,
-        content: '<p>Another perspective to consider...</p>',
-        authorId: currentUser.id,
-        authorName: currentUser.name,
-        authorAvatar: currentUser.avatar,
-        createdAt: Date.now() - 7200000,
-        updatedAt: Date.now() - 7200000,
-        isRead: true,
-        parentBlipId: parentId,
-        permissions: {
-          canEdit: true,
-          canComment: isAuthed,
-          canRead: true
-        }
-      }
-    ];
   };
 
   useEffect(() => { 
@@ -250,7 +200,7 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
           waveId: id,
           parentId: parentBlipId === id ? null : parentBlipId,
           content,
-          authorName: 'Demo User' // Add author name for demo mode
+          authorName: currentUser.name
         })
       });
       
@@ -265,8 +215,50 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
       console.error('Error adding reply:', error);
       toast('Failed to add reply', 'error');
     }
-    
+  
     setBusy(false);
+  };
+
+  const removeBlipFromTree = (blip: BlipData, targetId: string): { next: BlipData; removed: boolean } => {
+    let removed = false;
+    const childBlips = (blip.childBlips || []).reduce<BlipData[]>((acc, child) => {
+      if (child.id === targetId) {
+        removed = true;
+        return acc;
+      }
+      const { next, removed: childRemoved } = removeBlipFromTree(child, targetId);
+      if (childRemoved) removed = true;
+      acc.push(next);
+      return acc;
+    }, []);
+    return { next: { ...blip, childBlips }, removed };
+  };
+
+  const handleDeleteBlip = async (blipId: string): Promise<void> => {
+    if (!rootBlip || blipId === rootBlip.id) {
+      toast('Cannot delete the root blip', 'error');
+      return;
+    }
+    const previous = rootBlip;
+    const { next, removed } = removeBlipFromTree(rootBlip, blipId);
+    if (!removed) {
+      toast('Blip not found', 'error');
+      return;
+    }
+    setRootBlip(next);
+    try {
+      await ensureCsrf();
+      const response = await api(`/api/blips/${encodeURIComponent(blipId)}`, { method: 'DELETE' });
+      if (!response.ok) {
+        throw new Error(typeof response.data === 'string' ? response.data : 'delete_failed');
+      }
+      toast('Blip deleted');
+    } catch (error) {
+      console.error('Failed to delete blip', error);
+      setRootBlip(previous);
+      toast('Failed to delete blip', 'error');
+      throw error;
+    }
   };
 
   const handleToggleCollapse = (blipId: string): void => {
@@ -274,7 +266,18 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
     console.log('Toggle collapse:', blipId);
   };
 
-  if (!topic || !rootBlip) return <div>Loading...</div>;
+  const decoratedRootBlip = useMemo(() => {
+    if (!rootBlip) return null;
+    const unreadSet = unreadState?.unreadSet;
+    const decorate = (blip: BlipData): BlipData => ({
+      ...blip,
+      isRead: unreadSet ? !unreadSet.has(blip.id) : blip.isRead,
+      childBlips: (blip.childBlips || []).map(decorate),
+    });
+    return decorate(rootBlip);
+  }, [rootBlip, unreadState?.unreadSet, unreadState?.version]);
+
+  if (!topic || !decoratedRootBlip) return <div>Loading...</div>;
 
   return (
     <div className="rizzoma-topic-detail">
@@ -301,13 +304,15 @@ export function RizzomaTopicDetail({ id, isAuthed = false }: { id: string; isAut
       )}
 
       <div className="topic-content">
-        {rootBlip ? (
+        {decoratedRootBlip ? (
           <RizzomaBlip
-            blip={rootBlip}
+            blip={decoratedRootBlip}
             isRoot={true}
             onBlipUpdate={handleBlipUpdate}
             onAddReply={handleAddReply}
             onToggleCollapse={handleToggleCollapse}
+            onDeleteBlip={handleDeleteBlip}
+            onBlipRead={unreadState?.markBlipRead}
           />
         ) : (
           <div>Loading topic content...</div>

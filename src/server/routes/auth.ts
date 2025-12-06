@@ -6,7 +6,7 @@ import { z } from 'zod';
 // Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable
 import { hash as bcryptHash, compare as bcryptCompare } from '../lib/bcrypt.js';
 import rateLimit from 'express-rate-limit';
-import { findOne, insertDoc } from '../lib/couch.js';
+import { findOne, insertDoc, getDoc } from '../lib/couch.js';
 import { getCsrfTokenFromSession } from '../middleware/csrf.js';
 // import { config } from '../config.js';
 
@@ -47,6 +47,7 @@ type User = {
   passwordHash: string;
   createdAt: number;
   updatedAt: number;
+  name?: string;
 };
 
 router.post('/register', authLimiter, async (req, res): Promise<void> => {
@@ -101,8 +102,9 @@ router.get('/me', async (req, res): Promise<void> => {
   const id = req.session?.userId as string | undefined;
   if (!id) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
   try {
-    // Lightweight response; do not expose passwordHash
-    res.json({ id, requestId: (req as any)?.id });
+    const user = await getDoc<User>(id);
+    if (!user) { res.status(404).json({ error: 'user_not_found', requestId: (req as any)?.id }); return; }
+    res.json({ id, email: user.email, name: user.name, requestId: (req as any)?.id });
     return;
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'me_error', requestId: (req as any)?.id });

@@ -1,8 +1,32 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { BlipMenu } from './BlipMenu';
-import { api } from '../../lib/api';
 import { useEditor, EditorContent } from '@tiptap/react';
+import type { Editor } from '@tiptap/core';
 import { getEditorExtensions, defaultEditorProps } from '../editor/EditorConfig';
+import { toast } from '../Toast';
+import { copyBlipLink } from './copyBlipLink';
+import { InlineComments, InlineCommentsStatus } from '../editor/InlineComments';
+import { FEATURES } from '@shared/featureFlags';
+import { BlipHistoryModal } from './BlipHistoryModal';
+import { api, ensureCsrf } from '../../lib/api';
+import { 
+  getInlineCommentsVisibility, 
+  getInlineCommentsVisibilityFromStorage,
+  getInlineCommentsVisibilityMetadata,
+  setInlineCommentsVisibility, 
+  subscribeInlineCommentsVisibility 
+} from '../editor/inlineCommentsVisibility';
+import { 
+  getCollapsePreference, 
+  getCollapsePreferenceMetadata,
+  setCollapsePreference, 
+  subscribeCollapsePreference 
+} from './collapsePreferences';
+import { 
+  getBlipClipboardPayload, 
+  setBlipClipboardPayload 
+} from './clipboardStore';
+import { uploadFile } from '../../lib/upload';
 import './RizzomaBlip.css';
 
 export interface BlipData {
@@ -14,6 +38,8 @@ export interface BlipData {
   createdAt: number;
   updatedAt: number;
   isRead: boolean;
+  deletedAt?: number;
+  deleted?: boolean;
   childBlips?: BlipData[];
   permissions: {
     canEdit: boolean;
@@ -24,6 +50,44 @@ export interface BlipData {
   parentBlipId?: string;
 }
 
+const htmlToPlainText = (html: string): string => {
+  if (typeof window === 'undefined') {
+    return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  const div = window.document.createElement('div');
+  div.innerHTML = html;
+  const text = div.textContent || div.innerText || '';
+  return text.replace(/\u00a0/g, ' ').trim();
+};
+
+const computeSelectionOffsets = (
+  range: Range, 
+  root: HTMLElement
+): { start: number; end: number; text: string } | null => {
+  try {
+    const preSelectionRange = range.cloneRange();
+    preSelectionRange.selectNodeContents(root);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
+    const start = preSelectionRange.toString().length;
+    const text = range.toString();
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+    return {
+      start,
+      end: start + text.length,
+      text,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const clearBrowserSelection = () => {
+  if (typeof window === 'undefined') return;
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+};
+
 interface RizzomaBlipProps {
   blip: BlipData;
   isRoot?: boolean;
@@ -31,6 +95,8 @@ interface RizzomaBlipProps {
   onBlipUpdate?: (blipId: string, content: string) => void;
   onAddReply?: (parentBlipId: string, content: string) => void;
   onToggleCollapse?: (blipId: string) => void;
+  onDeleteBlip?: (blipId: string) => Promise<void> | void;
+  onBlipRead?: (blipId: string) => void;
 }
 
 export function RizzomaBlip({
@@ -39,28 +105,53 @@ export function RizzomaBlip({
   depth = 0,
   onBlipUpdate,
   onAddReply,
-  onToggleCollapse
+  onToggleCollapse,
+  onDeleteBlip,
+  onBlipRead,
 }: RizzomaBlipProps) {
+  const initialCollapsePreference = typeof blip.isCollapsed === 'boolean'
+    ? blip.isCollapsed
+    : getCollapsePreference(blip.id);
+  const [collapseByDefault, setCollapseByDefault] = useState(initialCollapsePreference);
+  const [isExpanded, setIsExpanded] = useState(() => !initialCollapsePreference);
   const [isEditing, setIsEditing] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
-  const [isExpanded, setIsExpanded] = useState(!blip.isCollapsed);
   const [editedContent, setEditedContent] = useState(blip.content);
   const [showInlineCommentBtn, setShowInlineCommentBtn] = useState(false);
-  const [selectedText, setSelectedText] = useState('');
-  const [selectionCoords, setSelectionCoords] = useState({ x: 0, y: 0 });
+  const [inlineCommentsNotice, setInlineCommentsNotice] = useState<string | null>(null);
+  const [selectionCoords, setSelectionCoords] = useState<{ x: number; y: number } | null>(null);
+  const [selectedRangeData, setSelectedRangeData] = useState<{ start: number; end: number; text: string } | null>(null);
+  const [inlineCommentDraft, setInlineCommentDraft] = useState('');
+  const [isInlineCommentFormVisible, setIsInlineCommentFormVisible] = useState(false);
+  const [isSavingInlineComment, setIsSavingInlineComment] = useState(false);
+  const [clipboardAvailable, setClipboardAvailable] = useState(() => !!getBlipClipboardPayload(blip.id));
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const blipContainerRef = useRef<HTMLDivElement>(null);
+  const [areCommentsVisible, setAreCommentsVisible] = useState(() => getInlineCommentsVisibility(blip.id));
+  const inlineVisibilityMetadata = getInlineCommentsVisibilityMetadata(blip.id);
+  const inlineVisibilityUpdatedAtRef = useRef(inlineVisibilityMetadata?.updatedAt ?? 0);
+  const collapsePreferenceMetadata = getCollapsePreferenceMetadata(blip.id);
+  const collapsePreferenceUpdatedAtRef = useRef(collapsePreferenceMetadata?.updatedAt ?? 0);
+  const readOnlySelectionWarned = useRef(false);
 
   // Create inline editor for editing mode
   const inlineEditor = useEditor({
-    extensions: getEditorExtensions(),
+    extensions: getEditorExtensions(undefined, undefined, {
+      blipId: blip.id,
+      onToggleInlineComments: (visible) => setInlineCommentsVisibility(blip.id, visible),
+    }),
     content: editedContent,
     editable: isEditing,
     editorProps: defaultEditorProps,
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor }: { editor: Editor }) => {
       setEditedContent(editor.getHTML());
     },
   });
@@ -71,6 +162,9 @@ export function RizzomaBlip({
   const handleToggleExpand = () => {
     setIsExpanded(!isExpanded);
     onToggleCollapse?.(blip.id);
+    if (!blip.isRead) {
+      onBlipRead?.(blip.id);
+    }
   };
 
   const handleStartEdit = () => {
@@ -88,6 +182,8 @@ export function RizzomaBlip({
   };
 
   const handleSaveEdit = async () => {
+    if (isSavingEdit) return;
+    setIsSavingEdit(true);
     try {
       const currentContent = inlineEditor?.getHTML() || editedContent;
       const response = await fetch(`/api/blips/${blip.id}`, {
@@ -110,22 +206,10 @@ export function RizzomaBlip({
       }
     } catch (error) {
       console.error('Error saving blip edit:', error);
-      // TODO: Show error toast
+      toast('Failed to save changes. Please try again.', 'error');
+    } finally {
+      setIsSavingEdit(false);
     }
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setIsActive(false);
-    setEditedContent(blip.content);
-    if (inlineEditor) {
-      inlineEditor.commands.setContent(blip.content);
-      inlineEditor.setEditable(false);
-    }
-  };
-
-  const handleContentUpdate = (newContent: string) => {
-    setEditedContent(newContent);
   };
 
   const handleAddReply = async () => {
@@ -151,20 +235,7 @@ export function RizzomaBlip({
         throw new Error('Failed to create reply');
       }
       
-      const data = await response.json();
-      
-      // Create a new blip data structure for the reply
-      const newReply: BlipData = {
-        id: data.id,
-        content: replyContent,
-        authorId: 'demo-user', // TODO: Get from auth context
-        authorName: 'Demo User',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        isRead: true,
-        permissions: data.blip.permissions,
-        parentBlipId: blip.id
-      };
+      await response.json();
       
       onAddReply?.(blip.id, replyContent);
       setReplyContent('');
@@ -172,8 +243,12 @@ export function RizzomaBlip({
       setIsExpanded(true);
     } catch (error) {
       console.error('Error creating reply:', error);
-      // TODO: Show error toast
+      toast('Failed to create reply. Please try again.', 'error');
     }
+  };
+
+  const handleSendFromToolbar = async () => {
+    await handleSaveEdit();
   };
 
   const handleCancelReply = () => {
@@ -181,35 +256,200 @@ export function RizzomaBlip({
     setShowReplyForm(false);
   };
 
+  const handleDelete = async () => {
+    if (isRoot || !blip.permissions.canEdit || isDeleting) return;
+    const confirmed = typeof window !== 'undefined'
+      ? window.confirm('Delete this blip and its replies?')
+      : true;
+    if (!confirmed) return;
+    setIsDeleting(true);
+    try {
+      if (onDeleteBlip) {
+        await onDeleteBlip(blip.id);
+      } else {
+        toast('Delete handler is not wired', 'error');
+      }
+    } catch (error) {
+      console.error('Failed to delete blip', error);
+      toast('Failed to delete blip', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const formatBytes = (bytes: number): string => {
+    if (!bytes) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    const value = bytes / Math.pow(1024, i);
+    return `${value.toFixed(value >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+  };
+
+  const pickFile = (accept: string): Promise<File> => new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) {
+        resolve(file);
+      } else {
+        reject(new Error('no_file_selected'));
+      }
+    };
+    input.onerror = () => reject(new Error('file_picker_error'));
+    input.click();
+  });
+
+  const insertAttachment = (name: string, url: string, size: number) => {
+    if (!inlineEditor) return;
+    inlineEditor
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'paragraph',
+        content: [
+          {
+            type: 'text',
+            text: name,
+            marks: [
+              {
+                type: 'link',
+                attrs: {
+                  href: url,
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                },
+              },
+            ],
+          },
+          { type: 'text', text: ` (${formatBytes(size)})` },
+        ],
+      })
+      .run();
+  };
+
+  const handleAttachmentUpload = async () => {
+    if (!inlineEditor) {
+      toast('Enter edit mode to insert attachments', 'error');
+      return;
+    }
+    try {
+      const file = await pickFile('*/*');
+      setIsUploading(true);
+      setUploadProgress(0);
+      const result = await uploadFile(file, (percent) => setUploadProgress(percent));
+      insertAttachment(result.originalName || file.name, result.url, result.size);
+      toast('Attachment uploaded');
+    } catch (error) {
+      if ((error as Error)?.message === 'no_file_selected') return;
+      console.error('Failed to upload attachment', error);
+      toast('Failed to upload attachment', 'error');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(null);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!inlineEditor) {
+      toast('Enter edit mode to insert images', 'error');
+      return;
+    }
+    try {
+      const file = await pickFile('image/*');
+      if (!file.type.startsWith('image/')) {
+        toast('Please choose an image file', 'error');
+        return;
+      }
+      setIsUploading(true);
+      setUploadProgress(0);
+      const result = await uploadFile(file, (percent) => setUploadProgress(percent));
+      inlineEditor.chain().focus().setImage({ src: result.url, alt: result.originalName || file.name }).run();
+      toast('Image uploaded');
+    } catch (error) {
+      if ((error as Error)?.message === 'no_file_selected') return;
+      console.error('Failed to upload image', error);
+      toast('Failed to upload image', 'error');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(null);
+    }
+  };
+
   // Handle text selection for inline comments
   useEffect(() => {
+    if (!FEATURES.INLINE_COMMENTS || isEditing) {
+      setShowInlineCommentBtn(false);
+      setSelectionCoords(null);
+      setSelectedRangeData(null);
+      setIsInlineCommentFormVisible(false);
+      setInlineCommentDraft('');
+      return;
+    }
+
     const handleSelection = () => {
+      if (typeof window === 'undefined') return;
       const selection = window.getSelection();
-      if (!selection || selection.isCollapsed || isEditing) {
+      if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
         setShowInlineCommentBtn(false);
+        setSelectionCoords(null);
+        setSelectedRangeData(null);
+        setIsInlineCommentFormVisible(false);
+        setInlineCommentDraft('');
         return;
       }
 
-      const selectedText = selection.toString().trim();
-      if (!selectedText || !contentRef.current) {
+      if (!contentRef.current) {
         setShowInlineCommentBtn(false);
+        setSelectionCoords(null);
+        setSelectedRangeData(null);
+        setIsInlineCommentFormVisible(false);
+        setInlineCommentDraft('');
         return;
       }
 
-      // Check if selection is within this blip's content
       const range = selection.getRangeAt(0);
       if (!contentRef.current.contains(range.commonAncestorContainer)) {
         setShowInlineCommentBtn(false);
+        setSelectionCoords(null);
+        setSelectedRangeData(null);
+        setIsInlineCommentFormVisible(false);
+        setInlineCommentDraft('');
         return;
       }
 
-      // Get selection coordinates
+      if (!blip.permissions.canComment) {
+        setShowInlineCommentBtn(false);
+        setSelectionCoords(null);
+        setSelectedRangeData(null);
+        setIsInlineCommentFormVisible(false);
+        setInlineCommentDraft('');
+        if (!readOnlySelectionWarned.current) {
+          toast('Sign in to add inline comments', 'error');
+          readOnlySelectionWarned.current = true;
+        }
+        return;
+      }
+
+      const offsets = computeSelectionOffsets(range, contentRef.current);
+      if (!offsets) {
+        setShowInlineCommentBtn(false);
+        setSelectionCoords(null);
+        setSelectedRangeData(null);
+        setIsInlineCommentFormVisible(false);
+        setInlineCommentDraft('');
+        return;
+      }
+
       const rect = range.getBoundingClientRect();
-      setSelectedText(selectedText);
+      setIsInlineCommentFormVisible(false);
+      setInlineCommentDraft('');
       setSelectionCoords({
         x: rect.left + rect.width / 2,
-        y: rect.top - 40
+        y: rect.top - 40,
       });
+      setSelectedRangeData(offsets);
       setShowInlineCommentBtn(true);
     };
 
@@ -220,12 +460,149 @@ export function RizzomaBlip({
       document.removeEventListener('mouseup', handleSelection);
       document.removeEventListener('selectionchange', handleSelection);
     };
-  }, [isEditing]);
+  }, [isEditing, blip.permissions.canComment, blip.id]);
+
+  useEffect(() => {
+    const metadata = getCollapsePreferenceMetadata(blip.id);
+    if (metadata) {
+      collapsePreferenceUpdatedAtRef.current = metadata.updatedAt;
+    }
+    const current = getCollapsePreference(blip.id);
+    setCollapseByDefault(current);
+    setIsExpanded(!current);
+    const unsubscribe = subscribeCollapsePreference(({ blipId: targetId, isCollapsed, updatedAt }) => {
+      if (targetId === blip.id) {
+        collapsePreferenceUpdatedAtRef.current = updatedAt;
+        setCollapseByDefault(isCollapsed);
+        setIsExpanded(!isCollapsed);
+      }
+    });
+    return unsubscribe;
+  }, [blip.id]);
+
+  useEffect(() => {
+    if (!inlineEditor) return;
+    const dom = (inlineEditor.view as any)?.dom as HTMLElement | undefined;
+    if (!dom) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter' && event.shiftKey) {
+        event.preventDefault();
+        void handleSaveEdit();
+      }
+    };
+    dom.addEventListener('keydown', handleKeyDown);
+    return () => dom.removeEventListener('keydown', handleKeyDown);
+  }, [inlineEditor, handleSaveEdit]);
+
+  useEffect(() => {
+    setClipboardAvailable(!!getBlipClipboardPayload(blip.id));
+  }, [blip.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const requestStartedAt = Date.now();
+    const syncPreference = async () => {
+      try {
+        const response = await api<{ collapseByDefault?: boolean }>(
+          `/api/blips/${encodeURIComponent(blip.id)}/collapse-default`
+        );
+        if (!response.ok || cancelled) return;
+        if (collapsePreferenceUpdatedAtRef.current > requestStartedAt) return;
+        const payload = response.data && typeof response.data === 'object'
+          ? (response.data as { collapseByDefault?: unknown })
+          : null;
+        if (payload && typeof payload.collapseByDefault === 'boolean') {
+          const updatedAt = setCollapsePreference(blip.id, payload.collapseByDefault);
+          collapsePreferenceUpdatedAtRef.current = updatedAt;
+          setCollapseByDefault(payload.collapseByDefault);
+          setIsExpanded(!payload.collapseByDefault);
+        }
+      } catch (error) {
+        console.error('Failed to load collapse preference:', error);
+      }
+    };
+    syncPreference();
+    return () => {
+      cancelled = true;
+    };
+  }, [blip.id]);
 
   // Handle click to make blip active (show menu)
   const handleBlipClick = () => {
     setIsActive(true);
+    if (!blip.isRead) {
+      onBlipRead?.(blip.id);
+    }
   };
+
+  useEffect(() => {
+    const metadata = getInlineCommentsVisibilityMetadata(blip.id);
+    if (metadata) {
+      inlineVisibilityUpdatedAtRef.current = metadata.updatedAt;
+    }
+    setAreCommentsVisible(getInlineCommentsVisibility(blip.id));
+    const unsubscribe = subscribeInlineCommentsVisibility(({ blipId: targetId, isVisible, updatedAt }) => {
+      if (targetId === blip.id) {
+        inlineVisibilityUpdatedAtRef.current = updatedAt;
+        setAreCommentsVisible(isVisible);
+      }
+    });
+    return unsubscribe;
+  }, [blip.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const requestStartedAt = Date.now();
+
+    const backfillVisibilityPreference = async (isVisible: boolean) => {
+      try {
+        await ensureCsrf();
+        await api(`/api/blips/${encodeURIComponent(blip.id)}/inline-comments-visibility`, {
+          method: 'PATCH',
+          body: JSON.stringify({ isVisible }),
+        });
+      } catch (error) {
+        console.error('Failed to persist inline comment visibility', error);
+      }
+    };
+
+    const applyVisibility = (nextValue: boolean) => {
+      const updatedAt = setInlineCommentsVisibility(blip.id, nextValue);
+      inlineVisibilityUpdatedAtRef.current = updatedAt;
+      if (!cancelled) {
+        setAreCommentsVisible(nextValue);
+      }
+    };
+
+    const fetchVisibility = async () => {
+      try {
+        const localValue = getInlineCommentsVisibilityFromStorage(blip.id);
+        const response = await api<{ isVisible?: boolean; source?: 'user' | 'default' }>(
+          `/api/blips/${encodeURIComponent(blip.id)}/inline-comments-visibility`
+        );
+        if (!response.ok || cancelled) return;
+        if (inlineVisibilityUpdatedAtRef.current > requestStartedAt) return;
+        const payload = response.data && typeof response.data === 'object'
+          ? (response.data as { isVisible?: boolean; source?: 'user' | 'default' })
+          : null;
+        const value = payload?.isVisible;
+        const source = payload?.source;
+        if (typeof value !== 'boolean') return;
+        if (source === 'default' && typeof localValue === 'boolean') {
+          applyVisibility(localValue);
+          void backfillVisibilityPreference(localValue);
+          return;
+        }
+        applyVisibility(value);
+      } catch (error) {
+        console.error('Failed to load inline comment visibility preference:', error);
+      }
+    };
+    fetchVisibility();
+    return () => {
+      cancelled = true;
+    };
+  }, [blip.id]);
 
   // Handle click outside to deactivate blip
   useEffect(() => {
@@ -244,52 +621,182 @@ export function RizzomaBlip({
     };
   }, [isActive]);
 
-  const handleCreateInlineComment = async () => {
-    if (!selectedText || !blip.permissions.canComment) return;
+  useEffect(() => {
+    if (isRoot && !blip.isRead) {
+      onBlipRead?.(blip.id);
+    }
+  }, [isRoot, blip.id, blip.isRead, onBlipRead]);
+
+  const handleInlineCommentButton = () => {
+    if (!FEATURES.INLINE_COMMENTS || !selectedRangeData) return;
+    setInlineCommentDraft('');
+    setIsInlineCommentFormVisible(true);
+  };
+
+  const handleCancelInlineComment = () => {
+    setIsInlineCommentFormVisible(false);
+    setInlineCommentDraft('');
+    setShowInlineCommentBtn(false);
+    setSelectedRangeData(null);
+    setSelectionCoords(null);
+    clearBrowserSelection();
+  };
+
+  const handleSubmitInlineComment = async () => {
+    if (
+      !FEATURES.INLINE_COMMENTS ||
+      !selectedRangeData ||
+      !inlineCommentDraft.trim() ||
+      !blip.permissions.canComment
+    ) {
+      return;
+    }
     
+    setIsSavingInlineComment(true);
     try {
-      // Extract waveId from the blip id (format: waveId:blipId)
-      const waveId = blip.id.split(':')[0];
-      const commentContent = `<blockquote>${selectedText}</blockquote><p></p>`;
-      
-      const response = await fetch('/api/blips', {
+      await ensureCsrf();
+      const response = await api('/api/comments', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          waveId,
-          parentId: blip.id,
-          content: commentContent,
-          isInlineComment: true // Flag for inline comments
+        body: JSON.stringify({
+          blipId: blip.id,
+          content: inlineCommentDraft.trim(),
+          range: selectedRangeData,
         }),
       });
-      
       if (!response.ok) {
-        throw new Error('Failed to create inline comment');
+        throw new Error(typeof response.data === 'string' ? response.data : 'Failed to create inline comment');
       }
-      
-      const data = await response.json();
-      
-      // Show reply form with the quoted text
-      setShowReplyForm(true);
-      setReplyContent(`Re: "${selectedText}"\n\n`);
+      toast('Inline comment added');
+      setIsInlineCommentFormVisible(false);
+      setInlineCommentDraft('');
       setShowInlineCommentBtn(false);
-      window.getSelection()?.removeAllRanges();
+      setSelectedRangeData(null);
+      setSelectionCoords(null);
       setIsExpanded(true);
-      
-      // If we have a callback, notify parent
-      onAddReply?.(blip.id, commentContent);
+      clearBrowserSelection();
     } catch (error) {
       console.error('Error creating inline comment:', error);
-      // Fallback to reply form
-      setShowReplyForm(true);
-      setReplyContent(`Re: "${selectedText}"\n\n`);
-      setShowInlineCommentBtn(false);
-      window.getSelection()?.removeAllRanges();
-      setIsExpanded(true);
+      toast('Failed to save inline comment', 'error');
+    } finally {
+      setIsSavingInlineComment(false);
     }
   };
+
+  const handleCopyLink = async () => {
+    try {
+      await copyBlipLink(blip.id);
+      toast('Blip link copied');
+    } catch (error) {
+      console.error('Failed to copy blip link', error);
+      toast('Failed to copy link', 'error');
+    }
+  };
+
+  const handleCopyComment = () => {
+    const html = isEditing ? (inlineEditor?.getHTML() || '') : blip.content;
+    const plainText = isEditing
+      ? (inlineEditor?.getText() || htmlToPlainText(html))
+      : htmlToPlainText(blip.content);
+    if (!plainText.trim()) {
+      toast('Nothing to copy', 'error');
+      return;
+    }
+    setBlipClipboardPayload(blip.id, { html, text: plainText });
+    setClipboardAvailable(true);
+    toast('Copied comment to inline clipboard');
+  };
+
+  const handlePasteAsReplyFromClipboard = () => {
+    if (!blip.permissions.canComment) {
+      toast('You cannot reply to this blip', 'error');
+      return;
+    }
+    const payload = getBlipClipboardPayload(blip.id);
+    if (!payload) {
+      toast('Copy a comment first', 'error');
+      return;
+    }
+    setShowReplyForm(true);
+    setIsExpanded(true);
+    setReplyContent((prev) => {
+      if (!prev.trim()) return payload.text;
+      return `${prev}\n\n${payload.text}`;
+    });
+  };
+
+  const handlePasteAtCursorFromClipboard = () => {
+    const payload = getBlipClipboardPayload(blip.id);
+    if (!payload) {
+      toast('Copy a comment first', 'error');
+      return;
+    }
+    if (!inlineEditor || !isEditing) {
+      toast('Enter edit mode to paste', 'error');
+      return;
+    }
+    inlineEditor.chain().focus().insertContent(payload.html).run();
+    toast('Pasted clipboard content');
+  };
+
+  const handleToggleCollapsePreference = async () => {
+    if (!blip.permissions.canEdit) return;
+    const previous = collapseByDefault;
+    const next = !previous;
+    setCollapseByDefault(next);
+    setIsExpanded(!next);
+    const changeToken = setCollapsePreference(blip.id, next);
+    collapsePreferenceUpdatedAtRef.current = changeToken;
+    try {
+      await ensureCsrf();
+      const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/collapse-default`, {
+        method: 'PATCH',
+        body: JSON.stringify({ collapseByDefault: next })
+      });
+      if (!response.ok) {
+        throw new Error(typeof response.data === 'string' ? response.data : 'Failed to save collapse preference');
+      }
+    } catch (error) {
+      console.error('Error saving collapse preference:', error);
+      toast('Failed to save collapse preference', 'error');
+      if (collapsePreferenceUpdatedAtRef.current !== changeToken) return;
+      const revertToken = setCollapsePreference(blip.id, previous);
+      collapsePreferenceUpdatedAtRef.current = revertToken;
+      setCollapseByDefault(previous);
+      setIsExpanded(!previous);
+    }
+  };
+
+  const handleToggleCommentsVisibility = () => {
+    const previous = areCommentsVisible;
+    const next = !previous;
+    setAreCommentsVisible(next);
+    const changeToken = setInlineCommentsVisibility(blip.id, next);
+    inlineVisibilityUpdatedAtRef.current = changeToken;
+    const persist = async () => {
+      try {
+        await ensureCsrf();
+        const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/inline-comments-visibility`, {
+          method: 'PATCH',
+          body: JSON.stringify({ isVisible: next }),
+        });
+        if (!response.ok) {
+          throw new Error(typeof response.data === 'string' ? response.data : 'Failed to save inline comment visibility');
+        }
+      } catch (error) {
+        console.error('Failed to save inline comment visibility', error);
+        toast('Failed to save inline comment visibility', 'error');
+        if (inlineVisibilityUpdatedAtRef.current !== changeToken) return;
+        const revertToken = setInlineCommentsVisibility(blip.id, previous);
+        inlineVisibilityUpdatedAtRef.current = revertToken;
+        setAreCommentsVisible(previous);
+      }
+    };
+    void persist();
+  };
+
+  const handleInlineCommentsStatus = useCallback((status: InlineCommentsStatus) => {
+    setInlineCommentsNotice(status.loadError);
+  }, []);
 
   return (
     <div 
@@ -305,10 +812,28 @@ export function RizzomaBlip({
         isEditing={isEditing}
         canEdit={blip.permissions.canEdit}
         canComment={blip.permissions.canComment}
+        inlineCommentsNotice={inlineCommentsNotice}
         editor={inlineEditor || undefined}
         onStartEdit={handleStartEdit}
         onFinishEdit={handleSaveEdit}
-        onCancel={handleCancelEdit}
+        onSend={handleSendFromToolbar}
+        onGetLink={handleCopyLink}
+        onToggleComments={handleToggleCommentsVisibility}
+        areCommentsVisible={areCommentsVisible}
+        collapseByDefault={collapseByDefault}
+        onToggleCollapseByDefault={blip.permissions.canEdit ? handleToggleCollapsePreference : undefined}
+        onCopyComment={handleCopyComment}
+        onPasteAsReply={blip.permissions.canComment ? handlePasteAsReplyFromClipboard : undefined}
+        onPasteAtCursor={isEditing ? handlePasteAtCursorFromClipboard : undefined}
+        clipboardAvailable={clipboardAvailable}
+        onShowHistory={() => setShowHistoryModal(true)}
+        onInsertAttachment={isEditing ? handleAttachmentUpload : undefined}
+        onInsertImage={isEditing ? handleImageUpload : undefined}
+        isUploading={isUploading}
+        uploadProgress={uploadProgress}
+        onDelete={!isRoot && blip.permissions.canEdit ? handleDelete : undefined}
+        isSending={isSavingEdit}
+        isDeleting={isDeleting}
       />
       {/* Blip Header */}
       {!isRoot && (
@@ -345,7 +870,20 @@ export function RizzomaBlip({
       >
         {isEditing ? (
           <div className="blip-editor-container" ref={editorRef}>
-            {inlineEditor && <EditorContent editor={inlineEditor} />}
+            {inlineEditor && (
+              <div style={{ position: 'relative' }}>
+                <EditorContent editor={inlineEditor} />
+                {FEATURES.INLINE_COMMENTS && (
+                  <InlineComments
+                    editor={inlineEditor}
+                    blipId={blip.id}
+                    isVisible={areCommentsVisible}
+                    canComment={blip.permissions.canComment}
+                    onStatusChange={handleInlineCommentsStatus}
+                  />
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div className="blip-view-mode">
@@ -411,6 +949,8 @@ export function RizzomaBlip({
                 onBlipUpdate={onBlipUpdate}
                 onAddReply={onAddReply}
                 onToggleCollapse={onToggleCollapse}
+                onDeleteBlip={onDeleteBlip}
+                onBlipRead={onBlipRead}
               />
             ))}
           </div>
@@ -428,7 +968,7 @@ export function RizzomaBlip({
       )}
       
       {/* Inline Comment Button */}
-      {showInlineCommentBtn && blip.permissions.canComment && !isEditing && (
+      {FEATURES.INLINE_COMMENTS && showInlineCommentBtn && blip.permissions.canComment && !isEditing && selectionCoords && !isInlineCommentFormVisible && (
         <button
           className="inline-comment-btn"
           style={{
@@ -437,11 +977,62 @@ export function RizzomaBlip({
             top: `${selectionCoords.y}px`,
             transform: 'translateX(-50%)'
           }}
-          onClick={handleCreateInlineComment}
+          onClick={handleInlineCommentButton}
           title="Add inline comment"
+          type="button"
         >
           💬 Comment
         </button>
+      )}
+
+      {FEATURES.INLINE_COMMENTS && isInlineCommentFormVisible && selectionCoords && selectedRangeData && (
+        <div
+          className="inline-comment-floating-form"
+          style={{
+            position: 'fixed',
+            left: `${selectionCoords.x}px`,
+            top: `${selectionCoords.y}px`,
+            transform: 'translateX(-50%)'
+          }}
+        >
+          <div className="inline-comment-form-header">
+            <span>
+              Comment on: "
+              {selectedRangeData.text.length > 40
+                ? `${selectedRangeData.text.substring(0, 40)}…`
+                : selectedRangeData.text}
+              "
+            </span>
+            <button type="button" onClick={handleCancelInlineComment} aria-label="Close inline comment form">
+              ✕
+            </button>
+          </div>
+          <textarea
+            className="inline-comment-form-textarea"
+            value={inlineCommentDraft}
+            onChange={(e) => setInlineCommentDraft(e.target.value)}
+            placeholder="Add your comment..."
+            rows={3}
+          />
+          <div className="inline-comment-form-actions">
+            <button type="button" onClick={handleCancelInlineComment}>Cancel</button>
+            <button
+              type="button"
+              className="primary"
+              onClick={handleSubmitInlineComment}
+              disabled={isSavingInlineComment || !inlineCommentDraft.trim()}
+            >
+              {isSavingInlineComment ? 'Saving...' : 'Add comment'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showHistoryModal && (
+        <BlipHistoryModal
+          blipId={blip.id}
+          onClose={() => setShowHistoryModal(false)}
+        />
       )}
     </div>
   );

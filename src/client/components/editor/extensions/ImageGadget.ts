@@ -65,13 +65,13 @@ export const ImageGadget = Node.create<ImageOptions>({
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
     return ['img', Object.assign({}, this.options.HTMLAttributes, HTMLAttributes)];
   },
 
   addCommands() {
     return {
-      setImage: options => ({ commands }) => {
+      setImage: (options: { src: string; alt?: string; title?: string }) => ({ commands }: { commands: any }) => {
         return commands.insertContent({
           type: this.name,
           attrs: options,

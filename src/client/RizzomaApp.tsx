@@ -1,4 +1,3 @@
-import { createRoot } from 'react-dom/client';
 import { useEffect, useState } from 'react';
 import { api } from './lib/api';
 import { RizzomaLayout } from './components/RizzomaLayout';
@@ -6,16 +5,18 @@ import { Toast } from './components/Toast';
 import { FEATURES } from '@shared/featureFlags';
 import './RizzomaApp.css';
 
-export function RizzomaApp() {
-  const [me, setMe] = useState<any>(null);
+type AuthedUser = { id: string; email?: string } | null;
+
+export function RizzomaApp(): JSX.Element {
+  const [me, setMe] = useState<AuthedUser>(null);
   const [loading, setLoading] = useState(true);
 
   // Bootstrap auth state
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
         const r = await api('/api/auth/me');
-        if (r.ok) setMe(r.data);
+        if (r.ok) setMe(r.data as AuthedUser);
       } catch (error) {
         console.error('Auth check failed:', error);
       } finally {
@@ -47,4 +48,3 @@ export function RizzomaApp() {
     </div>
   );
 }
-

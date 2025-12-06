@@ -6,48 +6,84 @@ type EditorSearchResult = {
   waveId: string;
   blipId?: string;
   updatedAt?: number;
+  snippet?: string | null;
 };
 
-export function EditorSearch() {
-  const [q, setQ] = useState('');
+type EditorSearchApiResponse = {
+  results?: Array<{
+    waveId?: string;
+    blipId?: string;
+    updatedAt?: number;
+    snippet?: string | null;
+  }>;
+  nextBookmark?: string | null;
+  nextBookmark?: string | null;
+};
+
+type EditorSearchProps = {
+  initialResults?: EditorSearchResult[];
+  initialBookmark?: string | null;
+  initialQuery?: string;
+};
+
+export function EditorSearch({ initialResults = [], initialBookmark = null, initialQuery = '' }: EditorSearchProps = {}): JSX.Element {
+  const [q, setQ] = useState(initialQuery);
   const [limit, setLimit] = useState(20);
-  const [results, setResults] = useState<EditorSearchResult[]>([]);
+  const [results, setResults] = useState<EditorSearchResult[]>(initialResults);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bookmark, setBookmark] = useState<string | null>(initialBookmark);
+  const [lastQuery, setLastQuery] = useState<string>(initialQuery);
 
-  const runSearch = async () => {
-    const query = q.trim();
+  const runSearch = async (options?: { append?: boolean }): Promise<void> => {
+    const baseQuery = q.trim();
+    const query = options?.append ? (lastQuery || baseQuery) : baseQuery;
     if (!query) {
       setResults([]);
       setError(null);
+      setBookmark(null);
+      setLastQuery('');
       return;
     }
     setBusy(true);
     setError(null);
+    if (!options?.append) {
+      setLastQuery(query);
+    }
     try {
       const params = new URLSearchParams();
       params.set('q', query);
       params.set('limit', String(limit));
+      if (options?.append && bookmark) {
+        params.set('bookmark', bookmark);
+      }
       const r = await api(`/api/editor/search?${params.toString()}`);
       if (!r.ok) {
         setError(`Search failed (${r.status})`);
-        setResults([]);
+        if (!options?.append) setResults([]);
         return;
       }
-      const list = Array.isArray((r.data as any)?.results) ? (r.data as any).results : [];
-      setResults(
-        list.map((d: any) => ({
-          waveId: String(d.waveId),
-          blipId: d.blipId ? String(d.blipId) : undefined,
-          updatedAt: typeof d.updatedAt === 'number' ? d.updatedAt : undefined,
-        })),
-      );
-    } catch (e: any) {
-      setError(e?.message || 'Search error');
-      setResults([]);
+      const payload = r.data as EditorSearchApiResponse;
+      const raw = Array.isArray(payload.results) ? payload.results : [];
+      const mapped = raw.map((item) => ({
+        waveId: item.waveId ? String(item.waveId) : '',
+        blipId: item.blipId ? String(item.blipId) : undefined,
+        updatedAt: typeof item.updatedAt === 'number' ? item.updatedAt : undefined,
+        snippet: typeof item.snippet === 'string' ? item.snippet : null,
+      }));
+      setResults((prev) => (options?.append ? [...prev, ...mapped] : mapped));
+      setBookmark(payload.nextBookmark ? String(payload.nextBookmark) : null);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Search error');
+      if (!options?.append) setResults([]);
     } finally {
       setBusy(false);
     }
+  };
+
+  const handleJump = (href: string) => {
+    const target = href.startsWith('#') ? href.slice(1) : href;
+    window.location.hash = target;
   };
 
   return (
@@ -63,7 +99,7 @@ export function EditorSearch() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') runSearch();
+            if (e.key === 'Enter') void runSearch();
           }}
         />
         <label>
@@ -80,9 +116,14 @@ export function EditorSearch() {
             }}
           />
         </label>
-        <button onClick={runSearch} disabled={busy}>
+        <button onClick={() => { void runSearch(); }} disabled={busy}>
           {busy ? 'Searching…' : 'Search'}
         </button>
+        {bookmark ? (
+          <button onClick={() => { void runSearch({ append: true }); }} disabled={busy}>
+            {busy ? 'Loading…' : 'Load more'}
+          </button>
+        ) : null}
       </div>
       {error ? (
         <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>
@@ -107,6 +148,14 @@ export function EditorSearch() {
                 {typeof r.updatedAt === 'number' ? (
                   <span style={{ marginLeft: 8, color: '#555' }}>{formatTimestamp(r.updatedAt)}</span>
                 ) : null}
+                {r.snippet ? (
+                  <div style={{ marginTop: 4, fontSize: 13, color: '#2c3e50' }}>{r.snippet}</div>
+                ) : null}
+                <div style={{ marginTop: 4 }}>
+                  <button onClick={() => handleJump(href)}>
+                    {r.blipId ? 'Jump to blip' : 'Open wave'}
+                  </button>
+                </div>
               </li>
             );
           })}
@@ -117,7 +166,9 @@ export function EditorSearch() {
           <div style={{ opacity: 0.7, fontSize: 14 }}>No results yet.</div>
         )
       )}
+      {!bookmark && results.length > 0 ? (
+        <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>No more results.</div>
+      ) : null}
     </section>
   );
 }
-

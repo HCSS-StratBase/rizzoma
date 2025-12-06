@@ -1,14 +1,123 @@
 import { Router } from 'express';
 import { getDoc, updateDoc, insertDoc, find } from '../lib/couch.js';
+import { emitEvent } from '../lib/socket.js';
+import { requireAuth } from '../middleware/auth.js';
 import type { Blip } from '../schemas/wave.js';
+
+type BlipHistoryDoc = {
+  _id: string;
+  type: 'blip_history';
+  blipId: string;
+  waveId: string;
+  content: string;
+  authorId?: string;
+  authorName?: string;
+  event: 'create' | 'update';
+  createdAt: number;
+  updatedAt: number;
+  snapshotVersion: number;
+  _rev?: string;
+};
+
+type CollapsePreferenceDoc = {
+  _id: string;
+  type: 'blip_collapse_pref';
+  userId: string;
+  blipId: string;
+  collapseByDefault: boolean;
+  createdAt: number;
+  updatedAt: number;
+  _rev?: string;
+};
+
+type InlineCommentsVisibilityDoc = {
+  _id: string;
+  type: 'inline_comments_visibility';
+  userId: string;
+  blipId: string;
+  isVisible: boolean;
+  createdAt: number;
+  updatedAt: number;
+  _rev?: string;
+};
+
+const collapsePrefDocId = (userId: string, blipId: string): string =>
+  `collapse-default:${userId}:${blipId}`;
+const inlineCommentsPrefDocId = (userId: string, blipId: string): string =>
+  `inline-comments-visible:${userId}:${blipId}`;
+
+async function recordBlipHistory(
+  blip: Blip & { _id?: string },
+  action: 'create' | 'update',
+  actorId: string,
+  actorName?: string,
+): Promise<void> {
+  if (!blip._id) return;
+  try {
+    const existing = await find<BlipHistoryDoc>({ type: 'blip_history', blipId: blip._id }, { limit: 200 });
+    const nextVersion = existing.docs.reduce((max, doc) => Math.max(max, doc.snapshotVersion || 0), 0) + 1;
+    const now = Date.now();
+    const historyDoc: BlipHistoryDoc = {
+      _id: `blip_history:${blip._id}:${now}`,
+      type: 'blip_history',
+      blipId: blip._id,
+      waveId: blip.waveId,
+      content: blip.content || '',
+      authorId: actorId,
+      authorName: actorName,
+      event: action,
+      createdAt: now,
+      updatedAt: now,
+      snapshotVersion: nextVersion,
+    };
+    await insertDoc(historyDoc as any);
+  } catch (error) {
+    console.error('Failed to record blip history', error);
+  }
+}
+
+async function markBlipAndDescendantsDeleted(
+  blip: Blip & { _id: string; _rev: string },
+  userId: string,
+): Promise<void> {
+  try {
+    const result = await find<Blip & { _rev: string }>({ type: 'blip', waveId: blip.waveId }, { limit: 500 });
+    const docs = result.docs || [];
+    const targetIds = new Set<string>([blip._id]);
+    let added = true;
+    while (added) {
+      added = false;
+      docs.forEach((doc) => {
+        if (doc.parentId && targetIds.has(doc.parentId) && !targetIds.has(doc._id!)) {
+          targetIds.add(doc._id!);
+          added = true;
+        }
+      });
+    }
+
+    const now = Date.now();
+    const toUpdate = docs.filter((doc) => doc._id && targetIds.has(doc._id)).map((doc) => ({
+      ...doc,
+      deleted: true,
+      deletedAt: now,
+      deletedBy: userId,
+      updatedAt: now,
+    }));
+
+    for (const doc of toUpdate) {
+      await updateDoc(doc as any);
+    }
+  } catch (error) {
+    console.error('Failed to mark blip descendants as deleted', error);
+    throw error;
+  }
+}
 
 const router = Router();
 
 // PATCH /api/blips/:id/reparent { parentId }
-router.patch('/:id/reparent', async (req, res): Promise<void> => {
-  // @ts-ignore
-  const userId = req.session?.userId || 'demo-user'; // Allow demo-user for testing
-  if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
+router.patch('/:id/reparent', requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
   try {
     const id = req.params.id;
     const parentId = (req.body || {}).parentId as string | null | undefined;
@@ -29,10 +138,8 @@ router.patch('/:id/reparent', async (req, res): Promise<void> => {
 });
 
 // POST /api/blips - Create a new blip
-router.post('/', async (req, res): Promise<void> => {
-  // @ts-ignore
-  const userId = req.session?.userId || 'demo-user'; // Allow demo-user for testing
-
+router.post('/', requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
   try {
     const { waveId, parentId, content } = req.body || {};
     
@@ -44,6 +151,7 @@ router.post('/', async (req, res): Promise<void> => {
     const now = Date.now();
     const blipId = `${waveId}:b${now}`;
     
+    const fallbackName = (req.user?.name && req.user.name.trim()) ? req.user.name : (req.user?.email || 'Unknown');
     const blip: Blip = {
       _id: blipId,
       type: 'blip',
@@ -53,10 +161,13 @@ router.post('/', async (req, res): Promise<void> => {
       createdAt: now,
       updatedAt: now,
       authorId: userId,
-      authorName: req.body.authorName || (userId === 'demo-user' ? 'Demo User' : 'Unknown')
+      authorName: (req.body?.authorName as string)?.trim() || fallbackName,
+      deleted: false,
     } as any;
 
     const r = await insertDoc(blip as any);
+    void recordBlipHistory(blip, 'create', userId, blip.authorName);
+    try { emitEvent('blip:created', { waveId, blipId, updatedAt: now, userId }); } catch {}
     res.status(201).json({ 
       id: r.id, 
       rev: r.rev,
@@ -75,13 +186,8 @@ router.post('/', async (req, res): Promise<void> => {
 });
 
 // PUT /api/blips/:id - Update blip content
-router.put('/:id', async (req, res): Promise<void> => {
-  // @ts-ignore
-  const userId = req.session?.userId || 'demo-user'; // Allow demo-user for testing
-  if (!userId) { 
-    res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); 
-    return; 
-  }
+router.put('/:id', requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
 
   try {
     const id = req.params.id;
@@ -93,11 +199,16 @@ router.put('/:id', async (req, res): Promise<void> => {
     }
 
     const blip = await getDoc<Blip & { _rev: string }>(id);
+    if (blip.deleted) {
+      res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
+      return;
+    }
     
     // Check if user can edit (simplified - in real app, check permissions)
-    const canEdit = true; // TODO: implement proper permission check
+    const canEdit = !blip.authorId || blip.authorId === userId;
     
     if (!canEdit) {
+      console.warn('[blips] forbidden update', { blipId: id, userId, ownerId: blip.authorId, requestId: (req as any)?.id });
       res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
       return;
     }
@@ -109,6 +220,8 @@ router.put('/:id', async (req, res): Promise<void> => {
     };
 
     const r = await updateDoc(updatedBlip as any);
+    void recordBlipHistory(updatedBlip, 'update', userId, req.body?.authorName || (blip as any).authorName);
+    try { emitEvent('blip:updated', { waveId: blip.waveId, blipId: blip._id, updatedAt: updatedBlip.updatedAt, userId }); } catch {}
     res.json({ 
       id: r.id, 
       rev: r.rev,
@@ -132,17 +245,19 @@ router.put('/:id', async (req, res): Promise<void> => {
 
 // GET /api/blips/:id - Get single blip with permissions
 router.get('/:id', async (req, res): Promise<void> => {
-  // @ts-ignore
-  const userId = req.session?.userId || 'demo-user'; // Allow demo-user for testing
-  
+  const userId = req.session?.userId as string | undefined;
   try {
     const id = req.params.id;
     const blip = await getDoc<Blip>(id);
+    if ((blip as any).deleted) {
+      res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
+      return;
+    }
     
     res.json({
       ...blip,
       permissions: {
-        canEdit: !!userId, // Simplified - in real app, check actual permissions
+        canEdit: !!userId && (!blip.authorId || blip.authorId === userId),
         canComment: !!userId,
         canRead: true
       }
@@ -156,11 +271,58 @@ router.get('/:id', async (req, res): Promise<void> => {
   }
 });
 
+router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+
+  try {
+    const id = req.params.id;
+    const blip = await getDoc<Blip & { _rev: string }>(id);
+    if (blip._id === blip.waveId) {
+      res.status(400).json({ error: 'cannot_delete_root', requestId: (req as any)?.id });
+      return;
+    }
+    if (blip.deleted) {
+      res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
+      return;
+    }
+    const isAuthor = !blip.authorId || blip.authorId === userId;
+    if (!isAuthor) {
+      console.warn('[blips] forbidden delete', { blipId: id, userId, ownerId: blip.authorId, requestId: (req as any)?.id });
+      res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
+      return;
+    }
+
+    await markBlipAndDescendantsDeleted(blip, userId);
+    try { emitEvent('blip:deleted', { waveId: blip.waveId, blipId: blip._id, userId, deletedAt: Date.now() }); } catch {}
+    res.json({ deleted: true, id });
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'delete_blip_error', requestId: (req as any)?.id });
+  }
+});
+
+// GET /api/blips/:id/history - Blip playback history
+router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
+  try {
+    const blipId = req.params.id;
+    const result = await find<BlipHistoryDoc>({ type: 'blip_history', blipId }, { limit: 200 });
+    const history = (result.docs || [])
+      .slice()
+      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+      .map(({ _id, _rev, type, ...rest }) => ({ id: _id, ...rest }));
+    res.json({ history });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'blip_history_error', requestId: (req as any)?.id });
+  }
+});
+
 // GET /api/blips?waveId=:waveId - Get all blips for a wave/topic
 router.get('/', async (req, res): Promise<void> => {
-  // @ts-ignore
-  const userId = req.session?.userId || 'demo-user'; // Allow demo-user for testing
-  const waveId = req.query.waveId as string;
+  const userId = req.session?.userId as string | undefined;
+  const waveId = (req.query as Record<string, string | undefined>)['waveId'] as string | undefined;
   
   if (!waveId) {
     res.status(400).json({ error: 'missing_waveId', requestId: (req as any)?.id });
@@ -170,7 +332,7 @@ router.get('/', async (req, res): Promise<void> => {
   try {
     // Use the find method to query blips by waveId
     const result = await find<Blip>({ type: 'blip', waveId }, { limit: 100 });
-    const blips = result.docs;
+    const blips = result.docs.filter((blip) => !(blip as any).deleted);
     
     res.json({
       blips: blips.map(blip => ({
@@ -187,5 +349,113 @@ router.get('/', async (req, res): Promise<void> => {
   }
 });
 
-export default router;
+router.get('/:id/collapse-default', requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+  try {
+    const blipId = req.params.id;
+    const doc = await getDoc<CollapsePreferenceDoc>(collapsePrefDocId(userId, blipId));
+    res.json({ collapseByDefault: !!doc.collapseByDefault });
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.json({ collapseByDefault: false });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'collapse_pref_error', requestId: (req as any)?.id });
+  }
+});
 
+router.patch('/:id/collapse-default', requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+  const { collapseByDefault } = req.body || {};
+  if (typeof collapseByDefault !== 'boolean') {
+    res.status(400).json({ error: 'invalid_payload', requestId: (req as any)?.id });
+    return;
+  }
+
+  const blipId = req.params.id;
+  const docId = collapsePrefDocId(userId, blipId);
+  try {
+    const existing = await getDoc<CollapsePreferenceDoc & { _rev: string }>(docId);
+    const next: CollapsePreferenceDoc & { _rev: string } = {
+      ...existing,
+      collapseByDefault,
+      updatedAt: Date.now(),
+    };
+    const r = await updateDoc(next as any);
+    res.json({ collapseByDefault, id: r.id, rev: r.rev });
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      const now = Date.now();
+      const doc: CollapsePreferenceDoc = {
+        _id: docId,
+        type: 'blip_collapse_pref',
+        userId,
+        blipId,
+        collapseByDefault,
+        createdAt: now,
+        updatedAt: now,
+      };
+      const r = await insertDoc(doc as any);
+      res.json({ collapseByDefault, id: r.id, rev: r.rev });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'collapse_pref_save_error', requestId: (req as any)?.id });
+  }
+});
+
+router.get('/:id/inline-comments-visibility', requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+  try {
+    const blipId = req.params.id;
+    const doc = await getDoc<InlineCommentsVisibilityDoc>(inlineCommentsPrefDocId(userId, blipId));
+    res.json({ isVisible: typeof doc.isVisible === 'boolean' ? doc.isVisible : true, source: 'user' });
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.json({ isVisible: true, source: 'default' });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'inline_comments_visibility_error', requestId: (req as any)?.id });
+  }
+});
+
+router.patch('/:id/inline-comments-visibility', requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+  const { isVisible } = req.body || {};
+  if (typeof isVisible !== 'boolean') {
+    res.status(400).json({ error: 'invalid_payload', requestId: (req as any)?.id });
+    return;
+  }
+
+  const blipId = req.params.id;
+  const docId = inlineCommentsPrefDocId(userId, blipId);
+
+  try {
+    const existing = await getDoc<InlineCommentsVisibilityDoc & { _rev: string }>(docId);
+    const next: InlineCommentsVisibilityDoc & { _rev: string } = {
+      ...existing,
+      isVisible,
+      updatedAt: Date.now(),
+    };
+    const r = await updateDoc(next as any);
+    res.json({ isVisible, id: r.id, rev: r.rev });
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      const now = Date.now();
+      const doc: InlineCommentsVisibilityDoc = {
+        _id: docId,
+        type: 'inline_comments_visibility',
+        userId,
+        blipId,
+        isVisible,
+        createdAt: now,
+        updatedAt: now,
+      };
+      const r = await insertDoc(doc as any);
+      res.json({ isVisible, id: r.id, rev: r.rev });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'inline_comments_visibility_save_error', requestId: (req as any)?.id });
+  }
+});
+
+export default router;

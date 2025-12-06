@@ -31,7 +31,7 @@ export const Underline = Mark.create<UnderlineOptions>({
       {
         style: 'text-decoration',
         consuming: false,
-        getAttrs: (style) => {
+        getAttrs: (style: string | null) => {
           if (typeof style !== 'string') {
             return false;
           }
@@ -44,19 +44,19 @@ export const Underline = Mark.create<UnderlineOptions>({
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
     return ['u', Object.assign({}, this.options.HTMLAttributes, HTMLAttributes), 0];
   },
 
   addCommands() {
     return {
-      setUnderline: () => ({ commands }) => {
+      setUnderline: () => ({ commands }: { commands: any }) => {
         return commands.setMark(this.name);
       },
-      toggleUnderline: () => ({ commands }) => {
+      toggleUnderline: () => ({ commands }: { commands: any }) => {
         return commands.toggleMark(this.name);
       },
-      unsetUnderline: () => ({ commands }) => {
+      unsetUnderline: () => ({ commands }: { commands: any }) => {
         return commands.unsetMark(this.name);
       },
     };

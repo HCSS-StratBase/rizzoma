@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { AuthPanel } from './AuthPanel';
 import './RizzomaLanding.css';
 
 interface RizzomaLandingProps {
-  onEnterRizzoma?: () => void;
+  onSignedIn?: (user: { id?: string; email?: string }) => void;
 }
 
-export function RizzomaLanding({ onEnterRizzoma }: RizzomaLandingProps) {
+export function RizzomaLanding({ onSignedIn }: RizzomaLandingProps) {
   const [showLogin, setShowLogin] = useState(false);
 
   return (
@@ -83,59 +84,13 @@ export function RizzomaLanding({ onEnterRizzoma }: RizzomaLandingProps) {
             >
               ×
             </button>
-            
-            <button 
-              className="oauth-btn google-btn"
-              onClick={() => {
+            <h3 style={{ marginTop: 0 }}>Sign in to continue</h3>
+            <AuthPanel
+              onSignedIn={(user) => {
                 setShowLogin(false);
-                if (onEnterRizzoma) onEnterRizzoma();
+                if (onSignedIn) onSignedIn(user);
               }}
-            >
-              <span className="oauth-icon">G</span>
-              Sign In With Gmail
-            </button>
-            
-            <button 
-              className="oauth-btn facebook-btn"
-              onClick={() => {
-                setShowLogin(false);
-                if (onEnterRizzoma) onEnterRizzoma();
-              }}
-            >
-              <span className="oauth-icon">f</span>
-              Sign In With Facebook
-            </button>
-            
-            <div className="or-divider">or</div>
-            
-            <form className="login-form" onSubmit={(e) => {
-              e.preventDefault();
-              // Handle login
-              if (onEnterRizzoma) onEnterRizzoma();
-            }}>
-              <input 
-                type="email" 
-                placeholder="Email" 
-                className="login-input"
-                required
-              />
-              <input 
-                type="password" 
-                placeholder="Password" 
-                className="login-input"
-                required
-              />
-              <button type="submit" className="submit-btn">
-                Sign in
-              </button>
-            </form>
-            
-            <div className="login-footer">
-              <span>Don't have an account? </span>
-              <a href="#" className="signup-link">Sign up</a>
-              <br />
-              <a href="#" className="forgot-link">Forgot password?</a>
-            </div>
+            />
           </div>
         </div>
       )}

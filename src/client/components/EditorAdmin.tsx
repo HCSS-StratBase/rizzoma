@@ -7,31 +7,42 @@ type EditorSearchResult = {
   updatedAt?: number;
 };
 
-export function EditorAdmin() {
+type EditorSearchPayload = {
+  waveId?: string;
+  blipId?: string;
+  updatedAt?: number;
+};
+
+type EditorSearchApiResponse = {
+  results?: EditorSearchPayload[];
+};
+
+export function EditorAdmin(): JSX.Element {
   const [recent, setRecent] = useState<EditorSearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    (async () => {
+    const load = async (): Promise<void> => {
       try {
-        // simple dev-only helper: search for any snapshots with a wildcard-ish pattern
         const r = await api('/api/editor/search?q=a&limit=10');
         if (!r.ok) {
           setError(`Failed to load editor snapshot sample (${r.status})`);
           return;
         }
-        const list = Array.isArray((r.data as any)?.results) ? (r.data as any).results : [];
+        const payload = r.data as EditorSearchApiResponse;
+        const list = Array.isArray(payload.results) ? payload.results : [];
         setRecent(
-          list.map((d: any) => ({
-            waveId: String(d.waveId),
-            blipId: d.blipId ? String(d.blipId) : undefined,
-            updatedAt: typeof d.updatedAt === 'number' ? d.updatedAt : undefined,
+          list.map(item => ({
+            waveId: item.waveId ? String(item.waveId) : '',
+            blipId: item.blipId ? String(item.blipId) : undefined,
+            updatedAt: typeof item.updatedAt === 'number' ? item.updatedAt : undefined,
           })),
         );
-      } catch (e: any) {
-        setError(e?.message || 'Failed to load editor snapshot sample');
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Failed to load editor snapshot sample');
       }
-    })();
+    };
+    void load();
   }, []);
 
   return (
@@ -69,4 +80,3 @@ export function EditorAdmin() {
     </section>
   );
 }
-

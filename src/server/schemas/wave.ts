@@ -19,8 +19,12 @@ export type Blip = {
   parentId?: string | null;
   content?: string;
   authorId?: string;
+  authorName?: string;
   createdAt: number;
   updatedAt: number;
+  deleted?: boolean;
+  deletedAt?: number;
+  deletedBy?: string;
 };
 
 export type BlipRead = {

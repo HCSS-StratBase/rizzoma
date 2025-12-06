@@ -1,5 +1,5 @@
-import { StarterKit } from '@tiptap/starter-kit';
-import { Collaboration } from '@tiptap/extension-collaboration';
+import StarterKit from '@tiptap/starter-kit';
+import Collaboration from '@tiptap/extension-collaboration';
 import { Highlight } from '@tiptap/extension-highlight';
 import { Link } from '@tiptap/extension-link';
 import { TaskList } from '@tiptap/extension-task-list';
@@ -14,6 +14,8 @@ import { CollaborativeCursor } from './CollaborativeCursors';
 import { Underline } from './extensions/Underline';
 import { TextColor } from './extensions/TextColor';
 import { ImageGadget } from './extensions/ImageGadget';
+import { InlineCommentsVisibility } from './extensions/InlineCommentsVisibility';
+import { ChartGadget, PollGadget } from './extensions/GadgetNodes';
 import { FEATURES } from '@shared/featureFlags';
 
 export const createYjsDocument = (initialContent?: any): Y.Doc => {
@@ -35,15 +37,33 @@ const mockUsers = [
   { id: '5', label: 'Charlie Davis', email: 'charlie@example.com' },
 ];
 
-export const getEditorExtensions = (ydoc?: Y.Doc, provider?: any): any[] => {
+type EditorExtensionOptions = {
+  blipId?: string;
+  onToggleInlineComments?: (visible: boolean) => void;
+};
+
+export const getEditorExtensions = (
+  ydoc?: Y.Doc,
+  provider?: any,
+  options?: EditorExtensionOptions
+): any[] => {
   const extensions = [
     StarterKit.configure({
-      history: false,
+      // Enable history so undo/redo in BlipMenu works reliably
       heading: {
         levels: [1, 2, 3]
       }
     })
   ];
+
+  if (options?.blipId || options?.onToggleInlineComments) {
+    extensions.push(
+      InlineCommentsVisibility.configure({
+        blipId: options?.blipId,
+        onToggle: options?.onToggleInlineComments,
+      })
+    );
+  }
 
   // Add rich editor features if enabled
   if (FEATURES.RICH_TOOLBAR) {
@@ -65,10 +85,15 @@ export const getEditorExtensions = (ydoc?: Y.Doc, provider?: any): any[] => {
           target: '_blank',
         },
       }),
-      ImageGadget.configure({
+      (ImageGadget as any).configure({
         inline: false,
         allowBase64: true,
       })
+    );
+
+    extensions.push(
+      ChartGadget.configure({}),
+      PollGadget.configure({})
     );
   }
 

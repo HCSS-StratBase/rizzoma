@@ -1,7 +1,6 @@
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { DecorationSet, Decoration } from '@tiptap/pm/view';
-import * as Y from 'yjs';
 import { Awareness } from 'y-protocols/awareness';
 import { FEATURES } from '@shared/featureFlags';
 import './CollaborativeCursors.css';
@@ -50,7 +49,7 @@ export const CollaborativeCursor = Extension.create({
         state: {
           init: () => DecorationSet.empty,
           
-          apply: (tr, decorationSet, oldState, newState) => {
+          apply: (_tr, _decorationSet, _oldState, newState) => {
             const awareness: Awareness = provider.awareness;
             const states = awareness.getStates();
             const clientId = awareness.clientID;
@@ -60,7 +59,7 @@ export const CollaborativeCursor = Extension.create({
             states.forEach((state, stateClientId) => {
               if (stateClientId === clientId) return;
               
-              const cursor = state.cursor;
+              const cursor = (state as any)?.cursor;
               if (!cursor || !cursor.selection) return;
               
               const { from, to } = cursor.selection;
@@ -157,7 +156,7 @@ export function TypingIndicator({ provider }: { provider: any }) {
   states.forEach((state, stateClientId) => {
     if (stateClientId === clientId) return;
     
-    const cursor = state.cursor;
+    const cursor = (state as any)?.cursor;
     if (cursor && cursor.user && cursor.isTyping) {
       typingUsers.push(cursor.user);
     }

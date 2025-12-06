@@ -7,6 +7,7 @@ import { RizzomaTopicDetail } from './RizzomaTopicDetail';
 import { RightToolsPanel } from './RightToolsPanel';
 import { CreateTopicModal } from './CreateTopicModal';
 import './RizzomaLayout.css';
+import { useWaveUnread } from '../hooks/useWaveUnread';
 
 interface RizzomaLayoutProps {
   isAuthed: boolean;
@@ -19,6 +20,7 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
   const [activeTab, setActiveTab] = useState<TabType>('topics');
   const [searchPaneCollapsed, setSearchPaneCollapsed] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const unreadState = useWaveUnread(selectedTopicId);
   
   console.log('RizzomaLayout render - selectedTopicId:', selectedTopicId);
 
@@ -36,7 +38,6 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
       case 'topics':
         return (
           <RizzomaTopicsList 
-            isAuthed={isAuthed}
             onTopicSelect={setSelectedTopicId}
             selectedTopicId={selectedTopicId}
           />
@@ -110,6 +111,7 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
               <RizzomaTopicDetail 
                 id={selectedTopicId} 
                 isAuthed={isAuthed} 
+                unreadState={unreadState}
               />
             </>
           ) : (
@@ -122,10 +124,10 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
       </div>
 
       {/* Right Tools Panel - Far Right */}
-      <RightToolsPanel 
-        isAuthed={isAuthed}
-        selectedTopicId={selectedTopicId}
-      />
+        <RightToolsPanel 
+          isAuthed={isAuthed}
+          unreadState={selectedTopicId ? unreadState : null}
+        />
       
       {/* Create Topic Modal */}
       <CreateTopicModal

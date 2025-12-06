@@ -144,7 +144,6 @@ html {
 }
 
 .wave-container {
-    margin-left: 0 !important; /* #TODO kill resizer */
     margin-right: 47px;
 }
 
@@ -191,4 +190,3 @@ html {
 .anonymous-wave-info {
     display: none;
 }
-

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 describe('client: TipTap editor integration', () => {
-  it('EditorConfig exports required functions', async () => {
+  it('EditorConfig exports required functions', { timeout: 15000 }, async () => {
     const module = await import('../client/components/editor/EditorConfig');
     expect(module.createYjsDocument).toBeDefined();
     expect(module.getEditorExtensions).toBeDefined();

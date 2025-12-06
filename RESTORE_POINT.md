@@ -65,21 +65,25 @@
 ### Testing and QA coverage
 - [ ] Test every functionality that's added or modified and update that md file accordingly (or create one if there isn't one already!)
 - [ ] Add coverage for Follow-the-Green navigation/unread tracking (wave-level) plus degraded-path toasts for editor actions; re-run full Vitest suite and add browser smoke.
+  - (2026-03-05) Added `src/tests/client.RightToolsPanel.followGreen.test.tsx` and `src/tests/client.useWaveUnread.test.tsx` to cover the modern Follow-the-Green CTA (`RightToolsPanel`/`FollowTheGreen`) and the `useWaveUnread` hook (initial load, optimistic mark-read, and socket `deleted` events). Browser smoke and multi-user flows are still pending.
 - [ ] Gate CI on `npm run test:toolbar-inline` and the Follow-the-Green suite once unread/presence persistence lands so toolbar/unread regressions fail fast.
 - [x] Expand automated regression for BlipMenu parity items and failure-path toasts; add cross-browser (Chromium/Firefox/WebKit) smoke runs.
   - (2025-12-04) `client.BlipMenu.test.tsx` now asserts inline comment error banners render in edit mode and that read-only commenting disables the edit overflow paste actions, covering the failure-path toasts surfaced by the inline toolbar; the existing `npm run test:toolbar-inline` smoke already iterates Chromium/Firefox/WebKit.
 - [x] Manual testing checklist (MANUAL_TEST_CHECKLIST.md): rerun with restored toolbar/popovers, including keyboard shortcuts (j/k), editor search, performance responsiveness, mobile layout.
   - (2025-12-04) Checklist now contains a dedicated inline toolbar walkthrough (read/edit states, overflow, degraded banners) plus inline comment navigation/shortcut steps so manual runs cover the restored surfaces without extra notes.
 - [ ] Add health checks for `/api/health`, inline comments endpoints, and upload endpoints; wire to CI smoke where feasible.
+  - (2026-03-05) Added `/api/health` router (`src/server/routes/health.ts`) with `src/tests/server.health.test.ts`, basic inline comments health tests in `src/tests/routes.comments.inlineHealth.test.ts` (feature-flag on/off and empty view handling), and upload edgecase coverage in `src/tests/routes.uploads.edgecases.test.ts` (auth required, missing file error, and successful upload metadata). CI wiring remains outstanding.
 - [ ] Performance tests: large document load, realtime under concurrency, mobile responsiveness; capture metrics/budgets.
 
 ### Documentation and knowledge base
-- [ ] Audit and correct overstatements in `RIZZOMA_FEATURES_STATUS.md` (tracks A–D marked “implemented” but lack unread/perms/upload validation); align with actual coverage/tests.
+- [x] Audit and correct overstatements in `RIZZOMA_FEATURES_STATUS.md` (tracks A–D marked “implemented” but lack unread/perms/upload validation); align with actual coverage/tests.
+  - (2026-03-05) Updated summary, Track C, unread/presence, and "Still pending" sections so Follow-the-Green, perf/resilience, CI/health checks, and backup automation are called out as remaining work, and clarified that `useWaveUnread` + `RightToolsPanel` are the canonical Follow-the-Green surfaces while `GreenNavigation`/`useChangeTracking` act as a test harness.
 - [ ] Keep `docs/EDITOR*.md`, `docs/EDITOR_TOOLBAR_PARITY.md`, `README_MODERNIZATION.md`, and onboarding/restart guides current with any API or flag changes; add notes when features remain behind flags or need manual setup.
 - [x] Mirror “Next up” items from `README_MODERNIZATION.md`: add Playwright smoke for inline toolbar overflow/gear parity and expand unread navigation/Follow-the-Green regression coverage while documenting degraded-state banners.
   - [x] (2025-12-04) `npm run test:toolbar-inline` now iterates Chromium, Firefox, and WebKit while exercising the inline toolbar overflow/gear actions plus inline comment navigation, so parity gaps surface across browsers without manual QA.
   - [x] (2026-01-07) Added `src/tests/client.followGreenNavigation.test.tsx` to cover `useChangeTracking` + `GreenNavigation` highlight flows and documented the inline comment degraded-state banners across `docs/EDITOR_TOOLBAR_PARITY.md` and `INLINE_COMMENTS_VS_REPLIES.md` so toolbar/popup cues stay synchronized.
 - [ ] Refresh `TESTING_STATUS.md` with the next real run (typecheck/tests/build) and note outstanding UI/browser smoke gaps.
+  - (2026-03-05) Partially refreshed to clarify Follow-the-Green coverage, FEAT_ALL status, and remaining gaps for large-wave/perf paths; a new end-to-end run is still pending.
 - [ ] Add doc notes for backup workflow refinements and any CI additions.
 
 ### Operations, automation, and backups

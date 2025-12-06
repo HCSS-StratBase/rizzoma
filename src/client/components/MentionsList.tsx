@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { api } from '../lib/api';
 import './MentionsList.css';
 
 interface MentionsListProps {
@@ -18,7 +17,7 @@ interface Mention {
   isRead: boolean;
 }
 
-export function MentionsList({ isAuthed, onSelectMention }: MentionsListProps) {
+export function MentionsList({ isAuthed, onSelectMention }: MentionsListProps): JSX.Element {
   const [mentions, setMentions] = useState<Mention[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -32,38 +31,33 @@ export function MentionsList({ isAuthed, onSelectMention }: MentionsListProps) {
     loadMentions();
   }, [isAuthed]);
 
-  const loadMentions = async () => {
-    try {
-      setLoading(true);
-      // For now, create mock data since the API doesn't have mentions endpoint yet
-      const mockMentions: Mention[] = [
-        {
-          id: '1',
-          topicId: '43dc6fb93c4b7c1abc80aa4df6001060',
-          topicTitle: 'Welcome to Rizzoma',
-          mentionText: '@you Great work on the new features!',
-          authorName: 'Alice Johnson',
-          authorId: 'alice',
-          timestamp: new Date().toISOString(),
-          isRead: false,
-        },
-        {
-          id: '2',
-          topicId: '43dc6fb93c4b7c1abc80aa4df6001060',
-          topicTitle: 'Project Planning',
-          mentionText: '@you Can you review this document?',
-          authorName: 'Bob Smith',
-          authorId: 'bob',
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-          isRead: true,
-        }
-      ];
-      setMentions(mockMentions);
-    } catch (error) {
-      console.error('Failed to load mentions:', error);
-    } finally {
-      setLoading(false);
-    }
+  const loadMentions = (): void => {
+    setLoading(true);
+    // Mock data placeholder until API exists
+    const mockMentions: Mention[] = [
+      {
+        id: '1',
+        topicId: '43dc6fb93c4b7c1abc80aa4df6001060',
+        topicTitle: 'Welcome to Rizzoma',
+        mentionText: '@you Great work on the new features!',
+        authorName: 'Alice Johnson',
+        authorId: 'alice',
+        timestamp: new Date().toISOString(),
+        isRead: false,
+      },
+      {
+        id: '2',
+        topicId: '43dc6fb93c4b7c1abc80aa4df6001060',
+        topicTitle: 'Project Planning',
+        mentionText: '@you Can you review this document?',
+        authorName: 'Bob Smith',
+        authorId: 'bob',
+        timestamp: new Date(Date.now() - 86400000).toISOString(),
+        isRead: true,
+      }
+    ];
+    setMentions(mockMentions);
+    setLoading(false);
   };
 
   const filteredMentions = filter === 'unread' 

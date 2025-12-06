@@ -1,3 +1,40 @@
+var latestSecureToken = null;
+
+function stableHash(input) {
+    var hash = 5381;
+    for (var i = 0; i < input.length; i++) {
+        hash = ((hash << 5) + hash) ^ input.charCodeAt(i);
+    }
+    return Math.abs(hash);
+}
+
+function makeJsonRequest(path, method, postParams, callback, excludeSecurityToken) {
+    var payload = postParams || {};
+    var socialDataPath = document.location.protocol + "//" + document.location.host
+        + "/social/rest/samplecontainer/";
+    var url = socialDataPath + path;
+    if (!excludeSecurityToken && latestSecureToken) {
+        url += "?st=" + latestSecureToken;
+    }
+
+    var makeRequestParams = {
+      "CONTENT_TYPE" : "JSON",
+      "METHOD" : method,
+      "POST_DATA" : payload
+    };
+
+    gadgets.io.makeNonProxiedRequest(url,
+      function(data) {
+        data = data.data || data;
+        if (callback) {
+            callback(data);
+        }
+      },
+      makeRequestParams,
+      "application/javascript"
+    );
+}
+
 initGadget = function(gadgetUrl, divId) {
 	gadgets.pubsubrouter.init(function() { return gadgetUrl; });
 	var iframeBaseUrl = '/gadgets/';
@@ -18,7 +55,8 @@ initGadget = function(gadgetUrl, divId) {
 		  var gadget = container.createGadget({'specUrl': metadata.gadgets[i].url,
 			  'title': metadata.gadgets[i].title, 'userPrefs': metadata.gadgets[i].userPrefs});
 		  gadget.setServerBase(iframeBaseUrl);
-		  gadget.secureToken = escape(generateSecureToken(gadgetUrl));
+		  gadget.secureToken = encodeURIComponent(generateSecureToken(gadgetUrl));
+          latestSecureToken = gadget.secureToken;
 		  gadget.getAdditionalParams = getAdditionalParams;
 		  container.addGadget(gadget);
 		}
@@ -47,39 +85,12 @@ function requestGadgetMetaData(gadgetUrl, opt_callback) {
 }
 
 function sendRequestToServer(url, method, opt_postParams, opt_callback, opt_excludeSecurityToken) {
-	// TODO: Should re-use the jsoncontainer code somehow
-	opt_postParams = opt_postParams || {};
-	
-	var socialDataPath = document.location.protocol + "//" + document.location.host
-    + "/social/rest/samplecontainer/";
-
-	var makeRequestParams = {
-	  "CONTENT_TYPE" : "JSON",
-	  "METHOD" : method,
-	  "POST_DATA" : opt_postParams};
-
-	if (!opt_excludeSecurityToken) {
-	  url = socialDataPath + url + "?st=" + gadget.secureToken;
-	}
-
-	gadgets.io.makeNonProxiedRequest(url,
-	  function(data) {
-		data = data.data;
-		if (opt_callback) {
-			opt_callback(data);
-		}
-	  },
-	  makeRequestParams,
-	  "application/javascript"
-	);
+	makeJsonRequest(url, method, opt_postParams, opt_callback, opt_excludeSecurityToken);
 };
 
 function generateSecureToken(gadgetUrl) {
-	// TODO: Use a less silly mechanism of mapping a gadget URL to an appid
-	var appId = 0;
-	for (var i = 0; i < gadgetUrl.length; i++) {
-	  appId += gadgetUrl.charCodeAt(i);
-	}
+	// Deterministic hash of the gadget URL for appid to avoid collisions
+	var appId = stableHash(gadgetUrl).toString(36);
 	var fields = ["ownerId111", "viewerId111", appId, "shindig", gadgetUrl, "0", "default"];
 	for (var i = 0; i < fields.length; i++) {
 	  // escape each field individually, for metachars in URL

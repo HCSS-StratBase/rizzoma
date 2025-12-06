@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 import { toast } from './Toast';
 import './CreateTopicModal.css';
@@ -9,15 +10,16 @@ interface CreateTopicModalProps {
   onTopicCreated: (topicId: string) => void;
 }
 
-export function CreateTopicModal({ isOpen, onClose, onTopicCreated }: CreateTopicModalProps) {
+export function CreateTopicModal({ isOpen, onClose, onTopicCreated }: CreateTopicModalProps): JSX.Element | null {
   const [title, setTitle] = useState('');
   const [participants, setParticipants] = useState('');
   const [creating, setCreating] = useState(false);
+  const trimmedTitle = title.trim();
 
   if (!isOpen) return null;
 
-  const handleCreate = async () => {
-    if (!title.trim()) {
+  const handleCreate = async (): Promise<void> => {
+    if (trimmedTitle.length === 0) {
       toast('Please enter a topic title', 'error');
       return;
     }
@@ -33,7 +35,7 @@ export function CreateTopicModal({ isOpen, onClose, onTopicCreated }: CreateTopi
     const response = await api('/api/topics', {
       method: 'POST',
       body: JSON.stringify({
-        title: title.trim(),
+        title: trimmedTitle,
         content: '<p>Start your discussion here...</p>',
         participants: emails
       })
@@ -53,7 +55,7 @@ export function CreateTopicModal({ isOpen, onClose, onTopicCreated }: CreateTopi
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
     if (e.key === 'Escape') {
       onClose();
     }
@@ -98,8 +100,8 @@ export function CreateTopicModal({ isOpen, onClose, onTopicCreated }: CreateTopi
         <div className="modal-footer">
           <button 
             className="btn-primary"
-            onClick={handleCreate}
-            disabled={creating || !title.trim()}
+            onClick={() => { void handleCreate(); }}
+            disabled={creating || trimmedTitle.length === 0}
           >
             {creating ? 'Creating...' : 'Create Topic'}
           </button>

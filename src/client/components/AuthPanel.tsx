@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { api } from '../lib/api';
 import { toast } from './Toast';
 
-export function AuthPanel({ onSignedIn }: { onSignedIn: (u: any) => void }) {
+type AuthUser = { id?: string; email?: string };
+
+export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void }): JSX.Element {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const act = async (kind: 'login' | 'register') => {
+  const act = async (kind: 'login' | 'register'): Promise<void> => {
     setError(null);
     if (!email.includes('@') || password.length < 6) { setError('Enter a valid email and 6+ char password'); return; }
     setBusy(true);
@@ -20,7 +22,7 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: any) => void }) {
       const idTag = (reqId !== undefined && reqId !== '') ? ` (${reqId})` : '';
       toast(`${kind==='login'?'Login':'Register'} failed${idTag}`,'error');
     } else {
-      onSignedIn(r.data);
+      onSignedIn(r.data as AuthUser);
       toast(kind==='login'?'Logged in':'Registered','info');
     }
   };

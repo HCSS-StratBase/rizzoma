@@ -116,3 +116,75 @@
 .editable-blip-content .btn-secondary:hover {
   background-color: #4b5563;
 }
+
+/* Gadget node styling */
+.blip-editor .ProseMirror .gadget-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 8px 0;
+  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+}
+
+.blip-editor .ProseMirror .gadget-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.blip-editor .ProseMirror .gadget-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: #312e81;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.blip-editor .ProseMirror .gadget-title {
+  font-weight: 600;
+  color: #111827;
+}
+
+.blip-editor .ProseMirror .gadget-body {
+  padding: 6px 4px;
+  color: #374151;
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+}
+
+.blip-editor .ProseMirror .gadget-preview {
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.blip-editor .ProseMirror .gadget-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.blip-editor .ProseMirror .gadget-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.blip-editor .ProseMirror .gadget-list-item:last-child {
+  border-bottom: none;
+}
+
+.blip-editor .ProseMirror .gadget-option-label {
+  font-weight: 500;
+}
+
+.blip-editor .ProseMirror .gadget-option-votes {
+  font-size: 12px;
+  color: #6b7280;
+}

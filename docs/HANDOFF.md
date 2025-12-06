@@ -1,6 +1,11 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2025-11-15
+Last Updated: 2025-12-05
+
+### Drift warnings (needs refresh after unread/presence/perms work)
+- Status docs (`RIZZOMA_FEATURES_STATUS.md`, `TESTING_GUIDE.md`, `TESTING_STATUS.md`, `CLAUDE.md`, `AGENTS.md`, `README*.md`, `QUICKSTART.md`) still describe demo-mode shortcuts, auto-merge/PR automation, and “all core features working.” Current backlog contradicts this (real unread persistence now shipping, but recovery UI, search relevance/pagination, and permissions tightening remain outstanding), so treat those docs as stale until rewritten alongside the new feature work.
+- If link management guidance is still needed, `docs/LINKS_REPARENT.md` was removed; restore or replace before directing contributors to it.
+- Demo-mode login references are now stale: the Rizzoma layout routes sign-in through the real `AuthPanel`, so contributors must use authenticated sessions rather than `?demo=true` fallbacks.
 
 PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
@@ -11,16 +16,15 @@ Current State (master)
 - Milestone B Part 1 merged (#23): Editor TipTap+Yjs snapshots; WaveView toggle.
 - Milestone B+ merged (#30): Editor realtime (incrementals + client apply) behind `EDITOR_ENABLE=1`.
 - Milestone B+ merged (#32): Editor Rooms/Presence (room‑scoped updates) with presence counts.
-- Milestone B+ merged (#34): Presence identity + WaveView badge (users array in presence payload).
+- Milestone B+ merged (#34): Presence identity + WaveView badge (users array in presence payload); 2026-02 presence polish pushed avatars/badges + error/loading states into both WaveView and the TipTap editor panes with socket-level debounce/expiry coverage (`server.editorPresence.test.ts`, `client.PresenceIndicator.test.tsx`).
 
 Open PRs
 - None at this time.
 
 Next Work
 - Branch: `phase4/editor-recovery-ui`
-  - Recovery UI: [BASIC DONE] WaveView button to trigger `/api/editor/:waveId/rebuild` (scopes to current blip when selected) and show inline status (applied count / errors). Follow‑up: richer admin UI surface and history/journal.
+  - Recovery UI: [DONE] `RebuildPanel` now queues rebuild jobs, polls `/api/editor/:waveId/rebuild?blipId=` for status/logs, and renders applied counts + retry toasts inside WaveView. Follow‑up: expand into a richer admin history/journal if we need visibility beyond the per-wave surface.
   - Search materialization polish: [BASIC DONE] add/create indexes; harden search endpoint; simple client search UI (basic `#/editor/search` view wired to `/api/editor/search`).
-  - Editor pane presence UI: [BASIC DONE] inline identity indicator in editor container header (count + tooltip of user names/ids).
   - Tests + docs for each step; keep PRs small and feature‑flagged.
   - Pre-flight status (2025‑11‑14): `npm run typecheck`, `npm test`, and `npm run build` all pass on this branch; TypeScript strictness slightly relaxed (`noImplicitOverride`/`noUncheckedIndexedAccess`) to accommodate `connect-redis` typings; editor search/rebuild routes stubbed but wired and covered by tests.
 

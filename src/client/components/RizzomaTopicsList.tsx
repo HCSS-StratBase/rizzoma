@@ -13,12 +13,11 @@ interface Topic {
 }
 
 interface RizzomaTopicsListProps {
-  isAuthed: boolean;
   onTopicSelect: (topicId: string) => void;
   selectedTopicId: string | null;
 }
 
-export function RizzomaTopicsList({ isAuthed, onTopicSelect, selectedTopicId }: RizzomaTopicsListProps) {
+export function RizzomaTopicsList({ onTopicSelect, selectedTopicId }: RizzomaTopicsListProps) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

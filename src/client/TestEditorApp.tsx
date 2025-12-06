@@ -1,16 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BlipEditor } from './components/editor/BlipEditor';
-import { FEATURES, getEnabledFeatures } from '../shared/featureFlags';
+import { getEnabledFeatures } from '@shared/featureFlags';
 import './components/editor/BlipEditor.css';
 
-export function TestEditorApp() {
+export function TestEditorApp(): JSX.Element {
   const [content1, setContent1] = useState('<p>This is the first editor for testing rich text features.</p>');
   const [content2, setContent2] = useState('<p>This is the second editor for testing real-time collaboration.</p>');
-  const [selectedText, setSelectedText] = useState('');
-  
-  // Show feature flags status
-  console.log('Feature flags:', FEATURES);
-  console.log('Enabled features:', getEnabledFeatures());
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -75,12 +70,6 @@ export function TestEditorApp() {
           </div>
         </div>
       </div>
-
-      {selectedText && (
-        <div style={{ marginTop: '20px', padding: '10px', background: '#e8f4f8', borderRadius: '5px' }}>
-          <strong>Selected Text:</strong> "{selectedText}"
-        </div>
-      )}
     </div>
   );
 }

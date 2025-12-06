@@ -1,3 +1,7 @@
+:root {
+    --blip-menu-icon-sprite: url(/s/img/wave_buttons.png);
+}
+
 .blip-menu,
 .blip-menu button,
 .bottom-blip-menu button {
@@ -79,6 +83,7 @@
     width: 25px;
     display: inline-block;
     background: url(/s/img/wave_buttons.png) no-repeat;
+    background-image: var(--blip-menu-icon-sprite, url(/s/img/wave_buttons.png));
     vertical-align: middle;
 }
 
@@ -139,9 +144,12 @@
 }
 
 .edit-menu .make-background-color .icon {
-    background: #fff url(/s/img/wave_buttons_text_background.png) -14px -7px no-repeat; /* TODO: merge with other icons*/
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #fff9c4 0%, #fff9c4 50%, #ffd54f 50%, #ffd54f 100%);
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
     vertical-align: top;
 }
 
@@ -282,7 +290,8 @@
     background-position: 0 -42px;
 }
 
-.blip-container:not(:first-child).active > .blip-menu-container .is-folded-by-default { /* TODO: ? */
+/* Only expose the fold-by-default toggle on the first/root blip to avoid duplicate switches on replies */
+.blip-container:not(:first-child) > .blip-menu-container .is-folded-by-default {
     display: none;
 }
 

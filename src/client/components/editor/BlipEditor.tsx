@@ -6,6 +6,7 @@ import { yjsDocManager } from './YjsDocumentManager';
 import { useCollaboration } from './useCollaboration';
 import { InlineComments } from './InlineComments';
 import { FEATURES } from '@shared/featureFlags';
+import { getInlineCommentsVisibility, setInlineCommentsVisibility, subscribeInlineCommentsVisibility } from './inlineCommentsVisibility';
 import './BlipEditor.css';
 
 interface BlipEditorProps {
@@ -15,7 +16,6 @@ interface BlipEditorProps {
   onUpdate?: (content: string) => void;
   ydoc?: Y.Doc;
   enableCollaboration?: boolean;
-  showToolbar?: boolean;
 }
 
 export function BlipEditor({ 
@@ -25,14 +25,16 @@ export function BlipEditor({
   onUpdate,
   ydoc,
   enableCollaboration = false,
-  showToolbar = false
 }: BlipEditorProps): JSX.Element {
   const [localYdoc] = useState(() => ydoc || yjsDocManager.getDocument(blipId));
-  const [comments, setComments] = useState<any[]>([]);
   const provider = useCollaboration(localYdoc, blipId, enableCollaboration && !isReadOnly);
+  const [areCommentsVisible, setAreCommentsVisible] = useState(() => getInlineCommentsVisibility(blipId));
 
   const editor = useEditor({
-    extensions: getEditorExtensions(localYdoc, provider),
+    extensions: getEditorExtensions(localYdoc, provider, {
+      blipId,
+      onToggleInlineComments: (visible) => setInlineCommentsVisibility(blipId, visible),
+    }),
     content,
     editable: !isReadOnly,
     editorProps: defaultEditorProps,
@@ -57,6 +59,16 @@ export function BlipEditor({
   }, [editor, content, isReadOnly]);
 
   useEffect(() => {
+    setAreCommentsVisible(getInlineCommentsVisibility(blipId));
+    const unsubscribe = subscribeInlineCommentsVisibility(({ blipId: targetId, isVisible }) => {
+      if (targetId === blipId) {
+        setAreCommentsVisible(isVisible);
+      }
+    });
+    return unsubscribe;
+  }, [blipId]);
+
+  useEffect(() => {
     return () => {
       if (!ydoc) {
         yjsDocManager.removeDocument(blipId);
@@ -76,14 +88,8 @@ export function BlipEditor({
           <InlineComments 
             editor={editor}
             blipId={blipId}
-            comments={comments}
-            onAddComment={(comment) => {
-              // TODO: Send to server
-              setComments([...comments, { ...comment, id: Date.now().toString(), createdAt: Date.now(), updatedAt: Date.now() }]);
-            }}
-            onResolveComment={(commentId) => {
-              setComments(comments.map(c => c.id === commentId ? {...c, resolved: true} : c));
-            }}
+            isVisible={areCommentsVisible}
+            canComment={!isReadOnly}
           />
         )}
       </div>

@@ -25,8 +25,8 @@ For live project status and the restart checklist, see `docs/HANDOFF.md` and `do
 3. **Copy legacy CouchDB views and deploy (recommended for dev; required for legacy fallbacks):**
    ```bash
    npm run prep:views
-  npm run deploy:views
-  ```
+   npm run deploy:views
+   ```
 
 Note:
 - These design docs enable legacy CouchDB view fallbacks used by the modern API when there are no modern `topic` documents yet. Skipping this step means the topics list may be empty until you create new topics.
@@ -72,10 +72,10 @@ gh pr create -R HCSS-StratBase/rizzoma -B master -H <branch> \
 As of now, the modern stack is running end‑to‑end in development:
 
 - TypeScript server (Express 4.x) with session auth (Redis), CSRF, request IDs, CORS allowlist and standardized errors
-- Vite + React client with Auth, Topics/Comments CRUD, pagination, search and toasts
-- Vite + React client with Auth, Topics/Comments CRUD, pagination, search and toasts; realtime refresh via Socket.IO
+- Vite + React client with Auth, Topics/Comments CRUD, search and toasts (with optional server-side paging), plus realtime refresh via Socket.IO
+- Rizzoma layout exposes the full TipTap inline toolbar (undo/redo, lists, clear formatting, link/image placeholders) through `BlipMenu`, matching the shared Editor toolbar feature set behind flags
 - CouchDB integration via direct HTTP (Mango `_find` + legacy views as fallback); views deployable via `scripts/deploy-views.js`
-- Server-side paging & search via Mango for topics/comments with cursor (`nextBookmark`) (Phase 2)
+- Server-side paging & search via Mango for topics/comments with cursor (`nextBookmark`) (Phase 2, a modernization convenience — the original Rizzoma UI did not expose explicit pagination controls)
 - Read‑only Waves + nested Blips endpoints and initial client views (Phase 3 Milestone A)
 - Docker Compose dev stack (app + CouchDB + Redis + RabbitMQ + Sphinx; optional MinIO)
 - GitHub Actions CI: typecheck, lint and build (and Docker build)
@@ -333,6 +333,15 @@ After Phase‑1 stabilization:
 3. Tighten security (Cookie settings, CSP, helmet hardening)
 4. Add realtime updates for collaborative UX
 5. Consider service boundaries only after functionality parity is reached
+
+### Next up
+
+Cross-browser Playwright smoke now covers the inline toolbar overflow/gear actions (`npm run test:toolbar-inline` iterates Chromium, Firefox, and WebKit while exercising the inline comments navigation filters). Recent additions:
+
+- ✅ Added `src/tests/client.followGreenNavigation.test.tsx` to exercise the Follow-the-Green hook plus the toolbar-facing `GreenNavigation` button, ensuring unread badges and highlight flashes stay aligned with the restored inline toolbar.
+- ✅ Documented the inline comment degraded-state banners across `docs/EDITOR_TOOLBAR_PARITY.md` and `INLINE_COMMENTS_VS_REPLIES.md` so popover/toolbars stay in sync when commenting is disabled or APIs fail.
+
+Next up: continue broadening unread/presence/perf coverage (server-backed read state, multi-wave Follow-the-Green flows, and realtime banner telemetry) so the toolbar remains an accurate source of truth.
 
 ## Resources
 

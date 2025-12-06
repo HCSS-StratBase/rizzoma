@@ -129,6 +129,66 @@
   background: #45a049;
 }
 
+.inline-comment-floating-form {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  width: 260px;
+  z-index: 1001;
+}
+
+.inline-comment-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.inline-comment-form-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.inline-comment-form-textarea {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: 6px;
+  font-size: 12px;
+  resize: none;
+}
+
+.inline-comment-form-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.inline-comment-form-actions button {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.inline-comment-form-actions .primary {
+  background: #4EA0F1;
+  color: #fff;
+}
+
+.inline-comment-form-actions .primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* View Mode */
 .blip-view-mode {
   position: relative;
@@ -136,6 +196,127 @@
 
 .blip-view-mode:hover .blip-toolbar-simple {
   opacity: 1;
+}
+
+.blip-history-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1400;
+}
+
+.blip-history-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: min(720px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.blip-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.blip-history-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.blip-history-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.blip-history-list {
+  padding: 12px 16px;
+  overflow-y: auto;
+  gap: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.blip-history-entry {
+  border: 1px solid #ededed;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fafafa;
+}
+
+.blip-history-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: #444;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.history-version {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.history-event {
+  text-transform: capitalize;
+}
+
+.history-author {
+  color: #111;
+  font-weight: 500;
+}
+
+.blip-history-content {
+  background: #fff;
+  border-radius: 6px;
+  padding: 8px;
+  border: 1px dashed #e0e0e0;
+}
+
+.blip-history-footer {
+  padding: 10px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.blip-history-footer button {
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.blip-history-footer .primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.blip-history-status {
+  padding: 16px;
+  text-align: center;
+  color: #555;
+}
+
+.blip-history-error {
+  padding: 16px;
+  text-align: center;
+  color: #b91c1c;
 }
 
 .blip-toolbar-simple {

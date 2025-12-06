@@ -31,8 +31,8 @@ export const TextColor = Mark.create<TextColorOptions>({
         attributes: {
           color: {
             default: null,
-            parseHTML: element => element.style.color?.replace(/['"]/g, ''),
-            renderHTML: attributes => {
+            parseHTML: (element: HTMLElement) => element.style.color?.replace(/['"]/g, ''),
+            renderHTML: (attributes: { color?: string }) => {
               if (!attributes.color) {
                 return {};
               }
@@ -48,12 +48,12 @@ export const TextColor = Mark.create<TextColorOptions>({
 
   addCommands() {
     return {
-      setColor: (color: string) => ({ chain }) => {
+      setColor: (color: string) => ({ chain }: { chain: () => any }) => {
         return chain()
           .setMark('textStyle', { color })
           .run();
       },
-      unsetColor: () => ({ chain }) => {
+      unsetColor: () => ({ chain }: { chain: () => any }) => {
         return chain()
           .setMark('textStyle', { color: null })
           .removeEmptyTextStyle()

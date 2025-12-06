@@ -1,4 +1,4 @@
-import { Editor } from '@tiptap/react';
+import type { Editor } from '@tiptap/core';
 import { useState, useRef, useEffect } from 'react';
 import { DEFAULT_BG_COLORS } from '@shared/constants/textFormatting';
 import './EditorToolbar.css';
@@ -75,7 +75,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
     editor
       .chain()
       .focus()
-      .command(({ tr, dispatch }) => {
+      .command(({ tr, dispatch }: { tr: any; dispatch?: (tr: any) => void }) => {
         if (dispatch) {
           tr.insertText(emoji, from, to);
           dispatch(tr);
@@ -103,6 +103,61 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       .clearNodes()
       .unsetAllMarks()
       .run();
+  };
+
+  const parseChartSeries = (input: string | null): Array<{ label: string; value: number }> => {
+    if (!input) return [];
+    return input
+      .split(',')
+      .map((pair) => {
+        const [label, value] = pair.split(':');
+        return {
+          label: label?.trim() || '',
+          value: Number(value ?? 0),
+        };
+      })
+      .filter((item) => item.label);
+  };
+
+  const insertChartGadget = () => {
+    const title = window.prompt('Chart title', 'Sprint burndown');
+    const typeInput = window.prompt('Chart type (bar, line, pie)', 'bar');
+    const seriesInput = window.prompt('Data points (label:value, comma separated)', 'Todo:5,Doing:3,Done:2');
+    const type = ['bar', 'line', 'pie'].includes((typeInput || '').toLowerCase())
+      ? (typeInput as string).toLowerCase()
+      : 'bar';
+    const data = parseChartSeries(seriesInput);
+    editor
+      .chain()
+      .focus()
+      .insertChart({
+        title: title || 'Chart',
+        type,
+        data: data.length ? data : [{ label: 'Empty', value: 0 }],
+      })
+      .run();
+    setShowGadget(false);
+  };
+
+  const insertPollGadget = () => {
+    const question = window.prompt('Poll question', 'Which option should we ship?') || 'Poll question';
+    const optionsInput = window.prompt('Poll options (comma separated)', 'Option A,Option B,Option C');
+    const allowMultiple = window.confirm('Allow multiple selections?');
+    const options = (optionsInput || '')
+      .split(',')
+      .map((opt) => opt.trim())
+      .filter(Boolean)
+      .map((label, idx) => ({ id: `opt-${idx}`, label, votes: 0 }));
+    editor
+      .chain()
+      .focus()
+      .insertPoll({
+        question,
+        options: options.length ? options : [{ id: 'opt-0', label: 'Yes', votes: 0 }],
+        allowMultiple,
+      })
+      .run();
+    setShowGadget(false);
   };
 
   return (
@@ -444,18 +499,14 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
               <button
                 className="dropdown-item"
                 onClick={() => {
-                  editor.chain().focus().insertContent('📊 [Chart Gadget]').run();
-                  setShowGadget(false);
+                  insertChartGadget();
                 }}
               >
                 📊 Chart
               </button>
               <button
                 className="dropdown-item"
-                onClick={() => {
-                  editor.chain().focus().insertContent('🗳️ [Poll Gadget]').run();
-                  setShowGadget(false);
-                }}
+                onClick={insertPollGadget}
               >
                 🗳️ Poll
               </button>

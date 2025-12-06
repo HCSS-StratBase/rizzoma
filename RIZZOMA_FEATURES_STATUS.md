@@ -1,7 +1,7 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
 ## Summary
-All 4 parallel tracks have been implemented! The core Rizzoma experience is now available behind feature flags.
+Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests; Follow-the-Green validation, perf/resilience sweeps, and CI gating are still outstanding.
 
 ## ✅ Implemented Features
 
@@ -10,6 +10,7 @@ All 4 parallel tracks have been implemented! The core Rizzoma experience is now 
 - **Comment anchoring** - Comments attached to specific text ranges
 - **Comment sidebar** - View and manage all comments
 - **Resolve/unresolve** - Mark comments as resolved
+- **Visibility preference** - Per-blip inline comment visibility persisted server-side with localStorage fallback and keyboard shortcuts (Ctrl+Shift+Up/Down)
 - **API endpoints** - Full backend support for comments
 - **Files created:**
   - `InlineComments.tsx/css` - UI components
@@ -17,7 +18,7 @@ All 4 parallel tracks have been implemented! The core Rizzoma experience is now 
   - `routes/inlineComments.ts` - API endpoints
 
 ### Track B: Rich Text Editor
-- **Formatting toolbar** - Bold, italic, headings, lists, etc.
+- **Formatting toolbar** - Bold, italic, headings, lists, undo/redo, clear formatting, link/image/attachment placeholders
 - **@mentions** - Type @ to mention users with autocomplete
 - **Task lists** - Checkbox support for tasks
 - **Links** - Add/remove hyperlinks
@@ -28,15 +29,17 @@ All 4 parallel tracks have been implemented! The core Rizzoma experience is now 
   - Enhanced `EditorConfig.tsx` with extensions
 
 ### Track C: "Follow the Green" Visual System
-- **Change tracking** - Tracks unread changes per user
-- **Green indicators** - Visual highlighting of new content
-- **Navigation helper** - "Follow the Green" button with count
-- **Time indicators** - Shows when content changed
-- **Persistent tracking** - Saves read state to localStorage
+- **Change tracking (experimental)** - Local hook to track unread changes per user in developer/test views.
+- **Green indicators** - Visual highlighting of new or unread content.
+- **Navigation helper** - "Follow the Green" button with unread count.
+- **Time indicators** - Shows when content changed.
+- **Persistent tracking** - Saves read state to localStorage or per-wave unread docs.
 - **Files created:**
-  - `useChangeTracking.ts` - Change tracking hook
-  - `GreenNavigation.tsx` - Navigation component
-  - `FollowGreen.css` - Green visual styling
+  - `useChangeTracking.ts` - Local change tracking hook (dev/test harness).
+  - `useWaveUnread.ts` - Wave-level unread state hook backed by `/api/waves/:id/unread`.
+  - `GreenNavigation.tsx` - Legacy navigation component using `useChangeTracking`.
+  - `FollowTheGreen.tsx` / `RightToolsPanel.tsx` - Rizzoma layout Follow-the-Green CTA and tools panel.
+  - `FollowGreen.css` / `FollowTheGreen.css` - Green visual styling.
 
 ### Track D: Real-time Collaboration
 - **Live cursors** - See where others are typing
@@ -47,6 +50,24 @@ All 4 parallel tracks have been implemented! The core Rizzoma experience is now 
 - **Files created:**
   - `CollaborativeCursors.tsx/css` - Cursor system
   - Enhanced `CollaborativeProvider.ts` with awareness
+
+### Unread tracking & presence
+- **Per-user read state** - `/api/waves/:id/unread`, `/next`, `/prev`, and `/blips/:blipId/read` persist `readAt` vs `updatedAt`.
+- **Wave list badges** - `WavesList` pulls `/unread_counts` and renders unread/total pills with quick links to the first unread blip.
+- **WaveView toolbar** - Inline unread counter, next/prev/first/last controls, keyboard shortcuts (j/k/g/G) plus optimistic mark-read + rollback on failure.
+- **Follow-the-Green** - `useWaveUnread` hydrates per-wave unread sets, `RizzomaTopicDetail` decorates blips with `isRead`/`unread` classes, and `RightToolsPanel` + `FollowTheGreen` expose the CTA and count; the older `GreenNavigation`/`useChangeTracking` pair remains a test harness only.
+- **PresenceIndicator** - Shared component shows avatars/initials, loading/error text, and overflow counts in both `WaveView` and `Editor`.
+- **Tests** - `routes.waves.unread.test.ts`, `client.followGreenNavigation.test.tsx`, `server.editorPresence.test.ts`, `client.PresenceIndicator.test.tsx`, and `routes.blips.permissions.test.ts` cover the persistence + UI states (with additional Playwright/browser smoke still pending).
+
+### Permissions & Auth
+- `requireAuth` now guards topic/blip write endpoints, logs denied operations, and respects actual author IDs.
+- Rizzoma layout login flow uses the real `AuthPanel` modal instead of demo users.
+- New Vitest coverage exercises unauthenticated, unauthorized, and authorized flows.
+
+## Still pending
+- Follow-the-Green validation in the modern Rizzoma layout (multi-user edits, wave-level unread navigation, and degraded-state toasts), plus broader automation.
+- Perf/resilience sweeps for large waves/blips, inline comments, playback, and realtime updates; capture metrics and document thresholds/limits.
+- CI gating for `npm run test:toolbar-inline` and Follow-the-Green once unread/presence suites stabilise, along with health checks and backup automation.
 
 ## 🎛️ Feature Flags
 
@@ -94,12 +115,13 @@ FEAT_ALL=1
 
 With `FEAT_ALL=1` enabled:
 
-1. **Rich Editing** - Full formatting toolbar on all blips
-2. **@mentions** - Type @ to mention users
-3. **Tasks** - Create task lists with checkboxes
-4. **Comments** - Select text and add inline comments
-5. **Follow Green** - Navigate through unread changes
-6. **Live Collaboration** - See other users' cursors
-7. **Real-time Updates** - Everything syncs instantly
+1. **Rich Editing** - Full formatting toolbar on all blips.
+2. **@mentions** - Type @ to mention users.
+3. **Tasks** - Create task lists with checkboxes.
+4. **Comments** - Select text and add inline comments.
+5. **Follow Green** - Navigate through unread changes in WaveView and the Rizzoma layout; some multi-session/large-wave edge cases still rely on manual testing.
+6. **Live Collaboration** - See other users' cursors.
+7. **Real-time Updates** - Core realtime flows are active; perf/CI hardening is still in progress.
 
-The core Rizzoma experience is now available!
+Most of the core Rizzoma experience is available; see **Still pending** for remaining gaps.
+

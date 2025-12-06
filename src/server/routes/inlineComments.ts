@@ -15,7 +15,8 @@ const createCommentSchema = z.object({
     start: z.number(),
     end: z.number(),
     text: z.string()
-  })
+  }),
+  parentId: z.string().optional(),
 });
 
 // Get comments for a blip
@@ -34,7 +35,13 @@ router.get('/blip/:blipId/comments', async (req, res): Promise<void> => {
         include_docs: true
       });
       
-      const comments = result.rows.map(row => row.doc).filter(Boolean);
+      const comments = result.rows
+        .map(row => row.doc)
+        .filter(Boolean)
+        .map((comment) => ({
+          ...comment,
+          isAuthenticated: typeof (comment as InlineComment).userId === 'string' && (comment as InlineComment).userId.trim().length > 0,
+        }));
       res.json({ comments });
     } catch (error) {
       // If view doesn't exist, return empty array
@@ -54,9 +61,28 @@ router.post('/comments', requireAuth, async (req, res): Promise<void> => {
       return;
     }
 
-    const { blipId, content, range } = createCommentSchema.parse(req.body);
+    const { blipId, content, range, parentId } = createCommentSchema.parse(req.body);
     const userId = req.user!.id;
     const userName = req.user!.name || 'Anonymous';
+    const userEmail = req.user!.email || '';
+    const userAvatar = (req.session as any)?.userAvatar || '';
+    let resolvedRange = range;
+    let rootId: string | undefined;
+
+    if (parentId) {
+      try {
+        const parent = await getDoc<InlineComment & { _id: string }>(parentId);
+        if (!parent || parent.blipId !== blipId) {
+          res.status(400).json({ error: 'invalid_parent' });
+          return;
+        }
+        resolvedRange = parent.range;
+        rootId = parent.rootId || parent._id;
+      } catch (error) {
+        res.status(404).json({ error: 'parent_not_found' });
+        return;
+      }
+    }
     
     const commentId = `comment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const comment: InlineComment & { _id: string; type: string } = {
@@ -65,11 +91,17 @@ router.post('/comments', requireAuth, async (req, res): Promise<void> => {
       blipId,
       userId,
       userName,
+      userEmail,
+      userAvatar,
+      isAuthenticated: true,
       content,
-      range,
+      range: resolvedRange,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       resolved: false,
+      parentId,
+      rootId: rootId || commentId,
+      resolvedAt: null,
       type: 'inline_comment'
     };
     
@@ -97,6 +129,7 @@ router.patch('/comments/:commentId/resolve', requireAuth, async (req, res): Prom
     await updateDoc({
       ...doc,
       resolved,
+      resolvedAt: resolved ? Date.now() : null,
       updatedAt: Date.now()
     });
     
