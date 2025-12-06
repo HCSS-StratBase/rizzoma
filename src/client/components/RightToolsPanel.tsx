@@ -23,15 +23,27 @@ export function RightToolsPanel({ isAuthed, unreadState }: RightToolsPanelProps)
     if (navigating) return;
     setNavigateStatus(null);
     setNavigating(true);
-    const unreadElements = document.querySelectorAll('.rizzoma-blip.unread');
-    if (unreadElements.length === 0) {
+    const nextUnreadId = unreadState?.unreadIds[0] ?? null;
+    const ensureElement = (blipId: string): HTMLElement | null => {
+      const escape = (val: string) => {
+        if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(val);
+        return val.replace(/["\\]/g, '\\$&');
+      };
+      const selector = `[data-blip-id="${escape(blipId)}"]`;
+      return document.querySelector(selector) as HTMLElement | null;
+    };
+    let target: HTMLElement | null = nextUnreadId ? ensureElement(nextUnreadId) : null;
+    if (!target) {
+      const fallback = document.querySelector('.rizzoma-blip.unread');
+      target = fallback as HTMLElement | null;
+    }
+    if (!target) {
       const message = 'No unread blips to follow';
       setNavigateStatus({ message, tone: 'info' });
       toast(message, 'info');
       setNavigating(false);
       return;
     }
-    const target = unreadElements[0] as HTMLElement;
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const blipId = target.getAttribute('data-blip-id');
     if (blipId) {
