@@ -42,3 +42,24 @@
   min-width: 20px;
   text-align: center;
 }
+
+.follow-the-green {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.follow-the-green-btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.follow-the-green-status {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #2c3e50;
+}
+
+.follow-the-green-status.error {
+  color: #c0392b;
+}

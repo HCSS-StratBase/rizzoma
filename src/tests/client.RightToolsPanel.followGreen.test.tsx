@@ -5,6 +5,11 @@ import { createRoot, type Root } from 'react-dom/client';
 import { RightToolsPanel } from '../client/components/RightToolsPanel';
 import { FEATURES } from '@shared/featureFlags';
 import type { WaveUnreadState } from '../client/hooks/useWaveUnread';
+import { toast } from '../client/components/Toast';
+
+vi.mock('../client/components/Toast', () => ({
+  toast: vi.fn(),
+}));
 
 type UnreadStateStub = Pick<
   WaveUnreadState,
@@ -108,6 +113,9 @@ describe('client: RightToolsPanel Follow-the-Green', () => {
     });
 
     expect(markBlipRead).not.toHaveBeenCalled();
+    const status = container.querySelector('.follow-the-green-status');
+    expect(status?.textContent).toContain('No unread');
+    expect(toast).toHaveBeenCalledWith('No unread blips to follow', 'info');
 
     act(() => root.unmount());
     container.remove();

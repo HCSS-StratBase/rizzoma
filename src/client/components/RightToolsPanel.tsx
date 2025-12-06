@@ -3,6 +3,7 @@ import { FollowTheGreen } from './FollowTheGreen';
 import { UserPresence } from './UserPresence';
 import './RightToolsPanel.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
+import { toast } from './Toast';
 
 interface RightToolsPanelProps {
   isAuthed: boolean;
@@ -13,19 +14,36 @@ export function RightToolsPanel({ isAuthed, unreadState }: RightToolsPanelProps)
   const [collapsed, setCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<'text' | 'mindmap'>('text');
   const [repliesVisible, setRepliesVisible] = useState(true);
+  const [navigating, setNavigating] = useState(false);
+  const [navigateStatus, setNavigateStatus] = useState<{ message: string; tone: 'info' | 'error' } | null>(null);
 
   const unreadCount = unreadState?.unreadIds.length ?? 0;
 
-  const handleFollowGreen = () => {
+  const handleFollowGreen = async () => {
+    if (navigating) return;
+    setNavigateStatus(null);
+    setNavigating(true);
     const unreadElements = document.querySelectorAll('.rizzoma-blip.unread');
-    if (unreadElements.length > 0) {
-      const target = unreadElements[0] as HTMLElement;
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      const blipId = target.getAttribute('data-blip-id');
-      if (blipId) {
-        void unreadState?.markBlipRead(blipId);
+    if (unreadElements.length === 0) {
+      const message = 'No unread blips to follow';
+      setNavigateStatus({ message, tone: 'info' });
+      toast(message, 'info');
+      setNavigating(false);
+      return;
+    }
+    const target = unreadElements[0] as HTMLElement;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const blipId = target.getAttribute('data-blip-id');
+    if (blipId) {
+      try {
+        await unreadState?.markBlipRead(blipId);
+      } catch {
+        const message = 'Follow-the-Green failed, please refresh the wave';
+        setNavigateStatus({ message, tone: 'error' });
+        toast(message, 'error');
       }
     }
+    setNavigating(false);
   };
 
   return (
@@ -48,6 +66,10 @@ export function RightToolsPanel({ isAuthed, unreadState }: RightToolsPanelProps)
             <FollowTheGreen 
               unreadCount={unreadCount}
               onNavigate={handleFollowGreen}
+              disabled={collapsed || unreadCount === 0 || navigating}
+              busy={navigating}
+              statusMessage={navigateStatus?.message ?? null}
+              statusTone={navigateStatus?.tone ?? 'info'}
             />
           </div>
           
