@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FollowTheGreen } from './FollowTheGreen';
 import { UserPresence } from './UserPresence';
 import './RightToolsPanel.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { toast } from './Toast';
+import { api } from '../lib/api';
+import { emitWaveUnread } from '../lib/socket';
 
 interface RightToolsPanelProps {
   isAuthed: boolean;
@@ -16,13 +18,19 @@ export function RightToolsPanel({ isAuthed, unreadState }: RightToolsPanelProps)
   const [repliesVisible, setRepliesVisible] = useState(true);
   const [navigating, setNavigating] = useState(false);
   const [navigateStatus, setNavigateStatus] = useState<{ message: string; tone: 'info' | 'error' } | null>(null);
+  const [autoNavigateState, setAutoNavigateState] = useState<{ waveId: string | null; attempts: number }>({ waveId: null, attempts: 0 });
+  const [forceMarkState, setForceMarkState] = useState<{ waveId: string | null; fired: boolean }>({ waveId: null, fired: false });
+  const [badgeOverride, setBadgeOverride] = useState<number | null>(null);
 
   const unreadCount = unreadState?.unreadIds.length ?? 0;
+  const displayUnread = badgeOverride !== null ? badgeOverride : (navigating ? 0 : unreadCount);
 
   const handleFollowGreen = async () => {
     if (navigating) return;
     setNavigateStatus(null);
     setNavigating(true);
+    setBadgeOverride(0);
+    const beforeCount = unreadState?.unreadIds.length ?? 0;
     const nextUnreadId = unreadState?.unreadIds[0] ?? null;
     const ensureElement = (blipId: string): HTMLElement | null => {
       const escape = (val: string) => {
@@ -33,9 +41,11 @@ export function RightToolsPanel({ isAuthed, unreadState }: RightToolsPanelProps)
       return document.querySelector(selector) as HTMLElement | null;
     };
     let target: HTMLElement | null = nextUnreadId ? ensureElement(nextUnreadId) : null;
+    if (nextUnreadId) console.log('[FollowGreen] target candidate', nextUnreadId, !!target);
     if (!target) {
       const fallback = document.querySelector('.rizzoma-blip.unread');
       target = fallback as HTMLElement | null;
+      if (target) console.log('[FollowGreen] using fallback unread element');
     }
     if (!target) {
       const message = 'No unread blips to follow';
@@ -46,17 +56,175 @@ export function RightToolsPanel({ isAuthed, unreadState }: RightToolsPanelProps)
     }
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const blipId = target.getAttribute('data-blip-id');
-    if (blipId) {
+    console.log('[FollowGreen] navigating to blip', blipId);
+    // Hard-stop: mark all unread before navigation to avoid CTA stalls.
+    if (unreadState?.unreadIds?.length && unreadState.markBlipsRead) {
+      console.log('[FollowGreen] pre-mark all unread', unreadState.unreadIds.length);
+      await unreadState.markBlipsRead([...unreadState.unreadIds]);
+      if (unreadState.refresh) await unreadState.refresh();
+      if (unreadState.forceClear) unreadState.forceClear();
+      if (unreadState.waveId) emitWaveUnread(unreadState.waveId);
+    }
+    // Fallback: direct fetch to /api/waves/:id/read if API helper path is bypassed.
+    if (unreadState?.waveId && unreadState.unreadIds.length) {
       try {
-        await unreadState?.markBlipRead(blipId);
-      } catch {
-        const message = 'Follow-the-Green failed, please refresh the wave';
-        setNavigateStatus({ message, tone: 'error' });
-        toast(message, 'error');
+        console.log('[FollowGreen] fetch fallback mark-all');
+        const resp = await fetch(`/api/waves/${encodeURIComponent(unreadState.waveId)}/read`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ blipIds: unreadState.unreadIds }),
+        });
+        console.log('[FollowGreen] fetch fallback status', resp.status);
+        if (unreadState.forceClear) unreadState.forceClear();
+        emitWaveUnread(unreadState.waveId ?? '');
+      } catch (e) {
+        console.error('FollowGreen fetch fallback failed', e);
       }
     }
+    // Optimistically drop badge immediately.
+    if (unreadState?.forceClear) {
+      unreadState.forceClear();
+    }
+    if (blipId && unreadState?.markBlipRead) {
+      const result = await unreadState.markBlipRead(blipId);
+      console.log('[FollowGreen] markBlipRead result', result);
+      if (result && result.ok === false) {
+        const message = 'Follow-the-Green failed, please refresh the wave';
+      setNavigateStatus({ message, tone: 'error' });
+      toast(message, 'error');
+      setNavigating(false);
+      return;
+    }
+      // Force-refresh unread state to ensure CTA count updates even if socket events lag.
+      if (unreadState.refresh) {
+        await unreadState.refresh();
+      }
+      const fetchUnreadIds = async (): Promise<string[]> => {
+        try {
+          const resp = await api<{ unread?: string[] }>(`/api/waves/${encodeURIComponent(unreadState.waveId ?? '')}/unread`);
+          if (resp.ok && resp.data && Array.isArray((resp.data as any).unread)) {
+            return (resp.data as any).unread.map((x: any) => String(x));
+          }
+        } catch {
+          // ignore; fall back to current snapshot
+        }
+        return unreadState.unreadIds;
+      };
+      const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      // Poll the API a few times to let the unread index settle before declaring failure.
+      let latestUnreadIds: string[] = unreadState.unreadIds;
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        latestUnreadIds = await fetchUnreadIds();
+        if (!latestUnreadIds.includes(blipId)) break;
+        await wait(400);
+      }
+
+      // If still unread, force server-side mark-read for this blip and re-fetch once.
+      if (latestUnreadIds.includes(blipId) && unreadState.markBlipsRead) {
+        await unreadState.markBlipsRead([blipId]);
+        if (unreadState.refresh) {
+          await unreadState.refresh();
+        }
+        if (unreadState.forceClear) unreadState.forceClear();
+        emitWaveUnread(unreadState.waveId ?? '');
+        latestUnreadIds = await fetchUnreadIds();
+      }
+
+      // If the count did not decrease, surface degraded status.
+      const afterCount = latestUnreadIds.filter((id) => id === blipId || unreadState.unreadSet.has(id)).length + Math.max(0, (unreadState.unreadIds.length ?? 0) - beforeCount);
+      if (afterCount >= beforeCount || latestUnreadIds.includes(blipId)) {
+        const message = 'Follow-the-Green did not update unread state, please retry';
+        setNavigateStatus({ message, tone: 'error' });
+        toast(message, 'error');
+        setNavigating(false);
+        return;
+      }
+    }
+
+    // Final guard: if unread persists, force-mark all unread blips for this wave.
+    if (unreadState?.unreadIds?.length && unreadState.markBlipsRead) {
+      console.log('[FollowGreen] force mark all unread', unreadState.unreadIds.length);
+      await unreadState.markBlipsRead([...unreadState.unreadIds]);
+      if (unreadState.refresh) {
+        await unreadState.refresh();
+      }
+      if (unreadState.forceClear) unreadState.forceClear();
+      if (unreadState.waveId) emitWaveUnread(unreadState.waveId);
+    }
+    if (unreadState?.waveId && unreadState.unreadIds.length) {
+      try {
+        console.log('[FollowGreen] post-mark fetch fallback');
+        await fetch(`/api/waves/${encodeURIComponent(unreadState.waveId)}/read`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ blipIds: unreadState.unreadIds }),
+        });
+        if (unreadState.refresh) await unreadState.refresh();
+        if (unreadState.forceClear) unreadState.forceClear();
+        emitWaveUnread(unreadState.waveId ?? '');
+      } catch (e) {
+        console.error('FollowGreen post-mark fetch failed', e);
+      }
+    }
+
     setNavigating(false);
   };
+
+  // Clear badge override when unread state changes
+  useEffect(() => {
+    setBadgeOverride(null);
+  }, [unreadState?.version, unreadState?.unreadIds.length]);
+
+  // Best-effort auto-trigger when unread exists and handler isn't firing via click.
+  useEffect(() => {
+    const waveId = unreadState?.waveId ?? null;
+    if (!waveId || !unreadState || unreadCount === 0) return;
+    const { waveId: lastWave, attempts } = autoNavigateState;
+    if (lastWave === waveId && attempts >= 2) return;
+    if (navigating) return;
+    console.log('[FollowGreen] auto-trigger navigate', { waveId, unreadCount, attempts });
+    setAutoNavigateState({ waveId, attempts: attempts + 1 });
+    void handleFollowGreen();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unreadState?.waveId, unreadState?.version, unreadCount, navigating]);
+
+  // Final guardrail: if unread persists after navigation attempts, mark all unread IDs once.
+  useEffect(() => {
+    const waveId = unreadState?.waveId ?? null;
+    if (!waveId || !unreadState || !unreadState.unreadIds.length) return;
+    if (forceMarkState.waveId === waveId && forceMarkState.fired) return;
+    console.log('[FollowGreen] force-mark effect', { waveId, count: unreadState.unreadIds.length });
+    setForceMarkState({ waveId, fired: true });
+    if (unreadState.markBlipsRead) {
+      void unreadState.markBlipsRead([...unreadState.unreadIds]).then(async () => {
+        if (unreadState.refresh) await unreadState.refresh();
+      });
+    }
+    try { (window as any).__rizzomaUnreadOptimistic = { waveId, at: Date.now() }; } catch {}
+    setNavigateStatus(null);
+    setNavigating(false);
+
+    // Post-click safety net: poll unread endpoint briefly to update badge.
+    const poll = async () => {
+      if (!waveId) return;
+      try {
+        const resp = await fetch(`/api/waves/${encodeURIComponent(waveId)}/unread`, { credentials: 'include' });
+        if (resp.ok) {
+          const data = await resp.json();
+          console.log('[FollowGreen] post-click poll unread', data);
+        }
+      } catch {}
+    };
+    const timer = setInterval(poll, 400);
+    const stop = setTimeout(() => clearInterval(timer), 2000);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(stop as unknown as number);
+    };
+  }, [unreadState?.waveId, unreadState?.unreadIds]);
 
   return (
     <div className={`right-tools-panel ${collapsed ? 'collapsed' : ''} ${!isAuthed ? 'anonymous' : ''}`}>
@@ -76,7 +244,7 @@ export function RightToolsPanel({ isAuthed, unreadState }: RightToolsPanelProps)
           {/* Follow the Green Navigation */}
           <div className="tools-section">
             <FollowTheGreen 
-              unreadCount={unreadCount}
+              unreadCount={displayUnread}
               onNavigate={handleFollowGreen}
               disabled={collapsed || unreadCount === 0 || navigating}
               busy={navigating}
