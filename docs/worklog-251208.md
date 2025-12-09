@@ -159,3 +159,6 @@
 ## 2025-12-09 (perf harness sanity)
 - Updated `perf-harness.mjs` to use `parentId: null` for blip creation and to load the modern topic route (`#/topic/:id?layout=rizzoma`).
 - Ran `RIZZOMA_PERF_BLIPS=200 FEAT_ALL=1 node perf-harness.mjs` with dist server + Vite (memory session). Result: Time to First Render 2173.8ms, FCP 260ms, memory ~38MB, rendered 101/200 blips (benchmark marked PASS). Metrics saved under `snapshots/perf/metrics-1765300707079.json` with screenshot `snapshots/perf/render-1765300707079.png`.
+
+## 2025-12-09 (health tests)
+- Ran `npm run test:health` → pass (server.health, inline comments health, uploads edgecases); logs show expected unauthenticated/virus-scan warnings during tests.
