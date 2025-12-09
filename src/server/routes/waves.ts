@@ -69,8 +69,11 @@ router.get('/:id', async (req, res) => {
     }
     // fetch blips (works for both modern and legacy data)
     await createIndex(['type', 'waveId', 'createdAt'], 'idx_blip_wave_createdAt').catch(() => undefined);
-    const r = await find<Blip>({ type: 'blip', waveId: id }, { limit: 5000, sort: [{ createdAt: 'asc' }] }).catch(async () => {
-      return find<Blip>({ type: 'blip', waveId: id }, { limit: 5000 });
+    const r = await find<Blip>(
+      { type: 'blip', waveId: id },
+      { limit: 20000, sort: [{ createdAt: 'asc' }] },
+    ).catch(async () => {
+      return find<Blip>({ type: 'blip', waveId: id }, { limit: 20000 });
     });
     let blips = (r.docs || []).map((b) => ({ ...b, createdAt: (b as any).createdAt || (b as any).contentTimestamp || 0 }));
     // If no blips found try legacy view with include_docs
@@ -195,23 +198,24 @@ router.post('/:waveId/blips/:blipId/read', async (req, res) => {
   const waveId = req.params.waveId;
   const blipId = req.params.blipId;
   try {
+    try { console.log('[waves] mark one read', { waveId, blipId, userId }); } catch {}
     const keyId = `read:user:${userId}:wave:${waveId}:blip:${blipId}`;
-    const now = Date.now();
-    const existing = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId, blipId }).catch(() => null);
-    if (existing && existing._id && existing._rev) {
-      const r = await updateDoc({ ...existing, readAt: now } as any);
-      try { emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); } catch {}
-      res.json({ ok: true, id: r.id, rev: r.rev, readAt: now });
-      return;
+      const now = Date.now();
+      const existing = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId, blipId }).catch(() => null);
+      if (existing && existing._id && existing._rev) {
+        const r = await updateDoc({ ...existing, readAt: now } as any);
+        try { console.log('[waves] emit wave:unread (single)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
+        res.json({ ok: true, id: r.id, rev: r.rev, readAt: now });
+        return;
+      }
+      const doc: BlipRead = { _id: keyId, type: 'read', userId, waveId, blipId, readAt: now };
+      const r = await insertDoc(doc as any);
+      try { console.log('[waves] emit wave:unread (single insert)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
+      res.status(201).json({ ok: true, id: r.id, rev: r.rev, readAt: now });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'read_mark_error', requestId: (req as any)?.id });
     }
-    const doc: BlipRead = { _id: keyId, type: 'read', userId, waveId, blipId, readAt: now };
-    const r = await insertDoc(doc as any);
-    try { emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); } catch {}
-    res.status(201).json({ ok: true, id: r.id, rev: r.rev, readAt: now });
-  } catch (e: any) {
-    res.status(500).json({ error: e?.message || 'read_mark_error', requestId: (req as any)?.id });
-  }
-});
+  });
 
 // POST /api/waves/:id/read — mark multiple blips as read { blipIds: [] }
 router.post('/:id/read', async (req, res) => {
@@ -221,6 +225,7 @@ router.post('/:id/read', async (req, res) => {
   const id = req.params.id;
   const blipIds = Array.isArray((req.body || {}).blipIds) ? (req.body as any).blipIds.map((s: any) => String(s)) : [];
   const results: Array<{ id: string; ok: boolean }> = [];
+   try { console.log('[waves] mark many read', { waveId: id, count: blipIds.length, userId }); } catch {}
   for (const bid of blipIds) {
     try {
       const keyId = `read:user:${userId}:wave:${id}:blip:${bid}`;
@@ -228,12 +233,12 @@ router.post('/:id/read', async (req, res) => {
       const existing = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId: id, blipId: bid }).catch(() => null);
       if (existing && existing._id && existing._rev) {
         const r = await updateDoc({ ...existing, readAt: now } as any);
-        if (r?.ok) { results.push({ id: bid, ok: true }); try { emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); } catch {} }
+        if (r?.ok) { results.push({ id: bid, ok: true }); try { console.log('[waves] emit wave:unread (bulk update)', { waveId: id, blipId: bid, userId }); emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); emitEvent('wave:unread', { waveId: id, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); } }
         else results.push({ id: bid, ok: false });
         continue;
       }
       const r = await insertDoc({ _id: keyId, type: 'read', userId, waveId: id, blipId: bid, readAt: now } as any);
-      if (r?.ok) { results.push({ id: bid, ok: true }); try { emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); } catch {} } else results.push({ id: bid, ok: false });
+      if (r?.ok) { results.push({ id: bid, ok: true }); try { console.log('[waves] emit wave:unread (bulk insert)', { waveId: id, blipId: bid, userId }); emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); emitEvent('wave:unread', { waveId: id, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); } } else results.push({ id: bid, ok: false });
     } catch {
       results.push({ id: bid, ok: false });
     }
