@@ -152,3 +152,6 @@
   - `npm run test:toolbar-inline` passed (snapshots `snapshots/toolbar-inline/1765298097444-*-final.png`).
   - `npm run test:follow-green` (desktop + mobile profiles) passed (snapshots `snapshots/follow-the-green/1765298128125-desktop-all-read.png` and `...-mobile-all-read.png`, console logs saved alongside).
 - Stopped servers after runs (killed :8000/:3000 listeners).
+
+## 2025-12-09 (targeted test)
+- Ran `npm test -- --run src/tests/client.getUserMediaAdapter.test.ts` → pass (8 tests). No code changes; ensures getUserMedia adapter coverage still green post-push.
