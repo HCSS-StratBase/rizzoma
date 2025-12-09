@@ -144,3 +144,11 @@
   - `npm run test:follow-green` now executes desktop and mobile sequentially; both passed. Snapshots: `snapshots/follow-the-green/1765296401439-desktop-all-read.png` and `snapshots/follow-the-green/1765296401439-mobile-all-read.png` with per-profile console logs.
   - `npm run test:toolbar-inline` rerun afterward; still green across all browsers with snapshots `snapshots/toolbar-inline/1765296441627-*-final.png`.
 - Stopped background servers after runs (PIDs 10385/10386/10421/10434).
+
+## 2025-12-09 (post-push hygiene rerun)
+- Time: 2025-12-09T17:07:54+01:00. Branch still `feature/rizzoma-core-features`.
+- Ran `npm run lint:branch-context` → pass.
+- Reran smokes with FEAT_ALL=1 on server + Vite:
+  - `npm run test:toolbar-inline` passed (snapshots `snapshots/toolbar-inline/1765298097444-*-final.png`).
+  - `npm run test:follow-green` (desktop + mobile profiles) passed (snapshots `snapshots/follow-the-green/1765298128125-desktop-all-read.png` and `...-mobile-all-read.png`, console logs saved alongside).
+- Stopped servers after runs (killed :8000/:3000 listeners).
