@@ -39,5 +39,13 @@ rizzoma.bundle
 # Playwright screenshots
 .playwright-mcp/
 
+# Snapshots (default ignored; explicitly include latest published artifacts)
+snapshots/**
+!snapshots/**/.gitkeep
+!snapshots/follow-the-green/1765298128125-*.png
+!snapshots/follow-the-green/1765296401439-*.png
+!snapshots/toolbar-inline/1765298097444-*.png
+!snapshots/perf/**
+
 # Development logs
 *.log
