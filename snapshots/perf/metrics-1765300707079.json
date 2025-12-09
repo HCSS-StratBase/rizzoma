@@ -1,0 +1,25 @@
+{
+  "timestamp": 1765300707079,
+  "waveId": "c9d8c40772e6dc531dc1ee5c8307afc4",
+  "expectedBlips": 200,
+  "actualBlips": 101,
+  "performance": {
+    "timeToFirstRender": 2173.8,
+    "firstContentfulPaint": 260,
+    "domComplete": 216.5,
+    "loadComplete": 216.5,
+    "memoryUsage": {
+      "used": 38,
+      "total": 58
+    },
+    "appMetrics": {}
+  },
+  "url": "http://localhost:3000#/topic/c9d8c40772e6dc531dc1ee5c8307afc4?layout=rizzoma",
+  "screenshot": "/mnt/c/Rizzoma/snapshots/perf/render-1765300707079.png",
+  "startedAt": 1765300728074,
+  "benchmarks": {
+    "firstRenderTarget": 3000,
+    "memoryTarget": 100,
+    "passed": true
+  }
+}
