@@ -171,3 +171,7 @@
 - Time: 2025-12-09T18:58:49+01:00. Branch `feature/rizzoma-core-features`.
 - Added `src/client/lib/performance.d.ts` and improved perf metrics computation (no in-place sort) to support PerfMonitor consumers.
 - Adjusted `.gitignore` to keep snapshots ignored by default while tracking latest Playwright artifacts; latest toolbar/follow-green snapshots added.
+
+## 2025-12-09 (perf harness 1k blips + budget)
+- Ran `RIZZOMA_PERF_BLIPS=1000 FEAT_ALL=1 node perf-harness.mjs` (server: memory session, Vite FEAT_ALL=1 on :3000). Result: TTF 3299.2ms, FCP 352ms, memory ~33MB, blips rendered 101/1000 → benchmark FAIL (TTF over budget and blip render count too low). Artifacts: `snapshots/perf/metrics-1765303290416.json`, `snapshots/perf/render-1765303290416.png`.
+- Budget check (`PERF_BUDGET_EXPECTED_BLIPS=1000 PERF_BUDGET_MIN_RATIO=0.5 node scripts/perf-budget.mjs`) now warns: 200-blip run passes, 1000-blip run fails on TTF and render count. Need follow-up to diagnose render throughput/virtualization and TTF >3s at 1k.
