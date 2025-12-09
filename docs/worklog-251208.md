@@ -162,3 +162,7 @@
 
 ## 2025-12-09 (health tests)
 - Ran `npm run test:health` → pass (server.health, inline comments health, uploads edgecases); logs show expected unauthenticated/virus-scan warnings during tests.
+
+## 2025-12-09 (perf budget check)
+- Added `scripts/perf-budget.mjs` (env-tunable budgets for TTF/FCP/memory/blip count; reads latest `snapshots/perf/metrics-*.json`).
+- Ran `PERF_BUDGET_EXPECTED_BLIPS=200 PERF_BUDGET_MIN_RATIO=0.5 node scripts/perf-budget.mjs` against latest run → all budgets PASS (TTF 2173.8ms, FCP 260ms, memory 38MB, blips 101/200).
