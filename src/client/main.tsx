@@ -14,7 +14,12 @@ import { GreenNavigation } from './components/GreenNavigation';
 import { RizzomaLayout } from './components/RizzomaLayout';
 import { RizzomaLanding } from './components/RizzomaLanding';
 import { FEATURES } from '@shared/featureFlags';
+import { MobileProvider } from './contexts/MobileContext';
+import { useServiceWorker, useInstallPrompt } from './hooks/useServiceWorker';
+import { useOfflineToast } from './hooks/useOfflineStatus';
 import './RizzomaApp.css';
+import './styles/breakpoints.css';
+import './styles/view-transitions.css';
 
 const PERF_SKIP_KEY = 'rizzoma:perf:skipSidebarTopics';
 const PERF_AUTO_EXPAND_KEY = 'rizzoma:perf:autoExpandRoot';
@@ -77,8 +82,19 @@ export function App() {
   const params = new URLSearchParams(window.location.search);
   // Consider any layout param or topic/wave route as opting into the Rizzoma shell (useful for deep-links in dev)
   const useRizzomaLayoutParam = params.get('layout') === 'rizzoma' || params.has('layout');
-  
+
   const [checkingAuth, setCheckingAuth] = useState(!perfMode);
+
+  // PWA and offline hooks
+  const { isActive: swActive, updateAvailable, skipWaiting } = useServiceWorker({
+    onUpdateAvailable: () => {
+      window.dispatchEvent(new CustomEvent('toast', {
+        detail: { message: 'App update available. Click to refresh.', type: 'info', action: skipWaiting },
+      }));
+    },
+  });
+  const { canInstall, promptInstall } = useInstallPrompt();
+  useOfflineToast();
 
   // bootstrap auth state
   useEffect(() => {
@@ -198,7 +214,11 @@ export function App() {
 
 const container = document.getElementById('root');
 if (container) {
-  createRoot(container).render(<App />);
+  createRoot(container).render(
+    <MobileProvider>
+      <App />
+    </MobileProvider>
+  );
 }
 
 export default App;

@@ -9,6 +9,25 @@
 - `TESTING_STATUS.md` is a log, not a guarantee—always rerun targeted suites before merges.
 
 ## Recent fixes (2026-01-18)
+- **Mobile Modernization (PWA)**: Implemented complete mobile infrastructure with zero new dependencies:
+  - `src/client/styles/breakpoints.css` - CSS variables for responsive breakpoints (320/480/768/1024/1200)
+  - `src/client/hooks/useMediaQuery.ts` - Media query hooks (`useIsMobile`, `useIsTablet`, etc.)
+  - `src/client/contexts/MobileContext.tsx` - React context for mobile state
+  - `src/client/components/mobile/BottomSheet.tsx` - Slide-up bottom sheet component
+  - `src/client/components/mobile/BottomSheetMenu.tsx` - Menu variant integrated with BlipMenu
+  - `public/manifest.json` + `public/sw.js` - PWA manifest and service worker
+  - `public/icons/*.svg` - 8 SVG icons (72-512px)
+  - `src/client/hooks/useSwipe.ts` - Swipe gesture detection
+  - `src/client/hooks/usePullToRefresh.ts` - Pull-to-refresh with visual indicator
+  - `src/client/hooks/useViewTransition.ts` - View Transitions API wrapper
+  - `src/client/styles/view-transitions.css` - Navigation transition animations
+  - `src/client/lib/offlineQueue.ts` - Offline mutation queue with retry logic
+  - `src/client/hooks/useOfflineStatus.ts` - Online/offline state hooks
+  - `src/client/hooks/useServiceWorker.ts` - SW registration and updates
+  - Updated `main.tsx` with MobileProvider wrapper, SW registration
+  - Updated `RizzomaLayout.tsx` with mobile view switching, swipe navigation
+  - Updated `BlipMenu.tsx` with BottomSheetMenu integration
+  - Build verified: 612 modules transformed, production build successful
 - **Mobile responsive CSS**: Added responsive breakpoints for viewports <500px in `RizzomaLayout.css`, `RightToolsPanel.css`, `BlipMenu.css`, and `RizzomaTopicDetail.css`. On mobile: sidebars hidden, content area full-width, toolbar buttons larger with touch-friendly spacing.
 - **Mobile CI smoke tests**: Added mobile profile to `browser-smokes` job (`RIZZOMA_E2E_PROFILES=mobile`); mobile snapshots uploaded as `follow-the-green-mobile/`.
 - **N+1 API calls eliminated in perf mode**: Added `isPerfMode` check to visibility preference useEffect in `RizzomaBlip.tsx`. Eliminated 20+ individual `/inline-comments-visibility` API calls per page load.

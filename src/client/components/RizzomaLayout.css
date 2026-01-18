@@ -164,43 +164,80 @@
   }
 }
 
+/* Mobile Layout - Progressive Enhancement */
+
+/* Mobile hidden utility */
+.mobile-hidden {
+  display: none !important;
+}
+
 /* Mobile: Hide sidebars, full-width content */
-@media (max-width: 500px) {
-  .rizzoma-layout {
+@media (max-width: 768px) {
+  .rizzoma-layout.mobile-layout {
     flex-direction: column;
   }
 
-  .navigation-container {
+  .mobile-layout .navigation-container {
     display: none;
   }
 
-  .tabs-container {
-    display: none;
-  }
-
-  .wave-container {
+  /* Show tabs-container as full width when on list view */
+  .mobile-layout .tabs-container {
     width: 100%;
     min-width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-layout .tabs-container.mobile-hidden {
+    display: none !important;
+  }
+
+  /* Show wave-container as full width when on content view */
+  .mobile-layout .wave-container {
+    width: 100%;
+    min-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-layout .wave-container.mobile-hidden {
+    display: none !important;
+  }
+
+  /* Hide right panel on mobile */
+  .mobile-layout .right-tools-panel {
+    display: none;
   }
 
   /* Mobile header for back navigation */
   .mobile-header {
     display: flex;
     height: 48px;
+    min-height: 48px;
     background: #2c3e50;
     color: white;
     align-items: center;
     padding: 0 12px;
     gap: 12px;
+    flex-shrink: 0;
+    /* Safe area for notched devices */
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   .mobile-header .back-btn {
     background: none;
     border: none;
     color: white;
-    font-size: 20px;
+    font-size: 24px;
     cursor: pointer;
     padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .mobile-header .title {
@@ -216,15 +253,65 @@
     background: none;
     border: none;
     color: white;
-    font-size: 20px;
+    font-size: 24px;
     cursor: pointer;
     padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Touch-friendly adjustments */
+  .mobile-layout .tabs-content {
+    padding: 4px;
+  }
+
+  .mobile-layout .tabs-header {
+    padding: 0 12px;
+  }
+
+  /* Hide collapse button on mobile - use swipe instead */
+  .mobile-layout .collapse-btn {
+    display: none;
   }
 }
 
 /* Ensure mobile header is hidden on desktop */
-@media (min-width: 501px) {
+@media (min-width: 769px) {
   .mobile-header {
-    display: none;
+    display: none !important;
+  }
+
+  .mobile-hidden {
+    display: flex !important;
+  }
+}
+
+/* Transition animations for mobile view switching */
+.mobile-layout .tabs-container,
+.mobile-layout .wave-container {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+/* Slide transition when switching views */
+.mobile-layout.mobile-view-list .wave-container:not(.mobile-hidden) {
+  transform: translateX(100%);
+  position: absolute;
+  inset: 0;
+}
+
+.mobile-layout.mobile-view-content .tabs-container:not(.mobile-hidden) {
+  transform: translateX(-100%);
+  position: absolute;
+  inset: 0;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-layout .tabs-container,
+  .mobile-layout .wave-container {
+    transition: none;
   }
 }

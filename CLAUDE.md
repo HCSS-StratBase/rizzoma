@@ -18,6 +18,15 @@ This file is a lightweight status guide for the active branch. Older "phase" tim
 5) Finish CoffeeScript/legacy cleanup and dependency upgrades; decide legacy static assets.
 
 ## Recently Completed Highlights
+- **Mobile modernization (2026-01-18)**: Implemented complete mobile PWA infrastructure with zero new dependencies:
+  - Responsive breakpoints system (`src/client/styles/breakpoints.css`)
+  - Mobile context and hooks (`useMediaQuery`, `useIsMobile`, `useMobileContext`)
+  - BottomSheet component for mobile menus (`src/client/components/mobile/`)
+  - PWA manifest, service worker, and SVG icons
+  - Gesture hooks (`useSwipe`, `usePullToRefresh`)
+  - View Transitions API wrapper (`useViewTransition`)
+  - Offline queue with mutation retry (`offlineQueue.ts`, `useOfflineStatus`)
+  - Mobile layout with swipe navigation in `RizzomaLayout`
 - **N+1 API calls eliminated (2026-01-18)**: Perf mode now skips individual `/inline-comments-visibility` calls (was 20+ calls, now 0).
 - **CI perf budgets (2026-01-18)**: Added `perf-budgets` job to CI pipeline; set `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to fail on budget violations.
 - **Perf harness timing fix (2026-01-18)**: Harness now waits for all labels to render before counting.

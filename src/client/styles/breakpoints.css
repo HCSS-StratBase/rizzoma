@@ -1,0 +1,104 @@
+/**
+ * Breakpoint System - CSS Custom Properties
+ *
+ * Standard breakpoints for responsive design:
+ * - xs: 320px  (small phones)
+ * - sm: 480px  (large phones)
+ * - md: 768px  (tablets)
+ * - lg: 1024px (small desktops)
+ * - xl: 1200px (large desktops)
+ */
+
+:root {
+  /* Breakpoint values */
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1200px;
+
+  /* Common spacing that adapts to screen size */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Touch target sizes (minimum 44px for accessibility) */
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+
+  /* Safe areas for notched devices */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+
+  /* Animation durations */
+  --animation-fast: 150ms;
+  --animation-normal: 300ms;
+  --animation-slow: 500ms;
+
+  /* Easing curves */
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Mobile-first: Default styles apply to all screens */
+
+/* Small phones and up (xs: 320px+) */
+@media (min-width: 320px) {
+  :root {
+    --content-padding: var(--spacing-sm);
+    --panel-width: 100%;
+  }
+}
+
+/* Large phones and up (sm: 480px+) */
+@media (min-width: 480px) {
+  :root {
+    --content-padding: var(--spacing-md);
+  }
+}
+
+/* Tablets and up (md: 768px+) */
+@media (min-width: 768px) {
+  :root {
+    --content-padding: var(--spacing-lg);
+    --panel-width: 320px;
+  }
+}
+
+/* Small desktops and up (lg: 1024px+) */
+@media (min-width: 1024px) {
+  :root {
+    --content-padding: var(--spacing-xl);
+    --panel-width: 360px;
+  }
+}
+
+/* Large desktops (xl: 1200px+) */
+@media (min-width: 1200px) {
+  :root {
+    --panel-width: 400px;
+  }
+}
+
+/* Touch device overrides */
+@media (hover: none) and (pointer: coarse) {
+  :root {
+    /* Ensure touch-friendly sizing on touch devices */
+    --button-min-height: var(--touch-target-min);
+    --input-min-height: var(--touch-target-min);
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --animation-fast: 0ms;
+    --animation-normal: 0ms;
+    --animation-slow: 0ms;
+  }
+}

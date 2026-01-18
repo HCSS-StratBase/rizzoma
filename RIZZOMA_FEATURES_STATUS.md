@@ -1,7 +1,7 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
 ## Summary
-Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests. Follow-the-Green now has deterministic Vitest coverage (CTA happy/degraded paths), a multi-user Playwright smoke (multi unread + forced mark-read failure + mobile viewport), and CI gating via the `browser-smokes` GitHub job (with snapshots/artifacts). Uploads run through MIME sniffing + optional ClamAV, optionally stream to S3/MinIO, and the client surfaces cancel/retry/preview UI. A perf harness (`npm run perf:harness`) seeds 5k-blip waves and captures time-to-first-render screenshots/metrics under `snapshots/perf/`. Health/inline-comments/uploads checks now run in CI via the `health-checks` job (`npm run test:health`). **Recent performance fixes (2026-01-17)**: Blips API query optimized by adding sort clause to force CouchDB index usage (18s → 29ms, 600x improvement); bcrypt rounds reduced to 2 in dev/test mode for faster auth (~6s → ~100ms per hash). **Perf harness fixes (2026-01-18)**: N+1 API calls eliminated in perf mode (20+ individual `/inline-comments-visibility` calls → 0); timing fix ensures all labels render before counting; CI `perf-budgets` job added with optional budget enforcement. Mobile viewport validation remains outstanding; rerun the recorded tests before trusting this snapshot.
+Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests. Follow-the-Green now has deterministic Vitest coverage (CTA happy/degraded paths), a multi-user Playwright smoke (multi unread + forced mark-read failure + mobile viewport), and CI gating via the `browser-smokes` GitHub job (with snapshots/artifacts). Uploads run through MIME sniffing + optional ClamAV, optionally stream to S3/MinIO, and the client surfaces cancel/retry/preview UI. A perf harness (`npm run perf:harness`) seeds 5k-blip waves and captures time-to-first-render screenshots/metrics under `snapshots/perf/`. Health/inline-comments/uploads checks now run in CI via the `health-checks` job (`npm run test:health`). **Mobile modernization (2026-01-18)**: Implemented complete mobile PWA infrastructure with zero new dependencies - responsive breakpoints, MobileContext, BottomSheet component, PWA manifest/SW/icons, gesture hooks (swipe, pull-to-refresh), View Transitions API, offline mutation queue with retry logic, and mobile view switching in RizzomaLayout. **Recent performance fixes (2026-01-17)**: Blips API query optimized by adding sort clause to force CouchDB index usage (18s → 29ms, 600x improvement); bcrypt rounds reduced to 2 in dev/test mode for faster auth (~6s → ~100ms per hash). **Perf harness fixes (2026-01-18)**: N+1 API calls eliminated in perf mode (20+ individual `/inline-comments-visibility` calls → 0); timing fix ensures all labels render before counting; CI `perf-budgets` job added with optional budget enforcement. Mobile device validation on iPhone Safari/Chrome Android remains outstanding.
 
 ## ✅ Implemented Features
 
@@ -69,6 +69,36 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 ### Media adapter
 - **Modern getUserMedia adapter** - `src/static/js/getUserMediaAdapter.js` now normalizes constraints (including simple strings), prefers modern `mediaDevices.getUserMedia`, detects display media support, exposes permission status helpers and device enumeration, and retains legacy fallbacks. Covered by `src/tests/client.getUserMediaAdapter.test.ts`.
 
+### Mobile Modernization (PWA)
+- **Zero new dependencies** - All features use native browser APIs (Touch Events, Service Worker, View Transitions, localStorage)
+- **Responsive breakpoints** - CSS variables and hooks for consistent breakpoints (xs: 320px, sm: 480px, md: 768px, lg: 1024px, xl: 1200px)
+- **Mobile context** - `MobileProvider` wraps app, `useMobileContext()` provides isMobile/isTablet/isDesktop/isTouchDevice state
+- **BottomSheet component** - Slide-up mobile menu with swipe-to-dismiss, backdrop click, escape key, body scroll lock, safe area padding
+- **PWA installability** - Web manifest, service worker (cache-first for assets, network-first for API), 8 SVG icons, apple-touch-icon support
+- **Gesture hooks** - `useSwipe` (swipe detection with threshold/timeout), `usePullToRefresh` (with visual indicator), `useSwipeToDismiss`
+- **View Transitions** - `useViewTransition` wraps native View Transitions API with reduced-motion support, navigation transitions
+- **Offline support** - `offlineQueue` queues mutations when offline, auto-syncs on reconnect, max 3 retries, localStorage persistence; `useOfflineStatus` hook with toast notifications
+- **Mobile layout** - `RizzomaLayout` switches between list/content views on mobile with swipe navigation, mobile header with back button
+- **Touch optimization** - 44px minimum touch targets, touch-friendly button sizing
+- **Files created:**
+  - `src/client/styles/breakpoints.css` - CSS variables
+  - `src/client/hooks/useMediaQuery.ts` - Breakpoint hooks
+  - `src/client/contexts/MobileContext.tsx` - Mobile context provider
+  - `src/client/components/mobile/BottomSheet.tsx` - Bottom sheet component
+  - `src/client/components/mobile/BottomSheet.css` - Bottom sheet styles
+  - `src/client/components/mobile/BottomSheetMenu.tsx` - Menu variant
+  - `src/client/components/mobile/BottomSheetMenu.css` - Menu styles
+  - `src/client/hooks/useSwipe.ts` - Swipe detection
+  - `src/client/hooks/usePullToRefresh.ts` - Pull-to-refresh
+  - `src/client/hooks/useViewTransition.ts` - View Transitions wrapper
+  - `src/client/styles/view-transitions.css` - Transition animations
+  - `src/client/hooks/useServiceWorker.ts` - SW registration
+  - `src/client/lib/offlineQueue.ts` - Offline mutation queue
+  - `src/client/hooks/useOfflineStatus.ts` - Online/offline hooks
+  - `public/manifest.json` - PWA manifest
+  - `public/sw.js` - Service worker
+  - `public/icons/*.svg` - App icons (72-512px)
+
 ### Permissions & Auth
 - `requireAuth` now guards topic/blip write endpoints, logs denied operations, and respects actual author IDs.
 - Rizzoma layout login flow uses the real `AuthPanel` modal instead of demo users.
@@ -89,7 +119,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Blip toolbar (read/edit, gear overflow, playback) | CoffeeKup toolbar with read/edit blocks, gear menu copy/paste reply/cursor, playback (`original-rizzoma-src/src/client/blip/menu/template.coffee`), playback menu/buttons (`original-rizzoma-src/src/client/playback/blip_menu.coffee`) | Modern toolbar in `src/client/components/blip/RizzomaBlip.tsx` + `RizzomaBlip.css`; Playwright `test-toolbar-inline-smoke.mjs` covers core buttons. Gear copy/paste variants and playback controls not yet reimplemented. |
 | Playback timeline/history | Playback wave view/models, calendar/fast-forward/back buttons (`original-rizzoma-src/src/client/playback/*`) | No modern playback timeline UI; feature not ported. |
 | Email notifications/invites | Notification utils/templates (`original-rizzoma-src/src/server/notification/utils.coffee`, mail assets under `original-rizzoma-src/src/static/img/mail/`) | Modern code lacks restored mail notifications/invites; SMTP/templates need port + tests. |
-| Mobile layout | Mobile blip index/view variants (`original-rizzoma-src/src/client/blip/index_mobile.coffee`, `view_mobile.coffee`) | Modern React layout is desktop-first; mobile unread/navigation/toolbar/inline-comment ergonomics unvalidated. |
+| Mobile layout | Mobile blip index/view variants (`original-rizzoma-src/src/client/blip/index_mobile.coffee`, `view_mobile.coffee`) | **Modernized**: PWA with responsive breakpoints, MobileContext, BottomSheet menus, gesture hooks (swipe/pull-to-refresh), View Transitions, offline queue, mobile view switching. Device validation on iPhone Safari/Chrome Android remains. |
 | Uploads pipeline | Legacy CoffeeScript uploads (simple storage, limited validation) | Modernized uploads: MIME sniffing, optional ClamAV, local/S3 (`src/server/routes/uploads.ts`); client cancel/retry/preview (`src/client/lib/upload.ts`, `RizzomaBlip`). Parity exceeds original. |
 | getUserMedia adapter | Legacy static adapter (`original-rizzoma/src/static/js/getUserMediaAdapter.js`) | Modern adapter with constraint normalization, display media detection, permission/device helpers + tests (`src/static/js/getUserMediaAdapter.js`, `src/tests/client.getUserMediaAdapter.test.ts`). |
 | Inline comments | CoffeeScript inline comments widgets/routes | Modern TipTap inline comments with server routes (`src/server/routes/inlineComments.ts`), UI in `RizzomaBlip`, degraded banners, tests (`client.inlineCommentsPopover.test.tsx`, health tests). |

@@ -302,3 +302,23 @@
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Mobile menu trigger button */
+.mobile-menu-btn {
+  font-size: 18px !important;
+  font-weight: bold;
+  padding: 4px 10px !important;
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .menu-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .done-btn,
+  .edit-btn {
+    min-width: 60px;
+  }
+}

@@ -1,0 +1,262 @@
+/**
+ * View Transitions Styles
+ *
+ * These styles define animations for the View Transitions API.
+ * They apply to ::view-transition pseudo-elements created by the browser.
+ */
+
+/* Opt-in to view transitions */
+@view-transition {
+  navigation: auto;
+}
+
+/* Default crossfade transition */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--animation-normal, 300ms);
+  animation-timing-function: var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+}
+
+/* Fade out old content */
+::view-transition-old(root) {
+  animation: fade-out var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+/* Fade in new content */
+::view-transition-new(root) {
+  animation: fade-in var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Navigation transitions - forward (push) */
+[data-nav-direction="forward"]::view-transition-old(root) {
+  animation: slide-out-left var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+[data-nav-direction="forward"]::view-transition-new(root) {
+  animation: slide-in-right var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+/* Navigation transitions - back (pop) */
+[data-nav-direction="back"]::view-transition-old(root) {
+  animation: slide-out-right var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+[data-nav-direction="back"]::view-transition-new(root) {
+  animation: slide-in-left var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+@keyframes slide-out-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-30%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(30%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(30%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-30%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Mobile slide transitions (full screen slides) */
+@media (max-width: 768px) {
+  [data-nav-direction="forward"]::view-transition-old(root) {
+    animation: mobile-slide-out-left var(--animation-normal, 300ms) var(--ease-out) forwards;
+  }
+
+  [data-nav-direction="forward"]::view-transition-new(root) {
+    animation: mobile-slide-in-right var(--animation-normal, 300ms) var(--ease-out) forwards;
+  }
+
+  [data-nav-direction="back"]::view-transition-old(root) {
+    animation: mobile-slide-out-right var(--animation-normal, 300ms) var(--ease-out) forwards;
+  }
+
+  [data-nav-direction="back"]::view-transition-new(root) {
+    animation: mobile-slide-in-left var(--animation-normal, 300ms) var(--ease-out) forwards;
+  }
+
+  @keyframes mobile-slide-out-left {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
+  @keyframes mobile-slide-in-right {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes mobile-slide-out-right {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes mobile-slide-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+}
+
+/* Cross-fade transition type */
+::view-transition-group(crossfade) {
+  animation-duration: var(--animation-fast, 150ms);
+}
+
+::view-transition-old(crossfade) {
+  animation: fade-out var(--animation-fast, 150ms) var(--ease-out) forwards;
+}
+
+::view-transition-new(crossfade) {
+  animation: fade-in var(--animation-fast, 150ms) var(--ease-out) forwards;
+}
+
+/* Scale transition for modals/sheets */
+::view-transition-old(modal) {
+  animation: scale-out var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+::view-transition-new(modal) {
+  animation: scale-in var(--animation-normal, 300ms) var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) forwards;
+}
+
+@keyframes scale-out {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Topic card transition */
+::view-transition-group(topic-card) {
+  animation-duration: var(--animation-normal, 300ms);
+}
+
+::view-transition-old(topic-card),
+::view-transition-new(topic-card) {
+  animation-timing-function: var(--ease-out);
+  /* Maintain aspect ratio during morph */
+  object-fit: cover;
+}
+
+/* Blip transition */
+::view-transition-group(blip) {
+  animation-duration: var(--animation-fast, 150ms);
+}
+
+/* Shared element transitions */
+[style*="view-transition-name"] {
+  will-change: transform;
+  contain: layout;
+}
+
+/* Reduced motion: disable all animations */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Still allow instant changes */
+  ::view-transition-old(root) {
+    display: none;
+  }
+
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+/* Debug mode - show transition groups */
+.debug-transitions ::view-transition-group(*) {
+  outline: 2px solid red;
+}
+
+.debug-transitions ::view-transition-old(*) {
+  outline: 2px dashed blue;
+}
+
+.debug-transitions ::view-transition-new(*) {
+  outline: 2px dashed green;
+}

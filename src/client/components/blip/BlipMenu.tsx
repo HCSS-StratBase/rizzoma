@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Editor } from '@tiptap/core';
 import { DEFAULT_BG_COLORS } from '@shared/constants/textFormatting';
+import { useMobileContextSafe } from '../../contexts/MobileContext';
+import { BottomSheetMenu, createBlipMenuItems } from '../mobile/BottomSheetMenu';
 import './BlipMenu.css';
 
 interface BlipMenuProps {
@@ -68,7 +70,12 @@ export function BlipMenu({
   });
   const [showBgPalette, setShowBgPalette] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const overflowRef = useRef<HTMLDivElement | null>(null);
+
+  // Mobile detection
+  const mobileContext = useMobileContextSafe();
+  const isMobile = mobileContext?.shouldUseMobileUI ?? false;
 
   // Track active marks to reflect current selection
   useEffect(() => {
@@ -101,6 +108,7 @@ export function BlipMenu({
       setShowBgPalette(false);
     }
     setShowOverflow(false);
+    setShowMobileMenu(false);
   }, [isEditing, isActive]);
 
   useEffect(() => {
@@ -169,6 +177,43 @@ export function BlipMenu({
       {inlineCommentsBannerMessage}
     </div>
   ) : null;
+
+  // Mobile menu items
+  const mobileMenuItems = createBlipMenuItems({
+    canEdit,
+    canComment,
+    isEditing,
+    areCommentsVisible,
+    collapseByDefault,
+    clipboardAvailable,
+    isUploading,
+    isSending,
+    isDeleting,
+    onStartEdit,
+    onFinishEdit,
+    onToggleComments,
+    onDelete,
+    onGetLink,
+    onToggleCollapseByDefault,
+    onCopyComment,
+    onPasteAsReply,
+    onPasteAtCursor,
+    onShowHistory,
+    onInsertAttachment,
+    onInsertImage,
+    onSend,
+  });
+
+  // Mobile menu component
+  const mobileMenu = (
+    <BottomSheetMenu
+      isOpen={showMobileMenu}
+      onClose={() => setShowMobileMenu(false)}
+      items={mobileMenuItems}
+      title={isEditing ? 'Edit Options' : 'Blip Options'}
+      data-testid="blip-mobile-menu"
+    />
+  );
 
   const renderOverflowItems = (mode: 'edit' | 'read') => (
     <div className="menu-dropdown-panel" role="menu">
@@ -481,8 +526,23 @@ export function BlipMenu({
               </button>
             </div>
           )}
+          {/* Mobile menu trigger */}
+          {isMobile && (
+            <div className="menu-group">
+              <button
+                className="menu-btn mobile-menu-btn"
+                onClick={() => setShowMobileMenu(true)}
+                title="More options"
+                type="button"
+                data-testid="blip-menu-mobile-trigger"
+              >
+                ≡
+              </button>
+            </div>
+          )}
         </div>
         {commentsBanner}
+        {mobileMenu}
       </div>
     );
   }
@@ -581,8 +641,22 @@ export function BlipMenu({
           </button>
           {showOverflow && renderOverflowItems('read')}
         </div>
+
+        {/* Mobile menu trigger */}
+        {isMobile && (
+          <button
+            className="menu-btn mobile-menu-btn"
+            onClick={() => setShowMobileMenu(true)}
+            title="All options"
+            type="button"
+            data-testid="blip-menu-mobile-trigger"
+          >
+            ≡
+          </button>
+        )}
       </div>
       {commentsBanner}
+      {mobileMenu}
     </div>
   );
 }

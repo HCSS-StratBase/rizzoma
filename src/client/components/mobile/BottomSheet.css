@@ -1,0 +1,216 @@
+/**
+ * Bottom Sheet Styles
+ * Mobile: slides up from bottom
+ * Desktop: centered modal
+ */
+
+/* Overlay backdrop */
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0);
+  transition: background-color var(--animation-normal, 300ms) ease;
+  /* Safe area padding for notched devices */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-sheet-overlay.open {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.bottom-sheet-overlay.reduced-motion {
+  transition: none;
+}
+
+.bottom-sheet-overlay.reduced-motion .bottom-sheet {
+  transition: none;
+}
+
+/* Sheet container */
+.bottom-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  background: white;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(100%);
+  transition: transform var(--animation-normal, 300ms) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-sheet-overlay.open .bottom-sheet {
+  transform: translateY(0);
+}
+
+/* Mobile-specific styles */
+.bottom-sheet.mobile {
+  border-radius: 16px 16px 0 0;
+  max-height: 85vh;
+}
+
+/* Desktop modal variant */
+.bottom-sheet.desktop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  opacity: 0;
+  max-width: 480px;
+  border-radius: 12px;
+  margin: 0;
+}
+
+.bottom-sheet-overlay.open .bottom-sheet.desktop {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+/* Content wrapper for touch handling */
+.bottom-sheet-content {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+  overflow: hidden;
+  will-change: transform;
+}
+
+/* Drag handle for mobile */
+.bottom-sheet-handle {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 8px;
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+.bottom-sheet-handle:active {
+  cursor: grabbing;
+}
+
+.bottom-sheet-handle-bar {
+  width: 36px;
+  height: 4px;
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+/* Header with title and close button */
+.bottom-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.bottom-sheet-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.bottom-sheet-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.bottom-sheet-close:hover {
+  background-color: #f3f4f6;
+}
+
+.bottom-sheet-close:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Body content area */
+.bottom-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  /* Safe area padding at bottom */
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Touch scrolling optimization */
+.bottom-sheet-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.bottom-sheet-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bottom-sheet-body::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 2px;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .bottom-sheet-overlay {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .bottom-sheet {
+    border-radius: 12px;
+    max-width: 480px;
+  }
+
+  .bottom-sheet-handle {
+    display: none;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .bottom-sheet-close {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Animation variants for different entrance styles */
+.bottom-sheet[data-animation="slide"] {
+  transform: translateY(100%);
+}
+
+.bottom-sheet-overlay.open .bottom-sheet[data-animation="slide"] {
+  transform: translateY(0);
+}
+
+.bottom-sheet[data-animation="fade"] {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.bottom-sheet-overlay.open .bottom-sheet[data-animation="fade"] {
+  transform: translateY(0);
+  opacity: 1;
+}
