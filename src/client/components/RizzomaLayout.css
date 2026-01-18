@@ -157,9 +157,74 @@
     width: 60px;
     min-width: 60px;
   }
-  
+
   .tabs-container {
     width: 240px;
     min-width: 240px;
+  }
+}
+
+/* Mobile: Hide sidebars, full-width content */
+@media (max-width: 500px) {
+  .rizzoma-layout {
+    flex-direction: column;
+  }
+
+  .navigation-container {
+    display: none;
+  }
+
+  .tabs-container {
+    display: none;
+  }
+
+  .wave-container {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  /* Mobile header for back navigation */
+  .mobile-header {
+    display: flex;
+    height: 48px;
+    background: #2c3e50;
+    color: white;
+    align-items: center;
+    padding: 0 12px;
+    gap: 12px;
+  }
+
+  .mobile-header .back-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+  }
+
+  .mobile-header .title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-header .menu-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+  }
+}
+
+/* Ensure mobile header is hidden on desktop */
+@media (min-width: 501px) {
+  .mobile-header {
+    display: none;
   }
 }

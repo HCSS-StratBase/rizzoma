@@ -9,6 +9,8 @@
 - `TESTING_STATUS.md` is a log, not a guarantee—always rerun targeted suites before merges.
 
 ## Recent fixes (2026-01-18)
+- **Mobile responsive CSS**: Added responsive breakpoints for viewports <500px in `RizzomaLayout.css`, `RightToolsPanel.css`, `BlipMenu.css`, and `RizzomaTopicDetail.css`. On mobile: sidebars hidden, content area full-width, toolbar buttons larger with touch-friendly spacing.
+- **Mobile CI smoke tests**: Added mobile profile to `browser-smokes` job (`RIZZOMA_E2E_PROFILES=mobile`); mobile snapshots uploaded as `follow-the-green-mobile/`.
 - **N+1 API calls eliminated in perf mode**: Added `isPerfMode` check to visibility preference useEffect in `RizzomaBlip.tsx`. Eliminated 20+ individual `/inline-comments-visibility` API calls per page load.
 - **Perf harness timing fix**: Added `waitForFunction` to wait for all labels before counting. Now correctly reports all rendered blips.
 - **CI perf budgets job**: Added `perf-budgets` job to `.github/workflows/ci.yml`. Uses `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to optionally fail CI on budget violations.
@@ -37,5 +39,5 @@
 - Rerun typecheck + focused Vitest + browser smokes before shipping changes; document outcomes here with dates.
 - CI gating for `/api/health`, inline comments health checks, and upload probes is now in place via the `health-checks` job (`npm run test:health`).
 - CI gating for perf budgets is now in place via the `perf-budgets` job. Currently warn-only; set `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to block on failures.
-- Mobile viewport validation for unread/follow-green/toolbar is pending.
+- Mobile viewport validation is now CI-gated via `browser-smokes` job with `RIZZOMA_E2E_PROFILES=mobile`; check `follow-the-green-mobile/` snapshots for visual verification.
 - Legacy CoffeeScript/asset cleanup and dependency upgrades need coverage once refactored.

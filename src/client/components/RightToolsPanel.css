@@ -184,8 +184,48 @@
     width: 200px;
     min-width: 200px;
   }
-  
+
   .topic-management {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile: Hide right panel completely */
+@media (max-width: 500px) {
+  .right-tools-panel {
+    display: none;
+  }
+
+  /* Mobile tools overlay - shown via hamburger menu */
+  .right-tools-panel.mobile-open {
+    display: flex;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 1000;
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.2s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  /* Overlay backdrop */
+  .mobile-overlay-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 999;
   }
 }

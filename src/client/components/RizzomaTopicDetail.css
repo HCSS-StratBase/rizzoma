@@ -117,3 +117,44 @@
 .perf-blip-anchor {
   display: block;
 }
+
+/* Mobile responsive */
+@media (max-width: 500px) {
+  .rizzoma-topic-detail {
+    padding: 12px;
+    max-width: 100%;
+  }
+
+  .topic-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .header-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .header-btn {
+    flex: 1;
+    min-width: calc(50% - 4px);
+    padding: 10px 12px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .topic-title {
+    font-size: 20px;
+    margin: 4px 0;
+  }
+
+  .topic-content {
+    padding: 12px;
+  }
+}

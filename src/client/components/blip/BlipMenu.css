@@ -226,22 +226,63 @@
   font-size: 11px;
 }
 
-/* Responsive behavior - hide buttons when container is too narrow */
-@media (max-width: 600px) {
-  .menu-group:last-child {
-    display: none;
-  }
-}
-
+/* Mobile: Compact toolbar with essential buttons */
 @media (max-width: 500px) {
-  .menu-group:nth-last-child(-n+2) {
+  .blip-menu {
+    height: auto;
+    min-height: 36px;
+    padding: 4px 6px;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  .menu-group {
+    margin-right: 4px;
+    padding-right: 4px;
+    border-right-width: 1px;
+  }
+
+  .menu-btn {
+    padding: 6px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    font-size: 13px !important;
+  }
+
+  .done-btn {
+    padding: 6px 10px !important;
+  }
+
+  /* Hide less essential button groups on mobile, but keep overflow */
+  .menu-group.format-group {
     display: none;
   }
-}
 
-@media (max-width: 400px) {
-  .menu-group:nth-last-child(-n+3) {
-    display: none;
+  /* Keep overflow toggle visible for accessing hidden actions */
+  .menu-group.overflow-group {
+    display: flex !important;
+  }
+
+  /* Dropdown panel positioning for mobile */
+  .menu-dropdown-panel {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 12px 12px 0 0;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .menu-dropdown-item {
+    padding: 14px 16px;
+    font-size: 14px;
+  }
+
+  /* Nested blip adjustment */
+  .nested-blip .blip-menu-container {
+    left: 16px;
   }
 }
 

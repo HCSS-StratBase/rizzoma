@@ -104,11 +104,19 @@ jobs:
           RIZZOMA_BASE_URL: http://127.0.0.1:3000
           RIZZOMA_SNAPSHOT_DIR: snapshots/toolbar-inline
         run: npm run test:toolbar-inline
-      - name: Run Follow-the-Green smoke
+      - name: Run Follow-the-Green smoke (desktop)
         if: ${{ steps.install-smoke.outcome == 'success' }}
         env:
           RIZZOMA_BASE_URL: http://127.0.0.1:3000
           RIZZOMA_SNAPSHOT_DIR: snapshots/follow-the-green
+          RIZZOMA_E2E_PROFILES: desktop
+        run: npm run test:follow-green
+      - name: Run Follow-the-Green smoke (mobile)
+        if: ${{ steps.install-smoke.outcome == 'success' }}
+        env:
+          RIZZOMA_BASE_URL: http://127.0.0.1:3000
+          RIZZOMA_SNAPSHOT_DIR: snapshots/follow-the-green-mobile
+          RIZZOMA_E2E_PROFILES: mobile
         run: npm run test:follow-green
       - name: Upload smoke snapshots
         if: always()
@@ -118,6 +126,7 @@ jobs:
           path: |
             snapshots/toolbar-inline/**/*.png
             snapshots/follow-the-green/**/*.png
+            snapshots/follow-the-green-mobile/**/*.png
           if-no-files-found: warn
       - name: Upload dev logs
         if: always()
