@@ -97,8 +97,9 @@ The Rizzoma collaboration platform has been completely modernized from a legacy 
 | Extension Blocking | .exe/.bat/.sh etc | ✅ Tested |
 | Virus Scanning | ClamAV (optional) | ✅ Tested |
 | Local Storage | Filesystem | ✅ Tested |
-| S3 Storage | AWS SDK v3 (optional) | ✅ Tested |
+| S3 Storage | AWS SDK v3 (optional) | ✅ Tested + MinIO verified |
 | Signed URLs | Private bucket support | ✅ Tested |
+| MinIO Compatibility | forcePathStyle | ✅ Verified with real MinIO |
 | Upload Progress | Client UI | ✅ Implemented |
 | Cancel/Retry | Client controls | ✅ Implemented |
 
