@@ -131,7 +131,7 @@ const router = Router();
 // PATCH /api/blips/:id/reparent { parentId }
 router.patch('/:id/reparent', requireAuth, async (req, res): Promise<void> => {
   try {
-    const id = req.params['id'];
+    const id = req.params['id'] as string;
     const parentId = (req.body || {}).parentId as string | null | undefined;
     const blip = await getDoc<Blip & { _id: string; _rev: string }>(id);
     const next: Blip & { _rev?: string } = {
@@ -203,7 +203,7 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
 
   try {
-    const id = req.params['id'];
+    const id = req.params['id'] as string;
     const { content } = req.body || {};
     
     if (!content) {
@@ -262,7 +262,7 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
 router.get('/:id', async (req, res): Promise<void> => {
   const userId = req.session?.userId;
   try {
-    const id = req.params['id'];
+    const id = req.params['id'] as string;
     const blip = await getDoc<Blip>(id);
     if ((blip as any).deleted) {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
@@ -290,7 +290,7 @@ router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
 
   try {
-    const id = req.params['id'];
+    const id = req.params['id'] as string;
     const blip = await getDoc<Blip & { _id: string; _rev: string }>(id);
     if (blip._id === blip.waveId) {
       res.status(400).json({ error: 'cannot_delete_root', requestId: (req as any)?.id });
@@ -323,7 +323,7 @@ router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
 // GET /api/blips/:id/history - Blip playback history
 router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
   try {
-    const blipId = req.params['id'];
+    const blipId = req.params['id'] as string;
     const result = await find<BlipHistoryDoc>({ type: 'blip_history', blipId }, { limit: 200 });
     const history = (result.docs || [])
       .slice()
@@ -374,7 +374,7 @@ router.get('/', async (req, res): Promise<void> => {
 router.get('/:id/collapse-default', requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const blipId = req.params['id'];
+    const blipId = req.params['id'] as string;
     const doc = await getDoc<CollapsePreferenceDoc>(collapsePrefDocId(userId, blipId));
     res.json({ collapseByDefault: !!doc.collapseByDefault });
   } catch (e: any) {
@@ -394,7 +394,7 @@ router.patch('/:id/collapse-default', requireAuth, async (req, res): Promise<voi
     return;
   }
 
-  const blipId = req.params['id'];
+  const blipId = req.params['id'] as string;
   const docId = collapsePrefDocId(userId, blipId);
   try {
     const existing = await getDoc<CollapsePreferenceDoc & { _rev: string }>(docId);
@@ -428,7 +428,7 @@ router.patch('/:id/collapse-default', requireAuth, async (req, res): Promise<voi
 router.get('/:id/inline-comments-visibility', requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const blipId = req.params['id'];
+    const blipId = req.params['id'] as string;
     const doc = await getDoc<InlineCommentsVisibilityDoc>(inlineCommentsPrefDocId(userId, blipId));
     res.json({ isVisible: typeof doc.isVisible === 'boolean' ? doc.isVisible : true, source: 'user' });
   } catch (e: any) {
@@ -448,7 +448,7 @@ router.patch('/:id/inline-comments-visibility', requireAuth, async (req, res): P
     return;
   }
 
-  const blipId = req.params['id'];
+  const blipId = req.params['id'] as string;
   const docId = inlineCommentsPrefDocId(userId, blipId);
 
   try {
@@ -484,7 +484,7 @@ router.patch('/:id/inline-comments-visibility', requireAuth, async (req, res): P
 router.post('/:id/duplicate', requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const id = req.params['id'];
+    const id = req.params['id'] as string;
     const sourceBlip = await getDoc<Blip & { _id: string }>(id);
 
     if ((sourceBlip as any).deleted) {
@@ -539,7 +539,7 @@ router.post('/:id/duplicate', requireAuth, async (req, res): Promise<void> => {
 router.post('/:id/move', requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const id = req.params['id'];
+    const id = req.params['id'] as string;
     const { newParentId } = req.body || {};
 
     const blip = await getDoc<Blip & { _id: string; _rev: string }>(id);

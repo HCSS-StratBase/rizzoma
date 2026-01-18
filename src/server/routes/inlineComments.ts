@@ -122,7 +122,7 @@ router.patch('/comments/:commentId/resolve', requireAuth, async (req, res): Prom
       return;
     }
 
-    const { commentId } = req.params;
+    const commentId = req.params['commentId'] as string;
     const { resolved } = z.object({ resolved: z.boolean() }).parse(req.body);
     
     const doc = await getDoc<any>(commentId);
@@ -148,7 +148,7 @@ router.delete('/comments/:commentId', requireAuth, async (req, res): Promise<voi
       return;
     }
 
-    const { commentId } = req.params;
+    const commentId = req.params['commentId'] as string;
     const userId = req.user!.id;
     
     const doc = await getDoc<any>(commentId);

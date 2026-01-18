@@ -173,7 +173,7 @@ router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => 
 // GET /api/topics/:id
 router.get('/:id', async (req, res): Promise<void> => {
   try {
-    const id = req.params['id'];
+    const id = req.params['id'] as string;
     const doc = await getDoc<Topic>(id);
     res.json({ id: doc._id, title: doc.title, content: doc.content, createdAt: doc.createdAt, updatedAt: doc.updatedAt });
     return;
@@ -188,7 +188,7 @@ router.get('/:id', async (req, res): Promise<void> => {
 router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const id = req.params['id'];
+    const id = req.params['id'] as string;
     const payload = UpdateTopicSchema.parse(req.body ?? {});
     const existing = await getDoc<Topic & { _rev: string }>(id);
     if (existing.authorId && existing.authorId !== userId) {
@@ -218,7 +218,7 @@ router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void>
 router.delete('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const id = req.params['id'];
+    const id = req.params['id'] as string;
     const doc = await getDoc<{ _rev: string } & Topic>(id);
     if ((doc as any).authorId && (doc as any).authorId !== userId) {
       console.warn('[topics] forbidden delete', { topicId: id, userId, ownerId: (doc as any).authorId, requestId: (req as any)?.id });
