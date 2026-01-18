@@ -88,10 +88,10 @@ describe('routes: /api/waves unread/next', () => {
       }
       if (method === 'PUT' && /\/project_rizzoma\/.+/.test(path)) {
         const body = JSON.parse((init?.body as string | undefined) ?? '{}') as Record<string, unknown>;
-        const idx = readDocs.findIndex((d) => d._id === body._id);
+        const idx = readDocs.findIndex((d) => d['_id'] === body['_id']);
         const stored = { ...body, _rev: '2-x' };
         if (idx >= 0) readDocs[idx] = stored;
-        return okResp({ ok: true, id: body._id || 'r1', rev: stored._rev });
+        return okResp({ ok: true, id: body['_id'] || 'r1', rev: stored._rev });
       }
       return okResp({}, 404);
     }) as typeof global.fetch;

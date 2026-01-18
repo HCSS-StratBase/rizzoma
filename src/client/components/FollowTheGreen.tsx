@@ -1,3 +1,4 @@
+import { useCallback, useRef } from 'react';
 import { FEATURES } from '@shared/featureFlags';
 import './FollowTheGreen.css';
 
@@ -22,11 +23,29 @@ export function FollowTheGreen({
     return null;
   }
 
+  // Expose a debug hook for tests to call directly.
+  if (typeof window !== 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__followGreenClick = onNavigate;
+  }
+
+  const clickLockRef = useRef(false);
+  const handleNavigate = useCallback(() => {
+    if (disabled || busy) return;
+    console.log('[FollowTheGreen] navigate click', { unreadCount });
+    if (clickLockRef.current) return;
+    clickLockRef.current = true;
+    try { onNavigate(); } finally {
+      setTimeout(() => { clickLockRef.current = false; }, 0);
+    }
+  }, [busy, disabled, onNavigate, unreadCount]);
+
   return (
     <div className="follow-the-green">
       <button
         className="follow-the-green-btn"
-        onClick={onNavigate}
+        onClick={handleNavigate}
+        onMouseDown={handleNavigate}
         title={`Navigate to next unread (${unreadCount} remaining)`}
         disabled={disabled}
         aria-busy={busy}

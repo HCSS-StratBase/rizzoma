@@ -69,23 +69,26 @@ gh pr create -R HCSS-StratBase/rizzoma -B master -H <branch> \
 
 ## Progress Snapshot
 
+Branch context: `feature/rizzoma-core-features`. This snapshot is historical; use `RIZZOMA_FEATURES_STATUS.md` for the up-to-date feature/backlog view on this branch.
+
 As of now, the modern stack is running end‑to‑end in development:
 
 - TypeScript server (Express 4.x) with session auth (Redis), CSRF, request IDs, CORS allowlist and standardized errors
 - Vite + React client with Auth, Topics/Comments CRUD, search and toasts (with optional server-side paging), plus realtime refresh via Socket.IO
 - Rizzoma layout exposes the full TipTap inline toolbar (undo/redo, lists, clear formatting, link/image placeholders) through `BlipMenu`, matching the shared Editor toolbar feature set behind flags
 - CouchDB integration via direct HTTP (Mango `_find` + legacy views as fallback); views deployable via `scripts/deploy-views.js`
-- Server-side paging & search via Mango for topics/comments with cursor (`nextBookmark`) (Phase 2, a modernization convenience — the original Rizzoma UI did not expose explicit pagination controls)
-- Read‑only Waves + nested Blips endpoints and initial client views (Phase 3 Milestone A)
+- Server-side paging & search via Mango for topics/comments with cursor (`nextBookmark`) (modernization milestone; the legacy UI lacked explicit pagination)
+- Read‑only Waves + nested Blips endpoints and initial client views (initial modernization milestone for Waves/Blips)
 - Docker Compose dev stack (app + CouchDB + Redis + RabbitMQ + Sphinx; optional MinIO)
 - GitHub Actions CI: typecheck, lint and build (and Docker build)
 
-Remaining Phase‑1 items before a production cut:
+Current branch focus (feature/rizzoma-core-features):
 
-- (DONE) Replace in‑memory filtering for topics search/pagination with CouchDB Mango/view queries.
-- (DONE) Add tests: middleware (requestId/csrf/error), routes (auth/topics/comments/waves/editor), and basic client rendering (App smoke test).
-- (DONE) Harden security defaults (secure cookies behind proxy, production CORS allowlist, quick production security checklist).
-- (DONE) Optional: realtime updates via socket.io (server emits topic/comment events; client refreshes affected views).
+- Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; add metrics/logging hooks and run `npm run perf:harness` with budgets.
+- Modernize `getUserMedia` adapter and broaden mobile validation for new media APIs.
+- Wire health checks (`/api/health`, inline comments, uploads) into CI; keep Playwright smokes (`npm run test:toolbar-inline`, `npm run test:follow-green`) green.
+- Automate bundle + GDrive backups with verification/alerts; finish CoffeeScript/legacy asset cleanup and dependency upgrades.
+- Keep `RIZZOMA_FEATURES_STATUS.md` and `TESTING_STATUS.md` refreshed after real runs; align onboarding/restart docs with the active branch.
 
 ## Migration Steps
 
@@ -326,13 +329,13 @@ docker compose ps
 
 ## Next Steps
 
-After Phase‑1 stabilization:
+After the current branch backlog is closed:
 
-1. Add monitoring/telemetry (OpenTelemetry) and structured logs export
-2. Improve search by indexing and view optimizations
-3. Tighten security (Cookie settings, CSP, helmet hardening)
-4. Add realtime updates for collaborative UX
-5. Consider service boundaries only after functionality parity is reached
+1. Add monitoring/telemetry (OpenTelemetry) and structured log export.
+2. Improve search by indexing and view optimizations.
+3. Tighten security (cookie settings, CSP, helmet hardening).
+4. Harden realtime observability/failover for collaborative UX.
+5. Consider service boundaries only after functionality parity is solid.
 
 ### Next up
 

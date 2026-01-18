@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireAuth } from '../middleware/auth';
-import { view, insertDoc, getDoc, updateDoc, deleteDoc } from '../lib/couch';
-import { InlineComment } from '@shared/types/comments';
-import { FEATURES } from '@shared/featureFlags';
+import { requireAuth } from '../middleware/auth.js';
+import { view, insertDoc, getDoc, updateDoc, deleteDoc } from '../lib/couch.js';
+import { InlineComment } from '../../shared/types/comments.js';
+import { FEATURES } from '../../shared/featureFlags.js';
 
 const router = Router();
 
@@ -36,8 +36,8 @@ router.get('/blip/:blipId/comments', async (req, res): Promise<void> => {
       });
       
       const comments = result.rows
-        .map(row => row.doc)
-        .filter(Boolean)
+        .map((row: { doc?: InlineComment }) => row.doc)
+        .filter((doc): doc is InlineComment => Boolean(doc))
         .map((comment) => ({
           ...comment,
           isAuthenticated: typeof (comment as InlineComment).userId === 'string' && (comment as InlineComment).userId.trim().length > 0,

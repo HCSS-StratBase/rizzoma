@@ -118,6 +118,14 @@ services:
     networks:
       - rizzoma-network
 
+  clamav:
+    image: clamav/clamav:latest
+    container_name: rizzoma-clamav
+    ports:
+      - "3310:3310"
+    networks:
+      - rizzoma-network
+
 networks:
   rizzoma-network:
     driver: bridge

@@ -5,7 +5,29 @@ const PRESENCE_HEARTBEAT_INTERVAL_MS = 10000;
 
 function getSocket(): Socket {
   if (!socket) {
-    socket = io('/', { withCredentials: true, autoConnect: true });
+    const resolveSocketUrl = () => {
+      if (typeof window === 'undefined') return '/';
+      const override = (window as any).__RIZZOMA_SOCKET_URL;
+      if (override) return override;
+      try {
+        const current = new URL(window.location.href);
+        if (current.port === '3000') current.port = '8000';
+        return current.origin;
+      } catch {
+        return window.location.origin || '/';
+      }
+    };
+    const url = resolveSocketUrl();
+    socket = io(url, {
+      withCredentials: true,
+      autoConnect: true,
+      path: '/socket.io',
+      transports: ['websocket'],
+    });
+    socket.on('connect', () => console.log('[socket] connected', socket?.id));
+    socket.on('connect_error', (err) => console.error('[socket] connect_error', err));
+    socket.on('wave:unread', (payload) => console.log('[socket] wave:unread (global)', payload));
+    socket.onAny((event, ...args) => console.log('[socket:any]', event, args));
   }
   return socket;
 }
@@ -107,6 +129,7 @@ export function subscribeEditorPresence(
 export type BlipSocketEvent =
   | { action: 'created' | 'updated' | 'deleted'; waveId: string; blipId: string; updatedAt?: number; userId?: string }
   | { action: 'read'; waveId: string; blipId: string; readAt?: number; userId?: string };
+export type WaveUnreadEvent = { waveId: string; userId?: string };
 
 export function subscribeBlipEvents(waveId: string, onEvent: (payload: BlipSocketEvent) => void): () => void {
   const s = getSocket();
@@ -128,4 +151,31 @@ export function subscribeBlipEvents(waveId: string, onEvent: (payload: BlipSocke
     s.off('blip:deleted', deleted);
     s.off('blip:read', read);
   };
+}
+
+export function subscribeWaveUnread(waveId: string, onEvent: (payload: WaveUnreadEvent) => void, userId?: string | null): () => void {
+  const s = getSocket();
+  s.emit('wave:unread:join', { waveId, userId: userId || undefined });
+  const handler = (p: any) => {
+    console.log('[socket] wave:unread event received', p);
+    if (!p || p.waveId !== waveId) return;
+    onEvent({ waveId: String(p.waveId), userId: p.userId ? String(p.userId) : undefined });
+  };
+  s.on('wave:unread', handler);
+  return () => {
+    try { s.emit('wave:unread:leave', { waveId, userId: userId || undefined }); } catch {}
+    s.off('wave:unread', handler);
+  };
+}
+
+export function ensureWaveUnreadJoin(waveId: string, userId?: string | null) {
+  const s = getSocket();
+  s.emit('wave:unread:join', { waveId, userId: userId || undefined });
+}
+
+export function emitWaveUnread(waveId: string, userId?: string | null) {
+  const s = getSocket();
+  try {
+    s.emit('wave:unread', { waveId, userId: userId || undefined });
+  } catch {}
 }

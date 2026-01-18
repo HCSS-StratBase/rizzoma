@@ -17,7 +17,6 @@ type EditorSearchApiResponse = {
     snippet?: string | null;
   }>;
   nextBookmark?: string | null;
-  nextBookmark?: string | null;
 };
 
 type EditorSearchProps = {

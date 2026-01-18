@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../lib/api';
-import { subscribeBlipEvents } from '../lib/socket';
+import { subscribeBlipEvents, subscribeWaveUnread, ensureWaveUnreadJoin } from '../lib/socket';
 import { toast } from '../components/Toast';
 
 type Snapshot = {
@@ -21,6 +21,24 @@ const INITIAL_STATE: Snapshot = {
   version: 0,
 };
 
+const DEBUG_KEY = 'rizzoma:debug:unread';
+const PERF_HASH = 'perf=1';
+
+const isPerfMode = (): boolean => {
+  try {
+    return typeof window !== 'undefined' && (window.location.hash || '').includes(PERF_HASH);
+  } catch {
+    return false;
+  }
+};
+
+const debugEnabled = (): boolean => {
+  try { return typeof localStorage !== 'undefined' && localStorage.getItem(DEBUG_KEY) === '1'; } catch { return false; }
+};
+const dbg = (...args: any[]) => { if (debugEnabled()) console.debug('[useWaveUnread]', ...args); };
+
+export type MarkReadResult = { ok: true } | { ok: false; error?: string };
+
 export type WaveUnreadState = {
   waveId: string | null;
   unreadIds: string[];
@@ -31,24 +49,38 @@ export type WaveUnreadState = {
   error: string | null;
   version: number;
   refresh: () => Promise<void>;
-  markBlipRead: (blipId: string) => Promise<void>;
-  markBlipsRead: (blipIds: string[]) => Promise<void>;
+  markBlipRead: (blipId: string) => Promise<MarkReadResult>;
+  markBlipsRead: (blipIds: string[]) => Promise<MarkReadResult>;
+  forceClear: () => void;
 };
 
 export function useWaveUnread(waveId: string | null): WaveUnreadState {
   const [state, setState] = useState<Snapshot>(INITIAL_STATE);
   const userIdRef = useRef<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const perfMode = isPerfMode();
 
   useEffect(() => {
+    if (perfMode) {
+      setAuthReady(false);
+      userIdRef.current = null;
+      setUserId(null);
+      return;
+    }
     (async () => {
       try {
         const me = await api('/api/auth/me');
         if (me.ok && me.data && typeof me.data === 'object' && (me.data as any).id) {
-          userIdRef.current = String((me.data as any).id);
+          const id = String((me.data as any).id);
+          userIdRef.current = id;
+          setUserId(id);
         }
       } catch {
         userIdRef.current = null;
+        setUserId(null);
       }
+      setAuthReady(true);
     })();
   }, []);
 
@@ -57,9 +89,17 @@ export function useWaveUnread(waveId: string | null): WaveUnreadState {
   }, []);
 
   const refresh = useCallback(async () => {
+    if (perfMode) {
+      resetState();
+      return;
+    }
     if (!waveId) {
       resetState();
       return;
+    }
+    dbg('refresh:start', { waveId });
+    if (typeof window !== 'undefined') {
+      try { (window as any).__rizzomaUnreadLastRefresh = Date.now(); } catch {}
     }
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
@@ -69,6 +109,7 @@ export function useWaveUnread(waveId: string | null): WaveUnreadState {
       }
       const data = resp.data as any;
       const unreadIds = Array.isArray(data?.unread) ? (data.unread as any[]).map((id) => String(id)) : [];
+      dbg('refresh:success', { waveId, unreadCount: unreadIds.length, total: data?.total, read: data?.read });
       setState((prev) => ({
         unreadIds,
         total: Number(data?.total || 0),
@@ -85,19 +126,26 @@ export function useWaveUnread(waveId: string | null): WaveUnreadState {
         error: 'Failed to load unread state',
         version: prev.version + 1,
       }));
+      dbg('refresh:error', { waveId, error });
     }
-  }, [waveId, resetState]);
+  }, [waveId, resetState, perfMode]);
 
   useEffect(() => {
+    if (perfMode) {
+      resetState();
+      return;
+    }
     if (!waveId) {
       resetState();
       return;
     }
     void refresh();
-  }, [waveId, refresh, resetState]);
+  }, [waveId, refresh, resetState, perfMode]);
 
   useEffect(() => {
-    if (!waveId) return undefined;
+    if (perfMode) return undefined;
+    if (!waveId || !authReady) return undefined;
+    ensureWaveUnreadJoin(waveId, userIdRef.current);
     const unsubscribe = subscribeBlipEvents(waveId, (evt) => {
       const selfId = userIdRef.current;
       if (evt.userId && selfId && evt.userId === selfId && evt.action !== 'deleted') {
@@ -117,20 +165,27 @@ export function useWaveUnread(waveId: string | null): WaveUnreadState {
         });
         return;
       }
+      dbg('blip:event', evt);
       void refresh();
     });
+    const unsubscribeWave = subscribeWaveUnread(waveId, (evt) => { dbg('wave:unread:event', evt); void refresh(); }, userIdRef.current);
     return () => {
       try { unsubscribe(); } catch {}
+      try { unsubscribeWave(); } catch {}
     };
-  }, [waveId, refresh]);
+  }, [waveId, refresh, userId, authReady, perfMode]);
 
-  const markBlipRead = useCallback(async (blipId: string) => {
-    if (!waveId || !blipId) return;
+  const markBlipRead = useCallback(async (blipId: string): Promise<MarkReadResult> => {
+    if (perfMode) return { ok: true };
+    if (!waveId || !blipId) return { ok: true };
     let removed = false;
+    let snapshot: Snapshot | null = null;
     setState((prev) => {
+      snapshot = prev;
       if (!prev.unreadIds.includes(blipId)) return prev;
       removed = true;
       const nextUnread = prev.unreadIds.filter((id) => id !== blipId);
+      dbg('markBlipRead:optimistic', { waveId, blipId, before: prev.unreadIds.length, after: nextUnread.length });
       return {
         ...prev,
         unreadIds: nextUnread,
@@ -138,21 +193,26 @@ export function useWaveUnread(waveId: string | null): WaveUnreadState {
         version: prev.version + 1,
       };
     });
-    if (!removed) return;
+    if (!removed) return { ok: true };
     try {
       const resp = await api(`/api/waves/${encodeURIComponent(waveId)}/blips/${encodeURIComponent(blipId)}/read`, { method: 'POST' });
       if (!resp.ok) {
         throw new Error(typeof resp.data === 'string' ? resp.data : 'mark_read_failed');
       }
+      dbg('markBlipRead:success', { waveId, blipId });
+      return { ok: true };
     } catch (error) {
       console.error('Failed to mark blip read', error);
-      toast('Read sync failed, retrying…', 'error');
-      await refresh();
+      if (snapshot) setState(snapshot);
+      toast('Follow-the-Green failed, please refresh', 'error');
+      dbg('markBlipRead:rollback', { waveId, blipId });
+      return { ok: false, error: error instanceof Error ? error.message : 'mark_read_failed' };
     }
-  }, [waveId, refresh]);
+  }, [waveId, perfMode]);
 
-  const markBlipsRead = useCallback(async (blipIds: string[]) => {
-    if (!waveId || !Array.isArray(blipIds) || blipIds.length === 0) return;
+  const markBlipsRead = useCallback(async (blipIds: string[]): Promise<MarkReadResult> => {
+    if (perfMode) return { ok: true };
+    if (!waveId || !Array.isArray(blipIds) || blipIds.length === 0) return { ok: true };
     let removedCount = 0;
     setState((prev) => {
       const removalSet = new Set(blipIds);
@@ -169,20 +229,34 @@ export function useWaveUnread(waveId: string | null): WaveUnreadState {
         version: prev.version + 1,
       };
     });
-    if (removedCount === 0) return;
+    if (removedCount === 0) return { ok: true };
     try {
       const resp = await api(`/api/waves/${encodeURIComponent(waveId)}/read`, { method: 'POST', body: JSON.stringify({ blipIds }) });
       if (!resp.ok) {
         throw new Error(typeof resp.data === 'string' ? resp.data : 'mark_read_failed');
       }
+      return { ok: true };
     } catch (error) {
       console.error('Failed to mark blips read', error);
       toast('Failed to persist read state, retrying…', 'error');
       await refresh();
+      return { ok: false, error: error instanceof Error ? error.message : 'mark_read_failed' };
     }
   }, [waveId, refresh]);
 
   const unreadSet = useMemo(() => new Set(state.unreadIds), [state.unreadIds]);
+
+  const forceClear = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      unreadIds: [],
+      readCount: prev.total,
+      version: prev.version + 1,
+    }));
+    if (typeof window !== 'undefined') {
+      try { (window as any).__rizzomaUnreadOptimistic = { waveId, at: Date.now() }; } catch {}
+    }
+  }, [waveId]);
 
   return {
     waveId,
@@ -196,5 +270,6 @@ export function useWaveUnread(waveId: string | null): WaveUnreadState {
     refresh,
     markBlipRead,
     markBlipsRead,
+    forceClear,
   };
 }

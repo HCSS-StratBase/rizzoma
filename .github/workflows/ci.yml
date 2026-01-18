@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, feature/rizzoma-core-features ]
   pull_request:
 
 jobs:
@@ -48,3 +48,198 @@ jobs:
           push: false
           target: production
           tags: rizzoma:ci
+
+  browser-smokes:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: 'npm'
+      - name: Configure npm
+        run: |
+          npm config set fund false
+          npm config set audit false
+          npm config set legacy-peer-deps true
+      - name: Install dependencies
+        id: install-smoke
+        env:
+          CYPRESS_INSTALL_BINARY: '0'
+        run: |
+          npm ci --no-audit --no-fund --no-optional || npm install --no-audit --no-fund --no-optional
+      - name: Install Playwright browsers
+        if: ${{ steps.install-smoke.outcome == 'success' }}
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Start docker services
+        if: ${{ steps.install-smoke.outcome == 'success' }}
+        run: docker compose up -d couchdb redis
+      - name: Start dev stack
+        if: ${{ steps.install-smoke.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev > dev.log 2>&1 &
+          echo $! > dev.pid
+      - name: Wait for dev stack
+        if: ${{ steps.install-smoke.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          for attempt in {1..40}; do
+            if curl -fsS http://127.0.0.1:3000 >/dev/null 2>&1 && curl -fsS http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
+              echo "Dev stack is ready"
+              exit 0
+            fi
+            echo "Waiting for dev stack (attempt ${attempt})..."
+            sleep 5
+          done
+          echo "Dev stack failed to start"
+          exit 1
+      - name: Run toolbar + inline smoke
+        if: ${{ steps.install-smoke.outcome == 'success' }}
+        env:
+          RIZZOMA_BASE_URL: http://127.0.0.1:3000
+          RIZZOMA_SNAPSHOT_DIR: snapshots/toolbar-inline
+        run: npm run test:toolbar-inline
+      - name: Run Follow-the-Green smoke
+        if: ${{ steps.install-smoke.outcome == 'success' }}
+        env:
+          RIZZOMA_BASE_URL: http://127.0.0.1:3000
+          RIZZOMA_SNAPSHOT_DIR: snapshots/follow-the-green
+        run: npm run test:follow-green
+      - name: Upload smoke snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke-snapshots
+          path: |
+            snapshots/toolbar-inline/**/*.png
+            snapshots/follow-the-green/**/*.png
+          if-no-files-found: warn
+      - name: Upload dev logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke-logs
+          path: dev.log
+          if-no-files-found: warn
+      - name: Stop dev stack
+        if: always()
+        run: |
+          if [ -f dev.pid ]; then
+            kill "$(cat dev.pid)" 2>/dev/null || true
+            rm -f dev.pid
+          fi
+          docker compose down || true
+
+  perf-budgets:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: 'npm'
+      - name: Configure npm
+        run: |
+          npm config set fund false
+          npm config set audit false
+          npm config set legacy-peer-deps true
+      - name: Install dependencies
+        id: install-perf
+        env:
+          CYPRESS_INSTALL_BINARY: '0'
+        run: |
+          npm ci --no-audit --no-fund --no-optional || npm install --no-audit --no-fund --no-optional
+      - name: Install Playwright browsers
+        if: ${{ steps.install-perf.outcome == 'success' }}
+        run: npx playwright install --with-deps chromium
+      - name: Start docker services
+        if: ${{ steps.install-perf.outcome == 'success' }}
+        run: docker compose up -d couchdb redis
+      - name: Start dev stack
+        if: ${{ steps.install-perf.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          SESSION_STORE=memory FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev > dev.log 2>&1 &
+          echo $! > dev.pid
+      - name: Wait for dev stack
+        if: ${{ steps.install-perf.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          for attempt in {1..40}; do
+            if curl -fsS http://127.0.0.1:3000 >/dev/null 2>&1 && curl -fsS http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
+              echo "Dev stack is ready"
+              exit 0
+            fi
+            echo "Waiting for dev stack (attempt ${attempt})..."
+            sleep 5
+          done
+          echo "Dev stack failed to start"
+          exit 1
+      - name: Run perf harness
+        if: ${{ steps.install-perf.outcome == 'success' }}
+        env:
+          RIZZOMA_BASE_URL: http://127.0.0.1:3000
+          RIZZOMA_PERF_BLIPS: 50
+          RIZZOMA_PERF_ENFORCE_BUDGETS: 0
+          RIZZOMA_SNAPSHOT_DIR: snapshots/perf
+        run: npm run perf:harness
+      - name: Upload perf snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-snapshots
+          path: |
+            snapshots/perf/**/*.png
+            snapshots/perf/**/*.json
+          if-no-files-found: warn
+      - name: Upload dev logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-dev-logs
+          path: dev.log
+          if-no-files-found: warn
+      - name: Stop dev stack
+        if: always()
+        run: |
+          if [ -f dev.pid ]; then
+            kill "$(cat dev.pid)" 2>/dev/null || true
+            rm -f dev.pid
+          fi
+          docker compose down || true
+
+  health-checks:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: 'npm'
+      - name: Configure npm
+        run: |
+          npm config set fund false
+          npm config set audit false
+          npm config set legacy-peer-deps true
+      - name: Install dependencies (skip Cypress binary)
+        id: install-health
+        env:
+          CYPRESS_INSTALL_BINARY: '0'
+        run: |
+          npm ci --no-audit --no-fund --no-optional || npm install --no-audit --no-fund --no-optional
+      - name: Run health / uploads / inline comments checks
+        if: ${{ steps.install-health.outcome == 'success' }}
+        env:
+          FEAT_ALL: 1
+          EDITOR_ENABLE: 1
+        run: npm run test:health

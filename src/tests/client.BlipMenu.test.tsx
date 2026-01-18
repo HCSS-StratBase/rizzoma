@@ -80,6 +80,7 @@ describe('client: BlipMenu toolbar', () => {
     isEditing: true,
     canEdit: true,
     canComment: true,
+    clipboardAvailable: true,
     onStartEdit: vi.fn(),
     onFinishEdit: vi.fn(),
     onSend: vi.fn(),
@@ -88,6 +89,12 @@ describe('client: BlipMenu toolbar', () => {
     onGetLink: vi.fn(),
     onToggleCollapseByDefault: vi.fn(),
     collapseByDefault: false,
+    onCopyComment: vi.fn(),
+    onPasteAsReply: vi.fn(),
+    onPasteAtCursor: vi.fn(),
+    isDeleting: false,
+    isUploading: false,
+    uploadProgress: null as number | null,
     onShowHistory: vi.fn(),
   });
   let baseProps: ReturnType<typeof createBaseProps>;
@@ -423,6 +430,15 @@ describe('client: BlipMenu toolbar', () => {
   });
 
   it('disables paste actions when clipboard is empty', () => {
+    // Re-render with clipboardAvailable: false to simulate empty clipboard
+    act(() => root.unmount());
+    container.remove();
+    baseProps = {
+      ...createBaseProps(),
+      clipboardAvailable: false,
+    };
+    ({ container, root } = renderMenu(<BlipMenu {...baseProps} editor={editor as any} />));
+
     const gear = container.querySelector('button[title="Other actions"]');
     expect(gear).toBeTruthy();
     act(() => gear!.dispatchEvent(new MouseEvent('click', { bubbles: true })));

@@ -1,7 +1,7 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
 ## Summary
-Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests; Follow-the-Green validation, perf/resilience sweeps, and CI gating are still outstanding.
+Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests. Follow-the-Green now has deterministic Vitest coverage (CTA happy/degraded paths), a multi-user Playwright smoke (multi unread + forced mark-read failure + mobile viewport), and CI gating via the `browser-smokes` GitHub job (with snapshots/artifacts). Uploads run through MIME sniffing + optional ClamAV, optionally stream to S3/MinIO, and the client surfaces cancel/retry/preview UI. A perf harness (`npm run perf:harness`) seeds 5k-blip waves and captures time-to-first-render screenshots/metrics under `snapshots/perf/`. Health/inline-comments/uploads checks now run in CI via the `health-checks` job (`npm run test:health`). **Recent performance fixes (2026-01-17)**: Blips API query optimized by adding sort clause to force CouchDB index usage (18s → 29ms, 600x improvement); bcrypt rounds reduced to 2 in dev/test mode for faster auth (~6s → ~100ms per hash). **Perf harness fixes (2026-01-18)**: N+1 API calls eliminated in perf mode (20+ individual `/inline-comments-visibility` calls → 0); timing fix ensures all labels render before counting; CI `perf-budgets` job added with optional budget enforcement. Mobile viewport validation remains outstanding; rerun the recorded tests before trusting this snapshot.
 
 ## ✅ Implemented Features
 
@@ -58,6 +58,16 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - **Follow-the-Green** - `useWaveUnread` hydrates per-wave unread sets, `RizzomaTopicDetail` decorates blips with `isRead`/`unread` classes, and `RightToolsPanel` + `FollowTheGreen` expose the CTA, inline status messages, and count; the older `GreenNavigation`/`useChangeTracking` pair remains a test harness only.
 - **PresenceIndicator** - Shared component shows avatars/initials, loading/error text, and overflow counts in both `WaveView` and `Editor`.
 - **Tests** - `routes.waves.unread.test.ts`, `client.followGreenNavigation.test.tsx`, `client.RightToolsPanel.followGreen.test.tsx`, `client.useWaveUnread.test.tsx`, `routes.uploads.edgecases.test.ts`, `server.editorPresence.test.ts`, `client.PresenceIndicator.test.tsx`, and `routes.blips.permissions.test.ts` cover the persistence + UI states. Playwright smokes `test-toolbar-inline-smoke.mjs` and `test-follow-green-smoke.mjs` exercise inline toolbar parity and multi-user Follow-the-Green flows respectively (additional CI gating still pending).
+- **Automation** - The `browser-smokes` GitHub job runs both Playwright suites, captures `snapshots/toolbar-inline/` + `snapshots/follow-the-green/`, and uploads dev logs/artifacts whenever the toolbar or Follow-the-Green flows regress.
+  - The job now runs even when the main build fails so snapshots/artifacts are always available for triage; fetch them locally with `npm run snapshots:pull` if you need the latest screenshots without rerunning Playwright.
+
+### Uploads & gadget nodes
+- **Server safeguards** - `/api/uploads` inspects MIME signatures, blocks executables by signature/extension, optionally streams file buffers through ClamAV (`CLAMAV_HOST`/`CLAMAV_PORT`), and supports filesystem or S3/MinIO storage (configure via `UPLOADS_STORAGE`, `UPLOADS_S3_*`, `UPLOADS_S3_PUBLIC_URL`). Docker Compose now includes an optional `clamav` service for local scanning.
+- **Client UX** - `src/client/lib/upload.ts` exposes a cancelable `createUploadTask`, and `RizzomaBlip` renders inline preview/progress/cancel/retry controls so attachments/images surface their state (with toasts for success/failure). The toolbar upload buttons respect the new `isUploading` state, and Vitest exercises the degraded flows.
+- **Tests** - `src/tests/routes.uploads.edgecases.test.ts` covers auth/missing file/virus/S3 flows, and `src/tests/client.editor.GadgetNodes.test.ts` exercises the chart/poll gadget parse/render/command helpers so the restored gadget buttons stay in sync with the CoffeeScript UI.
+
+### Media adapter
+- **Modern getUserMedia adapter** - `src/static/js/getUserMediaAdapter.js` now normalizes constraints (including simple strings), prefers modern `mediaDevices.getUserMedia`, detects display media support, exposes permission status helpers and device enumeration, and retains legacy fallbacks. Covered by `src/tests/client.getUserMediaAdapter.test.ts`.
 
 ### Permissions & Auth
 - `requireAuth` now guards topic/blip write endpoints, logs denied operations, and respects actual author IDs.
@@ -65,9 +75,37 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - New Vitest coverage exercises unauthenticated, unauthorized, and authorized flows.
 
 ## Still pending
-- Follow-the-Green validation in the modern Rizzoma layout (multi-user edits, wave-level unread navigation, and degraded-state toasts), plus broader automation.
-- Perf/resilience sweeps for large waves/blips, inline comments, playback, and realtime updates; capture metrics and document thresholds/limits.
-- CI gating for `npm run test:toolbar-inline` and Follow-the-Green once unread/presence suites stabilise, along with health checks and backup automation.
+- Perf/resilience sweeps for large waves/blips, inline comments, playback, and realtime updates; run `npm run perf:harness` regularly, document thresholds/limits, and add alerts/budgets.
+- Mobile parity: broader mobile validation for media/device flows, unread navigation, and toolbar/inline comment ergonomics.
+- Legacy cleanup: migrate remaining CoffeeScript entrypoints/static assets, drop unused legacy CSS/JS, and finish dependency upgrades.
+- Playback/history parity: ensure playback controls/history popovers match the original CoffeeScript implementation (edit/read states, gear overflow, copy/paste variants) with Playwright coverage.
+- Email/notifications parity: restore/validate wave email notifications/invites vs the original Rizzoma behavior (SMTP paths, templates).
+- Backup workflow automation (bundle + GDrive copy) and CI alerting for failures (typecheck/tests/build/docker).
+
+## Original parity gaps (CoffeeScript vs modern)
+
+| Functionality | Original implementation (CoffeeScript) | Modern status / gap |
+| --- | --- | --- |
+| Blip toolbar (read/edit, gear overflow, playback) | CoffeeKup toolbar with read/edit blocks, gear menu copy/paste reply/cursor, playback (`original-rizzoma-src/src/client/blip/menu/template.coffee`), playback menu/buttons (`original-rizzoma-src/src/client/playback/blip_menu.coffee`) | Modern toolbar in `src/client/components/blip/RizzomaBlip.tsx` + `RizzomaBlip.css`; Playwright `test-toolbar-inline-smoke.mjs` covers core buttons. Gear copy/paste variants and playback controls not yet reimplemented. |
+| Playback timeline/history | Playback wave view/models, calendar/fast-forward/back buttons (`original-rizzoma-src/src/client/playback/*`) | No modern playback timeline UI; feature not ported. |
+| Email notifications/invites | Notification utils/templates (`original-rizzoma-src/src/server/notification/utils.coffee`, mail assets under `original-rizzoma-src/src/static/img/mail/`) | Modern code lacks restored mail notifications/invites; SMTP/templates need port + tests. |
+| Mobile layout | Mobile blip index/view variants (`original-rizzoma-src/src/client/blip/index_mobile.coffee`, `view_mobile.coffee`) | Modern React layout is desktop-first; mobile unread/navigation/toolbar/inline-comment ergonomics unvalidated. |
+| Uploads pipeline | Legacy CoffeeScript uploads (simple storage, limited validation) | Modernized uploads: MIME sniffing, optional ClamAV, local/S3 (`src/server/routes/uploads.ts`); client cancel/retry/preview (`src/client/lib/upload.ts`, `RizzomaBlip`). Parity exceeds original. |
+| getUserMedia adapter | Legacy static adapter (`original-rizzoma/src/static/js/getUserMediaAdapter.js`) | Modern adapter with constraint normalization, display media detection, permission/device helpers + tests (`src/static/js/getUserMediaAdapter.js`, `src/tests/client.getUserMediaAdapter.test.ts`). |
+| Inline comments | CoffeeScript inline comments widgets/routes | Modern TipTap inline comments with server routes (`src/server/routes/inlineComments.ts`), UI in `RizzomaBlip`, degraded banners, tests (`client.inlineCommentsPopover.test.tsx`, health tests). |
+| Unread / Follow-the-Green | Legacy change tracking hooks + navigation | Modern unread persistence (`/api/waves/:id/unread`, `/unread_counts`), CTA in `RightToolsPanel`, hooks (`useWaveUnread`), Playwright smoke `test-follow-green-smoke.mjs`; blips API optimized (18s → 29ms) via CouchDB index sort clause; auto-navigation now marks blips read on wave load. |
+| Presence / realtime cursors | Yjs awareness + presence badges in legacy UI | Modern presence via Yjs + `PresenceIndicator` in WaveView/Editor, tests (`server.editorPresence.test.ts`, `client.PresenceIndicator.test.tsx`). |
+| Recovery / rebuild UI | Legacy rebuild actions | Modern rebuild status/log surface in WaveView; route tests + UI polling; shipped. |
+| Search | Legacy search endpoints/UI | Modern `/api/editor/search` with Mango indexes/snippets/pagination; `EditorSearch.tsx` UI + tests. |
+| Permissions/auth | Demo users + lax guards | Modern enforces `requireAuth`, removes demo shortcuts, guards blip/topic writes; toasts for failures; tests (`routes.blips.permissions.test.ts`); bcrypt rounds reduced to 2 in dev/test for faster auth. |
+| Feature flags / enablement | Legacy flags in CoffeeScript | Modern `src/shared/featureFlags.ts`; `EDITOR_ENABLE` gate; FEAT_ALL supported. |
+| Perf harness | Ad-hoc | Modern `perf-harness.mjs` seeds 5k blips and captures metrics/screens; budgets/schedules pending. |
+| Health checks | Minimal | Modern `/api/health`, inline-comments/upload health tests; CI `health-checks` job runs `npm run test:health`. |
+| Backup automation | Manual | Bundling described but automation/GDrive cadence still missing. |
+| DB views / Couch | Legacy views and deploy scripts | Views deployment scripts exist (`npm run prep:views && npm run deploy:views`); keep in sync with modern Couch usage. |
+| Gadget nodes | Legacy gadget buttons | Modern TipTap gadget nodes (chart/poll/attachment/image) with parse/command tests (`src/tests/client.editor.GadgetNodes.test.ts`). |
+| Browser smokes | Manual QA | Modern GitHub `browser-smokes` job runs toolbar + follow-green Playwright suites with snapshots/artifacts. |
+| Legacy assets | jQuery-era static assets | Disposition pending; need to keep/retire original static assets in `original-rizzoma-src`/`original-rizzoma`. |
 
 ## 🎛️ Feature Flags
 

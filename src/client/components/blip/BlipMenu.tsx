@@ -51,13 +51,13 @@ export function BlipMenu({
   onPasteAtCursor,
   clipboardAvailable = false,
   onShowHistory,
+  onSend,
+  isSending = false,
+  isDeleting = false,
   onInsertAttachment,
   onInsertImage,
   isUploading = false,
   uploadProgress = null,
-  onSend,
-  isSending = false,
-  isDeleting = false,
   inlineCommentsNotice = null,
 }: BlipMenuProps) {
   const [textFormatState, setTextFormatState] = useState({
@@ -138,6 +138,16 @@ export function BlipMenu({
       editor.chain().focus().setLink({ href, target: '_blank' }).run();
     } catch (error) {
       console.error('Failed to insert link', error);
+    }
+  };
+  const handleInsertEmoji = () => {
+    if (!editor) return;
+    const emoji = window.prompt('Pick an emoji to insert', '😊');
+    if (!emoji) return;
+    try {
+      editor.chain().focus().insertContent(emoji).run();
+    } catch (error) {
+      console.error('Failed to insert emoji', error);
     }
   };
   const handleHighlight = (color: string) => {
@@ -240,6 +250,19 @@ export function BlipMenu({
       >
         Copy direct link
       </button>
+      {canEdit && onToggleCollapseByDefault && (
+        <button
+          type="button"
+          role="menuitem"
+          className="menu-dropdown-item"
+          onClick={() => {
+            onToggleCollapseByDefault?.();
+            setShowOverflow(false);
+          }}
+        >
+          {collapseByDefault ? 'Show by default' : 'Hide by default'}
+        </button>
+      )}
       {canEdit && onDelete && (
         <button
           type="button"
@@ -303,6 +326,15 @@ export function BlipMenu({
               data-testid="blip-menu-insert-link"
             >
               🔗
+            </button>
+            <button
+              className="menu-btn"
+              title="Insert emoji"
+              onClick={handleInsertEmoji}
+              disabled={!editor}
+              data-testid="blip-menu-emoji"
+            >
+              😀
             </button>
             <button
               className="menu-btn"
@@ -512,6 +544,27 @@ export function BlipMenu({
             data-testid="blip-menu-delete"
           >
             🗑️
+          </button>
+        )}
+        {canEdit && onToggleCollapseByDefault && (
+          <button
+            className="menu-btn"
+            onClick={onToggleCollapseByDefault}
+            title={collapseByDefault ? 'Expand this thread by default' : 'Collapse this thread by default'}
+            data-testid="blip-menu-collapse-toggle"
+          >
+            {collapseByDefault ? 'Show' : 'Hide'}
+          </button>
+        )}
+
+        {canEdit && onToggleCollapseByDefault && (
+          <button
+            className="menu-btn"
+            onClick={onToggleCollapseByDefault}
+            title={collapseByDefault ? 'Expand this thread by default' : 'Collapse this thread by default'}
+            data-testid="blip-menu-collapse-toggle"
+          >
+            {collapseByDefault ? 'Show' : 'Hide'}
           </button>
         )}
         

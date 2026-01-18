@@ -26,8 +26,8 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId }: RizzomaTop
     try {
       const params = new URLSearchParams();
       if (searchTerm) params.set('q', searchTerm);
-      
-      const response = await api(`/api/topics?${params}`);
+
+      const response = await api(`/api/topics?${params.toString()}`);
       if (response.ok && response.data) {
         setTopics((response.data as any).topics || []);
       }
@@ -73,6 +73,9 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId }: RizzomaTop
               className={`topic-item ${selectedTopicId === topic.id ? 'selected' : ''}`}
               onClick={() => onTopicSelect(topic.id)}
             >
+              <div className={`topic-unread-bar ${topic.unreadCount && topic.unreadCount > 0 ? 'has-unread' : ''}`}>
+                <div className="topic-unread-fill" />
+              </div>
               <img 
                 src={getAvatarUrl(topic.authorId || 'Unknown')} 
                 alt="Avatar" 

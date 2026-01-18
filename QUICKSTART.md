@@ -8,25 +8,21 @@ This guide will help you get Rizzoma up and running quickly and reliably.
 - Docker and Docker Compose
 - Git
 
-## 🎯 One-Command Start
+## 🎯 Start the Stack (current branch flow)
 
 ```bash
-npm run start:all
+docker compose up -d couchdb redis
+npm run dev
 ```
 
-This single command will:
-1. ✅ Start all Docker services (Redis, CouchDB, RabbitMQ, Sphinx)
-2. ✅ Wait for services to be healthy
-3. ✅ Start the application servers (API + UI)
-4. ✅ Show you the status and access URLs
+This brings up CouchDB/Redis, then runs the API + UI locally (Vite + TSX). Use real authentication via the AuthPanel; demo/query-string logins are not supported on this branch.
 
 ## 📋 Available Commands
 
 ### Core Commands
-- `npm run start:all` - Start everything (recommended)
-- `npm run stop:all` - Stop all services cleanly
-- `npm run restart:all` - Restart everything
-- `npm run status` - Check service status
+- `docker compose up -d couchdb redis` - Start required services
+- `docker compose down` - Stop services (add `-v` to wipe volumes)
+- `npm run dev` - Start the app servers (assumes services running)
 
 ### Development
 - `npm run dev` - Start only the app servers (assumes Docker services are running)
@@ -53,9 +49,10 @@ Once running, you can access:
 ## 🔧 Configuration
 
 ### Enable Editor Features
+Set before starting `npm run dev`:
 ```bash
 export EDITOR_ENABLE=1
-npm run restart:all
+npm run dev
 ```
 
 ### Environment Variables
@@ -79,9 +76,9 @@ lsof -i :8000
 lsof -i :5984
 
 # Clean restart
-npm run stop:all
 docker compose down
-npm run start:all
+docker compose up -d couchdb redis
+npm run dev
 ```
 
 ### Can't connect to database?
@@ -91,7 +88,8 @@ curl http://localhost:5984/_up
 
 # Recreate database
 docker compose down -v  # Warning: removes data!
-npm run start:all
+docker compose up -d couchdb redis
+npm run dev
 ```
 
 ### Application errors?
@@ -109,13 +107,8 @@ curl http://localhost:8000/api/deps
 ## 🛑 Stopping Everything
 
 ```bash
-npm run stop:all
+docker compose down
 ```
-
-This will gracefully:
-- Stop all Node.js processes
-- Stop all Docker containers
-- Preserve your data (volumes remain)
 
 ## 💡 Tips
 

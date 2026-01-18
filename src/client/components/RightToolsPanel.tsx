@@ -13,6 +13,10 @@ interface RightToolsPanelProps {
 }
 
 export function RightToolsPanel({ isAuthed, unreadState }: RightToolsPanelProps) {
+  const isPerfMode = typeof window !== 'undefined' && (window.location.hash || '').includes('perf=1');
+  if (isPerfMode) {
+    return null;
+  }
   const [collapsed, setCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<'text' | 'mindmap'>('text');
   const [repliesVisible, setRepliesVisible] = useState(true);
@@ -179,7 +183,9 @@ export function RightToolsPanel({ isAuthed, unreadState }: RightToolsPanelProps)
   }, [unreadState?.version, unreadState?.unreadIds.length]);
 
   // Best-effort auto-trigger when unread exists and handler isn't firing via click.
+  // Can be disabled via localStorage for testing: localStorage.setItem('rizzoma:test:noAutoNav', '1')
   useEffect(() => {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('rizzoma:test:noAutoNav') === '1') return;
     const waveId = unreadState?.waveId ?? null;
     if (!waveId || !unreadState || unreadCount === 0) return;
     const { waveId: lastWave, attempts } = autoNavigateState;
@@ -192,7 +198,9 @@ export function RightToolsPanel({ isAuthed, unreadState }: RightToolsPanelProps)
   }, [unreadState?.waveId, unreadState?.version, unreadCount, navigating]);
 
   // Final guardrail: if unread persists after navigation attempts, mark all unread IDs once.
+  // Can be disabled via localStorage for testing: localStorage.setItem('rizzoma:test:noAutoNav', '1')
   useEffect(() => {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('rizzoma:test:noAutoNav') === '1') return;
     const waveId = unreadState?.waveId ?? null;
     if (!waveId || !unreadState || !unreadState.unreadIds.length) return;
     if (forceMarkState.waveId === waveId && forceMarkState.fired) return;

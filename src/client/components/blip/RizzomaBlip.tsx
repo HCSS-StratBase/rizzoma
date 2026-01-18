@@ -26,8 +26,9 @@ import {
   getBlipClipboardPayload, 
   setBlipClipboardPayload 
 } from './clipboardStore';
-import { uploadFile } from '../../lib/upload';
+import { createUploadTask, type UploadResult, type UploadTask } from '../../lib/upload';
 import './RizzomaBlip.css';
+import { measureRender } from '../../lib/performance';
 
 export interface BlipData {
   id: string;
@@ -96,8 +97,19 @@ interface RizzomaBlipProps {
   onAddReply?: (parentBlipId: string, content: string) => void;
   onToggleCollapse?: (blipId: string) => void;
   onDeleteBlip?: (blipId: string) => Promise<void> | void;
-  onBlipRead?: (blipId: string) => void;
+  onBlipRead?: (blipId: string) => Promise<unknown> | void;
+  onExpand?: (blipId: string) => void;
+  expandedBlips?: Set<string>;
 }
+
+type UploadUiState = {
+  kind: 'attachment' | 'image';
+  fileName: string;
+  progress: number;
+  status: 'uploading' | 'error';
+  previewUrl?: string;
+  error?: string | null;
+};
 
 export function RizzomaBlip({
   blip,
@@ -108,14 +120,18 @@ export function RizzomaBlip({
   onToggleCollapse,
   onDeleteBlip,
   onBlipRead,
+  onExpand,
+  expandedBlips,
 }: RizzomaBlipProps) {
+  const isPerfMode = typeof window !== 'undefined' && (window.location.hash || '').includes('perf=');
   const initialCollapsePreference = typeof blip.isCollapsed === 'boolean'
     ? blip.isCollapsed
     : getCollapsePreference(blip.id);
   const [collapseByDefault, setCollapseByDefault] = useState(initialCollapsePreference);
   const [isExpanded, setIsExpanded] = useState(() => !initialCollapsePreference);
   const [isEditing, setIsEditing] = useState(false);
-  const [isActive, setIsActive] = useState(false);
+  // Default active so the read toolbar is visible immediately (parity with legacy view surface)
+  const [isActive, setIsActive] = useState(true);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [editedContent, setEditedContent] = useState(blip.content);
@@ -128,8 +144,16 @@ export function RizzomaBlip({
   const [isSavingInlineComment, setIsSavingInlineComment] = useState(false);
   const [clipboardAvailable, setClipboardAvailable] = useState(() => !!getBlipClipboardPayload(blip.id));
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadState, setUploadState] = useState<UploadUiState | null>(null);
+  const uploadTaskRef = useRef<UploadTask | null>(null);
+  const lastUploadRef = useRef<{
+    file: File;
+    kind: UploadUiState['kind'];
+    onSuccess: (result: UploadResult) => void;
+    successToast: string;
+    failureToast: string;
+  } | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -158,9 +182,14 @@ export function RizzomaBlip({
 
   const hasUnreadChildren = blip.childBlips?.some(child => !child.isRead) ?? false;
   const childCount = blip.childBlips?.length ?? 0;
+  const unreadMarkerActive = !blip.isRead || hasUnreadChildren;
 
   const handleToggleExpand = () => {
-    setIsExpanded(!isExpanded);
+    const next = !isExpanded;
+    if (next && onExpand) {
+      onExpand(blip.id);
+    }
+    setIsExpanded(next);
     onToggleCollapse?.(blip.id);
     if (!blip.isRead) {
       onBlipRead?.(blip.id);
@@ -209,6 +238,16 @@ export function RizzomaBlip({
       toast('Failed to save changes. Please try again.', 'error');
     } finally {
       setIsSavingEdit(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setIsActive(false);
+    setEditedContent(blip.content);
+    if (inlineEditor) {
+      inlineEditor.commands.setContent(blip.content);
+      inlineEditor.setEditable(false);
     }
   };
 
@@ -285,6 +324,80 @@ export function RizzomaBlip({
     return `${value.toFixed(value >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
   };
 
+  const beginUpload = useCallback(
+    (
+      kind: UploadUiState['kind'],
+      file: File,
+      handlers: { onSuccess: (result: UploadResult) => void; successToast: string; failureToast: string },
+    ) => {
+      if (uploadTaskRef.current) {
+        uploadTaskRef.current.cancel();
+      }
+      const previewUrl = kind === 'image' ? URL.createObjectURL(file) : undefined;
+      setUploadState({
+        kind,
+        fileName: file.name,
+        progress: 0,
+        status: 'uploading',
+        previewUrl,
+        error: null,
+      });
+      lastUploadRef.current = { file, kind, ...handlers };
+      const task = createUploadTask(file, {
+        onProgress: (percent) => {
+          setUploadState((prev) => (prev ? { ...prev, progress: percent } : prev));
+        },
+      });
+      uploadTaskRef.current = task;
+      task.promise
+        .then((result) => {
+          uploadTaskRef.current = null;
+          lastUploadRef.current = null;
+          setUploadState(null);
+          handlers.onSuccess(result);
+          toast(handlers.successToast);
+        })
+        .catch((error) => {
+          uploadTaskRef.current = null;
+          if ((error as Error)?.message === 'upload_aborted') {
+            setUploadState(null);
+            return;
+          }
+          setUploadState((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  status: 'error',
+                  error: handlers.failureToast,
+                }
+              : prev,
+          );
+          toast(handlers.failureToast, 'error');
+        });
+    },
+    [toast],
+  );
+
+  const handleCancelUpload = useCallback(() => {
+    if (uploadTaskRef.current) {
+      uploadTaskRef.current.cancel();
+      uploadTaskRef.current = null;
+    }
+    lastUploadRef.current = null;
+    setUploadState(null);
+    toast('Upload canceled', 'info');
+  }, [toast]);
+
+  const handleRetryUpload = useCallback(() => {
+    const last = lastUploadRef.current;
+    if (!last) return;
+    beginUpload(last.kind, last.file, last);
+  }, [beginUpload]);
+
+  const dismissUpload = useCallback(() => {
+    setUploadState(null);
+  }, []);
+
   const pickFile = (accept: string): Promise<File> => new Promise((resolve, reject) => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -336,18 +449,15 @@ export function RizzomaBlip({
     }
     try {
       const file = await pickFile('*/*');
-      setIsUploading(true);
-      setUploadProgress(0);
-      const result = await uploadFile(file, (percent) => setUploadProgress(percent));
-      insertAttachment(result.originalName || file.name, result.url, result.size);
-      toast('Attachment uploaded');
+      beginUpload('attachment', file, {
+        onSuccess: (result) => insertAttachment(result.originalName || file.name, result.url, result.size),
+        successToast: 'Attachment uploaded',
+        failureToast: 'Failed to upload attachment',
+      });
     } catch (error) {
       if ((error as Error)?.message === 'no_file_selected') return;
       console.error('Failed to upload attachment', error);
       toast('Failed to upload attachment', 'error');
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(null);
     }
   };
 
@@ -362,18 +472,17 @@ export function RizzomaBlip({
         toast('Please choose an image file', 'error');
         return;
       }
-      setIsUploading(true);
-      setUploadProgress(0);
-      const result = await uploadFile(file, (percent) => setUploadProgress(percent));
-      inlineEditor.chain().focus().setImage({ src: result.url, alt: result.originalName || file.name }).run();
-      toast('Image uploaded');
+      beginUpload('image', file, {
+        onSuccess: (result) => {
+          inlineEditor.chain().focus().setImage({ src: result.url, alt: result.originalName || file.name }).run();
+        },
+        successToast: 'Image uploaded',
+        failureToast: 'Failed to upload image',
+      });
     } catch (error) {
       if ((error as Error)?.message === 'no_file_selected') return;
       console.error('Failed to upload image', error);
       toast('Failed to upload image', 'error');
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(null);
     }
   };
 
@@ -499,6 +608,7 @@ export function RizzomaBlip({
   }, [blip.id]);
 
   useEffect(() => {
+    if (isPerfMode) return undefined;
     let cancelled = false;
     const requestStartedAt = Date.now();
     const syncPreference = async () => {
@@ -525,7 +635,7 @@ export function RizzomaBlip({
     return () => {
       cancelled = true;
     };
-  }, [blip.id]);
+  }, [blip.id, isPerfMode]);
 
   // Handle click to make blip active (show menu)
   const handleBlipClick = () => {
@@ -536,6 +646,7 @@ export function RizzomaBlip({
   };
 
   useEffect(() => {
+    if (isPerfMode) return undefined;
     const metadata = getInlineCommentsVisibilityMetadata(blip.id);
     if (metadata) {
       inlineVisibilityUpdatedAtRef.current = metadata.updatedAt;
@@ -548,9 +659,12 @@ export function RizzomaBlip({
       }
     });
     return unsubscribe;
-  }, [blip.id]);
+  }, [blip.id, isPerfMode]);
 
   useEffect(() => {
+    // Skip visibility preference fetch in perf mode to avoid N+1 API calls
+    if (isPerfMode) return undefined;
+
     let cancelled = false;
     const requestStartedAt = Date.now();
 
@@ -602,7 +716,7 @@ export function RizzomaBlip({
     return () => {
       cancelled = true;
     };
-  }, [blip.id]);
+  }, [blip.id, isPerfMode]);
 
   // Handle click outside to deactivate blip
   useEffect(() => {
@@ -798,24 +912,55 @@ export function RizzomaBlip({
     setInlineCommentsNotice(status.loadError);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const nextPreview = uploadState?.previewUrl ?? null;
+    if (previewUrlRef.current && previewUrlRef.current !== nextPreview) {
+      URL.revokeObjectURL(previewUrlRef.current);
+    }
+    previewUrlRef.current = nextPreview;
+  }, [uploadState?.previewUrl]);
+
+  const isUploading = uploadState?.status === 'uploading';
+  const uploadProgress = uploadState ? uploadState.progress : null;
+  const effectiveExpanded = isRoot ? true : isExpanded;
+
+  const rootStyle = isRoot && effectiveExpanded ? { display: 'block', opacity: 1, visibility: 'visible' } : {};
+
   return (
     <div 
       ref={blipContainerRef}
       className={`rizzoma-blip blip-container ${isRoot ? 'root-blip' : 'nested-blip'} ${!blip.isRead ? 'unread' : ''} ${isActive ? 'active' : ''}`}
       data-blip-id={blip.id}
-      style={{ marginLeft: isRoot ? 0 : 20, position: 'relative' }}
+      style={{ marginLeft: isRoot ? 0 : 20, position: 'relative', ...rootStyle }}
       onClick={handleBlipClick}
     >
+      <div 
+        className={`blip-expander ${unreadMarkerActive ? 'unread' : 'read'}`}
+        onClick={handleToggleExpand}
+        role="button"
+        aria-label={isExpanded ? 'Collapse' : 'Expand'}
+        data-testid="blip-expander"
+      >
+        <span className="blip-expander-icon">{isExpanded ? '−' : '+'}</span>
+      </div>
       {/* Inline Blip Menu */}
       <BlipMenu
-        isActive={isActive}
+        isActive={true}
         isEditing={isEditing}
         canEdit={blip.permissions.canEdit}
         canComment={blip.permissions.canComment}
         inlineCommentsNotice={inlineCommentsNotice}
         editor={inlineEditor || undefined}
         onStartEdit={handleStartEdit}
-        onFinishEdit={handleSaveEdit}
+        onFinishEdit={handleCancelEdit}
         onSend={handleSendFromToolbar}
         onGetLink={handleCopyLink}
         onToggleComments={handleToggleCommentsVisibility}
@@ -835,38 +980,51 @@ export function RizzomaBlip({
         isSending={isSavingEdit}
         isDeleting={isDeleting}
       />
-      {/* Blip Header */}
-      {!isRoot && (
-        <div className="blip-header" style={{ marginTop: isActive ? '30px' : '0' }}>
-          <div className="blip-collapse-control" onClick={handleToggleExpand}>
-            {childCount > 0 && (
-              <span className="collapse-icon">{isExpanded ? '−' : '+'}</span>
+      {uploadState && (
+        <div className={`upload-status ${uploadState.status}`} data-testid="upload-status">
+          <div className="upload-preview">
+            {uploadState.previewUrl ? (
+              <img src={uploadState.previewUrl} alt="Upload preview" />
+            ) : (
+              <span className="upload-file-icon" aria-hidden="true">📎</span>
             )}
-            {hasUnreadChildren && !isExpanded && (
-              <span className="unread-indicator">●</span>
+            <div className="upload-details">
+              <div className="upload-file-name">{uploadState.fileName}</div>
+              <div className="upload-progress-track" role="progressbar" aria-valuenow={uploadState.progress} aria-valuemin={0} aria-valuemax={100}>
+                <div className="upload-progress-fill" style={{ width: `${uploadState.progress}%` }} />
+              </div>
+              {uploadState.status === 'error' && (
+                <div className="upload-error">{uploadState.error || 'Upload failed'}</div>
+              )}
+            </div>
+          </div>
+          <div className="upload-actions">
+            {uploadState.status === 'uploading' ? (
+              <button type="button" className="upload-cancel-btn" onClick={handleCancelUpload}>
+                Cancel
+              </button>
+            ) : (
+              <>
+                <button type="button" className="upload-retry-btn" onClick={handleRetryUpload}>
+                  Retry
+                </button>
+                <button type="button" className="upload-dismiss-btn" onClick={dismissUpload}>
+                  Dismiss
+                </button>
+              </>
             )}
           </div>
-          
-          <div className="blip-author">
-            {blip.authorAvatar && (
-              <img src={blip.authorAvatar} alt={blip.authorName} className="author-avatar" />
-            )}
-            <span className="author-name">{blip.authorName}</span>
-            <span className="blip-time">
-              {new Date(blip.createdAt).toLocaleString()}
-            </span>
-          </div>
-
-          {!blip.isRead && (
-            <div className="blip-unread-marker" title="New message" />
-          )}
         </div>
       )}
-
       {/* Blip Content */}
       <div 
-        className={`blip-content ${isExpanded ? 'expanded' : 'collapsed'}`}
-        style={{ marginTop: isActive && isRoot ? '30px' : '0' }}
+        className={`blip-content ${effectiveExpanded ? 'expanded force-expanded' : 'collapsed'}`}
+        style={{
+          marginTop: isRoot ? '30px' : '0',
+          minHeight: isRoot ? 100 : 24,
+          ...(isRoot && effectiveExpanded ? { display: 'block', opacity: 1, visibility: 'visible' } : {}),
+        }}
+        data-expanded={effectiveExpanded ? '1' : '0'}
       >
         {isEditing ? (
           <div className="blip-editor-container" ref={editorRef}>
@@ -887,11 +1045,13 @@ export function RizzomaBlip({
           </div>
         ) : (
           <div className="blip-view-mode">
-            <div 
-              ref={contentRef}
-              className="blip-text"
-              dangerouslySetInnerHTML={{ __html: blip.content }}
-            />
+            <div className="blip-menu read-only-menu" data-testid="blip-menu-read-surface">
+              <div 
+                ref={contentRef}
+                className="blip-text"
+                dangerouslySetInnerHTML={{ __html: blip.content }}
+              />
+            </div>
           </div>
         )}
 
@@ -938,21 +1098,55 @@ export function RizzomaBlip({
         )}
 
         {/* Child Blips */}
-        {isExpanded && blip.childBlips && blip.childBlips.length > 0 && (
+        {blip.childBlips && blip.childBlips.length > 0 && (
           <div className="child-blips">
-            {blip.childBlips.map(childBlip => (
-              <RizzomaBlip
-                key={childBlip.id}
-                blip={childBlip}
-                isRoot={false}
-                depth={depth + 1}
-                onBlipUpdate={onBlipUpdate}
-                onAddReply={onAddReply}
-                onToggleCollapse={onToggleCollapse}
-                onDeleteBlip={onDeleteBlip}
-                onBlipRead={onBlipRead}
-              />
-            ))}
+            {blip.childBlips.map((childBlip) => {
+              const childExpanded = expandedBlips?.has(childBlip.id);
+              const text = childBlip.content
+                ? childBlip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+                : '';
+              const label = text
+                ? text.length > 140
+                  ? `${text.slice(0, 140)}…`
+                  : text
+                : 'Untitled blip';
+              return (
+                <div key={childBlip.id}>
+                  <div
+                    className="blip-collapsed-label"
+                    data-blip-id={childBlip.id}
+                    data-testid="blip-label-child"
+                    style={{ display: childExpanded ? 'none' : 'flex' }}
+                  >
+                    <button
+                      className="blip-expand-btn"
+                      onClick={() => onExpand?.(childBlip.id)}
+                      aria-label="Expand blip"
+                      type="button"
+                    >
+                      +
+                    </button>
+                    <div className="blip-label-text">
+                      <div className="blip-label-title">{label}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: childExpanded ? 'block' : 'none' }}>
+                    <RizzomaBlip
+                      blip={{ ...childBlip, isCollapsed: false }}
+                      isRoot={false}
+                      depth={depth + 1}
+                      onBlipUpdate={onBlipUpdate}
+                      onAddReply={onAddReply}
+                      onToggleCollapse={onToggleCollapse}
+                      onDeleteBlip={onDeleteBlip}
+                      onBlipRead={onBlipRead}
+                      onExpand={onExpand}
+                      expandedBlips={expandedBlips}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

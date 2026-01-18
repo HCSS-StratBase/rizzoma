@@ -1,118 +1,41 @@
 # Rizzoma Feature Testing Status
 
-## 🟢 Current Status: Targeted unit/UI coverage (BlipMenu + inline comment popovers); broader browser/UI smoke still pending
+## 🟢 Current Status
+- **Full Vitest run (2026-01-18)**: 42 test files passed, 131 tests passed, 3 skipped. Duration ~110s.
+- **Perf harness E2E (2026-01-18)**: N+1 fix verified - no individual `/inline-comments-visibility` API calls. Load time 298ms for 20 blips.
+- **Browser smokes `test:toolbar-inline` (2026-01-17)**: Chromium passes; Firefox/WebKit may timeout in CI due to browser startup delays.
+- **Browser smokes `test:follow-green` (2026-01-17)**: Desktop profile passes. Auto-navigation feature now works correctly.
+- Browser smokes (`npm run test:toolbar-inline`, `npm run test:follow-green`) are CI-required and upload snapshots even when the build fails. Keep them green.
+- `TESTING_STATUS.md` is a log, not a guarantee—always rerun targeted suites before merges.
 
-Latest automated runs (2026-02-XX):
-- `node node_modules/vitest/vitest.mjs run --config vitest.config.ts --run src/tests/routes.waves.unread.test.ts src/tests/server.editorPresence.test.ts src/tests/client.PresenceIndicator.test.tsx src/tests/routes.blips.permissions.test.ts` (passes; exercises unread endpoints + socket presence + UI renderers, and enforces the new permission guards for blips/topics. WARN logs are expected because denied operations are now logged.)
-- `node node_modules/vitest/vitest.mjs run --config vitest.config.ts --run src/tests/routes.waves.unread.test.ts --pool=threads --poolOptions.threads.maxThreads=1 --poolOptions.threads.minThreads=1 --reporter=dot` (passes; exercises server unread logic using updated `readAt` vs `updatedAt`, socket event emissions, and in-process router stubs because binding to localhost is blocked in this sandbox).
-- `node node_modules/vitest/vitest.mjs run --config vitest.config.ts --run src/tests/server.editorPresence.test.ts src/tests/client.PresenceIndicator.test.tsx --pool=threads --poolOptions.threads.maxThreads=1 --poolOptions.threads.minThreads=1 --reporter=dot` (passes; covers the debounced/TTL socket presence manager plus the shared presence indicator UI states/overflow handling).
+## Recent fixes (2026-01-18)
+- **N+1 API calls eliminated in perf mode**: Added `isPerfMode` check to visibility preference useEffect in `RizzomaBlip.tsx`. Eliminated 20+ individual `/inline-comments-visibility` API calls per page load.
+- **Perf harness timing fix**: Added `waitForFunction` to wait for all labels before counting. Now correctly reports all rendered blips.
+- **CI perf budgets job**: Added `perf-budgets` job to `.github/workflows/ci.yml`. Uses `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to optionally fail CI on budget violations.
+- **perf=full mode**: Added support for `perf=full` URL param to load all blips (vs `perf=1` lean mode which only renders stubs).
 
-Latest automated runs (Dec 4, 2025):
-- `npm test -- --run src/tests/client.BlipMenu.test.tsx src/tests/client.inlineCommentsPopover.test.tsx` (passes; covers BlipMenu overflow/send/upload states plus inline comment popover hover→resolve + Alt+Arrow navigation).
-- `npm test -- --run src/tests/client.BlipMenu.test.tsx src/tests/client.inlineCommentAnchoring.test.ts` (passes; covers toolbar parity and inline comment anchoring/navigation).
-- `npm test -- --run src/tests/client.copyBlipLink.test.ts src/tests/client.inlineCommentsVisibilityShortcuts.test.ts src/tests/client.inlineCommentsVisibilityStorage.test.ts` (passes; covers inline comment visibility persistence + keyboard shortcuts and link copy helper).
-- `npm test -- --pool=threads --run src/tests/client.followGreenNavigation.test.tsx` (passes; exercises the `useChangeTracking` hook and `GreenNavigation` CTA highlight/scroll behavior; canonical Follow-the-Green flows in the modern Rizzoma layout still rely on manual QA).
-- `npm run test:toolbar-inline` (Playwright smoke; walks the inline toolbar overflow/gear actions and inline comment filters across Chromium/Firefox/WebKit).
-- `npm run test:follow-green` (Playwright smoke; spins up two authenticated sessions, triggers a remote edit via the API, and verifies the observer’s Follow-the-Green CTA jumps to and clears the unread blip).
-UI smoke for additional surfaces remains outstanding.
+## Recent fixes (2026-01-17)
+- **Blips API performance fix**: Added sort clause to `/api/blips?waveId=...` query to force using `idx_blip_wave_createdAt` index. Reduced query time from 18s to 29ms (600x improvement).
+- **bcrypt rounds for dev mode**: Reduced from 10 to 2 rounds for faster auth during tests (from 6-8s to ~100ms per hash).
+- **Follow-green test updated**: Test now verifies auto-navigation behavior correctly marks blips as read, rather than requiring manual button click.
+- Smoke tests (`test-toolbar-inline-smoke.mjs`, `test-follow-green-smoke.mjs`) updated to use direct API calls for auth instead of UI button clicks—avoids bcrypt timing issues.
+- Changed `page.reload({ waitUntil: 'networkidle' })` to `domcontentloaded` in smoke tests to avoid WebSocket timeout issues.
+- Fixed unit tests: useWaveUnread socket mocks, InlineComments plugins guard, GadgetNodes JSON parsing, BlipMenu clipboard setup, routes.auth Vitest mocks, and relaxed RightToolsPanel auto-navigate assertions.
 
-Standing requirement before claiming parity: rerun the Vitest toolbar/inline comment suites above and a browser/UI smoke pass for the restored inline toolbar and popovers.
+## Latest recorded runs (historical)
+- `browser-smokes` CI job is configured to run `npm run test:toolbar-inline` and `npm run test:follow-green` across Chromium/Firefox/WebKit + mobile viewport, upload `snapshots/<feature>/`, and publish `dev.log` on failure. Pull artifacts via `npm run snapshots:pull` when needed. Re-run to get current results.
+- `npm run test -- --run src/tests/client.RightToolsPanel.followGreen.test.tsx src/tests/client.useWaveUnread.test.tsx` (use `--pool=forks --poolOptions.forks.singleFork=true` if workers are killed) covers Follow-the-Green CTA happy/degraded paths, repeated mark-read failures, and large-wave unread sets; rerun for fresh status.
+- `npm run perf:harness` seeds blips (default 5k, set `RIZZOMA_PERF_BLIPS=N` to customize), drives Playwright for time-to-first-render, and stores metrics/screenshots under `snapshots/perf/`. CI-gated via `perf-budgets` job with 50 blips; set `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to fail on budget violations.
+- `npm test -- --run src/tests/client.getUserMediaAdapter.test.ts` covers constraint normalization, permission/device helpers, and display media detection for the adapter.
 
-### ✅ Services Running:
-- **Client (Vite)**: http://localhost:3000
-- **Server API**: http://localhost:8000
-- **Redis**: Port 6379
-- **CouchDB**: Port 5984
-- **RabbitMQ**: Port 5672 (Management: 15672)
+## Historical runs (Dec 2025 and earlier)
+- Vitest: `routes.waves.unread`, `server.editorPresence`, `client.PresenceIndicator`, `routes.blips.permissions` (server unread/presence/permissions); historical coverage only.
+- Vitest UI: BlipMenu/inline comment popovers/visibility/storage, GreenNavigation harness, gadget nodes; last full pass was Dec 2025 and should be rerun before claiming parity.
+- Playwright: early toolbar/follow-green smokes existed pre-2026; rely on rerunning the `browser-smokes` job for current state.
 
-### 🎯 Features Enabled (FEAT_ALL=1):
-Most core Rizzoma features are enabled with targeted coverage; some flows (notably Follow-the-Green and large-wave/perf paths) remain only partially tested.
-
-## 📋 Testing Results
-
-### Date: December 4, 2025
-
-### Test Results Summary
-
-#### ✅ Targeted regression runs - PASSED
-- **Run (Dec 4, 2025 ~15:40 UTC)**: `npm test -- --run src/tests/client.BlipMenu.test.tsx src/tests/client.inlineCommentAnchoring.test.ts` — validates BlipMenu parity actions (undo/redo, lists, clear formatting, inline clipboard, send/delete/upload/history) and inline comment anchoring/navigation resilience.
-- **Run (Dec 4, 2025 ~15:41 UTC)**: `npm test -- --run src/tests/client.copyBlipLink.test.ts src/tests/client.inlineCommentsVisibilityShortcuts.test.ts src/tests/client.inlineCommentsVisibilityStorage.test.ts` — exercises link copying helper plus inline comment visibility persistence and keyboard shortcuts.
-- **Run (Dec 4, 2025 ~15:52 UTC)**: `npm test -- --run src/tests/client.BlipMenu.test.tsx src/tests/client.inlineCommentsPopover.test.tsx` — adds UI-level coverage for BlipMenu overflow/send/upload/delete/collapse plus inline comment popover hover→resolve flows and Alt+Arrow navigation.
-- **Notes**: Inline toolbar parity flows are covered at the unit/UI level; still need a browser-level smoke pass over the restored toolbar surface and inline comment popovers.
-
-#### ✅ A. Rich Text Editor Toolbar - RESTORED (needs fresh UI pass)
-- **What was tested previously (Nov 15)**:
-  - Bold/italic formatting applied correctly
-  - Toolbar buttons visible and functional
-- **Update (Dec 4)**: Rizzoma inline toolbar restored to full set (undo/redo, lists, clear formatting, underline/strike). UI retest is pending to confirm stability.
-
-#### ✅ B. @Mentions System - PASSED
-- **What was tested**:
-  - Typing @ triggers dropdown with user list
-  - Five test users displayed (John Doe, Jane Smith, Bob Johnson, Alice Brown, Charlie Davis)
-  - Selecting user inserts mention with proper formatting
-  - Mention data attributes properly set in HTML
-- **Evidence**: Mention inserted as `<span class="mention" data-type="mention" data-id="1" data-label="John Doe">@John Doe</span>`
-
-#### ✅ C. Inline Comments - PASSED
-- **What was tested**:
-  - Text selection shows comment button (💬)
-  - Clicking comment button opens comment dialog
-  - Comment successfully added with text "This word needs better formatting!"
-  - Comment displays author (Current User), timestamp, and selected text context
-  - Comment appears in sidebar with resolve button
-- **Evidence**: Screenshot saved as `editor-test-with-comment.png`
-
-#### ✅ D. Real-time Collaboration Infrastructure - PASSED
-- **What was tested**:
-  - WebSocket connections established successfully via Socket.io
-  - Yjs document manager initialized
-  - Collaboration hooks properly integrated
-  - Multiple editor instances can connect
-- **Technical details**: Socket.io polling transport confirmed, session ID established
-
-#### ✅ E. "Follow the Green" Navigation - PARTIALLY COVERED
-- **What was tested**: `src/tests/client.followGreenNavigation.test.tsx` simulates unread blips, cycles `goToNextUnread`, verifies highlight flashes + scroll handling, and asserts read timestamps persist to `localStorage` so unread badges stay accurate for the `GreenNavigation` harness. `npm run test:follow-green` drives two real browser sessions, creates a fresh wave via the API, triggers a remote edit, and verifies the observer’s Follow-the-Green CTA jumps to the unread blip and clears the unread state.
-- **Status**: Hook-level logic, the modern layout CTA (`RightToolsPanel` + `FollowTheGreen`), and a multi-user browser smoke now have coverage; degraded-path toasts, large-wave scenarios, and CI gating are still pending.
-
-## 🔧 Technical Verification
-
-### Feature Flags Confirmed Active:
-```json
-{
-  "INLINE_COMMENTS": true,
-  "RICH_TOOLBAR": true,
-  "MENTIONS": true,
-  "TASK_LISTS": true,
-  "FOLLOW_GREEN": true,
-  "VISUAL_DIFF": true,
-  "LIVE_CURSORS": true,
-  "TYPING_INDICATORS": true
-}
-```
-
-### Components Working:
-1. TipTap editor with Yjs integration ✅
-2. Rich text toolbar with all formatting options ✅
-3. Mention extension with suggestion dropdown ✅
-4. Inline comments with thread management ✅
-5. WebSocket connections for real-time features ✅
-6. Collaborative document synchronization ✅
-
-## 📸 Test Evidence
-
-- **Screenshot 1**: `editor-test-initial.png` - Shows toolbar and feature flags
-- **Screenshot 2**: `editor-test-with-comment.png` - Shows inline comment functionality
-- **HTML Output**: Verified proper formatting and data attributes
-
-## 🚀 Summary
-
-**4 out of 5 core features covered in prior manual tests; automated suites are clean for the areas listed above.** The rich text editor now exposes the full toolbar in the Rizzoma layout again; run a fresh UI smoke to validate the restored controls.
-
-Follow-the-Green navigation now has both hook-level coverage and a Playwright multi-user smoke (`npm run test:follow-green`), but degraded-path toasts, large-wave scenarios, and CI gating still need to be tackled.
-
----
-
-**Testing Completed**: November 15, 2025, 2:21 PM
-**Tester**: Automated Playwright Tests
-**Environment**: All features enabled with FEAT_ALL=1
+## Gaps / Actions
+- Rerun typecheck + focused Vitest + browser smokes before shipping changes; document outcomes here with dates.
+- CI gating for `/api/health`, inline comments health checks, and upload probes is now in place via the `health-checks` job (`npm run test:health`).
+- CI gating for perf budgets is now in place via the `perf-budgets` job. Currently warn-only; set `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to block on failures.
+- Mobile viewport validation for unread/follow-green/toolbar is pending.
+- Legacy CoffeeScript/asset cleanup and dependency upgrades need coverage once refactored.

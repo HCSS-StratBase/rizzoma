@@ -29,7 +29,7 @@ const app = express();
 app.use(helmet());
 // reflect origin from allowlist for credentialed requests
 const isProd = process.env['NODE_ENV'] === 'production';
-const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000')
+const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000,http://localhost:8000')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);

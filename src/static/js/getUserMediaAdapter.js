@@ -1,175 +1,306 @@
-var RTCPeerConnection = null;
-var getUserMedia = null;
-var attachMediaStream = null;
-var reattachMediaStream = null;
-var webrtcDetectedBrowser = null;
-var webrtcDetectedVersion = null;
-
-function trace(text) {
-  // This function is used for logging.
-  if (text[text.length - 1] == '\n') {
-    text = text.substring(0, text.length - 1);
+;(function initAdapter(globalScope, factory) {
+  const adapter = factory(globalScope || {});
+  if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = adapter;
+  } else if (globalScope) {
+    globalScope.getUserMediaAdapter = adapter;
   }
-  console.log((performance.now() / 1000).toFixed(3) + ": " + text);
-}
+})(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : this, function adapterFactory(root) {
+  const navigatorRef = root && root.navigator ? root.navigator : {};
+  const consoleRef = root && root.console ? root.console : { log: function noop() {} };
+  const permissionsRef = navigatorRef && navigatorRef.permissions;
+  const defaultConstraints = { audio: true, video: true };
 
-if (navigator.mozGetUserMedia) {
-  console.log("This appears to be Firefox");
-
-  webrtcDetectedBrowser = "firefox";
-
-  webrtcDetectedVersion =
-                  parseInt(navigator.userAgent.match(/Firefox\/([0-9]+)\./)[1]);
-
-  // The RTCPeerConnection object.
-  RTCPeerConnection = mozRTCPeerConnection;
-
-  // The RTCSessionDescription object.
-  RTCSessionDescription = mozRTCSessionDescription;
-
-  // The RTCIceCandidate object.
-  RTCIceCandidate = mozRTCIceCandidate;
-
-  // Get UserMedia (only difference is the prefix).
-  // Code from Adam Barth.
-  getUserMedia = navigator.mozGetUserMedia.bind(navigator);
-
-  // Creates iceServer from the url for FF.
-  createIceServer = function(url, username, password) {
-    var iceServer = null;
-    var url_parts = url.split(':');
-    if (url_parts[0].indexOf('stun') === 0) {
-      // Create iceServer with stun url.
-      iceServer = { 'url': url };
-    } else if (url_parts[0].indexOf('turn') === 0 &&
-               (url.indexOf('transport=udp') !== -1 ||
-                url.indexOf('?transport') === -1)) {
-      // Create iceServer with turn url.
-      // Ignore the transport parameter from TURN url.
-      var turn_url_parts = url.split("?");
-      iceServer = { 'url': turn_url_parts[0],
-                    'credential': password,
-                    'username': username };
+  function safeNow() {
+    if (root && root.performance && typeof root.performance.now === 'function') {
+      return root.performance.now();
     }
-    return iceServer;
-  };
+    return Date.now();
+  }
 
-  // Attach a media stream to an element.
-  attachMediaStream = function(element, stream) {
-    console.log("Attaching media stream");
-    element.mozSrcObject = stream;
-    element.play();
-  };
+  function trace(message) {
+    if (!message || !consoleRef || typeof consoleRef.log !== 'function') {
+      return;
+    }
+    if (message[message.length - 1] === '\n') {
+      message = message.substring(0, message.length - 1);
+    }
+    const prefix = (safeNow() / 1000).toFixed(3);
+    consoleRef.log(prefix + ': ' + message);
+  }
 
-  reattachMediaStream = function(to, from) {
-    console.log("Reattaching media stream");
-    to.mozSrcObject = from.mozSrcObject;
-    to.play();
-  };
+  function detectBrowser() {
+    const ua = (navigatorRef && navigatorRef.userAgent ? navigatorRef.userAgent : '').toLowerCase();
+    let name = 'unknown';
+    let version = 0;
+    let match = ua.match(/(edge|edg|edgios|edga)\/(\d+)/);
+    if (match) {
+      name = 'edge';
+      version = parseInt(match[2], 10);
+    } else if (/firefox\/(\d+)/.test(ua)) {
+      match = ua.match(/firefox\/(\d+)/);
+      name = 'firefox';
+      version = match ? parseInt(match[1], 10) : 0;
+    } else if (/chrome\/(\d+)/.test(ua)) {
+      match = ua.match(/chrome\/(\d+)/);
+      name = 'chrome';
+      version = match ? parseInt(match[1], 10) : 0;
+    } else if (/safari\/(\d+)/.test(ua) && /version\/(\d+)/.test(ua)) {
+      match = ua.match(/version\/(\d+)/);
+      name = 'safari';
+      version = match ? parseInt(match[1], 10) : 0;
+    }
+    return { name, version, userAgent: ua };
+  }
 
-  // Fake get{Video,Audio}Tracks
-  MediaStream.prototype.getVideoTracks = function() {
-    return [];
-  };
+  const browserInfo = detectBrowser();
+  const mediaDevices = navigatorRef.mediaDevices;
+  const legacyGetUserMedia =
+    navigatorRef.getUserMedia ||
+    navigatorRef.webkitGetUserMedia ||
+    navigatorRef.mozGetUserMedia ||
+    navigatorRef.msGetUserMedia ||
+    null;
 
-  MediaStream.prototype.getAudioTracks = function() {
-    return [];
-  };
-} else if (navigator.webkitGetUserMedia) {
-  console.log("This appears to be Chrome");
+  function resolveGetUserMediaImpl() {
+    if (mediaDevices && typeof mediaDevices.getUserMedia === 'function') {
+      return function modernGetUserMedia(constraints) {
+        trace('Using navigator.mediaDevices.getUserMedia()');
+        return mediaDevices.getUserMedia(constraints);
+      };
+    }
+    if (legacyGetUserMedia) {
+      return function legacyGetUserMediaPromise(constraints) {
+        trace('Falling back to legacy navigator.getUserMedia');
+        return new Promise(function executor(resolve, reject) {
+          legacyGetUserMedia.call(navigatorRef, constraints, resolve, reject);
+        });
+      };
+    }
+    return null;
+  }
 
-  webrtcDetectedBrowser = "chrome";
-  webrtcDetectedVersion =
-             parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2]);
+  const getUserMediaImpl = resolveGetUserMediaImpl();
+  const hasDisplayMedia = !!(mediaDevices && typeof mediaDevices.getDisplayMedia === 'function');
 
-  // Creates iceServer from the url for Chrome.
-  createIceServer = function(url, username, password) {
-    var iceServer = null;
-    var url_parts = url.split(':');
-    if (url_parts[0].indexOf('stun') === 0) {
-      // Create iceServer with stun url.
-      iceServer = { 'url': url };
-    } else if (url_parts[0].indexOf('turn') === 0) {
-      if (webrtcDetectedVersion < 28) {
-        // For pre-M28 chrome versions use old TURN format.
-        var url_turn_parts = url.split("turn:");
-        iceServer = { 'url': 'turn:' + username + '@' + url_turn_parts[1],
-                      'credential': password };
-      } else {
-        // For Chrome M28 & above use new TURN format.
-        iceServer = { 'url': url,
-                      'credential': password,
-                      'username': username };
+  function normalizeConstraints(input) {
+    if (!input || typeof input === 'function') {
+      return defaultConstraints;
+    }
+    if (typeof input === 'string') {
+      if (input === 'audio') {
+        return { audio: true, video: false };
+      }
+      if (input === 'video') {
+        return { audio: false, video: true };
       }
     }
-    return iceServer;
-  };
+    return input;
+  }
 
-  // The RTCPeerConnection object.
-  RTCPeerConnection = webkitRTCPeerConnection;
+  function hasPermissionsApi() {
+    return !!(permissionsRef && typeof permissionsRef.query === 'function');
+  }
 
-  // Get UserMedia (only difference is the prefix).
-  // Code from Adam Barth.
-  getUserMedia = navigator.webkitGetUserMedia.bind(navigator);
-
-  // Attach a media stream to an element.
-  attachMediaStream = function(element, stream) {
-    if (typeof element.srcObject !== 'undefined') {
-      element.srcObject = stream;
-    } else if (typeof element.mozSrcObject !== 'undefined') {
-      element.mozSrcObject = stream;
-    } else if (typeof element.src !== 'undefined') {
-      element.src = URL.createObjectURL(stream);
-    } else {
-      console.log('Error attaching stream to element.');
+  function queryPermission(name) {
+    if (!hasPermissionsApi()) {
+      return Promise.resolve('unknown');
     }
-  };
-
-  reattachMediaStream = function(to, from) {
-    to.src = from.src;
-  };
-
-  // The representation of tracks in a stream is changed in M26.
-  // Unify them for earlier Chrome versions in the coexisting period.
-  if (!webkitMediaStream.prototype.getVideoTracks) {
-    webkitMediaStream.prototype.getVideoTracks = function() {
-      return this.videoTracks;
-    };
-    webkitMediaStream.prototype.getAudioTracks = function() {
-      return this.audioTracks;
-    };
-  }
-
-  // New syntax of getXXXStreams method in M26.
-  if (!webkitRTCPeerConnection.prototype.getLocalStreams) {
-    webkitRTCPeerConnection.prototype.getLocalStreams = function() {
-      return this.localStreams;
-    };
-    webkitRTCPeerConnection.prototype.getRemoteStreams = function() {
-      return this.remoteStreams;
-    };
-  }
-} else {
-  console.log("Browser does not appear to be WebRTC-capable");
-}
-
-var mediaConstraints = {
-    video: true,
-    audio: true
-};
-//var mediaConstraints = {"audio": true, "video": {"mandatory": {}, "optional": []}};
-
-function requestUserMedia(callback) {
-    // Call into getUserMedia via the polyfill (adapter.js).
     try {
-        console.log('Requesting access to local media with mediaConstraints:\n' +
-                          '  \'' + JSON.stringify(mediaConstraints) + '\'');
-        getUserMedia(mediaConstraints, function(stream) {
-            callback(null, stream);
-        }, function(err) {
-            callback(err);
+      return permissionsRef
+        .query({ name: name })
+        .then(function (status) {
+          return status && status.state ? status.state : 'unknown';
+        })
+        .catch(function () {
+          return 'unknown';
         });
-    } catch (e) {
-        callback(e);
+    } catch (err) {
+      return Promise.resolve('unknown');
     }
-}
+  }
+
+  function getMediaPermissionStatus() {
+    return Promise.all([queryPermission('camera'), queryPermission('microphone')]).then(function (results) {
+      return {
+        camera: results[0],
+        microphone: results[1],
+      };
+    });
+  }
+
+  function enumerateInputDevices() {
+    if (!mediaDevices || typeof mediaDevices.enumerateDevices !== 'function') {
+      return Promise.resolve([]);
+    }
+    return mediaDevices
+      .enumerateDevices()
+      .then(function (devices) {
+        return (devices || []).filter(function (device) {
+          return device && (device.kind === 'audioinput' || device.kind === 'videoinput');
+        });
+      })
+      .catch(function () {
+        return [];
+      });
+  }
+
+  function createIceServer(url, username, password) {
+    if (!url) {
+      return null;
+    }
+    const config = { urls: url };
+    if (username) {
+      config.username = username;
+    }
+    if (password) {
+      config.credential = password;
+    }
+    return config;
+  }
+
+  function attachMediaStream(element, stream) {
+    if (!element) {
+      throw new Error('attachMediaStream requires a DOM element');
+    }
+    if (!stream) {
+      throw new Error('attachMediaStream requires a MediaStream');
+    }
+    trace('Attaching media stream');
+    if ('srcObject' in element) {
+      element.srcObject = stream;
+    } else if ('mozSrcObject' in element) {
+      element.mozSrcObject = stream;
+    } else {
+      const creator =
+        (root.URL && typeof root.URL.createObjectURL === 'function' && root.URL.createObjectURL) ||
+        (root.webkitURL && typeof root.webkitURL.createObjectURL === 'function' && root.webkitURL.createObjectURL);
+      if (!creator) {
+        throw new Error('Unable to attach stream: no supported URL.createObjectURL implementation found');
+      }
+      element.src = creator.call(root.URL || root.webkitURL, stream);
+    }
+    if (typeof element.play === 'function') {
+      const playResult = element.play();
+      if (playResult && typeof playResult.catch === 'function') {
+        playResult.catch(function swallow() {});
+      }
+    }
+    return element;
+  }
+
+  function reattachMediaStream(target, source) {
+    if (!target) {
+      throw new Error('reattachMediaStream requires a DOM element');
+    }
+    trace('Reattaching media stream');
+    if ('srcObject' in target) {
+      target.srcObject = source ? source.srcObject : null;
+    } else if ('mozSrcObject' in target) {
+      target.mozSrcObject = source ? source.mozSrcObject : null;
+    } else {
+      target.src = source ? source.src : '';
+    }
+    if (typeof target.play === 'function') {
+      const playResult = target.play();
+      if (playResult && typeof playResult.catch === 'function') {
+        playResult.catch(function swallow() {});
+      }
+    }
+    return target;
+  }
+
+  function requestUserMedia(constraints, callback) {
+    let cb = callback;
+    let requestedConstraints = constraints;
+    if (typeof constraints === 'function' && callback === undefined) {
+      cb = constraints;
+      requestedConstraints = defaultConstraints;
+    }
+    const finalConstraints = normalizeConstraints(requestedConstraints);
+    if (!getUserMediaImpl) {
+      const unsupportedError = new Error('Browser does not appear to be WebRTC-capable');
+      if (typeof cb === 'function') {
+        cb(unsupportedError);
+      }
+      return Promise.reject(unsupportedError);
+    }
+    trace("Requesting access to local media with mediaConstraints:\n  '" + JSON.stringify(finalConstraints) + "'");
+    return getUserMediaImpl(finalConstraints)
+      .then(function onSuccess(stream) {
+        if (typeof cb === 'function') {
+          cb(null, stream);
+        }
+        return stream;
+      })
+      .catch(function onError(error) {
+        if (typeof cb === 'function') {
+          cb(error);
+        }
+        throw error;
+      });
+  }
+
+  function legacyGetUserMediaWrapper(constraints, successCallback, errorCallback) {
+    return requestUserMedia(constraints)
+      .then(function handleSuccess(stream) {
+        if (typeof successCallback === 'function') {
+          successCallback(stream);
+        }
+        return stream;
+      })
+      .catch(function handleError(error) {
+        if (typeof errorCallback === 'function') {
+          errorCallback(error);
+        }
+        throw error;
+      });
+  }
+
+  function primePeerConnectionGlobals() {
+    if (!root) {
+      return null;
+    }
+    const RTCPeerConnectionCtor =
+      root.RTCPeerConnection ||
+      root.webkitRTCPeerConnection ||
+      root.mozRTCPeerConnection ||
+      root.msRTCPeerConnection ||
+      null;
+    if (!root.RTCPeerConnection && RTCPeerConnectionCtor) {
+      root.RTCPeerConnection = RTCPeerConnectionCtor;
+    }
+    return RTCPeerConnectionCtor;
+  }
+
+  primePeerConnectionGlobals();
+
+  const adapter = {
+    requestUserMedia,
+    attachMediaStream,
+    reattachMediaStream,
+    createIceServer,
+    detectBrowser,
+    hasModernApi: !!(mediaDevices && typeof mediaDevices.getUserMedia === 'function'),
+    canRequestMedia: !!getUserMediaImpl,
+    defaultConstraints,
+    supportsDisplayMedia: hasDisplayMedia,
+    hasPermissionsApi: hasPermissionsApi(),
+    getMediaPermissionStatus,
+    enumerateInputDevices,
+  };
+
+  if (root) {
+    root.webrtcDetectedBrowser = browserInfo.name;
+    root.webrtcDetectedVersion = browserInfo.version;
+    root.attachMediaStream = attachMediaStream;
+    root.reattachMediaStream = reattachMediaStream;
+    root.createIceServer = createIceServer;
+    root.requestUserMedia = requestUserMedia;
+    root.getUserMedia = legacyGetUserMediaWrapper;
+    root.enumerateInputDevices = enumerateInputDevices;
+    root.getMediaPermissionStatus = getMediaPermissionStatus;
+  }
+
+  return adapter;
+});

@@ -13,6 +13,15 @@ const parseChartData = (raw: unknown): ChartDataPoint[] => {
       .filter((item) => item.label);
   }
   if (typeof raw === 'string') {
+    // Try JSON first
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parseChartData(parsed);
+      }
+    } catch {
+      // Fall back to comma-separated format
+    }
     return raw.split(',').map((pair) => {
       const [label, value] = pair.split(':');
       return { label: label?.trim() || '', value: Number(value ?? 0) };
@@ -32,6 +41,15 @@ const parsePollOptions = (raw: unknown): PollOption[] => {
       .filter((item) => item.label);
   }
   if (typeof raw === 'string') {
+    // Try JSON first
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsePollOptions(parsed);
+      }
+    } catch {
+      // Fall back to comma-separated format
+    }
     return raw.split(',').map((label, idx) => ({
       id: `opt-${idx}`,
       label: label.trim(),
@@ -69,7 +87,7 @@ export const ChartGadget = Node.create({
     }];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
     const { data, title, type, ...rest } = HTMLAttributes as { data?: unknown; title?: string; type?: string };
     const points = parseChartData(data);
     const preview = points.length
@@ -140,7 +158,7 @@ export const PollGadget = Node.create({
     }];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
     const { question, options, allowMultiple, ...rest } = HTMLAttributes as {
       question?: string;
       options?: unknown;

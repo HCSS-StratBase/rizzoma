@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavigationPanel } from './NavigationPanel';
 import { RizzomaTopicsList } from './RizzomaTopicsList';
 import { MentionsList } from './MentionsList';
@@ -8,6 +8,7 @@ import { RightToolsPanel } from './RightToolsPanel';
 import { CreateTopicModal } from './CreateTopicModal';
 import './RizzomaLayout.css';
 import { useWaveUnread } from '../hooks/useWaveUnread';
+import { ensureWaveUnreadJoin } from '../lib/socket';
 
 interface RizzomaLayoutProps {
   isAuthed: boolean;
@@ -15,14 +16,63 @@ interface RizzomaLayoutProps {
 
 type TabType = 'topics' | 'mentions' | 'tasks' | 'publics' | 'store' | 'teams';
 
+const PERF_SKIP_KEY = 'rizzoma:perf:skipSidebarTopics';
+
+const getInitialPerfSkip = (): boolean => {
+  const hash = typeof window !== 'undefined' ? window.location.hash || '' : '';
+  const perfHash = hash.includes('perf=1');
+  try {
+    const stored = typeof localStorage !== 'undefined' && localStorage.getItem(PERF_SKIP_KEY) === '1';
+    if (perfHash) {
+      try { localStorage.setItem(PERF_SKIP_KEY, '1'); } catch {}
+    }
+    return perfHash || stored;
+  } catch {
+    return perfHash;
+  }
+};
+
 export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('topics');
   const [searchPaneCollapsed, setSearchPaneCollapsed] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [perfSkipTopics, setPerfSkipTopics] = useState(getInitialPerfSkip);
   const unreadState = useWaveUnread(selectedTopicId);
-  
-  console.log('RizzomaLayout render - selectedTopicId:', selectedTopicId);
+
+  // sync hash-based deep-links into the layout selection
+  useEffect(() => {
+    const syncFromHash = () => {
+      const hash = window.location.hash || '';
+      const mTopic = hash.match(/^#\/topic\/([^?]+)/);
+      if (mTopic?.[1]) {
+        setSelectedTopicId(mTopic[1]);
+      }
+      if (hash.includes('perf=1')) {
+        setPerfSkipTopics(true);
+        try {
+          localStorage.setItem(PERF_SKIP_KEY, '1');
+        } catch {}
+      }
+    };
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+    return () => window.removeEventListener('hashchange', syncFromHash);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const skip = localStorage.getItem(PERF_SKIP_KEY) === '1';
+      setPerfSkipTopics(skip);
+    } catch {}
+  }, []);
+
+  // Join unread sockets early for current topic
+  useEffect(() => {
+    if (selectedTopicId) {
+      ensureWaveUnreadJoin(selectedTopicId);
+    }
+  }, [selectedTopicId]);
 
   const handleNewClick = () => {
     setShowCreateModal(true);
@@ -34,6 +84,9 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
   };
 
   const renderSearchPanel = () => {
+    if (perfSkipTopics) {
+      return null;
+    }
     switch (activeTab) {
       case 'topics':
         return (
@@ -108,16 +161,16 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
         <div className="inner-wave-container">
           {selectedTopicId ? (
             <>
-              <RizzomaTopicDetail 
-                id={selectedTopicId} 
-                isAuthed={isAuthed} 
-                unreadState={unreadState}
-              />
-            </>
-          ) : (
-            <div className="no-topic-selected">
-              <h2>Welcome to Rizzoma</h2>
-              <p>Select a topic from the left panel or create a new one</p>
+          <RizzomaTopicDetail 
+            id={selectedTopicId} 
+            isAuthed={isAuthed} 
+            unreadState={unreadState}
+          />
+        </>
+      ) : (
+        <div className="no-topic-selected">
+          <h2>Welcome to Rizzoma</h2>
+          <p>Select a topic from the left panel or create a new one</p>
             </div>
           )}
         </div>

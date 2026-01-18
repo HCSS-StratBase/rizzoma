@@ -96,3 +96,24 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 20px;
 }
+
+.perf-root-stub {
+  border: 1px dashed #ccc;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 12px;
+  min-height: 120px;
+}
+
+.perf-root-body .perf-root-box {
+  height: 120px;
+  width: 100%;
+  background: linear-gradient(90deg, #f9f9f9 0%, #efefef 50%, #f9f9f9 100%);
+  border-radius: 6px;
+}
+
+/* Perf-only anchor to guarantee visible blip sizing during harness runs */
+.perf-root-stub-blip,
+.perf-blip-anchor {
+  display: block;
+}

@@ -60,6 +60,7 @@ This document keeps tabs on how closely the modern TipTap/Yjs toolbars match the
 - Hide/Show inline comments (per blip, persisted server-side with localStorage fallback; Ctrl+Shift+Up/Down shortcuts)
 - Collapse-by-default toggle (edit + read-only states; persists per user)
 - Read-only actions: Edit, Hide/Show comments (wired), Collapse toggle, Get link (wired), Delete (no-op), gear placeholder
+- Inline upload status card (per blip) renders preview/progress/cancel/retry/dismiss controls so attachment/image uploads mirror the legacy gadget popovers instead of relying on alerting.
 
 ## Gap Analysis / TODO
 - [x] Wire read-only Hide/Show comments controls to the inline comments plugin (per blip, stored per user). The BlipMenu hide/show button now toggles inline comments visibility for the active blip and persists the preference in `localStorage`, and both the TipTap `BlipEditor` surface and inline menu stay in sync.
@@ -80,12 +81,13 @@ We will update this list as each legacy capability is restored.
 ## File Map & Test Coverage
 
 - `src/client/components/blip/BlipMenu.tsx` — main inline toolbar surface. Handles edit/read-only actions, overflow gear, uploads, clipboard helpers, collapse-by-default toggle, and inline comment visibility switch.
-- `src/client/components/blip/BlipMenu.css` — restored folded toolbar styling, color palette, upload progress chip, and dropdown layout reusing the original gradients/sprites.
+- `src/client/components/blip/BlipMenu.css` — restored folded toolbar styling, color palette, upload status card (preview/progress/cancel/retry), and dropdown layout reusing the original gradients/sprites.
 - `src/client/components/blip/clipboardStore.ts` — lightweight clipboard cache for copy comment / paste as reply / paste at cursor actions surfaced in the overflow.
 - `src/client/components/editor/inlineCommentsVisibility.ts` — synchronizes inline comment visibility preference between BlipMenu and TipTap through `localStorage` + storage events.
 - `src/client/components/editor/extensions/*` — gadget, underline, and color extensions wired into BlipMenu buttons so parity matches Starter Kit + custom nodes.
 - `src/tests/client.BlipMenu.test.tsx` — Vitest suite covering edit/read-only states, formatting buttons, overflow actions (send/playback/copy/paste), upload progress, collapse toggles, and delete/link handlers.
 - `src/tests/client.blipClipboardStore.test.ts` — exercises clipboard interactions to confirm the overflow menu correctly enables/disables paste actions.
+- `src/tests/client.editor.GadgetNodes.test.ts` — ensures the TipTap chart/poll gadget nodes parse/render legacy DOM attributes and expose working insert commands for the gadget buttons.
 - `src/tests/client.followGreenNavigation.test.tsx` — exercises the Follow-the-Green unread navigation hook (`useChangeTracking`) and `GreenNavigation` button so unread badges, highlight flashes, and toolbar banners stay synchronized with real content changes.
 - `test-toolbar-inline-smoke.mjs` — Playwright-based smoke run (`npm run test:toolbar-inline`) that launches Chromium, exercises the inline toolbar controls (edit/read modes, formatting buttons, overflow toggles), types sample content, and confirms the inline comments nav renders for the active blip.
 - `test-follow-green-smoke.mjs` — Playwright multi-user smoke (`npm run test:follow-green`) that provisions two sessions, seeds a wave/blip via the API, triggers a remote edit, and verifies the observer follows and clears the unread state via the RightToolsPanel CTA.

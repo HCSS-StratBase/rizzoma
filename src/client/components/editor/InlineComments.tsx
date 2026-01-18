@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Editor } from '@tiptap/core';
-import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { InlineComment } from '@shared/types/comments';
 import { FEATURES } from '@shared/featureFlags';
@@ -171,6 +170,7 @@ export function InlineComments({
 
     const removePlugin = () => {
       const state = editor.state as any;
+      if (!state?.plugins || !Array.isArray(state.plugins)) return;
       const nextPlugins = state.plugins.filter((p: any) => p.key !== commentDecorationsKey);
       editor.view.updateState(state.reconfigure({ plugins: nextPlugins }));
     };
@@ -204,6 +204,7 @@ export function InlineComments({
     });
 
     const state = editor.state as any;
+    if (!state?.plugins || !Array.isArray(state.plugins)) return;
     const nextPlugins = [...state.plugins.filter((p: any) => p.key !== commentDecorationsKey), plugin];
     editor.view.updateState(state.reconfigure({ plugins: nextPlugins }));
 
@@ -214,8 +215,8 @@ export function InlineComments({
 
   useEffect(() => {
     if (!editor || !FEATURES.INLINE_COMMENTS || !isVisible) return;
-    const tr = editor.state.tr.setMeta(commentDecorationsKey, { rebuild: true });
-    editor.view.dispatch(tr);
+    const tr = (editor.state as any).tr?.setMeta?.(commentDecorationsKey, { rebuild: true });
+    if (tr) editor.view.dispatch(tr);
   }, [editor, groupedComments, isVisible]);
 
   useEffect(() => {

@@ -18,6 +18,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 }
 
 // Extend Express Request type
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace Express {
     interface Request {
@@ -29,3 +30,4 @@ declare global {
     }
   }
 }
+/* eslint-enable @typescript-eslint/no-namespace */

@@ -1,137 +1,42 @@
-# Rizzoma Project Status
+# Rizzoma Project Status (feature/rizzoma-core-features)
 
-## Current Branch: feature/rizzoma-core-features
+> **Session Continuity**: Read `CLAUDE_SESSION.md` first for detailed context from the last working session (recent fixes, test status, gotchas, key files).
 
-## CRITICAL WORKING PROTOCOL - ALWAYS FOLLOW THIS:
+This file is a lightweight status guide for the active branch. Older "phase" timelines, demo-mode flows, and auto-commit scripts are historical only—use real authentication and the current branch backlog below.
 
-### 1. Testing Methodology with Playwright MCP
-**NEVER claim something works without testing it with Playwright MCP!**
+## Testing Methodology
+- Use real sessions via the AuthPanel; demo/query-string logins (`?demo=true`) are not supported.
+- Keep Playwright smokes green: `npm run test:toolbar-inline` and `npm run test:follow-green` (headed runs allowed for triage).
+- Prefer multi-user validation when touching unread/follow-the-green/presence flows; capture snapshots if behavior changes.
+- Rerun targeted Vitest suites when touching the covered areas (e.g., unread, uploads, editor gadgets).
 
-1. **Always use headed browser** to visually compare old and new Rizzoma side-by-side
-2. **Test with multiple users** (open multiple tabs/sessions) 
-3. **Test EVERY functionality**:
-   - Create topics ✅
-   - Reply to topics ✅ 
-   - Edit blips ✅
-   - Inline comments (select text → comment) ✅
-   - Rich text formatting (all toolbar buttons) ✅
-   - @mentions (with autocomplete) - IN PROGRESS
-   - "Follow the green" navigation
-   - Real-time collaborative cursors - PENDING
-   - Tab switching (Inbox/Topics/Tasks/Contacts) ✅
-   - Expand/collapse nested blips ✅
+## Current Focus
+1) Perf/resilience sweeps for large waves/inline comments/playback/mobile; run `npm run perf:harness`, capture metrics/budgets, and add logging hooks.  
+2) Modernize `getUserMedia` adapter + tests for new media APIs; validate on mobile.  
+3) Health checks + CI gating for `/api/health`, inline comments, and uploads; keep browser smokes green.  
+4) Automate bundles/backups (bundle + GDrive copy) and document cadence.  
+5) Finish CoffeeScript/legacy cleanup and dependency upgrades; decide legacy static assets.
 
-4. **Document what doesn't work** - create detailed lists
+## Recently Completed Highlights
+- **N+1 API calls eliminated (2026-01-18)**: Perf mode now skips individual `/inline-comments-visibility` calls (was 20+ calls, now 0).
+- **CI perf budgets (2026-01-18)**: Added `perf-budgets` job to CI pipeline; set `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to fail on budget violations.
+- **Perf harness timing fix (2026-01-18)**: Harness now waits for all labels to render before counting.
+- **Blips API performance fix (2026-01-17)**: Added sort clause to `/api/blips?waveId=...` to force CouchDB index usage—query time reduced from 18s to 29ms (600x improvement).
+- **bcrypt dev mode optimization**: Reduced rounds from 10 to 2 in non-production for faster auth during tests.
+- **Follow-green test stabilization**: Test now verifies auto-navigation behavior; desktop profile passes reliably.
+- Presence/unread persistence with Follow-the-Green CTA, degraded toasts, and Playwright smokes (`test-follow-green-smoke.mjs` + `test-toolbar-inline-smoke.mjs`).
+- Upload pipeline hardened (MIME/ClamAV/S3), gadget nodes restored with TipTap, and edge-case tests added.
+- Recovery/search materialization shipped with polling UI + Mango pagination/snippets and corresponding tests.
+- Perf harness added (`npm run perf:harness`) to seed large waves and capture render metrics/screenshots.
 
-### 2. Problem-Solving Process
-When something doesn't work:
-1. **Look up the issue in the original Rizzoma GitHub repo** (https://github.com/rizzoma/rizzoma)
-2. **Find the relevant CoffeeScript files** 
-3. **Port missing functionality to TypeScript**
-4. **Test again with Playwright** - take screenshots
-5. **Iterate until it works**
+## Run/Verify
+- Start infra: `docker compose up -d couchdb redis` (add `clamav` if scanning).  
+- Run app: `npm run dev` (set `EDITOR_ENABLE=1` if needed).  
+- Tests: `npm run test`, `npm run test:toolbar-inline`, `npm run test:follow-green`, `npm run perf:harness` (as needed).  
+- Snapshots: `npm run snapshots:pull` to fetch latest artifacts without rerunning Playwright.  
+- Health: `curl http://localhost:8000/api/health`.
 
-### 3. Development Workflow
-1. **CONSTANTLY verify with screenshots** in headed browser
-2. **Never stop working** until verified with Playwright that everything works
-3. **Compare visual differences** between old and new Rizzoma
-4. **Match the exact UI and behavior** of original Rizzoma
-
-### 4. Documentation & Backup - AUTOMATED
-After implementing features:
-1. **Run `./scripts/deploy-updates.sh`** - This automatically:
-   - Commits all changes with descriptive messages
-   - Pushes to GitHub
-   - Updates this CLAUDE.md file
-   - Creates backup bundle (when implemented)
-2. **Manual verification** that changes are live
-
-### 5. Testing URLs
-- Old Rizzoma: https://rizzoma.com/topic/4b8594cb93eac9e5b05167b992e02f06/0_b_49h3_33joj/
-- New Rizzoma: http://localhost:3000/?layout=rizzoma
-- Demo mode: http://localhost:3000/?layout=rizzoma&demo=true
-
-## Latest Completed Tasks ($(date '+%Y-%m-%d %H:%M')):
-1. ✅ Fixed failing SSR test (removed problematic test)
-2. ✅ Implemented ALL core Rizzoma features in parallel:
-   - Track A: Inline comments system ✅
-   - Track B: Rich text toolbar and @mentions (toolbar ✅, mentions in progress)
-   - Track C: "Follow the green" navigation ✅
-   - Track D: Real-time cursors and presence (pending)
-3. ✅ Created feature flags for all features
-4. ✅ Fixed all module resolution issues
-5. ✅ Created startup/shutdown scripts
-6. ✅ Fixed 401 authentication errors for demo mode
-7. ✅ **MAJOR BREAKTHROUGH: React-integrated FloatingToolbar implemented**
-   - Created `/src/client/components/editor/FloatingToolbar.tsx`
-   - Full TipTap editor integration with active state tracking
-   - Professional UI with Bold, Italic, Underline, Headings, Lists, Undo/Redo
-   - Fixed positioning (top-right corner) with mobile responsive design
-   - Successfully tested with Playwright MCP - toolbar appears on edit mode
-8. ✅ All changes committed and documented
-
-## Current Working Features (Verified with Playwright):
-- ✅ 4-pane layout structure implemented
-- ✅ Navigation panel with tabs (Topics, Mentions, Tasks, Publics, Store, Teams)
-- ✅ Topics list panel with search
-- ✅ Wave/content view panel
-- ✅ Right tools panel with "Follow the green" button
-- ✅ Visual styling matches Rizzoma (teal gradient, etc)
-- ✅ Landing page with login modal
-- ✅ Demo mode authentication bypass (`?layout=rizzoma&demo=true`)
-- ✅ Tab switching updates content correctly
-- ✅ "New Topic" button opens creation modal
-- ✅ Reply button functionality (with API integration)
-- ✅ Edit mode switching (with API integration)
-- ✅ Inline comments creation from text selection
-- ✅ Backend API endpoints for blips (create, update, get)
-- ✅ Topic selection and display
-- ✅ **Rich text toolbar with formatting buttons** (FloatingToolbar)
-- ✅ Authentication system working for demo mode
-
-## Next Priority Features:
-- 🔄 @mentions autocomplete dropdown (IN PROGRESS)
-- ❌ Real-time collaborative cursors
-- ❌ Task creation with ~ key
-- ❌ Tags with # key
-- ❌ Gadgets functionality
-- ❌ Mind map view
-- ❌ Invite/Manage members functionality
-- ❌ Share functionality
-- ❌ Settings (⚙️) functionality
-- ❌ Full authentication flow (Gmail/Facebook login)
-
-## Automation Status:
-- ✅ Git commits: Automated with descriptive messages
-- ✅ GitHub pushes: Automated
-- ✅ Documentation updates: Automated (this file)
-- 🔄 Google Drive bundle: To be implemented
-- 🔄 Bundle versioning: To be implemented
-
-## Environment Variables:
-All features are enabled with: `FEAT_ALL=1`
-
-## Quick Commands:
-- **Deploy all changes**: `./scripts/deploy-updates.sh`
-- Start all services: `./scripts/start-all.sh`
-- Stop all services: `./scripts/stop-all.sh`
-- Run tests: `npm test`
-- Lint: `npm run lint`
-- Type check: `npm run type-check`
-
-## Critical Files Created/Modified:
-- `/src/client/components/editor/FloatingToolbar.tsx` - React floating toolbar
-- `/src/client/components/editor/FloatingToolbar.css` - Toolbar styling
-- `/src/client/components/editor/BlipEditor.tsx` - Integrated FloatingToolbar
-- `/src/client/components/blip/RizzomaBlip.tsx` - Updated for toolbar support
-- `/src/server/middleware/csrf.ts` - Fixed for demo mode
-- `/src/server/routes/blips.ts` - Demo user authentication
-- `/src/server/routes/topics.ts` - Demo user authentication
-- `/scripts/deploy-updates.sh` - This automation script
-
-## Testing Status:
-- Last tested: $(date '+%Y-%m-%d %H:%M')
-- Testing method: Playwright MCP with headed browser
-- Core functionality: All working
-- Rich text editing: Fully functional with floating toolbar
-- Authentication: Working in demo mode
+## Notes
+- Use `RIZZOMA_FEATURES_STATUS.md` for the authoritative feature snapshot; update after meaningful test runs.  
+- Update `TESTING_STATUS.md` when you run suites.  
+- Backups: bundle via `git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all`; copy to GDrive per `docs/HANDOFF.md`.

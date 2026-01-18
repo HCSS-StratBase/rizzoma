@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react';
 import { api } from './lib/api';
 import { AuthPanel } from './components/AuthPanel';
 import { TopicsList } from './components/TopicsList';
-import { TopicDetail } from './components/TopicDetail';
 import { WavesList } from './components/WavesList';
 import { WaveView } from './components/WaveView';
 import { Toast } from './components/Toast';
 import { StatusBar } from './components/StatusBar';
+import { RizzomaTopicDetail } from './components/RizzomaTopicDetail';
 import { EditorSearch } from './components/EditorSearch';
 import { EditorAdmin } from './components/EditorAdmin';
 import { GreenNavigation } from './components/GreenNavigation';
@@ -16,40 +16,73 @@ import { RizzomaLanding } from './components/RizzomaLanding';
 import { FEATURES } from '@shared/featureFlags';
 import './RizzomaApp.css';
 
+const PERF_SKIP_KEY = 'rizzoma:perf:skipSidebarTopics';
+const PERF_AUTO_EXPAND_KEY = 'rizzoma:perf:autoExpandRoot';
+
+// In perf mode, short-circuit expensive topic list fetches before any React render
+const perfHashEnabled = typeof window !== 'undefined' && (window.location.hash || '').includes('perf=1');
+if (perfHashEnabled && typeof window !== 'undefined') {
+  try { localStorage.setItem(PERF_SKIP_KEY, '1'); } catch {}
+  try {
+    localStorage.setItem(PERF_AUTO_EXPAND_KEY, '0');
+  } catch {}
+  if (!(window as any).__rizzomaPerfFetchPatched) {
+    const originalFetch = window.fetch.bind(window);
+    (window as any).__rizzomaPerfFetchPatched = true;
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const rawUrl = typeof input === 'string' ? input : (input as any)?.url || '';
+      const method = (init?.method || 'GET').toString().toUpperCase();
+      const normalizedPath = (() => {
+        try { return new URL(rawUrl, window.location.origin).pathname; } catch { return rawUrl; }
+      })();
+      if (method === 'GET' && normalizedPath === '/api/topics') {
+        return new Response(JSON.stringify({ topics: [], hasMore: false }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return originalFetch(input as any, init);
+    };
+  }
+}
+
 // Preserve layout parameter across navigation
 if (new URLSearchParams(window.location.search).get('layout') === 'rizzoma') {
-  const originalPushState = history.pushState;
-  const originalReplaceState = history.replaceState;
-  
-  history.pushState = function(...args) {
+  const originalPushState = history.pushState.bind(history);
+  const originalReplaceState = history.replaceState.bind(history);
+
+  history.pushState = function (...args) {
     if (args[2] && typeof args[2] === 'string' && !args[2].includes('?')) {
       args[2] += '?layout=rizzoma';
     }
-    return originalPushState.apply(history, args);
+    return originalPushState(...args);
   };
-  
-  history.replaceState = function(...args) {
+
+  history.replaceState = function (...args) {
     if (args[2] && typeof args[2] === 'string' && !args[2].includes('?')) {
       args[2] += '?layout=rizzoma';
     }
-    return originalReplaceState.apply(history, args);
+    return originalReplaceState(...args);
   };
 }
 
 export function App() {
-  const [me, setMe] = useState<any>(null);
+  const perfMode = (window.location.hash || '').includes('perf=1');
+  const [me, setMe] = useState<any>(perfMode ? { id: 'perf-mode' } : null);
   const [error] = useState<string | null>(null);
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Check if we should use Rizzoma layout based on URL parameter
   const params = new URLSearchParams(window.location.search);
-  const useRizzomaLayout = params.get('layout') === 'rizzoma';
+  // Consider any layout param or topic/wave route as opting into the Rizzoma shell (useful for deep-links in dev)
+  const useRizzomaLayoutParam = params.get('layout') === 'rizzoma' || params.has('layout');
   
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(!perfMode);
 
   // bootstrap auth state
   useEffect(() => {
+    if (perfMode) return;
     (async () => {
       try {
         const r = await api('/api/auth/me');
@@ -59,7 +92,7 @@ export function App() {
         setCheckingAuth(false);
       }
     })();
-  }, []);
+  }, [perfMode]);
 
   useEffect(() => {
     const onHash = () => setRoute(window.location.hash || '#/');
@@ -87,19 +120,10 @@ export function App() {
   };
   const listParams = parseListParams();
 
-  // Show landing page if not authenticated and using Rizzoma layout
-  if (useRizzomaLayout && !checkingAuth && !me) {
-    return (
-      <RizzomaLanding 
-        onSignedIn={(user) => {
-          setMe(user);
-        }}
-      />
-    );
-  }
+  const forceRizzomaLayout = useRizzomaLayoutParam || route.startsWith('#/topic/') || route.startsWith('#/wave/');
 
-  // Use Rizzoma layout if requested (requires authentication)
-  if (useRizzomaLayout && me) {
+  // Always render the modern Rizzoma shell for topic/wave routes or explicit layout flag
+  if (forceRizzomaLayout) {
     return (
       <div className="rizzoma-app">
         {FEATURES.FOLLOW_GREEN && (
@@ -108,7 +132,11 @@ export function App() {
             <a href="#">Disable extension</a>
           </div>
         )}
-        <RizzomaLayout isAuthed />
+        {!checkingAuth && !me ? (
+          <RizzomaLanding onSignedIn={(user) => setMe(user)} />
+        ) : (
+          <RizzomaLayout isAuthed={!!me} />
+        )}
         <Toast />
       </div>
     );
@@ -157,7 +185,7 @@ export function App() {
       ) : route.startsWith('#/wave/') && currentId ? (
         <WaveView id={currentId} />
       ) : route.startsWith('#/topic/') && currentId ? (
-        <TopicDetail id={currentId} isAuthed={!!me} />
+        <RizzomaTopicDetail id={currentId} isAuthed={!!me} />
       ) : (
         <TopicsList isAuthed={!!me} initialMy={listParams.my} initialLimit={listParams.limit} initialOffset={listParams.offset} initialQuery={listParams.q} />
       )}

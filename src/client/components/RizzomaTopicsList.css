@@ -39,6 +39,7 @@
   border-bottom: 1px solid #e0e0e0;
   position: relative;
   transition: background-color 0.2s;
+  padding-left: 16px;
 }
 
 .topic-item:hover {
@@ -57,6 +58,30 @@
   border-radius: 3px;
   margin-right: 8px;
   flex-shrink: 0;
+}
+
+.topic-unread-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  background: #e6e6e6;
+  overflow: hidden;
+}
+
+.topic-unread-bar .topic-unread-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0%;
+  background: #3cb371;
+  transition: height 0.2s ease, background-color 0.2s ease;
+}
+
+.topic-unread-bar.has-unread .topic-unread-fill {
+  height: 100%;
 }
 
 .topic-content {

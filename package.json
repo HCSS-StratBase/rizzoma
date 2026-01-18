@@ -35,7 +35,12 @@
     "logs:app": "docker compose logs -f app",
     "status": "docker compose ps && echo '\nAPI Health:' && curl -s http://localhost:8000/api/health || echo 'API not responding'",
     "test:toolbar-inline": "node test-toolbar-inline-smoke.mjs",
-    "test:follow-green": "node test-follow-green-smoke.mjs"
+    "test:follow-green": "node test-follow-green-smoke.mjs",
+    "test:health": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts src/tests/server.health.test.ts src/tests/routes.comments.inlineHealth.test.ts src/tests/routes.uploads.edgecases.test.ts",
+    "perf:harness": "node perf-harness.mjs",
+    "perf:budget": "node scripts/perf-budget.mjs",
+    "snapshots:pull": "bash scripts/fetch-latest-snapshots.sh",
+    "lint:branch-context": "node scripts/check-branch-state.cjs"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.4",

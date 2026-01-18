@@ -5,12 +5,19 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "outDir": "./dist/server",
-    "rootDir": "./src/server",
+    "rootDir": "./src",
     "noEmit": false,
     "jsx": "react",
     "lib": ["ES2022"],
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": "./",
+    "paths": {
+      "@server/*": ["src/server/*"],
+      "@client/*": ["src/client/*"],
+      "@shared/*": ["src/shared/*"],
+      "@types/*": ["src/types/*"]
+    }
   },
-  "include": ["src/server/**/*", "src/types/**/*"],
+  "include": ["src/server/**/*", "src/shared/**/*", "src/types/**/*"],
   "exclude": ["src/client/**/*", "src/server/couch_views/**/*", "src/share/**/*"]
 }

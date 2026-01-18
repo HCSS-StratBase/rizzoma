@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { toast } from './Toast';
 
@@ -9,6 +9,18 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
+
+  // Pre-fill dev credentials to avoid blank landing with 401s during smoke
+  useEffect(() => {
+    if (initialized) return;
+    const host = window?.location?.host || '';
+    if (host.includes('localhost')) {
+      setEmail('dev@example.com');
+      setPassword('devpass123');
+    }
+    setInitialized(true);
+  }, [initialized]);
 
   const act = async (kind: 'login' | 'register'): Promise<void> => {
     setError(null);

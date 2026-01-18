@@ -6,7 +6,7 @@ describe('client: inline comment visibility shortcuts', () => {
   it('toggles visibility and persists when shortcuts pressed', () => {
     const setSpy = vi
       .spyOn(visibility, 'setInlineCommentsVisibility')
-      .mockImplementation(() => {});
+      .mockImplementation(() => 0);
     const onToggle = vi.fn();
 
     toggleInlineCommentsVisibility({ blipId: 'wave1:blip1', onToggle }, true);

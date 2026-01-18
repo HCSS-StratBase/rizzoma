@@ -1,23 +1,22 @@
+import { vi, describe, it, expect, beforeAll } from 'vitest';
+
 // Use bcryptjs in tests to avoid native binding issues
 vi.mock('bcrypt', async () => {
   const mod: any = await import('bcryptjs');
   return { ...mod, default: mod };
 });
-import express from 'express';
-import cookieParser from 'cookie-parser';
-import { requestId } from '../server/middleware/requestId';
-import bcrypt from 'bcrypt';
 
 // Mock redis + connect-redis to avoid real connections in tests
-jest.mock('redis', () => ({
+vi.mock('redis', () => ({
   __esModule: true,
   createClient: () => ({
     connect: () => Promise.resolve(),
     on: () => void 0,
   }),
 }));
+
 // Support both default and named import styles for RedisStore in tests
-jest.mock('connect-redis', () => {
+vi.mock('connect-redis', () => {
   class RedisStoreMock {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(_opts: any) {}
@@ -29,6 +28,11 @@ jest.mock('connect-redis', () => {
   }
   return { __esModule: true, default: RedisStoreMock, RedisStore: RedisStoreMock };
 });
+
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import { requestId } from '../server/middleware/requestId';
+import bcrypt from 'bcrypt';
 
 describe('routes: /api/auth', () => {
   let app: express.Express;
@@ -67,6 +71,16 @@ describe('routes: /api/auth', () => {
     app.use(express.json());
     app.use(cookieParser());
     app.use(requestId());
+    // Add mock session middleware
+    app.use((req, _res, next) => {
+      (req as any).session = {
+        userId: undefined,
+        userEmail: undefined,
+        userName: undefined,
+        destroy: (cb: () => void) => cb(),
+      };
+      next();
+    });
     app.use('/api/auth', authRouter);
   });
 

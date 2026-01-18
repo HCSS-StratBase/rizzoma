@@ -20,6 +20,8 @@ type Topic = {
   updatedAt: number; // epoch millis
 };
 
+type TopicListItem = { id: string | undefined; title: string; createdAt: number; updatedAt?: number };
+
 // GET /api/topics?limit=20
 router.get('/', async (req, res): Promise<void> => {
   const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
@@ -27,12 +29,21 @@ router.get('/', async (req, res): Promise<void> => {
   const bookmark = String((req.query as any).bookmark || '').trim() || undefined;
   const myOnly = String((req.query as any).my ?? '0') === '1';
   const q = String((req.query as any).q ?? '').trim().toLowerCase();
+  const sortTopics = (list: TopicListItem[]) =>
+    list
+      .slice()
+      .sort((a, b) => {
+        const aTime = a.updatedAt ?? a.createdAt ?? 0;
+        const bTime = b.updatedAt ?? b.createdAt ?? 0;
+        return bTime - aTime;
+      });
+
   const respondWithUnread = async (
-    list: Array<{ id: string | undefined; title: string; createdAt: number }>,
+    list: TopicListItem[],
     more: boolean,
     bookmarkValue?: string,
   ) => {
-    let enriched = list;
+    let enriched = sortTopics(list);
     const userId = (req as any).session?.userId as string | undefined;
     if (userId) {
       const ids = enriched.map((t) => t.id).filter(Boolean) as string[];
@@ -54,10 +65,10 @@ router.get('/', async (req, res): Promise<void> => {
     if (myOnly && sessUser) selector.authorId = sessUser;
 
     // Ensure indexes (idempotent)
-    try { await createIndex(['type', 'createdAt'], 'idx_topic_createdAt'); } catch {}
-    if (myOnly) { try { await createIndex(['type', 'authorId', 'createdAt'], 'idx_topic_author_createdAt'); } catch {} }
+    try { await createIndex(['type', 'updatedAt'], 'idx_topic_updatedAt'); } catch {}
+    if (myOnly) { try { await createIndex(['type', 'authorId', 'updatedAt'], 'idx_topic_author_updatedAt'); } catch {} }
 
-    let topics: Array<{ id: string | undefined; title: string; createdAt: number }> = [];
+    let topics: Array<{ id: string | undefined; title: string; createdAt: number; updatedAt?: number }> = [];
     let hasMore = false;
 
     if (q) {
@@ -72,16 +83,26 @@ router.get('/', async (req, res): Promise<void> => {
         ],
       };
       try {
-        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, sort: [{ createdAt: 'desc' }], bookmark });
+        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, sort: [{ updatedAt: 'desc' }, { createdAt: 'desc' }], bookmark });
         const window = r.docs || [];
-        topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
+        topics = window.slice(0, limit).map((d) => ({
+          id: String(d._id ?? ''),
+          title: d.title,
+          createdAt: d.createdAt,
+          updatedAt: d.updatedAt,
+        }));
         hasMore = window.length > limit;
         await respondWithUnread(topics, hasMore, r.bookmark);
         return;
       } catch {
         const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, bookmark });
         const window = r.docs || [];
-        topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
+        topics = window.slice(0, limit).map((d) => ({
+          id: String(d._id ?? ''),
+          title: d.title,
+          createdAt: d.createdAt,
+          updatedAt: d.updatedAt,
+        }));
         hasMore = window.length > limit;
         await respondWithUnread(topics, hasMore, r.bookmark);
         return;
@@ -90,12 +111,17 @@ router.get('/', async (req, res): Promise<void> => {
       // No search term: efficient paging using skip/limit
       let r: { docs: Topic[]; bookmark?: string };
       try {
-        r = await find<Topic>(selector, { limit: limit + 1, skip: offset, sort: [{ createdAt: 'desc' }], bookmark });
+        r = await find<Topic>(selector, { limit: limit + 1, skip: offset, sort: [{ updatedAt: 'desc' }, { createdAt: 'desc' }], bookmark });
       } catch {
         r = await find<Topic>(selector, { limit: limit + 1, skip: offset, bookmark });
       }
       const window = r.docs || [];
-      topics = window.slice(0, limit).map((d) => ({ id: d._id, title: d.title, createdAt: d.createdAt }));
+      topics = window.slice(0, limit).map((d) => ({
+        id: String(d._id ?? ''),
+        title: d.title,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+      }));
       hasMore = window.length > limit;
       await respondWithUnread(topics, hasMore, r.bookmark);
       return;
@@ -147,7 +173,7 @@ router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => 
 // GET /api/topics/:id
 router.get('/:id', async (req, res): Promise<void> => {
   try {
-    const id = req.params.id;
+    const id = req.params['id'];
     const doc = await getDoc<Topic>(id);
     res.json({ id: doc._id, title: doc.title, content: doc.content, createdAt: doc.createdAt, updatedAt: doc.updatedAt });
     return;
@@ -162,7 +188,7 @@ router.get('/:id', async (req, res): Promise<void> => {
 router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const id = req.params.id;
+    const id = req.params['id'];
     const payload = UpdateTopicSchema.parse(req.body ?? {});
     const existing = await getDoc<Topic & { _rev: string }>(id);
     if (existing.authorId && existing.authorId !== userId) {
@@ -177,8 +203,8 @@ router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void>
       updatedAt: Date.now(),
     };
     const r = await updateDoc(next as any);
-    res.json({ id: r.id, rev: r.rev });
-    try { emitEvent('topic:updated', { id: r.id, title: next.title, updatedAt: next.updatedAt }); } catch {}
+    res.json({ id: r['id'], rev: r['rev'] });
+    try { emitEvent('topic:updated', { id: r['id'], title: next.title, updatedAt: next.updatedAt }); } catch {}
     return;
   } catch (e: any) {
     if (e?.issues) { res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id }); return; }
@@ -192,7 +218,7 @@ router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void>
 router.delete('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const id = req.params.id;
+    const id = req.params['id'];
     const doc = await getDoc<{ _rev: string } & Topic>(id);
     if ((doc as any).authorId && (doc as any).authorId !== userId) {
       console.warn('[topics] forbidden delete', { topicId: id, userId, ownerId: (doc as any).authorId, requestId: (req as any)?.id });
@@ -200,8 +226,8 @@ router.delete('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void
       return;
     }
     const r = await deleteDoc(id, (doc as any)._rev);
-    res.json({ id: r.id, rev: r.rev });
-    try { emitEvent('topic:deleted', { id: r.id }); } catch {}
+    res.json({ id: r['id'], rev: r['rev'] });
+    try { emitEvent('topic:deleted', { id: r['id'] }); } catch {}
     return;
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }

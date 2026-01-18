@@ -30,7 +30,11 @@ export function Toast() {
   const bg = type === 'error' ? '#fce8e6' : '#e6f4ea';
   const color = type === 'error' ? '#d93025' : '#137333';
   return (
-    <div style={{ position: 'fixed', bottom: 16, right: 16, background: bg, color, padding: '8px 12px', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+    <div
+      data-testid="toast"
+      className={`toast toast-${type}`}
+      style={{ position: 'fixed', bottom: 16, right: 16, background: bg, color, padding: '8px 12px', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+    >
       {msg}
     </div>
   );

@@ -57,11 +57,11 @@ describe('client: Follow-the-Green navigation', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    (FEATURES as Record<string, boolean>).FOLLOW_GREEN = true;
+    (FEATURES as Record<string, boolean>)['FOLLOW_GREEN'] = true;
   });
 
   afterEach(() => {
-    (FEATURES as Record<string, boolean>).FOLLOW_GREEN = originalFollowGreen;
+    (FEATURES as Record<string, boolean>)['FOLLOW_GREEN'] = originalFollowGreen;
     vi.clearAllMocks();
     vi.useRealTimers();
   });

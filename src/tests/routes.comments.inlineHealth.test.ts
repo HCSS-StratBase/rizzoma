@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Router, Request, Response, NextFunction } from 'express';
+import type { Router, Request, Response } from 'express';
+import type { Session, SessionData } from 'express-session';
 import { inlineCommentsRouter } from '../server/routes/inlineComments';
 import { FEATURES } from '@shared/featureFlags';
 
@@ -14,7 +15,7 @@ vi.mock('../server/lib/couch.js', () => ({
 type InvokeOptions = {
   params?: Record<string, string>;
   body?: any;
-  session?: Record<string, unknown>;
+  session?: Session & Partial<SessionData> & Record<string, unknown>;
   user?: any;
 };
 
@@ -30,13 +31,13 @@ async function invokeInlineRoute(
   if (!layer) throw new Error(`Route ${method} ${path} not found`);
   const stack = layer.route.stack;
   const req: Partial<Request> & {
-    session: Record<string, unknown>;
+    session: Session & Partial<SessionData> & Record<string, unknown>;
     user?: any;
   } = {
     method: method.toUpperCase() as any,
     params: opts.params ?? {},
     body: opts.body ?? {},
-    session: opts.session ?? {},
+    session: (opts.session ?? {}) as Session & Partial<SessionData> & Record<string, unknown>,
     user: opts.user,
   };
   const res: Partial<Response> & {
@@ -53,9 +54,6 @@ async function invokeInlineRoute(
       this.body = payload;
       return this as any;
     },
-  };
-  const next: NextFunction = (err?: any) => {
-    if (err) throw err;
   };
   for (const entry of stack) {
     let nextCalled = false;
@@ -91,4 +89,3 @@ describe('routes: inline comments basic health', () => {
     expect(res.body).toMatchObject({ error: 'Feature not enabled' });
   });
 });
-

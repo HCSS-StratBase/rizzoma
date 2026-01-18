@@ -94,7 +94,7 @@ describe('routes: blips permissions', () => {
 
   it('allows the author to update a blip', async () => {
     couch.getDoc.mockResolvedValue({ _id: 'b1', waveId: 'w1', authorId: 'author', content: '<p>old</p>' });
-    couch.updateDoc.mockResolvedValue({ id: 'b1', rev: '2-x' });
+    couch.updateDoc.mockResolvedValue({ ok: true, id: 'b1', rev: '2-x' });
     const res = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
       body: { content: '<p>new</p>' },
