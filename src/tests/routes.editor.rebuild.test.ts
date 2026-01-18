@@ -1,6 +1,9 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Increase timeout for module loading with mocks
+vi.setConfig({ hookTimeout: 30000 });
 
 describe('routes: /api/editor rebuild snapshot', () => {
   const app = express();
