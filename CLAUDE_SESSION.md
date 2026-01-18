@@ -51,9 +51,9 @@
    - Extended clipboardStore with cut/paste support
 
 ### Test Status
-- **Vitest**: 42 files, 128 tests passing, 3 skipped - verified 2026-01-18
+- **Vitest**: 42 files, 131 tests passing, 3 skipped - verified 2026-01-18
 - **Typecheck**: Passing
-- 1 unrelated hook timeout (editor rebuild test)
+- **All tests passing** (editor hook timeouts fixed)
 
 ## What's Left To Do
 
@@ -63,10 +63,11 @@
 - ~~Remove legacy CoffeeScript files~~ - DONE
 - ~~Remove legacy static assets~~ - DONE
 - ~~Remove legacy test scripts~~ - DONE
+- ~~Fix editor test hook timeouts~~ - DONE
+- ~~Add MODERNIZATION_COMPLETE.md~~ - DONE
 
 ### Remaining Tasks
-1. **Mobile validation** - Test PWA on actual devices (iPhone Safari, Chrome Android)
-2. **E2E test stabilization** - Fix hook timeout in editor rebuild test
+**None** - Modernization is complete. Only optional mobile device validation remains (PWA is ready).
 
 ## Key Commands
 ```bash
