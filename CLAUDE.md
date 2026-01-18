@@ -11,32 +11,29 @@ This file is a lightweight status guide for the active branch. Older "phase" tim
 - Rerun targeted Vitest suites when touching the covered areas (e.g., unread, uploads, editor gadgets).
 
 ## Current Focus
-1) Perf/resilience sweeps for large waves/inline comments/playback/mobile; run `npm run perf:harness`, capture metrics/budgets, and add logging hooks.  
-2) Modernize `getUserMedia` adapter + tests for new media APIs; validate on mobile.  
-3) Health checks + CI gating for `/api/health`, inline comments, and uploads; keep browser smokes green.  
-4) Automate bundles/backups (bundle + GDrive copy) and document cadence.  
-5) Finish CoffeeScript/legacy cleanup and dependency upgrades; decide legacy static assets.
+1) Perf/resilience sweeps for large waves/inline comments/playback/mobile; run `npm run perf:harness`, capture metrics/budgets, and add logging hooks.
+2) Modernize `getUserMedia` adapter + tests for new media APIs; validate on mobile.
+3) Health checks + CI gating for `/api/health`, inline comments, and uploads; keep browser smokes green.
+4) Validate PWA on actual mobile devices (iPhone Safari, Chrome Android).
 
 ## Recently Completed Highlights
-- **Mobile modernization (2026-01-18)**: Implemented complete mobile PWA infrastructure with zero new dependencies:
-  - Responsive breakpoints system (`src/client/styles/breakpoints.css`)
-  - Mobile context and hooks (`useMediaQuery`, `useIsMobile`, `useMobileContext`)
-  - BottomSheet component for mobile menus (`src/client/components/mobile/`)
-  - PWA manifest, service worker, and SVG icons
-  - Gesture hooks (`useSwipe`, `usePullToRefresh`)
-  - View Transitions API wrapper (`useViewTransition`)
-  - Offline queue with mutation retry (`offlineQueue.ts`, `useOfflineStatus`)
-  - Mobile layout with swipe navigation in `RizzomaLayout`
-- **N+1 API calls eliminated (2026-01-18)**: Perf mode now skips individual `/inline-comments-visibility` calls (was 20+ calls, now 0).
-- **CI perf budgets (2026-01-18)**: Added `perf-budgets` job to CI pipeline; set `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to fail on budget violations.
-- **Perf harness timing fix (2026-01-18)**: Harness now waits for all labels to render before counting.
-- **Blips API performance fix (2026-01-17)**: Added sort clause to `/api/blips?waveId=...` to force CouchDB index usage—query time reduced from 18s to 29ms (600x improvement).
-- **bcrypt dev mode optimization**: Reduced rounds from 10 to 2 in non-production for faster auth during tests.
-- **Follow-green test stabilization**: Test now verifies auto-navigation behavior; desktop profile passes reliably.
-- Presence/unread persistence with Follow-the-Green CTA, degraded toasts, and Playwright smokes (`test-follow-green-smoke.mjs` + `test-toolbar-inline-smoke.mjs`).
-- Upload pipeline hardened (MIME/ClamAV/S3), gadget nodes restored with TipTap, and edge-case tests added.
-- Recovery/search materialization shipped with polling UI + Mango pagination/snippets and corresponding tests.
-- Perf harness added (`npm run perf:harness`) to seed large waves and capture render metrics/screenshots.
+- **Major dependency upgrades (2026-01-18)**: Express 4→5, Redis 4→5, Vite 5→7, Vitest 1→4, @vitejs/plugin-react→5.0.0
+- **AWS SDK v3 migration (2026-01-18)**: S3 uploads now use modular `@aws-sdk/client-s3` with lazy initialization
+- **Massive legacy cleanup (2026-01-18)**: Removed 480 files, -66,949 lines:
+  - All CoffeeScript files (`src/share/`, `src/*_index.coffee`)
+  - All legacy static assets (`src/static/` - images, CSS, jQuery plugins)
+  - Legacy test scripts
+- **Mobile modernization (2026-01-18)**: Complete mobile PWA infrastructure with zero new dependencies:
+  - Responsive breakpoints, mobile context/hooks, BottomSheet component
+  - PWA manifest, service worker, SVG icons
+  - Gesture hooks (`useSwipe`, `usePullToRefresh`), View Transitions API
+  - Offline queue with mutation retry
+- **N+1 API calls eliminated (2026-01-18)**: Perf mode skips individual `/inline-comments-visibility` calls
+- **CI perf budgets (2026-01-18)**: Added `perf-budgets` job; set `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to fail on violations
+- **Blips API performance fix (2026-01-17)**: CouchDB index usage—query time 18s→29ms (600x improvement)
+- Presence/unread persistence with Follow-the-Green CTA and Playwright smokes
+- Upload pipeline hardened (MIME/ClamAV/S3), gadget nodes restored with TipTap
+- Perf harness (`npm run perf:harness`) for large wave benchmarks
 
 ## Run/Verify
 - Start infra: `docker compose up -d couchdb redis` (add `clamav` if scanning).  
@@ -46,6 +43,6 @@ This file is a lightweight status guide for the active branch. Older "phase" tim
 - Health: `curl http://localhost:8000/api/health`.
 
 ## Notes
-- Use `RIZZOMA_FEATURES_STATUS.md` for the authoritative feature snapshot; update after meaningful test runs.  
-- Update `TESTING_STATUS.md` when you run suites.  
-- Backups: bundle via `git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all`; copy to GDrive per `docs/HANDOFF.md`.
+- Use `RIZZOMA_FEATURES_STATUS.md` for the authoritative feature snapshot; update after meaningful test runs.
+- Update `TESTING_STATUS.md` when you run suites.
+- Backups: use `./scripts/backup.sh --gdrive` or manual bundle via `git bundle create rizzoma.bundle --all`.
