@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
-const adapterModulePath = '../static/js/getUserMediaAdapter.js';
+const adapterModulePath = '../client/lib/getUserMediaAdapter.js';
 
 async function loadAdapter() {
   const module = await import(adapterModulePath);

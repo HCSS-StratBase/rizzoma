@@ -144,17 +144,17 @@ export function useNavigationTransition(options: {
   const { startTransition, isSupported } = useViewTransition({
     onBeforeCapture: () => {
       // Add direction class for CSS targeting
-      document.documentElement.dataset.navDirection = defaultDirection;
+      document.documentElement.dataset['navDirection'] = defaultDirection;
     },
     onComplete: () => {
-      delete document.documentElement.dataset.navDirection;
+      delete document.documentElement.dataset['navDirection'];
     },
   });
 
   const navigate = useCallback(
     async (to: string, direction: 'forward' | 'back' = defaultDirection) => {
       if (isSupported) {
-        document.documentElement.dataset.navDirection = direction;
+        document.documentElement.dataset['navDirection'] = direction;
       }
 
       await startTransition(() => {

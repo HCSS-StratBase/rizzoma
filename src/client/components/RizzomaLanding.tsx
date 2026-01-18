@@ -69,7 +69,7 @@ export function RizzomaLanding({ onSignedIn }: RizzomaLandingProps) {
         </div>
         <div className="footer-apps">
           <a href="#" className="app-link">
-            <img src="/android-app.png" alt="Get it on Google Play" />
+            <img src="/android-app.svg" alt="Get it on Google Play" />
           </a>
           <a href="#" className="footer-link">Open Source Initiative</a>
         </div>

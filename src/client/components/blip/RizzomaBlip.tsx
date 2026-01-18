@@ -22,13 +22,15 @@ import {
   setCollapsePreference, 
   subscribeCollapsePreference 
 } from './collapsePreferences';
-import { 
-  getBlipClipboardPayload, 
-  setBlipClipboardPayload 
+import {
+  getBlipClipboardPayload,
+  setBlipClipboardPayload,
+  getGlobalClipboard,
+  clearCutState,
 } from './clipboardStore';
 import { createUploadTask, type UploadResult, type UploadTask } from '../../lib/upload';
 import './RizzomaBlip.css';
-import { measureRender } from '../../lib/performance';
+// Performance measurement is available via import { measureRender } from '../../lib/performance'
 
 export interface BlipData {
   id: string;
@@ -142,7 +144,9 @@ export function RizzomaBlip({
   const [inlineCommentDraft, setInlineCommentDraft] = useState('');
   const [isInlineCommentFormVisible, setIsInlineCommentFormVisible] = useState(false);
   const [isSavingInlineComment, setIsSavingInlineComment] = useState(false);
-  const [clipboardAvailable, setClipboardAvailable] = useState(() => !!getBlipClipboardPayload(blip.id));
+  const [clipboardAvailable, setClipboardAvailable] = useState(() => !!getBlipClipboardPayload(blip.id) || !!getGlobalClipboard());
+  const [isCutMode, setIsCutMode] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [uploadState, setUploadState] = useState<UploadUiState | null>(null);
   const uploadTaskRef = useRef<UploadTask | null>(null);
@@ -852,6 +856,94 @@ export function RizzomaBlip({
     toast('Pasted clipboard content');
   };
 
+  const handleDuplicate = async () => {
+    if (!blip.permissions.canEdit || isDuplicating) return;
+    setIsDuplicating(true);
+    try {
+      const response = await fetch(`/api/blips/${encodeURIComponent(blip.id)}/duplicate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to duplicate blip');
+      }
+      toast('Blip duplicated');
+      // Trigger refresh to show the new blip
+      window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+    } catch (error) {
+      console.error('Failed to duplicate blip', error);
+      toast('Failed to duplicate blip', 'error');
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
+  const handleCut = () => {
+    if (!blip.permissions.canEdit) {
+      toast('You cannot cut this blip', 'error');
+      return;
+    }
+    const html = blip.content;
+    const plainText = htmlToPlainText(html);
+    const waveId = blip.id.split(':')[0];
+    setBlipClipboardPayload(blip.id, {
+      html,
+      text: plainText,
+      isCut: true,
+      waveId,
+      parentId: blip.parentBlipId || null,
+    });
+    setIsCutMode(true);
+    setClipboardAvailable(true);
+    toast('Blip cut - select destination to paste');
+  };
+
+  const handlePasteAsNewBlip = async () => {
+    if (!blip.permissions.canComment) {
+      toast('You cannot add blips here', 'error');
+      return;
+    }
+    const globalClipboard = getGlobalClipboard();
+    const localClipboard = getBlipClipboardPayload(blip.id);
+    const payload = globalClipboard || localClipboard;
+    if (!payload) {
+      toast('Copy or cut a blip first', 'error');
+      return;
+    }
+    try {
+      const waveId = blip.id.split(':')[0];
+      const response = await fetch('/api/blips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          waveId,
+          parentId: blip.id, // Paste as child of current blip
+          content: payload.html,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to create blip');
+      }
+      // If this was a cut operation, delete the original
+      if (payload.isCut && payload.blipId) {
+        try {
+          await fetch(`/api/blips/${encodeURIComponent(payload.blipId)}`, {
+            method: 'DELETE',
+          });
+          clearCutState(payload.blipId);
+        } catch (deleteError) {
+          console.warn('Failed to delete cut blip', deleteError);
+        }
+      }
+      toast(payload.isCut ? 'Blip moved' : 'Blip pasted');
+      setIsCutMode(false);
+      window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+    } catch (error) {
+      console.error('Failed to paste blip', error);
+      toast('Failed to paste blip', 'error');
+    }
+  };
+
   const handleToggleCollapsePreference = async () => {
     if (!blip.permissions.canEdit) return;
     const previous = collapseByDefault;
@@ -932,7 +1024,7 @@ export function RizzomaBlip({
   const uploadProgress = uploadState ? uploadState.progress : null;
   const effectiveExpanded = isRoot ? true : isExpanded;
 
-  const rootStyle = isRoot && effectiveExpanded ? { display: 'block', opacity: 1, visibility: 'visible' } : {};
+  const rootStyle = isRoot && effectiveExpanded ? { display: 'block' as const, opacity: 1, visibility: 'visible' as const } : {};
 
   return (
     <div 
@@ -979,6 +1071,11 @@ export function RizzomaBlip({
         onDelete={!isRoot && blip.permissions.canEdit ? handleDelete : undefined}
         isSending={isSavingEdit}
         isDeleting={isDeleting}
+        onDuplicate={!isRoot && blip.permissions.canEdit ? handleDuplicate : undefined}
+        onCut={!isRoot && blip.permissions.canEdit ? handleCut : undefined}
+        onPasteAsNew={blip.permissions.canComment ? handlePasteAsNewBlip : undefined}
+        isCut={isCutMode}
+        isDuplicating={isDuplicating}
       />
       {uploadState && (
         <div className={`upload-status ${uploadState.status}`} data-testid="upload-status">

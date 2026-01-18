@@ -2,11 +2,16 @@ import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import multer from 'multer';
-import AWS from 'aws-sdk';
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { scanBuffer } from '../lib/virusScan.js';
+
+// AWS SDK v3 - optional, loaded dynamically when S3 storage is enabled
+let S3Client: any = null;
+let PutObjectCommand: any = null;
+let GetObjectCommand: any = null;
+let getSignedUrl: any = null;
 
 const uploadRoot = path.resolve(process.cwd(), 'data', 'uploads');
 fs.mkdirSync(uploadRoot, { recursive: true });
@@ -25,24 +30,53 @@ const imageMimes = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp'
 const allowedMimeTypes = new Set([...documentMimes, ...imageMimes]);
 const blockedExtensions = new Set(['.exe', '.bat', '.cmd', '.sh', '.msi']);
 
-const storageMode = (process.env['UPLOADS_STORAGE'] || 'local').toLowerCase();
-const s3Bucket = process.env['UPLOADS_S3_BUCKET'] || '';
-const s3BaseUrl = (process.env['UPLOADS_S3_PUBLIC_URL'] || '').replace(/\/$/, '');
-const s3SignedUrlTtl = Number(process.env['UPLOADS_S3_SIGNED_URL_TTL'] || 3600);
-let s3: AWS.S3 | null = null;
+let s3Client: any = null;
+let s3Initialized = false;
 
-if (storageMode === 's3') {
+// Initialize S3 client lazily on first use
+async function ensureS3Initialized() {
+  if (s3Initialized) return;
+
+  const storageMode = (process.env['UPLOADS_STORAGE'] || 'local').toLowerCase();
+  if (storageMode !== 's3') return;
+
+  const s3Bucket = process.env['UPLOADS_S3_BUCKET'] || '';
   if (!s3Bucket) {
     throw new Error('UPLOADS_S3_BUCKET is required when UPLOADS_STORAGE=s3');
   }
-  s3 = new AWS.S3({
-    accessKeyId: process.env['UPLOADS_S3_ACCESS_KEY'],
-    secretAccessKey: process.env['UPLOADS_S3_SECRET_KEY'],
-    endpoint: process.env['UPLOADS_S3_ENDPOINT'] || undefined,
-    s3ForcePathStyle: process.env['UPLOADS_S3_FORCE_PATH_STYLE'] === '1',
-    signatureVersion: 'v4',
-    region: process.env['UPLOADS_S3_REGION'] || 'us-east-1',
-  });
+
+  try {
+    // Dynamic import for optional AWS SDK v3
+    // Using string variables to prevent Vite from trying to resolve at build time
+    const s3ClientPkg = '@aws-sdk/client-s3';
+    const presignerPkg = '@aws-sdk/s3-request-presigner';
+    const s3Module = await import(/* @vite-ignore */ s3ClientPkg);
+    const presignerModule = await import(/* @vite-ignore */ presignerPkg);
+
+    S3Client = s3Module.S3Client;
+    PutObjectCommand = s3Module.PutObjectCommand;
+    GetObjectCommand = s3Module.GetObjectCommand;
+    getSignedUrl = presignerModule.getSignedUrl;
+
+    const endpoint = process.env['UPLOADS_S3_ENDPOINT'];
+    const forcePathStyle = process.env['UPLOADS_S3_FORCE_PATH_STYLE'] === '1';
+
+    s3Client = new S3Client({
+      credentials: {
+        accessKeyId: process.env['UPLOADS_S3_ACCESS_KEY'] || '',
+        secretAccessKey: process.env['UPLOADS_S3_SECRET_KEY'] || '',
+      },
+      endpoint: endpoint || undefined,
+      forcePathStyle: forcePathStyle,
+      region: process.env['UPLOADS_S3_REGION'] || 'us-east-1',
+    });
+
+    s3Initialized = true;
+    console.log('[uploads] S3 client initialized');
+  } catch (error) {
+    console.error('[uploads] Failed to initialize S3 client:', error);
+    throw new Error('AWS SDK v3 is required for S3 storage. Install @aws-sdk/client-s3 and @aws-sdk/s3-request-presigner');
+  }
 }
 
 const upload = multer({
@@ -96,24 +130,41 @@ async function persistLocalFile(filename: string, buffer: Buffer): Promise<strin
 }
 
 async function persistS3File(filename: string, buffer: Buffer, mimeType: string): Promise<string> {
-  if (!s3 || !s3Bucket) {
+  await ensureS3Initialized();
+
+  const s3Bucket = process.env['UPLOADS_S3_BUCKET'] || '';
+  const s3BaseUrl = (process.env['UPLOADS_S3_PUBLIC_URL'] || '').replace(/\/$/, '');
+  const s3SignedUrlTtl = Number(process.env['UPLOADS_S3_SIGNED_URL_TTL'] || 3600);
+
+  if (!s3Client || !s3Bucket) {
     throw new Error('S3 storage is not configured');
   }
-  await s3
-    .upload({
-      Bucket: s3Bucket,
-      Key: filename,
-      Body: buffer,
-      ContentType: mimeType,
-      Metadata: {
-        'original-name': filename,
-      },
-    })
-    .promise();
+
+  // Upload file using PutObjectCommand
+  const putCommand = new PutObjectCommand({
+    Bucket: s3Bucket,
+    Key: filename,
+    Body: buffer,
+    ContentType: mimeType,
+    Metadata: {
+      'original-name': filename,
+    },
+  });
+
+  await s3Client.send(putCommand);
+
+  // Return public URL or generate signed URL
   if (s3BaseUrl) {
     return `${s3BaseUrl}/${encodeURIComponent(filename)}`;
   }
-  return s3.getSignedUrl('getObject', { Bucket: s3Bucket, Key: filename, Expires: s3SignedUrlTtl });
+
+  // Generate signed URL for private buckets
+  const getCommand = new GetObjectCommand({
+    Bucket: s3Bucket,
+    Key: filename,
+  });
+
+  return await getSignedUrl(s3Client, getCommand, { expiresIn: s3SignedUrlTtl });
 }
 
 uploadsRouter.post('/', requireAuth, upload.single('file'), async (req, res) => {
@@ -148,6 +199,7 @@ uploadsRouter.post('/', requireAuth, upload.single('file'), async (req, res) => 
     const filename = `${baseName}-${randomUUID()}${ext || ''}`;
 
     let url: string;
+    const storageMode = (process.env['UPLOADS_STORAGE'] || 'local').toLowerCase();
     if (storageMode === 's3') {
       url = await persistS3File(filename, file.buffer, mimeType);
     } else {

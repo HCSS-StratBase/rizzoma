@@ -53,7 +53,7 @@ export const measureRender = (componentName: string) => {
 // Global performance monitoring
 if (typeof window !== 'undefined') {
   // Log metrics every 30 seconds in dev
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env['NODE_ENV'] === 'development') {
     setInterval(() => PerformanceMonitor.logMetrics(), 30000);
   }
 }

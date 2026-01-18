@@ -437,7 +437,7 @@ export async function fetchWithOfflineSupport(
   url: string,
   options: RequestInit & { offlineMeta?: Record<string, unknown> } = {}
 ): Promise<Response> {
-  const method = (options.method?.toUpperCase() || 'GET') as QueuedMutation['method'];
+  const method = options.method?.toUpperCase() || 'GET';
 
   // GET requests don't need to be queued
   if (method === 'GET' || navigator.onLine) {

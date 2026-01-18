@@ -52,8 +52,6 @@
     "dist",
     "build",
     "coverage",
-    "src/static/js/**/*",
-    "src/server/couch_views/**/*",
-    "src/share/**/*"
+    "src/server/couch_views/**/*"
   ]
 }

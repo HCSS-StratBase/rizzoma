@@ -32,6 +32,12 @@ interface BlipMenuProps {
   isSending?: boolean;
   isDeleting?: boolean;
   inlineCommentsNotice?: string | null;
+  // New copy/paste variants
+  onDuplicate?: () => void;
+  onCut?: () => void;
+  onPasteAsNew?: () => void;
+  isCut?: boolean;
+  isDuplicating?: boolean;
 }
 
 export function BlipMenu({
@@ -61,6 +67,11 @@ export function BlipMenu({
   isUploading = false,
   uploadProgress = null,
   inlineCommentsNotice = null,
+  onDuplicate,
+  onCut,
+  onPasteAsNew,
+  isCut = false,
+  isDuplicating = false,
 }: BlipMenuProps) {
   const [textFormatState, setTextFormatState] = useState({
     bold: false,
@@ -243,6 +254,46 @@ export function BlipMenu({
       >
         Copy comment
       </button>
+      {canEdit && onDuplicate && (
+        <button
+          type="button"
+          role="menuitem"
+          className="menu-dropdown-item"
+          disabled={isDuplicating}
+          onClick={() => {
+            onDuplicate?.();
+            setShowOverflow(false);
+          }}
+        >
+          {isDuplicating ? 'Duplicating…' : 'Duplicate blip'}
+        </button>
+      )}
+      {canEdit && onCut && (
+        <button
+          type="button"
+          role="menuitem"
+          className={`menu-dropdown-item ${isCut ? 'active' : ''}`}
+          onClick={() => {
+            onCut?.();
+            setShowOverflow(false);
+          }}
+        >
+          {isCut ? '✓ Cut (ready to paste)' : 'Cut blip'}
+        </button>
+      )}
+      {canComment && onPasteAsNew && clipboardAvailable && (
+        <button
+          type="button"
+          role="menuitem"
+          className="menu-dropdown-item"
+          onClick={() => {
+            onPasteAsNew?.();
+            setShowOverflow(false);
+          }}
+        >
+          Paste as new blip
+        </button>
+      )}
       <button
         type="button"
         role="menuitem"

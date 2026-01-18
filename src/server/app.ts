@@ -22,6 +22,7 @@ import blipsRouter from './routes/blips.js';
 import { inlineCommentsRouter } from './routes/inlineComments.js';
 import { uploadsPath, uploadsRouter } from './routes/uploads.js';
 import healthRouter from './routes/health.js';
+import notificationsRouter from './routes/notifications.js';
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use('/api', linksRouter);
 app.use('/api/blips', blipsRouter);
 app.use('/api', inlineCommentsRouter);
 app.use('/api/uploads', uploadsRouter);
+app.use('/api/notifications', notificationsRouter);
 
 // Placeholder root
 app.get('/', (_req, res) => {

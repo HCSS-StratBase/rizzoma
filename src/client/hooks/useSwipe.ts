@@ -150,7 +150,7 @@ export function useSwipe<T extends HTMLElement = HTMLElement>(
   );
 
   const handleTouchEnd = useCallback(
-    (event: TouchEvent) => {
+    (_event: TouchEvent) => {
       if (!enabled || !stateRef.current.isSwiping) return;
 
       const elapsed = Date.now() - startTimeRef.current;
@@ -275,7 +275,7 @@ export function useSwipeToDismiss(
   const progressRef = useRef(0);
   const isDismissingRef = useRef(false);
 
-  const swipeState = useSwipe(ref, {
+  useSwipe(ref, {
     directions: [direction],
     threshold,
     enabled,
@@ -308,7 +308,7 @@ export function useSwipeToDismiss(
         element.style.opacity = `${1 - progress * 0.5}`;
       }
     },
-    onSwipeEnd: (state, success) => {
+    onSwipeEnd: (_state, success) => {
       const element = ref.current;
       if (!element) return;
 

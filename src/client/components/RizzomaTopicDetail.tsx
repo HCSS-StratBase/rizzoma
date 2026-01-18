@@ -28,7 +28,8 @@ export function RizzomaTopicDetail({ id, isAuthed = false, unreadState }: { id: 
   const [topic, setTopic] = useState<TopicFull | null>(null);
   const [rootBlip, setRootBlip] = useState<BlipData | null>(null);
   const [expandedBlips, setExpandedBlips] = useState<Set<string>>(new Set());
-  const [rootExpanded, setRootExpanded] = useState(getPerfAutoExpandFlag());
+  const [_rootExpanded, setRootExpanded] = useState(getPerfAutoExpandFlag());
+  void _rootExpanded; // Suppress unused warning - state is set but not yet consumed
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hash = typeof window !== 'undefined' ? (window.location.hash || '') : '';
@@ -307,7 +308,8 @@ export function RizzomaTopicDetail({ id, isAuthed = false, unreadState }: { id: 
     return decorate(rootBlip);
   }, [rootBlip, unreadState?.unreadSet, unreadState?.version]);
 
-  const isExpanded = useCallback((blipId: string) => expandedBlips.has(blipId), [expandedBlips]);
+  const _isExpanded = useCallback((blipId: string) => expandedBlips.has(blipId), [expandedBlips]);
+  void _isExpanded; // Suppress unused warning - function defined for future use
   const setExpanded = useCallback((blipId: string) => {
     setExpandedBlips((prev) => {
       const next = new Set(prev);
@@ -363,20 +365,6 @@ export function RizzomaTopicDetail({ id, isAuthed = false, unreadState }: { id: 
     },
     [setExpanded],
   );
-
-  const expandedRoot = rootExpanded || (decoratedRootBlip ? isExpanded(decoratedRootBlip.id) : false);
-
-  const renderPerfStub = () => {
-    if (!decoratedRootBlip) return null;
-    return (
-      <div className="perf-root-stub" data-testid="perf-root-stub">
-        <div className="perf-root-label">{renderLabelOnly(decoratedRootBlip, true)}</div>
-        <div className="perf-root-body">
-          <div className="perf-root-box" />
-        </div>
-      </div>
-    );
-  };
 
   useEffect(() => {
     if (!rootBlip) return;

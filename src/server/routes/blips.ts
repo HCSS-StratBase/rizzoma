@@ -480,4 +480,118 @@ router.patch('/:id/inline-comments-visibility', requireAuth, async (req, res): P
   }
 });
 
+// POST /api/blips/:id/duplicate - Duplicate a blip (creates a copy as a sibling)
+router.post('/:id/duplicate', requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+  try {
+    const id = req.params['id'];
+    const sourceBlip = await getDoc<Blip & { _id: string }>(id);
+
+    if ((sourceBlip as any).deleted) {
+      res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
+      return;
+    }
+
+    const now = Date.now();
+    const newBlipId = `${sourceBlip.waveId}:b${now}`;
+    const fallbackName = (req.user?.name && req.user.name.trim()) ? req.user.name : (req.user?.email || 'Unknown');
+
+    const duplicatedBlip: Blip = {
+      _id: newBlipId,
+      type: 'blip',
+      waveId: sourceBlip.waveId,
+      parentId: sourceBlip.parentId || null, // Same parent as source (sibling)
+      content: sourceBlip.content,
+      createdAt: now,
+      updatedAt: now,
+      authorId: userId,
+      authorName: fallbackName,
+      deleted: false,
+    } as any;
+
+    const r = await insertDoc(duplicatedBlip as any);
+    void touchTopic(sourceBlip.waveId);
+    void recordBlipHistory(duplicatedBlip, 'create', userId, duplicatedBlip.authorName);
+    try { emitEvent('blip:created', { waveId: sourceBlip.waveId, blipId: newBlipId, updatedAt: now, userId }); } catch {}
+
+    res.status(201).json({
+      id: r['id'],
+      rev: r['rev'],
+      blip: {
+        ...duplicatedBlip,
+        permissions: {
+          canEdit: true,
+          canComment: true,
+          canRead: true
+        }
+      }
+    });
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'duplicate_blip_error', requestId: (req as any)?.id });
+  }
+});
+
+// POST /api/blips/:id/move - Move a blip to a new parent (cut & paste)
+router.post('/:id/move', requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+  try {
+    const id = req.params['id'];
+    const { newParentId } = req.body || {};
+
+    const blip = await getDoc<Blip & { _id: string; _rev: string }>(id);
+
+    if ((blip as any).deleted) {
+      res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
+      return;
+    }
+
+    // Check if user can edit the blip
+    const canEdit = !blip.authorId || blip.authorId === userId;
+    if (!canEdit) {
+      res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
+      return;
+    }
+
+    // Prevent moving to self or to a descendant (would create cycle)
+    if (newParentId === id) {
+      res.status(400).json({ error: 'cannot_move_to_self', requestId: (req as any)?.id });
+      return;
+    }
+
+    const now = Date.now();
+    const updatedBlip: Blip & { _id: string; _rev?: string } = {
+      ...blip,
+      parentId: newParentId || null,
+      updatedAt: now,
+    };
+
+    const r = await updateDoc(updatedBlip as any);
+    void touchTopic(blip.waveId);
+    try { emitEvent('blip:moved', { waveId: blip.waveId, blipId: id, newParentId, updatedAt: now, userId }); } catch {}
+
+    res.json({
+      id: r['id'],
+      rev: r['rev'],
+      blip: {
+        ...updatedBlip,
+        permissions: {
+          canEdit: true,
+          canComment: true,
+          canRead: true
+        }
+      }
+    });
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'move_blip_error', requestId: (req as any)?.id });
+  }
+});
+
 export default router;

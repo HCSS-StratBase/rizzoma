@@ -3,6 +3,9 @@ export interface BlipClipboardPayload {
   html: string;
   text: string;
   createdAt: number;
+  isCut?: boolean; // Indicates this was a cut operation
+  waveId?: string; // For cross-wave paste
+  parentId?: string | null; // Original parent for reference
 }
 
 type ClipboardState = Record<string, BlipClipboardPayload>;
@@ -44,12 +47,36 @@ export const setBlipClipboardPayload = (blipId: string, payload: Omit<BlipClipbo
     html: payload.html,
     text: payload.text,
     createdAt: Date.now(),
+    isCut: payload.isCut,
+    waveId: payload.waveId,
+    parentId: payload.parentId,
   };
   const state = readFromStorage();
   state[blipId] = next;
   memoryState = state;
   persist();
   return next;
+};
+
+// Get the global clipboard (most recent cut/copy)
+export const getGlobalClipboard = (): BlipClipboardPayload | null => {
+  const state = readFromStorage();
+  const entries = Object.values(state);
+  if (entries.length === 0) return null;
+  // Return most recent
+  return entries.reduce((latest, current) =>
+    current.createdAt > latest.createdAt ? current : latest
+  );
+};
+
+// Clear cut state from a specific blip
+export const clearCutState = (blipId: string): void => {
+  const state = readFromStorage();
+  if (state[blipId] && state[blipId].isCut) {
+    state[blipId] = { ...state[blipId], isCut: false };
+    memoryState = state;
+    persist();
+  }
 };
 
 export const getBlipClipboardPayload = (blipId: string): BlipClipboardPayload | null => {

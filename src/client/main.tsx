@@ -86,14 +86,14 @@ export function App() {
   const [checkingAuth, setCheckingAuth] = useState(!perfMode);
 
   // PWA and offline hooks
-  const { isActive: swActive, updateAvailable, skipWaiting } = useServiceWorker({
+  const { skipWaiting } = useServiceWorker({
     onUpdateAvailable: () => {
       window.dispatchEvent(new CustomEvent('toast', {
         detail: { message: 'App update available. Click to refresh.', type: 'info', action: skipWaiting },
       }));
     },
   });
-  const { canInstall, promptInstall } = useInstallPrompt();
+  useInstallPrompt();
   useOfflineToast();
 
   // bootstrap auth state

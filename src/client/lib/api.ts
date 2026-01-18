@@ -36,7 +36,7 @@ export async function api<T = any>(path: string, init?: RequestInit): Promise<Ap
   })();
   const isTopicsList = normalizedPath === '/api/topics';
   if ((perfSkip || perfHash) && method === 'GET' && isTopicsList) {
-    return { ok: true, data: { topics: [], hasMore: false }, status: 200 };
+    return { ok: true, data: { topics: [], hasMore: false } as T, status: 200 };
   }
 
   if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {

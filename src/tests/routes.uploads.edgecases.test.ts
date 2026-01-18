@@ -5,26 +5,34 @@ import type { Session, SessionData } from 'express-session';
 import { scanBuffer } from '../server/lib/virusScan';
 const scanBufferMock = scanBuffer as unknown as ReturnType<typeof vi.fn>;
 
-const uploadMock = vi.fn(() => ({
-  promise: async () => {},
-}));
-const signedUrlMock = vi.fn(() => 'https://s3.example.com/object');
+const sendMock = vi.fn().mockResolvedValue({});
+const getSignedUrlMock = vi.fn().mockResolvedValue('https://s3.example.com/object');
 
 vi.mock('../server/lib/virusScan', () => ({
   scanBuffer: vi.fn(async () => {}),
 }));
 
-vi.mock('aws-sdk', () => {
-  class S3 {
-    upload = uploadMock;
-    getSignedUrl = signedUrlMock;
+// Mock AWS SDK v3
+vi.mock('@aws-sdk/client-s3', () => {
+  class S3Client {
+    send = sendMock;
+  }
+  class PutObjectCommand {
+    constructor(public input: any) {}
+  }
+  class GetObjectCommand {
+    constructor(public input: any) {}
   }
   return {
-    __esModule: true,
-    default: { S3 },
-    S3,
+    S3Client,
+    PutObjectCommand,
+    GetObjectCommand,
   };
 });
+
+vi.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: getSignedUrlMock,
+}));
 
 // Mock multer so we don't depend on multipart parsing or real disk I/O
 vi.mock('multer', () => {
@@ -266,7 +274,7 @@ describe('routes: /api/uploads edgecases', () => {
         buffer: Buffer.from('%PDF'),
       },
     });
-    expect(uploadMock).toHaveBeenCalled();
+    expect(sendMock).toHaveBeenCalled();
     expect(res.statusCode).toBe(201);
     expect(res.body.upload.url).toBe('https://s3.example.com/object');
     expect(writeFileSpy).not.toHaveBeenCalled();
