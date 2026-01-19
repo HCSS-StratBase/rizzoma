@@ -657,28 +657,6 @@ export function BlipMenu({
             🗑️
           </button>
         )}
-        {canEdit && onToggleCollapseByDefault && (
-          <button
-            className="menu-btn"
-            onClick={onToggleCollapseByDefault}
-            title={collapseByDefault ? 'Expand this thread by default' : 'Collapse this thread by default'}
-            data-testid="blip-menu-collapse-toggle"
-          >
-            {collapseByDefault ? 'Show' : 'Hide'}
-          </button>
-        )}
-
-        {canEdit && onToggleCollapseByDefault && (
-          <button
-            className="menu-btn"
-            onClick={onToggleCollapseByDefault}
-            title={collapseByDefault ? 'Expand this thread by default' : 'Collapse this thread by default'}
-            data-testid="blip-menu-collapse-toggle"
-          >
-            {collapseByDefault ? 'Show' : 'Hide'}
-          </button>
-        )}
-        
         <div className="menu-dropdown" ref={overflowRef}>
           <button
             className={`menu-btn gear-btn ${showOverflow ? 'active' : ''}`}

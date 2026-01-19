@@ -1,4 +1,4 @@
-# Claude Session Context (2026-01-18)
+# Claude Session Context (2026-01-19)
 
 **Read this file first when resuming work on this project.**
 
@@ -6,6 +6,54 @@
 `feature/rizzoma-core-features` (main branch is `master`)
 
 ## Recent Session Summary
+
+### What Was Implemented (2026-01-19 - BLB Audit & Fix Session)
+
+**BLB (Bullet-Label-Blip) Implementation Audit & Fix:**
+
+The BLB functionality was audited against documentation and several critical issues were found and fixed:
+
+**Root Cause Discovery:**
+- `RizzomaBlip.tsx` had full BLB functionality but wasn't being used
+- `RizzomaTopicDetail.tsx` was the active component but had broken/missing BLB features
+- The "☑ Hidden" button in edit mode had NO onClick handler (completely non-functional)
+
+**Fixes Applied:**
+
+1. **`RizzomaTopicDetail.tsx`** - Major BLB wiring:
+   - Added `foldedBlips` state and `toggleFold()` function
+   - Wired up Fold button in both edit and view mode toolbars
+   - Fold state persists to localStorage AND server (`/api/blips/{id}/collapse-default`)
+   - Changed expand icon from `+` to `□` for collapsed blips
+   - Added `isBlipFolded()` helper that checks both local state and preferences
+
+2. **`RizzomaTopicDetail.css`** - Added Fold button styles:
+   - `.tb-btn.fold-btn` base styles
+   - `.tb-btn.fold-btn.active` for folded state (green highlight)
+
+3. **`BlipMenu.tsx`** - Removed duplicate buttons:
+   - Deleted 2 duplicate "Show/Hide" buttons from read mode toolbar
+   - Kept single "Fold" button
+
+4. **`RizzomaBlip.tsx`** - Updated expand icons:
+   - Changed `+` to `□` for collapsed blips
+   - Updated child blip expand buttons to use `□`
+
+5. **`docs/BLB_LOGIC_AND_PHILOSOPHY.md`** - Updated terminology:
+   - Changed "☐ Hide checkbox" → "Fold button" throughout
+   - Updated visual elements table
+   - Updated developer summary
+
+**BLB Feature Status:**
+| Feature | Status |
+|---------|--------|
+| Fold button in edit mode | ✅ Working |
+| Fold button in view mode | ✅ Working |
+| Fold state persistence (localStorage) | ✅ Working |
+| Fold state persistence (server) | ✅ Working |
+| Expand icon (□) | ✅ Updated |
+| Collapsed blip shows label only | ✅ Working |
+| Nested blips | ✅ Working |
 
 ### What Was Implemented (2026-01-18 - Late Night Session)
 
@@ -67,7 +115,7 @@
 - ~~Add MODERNIZATION_COMPLETE.md~~ - DONE
 
 ### Remaining Tasks
-**None** - Modernization is complete. Only optional mobile device validation remains (PWA is ready).
+**None** - Modernization and BLB implementation are complete. Only optional mobile device validation remains (PWA is ready).
 
 ## Key Commands
 ```bash
@@ -95,15 +143,17 @@ curl http://localhost:8000/api/health  # Health check
 ## Key Files
 | File | Purpose |
 |------|---------|
+| `docs/BLB_LOGIC_AND_PHILOSOPHY.md` | BLB methodology documentation |
+| `src/client/components/RizzomaTopicDetail.tsx` | **Main topic view with BLB Fold functionality** |
+| `src/client/components/blip/BlipMenu.tsx` | Blip toolbar with Fold button |
+| `src/client/components/blip/RizzomaBlip.tsx` | Blip with duplicate/cut/paste |
+| `src/client/components/blip/collapsePreferences.ts` | Fold state localStorage persistence |
+| `src/client/components/blip/clipboardStore.ts` | Clipboard state management |
+| `src/client/components/blip/BlipHistoryModal.tsx` | Timeline playback UI |
 | `scripts/backup.sh` | Backup automation script |
 | `src/server/services/email.ts` | Email notification service |
-| `src/server/routes/notifications.ts` | Notification API endpoints |
 | `src/server/routes/uploads.ts` | S3/local file uploads (AWS SDK v3) |
-| `src/client/components/blip/BlipHistoryModal.tsx` | Timeline playback UI |
-| `src/client/components/blip/RizzomaBlip.tsx` | Blip with duplicate/cut/paste |
-| `src/client/components/blip/clipboardStore.ts` | Clipboard state management |
-| `src/client/lib/getUserMediaAdapter.js` | WebRTC media adapter |
-| `src/server/routes/blips.ts` | Blips API with duplicate/move endpoints |
+| `src/server/routes/blips.ts` | Blips API with duplicate/move/collapse endpoints |
 
 ## Gotchas
 - **CouchDB Mango queries**: Must include sort clause matching index fields
@@ -121,4 +171,4 @@ All changes committed to `feature/rizzoma-core-features`:
 Bundle backup recommended before major changes.
 
 ---
-*Updated: 2026-01-18 after dependency upgrade session*
+*Updated: 2026-01-19 after BLB audit and fix session*

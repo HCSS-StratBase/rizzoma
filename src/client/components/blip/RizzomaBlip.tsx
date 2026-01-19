@@ -1041,7 +1041,7 @@ export function RizzomaBlip({
         aria-label={isExpanded ? 'Collapse' : 'Expand'}
         data-testid="blip-expander"
       >
-        <span className="blip-expander-icon">{isExpanded ? '−' : '+'}</span>
+        <span className="blip-expander-icon">{isExpanded ? '−' : '□'}</span>
       </div>
       {/* Inline Blip Menu */}
       <BlipMenu
@@ -1221,7 +1221,7 @@ export function RizzomaBlip({
                       aria-label="Expand blip"
                       type="button"
                     >
-                      +
+                      □
                     </button>
                     <div className="blip-label-text">
                       <div className="blip-label-title">{label}</div>

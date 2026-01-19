@@ -17,6 +17,12 @@ This file is a lightweight status guide for the active branch. Older "phase" tim
 4) Validate PWA on actual mobile devices (iPhone Safari, Chrome Android).
 
 ## Recently Completed Highlights
+- **BLB implementation fix (2026-01-19)**: Audited and fixed BLB (Bullet-Label-Blip) functionality:
+  - Root cause: `RizzomaTopicDetail.tsx` was active but had non-functional Fold button
+  - Fixed: Wired Fold button in edit/view mode, persists to localStorage + server
+  - Updated expand icons from +/− to □
+  - Removed duplicate toolbar buttons in `BlipMenu.tsx`
+  - Full methodology documented in `docs/BLB_LOGIC_AND_PHILOSOPHY.md`
 - **Major dependency upgrades (2026-01-18)**: Express 4→5, Redis 4→5, Vite 5→7, Vitest 1→4, @vitejs/plugin-react→5.0.0
 - **AWS SDK v3 migration (2026-01-18)**: S3 uploads now use modular `@aws-sdk/client-s3` with lazy initialization
 - **Massive legacy cleanup (2026-01-18)**: Removed 480 files, -66,949 lines:
