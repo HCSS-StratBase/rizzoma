@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -23,6 +24,8 @@ import { inlineCommentsRouter } from './routes/inlineComments.js';
 import { uploadsPath, uploadsRouter } from './routes/uploads.js';
 import healthRouter from './routes/health.js';
 import notificationsRouter from './routes/notifications.js';
+import mentionsRouter from './routes/mentions.js';
+import tasksRouter from './routes/tasks.js';
 
 const app = express();
 
@@ -30,7 +33,7 @@ const app = express();
 app.use(helmet());
 // reflect origin from allowlist for credentialed requests
 const isProd = process.env['NODE_ENV'] === 'production';
-const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000,http://localhost:8000')
+const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000,http://localhost:3001,http://localhost:8000')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
@@ -76,6 +79,8 @@ app.use('/api/blips', blipsRouter);
 app.use('/api', inlineCommentsRouter);
 app.use('/api/uploads', uploadsRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/mentions', mentionsRouter);
+app.use('/api/tasks', tasksRouter);
 
 // Placeholder root
 app.get('/', (_req, res) => {

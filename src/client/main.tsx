@@ -80,8 +80,8 @@ export function App() {
   const [busy, setBusy] = useState(false);
   // Check if we should use Rizzoma layout based on URL parameter
   const params = new URLSearchParams(window.location.search);
-  // Consider any layout param or topic/wave route as opting into the Rizzoma shell (useful for deep-links in dev)
-  const useRizzomaLayoutParam = params.get('layout') === 'rizzoma' || params.has('layout');
+  // Default to Rizzoma layout unless explicitly set to 'basic'
+  const useRizzomaLayoutParam = params.get('layout') !== 'basic';
 
   const [checkingAuth, setCheckingAuth] = useState(!perfMode);
 
@@ -151,7 +151,7 @@ export function App() {
         {!checkingAuth && !me ? (
           <RizzomaLanding onSignedIn={(user) => setMe(user)} />
         ) : (
-          <RizzomaLayout isAuthed={!!me} />
+          <RizzomaLayout isAuthed={!!me} user={me} />
         )}
         <Toast />
       </div>
@@ -169,8 +169,9 @@ export function App() {
         API health: <a href="/api/health" target="_blank" rel="noreferrer">/api/health</a>
       </p>
       <section style={{ marginBottom: 24 }}>
-        <AuthPanel onSignedIn={(u) => setMe(u)} />
-        {me ? (
+        {!me ? (
+          <AuthPanel onSignedIn={(u) => setMe(u)} />
+        ) : (
           <div style={{ marginTop: 8 }}>
             Signed in as {me.email || me.id}
             {' '}
@@ -188,7 +189,7 @@ export function App() {
               Logout
             </button>
           </div>
-        ) : null}
+        )}
         {error ? <div style={{ color: 'red', marginTop: 8 }}>{error}</div> : null}
       </section>
 
