@@ -3,7 +3,7 @@ import { z } from 'zod';
 // Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable
 import { hash as bcryptHash, compare as bcryptCompare } from '../lib/bcrypt.js';
 import rateLimit from 'express-rate-limit';
-import { findOne, insertDoc, getDoc } from '../lib/couch.js';
+import { findOne, insertDoc, getDoc, updateDoc } from '../lib/couch.js';
 import { getCsrfTokenFromSession } from '../middleware/csrf.js';
 import { isSamlEnabled, getSamlInstance, extractUserFromProfile, generateMetadata } from '../lib/saml.js';
 // import { config } from '../config.js';
@@ -201,9 +201,14 @@ router.get('/google/callback', async (req, res): Promise<void> => {
       const r = await insertDoc(doc);
       user = { ...doc, _id: r.id };
     } else if (userData.picture && user.avatar !== userData.picture) {
-      // Update avatar if it changed
+      // Update avatar in CouchDB
       user.avatar = userData.picture;
-      // Note: In production you'd want to update the user doc in CouchDB here
+      user.updatedAt = Date.now();
+      try {
+        await updateDoc(user as User & { _id: string; _rev?: string });
+      } catch (e) {
+        console.error('[auth] Failed to update user avatar:', e);
+      }
     }
 
     // Set session
@@ -304,8 +309,14 @@ router.get('/facebook/callback', async (req, res): Promise<void> => {
       const r = await insertDoc(doc);
       user = { ...doc, _id: r.id };
     } else if (pictureUrl && user.avatar !== pictureUrl) {
-      // Update avatar if it changed
+      // Update avatar in CouchDB
       user.avatar = pictureUrl;
+      user.updatedAt = Date.now();
+      try {
+        await updateDoc(user as User & { _id: string; _rev?: string });
+      } catch (e) {
+        console.error('[auth] Failed to update user avatar:', e);
+      }
     }
 
     // Set session
