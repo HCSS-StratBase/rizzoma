@@ -5,6 +5,8 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-02-03 00:30 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Added dependency upgrade audit (`docs/DEPENDENCY_UPGRADE_AUDIT.md`) and refreshed HANDOFF date/state. Branch/date guardrails unchanged.
+- (2026-02-03 00:20 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Corrected BLB logic doc to align topic pane diagram + view/edit toolbar notes with the live `rizzoma-main.png`/`rizzoma-blip-view.png`/`rizzoma-blip-edit.png` screenshots. Branch/date guardrails unchanged.
 - (2026-02-03 00:00 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Added `docs/LEGACY_ASSETS_AUDIT.md` to document remaining legacy folders and recommended disposition. Branch/date guardrails unchanged.
 - (2026-02-02 23:55 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. BLB parity checklist updated to reflect subblip navigation as the default inline marker behavior. Branch/date guardrails unchanged.
 - (2026-02-02 23:50 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Legacy cleanup audit: `.coffee` files exist only under `original-rizzoma-src/` reference tree; none in active `src/`. Branch/date guardrails unchanged.

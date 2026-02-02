@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **BLB parity snapshots** - Automated BLB snapshot set captured for legacy comparison
 - **BLB parity checklist** - `docs/BLB_PARITY_CHECKLIST.md`
 - **BLB snapshot assertions** - Snapshot harness now verifies collapsed/default, toolbar, inline, and unread states
+- **Dependency upgrade audit** - `docs/DEPENDENCY_UPGRADE_AUDIT.md` with major/minor staging plan
 - **Topic follow API** - `/api/topics/:id/follow` and `/api/topics/:id/unfollow` endpoints with persisted follow docs
 - **Topics list enrichment** - Topics payload now includes author metadata, snippets, and follow state for signed-in users
 - **Topics follow tests** - `src/tests/routes.topics.follow.test.ts` coverage for follow/unfollow and list enrichment
@@ -36,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **BLB toolbars** - Read/edit toolbars aligned to legacy (Hide/Show comments, Link, Hide, Delete, Gear)
 - **BLB expansion focus** - Expanding a collapsed blip now marks it active so the toolbar appears immediately
 - **BLB read toolbar** - Added explicit Collapse/Expand buttons in view mode for legacy parity
+- **BLB docs alignment** - Topic pane diagram + view/edit toolbar notes now match live screenshots
 - **Topic meta-blip body** - Topic content + child blips now share a single scroll container so the title is the first line of one unified pane
 - **Rizzoma Layout is now the default** - Basic layout requires `?layout=basic`
 - **OAuth redirect flow** - Now uses `CLIENT_URL` environment variable for proper redirect to frontend

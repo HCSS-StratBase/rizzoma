@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-02-02 (refreshed after topic meta-blip single-pane update + Playwright reruns; branch snapshot current)
+Last Updated: 2026-02-03 (refreshed after BLB doc corrections + dependency audit; branch snapshot current)
 
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.
@@ -23,7 +23,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (feature/rizzoma-core-features @ 2026-02-02)
+Current State (feature/rizzoma-core-features @ 2026-02-03)
 - FEAT_ALL required: start both server (:8000) and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Tests last run (2026-02-02): `npm test -- --run src/tests/routes.topics.follow.test.ts` pass. Playwright `npm run test:toolbar-inline` pass (assertions active; snapshots under `snapshots/toolbar-inline/1770070087999-*-final.png`). `node test-blb-snapshots.mjs` pass with snapshots under `snapshots/blb/1770069305557-*`. `npm run test:follow-green` pass for desktop+mobile with snapshots under `snapshots/follow-the-green/1770070342398-*` and `snapshots/follow-the-green/1770070373492-*`. Historical BLB snapshot runs remain below; re-run before merges.
 - BLB inline `[+]` markers now navigate into subblip documents; Ctrl+Enter inserts marker and navigates into the new subblip (topic + blip editors).
@@ -35,6 +35,7 @@ Current State (feature/rizzoma-core-features @ 2026-02-02)
 - Toolbar/inline comments: inline toolbar parity smoke green; inline comment nav remains optional in smoke but UI renders toolbars. Snapshots under `snapshots/toolbar-inline/`.
 - Health/Uploads: `/api/health` + inline comment/upload health tests green locally; uploads pipeline retains MIME/ClamAV/S3/MinIO support.
 - Perf/monitoring: `scripts/perf-budget.mjs` added; `src/client/lib/performance.d.ts` supports perf monitor consumers; perf snapshots stored under `snapshots/perf/`.
+- Dependency upgrades: audit captured in `docs/DEPENDENCY_UPGRADE_AUDIT.md` (major editor/tooling/server upgrades deferred; minor/patch batch pending).
 
 Open PRs
 - #37: BLB: refresh snapshot harness + inline expansion
