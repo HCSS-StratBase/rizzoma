@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-02-02 (refreshed after perf harness run; branch snapshot current)
+Last Updated: 2026-02-02 (refreshed after perf harness windowed metrics run; branch snapshot current)
 
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.
@@ -26,7 +26,7 @@ PR Ops (CLI)
 Current State (feature/rizzoma-core-features @ 2026-02-02)
 - FEAT_ALL required: start both server (:8000) and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Tests last run (2026-02-02): Playwright `node test-blb-snapshots.mjs` pass; BLB snapshots refreshed under `snapshots/blb/1770004650980-*` (inline expansion driven by clicking the marker, aligned with the UI). Inline marker click handler now uses event delegation + capture phase. Historical runs for toolbar/follow-green/health remain listed below; re-run before merges.
-- Perf: `perf-harness.mjs` 200-blip run PASS (TTF 2173.8ms, FCP 260ms, rendered 101/200); 1000-blip runs still FAIL — latest 2026-02-02 run (1000 blips) reported TTF ~112–116s, memory 117MB, labels rendered 1000/1000 in both landing-labels and expanded-root (`snapshots/perf/metrics-1770006531946-*.json`). `perfLimit` now raises `/api/blips` limits in perf mode; budgets enforced via `scripts/perf-budget.mjs`. CouchDB logged `UND_ERR_HEADERS_TIMEOUT` during blip history writes under load; investigate timeouts along with large-wave TTF/memory.
+- Perf: `perf-harness.mjs` 200-blip run PASS (TTF 2173.8ms, FCP 260ms, rendered 101/200); 1000-blip runs still FAIL — latest 2026-02-02 run (1000 blips) reported TTF ~66–69s, memory 125MB, labels rendered 1000/1000 in both landing-labels and expanded-root (`snapshots/perf/metrics-1770040727000-*.json`). Windowed 200-label time logged (~6.7s landing, ~69s expanded). `perfLimit` raises `/api/blips` limits in perf mode; `x-rizzoma-perf=1` skips blip history writes during perf seeding. Budgets enforced via `scripts/perf-budget.mjs`; still need to lower large-wave TTF/memory and resolve missing root label (1000/1001).
 - Follow-the-Green: socket host fix restores `wave:unread` delivery; CTA clears without API fallback. Snapshots under `snapshots/follow-the-green/` (desktop+mobile). RightToolsPanel uses unread sockets/refresh and logs debug when `rizzoma:debug:unread=1`.
 - Toolbar/inline comments: inline toolbar parity smoke green; inline comment nav remains optional in smoke but UI renders toolbars. Snapshots under `snapshots/toolbar-inline/`.
 - Health/Uploads: `/api/health` + inline comment/upload health tests green locally; uploads pipeline retains MIME/ClamAV/S3/MinIO support.

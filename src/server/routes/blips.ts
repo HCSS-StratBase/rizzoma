@@ -33,6 +33,15 @@ type InlineCommentsVisibilityDoc = {
 const inlineCommentsPrefDocId = (userId: string, blipId: string): string =>
   `inline-comments-visible:${userId}:${blipId}`;
 
+const isPerfRequest = (req: { headers?: Record<string, string | string[] | undefined>; query?: Record<string, any> }): boolean => {
+  const header = req.headers?.['x-rizzoma-perf'];
+  const headerValue = Array.isArray(header) ? header[0] : header;
+  if (headerValue === '1' || headerValue === 'true') return true;
+  const perfQuery = req.query?.perf;
+  const perfValue = Array.isArray(perfQuery) ? perfQuery[0] : perfQuery;
+  return perfValue === '1' || perfValue === 'true' || perfValue === 'full';
+};
+
 async function recordBlipHistory(
   blip: Blip & { _id?: string },
   action: 'create' | 'update',
@@ -169,7 +178,9 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
 
     const r = await insertDoc(blip as any);
     void touchTopic(waveId);
-    void recordBlipHistory(blip, 'create', userId, blip.authorName);
+    if (!isPerfRequest(req)) {
+      void recordBlipHistory(blip, 'create', userId, blip.authorName);
+    }
     try { emitEvent('blip:created', { waveId, blipId, updatedAt: now, userId }); } catch {}
     res.status(201).json({ 
       id: r['id'], 
@@ -225,7 +236,9 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
 
     const r = await updateDoc(updatedBlip as any);
     void touchTopic(blip.waveId);
-    void recordBlipHistory(updatedBlip, 'update', userId, req.body?.authorName || (blip as any).authorName);
+    if (!isPerfRequest(req)) {
+      void recordBlipHistory(updatedBlip, 'update', userId, req.body?.authorName || (blip as any).authorName);
+    }
     try { emitEvent('blip:updated', { waveId: blip.waveId, blipId: blip._id, updatedAt: updatedBlip.updatedAt, userId }); } catch {}
     res.json({ 
       id: r['id'], 
@@ -494,7 +507,9 @@ router.post('/:id/duplicate', requireAuth, async (req, res): Promise<void> => {
 
     const r = await insertDoc(duplicatedBlip as any);
     void touchTopic(sourceBlip.waveId);
-    void recordBlipHistory(duplicatedBlip, 'create', userId, duplicatedBlip.authorName);
+    if (!isPerfRequest(req)) {
+      void recordBlipHistory(duplicatedBlip, 'create', userId, duplicatedBlip.authorName);
+    }
     try { emitEvent('blip:created', { waveId: sourceBlip.waveId, blipId: newBlipId, updatedAt: now, userId }); } catch {}
 
     res.status(201).json({

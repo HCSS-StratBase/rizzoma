@@ -3,7 +3,7 @@
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
 - `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-02-02; refresh if more changes land.
-- Re-read checkpoint: 2026-02-02 05:52 local — drift warnings below remain accurate; no new docs added/removed (note `docs/LINKS_REPARENT.md` is still missing).
+- Re-read checkpoint: 2026-02-02 15:02 local — drift warnings below remain accurate; no new docs added/removed (note `docs/LINKS_REPARENT.md` is still missing).
 
 Quick start for the next batch (copy/paste):
 ```
@@ -18,7 +18,7 @@ codex exec '
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
 
   Priority focus:
-  1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; fix 1k-blip perf harness failures (TTF ~112–116s, memory 117MB) and CouchDB `UND_ERR_HEADERS_TIMEOUT` during history writes. Add windowed render metrics and decide whether perf-mode history writes should be suppressed.
+  1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; fix 1k-blip perf harness failures (TTF ~66–69s, memory 125MB) and the missing root label (1000/1001). Windowed render metrics are now captured; decide whether to skip more perf-mode writes and reduce large-wave TTF/memory.
   2) BLB parity: shared isFoldedByDefault, inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity, unread green markers, and update BLB snapshots.
   3) Modernize getUserMedia adapter + tests. (Adapter tests currently green.)
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
@@ -83,7 +83,7 @@ codex exec '
 - Tests: `npm test`
 - Build: `npm run build`
 - Perf harness (optional large-wave sanity): `npm run perf:harness` (seeds a 5k-blip wave and captures time-to-first-render metrics/screenshots under `snapshots/perf/`); log metrics/budgets when you run it.
-  - Recent runs: 200-blip PASS (TTF 2173.8ms, FCP 260ms, 101/200 rendered); 1000-blip FAIL (2026-02-02) with `perfLimit=1001` (TTF ~112–116s, FCP 840ms, memory 117MB, 1000/1000 rendered). Check budgets via `scripts/perf-budget.mjs`.
+  - Recent runs: 200-blip PASS (TTF 2173.8ms, FCP 260ms, 101/200 rendered); 1000-blip FAIL (2026-02-02) with `perfLimit=1001` and `x-rizzoma-perf=1` (TTF ~66–69s, FCP 432ms, memory 125MB, 1000/1000 rendered; windowed 200 ~6.7s landing, ~69s expanded). Check budgets via `scripts/perf-budget.mjs`.
 
 8) PR Workflow (CLI)
 - Create PR: `gh pr create -R HCSS-StratBase/rizzoma -B master -H <branch> -t "Title" -F <body.md>`

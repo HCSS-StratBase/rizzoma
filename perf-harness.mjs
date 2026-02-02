@@ -10,6 +10,7 @@ const ownerEmail = process.env.RIZZOMA_E2E_USER_A || `perf-owner+${Date.now()}@e
 const password = process.env.RIZZOMA_E2E_PASSWORD || 'PerfHarness!1';
 const perfLimit = blipTarget + 1;
 const perfQuery = `?layout=rizzoma&perf=full&perfLimit=${perfLimit}`;
+const perfHeaders = { 'x-rizzoma-perf': '1' };
 const snapshotDir = process.env.RIZZOMA_SNAPSHOT_DIR || path.resolve('snapshots', 'perf');
 const timestamp = Date.now();
 
@@ -106,12 +107,13 @@ async function getXsrfToken(page) {
 async function createWave(page, title) {
   const token = await getXsrfToken(page);
   const result = await page.evaluate(
-    async ({ title, token }) => {
+    async ({ title, token, perfHeaders }) => {
       const resp = await fetch('/api/topics', {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
           'x-csrf-token': token,
+          ...perfHeaders,
         },
         credentials: 'include',
         body: JSON.stringify({ title, content: `<p>${title}</p>` }),
@@ -119,7 +121,7 @@ async function createWave(page, title) {
       const data = await resp.json();
       return { ok: resp.ok, status: resp.status, data };
     },
-    { title, token },
+    { title, token, perfHeaders },
   );
   if (!result.ok) throw new Error(`Failed to create wave (${result.status}): ${JSON.stringify(result.data)}`);
   if (!result.data || !result.data.id) {
@@ -131,12 +133,13 @@ async function createWave(page, title) {
 async function createBlip(page, waveId, content) {
   const token = await getXsrfToken(page);
   const result = await page.evaluate(
-    async ({ waveId, content, token }) => {
+    async ({ waveId, content, token, perfHeaders }) => {
       const resp = await fetch('/api/blips', {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
           'x-csrf-token': token,
+          ...perfHeaders,
         },
         credentials: 'include',
         body: JSON.stringify({ waveId, parentId: null, content }),
@@ -144,7 +147,7 @@ async function createBlip(page, waveId, content) {
       const data = await resp.json();
       return { ok: resp.ok, status: resp.status, data };
     },
-    { waveId, content, token },
+    { waveId, content, token, perfHeaders },
   );
   if (!result.ok) throw new Error(`Failed to create blip (${result.status})`);
   return result.data?.id || result.data?.blip?._id || result.data?.blip?.id;
@@ -183,6 +186,32 @@ async function captureMetrics(waveId, creds) {
   await page.goto(url, { waitUntil: 'domcontentloaded' });
 
   const results = [];
+  const measureWindowedCount = async (selector, target, timeoutMs) => {
+    try {
+      return await page.evaluate(
+        ({ selector, target, timeoutMs }) => new Promise((resolve) => {
+          const start = performance.now();
+          const deadline = start + timeoutMs;
+          const check = () => {
+            const count = document.querySelectorAll(selector).length;
+            if (count >= target) {
+              resolve({ elapsed: performance.now(), count, timedOut: false });
+              return;
+            }
+            if (performance.now() >= deadline) {
+              resolve({ elapsed: performance.now(), count, timedOut: true });
+              return;
+            }
+            requestAnimationFrame(check);
+          };
+          check();
+        }),
+        { selector, target, timeoutMs },
+      );
+    } catch {
+      return null;
+    }
+  };
 
   for (const stage of metricsStages) {
     log(`Stage: ${stage.name}`);
@@ -190,8 +219,13 @@ async function captureMetrics(waveId, creds) {
     // Allow hidden but attached anchors; visibility is ensured by perf-mode stubs
     await page.waitForSelector(stage.selector, { timeout: 180000, state: 'attached' });
 
+    let windowed = null;
+
     // For landing-labels stage, wait for blips to fully load before counting
     if (stage.name === 'landing-labels') {
+      const windowTarget = Math.min(blipTarget + 1, 200);
+      windowed = await measureWindowedCount('.blip-collapsed-row', windowTarget, 60000);
+
       // Wait for expected number of collapsed rows (blipTarget + 1 for root)
       // or timeout after 30s if something is wrong
       const expectedLabels = blipTarget + 1;
@@ -212,9 +246,11 @@ async function captureMetrics(waveId, creds) {
       const expandBtn = await page.$('.blip-expand-btn');
       if (expandBtn) {
         await expandBtn.click();
-        await page.waitForSelector('.rizzoma-blip', { timeout: 180000, state: 'attached' });
-        await page.waitForTimeout(500); // allow layout to settle
       }
+      const windowTarget = Math.min(blipTarget, 200);
+      windowed = await measureWindowedCount('.rizzoma-blip', windowTarget, 60000);
+      await page.waitForSelector('.rizzoma-blip', { timeout: 180000, state: 'attached' });
+      await page.waitForTimeout(500); // allow layout to settle
     }
 
     const perfData = await page.evaluate(() => {
@@ -254,6 +290,14 @@ async function captureMetrics(waveId, creds) {
       labelsVisible: perfData.labelCount,
       blipsRendered: perfData.blipCount,
       renderMode: stage.name,
+      windowed: windowed
+        ? {
+            target: stage.name === 'landing-labels' ? Math.min(blipTarget + 1, 200) : Math.min(blipTarget, 200),
+            elapsedMs: Number(windowed.elapsed.toFixed(2)),
+            count: windowed.count,
+            timedOut: windowed.timedOut,
+          }
+        : null,
       performance: {
         timeToFirstRender: Number(perfData.timeToFirstRender.toFixed(2)),
         firstContentfulPaint: Number(perfData.firstContentfulPaint.toFixed(2)),
@@ -281,6 +325,9 @@ async function captureMetrics(waveId, creds) {
     log(`  Memory Usage: ${perf.memoryUsage?.used || 'N/A'}MB`);
     log(`  Labels Visible: ${metrics.labelsVisible}`);
     log(`  Blips Rendered: ${metrics.blipsRendered}/${metrics.expectedBlips}`);
+    if (metrics.windowed) {
+      log(`  Windowed ${metrics.windowed.target}: ${metrics.windowed.elapsedMs}ms (${metrics.windowed.count}${metrics.windowed.timedOut ? ', timed out' : ''})`);
+    }
     log(`  Benchmark: ${metrics.benchmarks.passed ? '✅ PASS' : '❌ FAIL'}`);
     log(`  Full metrics saved to ${metricsPath}`);
     results.push(metrics);

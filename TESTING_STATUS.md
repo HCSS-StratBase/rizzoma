@@ -2,7 +2,7 @@
 
 ## 🟢 Current Status
 - **BLB Playwright snapshots (2026-02-02)**: `node test-blb-snapshots.mjs` pass; refreshed BLB snapshot set under `snapshots/blb/1770004650980-*`.
-- **Perf harness (2026-02-02, 1000 blips)**: `npm run perf:harness` with `RIZZOMA_PERF_BLIPS=1000` captured metrics under `snapshots/perf/metrics-1770006531946-*.json` and renders under `snapshots/perf/render-1770006531946-*.png`; landing-labels and expanded-root both failed budgets (TTF ~112–116s, 1000/1000 labels rendered, memory ~117MB). CouchDB reported `UND_ERR_HEADERS_TIMEOUT` during blip history writes under load.
+- **Perf harness (2026-02-02, 1000 blips)**: `npm run perf:harness` with `RIZZOMA_PERF_BLIPS=1000` captured metrics under `snapshots/perf/metrics-1770040727000-*.json` and renders under `snapshots/perf/render-1770040727000-*.png`; landing-labels and expanded-root both failed budgets (TTF ~66–69s, 1000/1000 labels rendered, memory ~125MB). Windowed 200-label time ~6.7s (landing) and ~69s (expanded-root).
 - **Full Vitest run (2026-01-18)**: 42 test files passed, 131 tests passed, 3 skipped. Duration ~110s.
 - **Perf harness E2E (2026-01-18)**: N+1 fix verified - no individual `/inline-comments-visibility` API calls. Load time 298ms for 20 blips.
 - **Browser smokes `test:toolbar-inline` (2026-01-17)**: Chromium passes; Firefox/WebKit may timeout in CI due to browser startup delays.
@@ -36,6 +36,7 @@
 - **Perf harness timing fix**: Added `waitForFunction` to wait for all labels before counting. Now correctly reports all rendered blips.
 - **CI perf budgets job**: Added `perf-budgets` job to `.github/workflows/ci.yml`. Uses `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to optionally fail CI on budget violations.
 - **perf=full mode**: Added support for `perf=full` URL param to load all blips (vs `perf=1` lean mode which only renders stubs). Perf runs can now pass `perfLimit=N` to raise the `/api/blips` limit in `RizzomaTopicDetail`.
+- **Perf harness windowed metrics**: Perf harness now logs time-to-first-200 labels/blips and uses `x-rizzoma-perf=1` to skip blip history writes during perf seeding.
 
 ## Recent fixes (2026-01-17)
 - **Blips API performance fix**: Added sort clause to `/api/blips?waveId=...` query to force using `idx_blip_wave_createdAt` index. Reduced query time from 18s to 29ms (600x improvement).

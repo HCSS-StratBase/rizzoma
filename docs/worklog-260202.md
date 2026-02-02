@@ -90,3 +90,8 @@
   - expanded-root: TTF 115647.9ms, FCP 840ms, memory 117MB, blips rendered 1000/1000 (budget FAIL).
   - Metrics + renders saved under `snapshots/perf/metrics-1770006531946-*.json` and `snapshots/perf/render-1770006531946-*.png`.
   - CouchDB logged `UND_ERR_HEADERS_TIMEOUT` during blip history writes under load.
+- Perf harness updated to capture windowed (first 200) label/blip render timing and to set `x-rizzoma-perf=1` so blip history writes are skipped during perf seeding.
+- Re-ran perf harness (1000 blips) after perf header + windowed metrics:
+  - landing-labels: TTF 66682ms, FCP 432ms, memory 125MB, labels visible 1000/1000, windowed 200 in 6669ms (budget FAIL).
+  - expanded-root: TTF 69488.3ms, FCP 432ms, memory 125MB, blips rendered 1000/1000, windowed 200 in 68974ms (budget FAIL).
+  - Metrics + renders saved under `snapshots/perf/metrics-1770040727000-*.json` and `snapshots/perf/render-1770040727000-*.png`.
