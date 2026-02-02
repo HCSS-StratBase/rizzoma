@@ -15,7 +15,7 @@ const timestamp = Date.now();
 const log = (msg) => console.log(`➡️  [perf] ${msg}`);
 
 const metricsStages = [
-  { name: 'landing-labels', selector: '.blip-collapsed-label' },
+  { name: 'landing-labels', selector: '.blip-collapsed-row' },
   // In perf mode we render a stub root for visibility; prefer the stub, fall back to the real blip/anchor
   { name: 'expanded-root', selector: '.perf-root-stub-blip, .perf-blip-anchor, .rizzoma-blip' },
 ];
@@ -191,18 +191,18 @@ async function captureMetrics(waveId, creds) {
 
     // For landing-labels stage, wait for blips to fully load before counting
     if (stage.name === 'landing-labels') {
-      // Wait for expected number of labels (blipTarget + 1 for root)
+      // Wait for expected number of collapsed rows (blipTarget + 1 for root)
       // or timeout after 30s if something is wrong
       const expectedLabels = blipTarget + 1;
       try {
         await page.waitForFunction(
-          (expected) => document.querySelectorAll('.blip-collapsed-label').length >= expected,
+          (expected) => document.querySelectorAll('.blip-collapsed-row').length >= expected,
           expectedLabels,
           { timeout: 60000 }
         );
         log(`All ${expectedLabels} labels loaded`);
       } catch {
-        const actualLabels = await page.evaluate(() => document.querySelectorAll('.blip-collapsed-label').length);
+        const actualLabels = await page.evaluate(() => document.querySelectorAll('.blip-collapsed-row').length);
         log(`Warning: Only ${actualLabels}/${expectedLabels} labels loaded after 60s`);
       }
     }
@@ -236,7 +236,7 @@ async function captureMetrics(waveId, creds) {
           total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024),
         } : null,
         appMetrics,
-        labelCount: document.querySelectorAll('.blip-collapsed-label').length,
+        labelCount: document.querySelectorAll('.blip-collapsed-row').length,
         blipCount: document.querySelectorAll('.rizzoma-blip').length,
       };
     });

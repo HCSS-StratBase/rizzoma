@@ -1,0 +1,28 @@
+{
+  "timestamp": "1770005659623-landing-labels",
+  "waveId": "6539050323073ca076288b8ffe01ffd3",
+  "expectedBlips": 1000,
+  "actualBlips": 500,
+  "labelsVisible": 500,
+  "blipsRendered": 500,
+  "renderMode": "landing-labels",
+  "performance": {
+    "timeToFirstRender": 93272.5,
+    "firstContentfulPaint": 928,
+    "domComplete": 609.2,
+    "loadComplete": 609.3,
+    "memoryUsage": {
+      "used": 69,
+      "total": 73
+    },
+    "appMetrics": {}
+  },
+  "url": "http://localhost:3000#/topic/6539050323073ca076288b8ffe01ffd3?layout=rizzoma&perf=full",
+  "screenshot": "/mnt/c/Rizzoma/snapshots/perf/render-1770005659623-landing-labels.png",
+  "startedAt": 1770006058644,
+  "benchmarks": {
+    "firstRenderTarget": 3000,
+    "memoryTarget": 100,
+    "passed": false
+  }
+}

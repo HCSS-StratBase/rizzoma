@@ -79,3 +79,8 @@
   - `snapshots/blb/1770004650980-blb-inline-expanded.png` + `.md`
   - `snapshots/blb/1770004650980-blb-unread-green-plus.png` + `.md`
 - Pruned older BLB snapshot sets in `snapshots/blb/` so only the latest run remains.
+- Perf harness sweep (1000 blips) after updating landing label selector to `.blip-collapsed-row` in `perf-harness.mjs`.
+- Perf results (timestamp 1770005659623):
+  - landing-labels: TTF 93272.5ms, FCP 928ms, memory 69MB, labels visible 500/1000 (budget FAIL).
+  - expanded-root: TTF 93784.5ms, FCP 928ms, memory 69MB, blips rendered 500/1000 (budget FAIL).
+  - Metrics + renders saved under `snapshots/perf/metrics-1770005659623-*.json` and `snapshots/perf/render-1770005659623-*.png`.

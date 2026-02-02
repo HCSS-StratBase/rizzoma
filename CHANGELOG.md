@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 - **BLB unread cues** - Unread state now propagates to collapsed rows and inline markers
 - **BLB inline marker clicks** - Event delegation now uses `closest()` and capture phase to keep inline marker toggles responsive in view mode
+- **Perf harness landing selector** - Perf harness now waits for `.blip-collapsed-row` instead of legacy `.blip-collapsed-label`
 - **BLB export** - JSON export now serializes `isFoldedByDefault`
 - **dotenv loading** - Added `import 'dotenv/config'` to ensure .env file is loaded
 
