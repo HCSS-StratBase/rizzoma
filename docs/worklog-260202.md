@@ -65,3 +65,10 @@
   - `snapshots/blb/1770003828507-blb-inline-expanded.png` + `.md`
   - `snapshots/blb/1770003828507-blb-unread-green-plus.png` + `.md`
 - Pruned intermediate BLB snapshot runs so only the latest set remains in `snapshots/blb/`.
+- Updated BlipThread click handler to use event delegation via `closest()` and capture phase, improving inline marker clicks in view mode.
+- Re-ran BLB Playwright snapshot harness after click-handler adjustment (headless Chromium); latest set:
+  - `snapshots/blb/1770004392410-blb-landing-collapsed.png` + `.md`
+  - `snapshots/blb/1770004392410-blb-expanded-view.png` + `.md`
+  - `snapshots/blb/1770004392410-blb-inline-expanded.png` + `.md`
+  - `snapshots/blb/1770004392410-blb-unread-green-plus.png` + `.md`
+- Pruned older BLB snapshot sets in `snapshots/blb/` so only the latest run remains.

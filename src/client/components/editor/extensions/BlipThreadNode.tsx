@@ -112,8 +112,8 @@ export const BlipThreadNode = Node.create({
  */
 export function setupBlipThreadClickHandler(): () => void {
   const handler = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (!target.classList.contains('blip-thread-marker')) return;
+    const target = (e.target as HTMLElement).closest('.blip-thread-marker') as HTMLElement | null;
+    if (!target) return;
 
     const threadId = target.getAttribute('data-blip-thread');
     if (!threadId) return;
@@ -136,6 +136,6 @@ export function setupBlipThreadClickHandler(): () => void {
     }));
   };
 
-  document.addEventListener('click', handler);
-  return () => document.removeEventListener('click', handler);
+  document.addEventListener('click', handler, true);
+  return () => document.removeEventListener('click', handler, true);
 }
