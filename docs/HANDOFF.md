@@ -66,7 +66,7 @@ Backup (GDrive)
 - Bundle (manual): `git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all`
 - Copy (manual PowerShell):
   `powershell.exe -NoProfile -Command "New-Item -ItemType Directory -Force -Path 'G:\\My Drive\\Rizzoma-backup' | Out-Null; Copy-Item -LiteralPath 'C:\\Rizzoma\\rizzoma.bundle' -Destination 'G:\\My Drive\\Rizzoma-backup\\rizzoma.bundle' -Force'"`
-- Last run: 2026-02-02 (bundle created + copied to GDrive).
+- Last run: 2026-02-03 (bundle created + copied to GDrive via `scripts/backup-bundle.sh`).
 
 PR Log
 - 2025‑11‑06: #23 merged (B Part 1: snapshots)

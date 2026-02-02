@@ -60,6 +60,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Perf harness landing selector** - Perf harness now waits for `.blip-collapsed-row` instead of legacy `.blip-collapsed-label`
 - **BLB export** - JSON export now serializes `isFoldedByDefault`
 - **dotenv loading** - Added `import 'dotenv/config'` to ensure .env file is loaded
+- **Backup script paths** - `scripts/backup-bundle.sh` now converts WSL paths for PowerShell copy
 
 ## [2026-01-19]
 
