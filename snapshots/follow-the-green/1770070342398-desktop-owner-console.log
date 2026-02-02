@@ -1,0 +1,76 @@
+[debug] [vite] connecting...
+[debug] [vite] connected.
+[info] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold
+[log] [SW Hook] Registering service worker...
+[error] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[log] [api] /api/auth/me GET 401 8ms
+[error] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[log] [api] /api/auth/me GET 401 22ms
+[log] [SW Hook] Registering service worker...
+[log] [SW Hook] Service worker registered: ServiceWorkerRegistration
+[log] [SW Hook] Service worker registered: ServiceWorkerRegistration
+[log] [SW Hook] Update found, installing...
+[log] [SW Hook] Update found, installing...
+[log] [api] /api/topics?limit=20&offset=0 GET 200 105ms
+[log] [SW Hook] First install complete
+[log] [SW Hook] First install complete
+[log] [SW Hook] Controller changed, reloading...
+[error] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[debug] [vite] connecting...
+[debug] [vite] connected.
+[info] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold
+[log] [SW Hook] Registering service worker...
+[log] [SW Hook] Service worker registered: ServiceWorkerRegistration
+[log] [api] /api/auth/me GET 200 25ms
+[log] [api] /api/auth/me GET 200 26ms
+[debug] [useWaveUnread] refresh:start {waveId: 6539050323073ca076288b8ffe045f8d}
+[log] [api] /api/topics/6539050323073ca076288b8ffe045f8d GET 200 22ms
+[log] [socket] connected mpJqWHEznAVcL5mbAAAJ
+[log] [socket:any] hello [Object]
+[log] [api] /api/waves/6539050323073ca076288b8ffe045f8d/participants GET 200 28ms
+[log] [api] /api/waves/6539050323073ca076288b8ffe045f8d/unread GET 200 53ms
+[debug] [useWaveUnread] refresh:success {waveId: 6539050323073ca076288b8ffe045f8d, unreadCount: 1, total: 1, read: 0}
+[log] [api] /api/blips?waveId=6539050323073ca076288b8ffe045f8d&limit=500 GET 200 18ms
+[log] [api] /api/blips/6539050323073ca076288b8ffe045f8d%3Ab1770070344136/collapse-default GET 200 16ms
+[log] [api] /api/blips/6539050323073ca076288b8ffe045f8d%3Ab1770070344136/inline-comments-visibility GET 200 17ms
+[log] [markWaveRead] fetching unread list
+[log] [markWaveRead] unread count: 1
+[log] [markWaveRead] marking read...
+[log] [socket:any] blip:read [Object]
+[log] [socket:any] wave:unread [Object]
+[log] [socket] wave:unread (global) {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[log] [socket] wave:unread event received {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[debug] [useWaveUnread] wave:unread:event {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[log] [socket:any] wave:unread [Object]
+[log] [socket] wave:unread (global) {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[log] [socket] wave:unread event received {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[debug] [useWaveUnread] wave:unread:event {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[log] [socket:any] wave:unread [Object]
+[log] [socket] wave:unread (global) {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[log] [socket] wave:unread event received {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[debug] [useWaveUnread] wave:unread:event {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[log] [socket:any] wave:unread [Object]
+[log] [socket] wave:unread (global) {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[log] [socket] wave:unread event received {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[debug] [useWaveUnread] wave:unread:event {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe04510d}
+[log] [markWaveRead] done
+[log] [socket:any] blip:read [Object]
+[debug] [useWaveUnread] blip:event {action: read, waveId: 6539050323073ca076288b8ffe045f8d, blipId: 6539050323073ca076288b8ffe045f8d:b1770070344136, updatedAt: undefined, readAt: 1770070346830}
+[log] [socket:any] wave:unread [Object]
+[log] [socket] wave:unread (global) {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe0468de}
+[log] [socket] wave:unread event received {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe0468de}
+[debug] [useWaveUnread] wave:unread:event {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe0468de}
+[log] [socket:any] wave:unread [Object]
+[log] [socket] wave:unread (global) {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe0468de}
+[log] [socket] wave:unread event received {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe0468de}
+[debug] [useWaveUnread] wave:unread:event {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe0468de}
+[log] [socket:any] wave:unread [Object]
+[log] [socket] wave:unread (global) {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe0468de}
+[log] [socket] wave:unread event received {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe0468de}
+[debug] [useWaveUnread] wave:unread:event {waveId: 6539050323073ca076288b8ffe045f8d, userId: 6539050323073ca076288b8ffe0468de}
+[log] [socket:any] blip:created [Object]
+[log] [socket:any] blip:created [Object]
+[debug] [useWaveUnread] debounced:refresh
+[debug] [useWaveUnread] refresh:start {waveId: 6539050323073ca076288b8ffe045f8d}
+[log] [api] /api/waves/6539050323073ca076288b8ffe045f8d/unread GET 200 73ms
+[debug] [useWaveUnread] refresh:success {waveId: 6539050323073ca076288b8ffe045f8d, unreadCount: 2, total: 3, read: 1}

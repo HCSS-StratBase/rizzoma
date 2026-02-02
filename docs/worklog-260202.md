@@ -138,3 +138,4 @@
 - Updated `docs/EDITOR_TOOLBAR_PARITY.md` to reflect read-only Collapse/Expand actions and Delete wired state.
 - Updated `src/tests/client.BlipMenu.test.tsx` for read-only Collapse/Expand controls; Vitest run: `npm test -- --run src/tests/client.BlipMenu.test.tsx` (pass).
 - Re-ran Follow-the-Green Playwright smokes; snapshots under `snapshots/follow-the-green/1770070342398-*` (desktop) and `snapshots/follow-the-green/1770070373492-*` (mobile).
+- Ran perf harness with 1000 blips; metrics under `snapshots/perf/metrics-1770070825186-*.json` and renders under `snapshots/perf/render-1770070825186-*.png` (budgets passed).

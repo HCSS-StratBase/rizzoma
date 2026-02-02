@@ -5,7 +5,7 @@
 - **Browser smokes `test:toolbar-inline` (2026-02-02)**: Pass across Chromium/Firefox/WebKit; snapshots captured under `snapshots/toolbar-inline/1770070087999-*-final.png`.
 - **Browser smokes `test:follow-green` (2026-02-02)**: Desktop + mobile profiles pass; snapshots under `snapshots/follow-the-green/1770070342398-*` and `snapshots/follow-the-green/1770070373492-*`.
 - **BLB Playwright snapshots (2026-02-02)**: `node test-blb-snapshots.mjs` pass; refreshed BLB snapshot set under `snapshots/blb/1770069305557-*`.
-- **Perf harness (2026-02-02, 1000 blips)**: `npm run perf:harness` with `RIZZOMA_PERF_BLIPS=1000` captured metrics under `snapshots/perf/metrics-1770042725851-*.json` and renders under `snapshots/perf/render-1770042725851-*.png`; landing-labels and expanded-root both passed budgets (stage duration ~1.5s landing, ~0.5s expanded; memory ~23MB). Windowed 200-label time ~2.6–2.9s.
+- **Perf harness (2026-02-02, 1000 blips)**: `RIZZOMA_PERF_BLIPS=1000 npm run perf:harness` captured metrics under `snapshots/perf/metrics-1770070825186-*.json` and renders under `snapshots/perf/render-1770070825186-*.png`; landing-labels and expanded-root both passed budgets (stage duration ~1.39s landing, ~0.56s expanded; memory ~23MB). Windowed 200-label time ~2.3–2.6s.
 - **Full Vitest run (2026-01-18)**: 42 test files passed, 131 tests passed, 3 skipped. Duration ~110s.
 - **Perf harness E2E (2026-01-18)**: N+1 fix verified - no individual `/inline-comments-visibility` API calls. Load time 298ms for 20 blips.
 - **Browser smokes `test:toolbar-inline` (2026-01-17)**: Chromium passes; Firefox/WebKit may timeout in CI due to browser startup delays.
