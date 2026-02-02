@@ -137,3 +137,4 @@
 - Re-ran BLB snapshot harness after toolbar update; latest set under `snapshots/blb/1770069305557-*` and pruned the prior set.
 - Updated `docs/EDITOR_TOOLBAR_PARITY.md` to reflect read-only Collapse/Expand actions and Delete wired state.
 - Updated `src/tests/client.BlipMenu.test.tsx` for read-only Collapse/Expand controls; Vitest run: `npm test -- --run src/tests/client.BlipMenu.test.tsx` (pass).
+- Re-ran Follow-the-Green Playwright smokes; snapshots under `snapshots/follow-the-green/1770070342398-*` (desktop) and `snapshots/follow-the-green/1770070373492-*` (mobile).
