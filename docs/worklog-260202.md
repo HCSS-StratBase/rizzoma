@@ -148,3 +148,4 @@
 - Corrected `docs/BLB_LOGIC_AND_PHILOSOPHY.md` to align the topic pane diagram and view/edit toolbar notes with the live screenshots (`rizzoma-main.png`, `rizzoma-blip-view.png`, `rizzoma-blip-edit.png`).
 - Audited dependency upgrades from `npm outdated --json`; captured staged upgrade plan in `docs/DEPENDENCY_UPGRADE_AUDIT.md`.
 - Applied minor/patch dependency updates (Playwright/Vitest/Prettier, AWS SDK, session/email libs) and noted skipped out-of-range upgrades (`@xmpp/client`, `sharp`) in `docs/DEPENDENCY_UPGRADE_AUDIT.md`.
+- Installed Playwright browsers after version bump (`npx playwright install`), re-ran toolbar-inline smoke (Chromium/Firefox/WebKit) with snapshots under `snapshots/toolbar-inline/1770075382628-*-final.png`, and reran BlipMenu Vitest (18 tests).

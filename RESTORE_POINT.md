@@ -5,6 +5,7 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-02-03 00:40 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Logged Playwright reinstall + toolbar-inline rerun and BlipMenu Vitest in testing status/handoff. Branch/date guardrails unchanged.
 - (2026-02-03 00:35 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Logged minor/patch dependency updates and refreshed dependency audit + handoff note. Branch/date guardrails unchanged.
 - (2026-02-03 00:30 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Added dependency upgrade audit (`docs/DEPENDENCY_UPGRADE_AUDIT.md`) and refreshed HANDOFF date/state. Branch/date guardrails unchanged.
 - (2026-02-03 00:20 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Corrected BLB logic doc to align topic pane diagram + view/edit toolbar notes with the live `rizzoma-main.png`/`rizzoma-blip-view.png`/`rizzoma-blip-edit.png` screenshots. Branch/date guardrails unchanged.
