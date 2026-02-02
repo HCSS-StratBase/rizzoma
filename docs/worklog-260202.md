@@ -115,3 +115,8 @@
 - Ran Playwright smokes after CORS/auth updates:
   - `npm run test:toolbar-inline` pass; read toolbar not found so assertions skipped; snapshots under `snapshots/toolbar-inline/1770044690847-*`.
   - `npm run test:follow-green` pass for desktop and mobile; snapshots under `snapshots/follow-the-green/1770044752598-*` and `snapshots/follow-the-green-mobile/1770044781987-*`.
+- Switched BLB inline `[+]` markers to navigate into subblip documents (no inline expansion). Ctrl+Enter now inserts the marker and immediately navigates into the new subblip for both topic and blip editors.
+- Removed inline-expanded blip rendering block from the topic pane and stopped tracking expanded marker state (markers stay `+`, unread stays green).
+- Re-ran Playwright smokes after BLB navigation change:
+  - `npm run test:toolbar-inline` pass; read toolbar not found so assertions skipped; snapshots under `snapshots/toolbar-inline/1770050150043-*`.
+  - `npm run test:follow-green` pass for desktop and mobile; snapshots under `snapshots/follow-the-green/1770050219697-*` and `snapshots/follow-the-green-mobile/1770050254871-*`.

@@ -3,7 +3,7 @@
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
 - `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-02-02; refresh if more changes land.
-- Re-read checkpoint: 2026-02-02 16:08 local — topics follow + Playwright auth updates captured; drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
+- Re-read checkpoint: 2026-02-02 16:40 local — BLB [+] navigation + Playwright reruns captured; drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
 
 Quick start for the next batch (copy/paste):
 ```

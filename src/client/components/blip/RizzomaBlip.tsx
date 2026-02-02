@@ -377,9 +377,12 @@ export function RizzomaBlip({
           // The content is auto-saved, so the [+] marker will persist
         }
 
-        // BLB: DO NOT navigate - stay on the same page
-        // The [+] marker is now in the content, user can click it to expand inline
-        toast('Inline blip created - click [+] to expand');
+        const blipPathSegment = newBlipId.includes(':') ? newBlipId.split(':')[1] : newBlipId;
+        if (blipPathSegment) {
+          window.location.hash = `#/topic/${waveId}/${blipPathSegment}/`;
+        } else {
+          toast('Subblip created');
+        }
       } catch (error) {
         console.error('Error creating child blip:', error);
         toast('Failed to create child blip', 'error');

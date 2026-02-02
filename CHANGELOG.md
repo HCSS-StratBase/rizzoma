@@ -46,6 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Perf harness benchmarks** - Benchmarks now use per-stage duration (from stage start) to avoid double-counting navigation time
 - **Playwright auth check** - Toolbar + Follow-the-Green smokes now wait for the modern layout instead of a legacy Logout button
 - **CORS allowlist defaults** - Added `127.0.0.1` dev origins so Playwright can auth against localhost/127.0.0.1
+- **BLB [+] navigation** - Inline blip markers now navigate into subblip documents instead of expanding inline; topic/blip Ctrl+Enter navigates into the new subblip after inserting the marker
 
 ### Fixed
 - **BLB unread cues** - Unread state now propagates to collapsed rows and inline markers

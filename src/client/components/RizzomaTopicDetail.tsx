@@ -143,14 +143,6 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const [busy, setBusy] = useState(false);
   const [expandedBlips, setExpandedBlips] = useState<Set<string>>(new Set());
   const [newBlipContent, setNewBlipContent] = useState('');
-  // BLB: Inline expanded blips (from [+] markers in content)
-  const [expandedInlineBlips, setExpandedInlineBlips] = useState<Set<string>>(new Set());
-
-  // Reset inline expansion state when switching topics
-  useEffect(() => {
-    setExpandedInlineBlips(new Set());
-  }, [id]);
-
   // Topic gear menu state (collab toolbar)
   const [showGearMenu, setShowGearMenu] = useState(false);
   // Topic gear menu state (edit toolbar)
@@ -551,9 +543,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               return updated;
             });
 
-            // BLB: DO NOT navigate - the [+] marker is inserted inline
-            // User stays on the same page, can click [+] to expand inline
-            toast('Inline blip created - click [+] to expand');
+            // BLB: Navigate into the new subblip document
+            window.location.hash = `#/topic/${id}/${blipPathSegment}/`;
           } else {
             toast('Subblip created');
             load(true); // Fallback: reload to show the new blip
@@ -601,40 +592,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     return () => window.removeEventListener('rizzoma:refresh-topics', handleRefresh);
   }, [load]);
 
-  // BLB: Listen for inline [+] marker clicks to expand/collapse inline blips
-  useEffect(() => {
-    const handleBlipThreadToggle = (e: Event) => {
-      const { threadId, isExpanded, markerElement } = (e as CustomEvent).detail as {
-        threadId: string;
-        isExpanded: boolean;
-        markerElement?: HTMLElement;
-      };
-      if (markerElement) {
-        markerElement.classList.toggle('expanded', isExpanded);
-        markerElement.textContent = isExpanded ? '−' : '+';
-      }
-      setExpandedInlineBlips(prev => {
-        const next = new Set(prev);
-        if (isExpanded) {
-          next.add(threadId);
-        } else {
-          next.delete(threadId);
-        }
-        return next;
-      });
-      window.setTimeout(() => {
-        const marker = document.querySelector<HTMLElement>(`[data-blip-thread="${threadId}"]`);
-        if (marker) {
-          marker.classList.toggle('expanded', isExpanded);
-          marker.textContent = isExpanded ? '−' : '+';
-        }
-      }, 50);
-    };
-    window.addEventListener('blip-thread-toggle', handleBlipThreadToggle);
-    return () => window.removeEventListener('blip-thread-toggle', handleBlipThreadToggle);
-  }, []);
-
-  // BLB: Update inline marker unread state + expansion state
+  // BLB: Update inline marker unread state
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const unreadSet = unreadStateRef.current?.unreadSet ?? new Set<string>();
@@ -643,15 +601,13 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       markers.forEach((marker) => {
         const threadId = marker.getAttribute('data-blip-thread') || '';
         const hasUnread = threadId && unreadSet.has(threadId);
-        const isExpanded = threadId && expandedInlineBlips.has(threadId);
         marker.classList.toggle('has-unread', hasUnread);
-        marker.classList.toggle('expanded', isExpanded);
-        marker.textContent = isExpanded ? '−' : '+';
+        marker.textContent = '+';
       });
     };
     const raf = window.requestAnimationFrame(updateMarkers);
     return () => window.cancelAnimationFrame(raf);
-  }, [unreadState?.version, allBlipsMap.size, expandedInlineBlips]);
+  }, [unreadState?.version, allBlipsMap.size]);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -1174,36 +1130,6 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             </div>
           )}
         </div>
-
-        {/* ========================================
-            BLB: INLINE EXPANDED BLIPS
-            When user clicks [+] marker in content, show the blip here
-        ======================================== */}
-        {!isPerfLite && expandedInlineBlips.size > 0 && (
-          <div className="inline-expanded-blips">
-            {Array.from(expandedInlineBlips).map(threadId => {
-              const blipData = allBlipsMap.get(threadId) || pendingBlipsRef.current.get(threadId);
-              if (!blipData) return null;
-              return (
-                <div key={threadId} className="inline-expanded-blip-wrapper">
-                  <RizzomaBlip
-                    blip={blipData}
-                    isRoot={false}
-                    depth={1}
-                    onBlipUpdate={handleBlipUpdate}
-                    onAddReply={handleAddReply}
-                    onToggleCollapse={handleToggleCollapse}
-                    onDeleteBlip={handleDeleteBlip}
-                    onBlipRead={handleBlipRead}
-                    onExpand={handleExpand}
-                    expandedBlips={expandedBlips}
-                    forceExpanded={true}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        )}
 
         {/* ========================================
             BLB: CHILD BLIPS (Root-level replies)

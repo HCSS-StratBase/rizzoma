@@ -23,11 +23,11 @@ declare module '@tiptap/core' {
  * Key characteristics:
  * - Inline atom node (non-editable, self-contained)
  * - Syncs via Yjs automatically as part of the document
- * - Click EXPANDS INLINE (like original Rizzoma), does NOT navigate
+ * - Click NAVIGATES into the subblip document (URL changes)
  *
  * BLB Philosophy:
  * - The [+] marker indicates a child blip exists at this position
- * - Clicking expands the subblip content inline (not navigation)
+ * - Clicking navigates into the subblip document
  * - Green color indicates unread content in the thread
  */
 export const BlipThreadNode = Node.create({
@@ -107,8 +107,7 @@ export const BlipThreadNode = Node.create({
  * Set up click handler for BlipThread markers.
  * This should be called once to add event delegation for all markers.
  *
- * BLB: Clicking [+] dispatches an event for INLINE expansion (not navigation).
- * The parent component listens and renders the blip content inline.
+ * BLB: Clicking [+] navigates into the subblip document (URL changes).
  */
 export function setupBlipThreadClickHandler(): () => void {
   const handler = (e: MouseEvent) => {
@@ -121,19 +120,16 @@ export function setupBlipThreadClickHandler(): () => void {
     e.preventDefault();
     e.stopPropagation();
 
-    // BLB: Toggle the marker between [+] and [-] and dispatch expansion event
-    const isExpanded = target.textContent === '−';
-    target.textContent = isExpanded ? '+' : '−';
-    target.classList.toggle('expanded', !isExpanded);
+    const [waveId, blipPath] = threadId.includes(':')
+      ? threadId.split(':', 2)
+      : [null, threadId];
 
-    // Dispatch custom event for parent component to handle inline expansion
-    window.dispatchEvent(new CustomEvent('blip-thread-toggle', {
-      detail: {
-        threadId,
-        isExpanded: !isExpanded,
-        markerElement: target,
-      }
-    }));
+    const hashMatch = window.location.hash.match(/^#\/topic\/([^/]+)/);
+    const topicId = waveId || (hashMatch ? hashMatch[1] : null);
+
+    if (topicId && blipPath) {
+      window.location.hash = `#/topic/${topicId}/${blipPath}/`;
+    }
   };
 
   document.addEventListener('click', handler, true);
