@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **BLB parity checklist** - `docs/BLB_PARITY_CHECKLIST.md`
 - **BLB snapshot assertions** - Snapshot harness now verifies collapsed/default, toolbar, inline, and unread states
 - **Dependency upgrade audit** - `docs/DEPENDENCY_UPGRADE_AUDIT.md` with major/minor staging plan
+- **Backup script** - `scripts/backup-bundle.sh` to create bundles and copy to GDrive
 - **Topic follow API** - `/api/topics/:id/follow` and `/api/topics/:id/unfollow` endpoints with persisted follow docs
 - **Topics list enrichment** - Topics payload now includes author metadata, snippets, and follow state for signed-in users
 - **Topics follow tests** - `src/tests/routes.topics.follow.test.ts` coverage for follow/unfollow and list enrichment
