@@ -5,6 +5,7 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-02-02 23:35 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. `npm run test:health` rerun passed (server/inline comments/uploads). Branch/date guardrails unchanged.
 - (2026-02-02 23:30 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Perf harness rerun with 1000 blips passed budgets; metrics in `snapshots/perf/metrics-1770070825186-*.json` and renders in `snapshots/perf/render-1770070825186-*.png`. Branch/date guardrails unchanged.
 - (2026-02-02 23:20 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Follow-the-Green smokes rerun with snapshots `snapshots/follow-the-green/1770070342398-*` (desktop) and `snapshots/follow-the-green/1770070373492-*` (mobile). Branch/date guardrails unchanged.
 - (2026-02-02 23:10 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Updated BlipMenu Vitest coverage for read-only Collapse/Expand; toolbar-inline Playwright rerun passes with snapshots `snapshots/toolbar-inline/1770070087999-*-final.png`. Branch/date guardrails unchanged.
