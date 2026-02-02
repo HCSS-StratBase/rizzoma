@@ -50,3 +50,5 @@
   - `snapshots/blb/1769999290284-blb-inline-expanded.png` + `.md`
   - `snapshots/blb/1769999290284-blb-unread-green-plus.png` + `.md`
 - Started local dev server for snapshot generation and then stopped it.
+- Updated `CHANGELOG.md` with BLB parity additions/changes/fixes.
+- Stashed unrelated local modifications and untracked files to clean the workspace.

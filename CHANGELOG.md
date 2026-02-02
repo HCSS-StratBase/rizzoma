@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **BLB parity snapshots** - Automated BLB snapshot set captured for legacy comparison
+- **BLB parity checklist** - `docs/BLB_PARITY_CHECKLIST.md`
 - **Microsoft OAuth Authentication** - Users can now sign in with Microsoft accounts
   - Supports both personal and work/school accounts via configurable tenant
   - Routes: `/api/auth/microsoft`, `/api/auth/microsoft/callback`
@@ -26,11 +28,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Development notes including Vite HMR issues
 
 ### Changed
+- **BLB default behavior** - All blips start collapsed; inline `[+]` expands in place
+- **BLB toolbars** - Read/edit toolbars aligned to legacy (Hide/Show comments, Link, Hide, Delete, Gear)
 - **Rizzoma Layout is now the default** - Basic layout requires `?layout=basic`
 - **OAuth redirect flow** - Now uses `CLIENT_URL` environment variable for proper redirect to frontend
 - **Session structure** - Now includes `userAvatar` field for OAuth profile pictures
 
 ### Fixed
+- **BLB unread cues** - Unread state now propagates to collapsed rows and inline markers
+- **BLB export** - JSON export now serializes `isFoldedByDefault`
 - **dotenv loading** - Added `import 'dotenv/config'` to ensure .env file is loaded
 
 ## [2026-01-19]
