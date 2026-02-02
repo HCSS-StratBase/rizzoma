@@ -149,3 +149,4 @@
 - Audited dependency upgrades from `npm outdated --json`; captured staged upgrade plan in `docs/DEPENDENCY_UPGRADE_AUDIT.md`.
 - Applied minor/patch dependency updates (Playwright/Vitest/Prettier, AWS SDK, session/email libs) and noted skipped out-of-range upgrades (`@xmpp/client`, `sharp`) in `docs/DEPENDENCY_UPGRADE_AUDIT.md`.
 - Installed Playwright browsers after version bump (`npx playwright install`), re-ran toolbar-inline smoke (Chromium/Firefox/WebKit) with snapshots under `snapshots/toolbar-inline/1770075382628-*-final.png`, and reran BlipMenu Vitest (18 tests).
+- Re-ran Follow-the-Green Playwright smokes for desktop + mobile; snapshots under `snapshots/follow-the-green/1770075636800-*` and `snapshots/follow-the-green/1770075681747-*`.

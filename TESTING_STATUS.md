@@ -1,6 +1,7 @@
 # Rizzoma Feature Testing Status
 
 ## 🟢 Current Status
+- **Browser smokes `test:follow-green` (2026-02-03)**: Desktop + mobile profiles pass; snapshots under `snapshots/follow-the-green/1770075636800-*` and `snapshots/follow-the-green/1770075681747-*`.
 - **BlipMenu Vitest (2026-02-03)**: `npm test -- --run src/tests/client.BlipMenu.test.tsx` pass (18 tests).
 - **Browser smokes `test:toolbar-inline` (2026-02-03)**: Pass across Chromium/Firefox/WebKit; snapshots captured under `snapshots/toolbar-inline/1770075382628-*-final.png`.
 - **Topics follow tests (2026-02-02)**: `npm test -- --run src/tests/routes.topics.follow.test.ts` pass.
