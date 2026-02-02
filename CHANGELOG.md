@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **BLB parity snapshots** - Automated BLB snapshot set captured for legacy comparison
 - **BLB parity checklist** - `docs/BLB_PARITY_CHECKLIST.md`
 - **BLB snapshot assertions** - Snapshot harness now verifies collapsed/default, toolbar, inline, and unread states
+- **Topic follow API** - `/api/topics/:id/follow` and `/api/topics/:id/unfollow` endpoints with persisted follow docs
+- **Topics list enrichment** - Topics payload now includes author metadata, snippets, and follow state for signed-in users
+- **Topics follow tests** - `src/tests/routes.topics.follow.test.ts` coverage for follow/unfollow and list enrichment
 - **Microsoft OAuth Authentication** - Users can now sign in with Microsoft accounts
   - Supports both personal and work/school accounts via configurable tenant
   - Routes: `/api/auth/microsoft`, `/api/auth/microsoft/callback`
@@ -41,6 +44,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Perf mode detection** - `perf=full` now triggers perf-mode skips (unread/sidebar) like `perf=1`
 - **Perf render mode** - `perfRender=lite` renders lightweight collapsed rows for large-wave perf runs
 - **Perf harness benchmarks** - Benchmarks now use per-stage duration (from stage start) to avoid double-counting navigation time
+- **Playwright auth check** - Toolbar + Follow-the-Green smokes now wait for the modern layout instead of a legacy Logout button
+- **CORS allowlist defaults** - Added `127.0.0.1` dev origins so Playwright can auth against localhost/127.0.0.1
 
 ### Fixed
 - **BLB unread cues** - Unread state now propagates to collapsed rows and inline markers

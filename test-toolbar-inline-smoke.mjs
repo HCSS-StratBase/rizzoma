@@ -97,9 +97,9 @@ async function ensureAuth(page) {
   // Reload page to pick up new session (use domcontentloaded instead of networkidle due to WebSocket)
   await page.reload({ waitUntil: 'domcontentloaded' });
 
-  // Verify logout button is visible (indicates successful auth)
-  const logoutButton = page.locator('button', { hasText: 'Logout' });
-  await logoutButton.waitFor({ timeout: 15000 });
+  // Verify the authenticated layout is visible (indicates successful auth)
+  const layoutMarker = page.locator('.rizzoma-layout');
+  await layoutMarker.waitFor({ timeout: 15000 });
 }
 
 async function getXsrfToken(page) {

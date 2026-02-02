@@ -1,10 +1,23 @@
 import { Router } from 'express';
-import { createIndex, deleteDoc, find, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
+import { createIndex, deleteDoc, find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
 import { csrfProtect } from '../middleware/csrf.js';
 import { requireAuth } from '../middleware/auth.js';
 import { CreateTopicSchema, UpdateTopicSchema } from '../schemas/topic.js';
 import { computeWaveUnreadCounts } from '../lib/unread.js';
+import { sendInviteEmail } from '../services/email.js';
+import type { WaveParticipant } from '../schemas/wave.js';
+
+// User type for lookups
+type User = {
+  _id?: string;
+  type: 'user';
+  email: string;
+  name?: string | null;
+  avatar?: string;
+  createdAt?: number;
+  updatedAt?: number;
+};
 
 const router = Router();
 
@@ -20,7 +33,36 @@ type Topic = {
   updatedAt: number; // epoch millis
 };
 
-type TopicListItem = { id: string | undefined; title: string; createdAt: number; updatedAt?: number };
+type TopicFollow = {
+  _id?: string;
+  type: 'topic_follow';
+  userId: string;
+  topicId: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+type TopicListItem = {
+  id: string | undefined;
+  title: string;
+  content?: string;
+  authorId?: string;
+  createdAt: number;
+  updatedAt?: number;
+};
+
+const MAX_SNIPPET_LENGTH = 140;
+
+function stripHtml(input: string): string {
+  return input.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function buildSnippet(content?: string): string | undefined {
+  if (!content) return undefined;
+  const text = stripHtml(String(content));
+  if (!text) return undefined;
+  return text.length > MAX_SNIPPET_LENGTH ? `${text.slice(0, MAX_SNIPPET_LENGTH)}…` : text;
+}
 
 // GET /api/topics?limit=20
 router.get('/', async (req, res): Promise<void> => {
@@ -45,17 +87,51 @@ router.get('/', async (req, res): Promise<void> => {
   ) => {
     let enriched = sortTopics(list);
     const userId = (req as any).session?.userId as string | undefined;
-    if (userId) {
-      const ids = enriched.map((t) => t.id).filter(Boolean) as string[];
-      if (ids.length > 0) {
-        const counts = await computeWaveUnreadCounts(userId, ids);
-        enriched = enriched.map((topic) => {
-          const entry = topic.id ? counts[topic.id] : undefined;
-          return entry ? { ...topic, unreadCount: entry.unread, totalCount: entry.total } : topic;
-        });
+    const ids = enriched.map((t) => t.id).filter(Boolean) as string[];
+    if (userId && ids.length > 0) {
+      const counts = await computeWaveUnreadCounts(userId, ids);
+      enriched = enriched.map((topic) => {
+        const entry = topic.id ? counts[topic.id] : undefined;
+        return entry ? { ...topic, unreadCount: entry.unread, totalCount: entry.total } : topic;
+      });
+    }
+
+    const authorIds = Array.from(new Set(enriched.map((t) => t.authorId).filter(Boolean))) as string[];
+    const authorMap = new Map<string, User>();
+    for (const authorId of authorIds) {
+      try {
+        const user = await getDoc<User>(authorId);
+        if (user && user.type === 'user') authorMap.set(authorId, user);
+      } catch {
+        // ignore missing author docs
       }
     }
-    res.json({ topics: enriched, hasMore: more, nextBookmark: bookmarkValue });
+
+    let followedTopics = new Set<string>();
+    if (userId) {
+      try {
+        await createIndex(['type', 'userId', 'topicId'], 'idx_topic_follow_user_topic');
+      } catch {}
+      try {
+        const r = await find<TopicFollow>({ type: 'topic_follow', userId }, { limit: 1000 });
+        followedTopics = new Set((r.docs || []).map((doc) => doc.topicId));
+      } catch {
+        // ignore follow lookup failures
+      }
+    }
+
+    const response = enriched.map((topic) => {
+      const author = topic.authorId ? authorMap.get(topic.authorId) : undefined;
+      return {
+        ...topic,
+        snippet: buildSnippet(topic.content),
+        authorName: author?.name ?? undefined,
+        authorAvatar: author?.avatar ?? undefined,
+        isFollowed: userId && topic.id ? followedTopics.has(topic.id) : undefined,
+      };
+    });
+
+    res.json({ topics: response, hasMore: more, nextBookmark: bookmarkValue });
   };
 
   try {
@@ -83,11 +159,13 @@ router.get('/', async (req, res): Promise<void> => {
         ],
       };
       try {
-        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, sort: [{ updatedAt: 'desc' }, { createdAt: 'desc' }], bookmark });
+        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, sort: [{ type: 'desc' }, { updatedAt: 'desc' }], use_index: '_design/f42721f2a3749e9d7b563c5b102021d284dffff1', bookmark });
         const window = r.docs || [];
         topics = window.slice(0, limit).map((d) => ({
           id: String(d._id ?? ''),
           title: d.title,
+          content: d.content,
+          authorId: d.authorId,
           createdAt: d.createdAt,
           updatedAt: d.updatedAt,
         }));
@@ -100,6 +178,8 @@ router.get('/', async (req, res): Promise<void> => {
         topics = window.slice(0, limit).map((d) => ({
           id: String(d._id ?? ''),
           title: d.title,
+          content: d.content,
+          authorId: d.authorId,
           createdAt: d.createdAt,
           updatedAt: d.updatedAt,
         }));
@@ -111,7 +191,7 @@ router.get('/', async (req, res): Promise<void> => {
       // No search term: efficient paging using skip/limit
       let r: { docs: Topic[]; bookmark?: string };
       try {
-        r = await find<Topic>(selector, { limit: limit + 1, skip: offset, sort: [{ updatedAt: 'desc' }, { createdAt: 'desc' }], bookmark });
+        r = await find<Topic>(selector, { limit: limit + 1, skip: offset, sort: [{ type: 'desc' }, { updatedAt: 'desc' }], use_index: '_design/f42721f2a3749e9d7b563c5b102021d284dffff1', bookmark });
       } catch {
         r = await find<Topic>(selector, { limit: limit + 1, skip: offset, bookmark });
       }
@@ -119,6 +199,8 @@ router.get('/', async (req, res): Promise<void> => {
       topics = window.slice(0, limit).map((d) => ({
         id: String(d._id ?? ''),
         title: d.title,
+        content: d.content,
+        authorId: d.authorId,
         createdAt: d.createdAt,
         updatedAt: d.updatedAt,
       }));
@@ -157,8 +239,98 @@ router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => 
       updatedAt: now,
     };
     const r = await insertDoc(doc);
-    res.status(201).json({ id: r.id, rev: r.rev });
-    try { emitEvent('topic:created', { id: r.id, title: doc.title, createdAt: doc.createdAt }); } catch {}
+    const topicId = r.id;
+
+    // Handle participants if provided
+    const participantEmails = Array.isArray((req.body as any)?.participants)
+      ? (req.body as any).participants
+          .map((e: string) => String(e).trim().toLowerCase())
+          .filter((e: string) => e.length > 0 && e.includes('@'))
+      : [];
+
+    let invitedCount = 0;
+    if (participantEmails.length > 0) {
+      // Get inviter info
+      const inviterUser = await findOne<User>({ type: 'user', _id: userId }).catch(() => null)
+        || await getDoc<User>(userId).catch(() => null);
+      const inviterName = inviterUser?.name || inviterUser?.email?.split('@')[0] || 'Someone';
+      const inviterEmail = inviterUser?.email || '';
+
+      const baseUrl = process.env['APP_BASE_URL'] || `${req.protocol}://${req.headers.host}`;
+      const topicUrl = `${baseUrl}/#/topic/${topicId}`;
+
+      // Create owner participant record for the creator
+      const ownerParticipantId = `participant:wave:${topicId}:user:${userId}`;
+      const ownerParticipant: WaveParticipant = {
+        _id: ownerParticipantId,
+        type: 'participant',
+        waveId: topicId,
+        userId: userId,
+        email: inviterEmail,
+        role: 'owner',
+        invitedAt: now,
+        acceptedAt: now,
+        status: 'accepted',
+      };
+      await insertDoc(ownerParticipant as any).catch(() => undefined);
+
+      // Invite each participant
+      for (const email of participantEmails) {
+        try {
+          // Find or create user
+          let user = await findOne<User>({ type: 'user', email }).catch(() => null);
+          let newUser = false;
+
+          if (!user) {
+            const newUserDoc: User = {
+              type: 'user',
+              email,
+              name: email.split('@')[0],
+              createdAt: now,
+              updatedAt: now,
+            };
+            const userResult = await insertDoc(newUserDoc as any);
+            user = { ...newUserDoc, _id: userResult.id };
+            newUser = true;
+          }
+
+          // Create participant record
+          const participantId = `participant:wave:${topicId}:user:${user._id}`;
+          const participant: WaveParticipant = {
+            _id: participantId,
+            type: 'participant',
+            waveId: topicId,
+            userId: user._id!,
+            email,
+            role: 'editor',
+            invitedBy: userId,
+            invitedAt: now,
+            status: newUser ? 'pending' : 'accepted',
+            acceptedAt: newUser ? undefined : now,
+          };
+          await insertDoc(participant as any);
+
+          // Send invite email
+          await sendInviteEmail({
+            inviterName,
+            inviterEmail,
+            topicTitle: doc.title,
+            topicUrl,
+            recipientEmail: email,
+            recipientName: user.name || undefined,
+          }).catch((err) => {
+            console.warn('[topics] invite email failed', { email, error: err?.message });
+          });
+
+          invitedCount++;
+        } catch (err: any) {
+          console.error('[topics] invite participant error', { email, error: err?.message });
+        }
+      }
+    }
+
+    res.status(201).json({ id: topicId, rev: r.rev, participantsInvited: invitedCount });
+    try { emitEvent('topic:created', { id: topicId, title: doc.title, createdAt: doc.createdAt }); } catch {}
     return;
   } catch (e: any) {
     if (e?.issues) {
@@ -180,6 +352,71 @@ router.get('/:id', async (req, res): Promise<void> => {
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
     res.status(500).json({ error: e?.message || 'couch_error', requestId: (req as any)?.id });
+    return;
+  }
+});
+
+// POST /api/topics/:id/follow
+router.post('/:id/follow', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+  const topicId = req.params['id'] as string;
+  try {
+    await getDoc<Topic>(topicId);
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
+  }
+
+  const followId = `topic_follow:${userId}:${topicId}`;
+  try {
+    const existing = await getDoc<TopicFollow>(followId).catch(() => null);
+    if (existing && existing.type === 'topic_follow') {
+      res.json({ ok: true, topicId, isFollowed: true });
+      return;
+    }
+
+    const now = Date.now();
+    const doc: TopicFollow = {
+      _id: followId,
+      type: 'topic_follow',
+      userId,
+      topicId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await insertDoc(doc as any);
+    res.status(201).json({ ok: true, topicId, isFollowed: true });
+    return;
+  } catch (e: any) {
+    if (String(e?.message).startsWith('409')) {
+      res.json({ ok: true, topicId, isFollowed: true });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'follow_error', requestId: (req as any)?.id });
+    return;
+  }
+});
+
+// POST /api/topics/:id/unfollow
+router.post('/:id/unfollow', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+  const topicId = req.params['id'] as string;
+  const followId = `topic_follow:${userId}:${topicId}`;
+
+  try {
+    const existing = await getDoc<TopicFollow & { _rev?: string }>(followId).catch(() => null);
+    if (!existing || !existing._rev) {
+      res.json({ ok: true, topicId, isFollowed: false });
+      return;
+    }
+    await deleteDoc(followId, existing._rev);
+    res.json({ ok: true, topicId, isFollowed: false });
+    return;
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.json({ ok: true, topicId, isFollowed: false });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'unfollow_error', requestId: (req as any)?.id });
     return;
   }
 });

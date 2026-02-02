@@ -3,7 +3,7 @@
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
 - `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-02-02; refresh if more changes land.
-- Re-read checkpoint: 2026-02-02 15:34 local — drift warnings below remain accurate; no new docs added/removed (note `docs/LINKS_REPARENT.md` is still missing).
+- Re-read checkpoint: 2026-02-02 16:08 local — topics follow + Playwright auth updates captured; drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
 
 Quick start for the next batch (copy/paste):
 ```
@@ -20,7 +20,7 @@ codex exec '
   Priority focus:
   1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; move beyond `perfRender=lite` and reduce full-render TTF/memory. Lite-mode perf harness now passes (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB) but full render still needs work.
   2) BLB parity: shared isFoldedByDefault, inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity, unread green markers, and update BLB snapshots.
-  3) Modernize getUserMedia adapter + tests. (Adapter tests currently green.)
+  3) Toolbar parity: `test:toolbar-inline` now skips assertions because the read toolbar is missing in the modern layout — restore/confirm the read toolbar and re-run smokes.
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
   5) Automate bundles/backups (bundle + GDrive copy) and document cadence.
   6) Finish CoffeeScript/legacy cleanup and dependency upgrades; decide legacy static assets.

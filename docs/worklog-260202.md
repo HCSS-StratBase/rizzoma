@@ -108,3 +108,10 @@
   - expanded-root: TTF 3396.8ms, stage duration 543.1ms, memory 23MB, blips rendered 1000/1000, windowed 200 in 2878.8ms (budget PASS).
   - Metrics + renders saved under `snapshots/perf/metrics-1770042725851-*.json` and `snapshots/perf/render-1770042725851-*.png`.
 - Ran `npm run lint:branch-context` after perfRender=lite doc updates (pass).
+- Added topics list enrichment (author name/avatar, snippets, follow state) and follow/unfollow endpoints; persisted `topic_follow` docs.
+- Added `src/tests/routes.topics.follow.test.ts` for follow/unfollow and list enrichment, and ran `npm test -- --run src/tests/routes.topics.follow.test.ts` (pass).
+- Updated CORS allowlist defaults to include `127.0.0.1:*` so Playwright smokes can auth from localhost/127.0.0.1.
+- Playwright auth checks now wait for `.rizzoma-layout` instead of a legacy Logout button in `test-toolbar-inline-smoke.mjs` and `test-follow-green-smoke.mjs`.
+- Ran Playwright smokes after CORS/auth updates:
+  - `npm run test:toolbar-inline` pass; read toolbar not found so assertions skipped; snapshots under `snapshots/toolbar-inline/1770044690847-*`.
+  - `npm run test:follow-green` pass for desktop and mobile; snapshots under `snapshots/follow-the-green/1770044752598-*` and `snapshots/follow-the-green-mobile/1770044781987-*`.

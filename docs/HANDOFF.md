@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-02-02 (refreshed after perf=lite render run; branch snapshot current)
+Last Updated: 2026-02-02 (refreshed after topics follow + Playwright auth adjustments; branch snapshot current)
 
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.
@@ -25,7 +25,8 @@ PR Ops (CLI)
 
 Current State (feature/rizzoma-core-features @ 2026-02-02)
 - FEAT_ALL required: start both server (:8000) and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
-- Tests last run (2026-02-02): Playwright `node test-blb-snapshots.mjs` pass; BLB snapshots refreshed under `snapshots/blb/1770004650980-*` (inline expansion driven by clicking the marker, aligned with the UI). Inline marker click handler now uses event delegation + capture phase. Historical runs for toolbar/follow-green/health remain listed below; re-run before merges.
+- Tests last run (2026-02-02): `npm test -- --run src/tests/routes.topics.follow.test.ts` pass. Playwright `npm run test:toolbar-inline` pass (read toolbar not found; assertions skipped; snapshots under `snapshots/toolbar-inline/1770044690847-*`). `npm run test:follow-green` pass for desktop+mobile with snapshots under `snapshots/follow-the-green/1770044752598-*` and `snapshots/follow-the-green-mobile/1770044781987-*`. Historical BLB snapshot runs remain below; re-run before merges.
+- Topics list enrichment: `/api/topics` now emits author name/avatar, snippets, unread totals, and follow state for signed-in users; follow/unfollow endpoints persist `topic_follow` docs with tests in `src/tests/routes.topics.follow.test.ts`.
 - Perf: `perf-harness.mjs` 200-blip run PASS (TTF 2173.8ms, FCP 260ms, rendered 101/200); 1000-blip runs now PASS in `perfRender=lite` mode — latest 2026-02-02 run (1000 blips) reported stage duration ~1.5s landing and ~0.5s expanded, memory 23MB, labels rendered 1000/1000 (`snapshots/perf/metrics-1770042725851-*.json`). Windowed 200-label time ~2.6–2.9s. `perfLimit` raises `/api/blips` limits in perf mode; `x-rizzoma-perf=1` skips blip history writes during perf seeding, `perf=full` skips unread/sidebar fetches, and benchmarks now use per-stage duration. Keep working on full-render perf beyond lite mode.
 - Follow-the-Green: socket host fix restores `wave:unread` delivery; CTA clears without API fallback. Snapshots under `snapshots/follow-the-green/` (desktop+mobile). RightToolsPanel uses unread sockets/refresh and logs debug when `rizzoma:debug:unread=1`.
 - Toolbar/inline comments: inline toolbar parity smoke green; inline comment nav remains optional in smoke but UI renders toolbars. Snapshots under `snapshots/toolbar-inline/`.
