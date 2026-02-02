@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Editor } from '@tiptap/core';
+import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import { DEFAULT_BG_COLORS } from '@shared/constants/textFormatting';
 import { useMobileContextSafe } from '../../contexts/MobileContext';
 import { BottomSheetMenu, createBlipMenuItems } from '../mobile/BottomSheetMenu';
@@ -11,9 +12,14 @@ interface BlipMenuProps {
   canEdit: boolean;
   canComment: boolean;
   editor?: Editor;
+  isExpanded?: boolean;
   onStartEdit: () => void;
   onFinishEdit: () => void;
+  onCollapse?: () => void;
+  onExpand?: () => void;
   onToggleComments?: () => void;
+  onShowComments?: () => void;
+  onHideComments?: () => void;
   onDelete?: () => void;
   onGetLink?: () => void;
   areCommentsVisible?: boolean;
@@ -46,9 +52,14 @@ export function BlipMenu({
   canEdit,
   canComment,
   editor,
+  isExpanded = false,
   onStartEdit,
   onFinishEdit,
+  onCollapse,
+  onExpand,
   onToggleComments,
+  onShowComments,
+  onHideComments,
   onDelete,
   onGetLink,
   areCommentsVisible = true,
@@ -82,7 +93,9 @@ export function BlipMenu({
   const [showBgPalette, setShowBgPalette] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const overflowRef = useRef<HTMLDivElement | null>(null);
+  const emojiPickerRef = useRef<HTMLDivElement | null>(null);
 
   // Mobile detection
   const mobileContext = useMobileContextSafe();
@@ -134,6 +147,19 @@ export function BlipMenu({
     };
   }, [showOverflow]);
 
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current?.contains(event.target as Node)) return;
+      setShowEmojiPicker(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+
   if (!isActive) return null;
 
   const collapseToggleTitle = collapseByDefault
@@ -161,10 +187,14 @@ export function BlipMenu({
   };
   const handleInsertEmoji = () => {
     if (!editor) return;
-    const emoji = window.prompt('Pick an emoji to insert', '😊');
-    if (!emoji) return;
+    setShowEmojiPicker(!showEmojiPicker);
+  };
+
+  const handleEmojiSelect = (emojiData: EmojiClickData) => {
+    if (!editor) return;
     try {
-      editor.chain().focus().insertContent(emoji).run();
+      editor.chain().focus().insertContent(emojiData.emoji).run();
+      setShowEmojiPicker(false);
     } catch (error) {
       console.error('Failed to insert emoji', error);
     }
@@ -423,15 +453,28 @@ export function BlipMenu({
             >
               🔗
             </button>
-            <button
-              className="menu-btn"
-              title="Insert emoji"
-              onClick={handleInsertEmoji}
-              disabled={!editor}
-              data-testid="blip-menu-emoji"
-            >
-              😀
-            </button>
+            <div className="emoji-picker-container" ref={emojiPickerRef}>
+              <button
+                className={`menu-btn ${showEmojiPicker ? 'active' : ''}`}
+                title="Insert emoji"
+                onClick={handleInsertEmoji}
+                disabled={!editor}
+                data-testid="blip-menu-emoji"
+              >
+                😀
+              </button>
+              {showEmojiPicker && (
+                <div className="emoji-picker-dropdown">
+                  <EmojiPicker
+                    onEmojiClick={handleEmojiSelect}
+                    theme={Theme.LIGHT}
+                    searchPlaceholder="Search emojis..."
+                    width={350}
+                    height={400}
+                  />
+                </div>
+              )}
+            </div>
             <button
               className="menu-btn"
               title={isUploading ? 'Uploading attachment…' : 'Insert attachment'}
@@ -549,15 +592,15 @@ export function BlipMenu({
 
           <div className="menu-group">
             <div className="menu-dropdown" ref={overflowRef}>
-              <button 
-                className={`menu-btn other-btn ${showOverflow ? 'active' : ''}`}
+              <button
+                className={`menu-btn gear-btn ${showOverflow ? 'active' : ''}`}
                 title="Other actions"
                 type="button"
                 aria-expanded={showOverflow}
                 data-testid="blip-menu-overflow-toggle"
                 onClick={() => setShowOverflow((open) => !open)}
               >
-                ⋯
+                ⚙️
               </button>
               {showOverflow && renderOverflowItems('edit')}
             </div>
@@ -573,7 +616,20 @@ export function BlipMenu({
                 title={collapseToggleTitle}
                 data-testid="blip-menu-collapse-toggle"
               >
-                Fold
+                Hide
+              </button>
+            </div>
+          )}
+          {canEdit && (
+            <div className="menu-group">
+              <button
+                className="menu-btn delete-btn"
+                onClick={onDelete}
+                title="Delete comment"
+                disabled={!onDelete || isDeleting}
+                data-testid="blip-menu-delete"
+              >
+                Delete
               </button>
             </div>
           )}
@@ -598,66 +654,85 @@ export function BlipMenu({
     );
   }
 
-  // Read-only menu
+  // Read-only menu - Original Rizzoma style: Edit | hide/show comments | link | Hide | Delete | gear
   return (
     <div className="blip-menu-container">
       <div className="blip-menu read-only-menu" data-testid="blip-menu-read-surface">
         {canEdit && (
-          <button 
-            className="menu-btn edit-btn"
-            onClick={onStartEdit}
-            title="Edit"
-            data-testid="blip-menu-edit"
+          <div className="menu-group">
+            <button
+              className="menu-btn edit-btn"
+              onClick={onStartEdit}
+              title="Edit"
+              data-testid="blip-menu-edit"
+            >
+              Edit
+            </button>
+          </div>
+        )}
+
+        <div className="menu-group">
+          <button
+            className="menu-btn"
+            onClick={onHideComments}
+            title="Hide comments (Ctrl+Shift+Up)"
+            disabled={!onHideComments || !areCommentsVisible}
+            data-testid="blip-menu-comments-hide"
           >
-            Edit
+            ⤵
           </button>
+          <button
+            className="menu-btn"
+            onClick={onShowComments}
+            title="Show comments (Ctrl+Shift+Down)"
+            disabled={!onShowComments || areCommentsVisible}
+            data-testid="blip-menu-comments-show"
+          >
+            ⤴
+          </button>
+        </div>
+
+        <div className="menu-group">
+          <button
+            className="menu-btn"
+            onClick={onGetLink}
+            title="Get Direct Link"
+            data-testid="blip-menu-get-link"
+          >
+            🔗
+          </button>
+        </div>
+
+        {canEdit && (
+          <div className="menu-group">
+            <button
+              className={`menu-btn ${collapseByDefault ? 'active' : ''}`}
+              onClick={onToggleCollapseByDefault}
+              disabled={!onToggleCollapseByDefault}
+              aria-pressed={collapseByDefault}
+              title={collapseToggleTitle}
+              data-testid="blip-menu-hidden-toggle"
+            >
+              Hide
+            </button>
+          </div>
         )}
 
         {canEdit && (
-          <button
-            className={`menu-btn ${collapseByDefault ? 'active' : ''}`}
-            onClick={onToggleCollapseByDefault}
-            disabled={!onToggleCollapseByDefault}
-            aria-pressed={collapseByDefault}
-            title={collapseToggleTitle}
-            data-testid="blip-menu-collapse-toggle"
-          >
-            Fold
-          </button>
+          <div className="menu-group">
+            <button
+              className="menu-btn delete-btn"
+              onClick={onDelete}
+              title="Delete comment"
+              disabled={!onDelete || isDeleting}
+              data-testid="blip-menu-delete"
+            >
+              Delete
+            </button>
+          </div>
         )}
-        
-        <button 
-          className="menu-btn"
-          onClick={onToggleComments}
-          title={areCommentsVisible ? 'Hide Comments' : 'Show Comments'}
-          aria-pressed={areCommentsVisible}
-          disabled={!onToggleComments}
-          data-testid="blip-menu-comments-toggle"
-        >
-          💬
-        </button>
-        
-        <button 
-          className="menu-btn"
-          onClick={onGetLink}
-          title="Get Direct Link"
-          data-testid="blip-menu-get-link"
-        >
-          🔗
-        </button>
-        
-        {canEdit && onDelete && (
-          <button 
-            className="menu-btn delete-btn"
-            onClick={onDelete}
-            title="Delete blip"
-            disabled={isDeleting}
-            data-testid="blip-menu-delete"
-          >
-            🗑️
-          </button>
-        )}
-        <div className="menu-dropdown" ref={overflowRef}>
+
+        <div className="menu-group" ref={overflowRef}>
           <button
             className={`menu-btn gear-btn ${showOverflow ? 'active' : ''}`}
             title="More options"

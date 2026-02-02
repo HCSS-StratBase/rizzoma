@@ -1,0 +1,92 @@
+/* BlipThread inline marker styles */
+
+.blip-thread-marker {
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  text-decoration: none;
+  border-radius: 2px;
+  width: 14px;
+  height: 14px;
+  background: #e5e7eb;
+  border: 1px solid #d1d5db;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.blip-thread-marker:hover {
+  color: #374151;
+  background-color: #d1d5db;
+}
+
+/* Unread indicator - green color like Follow-the-Green */
+.blip-thread-marker.has-unread {
+  color: #ffffff;
+  font-weight: bold;
+  background: #2e8b57;
+  border-color: #2e8b57;
+}
+
+.blip-thread-marker.has-unread:hover {
+  color: #ffffff;
+  background-color: #246b46;
+}
+
+.blip-thread-marker.expanded {
+  background: #d1d5db;
+  color: #374151;
+}
+
+.blip-thread-marker.expanded.has-unread {
+  background: #2e8b57;
+  color: #ffffff;
+}
+
+/* Selected state in editor */
+.blip-thread-marker.selected {
+  background-color: rgba(78, 160, 241, 0.2);
+  outline: 1px solid rgba(78, 160, 241, 0.5);
+}
+
+/* ProseMirror node view wrapper */
+.blip-thread-marker.ProseMirror-selectednode {
+  background-color: rgba(78, 160, 241, 0.3);
+  outline: 2px solid #4ea0f1;
+}
+
+/* Ensure proper inline flow */
+.ProseMirror .blip-thread-marker {
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .blip-thread-marker {
+    color: #e5e7eb;
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .blip-thread-marker:hover {
+    color: #f3f4f6;
+    background-color: #4b5563;
+  }
+
+  .blip-thread-marker.has-unread {
+    color: #ffffff;
+    background: #22c55e;
+    border-color: #22c55e;
+  }
+
+  .blip-thread-marker.has-unread:hover {
+    color: #ffffff;
+    background-color: #16a34a;
+  }
+}

@@ -13,7 +13,8 @@ describe('client: collapse preferences persistence', () => {
     window.localStorage.clear();
   });
 
-  it('defaults to expanded and persists metadata to localStorage', () => {
+  it('defaults to not hidden and persists metadata to localStorage', () => {
+    // Default is false (not hidden) unless explicitly set
     expect(getCollapsePreference('wave1:blip1')).toBe(false);
     expect(getCollapsePreferenceMetadata('wave1:blip1')).toBeUndefined();
 

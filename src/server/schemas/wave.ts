@@ -25,6 +25,10 @@ export type Blip = {
   deleted?: boolean;
   deletedAt?: number;
   deletedBy?: string;
+  /** Shared BLB state: when true, this thread is collapsed by default for everyone. */
+  isFoldedByDefault?: boolean;
+  /** Character offset in parent content where this blip was created via Ctrl+Enter (inline blip). */
+  anchorPosition?: number;
 };
 
 export type BlipRead = {
@@ -34,4 +38,17 @@ export type BlipRead = {
   waveId: string;
   blipId: string;
   readAt: number;
+};
+
+export type WaveParticipant = {
+  _id?: string; // participant:wave:<waveId>:user:<userId>
+  type: 'participant';
+  waveId: string;
+  userId: string;
+  email: string;
+  role: 'owner' | 'editor' | 'viewer';
+  invitedBy?: string;
+  invitedAt: number;
+  acceptedAt?: number;
+  status: 'pending' | 'accepted' | 'declined';
 };

@@ -1,0 +1,52 @@
+# Worklog 260202
+
+- Created BLB parity checklist to lock legacy vs modern acceptance criteria: `docs/BLB_PARITY_CHECKLIST.md`.
+- Captured missing BLB snapshots and MDs under `snapshots/blb/`:
+  - `snapshots/blb/1769995968898-blb-landing-collapsed.png` + `.md`
+  - `snapshots/blb/1769995968898-blb-expanded-view.png` + `.md`
+  - `snapshots/blb/1769995968898-blb-inline-expanded.png` + `.md`
+  - `snapshots/blb/1769995968898-blb-unread-green-plus.png` + `.md`
+- Added a reusable Playwright harness for BLB snapshots: `test-blb-snapshots.mjs`.
+- Ran Playwright to generate the above snapshots (headless Chromium).
+- Started local dev server for snapshot generation and then stopped it (Docker infra remains running: CouchDB/Redis/RabbitMQ).
+- Switched BLB “Hidden by default” to a shared blip property:
+  - Added `isFoldedByDefault` to `src/server/schemas/wave.ts`.
+  - `/api/blips` now returns `isFoldedByDefault` and create/duplicate routes persist it.
+  - `/api/blips/:id/collapse-default` now reads/writes the blip doc (shared state) with auth/ownership guard.
+  - Client blip mapping now hydrates `isFoldedByDefault`; local storage defaults to false.
+- Updated `client.collapsePreferences` test expectation to match default false.
+- Adjusted BLB inline marker styling and interaction to better match legacy:
+  - Marker now renders as compact square `+`/`−` (no brackets) with green unread state.
+  - Menu container uses `pointer-events: none` with child elements opt-in to avoid blocking marker clicks.
+  - Collapsed row expand icons now use square `+` styling; expanded icon uses `−` (no brackets).
+- Re-ran Playwright BLB snapshots after UI changes; latest set:
+  - `snapshots/blb/1769997687745-blb-landing-collapsed.png` + `.md`
+  - `snapshots/blb/1769997687745-blb-expanded-view.png` + `.md`
+  - `snapshots/blb/1769997687745-blb-inline-expanded.png` + `.md`
+  - `snapshots/blb/1769997687745-blb-unread-green-plus.png` + `.md`
+- Updated BLB priority in `AGENTS.md` and mirrored in `docs/RESTART.md`.
+- Synced unread state into BLB visuals and removed navigation-on-expand:
+  - `RizzomaTopicDetail` now uses `unreadSet` to mark blips read/unread and updates inline marker classes/text.
+  - Collapsed `[+]` indicator now turns green when the blip itself is unread.
+  - Removed subblip navigation from `RizzomaBlip` expand click to keep inline expansion as default BLB behavior.
+- Added a dedicated effect to re-sync `isRead` across the blip tree whenever unread state updates.
+- Added explicit Collapse/Expand buttons to the read-only blip toolbar (legacy parity) and wired them to the blip expand toggle.
+- Propagated unread styling to collapsed child rows (label rows + [+] icon) to match legacy unread cues.
+- Re-ran BLB snapshots after unread styling update; latest set:
+  - `snapshots/blb/1769998389906-blb-landing-collapsed.png` + `.md`
+  - `snapshots/blb/1769998389906-blb-expanded-view.png` + `.md`
+  - `snapshots/blb/1769998389906-blb-inline-expanded.png` + `.md`
+  - `snapshots/blb/1769998389906-blb-unread-green-plus.png` + `.md`
+- Started local dev server for snapshot generation and then stopped it.
+- Updated BLB default expansion logic: all blips start collapsed unless explicitly expanded; child blips render expanded when opened.
+- Adjusted Hide-by-default toggle to avoid auto-expanding on unhide.
+- Aligned read-only toolbar to legacy layout: Edit, Hide/Show comments, Link, Hide, Delete, Gear.
+- Added Delete button to edit toolbar and renamed Fold -> Hide for legacy parity.
+- Added JSON export serialization for `isFoldedByDefault` in `ExportModal`.
+- Marked the /mnt/g/My Drive/Rizzoma workspace as deprecated in `README.md` and added `DEPRECATED.md`.
+- Re-ran BLB snapshots after toolbar/default-collapsed updates; latest set:
+  - `snapshots/blb/1769999290284-blb-landing-collapsed.png` + `.md`
+  - `snapshots/blb/1769999290284-blb-expanded-view.png` + `.md`
+  - `snapshots/blb/1769999290284-blb-inline-expanded.png` + `.md`
+  - `snapshots/blb/1769999290284-blb-unread-green-plus.png` + `.md`
+- Started local dev server for snapshot generation and then stopped it.

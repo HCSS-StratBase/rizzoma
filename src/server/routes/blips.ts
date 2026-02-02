@@ -19,17 +19,6 @@ type BlipHistoryDoc = {
   _rev?: string;
 };
 
-type CollapsePreferenceDoc = {
-  _id: string;
-  type: 'blip_collapse_pref';
-  userId: string;
-  blipId: string;
-  collapseByDefault: boolean;
-  createdAt: number;
-  updatedAt: number;
-  _rev?: string;
-};
-
 type InlineCommentsVisibilityDoc = {
   _id: string;
   type: 'inline_comments_visibility';
@@ -41,8 +30,6 @@ type InlineCommentsVisibilityDoc = {
   _rev?: string;
 };
 
-const collapsePrefDocId = (userId: string, blipId: string): string =>
-  `collapse-default:${userId}:${blipId}`;
 const inlineCommentsPrefDocId = (userId: string, blipId: string): string =>
   `inline-comments-visible:${userId}:${blipId}`;
 
@@ -153,8 +140,8 @@ router.patch('/:id/reparent', requireAuth, async (req, res): Promise<void> => {
 router.post('/', requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const { waveId, parentId, content } = req.body || {};
-    
+    const { waveId, parentId, content, anchorPosition } = req.body || {};
+
     if (!waveId || !content) {
       res.status(400).json({ error: 'missing_required_fields', requestId: (req as any)?.id });
       return;
@@ -162,7 +149,7 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
 
     const now = Date.now();
     const blipId = `${waveId}:b${now}`;
-    
+
     const fallbackName = (req.user?.name && req.user.name.trim()) ? req.user.name : (req.user?.email || 'Unknown');
     const blip: Blip = {
       _id: blipId,
@@ -175,6 +162,9 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
       authorId: userId,
       authorName: (req.body?.authorName as string)?.trim() || fallbackName,
       deleted: false,
+      isFoldedByDefault: false,
+      // Store anchor position for inline blips created via Ctrl+Enter
+      ...(typeof anchorPosition === 'number' ? { anchorPosition } : {}),
     } as any;
 
     const r = await insertDoc(blip as any);
@@ -359,6 +349,7 @@ router.get('/', async (req, res): Promise<void> => {
     res.json({
       blips: blips.map(blip => ({
         ...blip,
+        isFoldedByDefault: !!(blip as any).isFoldedByDefault,
         permissions: {
           canEdit: !!userId && blip.authorId === userId,
           canComment: !!userId,
@@ -372,14 +363,13 @@ router.get('/', async (req, res): Promise<void> => {
 });
 
 router.get('/:id/collapse-default', requireAuth, async (req, res): Promise<void> => {
-  const userId = req.user!.id;
   try {
     const blipId = req.params['id'] as string;
-    const doc = await getDoc<CollapsePreferenceDoc>(collapsePrefDocId(userId, blipId));
-    res.json({ collapseByDefault: !!doc.collapseByDefault });
+    const doc = await getDoc<Blip>(blipId);
+    res.json({ collapseByDefault: !!doc.isFoldedByDefault });
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) {
-      res.json({ collapseByDefault: false });
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
       return;
     }
     res.status(500).json({ error: e?.message || 'collapse_pref_error', requestId: (req as any)?.id });
@@ -395,30 +385,22 @@ router.patch('/:id/collapse-default', requireAuth, async (req, res): Promise<voi
   }
 
   const blipId = req.params['id'] as string;
-  const docId = collapsePrefDocId(userId, blipId);
   try {
-    const existing = await getDoc<CollapsePreferenceDoc & { _rev: string }>(docId);
-    const next: CollapsePreferenceDoc & { _rev: string } = {
+    const existing = await getDoc<Blip & { _rev: string }>(blipId);
+    if (existing.authorId && existing.authorId !== userId) {
+      res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
+      return;
+    }
+    const next: Blip & { _rev?: string } = {
       ...existing,
-      collapseByDefault,
+      isFoldedByDefault: collapseByDefault,
       updatedAt: Date.now(),
     };
     const r = await updateDoc(next as any);
     res.json({ collapseByDefault, id: r['id'], rev: r['rev'] });
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) {
-      const now = Date.now();
-      const doc: CollapsePreferenceDoc = {
-        _id: docId,
-        type: 'blip_collapse_pref',
-        userId,
-        blipId,
-        collapseByDefault,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const r = await insertDoc(doc as any);
-      res.json({ collapseByDefault, id: r['id'], rev: r['rev'] });
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
       return;
     }
     res.status(500).json({ error: e?.message || 'collapse_pref_save_error', requestId: (req as any)?.id });
@@ -507,6 +489,7 @@ router.post('/:id/duplicate', requireAuth, async (req, res): Promise<void> => {
       authorId: userId,
       authorName: fallbackName,
       deleted: false,
+      isFoldedByDefault: !!sourceBlip.isFoldedByDefault,
     } as any;
 
     const r = await insertDoc(duplicatedBlip as any);

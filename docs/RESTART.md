@@ -18,11 +18,12 @@ codex exec '
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
 
   Priority focus:
-  1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; fix 1k-blip perf harness failures (TTF/render count) and keep budgets documented.
-  2) Modernize getUserMedia adapter + tests. (Adapter tests currently green.)
-  3) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
-  4) Automate bundles/backups (bundle + GDrive copy) and document cadence.
-  5) Finish CoffeeScript/legacy cleanup and dependency upgrades; decide legacy static assets.
+  1) BLB parity: shared isFoldedByDefault, inline [+] marker behavior/styling, per-blip toolbar parity, unread green markers, and update BLB snapshots.
+  2) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; fix 1k-blip perf harness failures (TTF/render count) and keep budgets documented.
+  3) Modernize getUserMedia adapter + tests. (Adapter tests currently green.)
+  4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
+  5) Automate bundles/backups (bundle + GDrive copy) and document cadence.
+  6) Finish CoffeeScript/legacy cleanup and dependency upgrades; decide legacy static assets.
 
   Testing/CI hygiene:
   - Keep npm run test:toolbar-inline and npm run test:follow-green green; snapshots live under snapshots/<feature>/ and are uploaded as Actions artifacts.

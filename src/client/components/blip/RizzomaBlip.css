@@ -1,14 +1,18 @@
 /* Rizzoma Blip Styles */
 .rizzoma-blip {
   position: relative;
-  margin-bottom: 8px;
   transition: background-color 0.2s ease;
-  min-height: 32px;
+  /* Collapsed blips should look like simple list items - no extra spacing */
 }
 
+/* Root blip: only has min-height when expanded */
 .rizzoma-blip.root-blip {
-  min-height: 120px;
   width: 100%;
+}
+
+/* Expanded root blips need min-height for content */
+.rizzoma-blip.root-blip.expanded {
+  min-height: 120px;
 }
 
 .rizzoma-blip.unread {
@@ -239,6 +243,116 @@
   opacity: 1;
 }
 
+/* Original Rizzoma-style content row with bullet + content + avatar */
+.blip-content-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Simple bullet like live Rizzoma */
+.blip-bullet {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #444;
+  flex-shrink: 0;
+}
+
+.blip-main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.blip-author-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 12px;
+}
+
+.blip-author-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+}
+
+.blip-author-date {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* Contributors avatars - stacked like original Rizzoma with owner on top */
+.blip-contributors-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 12px;
+}
+
+.blip-contributors-stack {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+}
+
+.blip-contributors-stack.expanded {
+  width: auto;
+  height: auto;
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+
+.blip-contributor-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Stacked mode - avatars positioned absolutely */
+.blip-contributors-stack:not(.expanded) .blip-contributor-avatar {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Expanded mode - avatars in a row */
+.blip-contributors-stack.expanded .blip-contributor-avatar {
+  position: static;
+}
+
+.blip-contributor-avatar.owner {
+  border-color: #4EA0F1;
+}
+
+.blip-contributors-overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: #e0e0e0;
+  color: #666;
+  font-size: 10px;
+  font-weight: 500;
+  border: 2px solid #fff;
+}
+
 .blip-history-backdrop {
   position: fixed;
   inset: 0;
@@ -388,6 +502,71 @@
   margin: 4px 0;
 }
 
+/* TipTap ProseMirror editor styling for inline blip editor */
+.blip-editor-container .ProseMirror {
+  outline: none;
+  min-height: 1.5rem;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #4285f4;
+  border-radius: 4px;
+}
+
+.blip-editor-container .ProseMirror:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.blip-editor-container .ProseMirror p {
+  margin: 0 0 0.5em 0;
+}
+
+.blip-editor-container .ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+/* List styling - bullets INSIDE the container */
+.blip-editor-container .ProseMirror ul,
+.blip-editor-container .ProseMirror ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+  list-style-position: inside;
+}
+
+.blip-editor-container .ProseMirror ul {
+  list-style-type: disc;
+}
+
+.blip-editor-container .ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.blip-editor-container .ProseMirror li {
+  margin: 0.25em 0;
+}
+
+.blip-editor-container .ProseMirror li p {
+  display: inline;
+  margin: 0;
+}
+
+/* Nested lists - indent further */
+.blip-editor-container .ProseMirror ul ul,
+.blip-editor-container .ProseMirror ol ol,
+.blip-editor-container .ProseMirror ul ol,
+.blip-editor-container .ProseMirror ol ul {
+  margin: 0.25em 0;
+  padding-left: 1.5em;
+}
+
+.blip-editor-container .ProseMirror ul ul {
+  list-style-type: circle;
+}
+
+.blip-editor-container .ProseMirror ul ul ul {
+  list-style-type: square;
+}
+
 .blip-editor-container .blip-editor {
   background-color: #fff;
   border: 1px solid #4285f4;
@@ -463,6 +642,38 @@
   transform: scaleX(-1);
 }
 
+/* Reply Input - Original Rizzoma style */
+.blip-reply-inline {
+  margin-top: 8px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.reply-placeholder-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #999;
+  background: #fafafa;
+  cursor: text;
+}
+
+.reply-placeholder-input:hover {
+  border-color: #bbb;
+  background: #fff;
+}
+
+.reply-placeholder-input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.blip-reply-form-inline {
+  width: 100%;
+}
+
 /* Reply Form */
 .blip-reply-form {
   margin-top: 8px;
@@ -533,6 +744,86 @@
 /* Child Blips */
 .child-blips {
   margin-top: 8px;
+  margin-left: 16px;
+  border-left: 2px solid #e0e0e0;
+  padding-left: 12px;
+}
+
+/* Child blip wrapper */
+.child-blip-wrapper {
+  margin-bottom: 4px;
+}
+
+/* Collapsed child blip row - same format as parent: • Label [+] avatar date */
+.child-blip-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+  font-size: 14px;
+}
+
+.child-blip-collapsed:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.child-blip-collapsed.has-unread {
+  background-color: #fffae5;
+  border-left: 3px solid #ffd93d;
+  padding-left: 5px;
+}
+
+.child-blip-collapsed .blip-bullet {
+  font-size: 14px;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.child-blip-collapsed .blip-label-text {
+  flex: 1;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.child-blip-collapsed .blip-expand-icon {
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: bold;
+  color: #888;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: #f2f2f2;
+  border: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.child-blip-collapsed:hover .blip-expand-icon {
+  background: #e6e6e6;
+  border-color: #ccc;
+}
+
+/* Hide right side avatar/date on collapsed view - live Rizzoma doesn't show this */
+.blip-collapsed-right {
+  display: none !important;
+}
+
+.blip-collapsed-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.blip-collapsed-date {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
 }
 
 /* Collapsed Info */
@@ -609,11 +900,18 @@
   animation: highlight 2s ease;
 }
 
-/* Active blip styling (when clicked/selected) */
-.blip-container.active {
+/* Active blip styling (when clicked/selected) - only for expanded blips */
+/* Collapsed blips should look like simple list items without any active styling */
+.blip-container.active.expanded {
   border: 2px solid #57AAD9;
   border-radius: 4px;
   background-color: rgba(87, 170, 217, 0.02);
+}
+
+/* Collapsed blips never get active styling - they're just list items */
+.blip-container.active.collapsed {
+  border: none !important;
+  background-color: transparent !important;
 }
 
 .blip-container.active .blip-text {
@@ -708,4 +1006,153 @@
 
 .upload-actions button:hover {
   background: #f3f4f6;
+}
+
+/* ========================================
+   BLB COLLAPSED/EXPANDED STATES
+   Original Rizzoma-style behavior
+======================================== */
+
+/* Collapsed row - shows only bullet + label + [+] icon */
+/* Collapsed row: simple list item style like live Rizzoma */
+.blip-collapsed-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  cursor: pointer;
+  /* No card styling - just a simple list item */
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.blip-collapsed-row:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  /* Subtle hover - no card effect */
+}
+
+.blip-collapsed-label-text {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* [+] / [-] expand icons - Original Rizzoma style */
+/* Simple [+] icon like live Rizzoma - small green indicator */
+.blip-expand-icon {
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background: #e5e7eb;
+  border: 1px solid #d1d5db;
+  border-radius: 2px;
+}
+
+.blip-expand-icon:hover {
+  color: #374151;
+  background: #d1d5db;
+}
+
+/* Green [+] for unread content - THE KEY VISUAL CUE */
+.blip-expand-icon.has-unread {
+  color: #ffffff;
+  background: #2e8b57;
+  border-color: #2e8b57;
+}
+
+/* Collapsed author info (smaller, inline) */
+/* Hide author section on collapsed rows - live Rizzoma doesn't show this */
+.blip-collapsed-author {
+  display: none !important;
+}
+
+.blip-author-avatar-small {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.blip-author-date-small {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* Expanded state - show full content with toolbar */
+.blip-container.expanded {
+  /* No special border for expanded - the toolbar provides visual distinction */
+}
+
+.blip-container.collapsed {
+  /* Collapsed blips are minimal */
+  min-height: auto;
+  margin-bottom: 2px;
+}
+
+/* BLB: Root blips CAN be collapsed - no special hiding */
+/* The original Rizzoma collapsed all blips by default */
+
+/* Root blips when expanded need the expander positioned correctly */
+.blip-container.root-blip.expanded > .blip-expander {
+  left: -24px;
+  top: 40px; /* Below the BlipMenu toolbar */
+}
+
+/* Nested blip indentation */
+.blip-container.nested-blip {
+  margin-left: 0 !important; /* Handled by inline style based on depth */
+}
+
+/* Sub-bullet style for nested blips */
+.blip-container.nested-blip .blip-bullet {
+  content: '◦';
+  font-size: 14px;
+  color: #888;
+}
+
+/* Expander icon position adjustment for expanded state */
+.blip-container.expanded .blip-expander {
+  position: absolute;
+  left: -20px;
+  top: 40px; /* Below the toolbar */
+}
+
+.blip-expander-icon {
+  font-family: monospace;
+  font-size: 11px;
+}
+
+/* When blip is collapsed, hide the full content */
+.blip-container.collapsed > .blip-content {
+  display: none !important;
+}
+
+/* When blip is collapsed, hide the BlipMenu */
+.blip-container.collapsed > .blip-menu-container {
+  display: none !important;
+}
+
+/* Active collapsed row - minimal indication like live Rizzoma */
+/* Just a subtle background on hover, no border */
+.blip-container.collapsed.active .blip-collapsed-row {
+  background-color: rgba(0, 0, 0, 0.04);
+  /* No border - collapsed blips are simple list items */
+}
+
+/* Unread collapsed blip */
+.blip-container.collapsed.unread .blip-collapsed-row {
+  background-color: #fffae5;
+  border-left: 3px solid #ffd93d;
 }
