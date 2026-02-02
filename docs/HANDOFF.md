@@ -45,7 +45,8 @@ Next Work
   - Keep Playwright smokes/browser artifacts green; monitor follow-green socket delivery and toolbar parity as code changes land.
   - Health checks + CI gating: `/api/health` + inline comments/upload health tests pass locally; ensure CI coverage and alerting remain intact.
   - Backups: automate bundle + GDrive copy after merges and document cadence.
-  - Legacy cleanup: finish CoffeeScript/legacy asset disposition and dependency upgrades; rewrite onboarding/status docs to remove demo/start-all claims.
+- Legacy cleanup: finish CoffeeScript/legacy asset disposition and dependency upgrades; rewrite onboarding/status docs to remove demo/start-all claims.
+  - Audit (2026-02-02): `.coffee` files remain only in `original-rizzoma-src/` reference tree; none in active `src/`.
 
 Restart Checklist (any machine)
 - Node 20.19.0; `npm ci` (or `npm install`)
@@ -63,6 +64,7 @@ Backup (GDrive)
 - Bundle: `git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all`
 - Copy (PowerShell):
   `powershell.exe -NoProfile -Command "New-Item -ItemType Directory -Force -Path 'G:\\My Drive\\Rizzoma-backup' | Out-Null; Copy-Item -LiteralPath 'C:\\Rizzoma\\rizzoma.bundle' -Destination 'G:\\My Drive\\Rizzoma-backup\\rizzoma.bundle' -Force'"`
+- Last run: 2026-02-02 (bundle created + copied to GDrive).
 
 PR Log
 - 2025‑11‑06: #23 merged (B Part 1: snapshots)

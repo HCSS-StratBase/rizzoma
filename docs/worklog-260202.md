@@ -141,3 +141,5 @@
 - Ran perf harness with 1000 blips; metrics under `snapshots/perf/metrics-1770070825186-*.json` and renders under `snapshots/perf/render-1770070825186-*.png` (budgets passed).
 - Ran `npm run test:health` (server health, inline comments health, uploads edge cases) successfully.
 - Ran `npm test -- --run src/tests/client.getUserMediaAdapter.test.ts` successfully.
+- Created `rizzoma.bundle` and copied it to `G:\My Drive\Rizzoma-backup\rizzoma.bundle` (backup refresh).
+- Legacy cleanup audit: `.coffee` files only exist under `original-rizzoma-src` (reference), none in active `src/` tree.
