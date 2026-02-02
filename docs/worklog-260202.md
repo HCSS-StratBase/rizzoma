@@ -95,3 +95,4 @@
   - landing-labels: TTF 66682ms, FCP 432ms, memory 125MB, labels visible 1000/1000, windowed 200 in 6669ms (budget FAIL).
   - expanded-root: TTF 69488.3ms, FCP 432ms, memory 125MB, blips rendered 1000/1000, windowed 200 in 68974ms (budget FAIL).
   - Metrics + renders saved under `snapshots/perf/metrics-1770040727000-*.json` and `snapshots/perf/render-1770040727000-*.png`.
+- Ran `npm run lint:branch-context` after doc updates (pass).
