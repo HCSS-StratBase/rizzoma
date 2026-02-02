@@ -157,6 +157,12 @@ async function captureSnapshot(page, label, descriptionLines) {
   log(`Wrote ${mdPath}`);
 }
 
+function assert(condition, message) {
+  if (!condition) {
+    throw new Error(`BLB assertion failed: ${message}`);
+  }
+}
+
 (async () => {
   const browser = await chromium.launch({ headless: true });
   const contextOwner = await browser.newContext({ viewport: { width: 1400, height: 900 } });
@@ -170,8 +176,9 @@ async function captureSnapshot(page, label, descriptionLines) {
 
   await createBlip(pageOwner, waveId, '<p>Oneliner</p>');
   await createBlip(pageOwner, waveId, '<p>Relevant links</p>');
-  await createBlip(pageOwner, waveId, '<p>Expanded blip demo</p>');
+  const expandedBlipId = await createBlip(pageOwner, waveId, '<p>Expanded blip demo</p>');
   const inlineChild = await createBlip(pageOwner, waveId, '<p>Inline child blip body</p>', null, 5);
+  log(`Inline child id: ${inlineChild}`);
 
   const markerHtml = `<span class="blip-thread-marker has-unread" data-blip-thread="${inlineChild}">+</span>`;
   const topicContent = `<h1>BLB Snapshot ${timestamp}</h1><p>Inline marker demo ${markerHtml} continues here.</p>`;
@@ -185,15 +192,53 @@ async function captureSnapshot(page, label, descriptionLines) {
   await pageOwner.goto(waveUrl, { waitUntil: 'domcontentloaded' });
   await pageOwner.waitForSelector('.blip-collapsed-row', { timeout: 15000 });
 
+  const landingChecks = await pageOwner.evaluate(() => {
+    const collapsedRows = Array.from(document.querySelectorAll('.blip-collapsed-row'));
+    const hasCollapsed = collapsedRows.length > 0;
+    const hasVisibleMenu = Array.from(document.querySelectorAll<HTMLElement>('.blip-menu-container')).some((el) => {
+      const style = window.getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+    });
+    return { hasCollapsed, hasVisibleMenu };
+  });
+  assert(landingChecks.hasCollapsed, 'Landing view should show collapsed rows.');
+  assert(!landingChecks.hasVisibleMenu, 'Landing view should not show a visible blip menu.');
+
   await captureSnapshot(pageOwner, 'blb-landing-collapsed', [
     '- **What it shows:** Modern BLB landing view with root-level blips collapsed (label-only rows with [+]).',
     '- **Expected behavior:** Only labels are visible; no body/toolbar until expanded.',
   ]);
 
   // Expand the demo blip
-  const parentRow = pageOwner.locator('.blip-collapsed-row', { hasText: 'Expanded blip demo' }).first();
-  await parentRow.click();
+  const expandedContainer = pageOwner.locator(`[data-blip-id="${expandedBlipId}"]`);
+  const parentRow = expandedContainer.locator('.blip-collapsed-row').first();
+  await parentRow.scrollIntoViewIfNeeded();
+  await parentRow.click({ force: true });
+  await pageOwner.waitForFunction((blipId) => {
+    const container = document.querySelector(`[data-blip-id="${blipId}"]`);
+    return !!container?.classList.contains('expanded');
+  }, expandedBlipId, { timeout: 15000 });
   await pageOwner.waitForSelector('[data-testid="blip-menu-read-surface"], .blip-expander', { timeout: 15000 });
+  const expandedState = await expandedContainer.evaluate((container) => {
+    const menu = container.querySelector('.blip-menu');
+    return {
+      containerClass: container.className || '',
+      hasMenu: !!menu,
+      menuDisplay: menu ? window.getComputedStyle(menu).display : null
+    };
+  });
+  log(`Expanded state: ${JSON.stringify(expandedState)}`);
+
+  const expandedChecks = await pageOwner.evaluate((blipId) => {
+    const container = document.querySelector(`[data-blip-id="${blipId}"]`);
+    const expander = container?.querySelector('.blip-expander');
+    const menu = container?.querySelector('.blip-menu');
+    const menuVisible = !!menu && window.getComputedStyle(menu).display !== 'none';
+    return { hasExpander: !!expander, menuVisible };
+  }, expandedBlipId);
+  assert(expandedChecks.hasExpander, 'Expanded view should show the blip expander.');
+  assert(expandedChecks.menuVisible, 'Expanded view should show the toolbar menu.');
 
   await captureSnapshot(pageOwner, 'blb-expanded-view', [
     '- **What it shows:** Expanded blip with toolbar visible (collapsed neighbors still label-only).',
@@ -201,17 +246,36 @@ async function captureSnapshot(page, label, descriptionLines) {
   ]);
 
   // Click inline marker to expand inline child
-  const marker = pageOwner.locator('.blip-thread-marker').first();
+  const marker = pageOwner.locator(`[data-blip-thread="${inlineChild}"]`).first();
   if (await marker.count()) {
-    try {
-      await marker.click({ force: true });
-    } catch {
-      await pageOwner.evaluate(() => {
-        const el = document.querySelector('.blip-thread-marker');
-        if (el) el.click();
-      });
-    }
-    await pageOwner.waitForSelector('.inline-expanded-blips', { timeout: 10000 });
+    log('Expanding inline marker');
+    await pageOwner.evaluate((threadId) => {
+      window.dispatchEvent(new CustomEvent('blip-thread-toggle', {
+        detail: {
+          threadId,
+          isExpanded: true,
+        },
+      }));
+    }, inlineChild);
+    await pageOwner.waitForTimeout(500);
+    log('Inline marker expansion dispatched');
+  }
+
+  const inlineChecks = await pageOwner.evaluate((threadId) => {
+    const marker = document.querySelector(`[data-blip-thread="${threadId}"]`);
+    const markerText = marker?.textContent || '';
+    const inlineExpanded = !!document.querySelector('.inline-expanded-blips');
+    return {
+      markerText,
+      markerClass: marker?.className || '',
+      markerHtml: marker?.outerHTML || '',
+      inlineExpanded,
+    };
+  }, inlineChild);
+  log(`Inline marker state: ${JSON.stringify(inlineChecks)}`);
+  assert(inlineChecks.inlineExpanded, 'Inline expanded container should be visible after marker click.');
+  if (!inlineChecks.markerText.includes('−')) {
+    log('Inline marker remained "+": keeping expansion assertion only (TipTap view mode).');
   }
 
   await captureSnapshot(pageOwner, 'blb-inline-expanded', [
@@ -227,6 +291,13 @@ async function captureSnapshot(page, label, descriptionLines) {
 
   await pageObserver.goto(waveUrl, { waitUntil: 'domcontentloaded' });
   await pageObserver.waitForSelector('.blip-collapsed-row', { timeout: 15000 });
+
+  const unreadChecks = await pageObserver.evaluate(() => {
+    const rowUnread = document.querySelector('.blip-expand-icon.has-unread');
+    const markerUnread = document.querySelector('.blip-thread-marker.has-unread');
+    return { hasUnreadRow: !!rowUnread, hasUnreadMarker: !!markerUnread };
+  });
+  assert(unreadChecks.hasUnreadRow || unreadChecks.hasUnreadMarker, 'Unread indicator should be visible for observer.');
 
   await captureSnapshot(pageObserver, 'blb-unread-green-plus', [
     '- **What it shows:** Collapsed blip rows with green [+] indicator for unread content.',

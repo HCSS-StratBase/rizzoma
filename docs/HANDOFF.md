@@ -1,10 +1,10 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2025-12-09 (refreshed after Playwright/perf/health runs; branch snapshot current)
+Last Updated: 2026-02-02 (refreshed after BLB snapshot harness run; branch snapshot current)
 
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.
-- The "Current State" section below reflects `feature/rizzoma-core-features` as of 2025-12-09; revalidate after further changes.
+- The "Current State" section below reflects `feature/rizzoma-core-features` as of 2026-02-02; revalidate after further changes.
 
 ### Drift warnings (actively curating)
 - Many onboarding/status docs (`README*.md`, `QUICKSTART.md`, `README_MODERNIZATION.md`, `MODERNIZATION_STRATEGY.md`, `PARALLEL_DEVELOPMENT_PLAN.md`, `TESTING_GUIDE.md`, `MANUAL_TEST_CHECKLIST.md`, `CLAUDE.md`) still talk about demo-mode shortcuts, “all core features green,” or aggressive auto-merge flows that predate the unread/perf backlog. Treat them as historical until we rewrite them with the current perf harness + CI gating expectations.
@@ -23,9 +23,9 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (feature/rizzoma-core-features @ 2025-12-09)
+Current State (feature/rizzoma-core-features @ 2026-02-02)
 - FEAT_ALL required: start both server (:8000) and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
-- Tests last run (2025-12-09): `npm run lint:branch-context` pass; Playwright `npm run test:toolbar-inline` (Chromium/Firefox/WebKit) and `npm run test:follow-green` (desktop+mobile) pass after socket host fix and feature gating; `npm run test:health` pass; targeted `npm test -- --run src/tests/client.getUserMediaAdapter.test.ts` pass.
+- Tests last run (2026-02-02): Playwright `node test-blb-snapshots.mjs` pass; BLB snapshots refreshed under `snapshots/blb/1770003828507-*` (inline expansion driven via `blip-thread-toggle` dispatch for harness stability). Historical runs for toolbar/follow-green/health remain listed below; re-run before merges.
 - Perf: `perf-harness.mjs` 200-blip run PASS (TTF 2173.8ms, FCP 260ms, rendered 101/200); 1000-blip runs FAIL after lifting fetch cap (TTF 9877.7ms → 17810.9ms, FCP 396–536ms, ~159–179MB, rendered 1001/1000) and the new windowed render reports TTF 6271.8ms/14MB but only 1/1000 rendered because the harness stops at the first blip. Budgets enforced via `scripts/perf-budget.mjs`; need windowed render measurement (first 50/200) and lower large-wave TTF/memory.
 - Follow-the-Green: socket host fix restores `wave:unread` delivery; CTA clears without API fallback. Snapshots under `snapshots/follow-the-green/` (desktop+mobile). RightToolsPanel uses unread sockets/refresh and logs debug when `rizzoma:debug:unread=1`.
 - Toolbar/inline comments: inline toolbar parity smoke green; inline comment nav remains optional in smoke but UI renders toolbars. Snapshots under `snapshots/toolbar-inline/`.

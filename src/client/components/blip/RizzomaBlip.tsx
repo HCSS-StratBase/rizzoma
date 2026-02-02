@@ -398,6 +398,9 @@ export function RizzomaBlip({
     if (next && onExpand) {
       onExpand(blip.id);
     }
+    if (next) {
+      setIsActive(true);
+    }
     setIsExpanded(next);
     onToggleCollapse?.(blip.id);
     if (!blip.isRead) {

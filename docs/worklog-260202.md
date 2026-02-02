@@ -52,3 +52,16 @@
 - Started local dev server for snapshot generation and then stopped it.
 - Updated `CHANGELOG.md` with BLB parity additions/changes/fixes.
 - Stashed unrelated local modifications and untracked files to clean the workspace.
+- Added BLB assertions to `test-blb-snapshots.mjs` to verify collapsed default, toolbar visibility, inline expansion, and unread indicators.
+- Ensured expanding a collapsed blip sets it active so the toolbar appears immediately.
+- Refined inline marker sync to re-apply unread/expanded styling after inline expansion events.
+- Updated `test-blb-snapshots.mjs`:
+  - Targeted the expanded blip by `data-blip-id` to avoid false positives.
+  - Triggered inline expansion via `blip-thread-toggle` dispatch for stable snapshots.
+  - Logged inline marker state for traceability.
+- Re-ran BLB Playwright snapshot harness (headless Chromium) with FEAT_ALL enabled; latest set retained:
+  - `snapshots/blb/1770003828507-blb-landing-collapsed.png` + `.md`
+  - `snapshots/blb/1770003828507-blb-expanded-view.png` + `.md`
+  - `snapshots/blb/1770003828507-blb-inline-expanded.png` + `.md`
+  - `snapshots/blb/1770003828507-blb-unread-green-plus.png` + `.md`
+- Pruned intermediate BLB snapshot runs so only the latest set remains in `snapshots/blb/`.

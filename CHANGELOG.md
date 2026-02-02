@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - **BLB parity snapshots** - Automated BLB snapshot set captured for legacy comparison
 - **BLB parity checklist** - `docs/BLB_PARITY_CHECKLIST.md`
+- **BLB snapshot assertions** - Snapshot harness now verifies collapsed/default, toolbar, inline, and unread states
+- **BLB snapshot harness update** - Inline expansion now driven via `blip-thread-toggle` dispatch for stable snapshots (latest set refreshed)
 - **Microsoft OAuth Authentication** - Users can now sign in with Microsoft accounts
   - Supports both personal and work/school accounts via configurable tenant
   - Routes: `/api/auth/microsoft`, `/api/auth/microsoft/callback`
@@ -30,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 - **BLB default behavior** - All blips start collapsed; inline `[+]` expands in place
 - **BLB toolbars** - Read/edit toolbars aligned to legacy (Hide/Show comments, Link, Hide, Delete, Gear)
+- **BLB expansion focus** - Expanding a collapsed blip now marks it active so the toolbar appears immediately
 - **Rizzoma Layout is now the default** - Basic layout requires `?layout=basic`
 - **OAuth redirect flow** - Now uses `CLIENT_URL` environment variable for proper redirect to frontend
 - **Session structure** - Now includes `userAvatar` field for OAuth profile pictures

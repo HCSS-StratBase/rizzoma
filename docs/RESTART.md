@@ -2,8 +2,8 @@
 
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
-- `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2025-12-09; refresh if more changes land.
-- Re-read checkpoint: 2025-12-09 19:07 CET — drift warnings below remain accurate; no new docs added/removed (note `docs/LINKS_REPARENT.md` is still missing).
+- `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-02-02; refresh if more changes land.
+- Re-read checkpoint: 2026-02-02 04:45 local — drift warnings below remain accurate; no new docs added/removed (note `docs/LINKS_REPARENT.md` is still missing).
 
 Quick start for the next batch (copy/paste):
 ```
@@ -18,7 +18,7 @@ codex exec '
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
 
   Priority focus:
-  1) BLB parity: shared isFoldedByDefault, inline [+] marker behavior/styling, per-blip toolbar parity, unread green markers, and update BLB snapshots.
+  1) BLB parity: shared isFoldedByDefault, inline [+] marker click behavior/styling (snapshot harness currently dispatches `blip-thread-toggle`), per-blip toolbar parity, unread green markers, and update BLB snapshots.
   2) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; fix 1k-blip perf harness failures (TTF/render count) and keep budgets documented.
   3) Modernize getUserMedia adapter + tests. (Adapter tests currently green.)
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
