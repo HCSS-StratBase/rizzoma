@@ -84,3 +84,9 @@
   - landing-labels: TTF 93272.5ms, FCP 928ms, memory 69MB, labels visible 500/1000 (budget FAIL).
   - expanded-root: TTF 93784.5ms, FCP 928ms, memory 69MB, blips rendered 500/1000 (budget FAIL).
   - Metrics + renders saved under `snapshots/perf/metrics-1770005659623-*.json` and `snapshots/perf/render-1770005659623-*.png`.
+- Raised perf-mode `/api/blips` limit via `perfLimit` query parsing in `RizzomaTopicDetail`; perf harness now passes `perfLimit=blipTarget+1`.
+- Re-ran perf harness (1000 blips) after perf limit change:
+  - landing-labels: TTF 111800.4ms, FCP 840ms, memory 117MB, labels visible 1000/1000 (budget FAIL).
+  - expanded-root: TTF 115647.9ms, FCP 840ms, memory 117MB, blips rendered 1000/1000 (budget FAIL).
+  - Metrics + renders saved under `snapshots/perf/metrics-1770006531946-*.json` and `snapshots/perf/render-1770006531946-*.png`.
+  - CouchDB logged `UND_ERR_HEADERS_TIMEOUT` during blip history writes under load.

@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Rizzoma Layout is now the default** - Basic layout requires `?layout=basic`
 - **OAuth redirect flow** - Now uses `CLIENT_URL` environment variable for proper redirect to frontend
 - **Session structure** - Now includes `userAvatar` field for OAuth profile pictures
+- **Perf wave fetches** - Perf mode can raise `/api/blips` limits via `perfLimit` to pull full wave sets during harness runs
 
 ### Fixed
 - **BLB unread cues** - Unread state now propagates to collapsed rows and inline markers

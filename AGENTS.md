@@ -63,13 +63,13 @@ codex exec '
   Step 0: 
     - Check the current date/time.
     - Run "git checkout feature/rizzoma-core-features" immediately — that is the active branch for this backlog.
-    - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md
+    - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md (plus any Markdown touched in the last 31 days); capture drift into RESTORE_POINT.md + handoff/restart docs.
   Step 0.1:
     - Run "npm run lint:branch-context" to verify docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
 
   Priority focus (current backlog):
-  1) BLB parity: shared isFoldedByDefault, inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity, unread green markers, and update BLB snapshots.
-  2) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; add metrics/logging hooks and schedule/run the perf harness with budgets.
+  1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; address 1k-blip perf harness failures (TTF ~112–116s, memory 117MB) and CouchDB `UND_ERR_HEADERS_TIMEOUT` during history writes. Add windowed render metrics and decide on perf-mode history suppression if needed.
+  2) BLB parity: shared isFoldedByDefault, inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity, unread green markers, and update BLB snapshots as needed.
   3) Modernize getUserMedia adapter + tests for new media APIs.
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green.
   5) Automate bundles/backups (bundle + GDrive copy) and document cadence.

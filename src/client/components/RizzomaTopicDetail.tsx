@@ -36,6 +36,17 @@ function getLoadingState(): Map<string, LoadingState> {
   return new Map();
 }
 
+function getPerfBlipLimit(): number {
+  if (typeof window === 'undefined') return 500;
+  const hash = window.location.hash || '';
+  const query = hash.split('?')[1] || '';
+  const params = new URLSearchParams(query);
+  if (!params.has('perf')) return 500;
+  const rawLimit = Number(params.get('perfLimit') || '');
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 2000;
+  return Math.max(500, Math.min(limit, 5000));
+}
+
 type TopicFull = {
   id: string;
   title: string;
@@ -310,7 +321,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           role: p.role,
         }));
 
-        const blipsResponse = await api(`/api/blips?waveId=${encodeURIComponent(id)}&limit=500`);
+        const blipLimit = getPerfBlipLimit();
+        const blipsResponse = await api(`/api/blips?waveId=${encodeURIComponent(id)}&limit=${blipLimit}`);
 
         if (blipsResponse.ok && blipsResponse.data?.blips) {
           const rawBlips = blipsResponse.data.blips as Array<any>;

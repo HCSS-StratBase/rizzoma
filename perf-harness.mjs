@@ -8,7 +8,8 @@ const slowMo = Number(process.env.RIZZOMA_E2E_SLOWMO || (headed ? 100 : 0));
 const blipTarget = Number(process.env.RIZZOMA_PERF_BLIPS || 5000);
 const ownerEmail = process.env.RIZZOMA_E2E_USER_A || `perf-owner+${Date.now()}@example.com`;
 const password = process.env.RIZZOMA_E2E_PASSWORD || 'PerfHarness!1';
-const perfQuery = '?layout=rizzoma&perf=full';
+const perfLimit = blipTarget + 1;
+const perfQuery = `?layout=rizzoma&perf=full&perfLimit=${perfLimit}`;
 const snapshotDir = process.env.RIZZOMA_SNAPSHOT_DIR || path.resolve('snapshots', 'perf');
 const timestamp = Date.now();
 
