@@ -3,6 +3,17 @@ import { api } from '../lib/api';
 import { subscribeBlipEvents, subscribeWaveUnread, ensureWaveUnreadJoin } from '../lib/socket';
 import { toast } from '../components/Toast';
 
+// Debounce helper
+function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): T & { cancel: () => void } {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const debounced = (...args: Parameters<T>) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+  debounced.cancel = () => { if (timeoutId) clearTimeout(timeoutId); };
+  return debounced as T & { cancel: () => void };
+}
+
 type Snapshot = {
   unreadIds: string[];
   total: number;
@@ -22,11 +33,15 @@ const INITIAL_STATE: Snapshot = {
 };
 
 const DEBUG_KEY = 'rizzoma:debug:unread';
-const PERF_HASH = 'perf=1';
-
 const isPerfMode = (): boolean => {
   try {
-    return typeof window !== 'undefined' && (window.location.hash || '').includes(PERF_HASH);
+    if (typeof window === 'undefined') return false;
+    const hash = window.location.hash || '';
+    const query = hash.split('?')[1] || '';
+    const params = new URLSearchParams(query);
+    const perfValue = params.get('perf');
+    if (perfValue === null) return false;
+    return perfValue !== '0' && perfValue !== 'false';
   } catch {
     return false;
   }
@@ -142,6 +157,18 @@ export function useWaveUnread(waveId: string | null): WaveUnreadState {
     void refresh();
   }, [waveId, refresh, resetState, perfMode]);
 
+  // Create a debounced refresh to avoid hammering the server on rapid socket events
+  const debouncedRefreshRef = useRef<(ReturnType<typeof debounce>) | null>(null);
+  useEffect(() => {
+    debouncedRefreshRef.current = debounce(() => {
+      dbg('debounced:refresh');
+      void refresh();
+    }, 2000); // 2 second debounce for socket-triggered refreshes
+    return () => {
+      debouncedRefreshRef.current?.cancel();
+    };
+  }, [refresh]);
+
   useEffect(() => {
     if (perfMode) return undefined;
     if (!waveId || !authReady) return undefined;
@@ -166,14 +193,19 @@ export function useWaveUnread(waveId: string | null): WaveUnreadState {
         return;
       }
       dbg('blip:event', evt);
-      void refresh();
+      // Use debounced refresh for socket events to avoid hammering server
+      debouncedRefreshRef.current?.();
     });
-    const unsubscribeWave = subscribeWaveUnread(waveId, (evt) => { dbg('wave:unread:event', evt); void refresh(); }, userIdRef.current);
+    const unsubscribeWave = subscribeWaveUnread(waveId, (evt) => {
+      dbg('wave:unread:event', evt);
+      // Use debounced refresh for socket events
+      debouncedRefreshRef.current?.();
+    }, userIdRef.current);
     return () => {
       try { unsubscribe(); } catch {}
       try { unsubscribeWave(); } catch {}
     };
-  }, [waveId, refresh, userId, authReady, perfMode]);
+  }, [waveId, userId, authReady, perfMode]);
 
   const markBlipRead = useCallback(async (blipId: string): Promise<MarkReadResult> => {
     if (perfMode) return { ok: true };

@@ -96,3 +96,9 @@
   - expanded-root: TTF 69488.3ms, FCP 432ms, memory 125MB, blips rendered 1000/1000, windowed 200 in 68974ms (budget FAIL).
   - Metrics + renders saved under `snapshots/perf/metrics-1770040727000-*.json` and `snapshots/perf/render-1770040727000-*.png`.
 - Ran `npm run lint:branch-context` after doc updates (pass).
+- Perf mode detection now treats `perf=full` as perf for unread/sidebar skips (aligned with `perf=1` behavior).
+- Re-ran perf harness (1000 blips) after perf=full detection:
+  - landing-labels: TTF 65896.9ms, FCP 408ms, memory 117MB, labels visible 1000/1000, windowed 200 in 5889.8ms (budget FAIL).
+  - expanded-root: TTF 66855.1ms, FCP 408ms, memory 117MB, blips rendered 1000/1000, windowed 200 in 66337.9ms (budget FAIL).
+  - Metrics + renders saved under `snapshots/perf/metrics-1770041471455-*.json` and `snapshots/perf/render-1770041471455-*.png`.
+- Ran `npm run lint:branch-context` after the perf=full doc updates (pass).

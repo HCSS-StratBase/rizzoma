@@ -60,7 +60,19 @@ function getInitials(name?: string, email?: string): string {
 }
 
 export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
-  const isPerfMode = typeof window !== 'undefined' && (window.location.hash || '').includes('perf=1');
+  const isPerfMode = (() => {
+    try {
+      if (typeof window === 'undefined') return false;
+      const hash = window.location.hash || '';
+      const query = hash.split('?')[1] || '';
+      const params = new URLSearchParams(query);
+      const perfValue = params.get('perf');
+      if (perfValue === null) return false;
+      return perfValue !== '0' && perfValue !== 'false';
+    } catch {
+      return false;
+    }
+  })();
   if (isPerfMode) {
     return null;
   }

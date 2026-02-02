@@ -68,7 +68,7 @@ codex exec '
     - Run "npm run lint:branch-context" to verify docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
 
   Priority focus (current backlog):
-  1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; address 1k-blip perf harness failures (TTF ~66–69s, memory 125MB) and missing root label (1000/1001). Windowed render metrics are now captured; decide on further perf-mode skips and reduce large-wave TTF/memory.
+  1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; address 1k-blip perf harness failures (TTF ~65–67s, memory 117MB) and missing root label (1000/1001). Windowed render metrics are now captured; decide on further perf-mode skips and reduce large-wave TTF/memory.
   2) BLB parity: shared isFoldedByDefault, inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity, unread green markers, and update BLB snapshots as needed.
   3) Modernize getUserMedia adapter + tests for new media APIs.
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green.

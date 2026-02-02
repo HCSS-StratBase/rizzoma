@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Perf wave fetches** - Perf mode can raise `/api/blips` limits via `perfLimit` to pull full wave sets during harness runs
 - **Perf harness windowed metrics** - Perf harness now records the time to render the first 200 labels/blips for large waves
 - **Perf history writes** - Blip history writes are skipped when requests include `x-rizzoma-perf=1`
+- **Perf mode detection** - `perf=full` now triggers perf-mode skips (unread/sidebar) like `perf=1`
 
 ### Fixed
 - **BLB unread cues** - Unread state now propagates to collapsed rows and inline markers

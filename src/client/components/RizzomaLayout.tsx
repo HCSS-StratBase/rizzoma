@@ -3,6 +3,9 @@ import { NavigationPanel } from './NavigationPanel';
 import { RizzomaTopicsList } from './RizzomaTopicsList';
 import { MentionsList } from './MentionsList';
 import { TasksList } from './TasksList';
+import { PublicTopicsPanel } from './PublicTopicsPanel';
+import { StorePanel } from './StorePanel';
+import { TeamsPanel } from './TeamsPanel';
 import { RizzomaTopicDetail } from './RizzomaTopicDetail';
 import { RightToolsPanel } from './RightToolsPanel';
 import { CreateTopicModal } from './CreateTopicModal';
@@ -15,6 +18,7 @@ import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 interface RizzomaLayoutProps {
   isAuthed: boolean;
+  user?: { id?: string; email?: string; name?: string } | null;
 }
 
 type TabType = 'topics' | 'mentions' | 'tasks' | 'publics' | 'store' | 'teams';
@@ -23,7 +27,14 @@ const PERF_SKIP_KEY = 'rizzoma:perf:skipSidebarTopics';
 
 const getInitialPerfSkip = (): boolean => {
   const hash = typeof window !== 'undefined' ? window.location.hash || '' : '';
-  const perfHash = hash.includes('perf=1');
+  const perfHash = (() => {
+    if (!hash) return false;
+    const query = hash.split('?')[1] || '';
+    const params = new URLSearchParams(query);
+    const perfValue = params.get('perf');
+    if (perfValue === null) return false;
+    return perfValue !== '0' && perfValue !== 'false';
+  })();
   try {
     const stored = typeof localStorage !== 'undefined' && localStorage.getItem(PERF_SKIP_KEY) === '1';
     if (perfHash) {
@@ -38,8 +49,9 @@ const getInitialPerfSkip = (): boolean => {
 // Mobile view states
 type MobileView = 'list' | 'content';
 
-export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
+export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [currentBlipPath, setCurrentBlipPath] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('topics');
   const [searchPaneCollapsed, setSearchPaneCollapsed] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -101,11 +113,18 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
   useEffect(() => {
     const syncFromHash = () => {
       const hash = window.location.hash || '';
-      const mTopic = hash.match(/^#\/topic\/([^?]+)/);
-      if (mTopic?.[1]) {
+      // Match topic with optional blipPath: #/topic/{topicId}/{blipPath}/
+      const mTopicWithBlip = hash.match(/^#\/topic\/([^/?]+)\/(.+?)(?:\?.*)?$/);
+      const mTopic = hash.match(/^#\/topic\/([^/?]+)\/?(?:\?.*)?$/);
+
+      if (mTopicWithBlip) {
+        setSelectedTopicId(mTopicWithBlip[1]);
+        setCurrentBlipPath(mTopicWithBlip[2]);
+      } else if (mTopic?.[1]) {
         setSelectedTopicId(mTopic[1]);
+        setCurrentBlipPath(null);
       }
-      if (hash.includes('perf=1')) {
+      if (hash.includes('perf=')) {
         setPerfSkipTopics(true);
         try {
           localStorage.setItem(PERF_SKIP_KEY, '1');
@@ -147,9 +166,10 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
     switch (activeTab) {
       case 'topics':
         return (
-          <RizzomaTopicsList 
+          <RizzomaTopicsList
             onTopicSelect={setSelectedTopicId}
             selectedTopicId={selectedTopicId}
+            isAuthed={isAuthed}
           />
         );
       case 'mentions':
@@ -157,26 +177,11 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
       case 'tasks':
         return <TasksList isAuthed={isAuthed} onSelectTask={setSelectedTopicId} />;
       case 'publics':
-        return (
-          <div className="panel-placeholder">
-            <h3>Public Topics</h3>
-            <p>Browse public topics from the community</p>
-          </div>
-        );
+        return <PublicTopicsPanel onSelectTopic={setSelectedTopicId} />;
       case 'store':
-        return (
-          <div className="panel-placeholder">
-            <h3>Store</h3>
-            <p>Gadgets and extensions marketplace</p>
-          </div>
-        );
+        return <StorePanel />;
       case 'teams':
-        return (
-          <div className="panel-placeholder">
-            <h3>Teams</h3>
-            <p>Manage your team workspaces</p>
-          </div>
-        );
+        return <TeamsPanel isAuthed={isAuthed} />;
       default:
         return null;
     }
@@ -244,6 +249,7 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
             <>
               <RizzomaTopicDetail
                 id={selectedTopicId}
+                blipPath={currentBlipPath}
                 isAuthed={isAuthed}
                 unreadState={unreadState}
               />
@@ -258,8 +264,9 @@ export function RizzomaLayout({ isAuthed }: RizzomaLayoutProps) {
       </div>
 
       {/* Right Tools Panel - Far Right */}
-        <RightToolsPanel 
+        <RightToolsPanel
           isAuthed={isAuthed}
+          user={user}
           unreadState={selectedTopicId ? unreadState : null}
         />
       

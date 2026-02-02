@@ -25,7 +25,19 @@ export async function api<T = any>(path: string, init?: RequestInit): Promise<Ap
   // Perf harness bypass: skip sidebar topics fetch to avoid blocking landing render during perf runs
   const perfSkip =
     typeof localStorage !== 'undefined' && localStorage.getItem('rizzoma:perf:skipSidebarTopics') === '1';
-  const perfHash = typeof window !== 'undefined' && (window.location.hash || '').includes('perf=1');
+  const perfHash = (() => {
+    try {
+      if (typeof window === 'undefined') return false;
+      const hash = window.location.hash || '';
+      const query = hash.split('?')[1] || '';
+      const params = new URLSearchParams(query);
+      const perfValue = params.get('perf');
+      if (perfValue === null) return false;
+      return perfValue !== '0' && perfValue !== 'false';
+    } catch {
+      return false;
+    }
+  })();
   const normalizedPath = (() => {
     try {
       const url = new URL(path, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
