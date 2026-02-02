@@ -674,6 +674,27 @@ export function BlipMenu({
         <div className="menu-group">
           <button
             className="menu-btn"
+            onClick={onCollapse}
+            title="Collapse"
+            disabled={!onCollapse}
+            data-testid="blip-menu-collapse"
+          >
+            Collapse
+          </button>
+          <button
+            className="menu-btn"
+            onClick={onExpand}
+            title="Expand"
+            disabled={!onExpand}
+            data-testid="blip-menu-expand"
+          >
+            Expand
+          </button>
+        </div>
+
+        <div className="menu-group">
+          <button
+            className="menu-btn"
             onClick={onHideComments}
             title="Hide comments (Ctrl+Shift+Up)"
             disabled={!onHideComments || !areCommentsVisible}

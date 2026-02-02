@@ -120,3 +120,19 @@
 - Re-ran Playwright smokes after BLB navigation change:
   - `npm run test:toolbar-inline` pass; read toolbar not found so assertions skipped; snapshots under `snapshots/toolbar-inline/1770050150043-*`.
   - `npm run test:follow-green` pass for desktop and mobile; snapshots under `snapshots/follow-the-green/1770050219697-*` and `snapshots/follow-the-green-mobile/1770050254871-*`.
+- Verified local services are up: `http://localhost:8000/api/health` returns `{"status":"ok"}` and UI responds at `http://localhost:3000`.
+- Verified OAuth wiring: `/api/auth/oauth-status` returns `{ google: true, facebook: true, microsoft: true, saml: false }`; `/api/auth/google` and `/api/auth/facebook` issue 302 redirects to their provider auth endpoints.
+- Unified the topic meta-blip body into a single scrollable container so the topic title is the first line of the same pane as child blips.
+- Updated BLB docs with explicit single-container topic pane hierarchy.
+- Restarted dev server and reran Playwright smokes after the topic-pane change:
+  - `npm run test:toolbar-inline` pass (read toolbar not found; snapshots under `snapshots/toolbar-inline/1770056160355-*`).
+  - `npm run test:follow-green` pass for desktop + mobile; snapshots under `snapshots/follow-the-green/1770056216268-*` and `snapshots/follow-the-green/1770056239785-*`.
+- Updated `test-toolbar-inline-smoke.mjs` to expand blips via `.blip-collapsed-row` and force editor clicks so the read toolbar assertions run.
+- Re-ran Playwright toolbar-inline after the test update; snapshots under `snapshots/toolbar-inline/1770057761024-*-final.png`.
+- Updated AGENTS/RESTART priority note to reflect read-toolbar assertions now active in `test:toolbar-inline`.
+- Updated `test-blb-snapshots.mjs` to assert inline marker navigation (subblip view + URL change) instead of inline expansion.
+- Re-ran BLB snapshot harness; latest set under `snapshots/blb/1770066696549-*` and pruned older BLB snapshots.
+- Added Collapse/Expand buttons to the read-only blip toolbar for legacy parity.
+- Re-ran Playwright toolbar-inline; snapshots under `snapshots/toolbar-inline/1770069215769-*-final.png`.
+- Re-ran BLB snapshot harness after toolbar update; latest set under `snapshots/blb/1770069305557-*` and pruned the prior set.
+- Updated `docs/EDITOR_TOOLBAR_PARITY.md` to reflect read-only Collapse/Expand actions and Delete wired state.

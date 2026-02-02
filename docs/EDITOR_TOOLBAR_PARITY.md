@@ -2,6 +2,46 @@
 
 This document keeps tabs on how closely the modern TipTap/Yjs toolbars match the original Rizzoma CoffeeScript toolbar (`original-rizzoma/src/client/blip/menu/template.coffee`).
 
+## CRITICAL: Two-Level Toolbar Architecture
+
+Original Rizzoma has **TWO levels of toolbars** that modern implementation must replicate:
+
+### Level 1: Topic-Level Toolbars (ALWAYS VISIBLE)
+
+These appear at the TOP of every topic and are ALWAYS visible:
+
+#### 1A. Topic Collaboration Toolbar
+```
+[ Invite ] [👤👤👤👤👤] +78 [ 🔒 Share ]                        [⚙️]
+```
+| Element | Function | Modern Status |
+|---------|----------|---------------|
+| Invite button | Add new participants | ❌ Missing |
+| Participant avatars | Shows WHO is involved | ❌ Missing |
+| +N count | Additional participants | ❌ Missing |
+| Share button | Permissions/visibility | ❌ Missing |
+| Gear icon | Topic settings | ❌ Missing |
+
+#### 1B. Topic-Level Edit Toolbar
+```
+Edit | 💬 | 💬 | 🔗 | icon
+```
+| Element | Function | Modern Status |
+|---------|----------|---------------|
+| Edit | Edit topic metadata | ❌ Missing (we only have per-blip!) |
+| Comments icons | Topic-level comments | ❌ Missing |
+| Link | Copy topic link | ❌ Missing |
+
+### Level 2: Blip-Level Toolbar (ONLY WHEN EXPANDED)
+
+This toolbar appears **ONLY when a specific blip is expanded/focused**:
+
+```
+Edit | 💬 | 📎 | 🔗 | ☑ Hidden | 🗑 | 🔗
+```
+
+**CRITICAL**: Modern implementation shows toolbars on ALL blips. Original shows toolbar ONLY on the currently expanded/focused blip!
+
 ## Legacy Toolbar (CoffeeScript)
 
 ### Read-only block
@@ -59,10 +99,43 @@ This document keeps tabs on how closely the modern TipTap/Yjs toolbars match the
 - Link / Attachment / Image placeholders
 - Hide/Show inline comments (per blip, persisted server-side with localStorage fallback; Ctrl+Shift+Up/Down shortcuts)
 - Collapse-by-default toggle (edit + read-only states; persists per user)
-- Read-only actions: Edit, Hide/Show comments (wired), Collapse toggle, Get link (wired), Delete (no-op), gear placeholder
+- Read-only actions: Edit, Collapse/Expand, Hide/Show comments (wired), Get link (wired), Delete (wired), gear overflow
 - Inline upload status card (per blip) renders preview/progress/cancel/retry/dismiss controls so attachment/image uploads mirror the legacy gadget popovers instead of relying on alerting.
 
 ## Gap Analysis / TODO
+
+### Topic = Meta-Blip (HIGH PRIORITY - Fundamental Architecture!)
+- [x] **Topic IS a blip**: The topic/wave is the root meta-blip, not a separate entity
+- [x] **Title = First line**: Title is just the first line of topic content with H1/bold default styling
+- [x] **Topic content editable**: Topic content (including title) editable like any blip via TipTap
+- [ ] **Topic can have inline comments**: Ctrl+Enter anywhere in topic content creates inline comment
+- [ ] **Unify rendering**: Topic should render using same RizzomaBlip component pattern
+- [x] **Title syncing**: When content changes, extract first line to update `title` field for indexing
+
+### Topic-Level Toolbars (IMPLEMENTED)
+- [x] **Topic Collaboration Toolbar**: Invite button, participant avatars with +N count, Share button, gear settings
+- [x] **Topic-Level Edit Toolbar**: Same as blip toolbar - Edit/Done, 💬, 🔗, ⚙️
+- [x] These should be persistent at top of topic, always visible regardless of which blip is selected
+
+### Blip Expand/Collapse Behavior (HIGH PRIORITY - Fundamentally Different!)
+- [ ] **Collapsed-by-default rendering**: Blips with "Hidden" checked should render as `Label [+]` only
+- [ ] **[+]/[−] expand icons**: Visual indicators for collapsed/expanded state
+- [ ] **Green [+] for unread**: Collapsed blips with unread content should show green expand icon
+- [ ] **Toolbar visibility**: Blip toolbar should ONLY appear on EXPANDED/FOCUSED blip
+- [ ] **Cascade prevention**: Expanding parent must NOT auto-expand children
+- [ ] **"Write a reply..." placement**: Should appear ONLY at bottom of EXPANDED blip, not on every blip
+
+### Reply vs Inline Comment (HIGH PRIORITY - Two Types of Child Blips!)
+- [ ] **Reply (blip UNDER)**: Created via "Write a reply..." at bottom, comments on ENTIRE parent
+- [ ] **Inline Comment (blip IN)**: Created via Ctrl+Enter at cursor, comments on THAT SPECIFIC SPOT
+- [ ] **anchorPosition field**: Add to blip data model to distinguish inline comments (has anchor) from replies (no anchor)
+- [ ] **Render inline comments at anchor**: Inline comments should appear WITHIN parent's content at their anchor position
+- [ ] **Render replies at bottom**: Replies appear AFTER content, BEFORE "Write a reply..."
+- [ ] **Child blip format**: All collapsed child blips should render as `Label [+] avatar date` (same format as any collapsed blip)
+- [ ] **Recursive/fractal**: Both can have their own children (replies AND inline comments)
+- [ ] **Blank sheet**: Both are blank rich text containers - user decides format (bulleted, plain text, etc.)
+
+### Completed Items
 - [x] Wire read-only Hide/Show comments controls to the inline comments plugin (per blip, stored per user). The BlipMenu hide/show button now toggles inline comments visibility for the active blip and persists the preference in `localStorage`, and both the TipTap `BlipEditor` surface and inline menu stay in sync.
 - [x] Restore "Collapse this thread by default" toggle (persisted preference in Couch + localStorage fallback)
 - [x] Implement Copy Comment / Paste as reply / Paste at cursor actions (per-blip clipboard store + overflow menu; copy pulls current markup/text, paste-as-reply hydrates the reply composer, paste-at-cursor inserts html through TipTap)

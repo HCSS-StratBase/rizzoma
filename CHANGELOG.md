@@ -35,6 +35,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **BLB default behavior** - All blips start collapsed; inline `[+]` expands in place
 - **BLB toolbars** - Read/edit toolbars aligned to legacy (Hide/Show comments, Link, Hide, Delete, Gear)
 - **BLB expansion focus** - Expanding a collapsed blip now marks it active so the toolbar appears immediately
+- **BLB read toolbar** - Added explicit Collapse/Expand buttons in view mode for legacy parity
+- **Topic meta-blip body** - Topic content + child blips now share a single scroll container so the title is the first line of one unified pane
 - **Rizzoma Layout is now the default** - Basic layout requires `?layout=basic`
 - **OAuth redirect flow** - Now uses `CLIENT_URL` environment variable for proper redirect to frontend
 - **Session structure** - Now includes `userAvatar` field for OAuth profile pictures

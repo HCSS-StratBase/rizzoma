@@ -2,9 +2,9 @@
 
 ## 🟢 Current Status
 - **Topics follow tests (2026-02-02)**: `npm test -- --run src/tests/routes.topics.follow.test.ts` pass.
-- **Browser smokes `test:toolbar-inline` (2026-02-02)**: Pass across Chromium/Firefox/WebKit; read toolbar not found so assertions skipped and snapshots captured under `snapshots/toolbar-inline/1770050150043-*`.
-- **Browser smokes `test:follow-green` (2026-02-02)**: Desktop + mobile profiles pass; snapshots under `snapshots/follow-the-green/1770050219697-*` and `snapshots/follow-the-green-mobile/1770050254871-*`.
-- **BLB Playwright snapshots (2026-02-02)**: `node test-blb-snapshots.mjs` pass; refreshed BLB snapshot set under `snapshots/blb/1770004650980-*`.
+- **Browser smokes `test:toolbar-inline` (2026-02-02)**: Pass across Chromium/Firefox/WebKit; snapshots captured under `snapshots/toolbar-inline/1770069215769-*-final.png`.
+- **Browser smokes `test:follow-green` (2026-02-02)**: Desktop + mobile profiles pass; snapshots under `snapshots/follow-the-green/1770056216268-*` and `snapshots/follow-the-green/1770056239785-*`.
+- **BLB Playwright snapshots (2026-02-02)**: `node test-blb-snapshots.mjs` pass; refreshed BLB snapshot set under `snapshots/blb/1770069305557-*`.
 - **Perf harness (2026-02-02, 1000 blips)**: `npm run perf:harness` with `RIZZOMA_PERF_BLIPS=1000` captured metrics under `snapshots/perf/metrics-1770042725851-*.json` and renders under `snapshots/perf/render-1770042725851-*.png`; landing-labels and expanded-root both passed budgets (stage duration ~1.5s landing, ~0.5s expanded; memory ~23MB). Windowed 200-label time ~2.6–2.9s.
 - **Full Vitest run (2026-01-18)**: 42 test files passed, 131 tests passed, 3 skipped. Duration ~110s.
 - **Perf harness E2E (2026-01-18)**: N+1 fix verified - no individual `/inline-comments-visibility` API calls. Load time 298ms for 20 blips.

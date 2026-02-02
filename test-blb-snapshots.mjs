@@ -245,7 +245,7 @@ function assert(condition, message) {
     '- **Expected behavior:** Toolbar only appears on expanded blip; nested children remain collapsed.',
   ]);
 
-  // Click inline marker to expand inline child
+  // Click inline marker to navigate to inline child
   const marker = pageOwner.locator(`[data-blip-thread="${inlineChild}"]`).first();
   if (await marker.count()) {
     log('Clicking inline marker');
@@ -254,26 +254,33 @@ function assert(condition, message) {
     log('Inline marker click completed');
   }
 
+  await pageOwner.waitForFunction((waveId) => {
+    const hash = window.location.hash || '';
+    if (!hash.startsWith(`#/topic/${waveId}/`)) return false;
+    const rest = hash.slice(`#/topic/${waveId}/`.length);
+    return rest.length > 0;
+  }, waveId, { timeout: 15000 });
+  await pageOwner.waitForSelector('.subblip-view', { timeout: 15000 });
+
   const inlineChecks = await pageOwner.evaluate((threadId) => {
     const marker = document.querySelector(`[data-blip-thread="${threadId}"]`);
     const markerText = marker?.textContent || '';
-    const inlineExpanded = !!document.querySelector('.inline-expanded-blips');
+    const hash = window.location.hash || '';
+    const hasSubblipView = !!document.querySelector('.subblip-view');
     return {
       markerText,
       markerClass: marker?.className || '',
       markerHtml: marker?.outerHTML || '',
-      inlineExpanded,
+      hash,
+      hasSubblipView,
     };
   }, inlineChild);
   log(`Inline marker state: ${JSON.stringify(inlineChecks)}`);
-  assert(inlineChecks.inlineExpanded, 'Inline expanded container should be visible after marker click.');
-  if (!inlineChecks.markerText.includes('−')) {
-    log('Inline marker remained "+": keeping expansion assertion only (TipTap view mode).');
-  }
+  assert(inlineChecks.hasSubblipView, 'Subblip view should render after marker click.');
 
   await captureSnapshot(pageOwner, 'blb-inline-expanded', [
-    '- **What it shows:** Inline [+] marker expanded to reveal child blip inline.',
-    '- **Expected behavior:** Clicking [+] expands inline content without navigation.',
+    '- **What it shows:** Inline [+] marker navigates to the child blip view.',
+    '- **Expected behavior:** Clicking [+] updates the URL and renders the subblip view.',
   ]);
 
   // Observer view for unread green [+]

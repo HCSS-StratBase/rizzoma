@@ -204,12 +204,8 @@ async function runSmoke(browserName) {
     const cleanPath = topicPath.replace(/^\//, '');
     await page.goto(`${cleanBase}/${cleanPath}${encodeURIComponent(waveId)}`, { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
-    const expandBtn = page.locator('.blip-expand-btn').first();
-    if (await expandBtn.count()) {
-      await expandBtn.click();
-    }
     await ensureSelector(page, `[data-blip-id="${blipId}"]`, 'root blip', browserName, { timeout: 15000 });
-    const targetExpand = page.locator(`[data-blip-id="${blipId}"] .blip-expand-btn`).first();
+    const targetExpand = page.locator(`[data-blip-id="${blipId}"] .blip-collapsed-row`).first();
     if (await targetExpand.count()) {
       await targetExpand.click();
     }
@@ -250,7 +246,7 @@ async function runSmoke(browserName) {
 
     const editor = page.locator('.ProseMirror').first();
     await editor.waitFor({ timeout: 5000 });
-    await editor.click();
+    await editor.click({ position: { x: 20, y: 20 }, force: true });
     await page.keyboard.type('Playwright toolbar smoke test. ');
     await page.locator('[data-testid="blip-menu-bold"]').click();
     await page.keyboard.type('Bold text');
