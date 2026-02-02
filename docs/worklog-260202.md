@@ -150,3 +150,4 @@
 - Applied minor/patch dependency updates (Playwright/Vitest/Prettier, AWS SDK, session/email libs) and noted skipped out-of-range upgrades (`@xmpp/client`, `sharp`) in `docs/DEPENDENCY_UPGRADE_AUDIT.md`.
 - Installed Playwright browsers after version bump (`npx playwright install`), re-ran toolbar-inline smoke (Chromium/Firefox/WebKit) with snapshots under `snapshots/toolbar-inline/1770075382628-*-final.png`, and reran BlipMenu Vitest (18 tests).
 - Re-ran Follow-the-Green Playwright smokes for desktop + mobile; snapshots under `snapshots/follow-the-green/1770075636800-*` and `snapshots/follow-the-green/1770075681747-*`.
+- Re-ran perf harness with 1000 blips; metrics under `snapshots/perf/metrics-1770076098998-*.json` and renders under `snapshots/perf/render-1770076098998-*.png` (budgets passed).
