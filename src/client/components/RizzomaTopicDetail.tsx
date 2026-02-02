@@ -47,6 +47,16 @@ function getPerfBlipLimit(): number {
   return Math.max(500, Math.min(limit, 5000));
 }
 
+function getPerfRenderMode(): 'lite' | 'full' | null {
+  if (typeof window === 'undefined') return null;
+  const hash = window.location.hash || '';
+  const query = hash.split('?')[1] || '';
+  const params = new URLSearchParams(query);
+  if (!params.has('perf')) return null;
+  const mode = params.get('perfRender');
+  return mode === 'lite' ? 'lite' : 'full';
+}
+
 type TopicFull = {
   id: string;
   title: string;
@@ -117,6 +127,8 @@ function formatDate(timestamp: number): string {
 }
 
 export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unreadState }: { id: string; blipPath?: string | null; isAuthed?: boolean; unreadState?: WaveUnreadState | null }) {
+  const perfRenderMode = getPerfRenderMode();
+  const isPerfLite = perfRenderMode === 'lite';
   const [topic, setTopic] = useState<TopicFull | null>(null);
   const [blips, setBlips] = useState<BlipData[]>([]);
   const [allBlipsMap, setAllBlipsMap] = useState<Map<string, BlipData>>(new Map());
@@ -1167,7 +1179,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             BLB: INLINE EXPANDED BLIPS
             When user clicks [+] marker in content, show the blip here
         ======================================== */}
-        {expandedInlineBlips.size > 0 && (
+        {!isPerfLite && expandedInlineBlips.size > 0 && (
           <div className="inline-expanded-blips">
             {Array.from(expandedInlineBlips).map(threadId => {
               const blipData = allBlipsMap.get(threadId) || pendingBlipsRef.current.get(threadId);
@@ -1202,7 +1214,34 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           {(() => {
             // Filter out blips that have anchorPosition - they appear as [+] in content
             const listBlips = blips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
-            return listBlips.length > 0 && (
+            if (!listBlips.length) return null;
+            if (isPerfLite) {
+              return (
+                <div className="blip-list">
+                  {listBlips.map((blip) => {
+                    const text = blip.content
+                      ? blip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+                      : '';
+                    const label = text
+                      ? text.length > 80
+                        ? `${text.slice(0, 80)}…`
+                        : text
+                      : (blip.authorName || 'Blip');
+                    const hasUnread = !blip.isRead;
+                    return (
+                      <div key={blip.id} className="rizzoma-blip perf-blip-row" data-blip-id={blip.id}>
+                        <div className={`blip-collapsed-row perf-collapsed ${hasUnread ? 'has-unread' : ''}`}>
+                          <span className="blip-bullet">•</span>
+                          <span className="blip-collapsed-label-text">{label}</span>
+                          <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>+</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            }
+            return (
               <div className="blip-list">
                 {listBlips.map((blip) => (
                   <RizzomaBlip

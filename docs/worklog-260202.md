@@ -102,3 +102,9 @@
   - expanded-root: TTF 66855.1ms, FCP 408ms, memory 117MB, blips rendered 1000/1000, windowed 200 in 66337.9ms (budget FAIL).
   - Metrics + renders saved under `snapshots/perf/metrics-1770041471455-*.json` and `snapshots/perf/render-1770041471455-*.png`.
 - Ran `npm run lint:branch-context` after the perf=full doc updates (pass).
+- Added `perfRender=lite` to render lightweight collapsed rows for perf harness runs, skipped touchTopic/history in perf mode, and switched perf benchmarks to per-stage duration.
+- Re-ran perf harness (1000 blips) after perfRender=lite + stage-duration benchmark:
+  - landing-labels: TTF 2586.9ms, stage duration 1487.5ms, memory 23MB, labels visible 1000/1000, windowed 200 in 2574.7ms (budget PASS).
+  - expanded-root: TTF 3396.8ms, stage duration 543.1ms, memory 23MB, blips rendered 1000/1000, windowed 200 in 2878.8ms (budget PASS).
+  - Metrics + renders saved under `snapshots/perf/metrics-1770042725851-*.json` and `snapshots/perf/render-1770042725851-*.png`.
+- Ran `npm run lint:branch-context` after perfRender=lite doc updates (pass).

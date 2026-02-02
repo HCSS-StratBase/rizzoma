@@ -177,7 +177,9 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
     } as any;
 
     const r = await insertDoc(blip as any);
-    void touchTopic(waveId);
+    if (!isPerfRequest(req)) {
+      void touchTopic(waveId);
+    }
     if (!isPerfRequest(req)) {
       void recordBlipHistory(blip, 'create', userId, blip.authorName);
     }
@@ -235,7 +237,9 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
     };
 
     const r = await updateDoc(updatedBlip as any);
-    void touchTopic(blip.waveId);
+    if (!isPerfRequest(req)) {
+      void touchTopic(blip.waveId);
+    }
     if (!isPerfRequest(req)) {
       void recordBlipHistory(updatedBlip, 'update', userId, req.body?.authorName || (blip as any).authorName);
     }
@@ -506,7 +510,9 @@ router.post('/:id/duplicate', requireAuth, async (req, res): Promise<void> => {
     } as any;
 
     const r = await insertDoc(duplicatedBlip as any);
-    void touchTopic(sourceBlip.waveId);
+    if (!isPerfRequest(req)) {
+      void touchTopic(sourceBlip.waveId);
+    }
     if (!isPerfRequest(req)) {
       void recordBlipHistory(duplicatedBlip, 'create', userId, duplicatedBlip.authorName);
     }

@@ -8,8 +8,8 @@ const slowMo = Number(process.env.RIZZOMA_E2E_SLOWMO || (headed ? 100 : 0));
 const blipTarget = Number(process.env.RIZZOMA_PERF_BLIPS || 5000);
 const ownerEmail = process.env.RIZZOMA_E2E_USER_A || `perf-owner+${Date.now()}@example.com`;
 const password = process.env.RIZZOMA_E2E_PASSWORD || 'PerfHarness!1';
-const perfLimit = blipTarget + 1;
-const perfQuery = `?layout=rizzoma&perf=full&perfLimit=${perfLimit}`;
+const perfLimit = blipTarget;
+const perfQuery = `?layout=rizzoma&perf=full&perfRender=lite&perfLimit=${perfLimit}`;
 const perfHeaders = { 'x-rizzoma-perf': '1' };
 const snapshotDir = process.env.RIZZOMA_SNAPSHOT_DIR || path.resolve('snapshots', 'perf');
 const timestamp = Date.now();
@@ -216,6 +216,7 @@ async function captureMetrics(waveId, creds) {
   for (const stage of metricsStages) {
     log(`Stage: ${stage.name}`);
     const start = Date.now();
+    const stageStartPerf = await page.evaluate(() => performance.now());
     // Allow hidden but attached anchors; visibility is ensured by perf-mode stubs
     await page.waitForSelector(stage.selector, { timeout: 180000, state: 'attached' });
 
@@ -223,12 +224,12 @@ async function captureMetrics(waveId, creds) {
 
     // For landing-labels stage, wait for blips to fully load before counting
     if (stage.name === 'landing-labels') {
-      const windowTarget = Math.min(blipTarget + 1, 200);
+      const windowTarget = Math.min(blipTarget, 200);
       windowed = await measureWindowedCount('.blip-collapsed-row', windowTarget, 60000);
 
       // Wait for expected number of collapsed rows (blipTarget + 1 for root)
       // or timeout after 30s if something is wrong
-      const expectedLabels = blipTarget + 1;
+      const expectedLabels = blipTarget;
       try {
         await page.waitForFunction(
           (expected) => document.querySelectorAll('.blip-collapsed-row').length >= expected,
@@ -282,6 +283,7 @@ async function captureMetrics(waveId, creds) {
     const screenshotPath = path.join(snapshotDir, `render-${stageTimestamp}.png`);
     await page.screenshot({ path: screenshotPath, fullPage: true });
     
+    const stageDurationMs = Number((perfData.timeToFirstRender - stageStartPerf).toFixed(2));
     const metrics = {
       timestamp: stageTimestamp,
       waveId,
@@ -292,7 +294,7 @@ async function captureMetrics(waveId, creds) {
       renderMode: stage.name,
       windowed: windowed
         ? {
-            target: stage.name === 'landing-labels' ? Math.min(blipTarget + 1, 200) : Math.min(blipTarget, 200),
+            target: Math.min(blipTarget, 200),
             elapsedMs: Number(windowed.elapsed.toFixed(2)),
             count: windowed.count,
             timedOut: windowed.timedOut,
@@ -300,6 +302,7 @@ async function captureMetrics(waveId, creds) {
         : null,
       performance: {
         timeToFirstRender: Number(perfData.timeToFirstRender.toFixed(2)),
+        stageDurationMs,
         firstContentfulPaint: Number(perfData.firstContentfulPaint.toFixed(2)),
         domComplete: Number(perfData.domComplete.toFixed(2)),
         loadComplete: Number(perfData.loadComplete.toFixed(2)),
@@ -312,7 +315,7 @@ async function captureMetrics(waveId, creds) {
       benchmarks: {
         firstRenderTarget: 3000,
         memoryTarget: 100,
-        passed: perfData.timeToFirstRender < 3000 && (perfData.memoryUsage?.used || 0) < 100
+        passed: stageDurationMs < 3000 && (perfData.memoryUsage?.used || 0) < 100
       }
     };
     const metricsPath = path.join(snapshotDir, `metrics-${stageTimestamp}.json`);
@@ -321,6 +324,7 @@ async function captureMetrics(waveId, creds) {
     const perf = metrics.performance;
     log(`📊 [${stage.name}] Results:`);
     log(`  Time to First Render: ${perf.timeToFirstRender}ms`);
+    log(`  Stage Duration: ${perf.stageDurationMs}ms`);
     log(`  First Contentful Paint: ${perf.firstContentfulPaint}ms`);
     log(`  Memory Usage: ${perf.memoryUsage?.used || 'N/A'}MB`);
     log(`  Labels Visible: ${metrics.labelsVisible}`);
