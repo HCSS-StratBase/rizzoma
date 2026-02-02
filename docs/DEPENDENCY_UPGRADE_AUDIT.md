@@ -71,3 +71,27 @@ These can be updated in a single low-risk batch once BLB parity is fully signed 
 - `multer` 2.x and `connect-redis` 9.x have breaking changes; update server tests first.
 - `zod` 4.x and `date-fns` 4.x have API deltas; plan explicit migration.
 
+## Applied Updates (Minor/Patch Batch)
+
+Date: 2026-02-03
+
+Updated (minor/patch within current ranges):
+- `@aws-sdk/client-s3` → 3.981.0
+- `@aws-sdk/s3-request-presigner` → 3.981.0
+- `@floating-ui/dom` → 1.7.5
+- `@swc/core` → 1.15.11
+- `@vitejs/plugin-react` → 5.1.3
+- `cors` → 2.8.6
+- `emoji-picker-react` → 4.17.4
+- `express-session` → 1.19.0
+- `mailparser` → 3.9.3
+- `nodemailer` → 7.0.13
+- `playwright` → 1.58.1
+- `prettier` → 3.8.1
+- `vitest` → 4.0.18
+
+Skipped (outside current semver range):
+- `@xmpp/client` remains at 0.13.6 (latest 0.14.0 is outside the current range).
+- `sharp` remains at 0.33.5 (latest 0.34.5 is outside the current range).
+
+Audit note: `npm audit` reports 26 vulnerabilities post-update; no automated fixes applied yet.

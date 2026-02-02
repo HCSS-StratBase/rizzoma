@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **BLB expansion focus** - Expanding a collapsed blip now marks it active so the toolbar appears immediately
 - **BLB read toolbar** - Added explicit Collapse/Expand buttons in view mode for legacy parity
 - **BLB docs alignment** - Topic pane diagram + view/edit toolbar notes now match live screenshots
+- **Dependency maintenance** - Applied minor/patch updates for Playwright/Vitest/Prettier, AWS SDK, and session/email utilities
 - **Topic meta-blip body** - Topic content + child blips now share a single scroll container so the title is the first line of one unified pane
 - **Rizzoma Layout is now the default** - Basic layout requires `?layout=basic`
 - **OAuth redirect flow** - Now uses `CLIENT_URL` environment variable for proper redirect to frontend

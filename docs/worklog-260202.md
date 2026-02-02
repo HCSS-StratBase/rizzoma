@@ -147,3 +147,4 @@
 - Added `docs/LEGACY_ASSETS_AUDIT.md` to track legacy reference folders and recommended disposition.
 - Corrected `docs/BLB_LOGIC_AND_PHILOSOPHY.md` to align the topic pane diagram and view/edit toolbar notes with the live screenshots (`rizzoma-main.png`, `rizzoma-blip-view.png`, `rizzoma-blip-edit.png`).
 - Audited dependency upgrades from `npm outdated --json`; captured staged upgrade plan in `docs/DEPENDENCY_UPGRADE_AUDIT.md`.
+- Applied minor/patch dependency updates (Playwright/Vitest/Prettier, AWS SDK, session/email libs) and noted skipped out-of-range upgrades (`@xmpp/client`, `sharp`) in `docs/DEPENDENCY_UPGRADE_AUDIT.md`.

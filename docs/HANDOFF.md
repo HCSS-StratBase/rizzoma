@@ -35,7 +35,7 @@ Current State (feature/rizzoma-core-features @ 2026-02-03)
 - Toolbar/inline comments: inline toolbar parity smoke green; inline comment nav remains optional in smoke but UI renders toolbars. Snapshots under `snapshots/toolbar-inline/`.
 - Health/Uploads: `/api/health` + inline comment/upload health tests green locally; uploads pipeline retains MIME/ClamAV/S3/MinIO support.
 - Perf/monitoring: `scripts/perf-budget.mjs` added; `src/client/lib/performance.d.ts` supports perf monitor consumers; perf snapshots stored under `snapshots/perf/`.
-- Dependency upgrades: audit captured in `docs/DEPENDENCY_UPGRADE_AUDIT.md` (major editor/tooling/server upgrades deferred; minor/patch batch pending).
+- Dependency upgrades: audit captured in `docs/DEPENDENCY_UPGRADE_AUDIT.md`; minor/patch batch applied (Playwright/Vitest/Prettier, AWS SDK, session/email libs). Major editor/tooling/server upgrades remain deferred.
 
 Open PRs
 - #37: BLB: refresh snapshot harness + inline expansion
