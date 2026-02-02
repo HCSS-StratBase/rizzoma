@@ -26,7 +26,7 @@ Use this checklist to verify BLB (Bullet‑Label‑Blip) parity with the legacy 
 - [x] Clicking the marker expands the inline child in place.
 - [x] Marker toggles between collapsed/expanded states (visual parity with legacy).
 - [x] Marker color indicates unread state (green when unread).
-- [x] Snapshot harness drives inline expansion via `blip-thread-toggle` for stability; click remains the default UI path.
+- [x] Snapshot harness clicks the inline marker directly (matches the default UI path).
 - [x] Inline marker click handler uses event delegation (`closest`) with capture-phase listener to keep view-mode clicks reliable.
 
 ## 5) Toolbar Parity (Blip-Level)

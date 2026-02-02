@@ -10,7 +10,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **BLB parity snapshots** - Automated BLB snapshot set captured for legacy comparison
 - **BLB parity checklist** - `docs/BLB_PARITY_CHECKLIST.md`
 - **BLB snapshot assertions** - Snapshot harness now verifies collapsed/default, toolbar, inline, and unread states
-- **BLB snapshot harness update** - Inline expansion now driven via `blip-thread-toggle` dispatch for stable snapshots (latest set refreshed)
 - **Microsoft OAuth Authentication** - Users can now sign in with Microsoft accounts
   - Supports both personal and work/school accounts via configurable tenant
   - Routes: `/api/auth/microsoft`, `/api/auth/microsoft/callback`

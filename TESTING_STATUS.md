@@ -1,7 +1,7 @@
 # Rizzoma Feature Testing Status
 
 ## 🟢 Current Status
-- **BLB Playwright snapshots (2026-02-02)**: `node test-blb-snapshots.mjs` pass; refreshed BLB snapshot set under `snapshots/blb/1770004392410-*`.
+- **BLB Playwright snapshots (2026-02-02)**: `node test-blb-snapshots.mjs` pass; refreshed BLB snapshot set under `snapshots/blb/1770004650980-*`.
 - **Full Vitest run (2026-01-18)**: 42 test files passed, 131 tests passed, 3 skipped. Duration ~110s.
 - **Perf harness E2E (2026-01-18)**: N+1 fix verified - no individual `/inline-comments-visibility` API calls. Load time 298ms for 20 blips.
 - **Browser smokes `test:toolbar-inline` (2026-01-17)**: Chromium passes; Firefox/WebKit may timeout in CI due to browser startup delays.

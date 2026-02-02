@@ -248,17 +248,10 @@ function assert(condition, message) {
   // Click inline marker to expand inline child
   const marker = pageOwner.locator(`[data-blip-thread="${inlineChild}"]`).first();
   if (await marker.count()) {
-    log('Expanding inline marker');
-    await pageOwner.evaluate((threadId) => {
-      window.dispatchEvent(new CustomEvent('blip-thread-toggle', {
-        detail: {
-          threadId,
-          isExpanded: true,
-        },
-      }));
-    }, inlineChild);
+    log('Clicking inline marker');
+    await marker.click({ force: true });
     await pageOwner.waitForTimeout(500);
-    log('Inline marker expansion dispatched');
+    log('Inline marker click completed');
   }
 
   const inlineChecks = await pageOwner.evaluate((threadId) => {

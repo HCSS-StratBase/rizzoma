@@ -72,3 +72,10 @@
   - `snapshots/blb/1770004392410-blb-inline-expanded.png` + `.md`
   - `snapshots/blb/1770004392410-blb-unread-green-plus.png` + `.md`
 - Pruned older BLB snapshot sets in `snapshots/blb/` so only the latest run remains.
+- Restored BLB snapshot harness to click the inline marker directly (relying on the improved click handler) instead of dispatching `blip-thread-toggle`.
+- Re-ran BLB Playwright snapshot harness after click-handler adjustment (headless Chromium); latest set:
+  - `snapshots/blb/1770004650980-blb-landing-collapsed.png` + `.md`
+  - `snapshots/blb/1770004650980-blb-expanded-view.png` + `.md`
+  - `snapshots/blb/1770004650980-blb-inline-expanded.png` + `.md`
+  - `snapshots/blb/1770004650980-blb-unread-green-plus.png` + `.md`
+- Pruned older BLB snapshot sets in `snapshots/blb/` so only the latest run remains.
