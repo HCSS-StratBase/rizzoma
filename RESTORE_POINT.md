@@ -5,6 +5,7 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-02-02 23:10 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Updated BlipMenu Vitest coverage for read-only Collapse/Expand; toolbar-inline Playwright rerun passes with snapshots `snapshots/toolbar-inline/1770070087999-*-final.png`. Branch/date guardrails unchanged.
 - (2026-02-02 20:20 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Read-only blip toolbar now includes Collapse/Expand buttons. Playwright `test:toolbar-inline` rerun passes with snapshots `snapshots/toolbar-inline/1770069215769-*-final.png`; BLB snapshot harness rerun passes with snapshots `snapshots/blb/1770069305557-*` (older set pruned). Branch/date guardrails unchanged.
 - (2026-02-02 20:05 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. BLB snapshot harness now asserts inline marker navigation to subblip view (URL change + `.subblip-view`), and the latest BLB snapshot set is `snapshots/blb/1770066696549-*` (older sets pruned). Branch/date guardrails unchanged.
 - (2026-02-02 19:35 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Toolbar-inline smoke now expands via `.blip-collapsed-row` and forces editor click; Playwright rerun passes with snapshots `snapshots/toolbar-inline/1770057761024-*-final.png`. Branch/date guardrails unchanged.

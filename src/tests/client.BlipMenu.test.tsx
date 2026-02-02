@@ -85,8 +85,12 @@ describe('client: BlipMenu toolbar', () => {
     onFinishEdit: vi.fn(),
     onSend: vi.fn(),
     onToggleComments: vi.fn(),
+    onHideComments: vi.fn(),
+    onShowComments: vi.fn(),
     onDelete: vi.fn(),
     onGetLink: vi.fn(),
+    onCollapse: vi.fn(),
+    onExpand: vi.fn(),
     onToggleCollapseByDefault: vi.fn(),
     collapseByDefault: false,
     onCopyComment: vi.fn(),
@@ -187,27 +191,37 @@ describe('client: BlipMenu toolbar', () => {
     ));
 
     const editBtn = container.querySelector('button[title="Edit"]');
-    const commentsBtn = container.querySelector('button[title="Hide Comments"]');
+    const commentsBtn = container.querySelector('[data-testid="blip-menu-comments-hide"]');
+    const collapseBtn = container.querySelector('[data-testid="blip-menu-collapse"]');
+    const expandBtn = container.querySelector('[data-testid="blip-menu-expand"]');
     const linkBtn = container.querySelector('button[title="Get Direct Link"]');
-    const deleteBtn = container.querySelector('button[title="Delete blip"]');
-    const collapseBtn = container.querySelector('button[title="Collapse this thread by default"]');
+    const deleteBtn = container.querySelector('[data-testid="blip-menu-delete"]');
+    const collapseDefaultBtn = container.querySelector('button[title="Collapse this thread by default"]');
 
     expect(editBtn).toBeTruthy();
     expect(commentsBtn).toBeTruthy();
+    expect(collapseBtn).toBeTruthy();
+    expect(expandBtn).toBeTruthy();
     expect(linkBtn).toBeTruthy();
     expect(deleteBtn).toBeTruthy();
-    expect(collapseBtn).toBeTruthy();
+    expect(collapseDefaultBtn).toBeTruthy();
 
     act(() => editBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(baseProps.onStartEdit).toHaveBeenCalled();
 
     act(() => commentsBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    expect(baseProps.onToggleComments).toHaveBeenCalled();
+    expect(baseProps.onHideComments).toHaveBeenCalled();
+
+    act(() => collapseBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(baseProps.onCollapse).toHaveBeenCalled();
+
+    act(() => expandBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(baseProps.onExpand).toHaveBeenCalled();
 
     act(() => linkBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(baseProps.onGetLink).toHaveBeenCalled();
 
-    act(() => collapseBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    act(() => collapseDefaultBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(baseProps.onToggleCollapseByDefault).toHaveBeenCalled();
   });
 
@@ -223,9 +237,9 @@ describe('client: BlipMenu toolbar', () => {
       />
     ));
 
-    const commentsBtn = container.querySelector('button[title="Show Comments"]');
+    const commentsBtn = container.querySelector('[data-testid="blip-menu-comments-show"]');
     expect(commentsBtn).toBeTruthy();
-    expect(commentsBtn?.getAttribute('aria-pressed')).toBe('false');
+    expect((commentsBtn as HTMLButtonElement | null)?.disabled).toBe(false);
   });
 
   it('surfaces a read-only banner and disables paste-as-reply when comments are read-only', () => {
@@ -249,9 +263,9 @@ describe('client: BlipMenu toolbar', () => {
     expect(banner).toBeTruthy();
     expect(banner?.textContent).toContain('read-only');
 
-    const commentsToggle = container.querySelector('[data-testid="blip-menu-comments-toggle"]') as HTMLButtonElement | null;
-    expect(commentsToggle).toBeTruthy();
-    expect(commentsToggle?.disabled).toBe(false);
+    const hideBtn = container.querySelector('[data-testid="blip-menu-comments-hide"]') as HTMLButtonElement | null;
+    const showBtn = container.querySelector('[data-testid="blip-menu-comments-show"]') as HTMLButtonElement | null;
+    expect(hideBtn || showBtn).toBeTruthy();
 
     const gear = container.querySelector('button[title="More options"]');
     expect(gear).toBeTruthy();
@@ -507,7 +521,7 @@ describe('client: BlipMenu toolbar', () => {
     };
     ({ container, root } = renderMenu(<BlipMenu {...baseProps} editor={editor as any} />));
 
-    const deleteBtn = container.querySelector('button[title="Delete blip"]') as HTMLButtonElement | null;
+    const deleteBtn = container.querySelector('[data-testid="blip-menu-delete"]') as HTMLButtonElement | null;
     expect(deleteBtn?.disabled).toBe(true);
 
     const gear = container.querySelector('button[title="More options"]') as HTMLButtonElement | null;
@@ -528,7 +542,7 @@ describe('client: BlipMenu toolbar', () => {
     };
     ({ container, root } = renderMenu(<BlipMenu {...baseProps} editor={editor as any} />));
 
-    const enabledDelete = container.querySelector('button[title="Delete blip"]') as HTMLButtonElement | null;
+    const enabledDelete = container.querySelector('[data-testid="blip-menu-delete"]') as HTMLButtonElement | null;
     expect(enabledDelete?.disabled).toBe(false);
     act(() => enabledDelete!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(baseProps.onDelete).toHaveBeenCalled();

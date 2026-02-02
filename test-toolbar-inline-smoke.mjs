@@ -216,6 +216,8 @@ async function runSmoke(browserName) {
       await browser.close();
       return;
     }
+    await ensureSelector(page, '[data-testid="blip-menu-collapse"]', 'read toolbar collapse', browserName, { timeout: 5000 });
+    await ensureSelector(page, '[data-testid="blip-menu-expand"]', 'read toolbar expand', browserName, { timeout: 5000 });
     await ensureSelector(page, '[data-testid="blip-menu-read-surface"]', 'read-only inline toolbar', browserName, { timeout: 15000 });
 
     const editButton = page.locator('[data-testid="blip-menu-edit"]').first();

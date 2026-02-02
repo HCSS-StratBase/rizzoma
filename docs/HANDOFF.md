@@ -25,7 +25,7 @@ PR Ops (CLI)
 
 Current State (feature/rizzoma-core-features @ 2026-02-02)
 - FEAT_ALL required: start both server (:8000) and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
-- Tests last run (2026-02-02): `npm test -- --run src/tests/routes.topics.follow.test.ts` pass. Playwright `npm run test:toolbar-inline` pass (assertions active; snapshots under `snapshots/toolbar-inline/1770069215769-*-final.png`). `node test-blb-snapshots.mjs` pass with snapshots under `snapshots/blb/1770069305557-*`. `npm run test:follow-green` pass for desktop+mobile with snapshots under `snapshots/follow-the-green/1770056216268-*` and `snapshots/follow-the-green/1770056239785-*`. Historical BLB snapshot runs remain below; re-run before merges.
+- Tests last run (2026-02-02): `npm test -- --run src/tests/routes.topics.follow.test.ts` pass. Playwright `npm run test:toolbar-inline` pass (assertions active; snapshots under `snapshots/toolbar-inline/1770070087999-*-final.png`). `node test-blb-snapshots.mjs` pass with snapshots under `snapshots/blb/1770069305557-*`. `npm run test:follow-green` pass for desktop+mobile with snapshots under `snapshots/follow-the-green/1770056216268-*` and `snapshots/follow-the-green/1770056239785-*`. Historical BLB snapshot runs remain below; re-run before merges.
 - BLB inline `[+]` markers now navigate into subblip documents; Ctrl+Enter inserts marker and navigates into the new subblip (topic + blip editors).
 - Topic meta-blip now renders as a single scrollable pane so the topic title is the first line in the same container as child blips.
 - Read-only blip toolbar now includes Collapse/Expand buttons for legacy parity.

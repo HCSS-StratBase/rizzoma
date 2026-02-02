@@ -133,6 +133,7 @@
 - Updated `test-blb-snapshots.mjs` to assert inline marker navigation (subblip view + URL change) instead of inline expansion.
 - Re-ran BLB snapshot harness; latest set under `snapshots/blb/1770066696549-*` and pruned older BLB snapshots.
 - Added Collapse/Expand buttons to the read-only blip toolbar for legacy parity.
-- Re-ran Playwright toolbar-inline; snapshots under `snapshots/toolbar-inline/1770069215769-*-final.png`.
+- Re-ran Playwright toolbar-inline; snapshots under `snapshots/toolbar-inline/1770070087999-*-final.png`.
 - Re-ran BLB snapshot harness after toolbar update; latest set under `snapshots/blb/1770069305557-*` and pruned the prior set.
 - Updated `docs/EDITOR_TOOLBAR_PARITY.md` to reflect read-only Collapse/Expand actions and Delete wired state.
+- Updated `src/tests/client.BlipMenu.test.tsx` for read-only Collapse/Expand controls; Vitest run: `npm test -- --run src/tests/client.BlipMenu.test.tsx` (pass).
