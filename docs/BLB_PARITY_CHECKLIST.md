@@ -12,7 +12,7 @@ Use this checklist to verify BLB (Bullet‑Label‑Blip) parity with the legacy 
 
 ## 2) Collapsed/Expanded Behavior
 - [x] Default view is **collapsed** for all blips (label-only, no body, no toolbar).
-- [x] Clicking `[+]` **expands inline** (does not navigate to a new route).
+- [x] Clicking `[+]` **navigates into the subblip view** (URL changes to `/topic/{waveId}/{blipPath}/`).
 - [x] Expanding a parent does **not** auto-expand children.
 - [x] Collapsing returns to label-only state (TOC view).
 
@@ -23,8 +23,7 @@ Use this checklist to verify BLB (Bullet‑Label‑Blip) parity with the legacy 
 
 ## 4) Inline Marker (+) Behavior
 - [x] Inline `[+]` marker is a visual widget (legacy plus/minus style), not raw text.
-- [x] Clicking the marker expands the inline child in place.
-- [x] Marker toggles between collapsed/expanded states (visual parity with legacy).
+- [x] Clicking the marker **navigates to the child blip view** (subblip route) rather than expanding inline.
 - [x] Marker color indicates unread state (green when unread).
 - [x] Snapshot harness clicks the inline marker directly (matches the default UI path).
 - [x] Inline marker click handler uses event delegation (`closest`) with capture-phase listener to keep view-mode clicks reliable.
@@ -46,13 +45,13 @@ Use this checklist to verify BLB (Bullet‑Label‑Blip) parity with the legacy 
 - [x] Unread state clears when blip is opened/read (same as legacy).
 
 ## 8) Navigation & Drill‑Down
-- [x] Subblip drill-down is optional, but **default is inline expansion**.
-- [x] URL routing does not replace inline expand as the primary UI.
+- [x] Subblip drill-down is **default** on inline marker click (URL changes to `/topic/{waveId}/{blipPath}/`).
+- [x] Inline expansion is **not** used; subblip view is the primary UI.
 
 ## 9) Snapshot Coverage (Modern)
 - [x] Landing (collapsed labels only) snapshot.
 - [x] Expanded blip with toolbar snapshot.
-- [x] Inline `[+]` expanded snapshot.
+- [x] Inline `[+]` navigation snapshot (subblip view).
 - [x] Unread green `[+]` snapshot.
 
 ## 10) Reference Sources

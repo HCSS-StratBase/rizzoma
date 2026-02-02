@@ -143,3 +143,4 @@
 - Ran `npm test -- --run src/tests/client.getUserMediaAdapter.test.ts` successfully.
 - Created `rizzoma.bundle` and copied it to `G:\My Drive\Rizzoma-backup\rizzoma.bundle` (backup refresh).
 - Legacy cleanup audit: `.coffee` files only exist under `original-rizzoma-src` (reference), none in active `src/` tree.
+- Updated `docs/BLB_PARITY_CHECKLIST.md` to reflect subblip navigation as the default inline marker behavior.

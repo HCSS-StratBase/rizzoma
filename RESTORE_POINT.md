@@ -5,6 +5,7 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-02-02 23:55 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. BLB parity checklist updated to reflect subblip navigation as the default inline marker behavior. Branch/date guardrails unchanged.
 - (2026-02-02 23:50 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Legacy cleanup audit: `.coffee` files exist only under `original-rizzoma-src/` reference tree; none in active `src/`. Branch/date guardrails unchanged.
 - (2026-02-02 23:45 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Backup bundle created and copied to GDrive; noted in HANDOFF/RESTART. Branch/date guardrails unchanged.
 - (2026-02-02 23:40 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. getUserMedia adapter tests rerun: `npm test -- --run src/tests/client.getUserMediaAdapter.test.ts` pass. Branch/date guardrails unchanged.
