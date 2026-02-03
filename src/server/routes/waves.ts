@@ -1,59 +1,11 @@
 import { Router } from 'express';
 import { createIndex, find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
-import type { Blip, Wave, BlipRead, WaveParticipant } from '../schemas/wave.js';
-import { computeWaveUnreadCounts, invalidateUnreadCache } from '../lib/unread.js';
-import { sendInviteEmail } from '../services/email.js';
-import { csrfProtect } from '../middleware/csrf.js';
-import { requireAuth } from '../middleware/auth.js';
-
-// User type for lookups
-type User = {
-  _id?: string;
-  type: 'user';
-  email: string;
-  name?: string | null;
-  avatar?: string;
-  createdAt?: number;
-  updatedAt?: number;
-};
+import type { Blip, Wave, BlipRead } from '../schemas/wave.js';
+import { computeWaveUnreadCounts } from '../lib/unread.js';
 
 const router = Router();
 type FlatBlip = { id: string; updatedAt: number; createdAt?: number; content?: string; children?: FlatBlip[] };
-
-// In-memory cache for unread endpoint (TTL: 10 seconds)
-const unreadEndpointCache = new Map<string, { data: any; expires: number }>();
-const UNREAD_CACHE_TTL_MS = 10000;
-const DEBUG_UNREAD = process.env['RIZZOMA_DEBUG_UNREAD'] === '1';
-
-function logUnread(...args: any[]): void {
-  if (DEBUG_UNREAD) {
-    // eslint-disable-next-line no-console
-    console.log('[waves]', ...args);
-  }
-}
-
-function getUnreadCacheKey(userId: string, waveId: string): string {
-  return `${userId}:${waveId}`;
-}
-
-function cleanUnreadCache(): void {
-  const now = Date.now();
-  for (const [key, entry] of unreadEndpointCache.entries()) {
-    if (entry.expires < now) unreadEndpointCache.delete(key);
-  }
-}
-
-export function invalidateWaveUnreadCache(userId: string, waveId?: string): void {
-  if (waveId) {
-    unreadEndpointCache.delete(getUnreadCacheKey(userId, waveId));
-  } else {
-    const prefix = `${userId}:`;
-    for (const key of unreadEndpointCache.keys()) {
-      if (key.startsWith(prefix)) unreadEndpointCache.delete(key);
-    }
-  }
-}
 
 // GET /api/waves?limit&offset&q
 router.get('/', async (req, res) => {
@@ -152,204 +104,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PATCH /api/waves/:id — update wave properties (title, etc.)
-router.patch('/:id', async (req, res) => {
-  // @ts-ignore
-  const userId = req.session?.userId as string | undefined;
-  if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
-  const id = req.params.id;
-  try {
-    const wave = await getDoc<Wave & { _rev?: string }>(id);
-    if (!wave) {
-      res.status(404).json({ error: 'wave_not_found', requestId: (req as any)?.id });
-      return;
-    }
-    const body = req.body || {};
-    const updates: Partial<Wave> = {};
-    if (typeof body.title === 'string') {
-      updates.title = body.title.trim() || wave.title;
-    }
-    if (Object.keys(updates).length === 0) {
-      res.json({ ok: true, id, title: wave.title });
-      return;
-    }
-    const now = Date.now();
-    const updated = { ...wave, ...updates, updatedAt: now };
-    const r = await updateDoc(updated as any);
-    emitEvent('wave:updated', { waveId: id, userId, title: updated.title });
-    res.json({ ok: true, id: r.id, rev: r.rev, title: updated.title, updatedAt: now });
-  } catch (e: any) {
-    if (String(e?.message || '').startsWith('404')) {
-      res.status(404).json({ error: 'wave_not_found', requestId: (req as any)?.id });
-      return;
-    }
-    res.status(500).json({ error: e?.message || 'wave_update_error', requestId: (req as any)?.id });
-  }
-});
-
-// POST /api/waves/:id/participants — invite participants by email
-router.post('/:id/participants', csrfProtect(), requireAuth, async (req, res) => {
-  const userId = req.user!['id'] as string;
-  const waveId = req.params['id'] as string;
-  const { emails, message } = req.body || {};
-
-  if (!Array.isArray(emails) || emails.length === 0) {
-    res.status(400).json({ error: 'emails_required', requestId: (req as any)?.id });
-    return;
-  }
-
-  // Validate email format
-  const validEmails = emails
-    .map((e: string) => String(e).trim().toLowerCase())
-    .filter((e: string) => e.length > 0 && e.includes('@'));
-
-  if (validEmails.length === 0) {
-    res.status(400).json({ error: 'invalid_emails', requestId: (req as any)?.id });
-    return;
-  }
-
-  try {
-    // Get the wave to verify it exists and get title
-    let wave: Wave | null = null;
-    try {
-      wave = await getDoc<Wave>(waveId);
-    } catch (e: any) {
-      if (String(e?.message || '').startsWith('404')) {
-        res.status(404).json({ error: 'wave_not_found', requestId: (req as any)?.id });
-        return;
-      }
-      throw e;
-    }
-
-    // Get inviter info
-    const inviterUser = await getDoc<User>(userId).catch(() => null);
-    const inviterName = inviterUser?.name || inviterUser?.email?.split('@')[0] || 'Someone';
-    const inviterEmail = inviterUser?.email || '';
-
-    const results: Array<{ email: string; status: 'invited' | 'exists' | 'failed'; userId?: string; error?: string }> = [];
-    const baseUrl = process.env['APP_BASE_URL'] || `${req.protocol}://${req.headers.host}`;
-    const topicUrl = `${baseUrl}/#/topic/${waveId}`;
-
-    // Ensure participant index exists
-    await createIndex(['type', 'waveId', 'email'], 'idx_participant_wave_email').catch(() => undefined);
-
-    for (const email of validEmails) {
-      try {
-        // Check if already a participant
-        const existingParticipant = await findOne<WaveParticipant>({
-          type: 'participant',
-          waveId,
-          email
-        }).catch(() => null);
-
-        if (existingParticipant) {
-          results.push({ email, status: 'exists', userId: existingParticipant.userId });
-          continue;
-        }
-
-        // Find or create user
-        let user = await findOne<User>({ type: 'user', email }).catch(() => null);
-        let newUser = false;
-
-        if (!user) {
-          // Create placeholder user
-          const now = Date.now();
-          const newUserDoc: User = {
-            type: 'user',
-            email,
-            name: email.split('@')[0], // Use email prefix as default name
-            createdAt: now,
-            updatedAt: now,
-          };
-          const r = await insertDoc(newUserDoc as any);
-          user = { ...newUserDoc, _id: r.id };
-          newUser = true;
-        }
-
-        // Create participant record
-        const now = Date.now();
-        const participantId = `participant:wave:${waveId}:user:${user._id}`;
-        const participant: WaveParticipant = {
-          _id: participantId,
-          type: 'participant',
-          waveId,
-          userId: user._id!,
-          email,
-          role: 'editor',
-          invitedBy: userId,
-          invitedAt: now,
-          status: newUser ? 'pending' : 'accepted', // Existing users auto-accept
-          acceptedAt: newUser ? undefined : now,
-        };
-        await insertDoc(participant as any);
-
-        // Send invite email
-        const emailResult = await sendInviteEmail({
-          inviterName,
-          inviterEmail,
-          topicTitle: wave?.title || 'Untitled Topic',
-          topicUrl,
-          recipientEmail: email,
-          recipientName: user.name || undefined,
-          message: message || undefined,
-        });
-
-        if (emailResult.success) {
-          results.push({ email, status: 'invited', userId: user._id });
-        } else {
-          // Participant created but email failed
-          console.warn('[waves] invite email failed', { email, error: emailResult.error });
-          results.push({ email, status: 'invited', userId: user._id });
-        }
-
-        // Emit event
-        emitEvent('wave:participant:added', { waveId, userId: user._id, email, invitedBy: userId });
-      } catch (err: any) {
-        console.error('[waves] invite participant error', { email, error: err?.message });
-        results.push({ email, status: 'failed', error: err?.message });
-      }
-    }
-
-    const invited = results.filter(r => r.status === 'invited').length;
-    const existing = results.filter(r => r.status === 'exists').length;
-    const failed = results.filter(r => r.status === 'failed').length;
-
-    res.json({
-      ok: true,
-      invited,
-      existing,
-      failed,
-      results
-    });
-  } catch (e: any) {
-    console.error('[waves] participants error', { waveId, error: e?.message });
-    res.status(500).json({ error: e?.message || 'invite_error', requestId: (req as any)?.id });
-  }
-});
-
-// GET /api/waves/:id/participants — list participants
-router.get('/:id/participants', async (req, res) => {
-  const waveId = req.params['id'] as string;
-  try {
-    await createIndex(['type', 'waveId'], 'idx_participant_wave').catch(() => undefined);
-    const r = await find<WaveParticipant>({ type: 'participant', waveId }, { limit: 1000 });
-
-    const participants = (r.docs || []).map(p => ({
-      id: p._id,
-      userId: p.userId,
-      email: p.email,
-      role: p.role,
-      status: p.status,
-      invitedAt: p.invitedAt,
-      acceptedAt: p.acceptedAt,
-    }));
-
-    res.json({ participants });
-  } catch (e: any) {
-    res.status(500).json({ error: e?.message || 'participants_error', requestId: (req as any)?.id });
-  }
-});
-
 // compute a depth-first order of blips (preorder) including timestamps
 function flattenBlips(blips: FlatBlip[]): Array<{ id: string; updatedAt: number }> {
   const out: Array<{ id: string; updatedAt: number }> = [];
@@ -370,45 +124,17 @@ router.get('/:id/unread', async (req, res) => {
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
   const id = req.params.id;
-
-  // Check cache first
-  cleanUnreadCache();
-  const cacheKey = getUnreadCacheKey(userId, id);
-  const cached = unreadEndpointCache.get(cacheKey);
-  if (cached && cached.expires > Date.now()) {
-    res.json(cached.data);
-    return;
-  }
-
   try {
-    // Fetch blips directly instead of making HTTP call to self
-    await createIndex(['type', 'waveId', 'createdAt'], 'idx_blip_wave_createdAt').catch(() => undefined);
-    const blipResp = await find<Blip>(
-      { type: 'blip', waveId: id },
-      { limit: 10000, sort: [{ createdAt: 'asc' }] },
-    ).catch(async () => {
-      return find<Blip>({ type: 'blip', waveId: id }, { limit: 10000 });
-    });
-
-    // Build flat list of blips with timestamps
-    const blipDocs = (blipResp.docs || []).map((b) => ({
-      id: String((b as any)._id || ''),
-      updatedAt: Number((b as any).updatedAt || (b as any).createdAt || 0),
-    }));
-
-    // Get read records
+    // get tree
+    const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
+    const waveData: any = await waveResp.json();
+    const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
     await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
     (r.docs || []).forEach((d) => readMap.set(String(d.blipId), Number((d as any).readAt || 0)));
-
-    const unreadEntries = blipDocs.filter((entry) => entry.updatedAt > (readMap.get(entry.id) || 0));
-    const result = { unread: unreadEntries.map((e) => e.id), total: blipDocs.length, read: blipDocs.length - unreadEntries.length };
-
-    // Cache the result
-    unreadEndpointCache.set(cacheKey, { data: result, expires: Date.now() + UNREAD_CACHE_TTL_MS });
-
-    res.json(result);
+    const unreadEntries = order.filter((entry) => entry.updatedAt > (readMap.get(entry.id) || 0));
+    res.json({ unread: unreadEntries.map((e) => e.id), total: order.length, read: order.length - unreadEntries.length });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'unread_error', requestId: (req as any)?.id });
   }
@@ -472,23 +198,19 @@ router.post('/:waveId/blips/:blipId/read', async (req, res) => {
   const waveId = req.params.waveId;
   const blipId = req.params.blipId;
   try {
-    try { logUnread('mark one read', { waveId, blipId, userId }); } catch {}
+    try { console.log('[waves] mark one read', { waveId, blipId, userId }); } catch {}
     const keyId = `read:user:${userId}:wave:${waveId}:blip:${blipId}`;
       const now = Date.now();
       const existing = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId, blipId }).catch(() => null);
       if (existing && existing._id && existing._rev) {
         const r = await updateDoc({ ...existing, readAt: now } as any);
-        try { logUnread('emit wave:unread (single)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
-        invalidateUnreadCache(userId);
-        invalidateWaveUnreadCache(userId, waveId);
+        try { console.log('[waves] emit wave:unread (single)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
         res.json({ ok: true, id: r.id, rev: r.rev, readAt: now });
         return;
       }
       const doc: BlipRead = { _id: keyId, type: 'read', userId, waveId, blipId, readAt: now };
       const r = await insertDoc(doc as any);
-      try { logUnread('emit wave:unread (single insert)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
-      invalidateUnreadCache(userId);
-      invalidateWaveUnreadCache(userId, waveId);
+      try { console.log('[waves] emit wave:unread (single insert)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
       res.status(201).json({ ok: true, id: r.id, rev: r.rev, readAt: now });
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'read_mark_error', requestId: (req as any)?.id });
@@ -503,7 +225,7 @@ router.post('/:id/read', async (req, res) => {
   const id = req.params.id;
   const blipIds = Array.isArray((req.body || {}).blipIds) ? (req.body as any).blipIds.map((s: any) => String(s)) : [];
   const results: Array<{ id: string; ok: boolean }> = [];
-   try { logUnread('mark many read', { waveId: id, count: blipIds.length, userId }); } catch {}
+   try { console.log('[waves] mark many read', { waveId: id, count: blipIds.length, userId }); } catch {}
   for (const bid of blipIds) {
     try {
       const keyId = `read:user:${userId}:wave:${id}:blip:${bid}`;
@@ -511,19 +233,16 @@ router.post('/:id/read', async (req, res) => {
       const existing = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId: id, blipId: bid }).catch(() => null);
       if (existing && existing._id && existing._rev) {
         const r = await updateDoc({ ...existing, readAt: now } as any);
-        if (r?.ok) { results.push({ id: bid, ok: true }); try { logUnread('emit wave:unread (bulk update)', { waveId: id, blipId: bid, userId }); emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); emitEvent('wave:unread', { waveId: id, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); } }
+        if (r?.ok) { results.push({ id: bid, ok: true }); try { console.log('[waves] emit wave:unread (bulk update)', { waveId: id, blipId: bid, userId }); emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); emitEvent('wave:unread', { waveId: id, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); } }
         else results.push({ id: bid, ok: false });
         continue;
       }
       const r = await insertDoc({ _id: keyId, type: 'read', userId, waveId: id, blipId: bid, readAt: now } as any);
-      if (r?.ok) { results.push({ id: bid, ok: true }); try { logUnread('emit wave:unread (bulk insert)', { waveId: id, blipId: bid, userId }); emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); emitEvent('wave:unread', { waveId: id, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); } } else results.push({ id: bid, ok: false });
+      if (r?.ok) { results.push({ id: bid, ok: true }); try { console.log('[waves] emit wave:unread (bulk insert)', { waveId: id, blipId: bid, userId }); emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); emitEvent('wave:unread', { waveId: id, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); } } else results.push({ id: bid, ok: false });
     } catch {
       results.push({ id: bid, ok: false });
     }
   }
-  // Invalidate unread cache so next topics list fetch gets fresh counts
-  invalidateUnreadCache(userId);
-  invalidateWaveUnreadCache(userId, id);
   res.json({ ok: true, count: results.length, results });
 });
 

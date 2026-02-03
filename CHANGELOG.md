@@ -58,7 +58,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **scripts/deploy-updates.sh** - Removed stale CLAUDE.md auto-update and demo-mode references
 - **scripts/create-bundle.sh** - Updated bundle manifest to reflect real-auth dev flow
 - **src/server/lib/unread.ts** - Gate unread cache logs behind `RIZZOMA_DEBUG_UNREAD`
-- **src/server/routes/waves.ts** - Gate unread read/emit logs behind `RIZZOMA_DEBUG_UNREAD`
 - **RESTORE_POINT.md** - Logged doc cleanup pass in the re-read checkpoint
 - **README_MODERNIZATION.md** - Added FEAT_ALL/EDITOR_ENABLE run note for parity/smokes
 - **Dependency maintenance** - Applied minor/patch updates for Playwright/Vitest/Prettier, AWS SDK, and session/email utilities
