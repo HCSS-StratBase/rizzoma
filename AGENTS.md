@@ -67,6 +67,8 @@ codex exec '
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md (plus any Markdown touched in the last 31 days); capture drift into RESTORE_POINT.md + handoff/restart docs.
   Step 0.1:
     - Run "npm run lint:branch-context" to verify docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
+  Step 0.2:
+    - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `npm run dev`).
 
   Priority focus (current backlog):
   1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; lite-mode perf harness now passes (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB). Next: improve full-render perf beyond `perfRender=lite`.

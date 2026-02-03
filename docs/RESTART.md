@@ -3,7 +3,7 @@
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
 - `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-02-03; refresh if more changes land.
-- Re-read checkpoint: 2026-02-03 03:25 local — doc cleanup pass (onboarding/testing guidance aligned with real-auth + FEAT_ALL); drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
+- Re-read checkpoint: 2026-02-03 04:33 local — start-all bootstrap hardened (warns/continues if `sphinx` is missing/slow) and quickstart updated; drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
 
 Quick start for the next batch (copy/paste):
 ```
@@ -21,6 +21,8 @@ codex exec '
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
+  Step 0.2:
+    - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `npm run dev`).
 
   Priority focus:
   1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; move beyond `perfRender=lite` and reduce full-render TTF/memory. Lite-mode perf harness now passes (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB) but full render still needs work.

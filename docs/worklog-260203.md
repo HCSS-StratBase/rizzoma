@@ -35,3 +35,4 @@
 - Updated `scripts/start-all.sh` to skip or timeout on missing `sphinx` so the dev bootstrap doesn't hang indefinitely.
 - Ran `scripts/start-all.sh` in a live session; API health verified OK at `http://localhost:8000/api/health`, Vite UI reachable at `http://localhost:3000`.
 - Documented the `scripts/start-all.sh` flow + Sphinx timeout note in `QUICKSTART.md`; logged in `CHANGELOG.md`.
+- Updated `AGENTS.md` and `docs/RESTART.md` Codex exec next-batch steps to mention `scripts/start-all.sh` and the Sphinx timeout behavior.
