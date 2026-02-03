@@ -59,6 +59,7 @@ echo -e " ${GREEN}✓${NC}"
 echo -e "\n${YELLOW}🔧 Starting application servers...${NC}"
 # Enable all Rizzoma features for development
 export FEAT_ALL=1
+export EDITOR_ENABLE=1
 npm run dev &
 
 # Wait a bit for servers to start
@@ -84,7 +85,7 @@ echo "  - Main App: http://localhost:3000"
 echo "  - API: http://localhost:8000/api"
 echo "  - CouchDB: http://localhost:5984/_utils/ (admin/password)"
 echo "  - RabbitMQ: http://localhost:15672 (admin/password)"
-echo -e "\n💡 To enable editor features, set: export EDITOR_ENABLE=1"
+echo -e "\n💡 Editor features enabled via EDITOR_ENABLE=1"
 echo -e "\n${YELLOW}Press Ctrl+C to stop all services${NC}"
 
 # Keep script running and handle shutdown

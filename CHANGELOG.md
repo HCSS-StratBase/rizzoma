@@ -59,6 +59,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **scripts/create-bundle.sh** - Updated bundle manifest to reflect real-auth dev flow
 - **src/server/lib/unread.ts** - Gate unread cache logs behind `RIZZOMA_DEBUG_UNREAD`
 - **src/server/lib/unread.ts** - Added cache pruning to cap unread cache growth
+- **scripts/start-all.sh** - Export EDITOR_ENABLE=1 by default for dev runs
 - **RESTORE_POINT.md** - Logged doc cleanup pass in the re-read checkpoint
 - **README_MODERNIZATION.md** - Added FEAT_ALL/EDITOR_ENABLE run note for parity/smokes
 - **Dependency maintenance** - Applied minor/patch updates for Playwright/Vitest/Prettier, AWS SDK, and session/email utilities
