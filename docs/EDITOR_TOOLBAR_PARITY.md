@@ -108,7 +108,7 @@ Edit | 💬 | 📎 | 🔗 | ☑ Hidden | 🗑 | 🔗
 - [x] **Topic IS a blip**: The topic/wave is the root meta-blip, not a separate entity
 - [x] **Title = First line**: Title is just the first line of topic content with H1/bold default styling
 - [x] **Topic content editable**: Topic content (including title) editable like any blip via TipTap
-- [ ] **Topic can have inline comments**: Ctrl+Enter anywhere in topic content creates inline comment
+- [x] **Topic can have inline comments**: Ctrl+Enter anywhere in topic content creates inline comment
 - [ ] **Unify rendering**: Topic should render using same RizzomaBlip component pattern
 - [x] **Title syncing**: When content changes, extract first line to update `title` field for indexing
 
@@ -128,8 +128,8 @@ Edit | 💬 | 📎 | 🔗 | ☑ Hidden | 🗑 | 🔗
 ### Reply vs Inline Comment (HIGH PRIORITY - Two Types of Child Blips!)
 - [ ] **Reply (blip UNDER)**: Created via "Write a reply..." at bottom, comments on ENTIRE parent
 - [ ] **Inline Comment (blip IN)**: Created via Ctrl+Enter at cursor, comments on THAT SPECIFIC SPOT
-- [ ] **anchorPosition field**: Add to blip data model to distinguish inline comments (has anchor) from replies (no anchor)
-- [ ] **Render inline comments at anchor**: Inline comments should appear WITHIN parent's content at their anchor position
+- [x] **anchorPosition field**: Add to blip data model to distinguish inline comments (has anchor) from replies (no anchor)
+- [x] **Render inline comments at anchor**: Inline comments appear within parent content via inline `[+]` marker
 - [ ] **Render replies at bottom**: Replies appear AFTER content, BEFORE "Write a reply..."
 - [ ] **Child blip format**: All collapsed child blips should render as `Label [+] avatar date` (same format as any collapsed blip)
 - [ ] **Recursive/fractal**: Both can have their own children (replies AND inline comments)
