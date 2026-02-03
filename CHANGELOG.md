@@ -63,6 +63,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **scripts/start-all.sh** - Avoid hanging on missing `sphinx` and timeout Sphinx wait
 - **QUICKSTART.md** - Documented `scripts/start-all.sh` and Sphinx timeout behavior
 - **AGENTS.md / docs/RESTART.md** - Codex exec next-batch checklist now calls out `scripts/start-all.sh` and Sphinx timeout behavior
+- **BLB snapshots** - Refreshed BLB snapshot set under `snapshots/blb/1770090168674-*` after Playwright verification
 - **RESTORE_POINT.md** - Logged doc cleanup pass in the re-read checkpoint
 - **README_MODERNIZATION.md** - Added FEAT_ALL/EDITOR_ENABLE run note for parity/smokes
 - **Dependency maintenance** - Applied minor/patch updates for Playwright/Vitest/Prettier, AWS SDK, and session/email utilities
