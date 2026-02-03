@@ -12,3 +12,4 @@
 - Added Always-On Loop guidance to `AGENTS.md` and mirrored it in `docs/RESTART.md` so sessions keep cycling without pauses.
 - Updated HANDOFF/RESTORE_POINT/CHANGELOG to reflect the new operational rule.
 - `npm run lint:branch-context` pass after doc updates.
+- Reran follow-green Playwright smokes (desktop+mobile). Snapshots: `snapshots/follow-the-green/1770081675832-*`, `snapshots/follow-the-green/1770081713734-*`.

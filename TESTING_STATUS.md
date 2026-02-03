@@ -3,7 +3,7 @@
 ## 🟢 Current Status
 - **Health checks (2026-02-03)**: `npm run test:health` pass (server health, inline comments health, upload edge cases).
 - **Perf harness (2026-02-03, 1000 blips)**: `RIZZOMA_PERF_BLIPS=1000 npm run perf:harness` pass; metrics under `snapshots/perf/metrics-1770076098998-*.json` and renders under `snapshots/perf/render-1770076098998-*.png` (stage durations ~1.40s landing / ~0.54s expanded, windowed 200 ~2.45s / ~2.72s; TTF ~2.45s landing / ~3.23s expanded).
-- **Browser smokes `test:follow-green` (2026-02-03)**: Desktop + mobile profiles pass; snapshots under `snapshots/follow-the-green/1770075636800-*` and `snapshots/follow-the-green/1770075681747-*`.
+- **Browser smokes `test:follow-green` (2026-02-03)**: Desktop + mobile profiles pass; snapshots under `snapshots/follow-the-green/1770081675832-*` and `snapshots/follow-the-green/1770081713734-*`.
 - **BlipMenu Vitest (2026-02-03)**: `npm test -- --run src/tests/client.BlipMenu.test.tsx` pass (18 tests).
 - **Browser smokes `test:toolbar-inline` (2026-02-03)**: Pass across Chromium/Firefox/WebKit; snapshots captured under `snapshots/toolbar-inline/1770080797945-*-final.png`.
 - **Topics follow tests (2026-02-02)**: `npm test -- --run src/tests/routes.topics.follow.test.ts` pass.
