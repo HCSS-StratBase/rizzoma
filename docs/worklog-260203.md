@@ -30,3 +30,4 @@
 - Noted demo-mode references in `scripts/deploy-updates.sh` and `scripts/create-bundle.sh` as historical in HANDOFF/RESTART; logged in `CHANGELOG.md`.
 - Updated `scripts/deploy-updates.sh` to remove stale CLAUDE.md auto-update and demo-mode references; updated `scripts/create-bundle.sh` manifest instructions; logged in `CHANGELOG.md`.
 - Gated unread logging in `src/server/lib/unread.ts` behind `RIZZOMA_DEBUG_UNREAD`; logged in `CHANGELOG.md`.
+- Added unread cache pruning in `src/server/lib/unread.ts` to cap cache growth; logged in `CHANGELOG.md`.

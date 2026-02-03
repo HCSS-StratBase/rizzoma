@@ -6,6 +6,7 @@ export type WaveUnreadCounts = { total: number; unread: number; read: number };
 // Simple in-memory cache for unread counts (TTL: 30 seconds)
 const unreadCache = new Map<string, { data: Record<string, WaveUnreadCounts>; expires: number }>();
 const CACHE_TTL_MS = 30000;
+const MAX_CACHE_ENTRIES = 200;
 const DEBUG_UNREAD = process.env['RIZZOMA_DEBUG_UNREAD'] === '1';
 
 function logUnread(...args: any[]): void {
@@ -26,6 +27,18 @@ function cleanExpiredCache(): void {
   }
 }
 
+function pruneCache(): void {
+  if (unreadCache.size <= MAX_CACHE_ENTRIES) return;
+  const overflow = unreadCache.size - MAX_CACHE_ENTRIES;
+  let removed = 0;
+  for (const key of unreadCache.keys()) {
+    unreadCache.delete(key);
+    removed += 1;
+    if (removed >= overflow) break;
+  }
+  logUnread('pruned cache entries', removed);
+}
+
 /**
  * Compute unread/read totals for a batch of waves for a single user.
  * Limits to the first 200 unique ids to avoid expensive fan-out requests.
@@ -43,6 +56,7 @@ export async function computeWaveUnreadCounts(
 
   // Check cache first
   cleanExpiredCache();
+  pruneCache();
   const cacheKey = getCacheKey(userId, ids);
   const cached = unreadCache.get(cacheKey);
   if (cached && cached.expires > Date.now()) {
@@ -118,6 +132,7 @@ export async function computeWaveUnreadCounts(
   const elapsed = Date.now() - startTime;
   logUnread('computed in', elapsed, 'ms for', ids.length, 'waves');
   unreadCache.set(cacheKey, { data: results, expires: Date.now() + CACHE_TTL_MS });
+  pruneCache();
 
   return results;
 }
