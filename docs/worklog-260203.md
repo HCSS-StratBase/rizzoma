@@ -14,3 +14,4 @@
 - `npm run lint:branch-context` pass after doc updates.
 - Reran follow-green Playwright smokes (desktop+mobile). Snapshots: `snapshots/follow-the-green/1770081675832-*`, `snapshots/follow-the-green/1770081713734-*`.
 - Updated `RIZZOMA_FEATURES_STATUS.md` Next Steps/What You Can Do Now to reflect real-auth dev flow (`npm run dev` with FEAT_ALL/EDITOR_ENABLE) and perf/mobile priorities.
+- Updated `README_MODERNIZATION.md` with current-branch notes (real-auth requirement, FEAT_ALL/EDITOR_ENABLE, historical phase caveats); logged in `CHANGELOG.md`.

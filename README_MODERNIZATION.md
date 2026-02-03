@@ -4,6 +4,17 @@ This guide provides step-by-step instructions for modernizing the Rizzoma codeba
 
 For live project status and the restart checklist, see `docs/HANDOFF.md` and `docs/RESTART.md`.
 
+## Current Branch Notes (feature/rizzoma-core-features, 2026-02-03)
+
+This document includes historical phase language and legacy shortcuts. For the active branch, treat the following as authoritative:
+- Status and backlog: `RIZZOMA_FEATURES_STATUS.md`
+- Session startup and constraints: `docs/HANDOFF.md`, `docs/RESTART.md`
+
+Operational reality for this branch:
+- Demo-mode shortcuts are removed; sign-in flows route through the real `AuthPanel`.
+- Run the stack with `FEAT_ALL=1` and `EDITOR_ENABLE=1` for parity checks and Playwright smokes.
+- Use `npm run dev` (server :8000, client :3000); do not rely on historical `start:all` guidance.
+
 ## Prerequisites
 
 - Node.js 20.x or higher
@@ -36,6 +47,9 @@ Note:
    ```bash
 npm run migrate:coffee -- --dry-run
 ```
+
+Note:
+- The CoffeeScript migration step is historical unless you are actively porting legacy code; do not run it during normal feature work on this branch.
 
 ## Fork Policy & PR Target
 

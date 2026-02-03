@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **BLB expansion focus** - Expanding a collapsed blip now marks it active so the toolbar appears immediately
 - **BLB read toolbar** - Added explicit Collapse/Expand buttons in view mode for legacy parity
 - **BLB docs alignment** - Topic pane diagram + view/edit toolbar notes now match live screenshots
+- **README_MODERNIZATION.md** - Added current-branch notes (real-auth requirement, FEAT_ALL/EDITOR_ENABLE, and historical phase caveats)
 - **Dependency maintenance** - Applied minor/patch updates for Playwright/Vitest/Prettier, AWS SDK, and session/email utilities
 - **BLB parity docs** - Marked topic inline comments + anchorPosition behavior as implemented
 - **BLB parity docs** - Marked reply vs inline comment behaviors and child blip format as implemented
