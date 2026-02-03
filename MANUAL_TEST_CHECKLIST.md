@@ -1,6 +1,6 @@
 # 🧪 Rizzoma Manual Testing Checklist
 
-## 🌐 The app should now be open in your browser at http://localhost:3000
+## 🌐 Open the app at http://localhost:3000 (run with `FEAT_ALL=1` and `EDITOR_ENABLE=1`, sign in via AuthPanel)
 
 ### 📋 Step-by-Step Test Guide:
 
@@ -97,7 +97,7 @@ You should see all features as `true`.
 
 **No toolbar visible?**
 - Make sure you're editing a topic, not just viewing
-- Check that `FEAT_RICH_TOOLBAR=true` in console
+- Confirm `FEAT_ALL=1` was set before starting `npm run dev`
 
 **No comment button on selection?**
 - Try selecting more text

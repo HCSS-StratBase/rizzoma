@@ -45,6 +45,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **EDITOR_TOOLBAR_PARITY.md** - Updated topic toolbar status and topic render unification to reflect current implementation
 - **QUICKSTART.md** - Added FEAT_ALL note for parity/smokes and linked to handoff/restart docs
 - **TESTING_GUIDE.md** - Clarified FEAT_ALL/EDITOR_ENABLE + real-auth requirement for core feature testing
+- **CLAUDE.md** - Updated run/verify and backup notes for FEAT_ALL/EDITOR_ENABLE and current backup script
+- **MANUAL_TEST_CHECKLIST.md** - Updated run prerequisites and toolbar troubleshooting to reflect FEAT_ALL and real auth
 - **Dependency maintenance** - Applied minor/patch updates for Playwright/Vitest/Prettier, AWS SDK, and session/email utilities
 - **BLB parity docs** - Marked topic inline comments + anchorPosition behavior as implemented
 - **BLB parity docs** - Marked reply vs inline comment behaviors and child blip format as implemented

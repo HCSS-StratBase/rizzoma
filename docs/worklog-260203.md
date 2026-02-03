@@ -20,3 +20,5 @@
 - Updated `docs/EDITOR_TOOLBAR_PARITY.md` to reflect implemented topic toolbars and topic render unification; logged in `CHANGELOG.md`.
 - Updated `QUICKSTART.md` to mention `FEAT_ALL=1` for parity checks and link to handoff/restart docs; logged in `CHANGELOG.md`.
 - Updated `TESTING_GUIDE.md` to clarify FEAT_ALL/EDITOR_ENABLE + real-auth requirement; logged in `CHANGELOG.md`.
+- Updated `CLAUDE.md` run/verify and backup notes for FEAT_ALL/EDITOR_ENABLE and current backup script; logged in `CHANGELOG.md`.
+- Updated `MANUAL_TEST_CHECKLIST.md` prerequisites and toolbar troubleshooting to reflect FEAT_ALL and real auth; logged in `CHANGELOG.md`.

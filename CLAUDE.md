@@ -43,7 +43,7 @@ This file is a lightweight status guide for the active branch. Older "phase" tim
 
 ## Run/Verify
 - Start infra: `docker compose up -d couchdb redis` (add `clamav` if scanning).  
-- Run app: `npm run dev` (set `EDITOR_ENABLE=1` if needed).  
+- Run app: `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev` and sign in via AuthPanel (no demo/query-string logins).  
 - Tests: `npm run test`, `npm run test:toolbar-inline`, `npm run test:follow-green`, `npm run perf:harness` (as needed).  
 - Snapshots: `npm run snapshots:pull` to fetch latest artifacts without rerunning Playwright.  
 - Health: `curl http://localhost:8000/api/health`.
@@ -51,4 +51,4 @@ This file is a lightweight status guide for the active branch. Older "phase" tim
 ## Notes
 - Use `RIZZOMA_FEATURES_STATUS.md` for the authoritative feature snapshot; update after meaningful test runs.
 - Update `TESTING_STATUS.md` when you run suites.
-- Backups: use `./scripts/backup.sh --gdrive` or manual bundle via `git bundle create rizzoma.bundle --all`.
+- Backups: use `scripts/backup-bundle.sh` or manual bundle via `git bundle create rizzoma.bundle --all`.
