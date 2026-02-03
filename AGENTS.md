@@ -69,8 +69,8 @@ codex exec '
 
   Priority focus (current backlog):
   1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; lite-mode perf harness now passes (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB). Next: improve full-render perf beyond `perfRender=lite`.
-  2) BLB parity: shared isFoldedByDefault, inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity, unread green markers, and update BLB snapshots as needed.
-  3) Toolbar parity: `test:toolbar-inline` now skips assertions because the read toolbar is missing in the modern layout — restore/confirm the read toolbar and re-run smokes.
+  2) BLB parity: inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity, unread green markers, and update BLB snapshots as needed (topic render unification is wired; keep it aligned with live snapshots).
+  3) Toolbar parity: `test:toolbar-inline` now asserts the read toolbar (expanded via collapsed rows). Keep the read toolbar present and smokes green.
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green.
   5) Automate bundles/backups (bundle + GDrive copy) and document cadence.
   6) Finish CoffeeScript/legacy cleanup and dependency upgrades; decide legacy static assets.

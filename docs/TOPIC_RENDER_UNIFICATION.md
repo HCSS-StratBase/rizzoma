@@ -6,27 +6,30 @@ Date: 2026-02-03
 ## Goal
 Unify topic meta‑blip rendering with the `RizzomaBlip` component so the topic uses the same rendering path as any other blip (toolbar, content, children, reply input), while keeping the topic‑level toolbar and metadata.
 
+## Status
+Implemented (2026-02-03). Topic meta‑blip now renders via `RizzomaBlip` in normal mode; edit flow still uses the topic editor override to preserve title extraction + autosave.
+
 ## Current State
-- `RizzomaTopicDetail.tsx` renders a custom meta‑blip container (`topic-meta-blip`) with its own toolbar and content view.
+- `RizzomaTopicDetail.tsx` renders the topic meta‑blip body through `RizzomaBlip` with `renderMode="topic-root"` and a topic editor override for edit mode.
+- Root-level child blips are still rendered as `RizzomaBlip` instances (collapsed by default) inside the topic container, matching the legacy list behavior while sharing the unified tree.
 - Subblip view already uses `RizzomaBlip`.
 - Inline comments and `[+]` markers are handled via TipTap + `anchorPosition`.
 
-## Proposed Approach
-1. **Introduce a `renderMode` or `layout` prop in `RizzomaBlip`**:
-   - `renderMode: 'default' | 'topic-root'`
-   - `topic-root` hides the inline toolbar and reply footer (topic uses its own toolbar), but keeps content + child blips rendering identical.
-2. **Create a synthetic topic blip object** from `topic`:
+## Implementation Notes
+1. **`RizzomaBlip` gained `renderMode` + content hooks**:
+   - `renderMode: 'default' | 'topic-root'` hides the inline toolbar, reply footer, bullet, and contributors for the topic root.
+   - `contentContainerClassName`, `contentClassName`, `contentFooter`, and `childFooter` allow the topic detail view to preserve its padding and tag layout while sharing the unified blip tree.
+2. **Synthetic topic blip**:
    - `id`: topic id
-   - `content`: topic content (title as first line)
-   - `permissions`: map from topic permissions
-   - `childBlips`: reuse `listBlips` (root‑level children without `anchorPosition`)
-3. **Render `RizzomaBlip` for the meta‑blip body** inside `RizzomaTopicDetail`:
-   - `forceExpanded={true}`
-   - `renderMode="topic-root"`
-4. **Preserve the top topic toolbar** and edit mode handling in `RizzomaTopicDetail`.
-5. **Playwright verification**:
-   - Re-run `npm run test:toolbar-inline`
-   - Re-run `node test-blb-snapshots.mjs`
+   - `content`: topic content (title as first line fallback)
+   - `permissions`: derived from auth state
+   - `childBlips`: `listBlips` (root‑level children without `anchorPosition`)
+3. **Topic detail render**:
+   - `RizzomaBlip` renders the meta‑blip body in non‑perf mode with `forceExpanded` + `renderMode="topic-root"`.
+   - The topic editor is injected via `contentOverride` only while editing to preserve auto‑save/title sync.
+4. **Playwright verification**:
+   - `npm run test:toolbar-inline`
+   - `node test-blb-snapshots.mjs`
 
 ## Risks
 - Duplicate toolbars if `renderMode` is not respected.

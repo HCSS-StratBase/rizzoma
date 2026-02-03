@@ -749,6 +749,12 @@
   padding-left: 12px;
 }
 
+.rizzoma-blip.topic-root .child-blips {
+  margin-left: 0;
+  border-left: none;
+  padding-left: 0;
+}
+
 /* Child blip wrapper */
 .child-blip-wrapper {
   margin-bottom: 4px;

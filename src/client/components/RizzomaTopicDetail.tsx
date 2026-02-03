@@ -838,6 +838,47 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   }
 
   const tags = extractTags(topic.content || '');
+  const listBlips = blips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
+  const topicContentHtml = topic.content && topic.content.trim().length > 0
+    ? topic.content
+    : `<h1>${topic.title || 'Untitled'}</h1>`;
+  const topicBlip: BlipData = {
+    id: topic.id,
+    content: topicContentHtml,
+    authorId: topic.authorId,
+    authorName: topic.authorName,
+    createdAt: topic.createdAt,
+    updatedAt: topic.updatedAt,
+    isRead: true,
+    permissions: {
+      canEdit: isAuthed,
+      canComment: isAuthed,
+      canRead: true,
+    },
+    childBlips: listBlips,
+  };
+  const topicContentOverride = isEditingTopic ? (
+    <div className="topic-content-edit">
+      <EditorContent editor={topicEditor} />
+    </div>
+  ) : null;
+  const topicContentFooter = tags.length > 0 ? (
+    <div className="topic-tags">
+      {tags.map((tag, i) => <span key={i} className="topic-tag">{tag}</span>)}
+    </div>
+  ) : null;
+  const topicChildFooter = isAuthed ? (
+    <div className="write-reply-section">
+      <input
+        type="text"
+        className="write-reply-input"
+        placeholder="Write a reply..."
+        value={newBlipContent}
+        onChange={(e) => setNewBlipContent(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter' && newBlipContent.trim()) { e.preventDefault(); createRootBlip(); } }}
+      />
+    </div>
+  ) : null;
 
   return (
     <div className="rizzoma-topic-detail">
@@ -1104,103 +1145,91 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           </div>
         </div>
 
-        {/* Meta-blip content area (title + body content) */}
-        <div className="topic-blip-content">
-          {isEditingTopic ? (
-            <div className="topic-content-edit">
-              <EditorContent editor={topicEditor} />
-            </div>
-          ) : (
-            <div
-              className="topic-content-view"
-              onClick={isAuthed ? startEditingTopic : undefined}
-              style={isAuthed ? { cursor: 'pointer' } : undefined}
-              title={isAuthed ? 'Click to edit topic content' : undefined}
-            >
-              {topic.content ? (
-                <div dangerouslySetInnerHTML={{ __html: topic.content }} />
-              ) : (
-                <h1 className="topic-title">{topic.title || 'Untitled'}</h1>
-              )}
-            </div>
-          )}
-          {tags.length > 0 && (
-            <div className="topic-tags">
-              {tags.map((tag, i) => <span key={i} className="topic-tag">{tag}</span>)}
-            </div>
-          )}
-        </div>
-
-        {/* ========================================
-            BLB: CHILD BLIPS (Root-level replies)
-            Only show blips WITHOUT anchorPosition (those are inline [+] markers)
-            Blips with anchorPosition are embedded in content, not shown here
-        ======================================== */}
-        <div className="topic-blip-children">
-          {(() => {
-            // Filter out blips that have anchorPosition - they appear as [+] in content
-            const listBlips = blips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
-            if (!listBlips.length) return null;
-            if (isPerfLite) {
-              return (
-                <div className="blip-list">
-                  {listBlips.map((blip) => {
-                    const text = blip.content
-                      ? blip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-                      : '';
-                    const label = text
-                      ? text.length > 80
-                        ? `${text.slice(0, 80)}…`
-                        : text
-                      : (blip.authorName || 'Blip');
-                    const hasUnread = !blip.isRead;
-                    return (
-                      <div key={blip.id} className="rizzoma-blip perf-blip-row" data-blip-id={blip.id}>
-                        <div className={`blip-collapsed-row perf-collapsed ${hasUnread ? 'has-unread' : ''}`}>
-                          <span className="blip-bullet">•</span>
-                          <span className="blip-collapsed-label-text">{label}</span>
-                          <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>+</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            }
-            return (
-              <div className="blip-list">
-                {listBlips.map((blip) => (
-                  <RizzomaBlip
-                    key={blip.id}
-                    blip={blip}
-                    isRoot={false}
-                    depth={0}
-                    onBlipUpdate={handleBlipUpdate}
-                    onAddReply={handleAddReply}
-                    onToggleCollapse={handleToggleCollapse}
-                    onDeleteBlip={handleDeleteBlip}
-                    onBlipRead={handleBlipRead}
-                    onExpand={handleExpand}
-                    expandedBlips={expandedBlips}
-                    // BLB: NO navigation - expand/collapse INLINE like original Rizzoma
-                  />
-                ))}
+        {/* Meta-blip body: topic content + child blips in ONE scrollable container */}
+        <div className="topic-blip-body">
+          {isPerfLite ? (
+            <>
+              <div className="topic-blip-content">
+                {isEditingTopic ? (
+                  <div className="topic-content-edit">
+                    <EditorContent editor={topicEditor} />
+                  </div>
+                ) : (
+                  <div
+                    className="topic-content-view"
+                    onClick={isAuthed ? startEditingTopic : undefined}
+                    style={isAuthed ? { cursor: 'pointer' } : undefined}
+                    title={isAuthed ? 'Click to edit topic content' : undefined}
+                  >
+                    {topic.content ? (
+                      <div dangerouslySetInnerHTML={{ __html: topic.content }} />
+                    ) : (
+                      <h1 className="topic-title">{topic.title || 'Untitled'}</h1>
+                    )}
+                  </div>
+                )}
+                {tags.length > 0 && (
+                  <div className="topic-tags">
+                    {tags.map((tag, i) => <span key={i} className="topic-tag">{tag}</span>)}
+                  </div>
+                )}
               </div>
-            );
-          })()}
-
-          {/* Write a reply - at the bottom of the meta-blip */}
-          {isAuthed && (
-            <div className="write-reply-section">
-              <input
-                type="text"
-                className="write-reply-input"
-                placeholder="Write a reply..."
-                value={newBlipContent}
-                onChange={(e) => setNewBlipContent(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && newBlipContent.trim()) { e.preventDefault(); createRootBlip(); } }}
-              />
-            </div>
+              <div className="topic-blip-children">
+                {(() => {
+                  if (!listBlips.length) return null;
+                  return (
+                    <div className="blip-list">
+                      {listBlips.map((blip) => {
+                        const text = blip.content
+                          ? blip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+                          : '';
+                        const label = text
+                          ? text.length > 80
+                            ? `${text.slice(0, 80)}…`
+                            : text
+                          : (blip.authorName || 'Blip');
+                        const hasUnread = !blip.isRead;
+                        return (
+                          <div key={blip.id} className="rizzoma-blip perf-blip-row" data-blip-id={blip.id}>
+                            <div className={`blip-collapsed-row perf-collapsed ${hasUnread ? 'has-unread' : ''}`}>
+                              <span className="blip-bullet">•</span>
+                              <span className="blip-collapsed-label-text">{label}</span>
+                              <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>+</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+                {topicChildFooter}
+              </div>
+            </>
+          ) : (
+            <RizzomaBlip
+              key={topicBlip.id}
+              blip={topicBlip}
+              isRoot={true}
+              depth={0}
+              onBlipUpdate={handleBlipUpdate}
+              onAddReply={handleAddReply}
+              onToggleCollapse={handleToggleCollapse}
+              onDeleteBlip={handleDeleteBlip}
+              onBlipRead={handleBlipRead}
+              onExpand={handleExpand}
+              expandedBlips={expandedBlips}
+              forceExpanded={true}
+              renderMode="topic-root"
+              contentContainerClassName="topic-blip-content"
+              childContainerClassName="topic-blip-children"
+              contentClassName="topic-content-view"
+              contentTitle={isAuthed ? 'Click to edit topic content' : undefined}
+              onContentClick={!isEditingTopic && isAuthed ? startEditingTopic : undefined}
+              contentOverride={topicContentOverride}
+              contentFooter={topicContentFooter}
+              childFooter={topicChildFooter}
+              // BLB: NO navigation - expand/collapse INLINE like original Rizzoma
+            />
           )}
         </div>
       </div>)}

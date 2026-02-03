@@ -1,10 +1,10 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-02-03 (refreshed after BLB doc corrections + dependency audit; branch snapshot current)
+Last Updated: 2026-02-03 (topic render unification wired + BLB/toolbar Playwright refresh)
 
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.
-- The "Current State" section below reflects `feature/rizzoma-core-features` as of 2026-02-02; revalidate after further changes.
+- The "Current State" section below reflects `feature/rizzoma-core-features` as of 2026-02-03; revalidate after further changes.
 
 ### Drift warnings (actively curating)
 - Many onboarding/status docs (`README*.md`, `QUICKSTART.md`, `README_MODERNIZATION.md`, `MODERNIZATION_STRATEGY.md`, `PARALLEL_DEVELOPMENT_PLAN.md`, `TESTING_GUIDE.md`, `MANUAL_TEST_CHECKLIST.md`, `CLAUDE.md`) still talk about demo-mode shortcuts, “all core features green,” or aggressive auto-merge flows that predate the unread/perf backlog. Treat them as historical until we rewrite them with the current perf harness + CI gating expectations.
@@ -25,9 +25,9 @@ PR Ops (CLI)
 
 Current State (feature/rizzoma-core-features @ 2026-02-03)
 - FEAT_ALL required: start both server (:8000) and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
-- Tests last run (2026-02-03): `npm run test:health` pass. `npm test -- --run src/tests/client.BlipMenu.test.tsx` pass. Playwright `npm run test:toolbar-inline` pass (assertions active; snapshots under `snapshots/toolbar-inline/1770075382628-*-final.png`). Playwright `npm run test:follow-green` pass for desktop+mobile with snapshots under `snapshots/follow-the-green/1770075636800-*` and `snapshots/follow-the-green/1770075681747-*`. Perf harness 1000 blips pass with metrics under `snapshots/perf/metrics-1770076098998-*.json` and renders under `snapshots/perf/render-1770076098998-*.png`. `node test-blb-snapshots.mjs` pass with snapshots under `snapshots/blb/1770077199862-*`. Prior runs: `npm test -- --run src/tests/routes.topics.follow.test.ts` pass (2026-02-02). Historical BLB snapshot runs remain below; re-run before merges.
+- Tests last run (2026-02-03): Playwright `npm run test:toolbar-inline` pass (assertions active; snapshots under `snapshots/toolbar-inline/1770080797945-*-final.png`). `node test-blb-snapshots.mjs` pass with snapshots under `snapshots/blb/1770080861419-*`. Earlier 2026-02-03 runs: `npm run test:health` pass; `npm test -- --run src/tests/client.BlipMenu.test.tsx` pass; Playwright `npm run test:follow-green` pass with snapshots under `snapshots/follow-the-green/1770075636800-*` and `snapshots/follow-the-green/1770075681747-*`; perf harness 1000 blips pass with metrics under `snapshots/perf/metrics-1770076098998-*.json` and renders under `snapshots/perf/render-1770076098998-*.png`. Prior runs: `npm test -- --run src/tests/routes.topics.follow.test.ts` pass (2026-02-02). Historical BLB snapshot runs remain below; re-run before merges.
 - BLB inline `[+]` markers now navigate into subblip documents; Ctrl+Enter inserts marker and navigates into the new subblip (topic + blip editors).
-- Topic meta-blip now renders as a single scrollable pane so the topic title is the first line in the same container as child blips.
+- Topic meta-blip now renders via `RizzomaBlip` in normal mode (topic root renderMode) while keeping the topic toolbar + editor override; root-level blips still render as standard `RizzomaBlip` instances inside the unified container.
 - Read-only blip toolbar now includes Collapse/Expand buttons for legacy parity.
 - Topics list enrichment: `/api/topics` now emits author name/avatar, snippets, unread totals, and follow state for signed-in users; follow/unfollow endpoints persist `topic_follow` docs with tests in `src/tests/routes.topics.follow.test.ts`.
 - Perf: `perf-harness.mjs` 200-blip run PASS (TTF 2173.8ms, FCP 260ms, rendered 101/200); 1000-blip runs now PASS in `perfRender=lite` mode — latest 2026-02-02 run (1000 blips) reported stage duration ~1.5s landing and ~0.5s expanded, memory 23MB, labels rendered 1000/1000 (`snapshots/perf/metrics-1770042725851-*.json`). Windowed 200-label time ~2.6–2.9s. `perfLimit` raises `/api/blips` limits in perf mode; `x-rizzoma-perf=1` skips blip history writes during perf seeding, `perf=full` skips unread/sidebar fetches, and benchmarks now use per-stage duration. Keep working on full-render perf beyond lite mode.
@@ -46,7 +46,6 @@ Next Work
   - Keep Playwright smokes/browser artifacts green; monitor follow-green socket delivery and toolbar parity as code changes land.
   - Health checks + CI gating: `/api/health` + inline comments/upload health tests pass locally; ensure CI coverage and alerting remain intact.
   - Backups: automate bundle + GDrive copy after merges and document cadence.
-- Topic render unification: see `docs/TOPIC_RENDER_UNIFICATION.md` for plan to reuse `RizzomaBlip` for meta‑blip body.
 - Legacy cleanup: finish CoffeeScript/legacy asset disposition and dependency upgrades; rewrite onboarding/status docs to remove demo/start-all claims.
   - Audit (2026-02-02): `.coffee` files remain only in `original-rizzoma-src/` reference tree; none in active `src/`.
 

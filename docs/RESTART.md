@@ -2,8 +2,8 @@
 
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
-- `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-02-02; refresh if more changes land.
-- Re-read checkpoint: 2026-02-02 19:20 local — topic meta-blip single-pane update + Playwright reruns captured; drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
+- `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-02-03; refresh if more changes land.
+- Re-read checkpoint: 2026-02-03 01:20 local — topic render unification wired + Playwright toolbar/BLB snapshots refreshed; drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
 
 Quick start for the next batch (copy/paste):
 ```
@@ -24,7 +24,6 @@ codex exec '
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
   5) Automate bundles/backups (bundle + GDrive copy) and document cadence (`scripts/backup-bundle.sh`).
   6) Finish CoffeeScript/legacy cleanup and dependency upgrades; decide legacy static assets (note: `.coffee` files remain only in `original-rizzoma-src/` reference tree).
-  7) Topic render unification: follow `docs/TOPIC_RENDER_UNIFICATION.md` to reuse `RizzomaBlip` for meta‑blip body.
 
   Testing/CI hygiene:
   - Keep npm run test:toolbar-inline and npm run test:follow-green green; snapshots live under snapshots/<feature>/ and are uploaded as Actions artifacts.
@@ -94,4 +93,4 @@ codex exec '
 9) Backup
 - Script: `scripts/backup-bundle.sh` (runs bundle + PowerShell copy; honors `RIZZOMA_BUNDLE_PATH` + `RIZZOMA_GDRIVE_DIR` overrides).
 - Bundle (manual): `git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all`
-- Copy: see commands in `docs/HANDOFF.md` (last run 2026-02-02).
+- Copy: see commands in `docs/HANDOFF.md` (last run 2026-02-03).

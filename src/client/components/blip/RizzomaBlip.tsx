@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import { BlipMenu } from './BlipMenu';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
@@ -189,6 +190,17 @@ interface RizzomaBlipProps {
   onNavigateToSubblip?: (blip: BlipData) => void;
   // BLB: Force expanded state (used when viewing subblip as root)
   forceExpanded?: boolean;
+  // Topic rendering: tweak layout for topic root
+  renderMode?: 'default' | 'topic-root';
+  // Allow external render overrides for content or footers
+  contentOverride?: ReactNode;
+  contentFooter?: ReactNode;
+  childFooter?: ReactNode;
+  contentContainerClassName?: string;
+  childContainerClassName?: string;
+  contentClassName?: string;
+  contentTitle?: string;
+  onContentClick?: () => void;
 }
 
 type UploadUiState = {
@@ -213,6 +225,15 @@ export function RizzomaBlip({
   expandedBlips,
   onNavigateToSubblip,
   forceExpanded = false,
+  renderMode = 'default',
+  contentOverride,
+  contentFooter,
+  childFooter,
+  contentContainerClassName,
+  childContainerClassName,
+  contentClassName,
+  contentTitle,
+  onContentClick,
 }: RizzomaBlipProps) {
   const isPerfMode = typeof window !== 'undefined' && (window.location.hash || '').includes('perf=');
   const initialCollapsePreference = typeof blip.isFoldedByDefault === 'boolean'
@@ -1317,9 +1338,10 @@ export function RizzomaBlip({
 
   const isUploading = uploadState?.status === 'uploading';
   const uploadProgress = uploadState ? uploadState.progress : null;
+  const isTopicRoot = renderMode === 'topic-root';
   // Root blips start expanded by default, but can be collapsed
   // Non-root blips follow the collapse preference
-  const effectiveExpanded = isExpanded;
+  const effectiveExpanded = isTopicRoot ? true : isExpanded;
 
   const rootStyle = isRoot && effectiveExpanded ? { display: 'block' as const, opacity: 1, visibility: 'visible' as const } : {};
 
@@ -1334,7 +1356,7 @@ export function RizzomaBlip({
 
   // Determine if this blip should show as collapsed (label only)
   // BLB: ALL blips (including root) can be collapsed
-  const showCollapsedView = !effectiveExpanded;
+  const showCollapsedView = !effectiveExpanded && !isTopicRoot;
 
   useEffect(() => {
     if (forceExpanded) {
@@ -1346,7 +1368,7 @@ export function RizzomaBlip({
   return (
     <div
       ref={blipContainerRef}
-      className={`rizzoma-blip blip-container ${isRoot ? 'root-blip' : 'nested-blip'} ${!blip.isRead ? 'unread' : ''} ${isActive ? 'active' : ''} ${effectiveExpanded ? 'expanded' : 'collapsed'}`}
+      className={`rizzoma-blip blip-container ${isRoot ? 'root-blip' : 'nested-blip'} ${isTopicRoot ? 'topic-root' : ''} ${!blip.isRead ? 'unread' : ''} ${isActive ? 'active' : ''} ${effectiveExpanded ? 'expanded' : 'collapsed'}`}
       data-blip-id={blip.id}
       style={{ marginLeft: isRoot ? 0 : depth * 24, position: 'relative', ...rootStyle }}
       onClick={handleBlipClick}
@@ -1367,54 +1389,58 @@ export function RizzomaBlip({
       {!showCollapsedView && (
         <>
           {/* Expand/Collapse control - shows [−] when expanded */}
-          <div
-            className={`blip-expander ${unreadMarkerActive ? 'unread' : 'read'}`}
-            onClick={handleToggleExpand}
-            role="button"
-            aria-label="Collapse"
-            data-testid="blip-expander"
-          >
-            <span className="blip-expander-icon">−</span>
-          </div>
+          {!isTopicRoot && (
+            <div
+              className={`blip-expander ${unreadMarkerActive ? 'unread' : 'read'}`}
+              onClick={handleToggleExpand}
+              role="button"
+              aria-label="Collapse"
+              data-testid="blip-expander"
+            >
+              <span className="blip-expander-icon">−</span>
+            </div>
+          )}
           {/* Inline Blip Menu - Only shown when expanded */}
-          <BlipMenu
-        isActive={true}
-        isEditing={isEditing}
-        canEdit={blip.permissions.canEdit}
-        canComment={blip.permissions.canComment}
-        inlineCommentsNotice={inlineCommentsNotice}
-        editor={inlineEditor || undefined}
-        isExpanded={effectiveExpanded}
-        onStartEdit={handleStartEdit}
-        onFinishEdit={handleFinishEdit}
-        onCollapse={handleCollapse}
-        onExpand={handleExpand}
-        onSend={handleSendFromToolbar}
-        onGetLink={handleCopyLink}
-        onToggleComments={handleToggleCommentsVisibility}
-        onShowComments={handleShowComments}
-        onHideComments={handleHideComments}
-        areCommentsVisible={areCommentsVisible}
-        collapseByDefault={collapseByDefault}
-        onToggleCollapseByDefault={blip.permissions.canEdit ? handleToggleCollapsePreference : undefined}
-        onCopyComment={handleCopyComment}
-        onPasteAsReply={blip.permissions.canComment ? handlePasteAsReplyFromClipboard : undefined}
-        onPasteAtCursor={isEditing ? handlePasteAtCursorFromClipboard : undefined}
-        clipboardAvailable={clipboardAvailable}
-        onShowHistory={() => setShowHistoryModal(true)}
-        onInsertAttachment={isEditing ? handleAttachmentUpload : undefined}
-        onInsertImage={isEditing ? handleImageUpload : undefined}
-        isUploading={isUploading}
-        uploadProgress={uploadProgress}
-        onDelete={!isRoot && blip.permissions.canEdit ? handleDelete : undefined}
-        isSending={isSavingEdit}
-        isDeleting={isDeleting}
-        onDuplicate={!isRoot && blip.permissions.canEdit ? handleDuplicate : undefined}
-        onCut={!isRoot && blip.permissions.canEdit ? handleCut : undefined}
-        onPasteAsNew={blip.permissions.canComment ? handlePasteAsNewBlip : undefined}
-        isCut={isCutMode}
-        isDuplicating={isDuplicating}
-      />
+          {!isTopicRoot && (
+            <BlipMenu
+              isActive={true}
+              isEditing={isEditing}
+              canEdit={blip.permissions.canEdit}
+              canComment={blip.permissions.canComment}
+              inlineCommentsNotice={inlineCommentsNotice}
+              editor={inlineEditor || undefined}
+              isExpanded={effectiveExpanded}
+              onStartEdit={handleStartEdit}
+              onFinishEdit={handleFinishEdit}
+              onCollapse={handleCollapse}
+              onExpand={handleExpand}
+              onSend={handleSendFromToolbar}
+              onGetLink={handleCopyLink}
+              onToggleComments={handleToggleCommentsVisibility}
+              onShowComments={handleShowComments}
+              onHideComments={handleHideComments}
+              areCommentsVisible={areCommentsVisible}
+              collapseByDefault={collapseByDefault}
+              onToggleCollapseByDefault={blip.permissions.canEdit ? handleToggleCollapsePreference : undefined}
+              onCopyComment={handleCopyComment}
+              onPasteAsReply={blip.permissions.canComment ? handlePasteAsReplyFromClipboard : undefined}
+              onPasteAtCursor={isEditing ? handlePasteAtCursorFromClipboard : undefined}
+              clipboardAvailable={clipboardAvailable}
+              onShowHistory={() => setShowHistoryModal(true)}
+              onInsertAttachment={isEditing ? handleAttachmentUpload : undefined}
+              onInsertImage={isEditing ? handleImageUpload : undefined}
+              isUploading={isUploading}
+              uploadProgress={uploadProgress}
+              onDelete={!isRoot && blip.permissions.canEdit ? handleDelete : undefined}
+              isSending={isSavingEdit}
+              isDeleting={isDeleting}
+              onDuplicate={!isRoot && blip.permissions.canEdit ? handleDuplicate : undefined}
+              onCut={!isRoot && blip.permissions.canEdit ? handleCut : undefined}
+              onPasteAsNew={blip.permissions.canComment ? handlePasteAsNewBlip : undefined}
+              isCut={isCutMode}
+              isDuplicating={isDuplicating}
+            />
+          )}
       {uploadState && (
         <div className={`upload-status ${uploadState.status}`} data-testid="upload-status">
           <div className="upload-preview">
@@ -1453,15 +1479,17 @@ export function RizzomaBlip({
       )}
       {/* Blip Content */}
       <div 
-        className={`blip-content ${effectiveExpanded ? 'expanded force-expanded' : 'collapsed'}`}
+        className={`blip-content ${effectiveExpanded ? 'expanded force-expanded' : 'collapsed'}${contentContainerClassName ? ` ${contentContainerClassName}` : ''}`}
         style={{
-          marginTop: isRoot ? '40px' : '0',
-          minHeight: isRoot ? 100 : 24,
+          marginTop: isRoot && !isTopicRoot ? '40px' : '0',
+          minHeight: isRoot && !isTopicRoot ? 100 : 24,
           ...(isRoot && effectiveExpanded ? { display: 'block', opacity: 1, visibility: 'visible' } : {}),
         }}
         data-expanded={effectiveExpanded ? '1' : '0'}
       >
-        {isEditing ? (
+        {contentOverride ? (
+          contentOverride
+        ) : isEditing ? (
           <div className="blip-editor-container" ref={editorRef}>
             {inlineEditor && (
               <div style={{ position: 'relative' }}>
@@ -1482,85 +1510,117 @@ export function RizzomaBlip({
           <div className="blip-view-mode">
             <div className="blip-content-row">
               {/* Bullet point - original Rizzoma style */}
-              <span className="blip-bullet">•</span>
+              {!isTopicRoot && <span className="blip-bullet">•</span>}
               <div className="blip-main-content">
                 <div
                   ref={contentRef}
-                  className="blip-text"
+                  className={`blip-text${contentClassName ? ` ${contentClassName}` : ''}`}
                   dangerouslySetInnerHTML={{ __html: blip.content }}
                   data-testid="blip-view-content"
+                  onClick={onContentClick}
+                  title={contentTitle}
+                  style={onContentClick ? { cursor: 'pointer' } : undefined}
                 />
               </div>
               {/* Contributors avatars on right side - stacked with owner on top, expandable */}
-              <div className="blip-contributors-info">
-                <BlipContributorsStack contributors={blip.contributors} fallbackAuthor={blip.authorName} fallbackAvatar={blip.authorAvatar} />
-                <span className="blip-author-date">
-                  {new Date(blip.updatedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                </span>
-              </div>
+              {!isTopicRoot && (
+                <div className="blip-contributors-info">
+                  <BlipContributorsStack contributors={blip.contributors} fallbackAuthor={blip.authorName} fallbackAvatar={blip.authorAvatar} />
+                  <span className="blip-author-date">
+                    {new Date(blip.updatedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Child Blips (Replies) - BEFORE "Write a reply..." per BLB structure */}
-        {blip.childBlips && blip.childBlips.length > 0 && (
-          <div className="child-blips">
-            {blip.childBlips.map((childBlip) => {
-              const childExpanded = expandedBlips?.has(childBlip.id);
-              const childHasUnread = !childBlip.isRead || (childBlip.childBlips?.some((grandchild) => !grandchild.isRead) ?? false);
-              // Extract label from content - strip HTML tags and get first line
-              const text = childBlip.content
-                ? childBlip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-                : '';
-              const label = text
-                ? text.length > 80
-                  ? `${text.slice(0, 80)}…`
-                  : text
-                : (childBlip.authorName || 'Reply');
-              // Format date like parent blips (available for future use)
-              void new Date(childBlip.updatedAt || childBlip.createdAt);
+        {contentFooter}
 
-              return (
-                <div key={childBlip.id} className="child-blip-wrapper">
-                  {/* Collapsed child blip - simple like live Rizzoma: • Label [+] */}
+        {/* Child Blips (Replies) - BEFORE "Write a reply..." per BLB structure */}
+        {(blip.childBlips && blip.childBlips.length > 0) || childFooter ? (
+          <div className={`child-blips${childContainerClassName ? ` ${childContainerClassName}` : ''}`}>
+            {blip.childBlips && blip.childBlips.length > 0 && (isTopicRoot ? (
+              blip.childBlips.map((childBlip) => (
+                <RizzomaBlip
+                  key={childBlip.id}
+                  blip={childBlip}
+                  isRoot={false}
+                  depth={depth + 1}
+                  onBlipUpdate={onBlipUpdate}
+                  onAddReply={onAddReply}
+                  onToggleCollapse={onToggleCollapse}
+                  onDeleteBlip={onDeleteBlip}
+                  onBlipRead={onBlipRead}
+                  onExpand={onExpand}
+                  expandedBlips={expandedBlips}
+                />
+              ))
+            ) : (
+              blip.childBlips.map((childBlip) => {
+                const childExpanded = expandedBlips?.has(childBlip.id);
+                const childHasUnread = !childBlip.isRead || (childBlip.childBlips?.some((grandchild) => !grandchild.isRead) ?? false);
+                // Extract label from content - strip HTML tags and get first line
+                const text = childBlip.content
+                  ? childBlip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+                  : '';
+                const label = text
+                  ? text.length > 80
+                    ? `${text.slice(0, 80)}…`
+                    : text
+                  : (childBlip.authorName || 'Reply');
+                // Format date like parent blips (available for future use)
+                void new Date(childBlip.updatedAt || childBlip.createdAt);
+
+                return (
                   <div
-                    className={`blip-collapsed-row child-blip-collapsed ${childHasUnread ? 'has-unread' : ''}`}
-                    data-blip-id={childBlip.id}
-                    data-testid="blip-label-child"
-                    style={{ display: childExpanded ? 'none' : 'flex' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onExpand?.(childBlip.id);
-                    }}
+                    key={childBlip.id}
+                    className="child-blip-wrapper"
+                    data-blip-id={childExpanded ? undefined : childBlip.id}
                   >
-                    <span className="blip-bullet">•</span>
-                    <span className="blip-label-text">{label}</span>
-                    <span className={`blip-expand-icon ${childHasUnread ? 'has-unread' : ''}`}>+</span>
-                    {/* Author/date hidden on collapsed view to match live Rizzoma */}
+                    {/* Collapsed child blip - simple like live Rizzoma: • Label [+] */}
+                    {!childExpanded && (
+                      <div
+                        className={`blip-collapsed-row child-blip-collapsed ${childHasUnread ? 'has-unread' : ''}`}
+                        data-testid="blip-label-child"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onExpand?.(childBlip.id);
+                        }}
+                      >
+                        <span className="blip-bullet">•</span>
+                        <span className="blip-label-text">{label}</span>
+                        <span className={`blip-expand-icon ${childHasUnread ? 'has-unread' : ''}`}>+</span>
+                        {/* Author/date hidden on collapsed view to match live Rizzoma */}
+                      </div>
+                    )}
+                    {/* Expanded child blip */}
+                    {childExpanded && (
+                      <div>
+                        <RizzomaBlip
+                          blip={{ ...childBlip, isCollapsed: false }}
+                          isRoot={false}
+                          depth={depth + 1}
+                          onBlipUpdate={onBlipUpdate}
+                          onAddReply={onAddReply}
+                          onToggleCollapse={onToggleCollapse}
+                          onDeleteBlip={onDeleteBlip}
+                          onBlipRead={onBlipRead}
+                          onExpand={onExpand}
+                          expandedBlips={expandedBlips}
+                        />
+                      </div>
+                    )}
                   </div>
-                  {/* Expanded child blip */}
-                  <div style={{ display: childExpanded ? 'block' : 'none' }}>
-                    <RizzomaBlip
-                      blip={{ ...childBlip, isCollapsed: false }}
-                      isRoot={false}
-                      depth={depth + 1}
-                      onBlipUpdate={onBlipUpdate}
-                      onAddReply={onAddReply}
-                      onToggleCollapse={onToggleCollapse}
-                      onDeleteBlip={onDeleteBlip}
-                      onBlipRead={onBlipRead}
-                      onExpand={onExpand}
-                      expandedBlips={expandedBlips}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ))}
+            {childFooter}
           </div>
-        )}
+        ) : null}
 
         {/* Reply Input - at the BOTTOM per BLB structure */}
-        {!isEditing && blip.permissions.canComment && (
+        {!isTopicRoot && !isEditing && blip.permissions.canComment && (
           <div className="blip-reply-inline">
             {!showReplyForm ? (
               <input
