@@ -2,7 +2,7 @@
 
 This document keeps tabs on how closely the modern TipTap/Yjs toolbars match the original Rizzoma CoffeeScript toolbar (`original-rizzoma/src/client/blip/menu/template.coffee`).
 
-## CRITICAL: Two-Level Toolbar Architecture
+## Two-Level Toolbar Architecture
 
 Original Rizzoma has **TWO levels of toolbars** that modern implementation must replicate:
 
@@ -16,11 +16,11 @@ These appear at the TOP of every topic and are ALWAYS visible:
 ```
 | Element | Function | Modern Status |
 |---------|----------|---------------|
-| Invite button | Add new participants | ❌ Missing |
-| Participant avatars | Shows WHO is involved | ❌ Missing |
-| +N count | Additional participants | ❌ Missing |
-| Share button | Permissions/visibility | ❌ Missing |
-| Gear icon | Topic settings | ❌ Missing |
+| Invite button | Add new participants | ✅ Implemented |
+| Participant avatars | Shows WHO is involved | ✅ Implemented |
+| +N count | Additional participants | ✅ Implemented |
+| Share button | Permissions/visibility | ✅ Implemented |
+| Gear icon | Topic settings | ✅ Implemented |
 
 #### 1B. Topic-Level Edit Toolbar
 ```
@@ -28,9 +28,9 @@ Edit | 💬 | 💬 | 🔗 | icon
 ```
 | Element | Function | Modern Status |
 |---------|----------|---------------|
-| Edit | Edit topic metadata | ❌ Missing (we only have per-blip!) |
-| Comments icons | Topic-level comments | ❌ Missing |
-| Link | Copy topic link | ❌ Missing |
+| Edit | Edit topic metadata | ✅ Implemented |
+| Comments icons | Topic-level comments | ✅ Implemented |
+| Link | Copy topic link | ✅ Implemented |
 
 ### Level 2: Blip-Level Toolbar (ONLY WHEN EXPANDED)
 
@@ -40,7 +40,7 @@ This toolbar appears **ONLY when a specific blip is expanded/focused**:
 Edit | 💬 | 📎 | 🔗 | ☑ Hidden | 🗑 | 🔗
 ```
 
-**CRITICAL**: Modern implementation shows toolbars on ALL blips. Original shows toolbar ONLY on the currently expanded/focused blip!
+Current state: Toolbar visibility matches legacy (only the expanded/focused blip shows its toolbar).
 
 ## Legacy Toolbar (CoffeeScript)
 
@@ -109,7 +109,7 @@ Edit | 💬 | 📎 | 🔗 | ☑ Hidden | 🗑 | 🔗
 - [x] **Title = First line**: Title is just the first line of topic content with H1/bold default styling
 - [x] **Topic content editable**: Topic content (including title) editable like any blip via TipTap
 - [x] **Topic can have inline comments**: Ctrl+Enter anywhere in topic content creates inline comment
-- [ ] **Unify rendering**: Topic should render using same RizzomaBlip component pattern
+- [x] **Unify rendering**: Topic renders via `RizzomaBlip` (topic-root render mode) with content/child hooks
 - [x] **Title syncing**: When content changes, extract first line to update `title` field for indexing
 
 ### Topic-Level Toolbars (IMPLEMENTED)
