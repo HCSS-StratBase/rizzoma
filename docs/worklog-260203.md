@@ -32,3 +32,6 @@
 - Gated unread logging in `src/server/lib/unread.ts` behind `RIZZOMA_DEBUG_UNREAD`; logged in `CHANGELOG.md`.
 - Added unread cache pruning in `src/server/lib/unread.ts` to cap cache growth; logged in `CHANGELOG.md`.
 - Updated `scripts/start-all.sh` to export `EDITOR_ENABLE=1` by default; logged in `CHANGELOG.md`.
+- Updated `scripts/start-all.sh` to skip or timeout on missing `sphinx` so the dev bootstrap doesn't hang indefinitely.
+- Ran `scripts/start-all.sh` in a live session; API health verified OK at `http://localhost:8000/api/health`, Vite UI reachable at `http://localhost:3000`.
+- Documented the `scripts/start-all.sh` flow + Sphinx timeout note in `QUICKSTART.md`; logged in `CHANGELOG.md`.

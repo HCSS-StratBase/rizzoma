@@ -17,6 +17,12 @@ npm run dev
 
 This brings up CouchDB/Redis, then runs the API + UI locally (Vite + TSX). Use real authentication via the AuthPanel; demo/query-string logins are not supported on this branch.
 
+You can also run the all-in-one script, which will start services, wait for health checks, and launch the app:
+```bash
+./scripts/start-all.sh
+```
+If the optional `sphinx` service is not present (or is slow to boot), the script now warns and continues after a short timeout.
+
 ## 📋 Available Commands
 
 ### Core Commands

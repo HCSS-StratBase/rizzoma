@@ -48,12 +48,24 @@ done
 echo -e " ${GREEN}✓${NC}"
 
 # Check if Sphinx is ready (it doesn't have a health endpoint, so we just check if container is running)
-echo -n "  - Sphinx: "
-while [ "$(docker inspect -f '{{.State.Running}}' rizzoma-sphinx 2>/dev/null)" != "true" ]; do
-    echo -n "."
-    sleep 1
-done
-echo -e " ${GREEN}✓${NC}"
+if docker compose config --services | grep -q "^sphinx$"; then
+    echo -n "  - Sphinx: "
+    sphinx_wait=0
+    while [ "$(docker inspect -f '{{.State.Running}}' rizzoma-sphinx 2>/dev/null)" != "true" ]; do
+        echo -n "."
+        sleep 1
+        sphinx_wait=$((sphinx_wait + 1))
+        if [ "$sphinx_wait" -ge 60 ]; then
+            echo -e " ${YELLOW}⚠${NC} (timed out)"
+            break
+        fi
+    done
+    if [ "$sphinx_wait" -lt 60 ]; then
+        echo -e " ${GREEN}✓${NC}"
+    fi
+else
+    echo -e "  - Sphinx: ${YELLOW}⚠${NC} (service not defined in compose)"
+fi
 
 # Start the application
 echo -e "\n${YELLOW}🔧 Starting application servers...${NC}"
