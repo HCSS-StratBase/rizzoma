@@ -185,15 +185,15 @@ FEAT_ALL=1
 
 ## 🚦 Next Steps
 
-1. **Testing** - Start services with `FEAT_ALL=1 npm run start:all`
-2. **Polish** - Fine-tune UI/UX based on testing
-3. **Performance** - Optimize for large documents
-4. **Mobile** - Ensure responsive design
-5. **Documentation** - Update user guides
+1. **Testing** - Start services with `docker compose up -d couchdb redis`, then run `FEAT_ALL=1 EDITOR_ENABLE=1 SESSION_STORE=memory REDIS_URL=memory:// npm run dev` (real auth only).
+2. **Polish** - Fine-tune UI/UX based on testing.
+3. **Performance** - Optimize for large documents (beyond `perfRender=lite`).
+4. **Mobile** - Validate unread/navigation/toolbar ergonomics on device.
+5. **Documentation** - Update user guides and remove demo-mode language.
 
 ## 🎯 What You Can Do Now
 
-With `FEAT_ALL=1` enabled:
+With `FEAT_ALL=1` + real auth enabled:
 
 1. **Rich Editing** - Full formatting toolbar on all blips.
 2. **@mentions** - Type @ to mention users.
