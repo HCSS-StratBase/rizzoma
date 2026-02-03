@@ -51,6 +51,12 @@ npm run migrate:coffee -- --dry-run
 Note:
 - The CoffeeScript migration step is historical unless you are actively porting legacy code; do not run it during normal feature work on this branch.
 
+For local parity checks and Playwright smokes, run the app with:
+```bash
+FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev
+```
+Sign in via the AuthPanel (no demo/query-string logins).
+
 ## Fork Policy & PR Target
 
 Work exclusively on the HCSS fork until the modernized app fully works. Do not open PRs to `rizzoma/rizzoma`.

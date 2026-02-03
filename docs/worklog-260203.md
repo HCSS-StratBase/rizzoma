@@ -26,3 +26,4 @@
 - Updated `docs/HANDOFF.md` and `docs/RESTART.md` drift warnings to reflect recent doc cleanups; logged in `CHANGELOG.md`.
 - Updated `docs/HANDOFF.md` last-updated note and `docs/RESTART.md` re-read checkpoint timestamp for the doc cleanup pass; logged in `CHANGELOG.md`.
 - Logged the doc cleanup pass in `RESTORE_POINT.md`; updated `CHANGELOG.md`.
+- Added FEAT_ALL/EDITOR_ENABLE run note to `README_MODERNIZATION.md`; logged in `CHANGELOG.md`.
