@@ -43,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **EDITOR_REALTIME.md** - Updated realtime summary to include search materialization and current perf/CI next steps
 - **EDITOR.md** - Updated BLB/toolbar/inline-comment parity notes to reflect current implementation status
 - **EDITOR_TOOLBAR_PARITY.md** - Updated topic toolbar status and topic render unification to reflect current implementation
+- **QUICKSTART.md** - Added FEAT_ALL note for parity/smokes and linked to handoff/restart docs
 - **Dependency maintenance** - Applied minor/patch updates for Playwright/Vitest/Prettier, AWS SDK, and session/email utilities
 - **BLB parity docs** - Marked topic inline comments + anchorPosition behavior as implemented
 - **BLB parity docs** - Marked reply vs inline comment behaviors and child blip format as implemented

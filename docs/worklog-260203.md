@@ -18,3 +18,4 @@
 - Updated `docs/EDITOR_REALTIME.md` to reflect completed presence/recovery/search and current perf/CI next steps; logged in `CHANGELOG.md`.
 - Updated `docs/EDITOR.md` parity notes to reflect implemented BLB collapse, toolbar scoping, and Ctrl+Enter inline marker navigation; logged in `CHANGELOG.md`.
 - Updated `docs/EDITOR_TOOLBAR_PARITY.md` to reflect implemented topic toolbars and topic render unification; logged in `CHANGELOG.md`.
+- Updated `QUICKSTART.md` to mention `FEAT_ALL=1` for parity checks and link to handoff/restart docs; logged in `CHANGELOG.md`.

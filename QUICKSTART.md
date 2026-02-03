@@ -55,6 +55,11 @@ export EDITOR_ENABLE=1
 npm run dev
 ```
 
+For parity checks and Playwright smokes, also set:
+```bash
+export FEAT_ALL=1
+```
+
 ### Environment Variables
 Create a `.env` file for custom settings:
 ```bash
@@ -122,7 +127,7 @@ docker compose down
 
 - Create your first topic at http://localhost:3000
 - Explore the API at http://localhost:8000/api/topics
-- Check out the [full documentation](./README.md)
+- Check out `docs/HANDOFF.md` and `docs/RESTART.md` for the active branch status and restart checklist
 - Enable editor features for rich text editing
 
 ---
