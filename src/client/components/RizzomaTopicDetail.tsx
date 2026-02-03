@@ -802,11 +802,13 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       // No content, just use title as H1
       initialContent = titleH1;
     }
-    setTopicContent(initialContent);
-    lastSavedContentRef.current = initialContent;
+    const inlineRootBlips = blips.filter((b) => typeof b.anchorPosition === 'number');
+    const nextContent = injectInlineMarkers(initialContent, inlineRootBlips);
+    setTopicContent(nextContent);
+    lastSavedContentRef.current = nextContent;
     setIsEditingTopic(true);
     // The useEffect will handle syncing the editor content when isEditingTopic changes
-  }, [isAuthed, topic?.title, topic?.content]);
+  }, [isAuthed, topic?.title, topic?.content, blips]);
 
   // Finish editing topic
   const finishEditingTopic = useCallback(() => {

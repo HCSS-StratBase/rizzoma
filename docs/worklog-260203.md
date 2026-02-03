@@ -39,3 +39,5 @@
 - Ran `node test-blb-snapshots.mjs` to verify BLB behavior; new snapshot set captured under `snapshots/blb/1770090168674-*`.
 - Injected inline `[+]` markers for legacy anchor-positioned child blips (view-only) and filtered inline children out of list rendering so BLB drill-down matches legacy.
 - Playwright `node test-blb-snapshots.mjs` PASS; refreshed BLB snapshots under `snapshots/blb/1770091285630-*`.
+- Injected inline `[+]` markers into topic/blip edit content so legacy anchor-positioned children remain visible while editing.
+- Playwright `node test-blb-snapshots.mjs` PASS after edit-mode marker injection; refreshed BLB snapshots under `snapshots/blb/1770128954686-*`.

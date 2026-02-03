@@ -451,12 +451,13 @@ export function RizzomaBlip({
   const handleStartEdit = () => {
     console.log('handleStartEdit called for blip:', blip.id, 'canEdit:', blip.permissions.canEdit);
     if (blip.permissions.canEdit) {
-      setEditedContent(blip.content);
+      const nextContent = injectInlineMarkers(blip.content || '', inlineChildren);
+      setEditedContent(nextContent);
       setIsEditing(true);
       setIsActive(true);
       // Update inline editor content and make it editable
       if (inlineEditor) {
-        inlineEditor.commands.setContent(blip.content);
+        inlineEditor.commands.setContent(nextContent);
         inlineEditor.setEditable(true);
       }
     }
