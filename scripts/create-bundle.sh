@@ -83,14 +83,13 @@ Git Commit: $COMMIT_HASH
 Git Commit Message: $(git log -1 --pretty=format:"%s")
 
 Features Status:
-- ✅ Authentication system (demo mode)
+- ✅ Authentication system (AuthPanel sign-in)
 - ✅ Topic creation and editing
-- ✅ Rich text editor with FloatingToolbar
+- ✅ Rich text editor + inline toolbar
 - ✅ Reply functionality
 - ✅ Inline comments
-- 🔄 @mentions autocomplete (in progress)
-- ❌ Real-time collaborative cursors
-- ❌ Full OAuth authentication
+- 🔄 Perf/resilience sweeps (in progress)
+- ❌ Full OAuth authentication (pending)
 
 Critical Files:
 - CLAUDE.md (project documentation)
@@ -104,8 +103,8 @@ Critical Files:
 Installation Instructions:
 1. Extract bundle: tar -xzf $BUNDLE_NAME
 2. Run: npm install
-3. Start: ./scripts/start-all.sh
-4. Test: http://localhost:3000/?layout=rizzoma&demo=true
+3. Start: FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev
+4. Test: http://localhost:3000 (sign in via AuthPanel)
 
 Last Playwright Test: Successful
 - Floating toolbar working
