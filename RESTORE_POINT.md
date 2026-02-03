@@ -5,6 +5,7 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-02-03 03:25 local re-read) Doc cleanup pass: aligned onboarding/testing docs with real-auth + FEAT_ALL, marked planning docs historical, refreshed HANDOFF/RESTART drift warnings + timestamps. Branch/date guardrails unchanged.
 - (2026-02-03 02:20 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Added Always-On Loop guidance in AGENTS/RESTART, updated handoff/worklog/changelog. Branch/date guardrails unchanged.
 - (2026-02-03 02:10 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Wired topic render unification, refreshed BLB + toolbar Playwright snapshots, and updated handoff/testing/changelog/worklog. Branch/date guardrails unchanged.
 - (2026-02-03 01:35 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Added `docs/TOPIC_RENDER_UNIFICATION.md` and linked from HANDOFF/RESTART. Branch/date guardrails unchanged.
