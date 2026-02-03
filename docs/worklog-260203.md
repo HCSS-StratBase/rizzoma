@@ -27,3 +27,4 @@
 - Updated `docs/HANDOFF.md` last-updated note and `docs/RESTART.md` re-read checkpoint timestamp for the doc cleanup pass; logged in `CHANGELOG.md`.
 - Logged the doc cleanup pass in `RESTORE_POINT.md`; updated `CHANGELOG.md`.
 - Added FEAT_ALL/EDITOR_ENABLE run note to `README_MODERNIZATION.md`; logged in `CHANGELOG.md`.
+- Noted demo-mode references in `scripts/deploy-updates.sh` and `scripts/create-bundle.sh` as historical in HANDOFF/RESTART; logged in `CHANGELOG.md`.
