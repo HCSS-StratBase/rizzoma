@@ -9,6 +9,7 @@ import ExportModal from './ExportModal';
 import './RizzomaTopicDetail.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { RizzomaBlip, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
+import { injectInlineMarkers } from './blip/inlineMarkers';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
 import { getEditorExtensions, defaultEditorProps } from './editor/EditorConfig';
@@ -838,10 +839,12 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   }
 
   const tags = extractTags(topic.content || '');
+  const inlineRootBlips = blips.filter(b => typeof b.anchorPosition === 'number');
   const listBlips = blips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
-  const topicContentHtml = topic.content && topic.content.trim().length > 0
+  const topicContentHtmlBase = topic.content && topic.content.trim().length > 0
     ? topic.content
     : `<h1>${topic.title || 'Untitled'}</h1>`;
+  const topicContentHtml = injectInlineMarkers(topicContentHtmlBase, inlineRootBlips);
   const topicBlip: BlipData = {
     id: topic.id,
     content: topicContentHtml,
@@ -1161,8 +1164,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                     style={isAuthed ? { cursor: 'pointer' } : undefined}
                     title={isAuthed ? 'Click to edit topic content' : undefined}
                   >
-                    {topic.content ? (
-                      <div dangerouslySetInnerHTML={{ __html: topic.content }} />
+                    {topicContentHtml ? (
+                      <div dangerouslySetInnerHTML={{ __html: topicContentHtml }} />
                     ) : (
                       <h1 className="topic-title">{topic.title || 'Untitled'}</h1>
                     )}

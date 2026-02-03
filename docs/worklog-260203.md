@@ -37,3 +37,5 @@
 - Documented the `scripts/start-all.sh` flow + Sphinx timeout note in `QUICKSTART.md`; logged in `CHANGELOG.md`.
 - Updated `AGENTS.md` and `docs/RESTART.md` Codex exec next-batch steps to mention `scripts/start-all.sh` and the Sphinx timeout behavior.
 - Ran `node test-blb-snapshots.mjs` to verify BLB behavior; new snapshot set captured under `snapshots/blb/1770090168674-*`.
+- Injected inline `[+]` markers for legacy anchor-positioned child blips (view-only) and filtered inline children out of list rendering so BLB drill-down matches legacy.
+- Playwright `node test-blb-snapshots.mjs` PASS; refreshed BLB snapshots under `snapshots/blb/1770091285630-*`.

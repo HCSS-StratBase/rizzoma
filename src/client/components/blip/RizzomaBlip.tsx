@@ -32,6 +32,7 @@ import {
 import { createUploadTask, type UploadResult, type UploadTask } from '../../lib/upload';
 import { INSERT_EVENTS, EDIT_MODE_EVENT } from '../RightToolsPanel';
 import './RizzomaBlip.css';
+import { injectInlineMarkers } from './inlineMarkers';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
 export type BlipContributor = {
@@ -415,6 +416,11 @@ export function RizzomaBlip({
   const childCount = blip.childBlips?.length ?? 0;
   const hasUnread = !blip.isRead || hasUnreadChildren;
   const unreadMarkerActive = hasUnread;
+  const inlineChildren = (blip.childBlips || []).filter((child) => typeof child.anchorPosition === 'number');
+  const listChildren = (blip.childBlips || []).filter((child) => child.anchorPosition === undefined || child.anchorPosition === null);
+  const viewContentHtml = !isEditing && inlineChildren.length > 0
+    ? injectInlineMarkers(blip.content || '', inlineChildren)
+    : (blip.content || '');
 
   const handleToggleExpand = () => {
     const next = !isExpanded;
@@ -1515,7 +1521,7 @@ export function RizzomaBlip({
                 <div
                   ref={contentRef}
                   className={`blip-text${contentClassName ? ` ${contentClassName}` : ''}`}
-                  dangerouslySetInnerHTML={{ __html: blip.content }}
+                  dangerouslySetInnerHTML={{ __html: viewContentHtml }}
                   data-testid="blip-view-content"
                   onClick={onContentClick}
                   title={contentTitle}
@@ -1538,10 +1544,10 @@ export function RizzomaBlip({
         {contentFooter}
 
         {/* Child Blips (Replies) - BEFORE "Write a reply..." per BLB structure */}
-        {(blip.childBlips && blip.childBlips.length > 0) || childFooter ? (
+        {(listChildren && listChildren.length > 0) || childFooter ? (
           <div className={`child-blips${childContainerClassName ? ` ${childContainerClassName}` : ''}`}>
-            {blip.childBlips && blip.childBlips.length > 0 && (isTopicRoot ? (
-              blip.childBlips.map((childBlip) => (
+            {listChildren && listChildren.length > 0 && (isTopicRoot ? (
+              listChildren.map((childBlip) => (
                 <RizzomaBlip
                   key={childBlip.id}
                   blip={childBlip}
@@ -1557,7 +1563,7 @@ export function RizzomaBlip({
                 />
               ))
             ) : (
-              blip.childBlips.map((childBlip) => {
+              listChildren.map((childBlip) => {
                 const childExpanded = expandedBlips?.has(childBlip.id);
                 const childHasUnread = !childBlip.isRead || (childBlip.childBlips?.some((grandchild) => !grandchild.isRead) ?? false);
                 // Extract label from content - strip HTML tags and get first line

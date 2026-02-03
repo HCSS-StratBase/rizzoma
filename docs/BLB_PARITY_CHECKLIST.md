@@ -27,6 +27,7 @@ Use this checklist to verify BLB (Bullet‑Label‑Blip) parity with the legacy 
 - [x] Marker color indicates unread state (green when unread).
 - [x] Snapshot harness clicks the inline marker directly (matches the default UI path).
 - [x] Inline marker click handler uses event delegation (`closest`) with capture-phase listener to keep view-mode clicks reliable.
+- [x] Legacy anchor-positioned child blips inject `[+]` markers into the parent view even if the stored HTML lacks markers.
 
 ## 5) Toolbar Parity (Blip-Level)
 - [x] Toolbar appears **only on expanded/focused blips**.
