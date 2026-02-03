@@ -10,6 +10,11 @@ Quick start for the next batch (copy/paste):
 codex exec '
   Only edit files inside this repo; no external network/browsers unless via gh.
 
+  Always-On Loop:
+    - Treat every prompt as permission to continue the full Analyze -> Execute -> Verify -> Commit -> Document cycle.
+    - Do not stop between tasks unless blocked by a critical permission error or an unresolvable logical impasse.
+    - After each commit/push, immediately select the next smallest scoped task and repeat.
+
   Step 0: 
     - Check the current date/time.
     - Run "git checkout feature/rizzoma-core-features" immediately - that is the currently active branch we're working in.

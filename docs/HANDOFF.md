@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-02-03 (topic render unification wired + BLB/toolbar Playwright refresh)
+Last Updated: 2026-02-03 (topic render unification wired + Always-On Loop guidance in AGENTS/RESTART)
 
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.

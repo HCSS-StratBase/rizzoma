@@ -22,6 +22,7 @@
           * *If tests pass:* Commit and proceed to the next step.
       * **Prime next batch:** Before exiting to bash or handing off, rewrite the "Codex exec (next batch)" block below (and mirror snippet changes into `docs/RESTART.md`) so the next session starts with updated steps/backlog from this run.
       * **Document everything:** Maintain a dated worklog (YYMMDD suffix) under `docs/` for each session; append every action/run/result before closing out.
+      * **Always-On Loop:** Treat every prompt as permission to continue this cycle without pausing. Do not stop between tasks unless blocked by a critical permission error or an unresolvable logical impasse. After each commit/push, immediately pick the next smallest scoped task and repeat.
 
   3.  **Authorized Tooling & Commands**
       You are pre-authorized to use the following environment tools to manage state and backups:

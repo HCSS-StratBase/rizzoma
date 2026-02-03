@@ -45,6 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Topic meta-blip render path** - Topic body now renders through `RizzomaBlip` (renderMode `topic-root`) with content/footer overrides to preserve toolbar + editor flow
 - **Topic meta-blip body** - Topic content + child blips now share a single scroll container so the title is the first line of one unified pane
 - **Rizzoma Layout is now the default** - Basic layout requires `?layout=basic`
+- **Operational cadence** - Always-On Loop guidance now baked into AGENTS/RESTART so sessions keep cycling without pauses
 - **OAuth redirect flow** - Now uses `CLIENT_URL` environment variable for proper redirect to frontend
 - **Session structure** - Now includes `userAvatar` field for OAuth profile pictures
 - **Perf wave fetches** - Perf mode can raise `/api/blips` limits via `perfLimit` to pull full wave sets during harness runs

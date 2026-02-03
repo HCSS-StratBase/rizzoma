@@ -8,3 +8,7 @@
 ## Tests
 - `npm run test:toolbar-inline` (Chromium/Firefox/WebKit) PASS. Snapshots: `snapshots/toolbar-inline/1770080797945-*-final.png`.
 - `node test-blb-snapshots.mjs` PASS. Snapshots: `snapshots/blb/1770080861419-*`.
+
+- Added Always-On Loop guidance to `AGENTS.md` and mirrored it in `docs/RESTART.md` so sessions keep cycling without pauses.
+- Updated HANDOFF/RESTORE_POINT/CHANGELOG to reflect the new operational rule.
+- `npm run lint:branch-context` pass after doc updates.
