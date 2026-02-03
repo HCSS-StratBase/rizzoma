@@ -154,3 +154,4 @@
 - Added `scripts/backup-bundle.sh` to automate bundle creation + GDrive copy (with env overrides) and updated HANDOFF/RESTART/CHANGELOG accordingly.
 - Ran `scripts/backup-bundle.sh` after fixing Windows path conversion; bundle created and copied to GDrive (2026-02-03).
 - Re-ran `npm run test:health` (server health, inline comments health, uploads edge cases) after dependency updates; all 3 files/9 tests passed.
+- Re-ran `node test-blb-snapshots.mjs` after dev server restart; refreshed BLB snapshots under `snapshots/blb/1770077199862-*` and pruned the prior set.
