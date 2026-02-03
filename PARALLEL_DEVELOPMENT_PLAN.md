@@ -1,5 +1,7 @@
 # 🚀 Parallel Development Plan for Rizzoma Features
 
+> **Historical planning doc**: Timeline estimates below are historical. For the active branch, rely on `docs/HANDOFF.md`, `docs/RESTART.md`, and `RIZZOMA_FEATURES_STATUS.md` for the current backlog and sequencing.
+
 ## Overview
 By working on features in parallel across 3-4 development tracks, we can reduce the timeline from 8-12 weeks to **3-4 weeks** for core features.
 

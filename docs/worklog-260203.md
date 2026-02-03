@@ -22,3 +22,4 @@
 - Updated `TESTING_GUIDE.md` to clarify FEAT_ALL/EDITOR_ENABLE + real-auth requirement; logged in `CHANGELOG.md`.
 - Updated `CLAUDE.md` run/verify and backup notes for FEAT_ALL/EDITOR_ENABLE and current backup script; logged in `CHANGELOG.md`.
 - Updated `MANUAL_TEST_CHECKLIST.md` prerequisites and toolbar troubleshooting to reflect FEAT_ALL and real auth; logged in `CHANGELOG.md`.
+- Added historical notices to `MODERNIZATION_STRATEGY.md` and `PARALLEL_DEVELOPMENT_PLAN.md` pointing to current handoff/status docs; logged in `CHANGELOG.md`.

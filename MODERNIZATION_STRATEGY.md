@@ -1,5 +1,7 @@
 # Rizzoma Modernization Strategy
 
+> **Historical planning doc**: The phase timelines below are historical. For the active branch, use `docs/HANDOFF.md`, `docs/RESTART.md`, and `RIZZOMA_FEATURES_STATUS.md` for the current backlog, constraints, and status.
+
 ## Overview
 This document outlines the strategy for modernizing the Rizzoma codebase from Node.js 0.10 and CoffeeScript to modern JavaScript/TypeScript.
 
