@@ -34,6 +34,67 @@ Status: Milestone B+ (IN PROGRESS). Feature‑flagged; safe to keep merged.
 ## Toolbar parity tracker
 - See `docs/EDITOR_TOOLBAR_PARITY.md` for a running list of legacy toolbar controls vs the TipTap implementations plus the outstanding todo items to restore parity.
 
+## Two-Level Toolbar Architecture (Legacy Parity Notes)
+
+The original Rizzoma has a **TWO-LEVEL toolbar system** that modern implementation must replicate:
+
+1. **Topic-Level Toolbars** (ALWAYS visible at top):
+   - Collaboration toolbar: `Invite | 👤👤👤 +N | Share | ⚙️`
+   - Topic Edit toolbar: `Edit | 💬 | 🔗`
+
+2. **Blip-Level Toolbar** (ONLY on expanded blip):
+   - Shows when blip is clicked/focused
+   - Hidden for collapsed blips
+   - `Edit | 💬 | 📎 | 🔗 | ☑ Hidden | 🗑 | 🔗`
+
+Current state: Toolbar now appears on expanded/focused blips only (collapsed rows remain label-only) to match legacy. Keep validating via `docs/EDITOR_TOOLBAR_PARITY.md` + Playwright `npm run test:toolbar-inline`.
+
+## Collapse/Expand Behavior (BLB Parity Notes)
+
+Original Rizzoma uses **collapsed-by-default** rendering:
+
+- **Collapsed**: `• Label [+]` - only shows first line with expand icon
+- **Expanded**: Shows full content, toolbar, nested items, "Write a reply..."
+- **Green [+]**: Indicates unread content in collapsed blip
+- **Expand does NOT cascade**: Clicking [+] on parent doesn't expand children
+
+Current state: BLB collapse-first pattern implemented. Inline `[+]` markers navigate into subblip view and unread indicators propagate to collapsed rows and inline markers. See `docs/BLB_LOGIC_AND_PHILOSOPHY.md` and `docs/BLB_PARITY_CHECKLIST.md` for the full spec + snapshot coverage.
+
+See `docs/BLB_LOGIC_AND_PHILOSOPHY.md` for the complete specification.
+
+## Reply vs Inline Comment (Ctrl+Enter Behavior)
+
+There are **TWO ways** to create child blips in Rizzoma:
+
+### Reply (blip UNDER a blip)
+- **Created via**: "Write a reply..." input at bottom of expanded blip
+- **Purpose**: Comments on the ENTIRE parent blip
+- **Location**: Appears at the END of parent's content
+- **Data model**: `parentId` set, `anchorPosition` null/undefined
+
+### Inline Comment (blip IN a blip)
+- **Created via**: **Ctrl+Enter** at cursor position while editing
+- **Purpose**: Comments on THAT SPECIFIC POINT in the content
+- **Location**: Appears INLINE at the exact cursor position
+- **Data model**: `parentId` set, `anchorPosition` = character offset
+
+### Both Are Full Blips
+- Own author, timestamp, content
+- Can have their own children (replies AND inline comments) - recursive/fractal
+- Are "blank sheets" - user decides format (bulleted, plain text, etc.)
+- Collapsed label shows first line of whatever content user wrote
+
+### Keyboard Shortcuts in Edit Mode
+
+| Shortcut | Action | Creates New Blip? |
+|----------|--------|-------------------|
+| **Enter** | New line/bullet | No (same blip) |
+| **Tab** | Indent bullet | No (same blip) |
+| **Shift+Tab** | Outdent bullet | No (same blip) |
+| **Ctrl+Enter** | Create INLINE COMMENT | **YES** (new blip at cursor position) |
+
+Current state: Ctrl+Enter inserts an inline marker and navigates into the new subblip (anchorPosition tracked); inline expansion is no longer used. Validate via BLB snapshots and the toolbar-inline Playwright smoke.
+
 - Server routes: `src/server/routes/editor.ts`
   - `GET /api/editor/:waveId/snapshot` → `{ snapshotB64, nextSeq }` (supports `?blipId=`)
   - `POST /api/editor/:waveId/snapshot { snapshotB64, text?, blipId? }`
