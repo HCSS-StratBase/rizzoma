@@ -1,6 +1,6 @@
 # 🧪 Testing Rizzoma Core Features
 
-The app is now running at **http://localhost:3000** with all features enabled!
+Run the app at **http://localhost:3000** with `FEAT_ALL=1` and `EDITOR_ENABLE=1` enabled, and sign in via the AuthPanel (no demo/query-string logins on this branch).
 
 ## Quick Test Checklist
 
