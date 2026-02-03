@@ -24,3 +24,4 @@
 - Updated `MANUAL_TEST_CHECKLIST.md` prerequisites and toolbar troubleshooting to reflect FEAT_ALL and real auth; logged in `CHANGELOG.md`.
 - Added historical notices to `MODERNIZATION_STRATEGY.md` and `PARALLEL_DEVELOPMENT_PLAN.md` pointing to current handoff/status docs; logged in `CHANGELOG.md`.
 - Updated `docs/HANDOFF.md` and `docs/RESTART.md` drift warnings to reflect recent doc cleanups; logged in `CHANGELOG.md`.
+- Updated `docs/HANDOFF.md` last-updated note and `docs/RESTART.md` re-read checkpoint timestamp for the doc cleanup pass; logged in `CHANGELOG.md`.
