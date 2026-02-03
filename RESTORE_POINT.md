@@ -5,6 +5,7 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-02-03 01:20 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Marked expand/collapse parity items complete in `docs/EDITOR_TOOLBAR_PARITY.md` and refreshed BLB checklist date. Branch/date guardrails unchanged.
 - (2026-02-03 01:15 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Logged BLB snapshot harness rerun and new snapshot set. Branch/date guardrails unchanged.
 - (2026-02-03 01:10 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Logged `npm run test:health` rerun in TESTING_STATUS/HANDOFF/worklog. Branch/date guardrails unchanged.
 - (2026-02-03 01:05 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Fixed backup script Windows path handling and confirmed bundle copy run; updated HANDOFF/worklog. Branch/date guardrails unchanged.

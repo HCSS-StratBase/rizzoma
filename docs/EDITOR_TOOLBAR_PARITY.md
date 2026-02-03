@@ -118,12 +118,12 @@ Edit | 💬 | 📎 | 🔗 | ☑ Hidden | 🗑 | 🔗
 - [x] These should be persistent at top of topic, always visible regardless of which blip is selected
 
 ### Blip Expand/Collapse Behavior (HIGH PRIORITY - Fundamentally Different!)
-- [ ] **Collapsed-by-default rendering**: Blips with "Hidden" checked should render as `Label [+]` only
-- [ ] **[+]/[−] expand icons**: Visual indicators for collapsed/expanded state
-- [ ] **Green [+] for unread**: Collapsed blips with unread content should show green expand icon
-- [ ] **Toolbar visibility**: Blip toolbar should ONLY appear on EXPANDED/FOCUSED blip
-- [ ] **Cascade prevention**: Expanding parent must NOT auto-expand children
-- [ ] **"Write a reply..." placement**: Should appear ONLY at bottom of EXPANDED blip, not on every blip
+- [x] **Collapsed-by-default rendering**: Blips with "Hidden" checked render as `Label [+]` only
+- [x] **[+]/[−] expand icons**: Visual indicators for collapsed/expanded state
+- [x] **Green [+] for unread**: Collapsed blips with unread content show green expand icon
+- [x] **Toolbar visibility**: Blip toolbar appears only on EXPANDED/FOCUSED blip
+- [x] **Cascade prevention**: Expanding parent does not auto-expand children
+- [x] **"Write a reply..." placement**: Appears only at bottom of EXPANDED blip
 
 ### Reply vs Inline Comment (HIGH PRIORITY - Two Types of Child Blips!)
 - [ ] **Reply (blip UNDER)**: Created via "Write a reply..." at bottom, comments on ENTIRE parent
@@ -134,6 +134,8 @@ Edit | 💬 | 📎 | 🔗 | ☑ Hidden | 🗑 | 🔗
 - [ ] **Child blip format**: All collapsed child blips should render as `Label [+] avatar date` (same format as any collapsed blip)
 - [ ] **Recursive/fractal**: Both can have their own children (replies AND inline comments)
 - [ ] **Blank sheet**: Both are blank rich text containers - user decides format (bulleted, plain text, etc.)
+
+Note: Inline marker clicks currently navigate into subblip views (no inline expansion), matching BLB parity snapshots.
 
 ### Completed Items
 - [x] Wire read-only Hide/Show comments controls to the inline comments plugin (per blip, stored per user). The BlipMenu hide/show button now toggles inline comments visibility for the active blip and persists the preference in `localStorage`, and both the TipTap `BlipEditor` surface and inline menu stay in sync.

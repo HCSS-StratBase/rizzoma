@@ -1,7 +1,7 @@
 # BLB Parity Checklist (Legacy vs Modern)
 
 Branch: `feature/rizzoma-core-features`  
-Date: 2026-02-02
+Date: 2026-02-03
 
 Use this checklist to verify BLB (Bullet‑Label‑Blip) parity with the legacy CoffeeScript UI and behavior. Each item should be validated against legacy sources (`original-rizzoma-src`) and the reference screenshots under `screenshots/rizzoma-live/feature/rizzoma-core-features/`.
 
