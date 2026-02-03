@@ -49,6 +49,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **MANUAL_TEST_CHECKLIST.md** - Updated run prerequisites and toolbar troubleshooting to reflect FEAT_ALL and real auth
 - **MODERNIZATION_STRATEGY.md** - Added historical notice pointing to current branch handoff/status docs
 - **PARALLEL_DEVELOPMENT_PLAN.md** - Added historical notice pointing to current branch handoff/status docs
+- **docs/HANDOFF.md** - Updated drift warnings to reflect recent doc cleanups
+- **docs/RESTART.md** - Updated drift warnings to reflect recent doc cleanups
 - **Dependency maintenance** - Applied minor/patch updates for Playwright/Vitest/Prettier, AWS SDK, and session/email utilities
 - **BLB parity docs** - Marked topic inline comments + anchorPosition behavior as implemented
 - **BLB parity docs** - Marked reply vs inline comment behaviors and child blip format as implemented

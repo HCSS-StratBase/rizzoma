@@ -49,7 +49,7 @@ codex exec '
 ```
 
 ### Drift warnings
-- Status/onboarding docs (`README*.md`, `QUICKSTART.md`, `README_MODERNIZATION.md`, `MODERNIZATION_STRATEGY.md`, `PARALLEL_DEVELOPMENT_PLAN.md`, `TESTING_GUIDE.md`, `MANUAL_TEST_CHECKLIST.md`, `CLAUDE.md`) still describe demo-mode shortcuts or “all core features green” timelines; treat them as historical until we rewrite them with the current perf harness + CI gating requirements.
+- Status/onboarding docs (`README*.md`, `README_MODERNIZATION.md`, `MODERNIZATION_STRATEGY.md`, `PARALLEL_DEVELOPMENT_PLAN.md`) still describe demo-mode shortcuts or “all core features green” timelines; treat them as historical until we rewrite them with the current perf harness + CI gating requirements.
 - Phase language (e.g., `modernization/phase1` or “Phase 1 ready”) in README/modernization strategy docs is historical and not authoritative for `feature/rizzoma-core-features`; use `RIZZOMA_FEATURES_STATUS.md` for the current branch snapshot (perf/getUserMedia/health/backups remain outstanding).
 - `TESTING_STATUS.md` and `RIZZOMA_FEATURES_STATUS.md` summarize the latest coverage/gaps but rely on the last recorded runs; rerun targeted suites before trusting them.
 - Demo-mode login is gone: use real sessions through `AuthPanel`, not `?demo=true`.
@@ -58,7 +58,7 @@ codex exec '
 - `README_MODERNIZATION.md` still reads like Phase 1 is largely complete and omits the perf/getUserMedia/health/backups backlog; rewrite before citing it.
 - `docs/EDITOR_REALTIME.md` still lists presence/recovery/search as upcoming even though they shipped; update the roadmap to match the current backlog focus.
 - `TESTING_STATUS.md` and `RIZZOMA_FEATURES_STATUS.md` reflect historical Dec 2025 runs; rerun suites before relying on them.
-- `QUICKSTART.md`, `TESTING_GUIDE.md`, and `CLAUDE.md` continue to recommend `npm run start:all`/auto-commit/demo-mode flows that do not reflect the current perf/backups/health backlog or the real-auth requirement; treat them strictly as historical checklists until rewritten.
+- Remaining historical docs still recommend `npm run start:all` or demo-mode flows that do not reflect the current perf/backups/health backlog or the real-auth requirement; treat them strictly as historical checklists until rewritten.
 - Landing view parity: topic landing must match `screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-main.png` (root labels only, children/editor hidden until “+” is clicked). Keep perf harness landing metric on this collapsed state; measure expansions separately.
 
 1) Node and npm
