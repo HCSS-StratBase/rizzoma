@@ -16,14 +16,286 @@
   color: #888;
 }
 
-/* Header: Title on left, avatar+date on right */
-.topic-header {
+/* ========================================
+   TOPIC COLLABORATION TOOLBAR
+   Original Rizzoma: Invite | avatars | +N | Share | gear
+======================================== */
+.topic-collab-toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e0e0e0;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px;
+  background: linear-gradient(to bottom, #f8f8f8, #eee);
+  border-bottom: 1px solid #ddd;
   flex-shrink: 0;
+}
+
+.collab-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.15s ease;
+}
+
+.collab-btn:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+.invite-btn {
+  color: #4285f4;
+  font-weight: 500;
+}
+
+.share-btn {
+  color: #666;
+}
+
+.gear-btn {
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.gear-btn.active {
+  background: #ddd;
+}
+
+.gear-menu-container {
+  position: relative;
+}
+
+.gear-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 180px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 4px 0;
+}
+
+.gear-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+  transition: background-color 0.15s ease;
+}
+
+.gear-menu-item:hover {
+  background: #f0f0f0;
+}
+
+.gear-menu-divider {
+  height: 1px;
+  background: #ddd;
+  margin: 4px 0;
+}
+
+.collab-participants {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.participant-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  margin-left: -8px;
+}
+
+.participant-avatar:first-child {
+  margin-left: 0;
+}
+
+.participant-avatar.owner {
+  border-color: #4EA0F1;
+}
+
+.participant-avatar.pending {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.participant-overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: #e0e0e0;
+  color: #666;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: -8px;
+  cursor: default;
+}
+
+.participant-count {
+  font-size: 12px;
+  color: #666;
+  background: #e8e8e8;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+/* ========================================
+   UNIFIED TOPIC META-BLIP CONTAINER
+   BLB Philosophy: Topic IS the root blip
+   Contains: toolbar + content + child blips + reply input
+======================================== */
+.topic-meta-blip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Meta-blip toolbar (like BlipMenu for regular blips) */
+.topic-blip-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #e6e6e6;
+  border-bottom: 1px solid #cfcfcf;
+  flex-shrink: 0;
+}
+
+.topic-blip-toolbar.editing {
+  background: #d9edf9;
+  border-bottom-color: #bcd7ea;
+}
+
+.topic-tb-btn {
+  padding: 2px 6px;
+  font-size: 12px;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  color: #555;
+  transition: background-color 0.15s ease;
+}
+
+.topic-tb-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.topic-tb-btn.primary {
+  background: #5caaf7;
+  color: white;
+  font-weight: 500;
+}
+
+.topic-tb-btn.primary:hover {
+  background: #4A9BE8;
+}
+
+.topic-tb-btn.active {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Insert comment button - styled like original */
+.topic-tb-btn.insert-comment-btn {
+  color: #10B981;
+  font-weight: 500;
+}
+
+.topic-tb-btn.insert-comment-btn:hover {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.topic-toolbar-spacer {
+  flex: 1;
+}
+
+/* Meta info in toolbar (avatars + date) */
+.topic-meta-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topic-avatars-stack-small {
+  display: flex;
+  align-items: center;
+}
+
+.topic-avatar-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  border: 1px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.topic-avatar-small.owner {
+  border-color: #4EA0F1;
+}
+
+.topic-date-small {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* Meta-blip content area - unified with children (BLB: one blip container) */
+.topic-blip-content {
+  padding: 8px 16px 6px;
+  background: white;
+  /* No bottom padding - flows directly into children */
+}
+
+/* Meta-blip body - one scrollable container for topic + children */
+.topic-blip-body {
+  flex: 1;
+  overflow-y: auto;
+  background: white;
+}
+
+/* Child blips area - seamless continuation of topic content (BLB: unified container) */
+.topic-blip-children {
+  padding: 0 16px 16px;
+  background: white;
+  /* Same background as content - appears as ONE container */
+}
+
+.empty-state-inline {
+  color: #999;
+  font-size: 13px;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+/* REMOVED: Old separate topic-edit-toolbar and topic-header
+   These are now unified inside topic-meta-blip */
+
+/* Legacy header styles (kept for reference, may be removed) */
+.topic-header {
+  display: none; /* Hidden - now part of topic-blip-content */
 }
 
 .topic-header-left {
@@ -32,10 +304,111 @@
 
 .topic-title {
   margin: 0;
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: bold;
   color: #222;
-  line-height: 1.2;
+  line-height: 1.3;
+}
+
+.topic-title:hover {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+}
+
+/* Inline title editing */
+.topic-title-edit {
+  width: 100%;
+  font-size: 18px;
+  font-weight: bold;
+  color: #222;
+  line-height: 1.3;
+  border: 1px solid #5CAAF7;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 32px;
+  background: #fafbfc;
+  box-sizing: border-box;
+}
+
+.topic-title-edit:focus {
+  outline: none;
+  border-color: #4A9BE8;
+  box-shadow: 0 0 0 3px rgba(92, 170, 247, 0.2);
+}
+
+.topic-title-edit::placeholder {
+  color: #999;
+}
+
+/* BLB: Topic content editing (topic is meta-blip) */
+.topic-content-edit {
+  width: 100%;
+  border: 1px solid #5CAAF7;
+  border-radius: 3px;
+  padding: 8px 12px;
+  background: #fafbfc;
+  box-sizing: border-box;
+  min-height: 40px;
+}
+
+.topic-content-edit:focus-within {
+  border-color: #4A9BE8;
+  box-shadow: 0 0 0 3px rgba(92, 170, 247, 0.2);
+}
+
+.topic-content-edit .ProseMirror {
+  outline: none;
+  min-height: 24px;
+}
+
+.topic-content-edit .ProseMirror h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #222;
+  line-height: 1.3;
+}
+
+.topic-content-edit .ProseMirror p {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.topic-content-edit .ProseMirror p:first-child {
+  margin-top: 0;
+}
+
+/* Topic content view (read-only mode) */
+.topic-content-view {
+  width: 100%;
+}
+
+.topic-content-view:hover {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+}
+
+.topic-content-view h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #222;
+  line-height: 1.3;
+}
+
+.topic-content-view p {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.topic-content-view p:first-child {
+  margin-top: 0;
 }
 
 .topic-tags {
@@ -72,6 +445,30 @@
   color: #888;
 }
 
+/* Stacked avatars in topic header - like original Rizzoma */
+.topic-avatars-stack {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  cursor: pointer;
+}
+
+.topic-avatar-stacked {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  object-fit: cover;
+}
+
+.topic-avatar-stacked.owner {
+  border-color: #4EA0F1;
+}
+
 /* Topic-level toolbar */
 .topic-toolbar {
   display: flex;
@@ -98,14 +495,18 @@
   font-style: italic;
 }
 
-/* Body - full width, scrollable */
+/* Body - now handled by topic-blip-children inside the unified container */
 .topic-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 20px;
+  display: none; /* Replaced by topic-blip-children */
 }
 
-/* Blips list */
+/* Blips container - using RizzomaBlip components */
+.blips-container {
+  margin: 0;
+  padding: 0;
+}
+
+/* Blips list (legacy) */
 .blips-list {
   list-style: disc;
   margin: 0;
@@ -181,20 +582,20 @@
 .blip-expanded-box {
   margin: 8px 0 8px 0;
   padding: 0;
-  background: #f8f8f8;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
-/* Toolbar at TOP of expanded box */
+/* Toolbar at TOP of expanded box - minimal like real Rizzoma */
 .blip-toolbar {
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 6px 10px;
-  background: #e8e8e8;
-  border-bottom: 1px solid #ddd;
-  border-radius: 4px 4px 0 0;
+  padding: 4px 0;
+  background: transparent;
+  border-bottom: none;
+  border-radius: 0;
   flex-wrap: wrap;
 }
 
@@ -442,45 +843,40 @@
   font-weight: 500;
 }
 
-/* New blip section */
-.new-blip-section {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #e0e0e0;
+/* Write a reply section - minimal like real Rizzoma */
+.write-reply-section {
+  margin-top: 12px;
+  padding: 0;
 }
 
-.new-blip-input-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.new-blip-input {
-  flex: 1;
-  padding: 10px 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
+.write-reply-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 13px;
   font-family: inherit;
+  color: #666;
+  background: #fafafa;
+  box-sizing: border-box;
 }
 
-.new-blip-input:focus {
+.write-reply-input:focus {
   outline: none;
   border-color: #5CAAF7;
-  box-shadow: 0 0 0 2px rgba(92, 170, 247, 0.2);
+  background: white;
+  color: #333;
 }
 
-.new-blip-btn {
-  padding: 10px 20px;
-  font-weight: 600;
-  white-space: nowrap;
+.write-reply-input::placeholder {
+  color: #999;
 }
 
 /* Mobile */
 @media (max-width: 600px) {
   .topic-header {
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
   }
 
   .topic-header-right {
@@ -489,7 +885,12 @@
   }
 
   .topic-title {
-    font-size: 22px;
+    font-size: 16px;
+  }
+
+  .topic-title-edit {
+    font-size: 16px;
+    min-height: 28px;
   }
 
   .blip-toolbar {
@@ -500,4 +901,76 @@
     padding: 4px 6px;
     font-size: 11px;
   }
+}
+
+/* ========================================
+   BLB SUBBLIP VIEW
+   Shown when navigating into a subblip
+======================================== */
+.subblip-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.subblip-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(to bottom, #f8f9fa, #e8e9ea);
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.subblip-hide-btn {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #4ea0f1;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.subblip-hide-btn:hover {
+  background: #3d8fd8;
+}
+
+.subblip-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #666;
+  flex-wrap: wrap;
+}
+
+.subblip-breadcrumb a {
+  color: #4285f4;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.subblip-breadcrumb a:hover {
+  color: #1a73e8;
+  text-decoration: underline;
+}
+
+.current-blip-label {
+  color: #333;
+  font-weight: 500;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subblip-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
 }

@@ -43,3 +43,6 @@
 - Playwright `node test-blb-snapshots.mjs` PASS after edit-mode marker injection; refreshed BLB snapshots under `snapshots/blb/1770128954686-*`.
 - Rizzoma layout now renders for topic routes even before auth completes (prevents blank/landing screens on deep links).
 - Playwright `node test-blb-snapshots.mjs` PASS; refreshed BLB snapshots under `snapshots/blb/1770142563086-*`.
+- Flattened topic pane styling (toolbar + container) and removed unread yellow row backgrounds to better match legacy layout.
+- Added `docs/TECH_STACK_OLD_VS_NEW.md` with a legacy vs modern stack comparison.
+- Playwright `node test-blb-snapshots.mjs` PASS; refreshed BLB snapshots under `snapshots/blb/1770162413598-*`.

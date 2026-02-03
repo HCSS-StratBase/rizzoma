@@ -16,9 +16,9 @@
 }
 
 .rizzoma-blip.unread {
-  background-color: #fffae5;
-  border-left: 3px solid #ffd93d;
-  padding-left: 5px;
+  background-color: transparent;
+  border-left: none;
+  padding-left: 0;
 }
 
 .rizzoma-blip.nested-blip {
@@ -1159,6 +1159,6 @@
 
 /* Unread collapsed blip */
 .blip-container.collapsed.unread .blip-collapsed-row {
-  background-color: #fffae5;
-  border-left: 3px solid #ffd93d;
+  background-color: transparent;
+  border-left: none;
 }
