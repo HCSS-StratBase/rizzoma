@@ -24,6 +24,7 @@ codex exec '
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
   5) Automate bundles/backups (bundle + GDrive copy) and document cadence (`scripts/backup-bundle.sh`).
   6) Finish CoffeeScript/legacy cleanup and dependency upgrades; decide legacy static assets (note: `.coffee` files remain only in `original-rizzoma-src/` reference tree).
+  7) Topic render unification: follow `docs/TOPIC_RENDER_UNIFICATION.md` to reuse `RizzomaBlip` for meta‑blip body.
 
   Testing/CI hygiene:
   - Keep npm run test:toolbar-inline and npm run test:follow-green green; snapshots live under snapshots/<feature>/ and are uploaded as Actions artifacts.

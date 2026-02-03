@@ -158,3 +158,4 @@
 - Updated `docs/EDITOR_TOOLBAR_PARITY.md` to mark the blip expand/collapse parity items complete and refreshed the BLB checklist date.
 - Marked topic inline comments and anchorPosition inline rendering as implemented in `docs/EDITOR_TOOLBAR_PARITY.md`.
 - Marked reply vs inline comment behaviors (and child blip collapsed format) as implemented in `docs/EDITOR_TOOLBAR_PARITY.md`.
+- Added `docs/TOPIC_RENDER_UNIFICATION.md` with a plan to reuse `RizzomaBlip` for the topic meta‑blip body and linked it from HANDOFF/RESTART.

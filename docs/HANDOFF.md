@@ -46,6 +46,7 @@ Next Work
   - Keep Playwright smokes/browser artifacts green; monitor follow-green socket delivery and toolbar parity as code changes land.
   - Health checks + CI gating: `/api/health` + inline comments/upload health tests pass locally; ensure CI coverage and alerting remain intact.
   - Backups: automate bundle + GDrive copy after merges and document cadence.
+- Topic render unification: see `docs/TOPIC_RENDER_UNIFICATION.md` for plan to reuse `RizzomaBlip` for meta‑blip body.
 - Legacy cleanup: finish CoffeeScript/legacy asset disposition and dependency upgrades; rewrite onboarding/status docs to remove demo/start-all claims.
   - Audit (2026-02-02): `.coffee` files remain only in `original-rizzoma-src/` reference tree; none in active `src/`.
 
