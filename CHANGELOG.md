@@ -63,7 +63,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **scripts/start-all.sh** - Avoid hanging on missing `sphinx` and timeout Sphinx wait
 - **QUICKSTART.md** - Documented `scripts/start-all.sh` and Sphinx timeout behavior
 - **AGENTS.md / docs/RESTART.md** - Codex exec next-batch checklist now calls out `scripts/start-all.sh` and Sphinx timeout behavior
-- **BLB snapshots** - Refreshed BLB snapshot set under `snapshots/blb/1770128954686-*` after Playwright verification
+- **BLB snapshots** - Refreshed BLB snapshot set under `snapshots/blb/1770142563086-*` after Playwright verification
+- **Auth gating** - Render Rizzoma layout for topic routes even before auth completes to avoid blank/landing screens on deep links
 - **Inline BLB markers** - Inject legacy anchor-positioned child markers into view content and filter inline children out of list rendering
 - **Inline BLB markers** - Inject legacy anchor-positioned child markers into edit mode content for topic/blip editors
 - **RESTORE_POINT.md** - Logged doc cleanup pass in the re-read checkpoint

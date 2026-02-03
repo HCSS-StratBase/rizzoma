@@ -17,6 +17,7 @@ import { FEATURES } from '@shared/featureFlags';
 import { MobileProvider } from './contexts/MobileContext';
 import { useServiceWorker, useInstallPrompt } from './hooks/useServiceWorker';
 import { useOfflineToast } from './hooks/useOfflineStatus';
+import { setupBlipThreadClickHandler } from './components/editor/extensions/BlipThreadNode';
 import './RizzomaApp.css';
 import './styles/breakpoints.css';
 import './styles/view-transitions.css';
@@ -77,6 +78,7 @@ export function App() {
   const [error] = useState<string | null>(null);
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
   const [currentId, setCurrentId] = useState<string | null>(null);
+  const [currentBlipPath, setCurrentBlipPath] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Check if we should use Rizzoma layout based on URL parameter
   const params = new URLSearchParams(window.location.search);
@@ -95,6 +97,11 @@ export function App() {
   });
   useInstallPrompt();
   useOfflineToast();
+
+  // Set up BlipThread click handler for inline [+] markers
+  useEffect(() => {
+    return setupBlipThreadClickHandler();
+  }, []);
 
   // bootstrap auth state
   useEffect(() => {
@@ -117,9 +124,27 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    const mTopic = route.match(/^#\/topic\/([^?]+)(?:\?.*)?$/);
+    // Match topic with optional blipPath: #/topic/{topicId}/{blipPath}/
+    // blipPath can contain multiple segments like "0_b_xxx/0_b_yyy/"
+    const mTopicWithBlip = route.match(/^#\/topic\/([^/?]+)\/(.+?)(?:\?.*)?$/);
+    const mTopic = route.match(/^#\/topic\/([^/?]+)\/?(?:\?.*)?$/);
     const mWave = route.match(/^#\/wave\/([^?]+)(?:\?.*)?$/);
-    setCurrentId(mTopic ? (mTopic[1] ?? null) : mWave ? (mWave[1] ?? null) : null);
+
+    if (mTopicWithBlip) {
+      // Has blipPath - navigating inside a subblip
+      setCurrentId(mTopicWithBlip[1] ?? null);
+      setCurrentBlipPath(mTopicWithBlip[2] ?? null);
+    } else if (mTopic) {
+      // Topic root - no blipPath
+      setCurrentId(mTopic[1] ?? null);
+      setCurrentBlipPath(null);
+    } else if (mWave) {
+      setCurrentId(mWave[1] ?? null);
+      setCurrentBlipPath(null);
+    } else {
+      setCurrentId(null);
+      setCurrentBlipPath(null);
+    }
   }, [route]);
 
   // parse hash for list filters and pass as initial props
@@ -148,8 +173,8 @@ export function App() {
             <a href="#">Disable extension</a>
           </div>
         )}
-        {!checkingAuth && !me ? (
-          <RizzomaLanding onSignedIn={(user) => setMe(user)} />
+        {checkingAuth ? (
+          <div className="rizzoma-loading">Loading…</div>
         ) : (
           <RizzomaLayout isAuthed={!!me} user={me} />
         )}
@@ -202,7 +227,7 @@ export function App() {
       ) : route.startsWith('#/wave/') && currentId ? (
         <WaveView id={currentId} />
       ) : route.startsWith('#/topic/') && currentId ? (
-        <RizzomaTopicDetail id={currentId} isAuthed={!!me} />
+        <RizzomaTopicDetail id={currentId} blipPath={currentBlipPath} isAuthed={!!me} />
       ) : (
         <TopicsList isAuthed={!!me} initialMy={listParams.my} initialLimit={listParams.limit} initialOffset={listParams.offset} initialQuery={listParams.q} />
       )}

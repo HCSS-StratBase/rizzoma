@@ -41,3 +41,5 @@
 - Playwright `node test-blb-snapshots.mjs` PASS; refreshed BLB snapshots under `snapshots/blb/1770091285630-*`.
 - Injected inline `[+]` markers into topic/blip edit content so legacy anchor-positioned children remain visible while editing.
 - Playwright `node test-blb-snapshots.mjs` PASS after edit-mode marker injection; refreshed BLB snapshots under `snapshots/blb/1770128954686-*`.
+- Rizzoma layout now renders for topic routes even before auth completes (prevents blank/landing screens on deep links).
+- Playwright `node test-blb-snapshots.mjs` PASS; refreshed BLB snapshots under `snapshots/blb/1770142563086-*`.
