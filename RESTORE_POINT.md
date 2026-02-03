@@ -5,6 +5,7 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-02-03 01:30 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Marked reply vs inline comment parity complete in `docs/EDITOR_TOOLBAR_PARITY.md`. Branch/date guardrails unchanged.
 - (2026-02-03 01:25 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Marked topic inline comments + anchorPosition inline rendering complete in `docs/EDITOR_TOOLBAR_PARITY.md`. Branch/date guardrails unchanged.
 - (2026-02-03 01:20 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Marked expand/collapse parity items complete in `docs/EDITOR_TOOLBAR_PARITY.md` and refreshed BLB checklist date. Branch/date guardrails unchanged.
 - (2026-02-03 01:15 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Logged BLB snapshot harness rerun and new snapshot set. Branch/date guardrails unchanged.

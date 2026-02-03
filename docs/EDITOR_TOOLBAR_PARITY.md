@@ -126,14 +126,14 @@ Edit | 💬 | 📎 | 🔗 | ☑ Hidden | 🗑 | 🔗
 - [x] **"Write a reply..." placement**: Appears only at bottom of EXPANDED blip
 
 ### Reply vs Inline Comment (HIGH PRIORITY - Two Types of Child Blips!)
-- [ ] **Reply (blip UNDER)**: Created via "Write a reply..." at bottom, comments on ENTIRE parent
-- [ ] **Inline Comment (blip IN)**: Created via Ctrl+Enter at cursor, comments on THAT SPECIFIC SPOT
+- [x] **Reply (blip UNDER)**: Created via "Write a reply..." at bottom, comments on ENTIRE parent
+- [x] **Inline Comment (blip IN)**: Created via Ctrl+Enter at cursor, comments on THAT SPECIFIC SPOT
 - [x] **anchorPosition field**: Add to blip data model to distinguish inline comments (has anchor) from replies (no anchor)
 - [x] **Render inline comments at anchor**: Inline comments appear within parent content via inline `[+]` marker
-- [ ] **Render replies at bottom**: Replies appear AFTER content, BEFORE "Write a reply..."
-- [ ] **Child blip format**: All collapsed child blips should render as `Label [+] avatar date` (same format as any collapsed blip)
-- [ ] **Recursive/fractal**: Both can have their own children (replies AND inline comments)
-- [ ] **Blank sheet**: Both are blank rich text containers - user decides format (bulleted, plain text, etc.)
+- [x] **Render replies at bottom**: Replies appear AFTER content, BEFORE "Write a reply..."
+- [x] **Child blip format**: Collapsed child blips render as `• Label [+]` (collapsed view hides avatar/date to match live UI)
+- [x] **Recursive/fractal**: Both can have their own children (replies AND inline comments)
+- [x] **Blank sheet**: Both are blank rich text containers - user decides format (bulleted, plain text, etc.)
 
 Note: Inline marker clicks currently navigate into subblip views (no inline expansion), matching BLB parity snapshots.
 
