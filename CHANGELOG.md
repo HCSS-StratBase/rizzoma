@@ -34,10 +34,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Development notes including Vite HMR issues
 
 ### Changed
-- **BLB default behavior** - All blips start collapsed; inline `[+]` expands in place
+- **BLB default behavior** - All blips start collapsed; inline `[+]` navigates into subblip view
 - **BLB toolbars** - Read/edit toolbars aligned to legacy (Hide/Show comments, Link, Hide, Delete, Gear)
 - **BLB expansion focus** - Expanding a collapsed blip now marks it active so the toolbar appears immediately
 - **BLB read toolbar** - Added explicit Collapse/Expand buttons in view mode for legacy parity
+- **BLB toolbar visibility** - Toolbar now only renders for expanded blips (collapsed rows never show it)
+- **BLB snapshot refresh** - Updated BLB snapshot set `snapshots/blb/1770164188794-*` after toolbar visibility fix
 - **BLB docs alignment** - Topic pane diagram + view/edit toolbar notes now match live screenshots
 - **README_MODERNIZATION.md** - Added current-branch notes (real-auth requirement, FEAT_ALL/EDITOR_ENABLE, and historical phase caveats)
 - **EDITOR_REALTIME.md** - Updated realtime summary to include search materialization and current perf/CI next steps

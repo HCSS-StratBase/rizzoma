@@ -68,11 +68,11 @@ codex exec '
   Step 0.1:
     - Run "npm run lint:branch-context" to verify docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
   Step 0.2:
-    - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `npm run dev`).
+    - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`). Ensure `http://localhost:3000/` is reachable before Playwright.
 
   Priority focus (current backlog):
   1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; lite-mode perf harness now passes (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB). Next: improve full-render perf beyond `perfRender=lite`.
-  2) BLB parity: inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity, unread green markers, and update BLB snapshots as needed (topic render unification is wired; keep it aligned with live snapshots).
+  2) BLB parity: inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity (toolbar only for expanded blips), unread green markers, and update BLB snapshots as needed. Latest set: `snapshots/blb/1770164188794-*` (2026-02-04).
   3) Toolbar parity: `test:toolbar-inline` now asserts the read toolbar (expanded via collapsed rows). Keep the read toolbar present and smokes green.
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green.
   5) Automate bundles/backups (bundle + GDrive copy) and document cadence.

@@ -3,7 +3,7 @@
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
 - `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-02-03; refresh if more changes land.
-- Re-read checkpoint: 2026-02-03 04:33 local — start-all bootstrap hardened (warns/continues if `sphinx` is missing/slow) and quickstart updated; drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
+- Re-read checkpoint: 2026-02-04 01:20 local — BLB toolbar visibility tied to expanded state and BLB snapshots refreshed (`snapshots/blb/1770164188794-*`); drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
 
 Quick start for the next batch (copy/paste):
 ```
@@ -22,11 +22,11 @@ codex exec '
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
   Step 0.2:
-    - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `npm run dev`).
+    - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`). Ensure `http://localhost:3000/` is reachable before Playwright.
 
   Priority focus:
   1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; move beyond `perfRender=lite` and reduce full-render TTF/memory. Lite-mode perf harness now passes (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB) but full render still needs work.
-  2) BLB parity: enforce single-container topic pane (title as first line of the meta-blip body), inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity, unread green markers, and update BLB snapshots.
+  2) BLB parity: enforce single-container topic pane (title as first line of the meta-blip body), inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity (toolbar only for expanded blips), unread green markers, and update BLB snapshots. Latest set: `snapshots/blb/1770164188794-*` (2026-02-04).
   3) Toolbar parity: `test:toolbar-inline` now asserts the read toolbar (expanded via collapsed rows). Keep the read toolbar present and smokes green.
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
   5) Automate bundles/backups (bundle + GDrive copy) and document cadence (`scripts/backup-bundle.sh`).

@@ -253,6 +253,10 @@ export function RizzomaBlip({
       : false;
   const [isExpanded, setIsExpanded] = useState(() => initialExpanded);
   const [isEditing, setIsEditing] = useState(false);
+  const isTopicRoot = renderMode === 'topic-root';
+  // Root blips start expanded by default, but can be collapsed
+  // Non-root blips follow the collapse preference
+  const effectiveExpanded = isTopicRoot ? true : isExpanded;
 
   // Dispatch edit mode event to RightToolsPanel
   useEffect(() => {
@@ -260,8 +264,8 @@ export function RizzomaBlip({
     window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing } }));
   }, [isEditing]);
 
-  // Default active so the read toolbar is visible immediately (parity with legacy view surface)
-  const [isActive, setIsActive] = useState(true);
+  // BLB: Toolbar is visible when the blip is expanded (collapsed rows never show it)
+  const [isActive, setIsActive] = useState(forceExpanded);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [editedContent, setEditedContent] = useState(blip.content);
@@ -475,7 +479,6 @@ export function RizzomaBlip({
       autoSaveBlip(currentContent);
     }
     setIsEditing(false);
-    setIsActive(false);
     if (inlineEditor) {
       inlineEditor.setEditable(false);
     }
@@ -949,23 +952,6 @@ export function RizzomaBlip({
     };
   }, [blip.id, isPerfMode]);
 
-  // Handle click outside to deactivate blip
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (blipContainerRef.current && !blipContainerRef.current.contains(event.target as Node)) {
-        setIsActive(false);
-      }
-    };
-
-    if (isActive) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isActive]);
-
   // Handle Ctrl+Enter to create child blip when active (not editing)
   useEffect(() => {
     if (!isActive || isEditing || !blip.permissions.canComment) return;
@@ -1345,10 +1331,6 @@ export function RizzomaBlip({
 
   const isUploading = uploadState?.status === 'uploading';
   const uploadProgress = uploadState ? uploadState.progress : null;
-  const isTopicRoot = renderMode === 'topic-root';
-  // Root blips start expanded by default, but can be collapsed
-  // Non-root blips follow the collapse preference
-  const effectiveExpanded = isTopicRoot ? true : isExpanded;
 
   const rootStyle = isRoot && effectiveExpanded ? { display: 'block' as const, opacity: 1, visibility: 'visible' as const } : {};
 
@@ -1370,6 +1352,10 @@ export function RizzomaBlip({
       setIsExpanded(true);
     }
   }, [forceExpanded]);
+
+  useEffect(() => {
+    setIsActive(effectiveExpanded || isEditing);
+  }, [effectiveExpanded, isEditing]);
 
 
   return (
@@ -1410,7 +1396,7 @@ export function RizzomaBlip({
           {/* Inline Blip Menu - Only shown when expanded */}
           {!isTopicRoot && (
             <BlipMenu
-              isActive={true}
+              isActive={isActive}
               isEditing={isEditing}
               canEdit={blip.permissions.canEdit}
               canComment={blip.permissions.canComment}

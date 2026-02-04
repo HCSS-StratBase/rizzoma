@@ -5,6 +5,7 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-02-04 01:20 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. BLB toolbar visibility now tied to expanded state, reran BLB snapshot harness (`snapshots/blb/1770164188794-*`), updated changelog/worklog. Branch/date guardrails unchanged.
 - (2026-02-03 04:33 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Updated `scripts/start-all.sh` to avoid hanging on missing `sphinx`, documented the flow in QUICKSTART, and logged in worklog/changelog. Branch/date guardrails unchanged.
 - (2026-02-03 03:25 local re-read) Doc cleanup pass: aligned onboarding/testing docs with real-auth + FEAT_ALL, marked planning docs historical, refreshed HANDOFF/RESTART drift warnings + timestamps. Branch/date guardrails unchanged.
 - (2026-02-03 02:20 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Added Always-On Loop guidance in AGENTS/RESTART, updated handoff/worklog/changelog. Branch/date guardrails unchanged.
