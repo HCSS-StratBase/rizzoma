@@ -8,3 +8,4 @@
 - Removed yellow unread background from collapsed child blips (use green [+] only).
 - Re-ran BLB snapshot harness: `node test-blb-snapshots.mjs` -> `snapshots/blb/1770165748162-*`.
 - Updated `docs/HANDOFF.md` for new BLB snapshot set and reran `npm run lint:branch-context`.
+- Updated PR #37 body with new BLB toolbar/unread changes and snapshot set `1770165748162-*`.
