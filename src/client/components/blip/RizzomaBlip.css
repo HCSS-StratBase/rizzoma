@@ -777,9 +777,9 @@
 }
 
 .child-blip-collapsed.has-unread {
-  background-color: #fffae5;
-  border-left: 3px solid #ffd93d;
-  padding-left: 5px;
+  background-color: transparent;
+  border-left: none;
+  padding-left: 8px;
 }
 
 .child-blip-collapsed .blip-bullet {

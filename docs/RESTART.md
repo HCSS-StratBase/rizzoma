@@ -3,7 +3,7 @@
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
 - `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-02-03; refresh if more changes land.
-- Re-read checkpoint: 2026-02-04 01:20 local — BLB toolbar visibility tied to expanded state and BLB snapshots refreshed (`snapshots/blb/1770164188794-*`); drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
+- Re-read checkpoint: 2026-02-04 01:55 local — BLB child unread highlight removed (green [+] only) and BLB snapshots refreshed (`snapshots/blb/1770165748162-*`); drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
 
 Quick start for the next batch (copy/paste):
 ```
@@ -26,7 +26,7 @@ codex exec '
 
   Priority focus:
   1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; move beyond `perfRender=lite` and reduce full-render TTF/memory. Lite-mode perf harness now passes (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB) but full render still needs work.
-  2) BLB parity: enforce single-container topic pane (title as first line of the meta-blip body), inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity (toolbar only for expanded blips), unread green markers, and update BLB snapshots. Latest set: `snapshots/blb/1770164188794-*` (2026-02-04).
+  2) BLB parity: enforce single-container topic pane (title as first line of the meta-blip body), inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity (toolbar only for expanded blips), unread green markers, and update BLB snapshots. Latest set: `snapshots/blb/1770165748162-*` (2026-02-04).
   3) Toolbar parity: `test:toolbar-inline` now asserts the read toolbar (expanded via collapsed rows). Keep the read toolbar present and smokes green.
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
   5) Automate bundles/backups (bundle + GDrive copy) and document cadence (`scripts/backup-bundle.sh`).
