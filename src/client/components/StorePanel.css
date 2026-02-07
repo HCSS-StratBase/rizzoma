@@ -1,0 +1,143 @@
+.store-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.store-header {
+  margin-bottom: 16px;
+}
+
+.store-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.store-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.store-search {
+  margin-bottom: 12px;
+}
+
+.store-search input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.store-search input:focus {
+  outline: none;
+  border-color: #4285f4;
+}
+
+.store-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.category-btn {
+  padding: 6px 12px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.category-btn:hover {
+  background: #e0e0e0;
+}
+
+.category-btn.active {
+  background: #4285f4;
+  color: white;
+}
+
+.gadgets-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gadget-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  transition: box-shadow 0.15s;
+}
+
+.gadget-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gadget-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.gadget-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.gadget-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.gadget-description {
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.install-btn {
+  padding: 6px 12px;
+  background: #4285f4;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.install-btn:hover {
+  background: #3367d6;
+}
+
+.install-btn.installed {
+  background: #34a853;
+}
+
+.install-btn.installed:hover {
+  background: #2d8f47;
+}
+
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}

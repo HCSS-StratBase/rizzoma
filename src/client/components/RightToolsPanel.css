@@ -1,231 +1,275 @@
+/* RightToolsPanel - Minimal like real Rizzoma */
+
 .right-tools-panel {
-  width: 280px;
-  min-width: 280px;
-  background: #f5f5f5;
+  width: 80px;
+  min-width: 80px;
+  background: #F5F5F5;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid #ddd;
-  transition: width 0.3s ease;
+  align-items: center;
+  padding: 12px 8px;
+  gap: 16px;
+  border-left: 1px solid #DDD;
 }
 
-.right-tools-panel.collapsed {
-  width: 40px;
-  min-width: 40px;
+/* User Avatar Section */
+.user-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
-.right-tools-panel.anonymous {
-  opacity: 0.8;
-}
-
-.tools-header {
-  height: 48px;
-  background: #e8e8e8;
+.user-avatar-large {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  border-bottom: 1px solid #ccc;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 2px solid #fff;
 }
 
-.tools-section {
-  padding: 16px;
-  border-bottom: 1px solid #ddd;
+.user-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-/* View Controls */
-.view-controls {
+.avatar-initials {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.avatar-initials.hidden {
+  display: none;
+}
+
+.user-name {
+  font-size: 10px;
+  color: #555;
+  text-align: center;
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* Next button (Follow the Green) */
+.next-button {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.view-mode-toggle {
-  display: flex;
+  align-items: center;
   gap: 4px;
-  margin-top: 8px;
-}
-
-.mode-btn {
-  flex: 1;
-  padding: 6px 12px;
-  background: white;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s;
-}
-
-.mode-btn:first-child {
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
-}
-
-.mode-btn:last-child {
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  border-left: none;
-}
-
-.mode-btn:hover {
-  background: #f0f0f0;
-}
-
-.mode-btn.active {
-  background: #3498db;
-  color: white;
-  border-color: #3498db;
-}
-
-/* Tool Buttons */
-.tool-btn {
-  width: 100%;
-  padding: 8px 12px;
-  background: white;
-  border: 1px solid #ccc;
+  padding: 12px 8px;
+  background: #E8E8E8;
+  border: 1px solid #CCC;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
-  text-align: left;
+  font-size: 11px;
+  color: #666;
+  width: 100%;
   transition: all 0.2s;
 }
 
-.tool-btn:hover {
-  background: #f0f0f0;
-  border-color: #999;
+.next-button:hover:not(:disabled) {
+  background: #DDD;
+  border-color: #BBB;
 }
 
-.tool-btn:disabled {
+.next-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Quick Actions */
-.quick-actions {
+.next-button.has-unread {
+  background: #89E340;
+  border-color: #7AD030;
+  color: white;
+}
+
+.next-button.has-unread:hover:not(:disabled) {
+  background: #7AD030;
+}
+
+.next-arrow {
+  font-size: 16px;
+}
+
+/* View toggle */
+.view-toggle {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
-.action-btn {
+.view-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.view-btn:hover {
+  background: #E8E8E8;
+}
+
+.view-btn.active {
+  background: #E0E0E0;
+  border-color: #CCC;
+  color: #333;
+}
+
+.view-icon {
+  font-size: 16px;
+}
+
+.view-label {
+  white-space: nowrap;
+}
+
+/* Fold/Unfold controls */
+.fold-controls {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  justify-content: center;
+}
+
+.fold-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #E8E8E8;
+  border: 1px solid #CCC;
+  border-radius: 3px;
   cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  background: #f0f0f0;
-  border-color: #999;
-}
-
-.action-btn .icon {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 10px;
   color: #666;
+  transition: all 0.15s;
 }
 
-/* Topic Management */
-.topic-management {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+.fold-btn:hover {
+  background: #DDD;
+  border-color: #BBB;
 }
 
-.manage-btn {
-  padding: 8px 12px;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s;
+.fold-icon {
+  font-size: 10px;
 }
 
-.manage-btn:hover {
-  background: #f0f0f0;
-  border-color: #999;
-}
-
-/* Additional Actions */
-.additional-actions {
+/* Display mode toggle (short/expanded) */
+.display-toggle {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
 }
 
-.additional-actions .tool-btn {
-  flex: 1;
-  min-width: calc(50% - 4px);
+.display-btn {
+  padding: 4px 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  transition: all 0.15s;
 }
 
-/* Collapsed state */
-.right-tools-panel.collapsed .tools-section,
-.right-tools-panel.collapsed .user-presence {
-  display: none;
+.display-btn:hover {
+  background: #E8E8E8;
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
-  .right-tools-panel {
-    width: 240px;
-    min-width: 240px;
-  }
+.display-btn.active {
+  background: #E0E0E0;
+  border-color: #CCC;
+  color: #333;
 }
 
+/* Insert shortcuts */
+.insert-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding-top: 8px;
+  border-top: 1px solid #DDD;
+  margin-top: 8px;
+}
+
+.insert-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 6px 4px;
+  background: #FFF;
+  border: 1px solid #CCC;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.15s;
+}
+
+.insert-btn:hover {
+  background: #F0F0F0;
+  border-color: #AAA;
+}
+
+.insert-btn:active {
+  background: #E8E8E8;
+}
+
+.insert-icon {
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.insert-btn.gadget-btn {
+  font-size: 10px;
+  padding: 8px 4px;
+}
+
+.insert-label {
+  font-weight: 500;
+}
+
+/* Mobile: Hide on small screens */
 @media (max-width: 768px) {
   .right-tools-panel {
-    width: 200px;
-    min-width: 200px;
+    width: 50px;
+    min-width: 50px;
+    padding: 8px 4px;
   }
 
-  .topic-management {
-    grid-template-columns: 1fr;
+  .view-label {
+    display: none;
   }
 }
 
-/* Mobile: Hide right panel completely */
 @media (max-width: 500px) {
   .right-tools-panel {
     display: none;
-  }
-
-  /* Mobile tools overlay - shown via hamburger menu */
-  .right-tools-panel.mobile-open {
-    display: flex;
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 280px;
-    z-index: 1000;
-    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
-    animation: slideIn 0.2s ease-out;
-  }
-
-  @keyframes slideIn {
-    from {
-      transform: translateX(100%);
-    }
-    to {
-      transform: translateX(0);
-    }
-  }
-
-  /* Overlay backdrop */
-  .mobile-overlay-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 999;
   }
 }

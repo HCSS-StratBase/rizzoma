@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import './RightToolsPanel.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { emitWaveUnread } from '../lib/socket';
+import { GadgetPalette, type GadgetType } from './GadgetPalette';
 
 // Custom events for insert shortcuts - these are dispatched globally
 // and picked up by the active blip editor
@@ -111,8 +112,14 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
     dispatchInsertEvent(INSERT_EVENTS.TAG);
   }, []);
 
+  const [showGadgetPalette, setShowGadgetPalette] = useState(false);
+
   const handleInsertGadget = useCallback(() => {
-    dispatchInsertEvent(INSERT_EVENTS.GADGET);
+    setShowGadgetPalette(prev => !prev);
+  }, []);
+
+  const handleGadgetSelect = useCallback((type: GadgetType, url?: string) => {
+    dispatchInsertEvent(INSERT_EVENTS.GADGET, { type, url });
   }, []);
 
   const handleFollowGreen = async () => {
@@ -301,6 +308,12 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
           >
             <span className="insert-label">Gadgets</span>
           </button>
+          {showGadgetPalette && (
+            <GadgetPalette
+              onSelect={handleGadgetSelect}
+              onClose={() => setShowGadgetPalette(false)}
+            />
+          )}
         </div>
       )}
     </div>

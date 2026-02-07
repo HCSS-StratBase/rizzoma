@@ -17,8 +17,16 @@
   - Modern: Explicit Express routes (`/api/topics`, `/api/blips`, `/api/waves`, inline comments, uploads). CouchDB access via typed helpers (`getDoc`, `find`, `insertDoc`, `updateDoc`).
 
 - **Editor/toolbar**
-  - Legacy: Inline toolbar injected next to blips; buttons wired via jQuery; follows the classic Rizzoma look.
-  - Modern: TipTap-based editor (`BlipMenu`, `BlipEditor`, inline comments extension). Toolbar exposes `data-testid` hooks for Playwright; parity work needed to mirror legacy controls (Edit/Hide/Copy/Paste/Playback).
+  - Legacy: TWO-LEVEL TOOLBAR ARCHITECTURE:
+    1. **Topic-level toolbars** (always visible at top): Collaboration toolbar (Invite, participant avatars +N, Share, gear) + Topic Edit toolbar (Edit, comments, link)
+    2. **Blip-level toolbar** (only on EXPANDED blip): Appears when you click/focus a blip; hidden for collapsed blips
+  - Modern: TipTap-based editor (`BlipMenu`, `BlipEditor`, inline comments extension). Toolbar exposes `data-testid` hooks for Playwright.
+  - **GAP**: Modern shows toolbar on ALL blips. Legacy shows toolbar ONLY on expanded/focused blip. Topic-level toolbars are completely missing.
+
+- **Blip collapse/expand behavior**
+  - Legacy: Blips are COLLAPSED by default (when "Hidden" is checked), showing only `• Label [+]`. Click [+] to expand. Toolbar appears ONLY when blip is expanded. Green [+] indicates unread content. Expanding parent does NOT auto-expand children.
+  - Modern: All blips rendered expanded with toolbars visible. No [+]/[−] collapse icons. No collapsed "Table of Contents" view.
+  - **GAP**: This is a FUNDAMENTAL difference in how the UI behaves. Modern needs complete rework to match the collapse-first BLB pattern.
 
 - **Realtime/collaboration**
   - Legacy: Socket-based presence and follow-the-green implemented in CoffeeScript.
@@ -36,8 +44,38 @@
   - Legacy: Minimal automated UI tests; manual QA.
   - Modern: Playwright/Vitest smoke and unit tests with data-testids (e.g., BlipMenu). CI workflow on the feature branch; lint/typecheck tasks defined.
 
+- **Reply vs Inline Comment (Two types of child blips)**
+  - Legacy: TWO ways to create child blips:
+    1. **Reply** (blip UNDER): Created via "Write a reply..." at bottom. Comments on ENTIRE parent blip. Appears at end of parent's content.
+    2. **Inline Comment** (blip IN): Created via Ctrl+Enter at cursor position. Comments on THAT SPECIFIC SPOT. Appears INLINE at anchor position within content.
+  - Both are full blip documents (own author, timestamp, can have their own children recursively)
+  - Both are "blank sheets" - user decides format (bulleted, plain text, etc.)
+  - Data model: `anchorPosition` field distinguishes them (null = reply, set = inline)
+  - Modern: Currently treats Ctrl+Enter incorrectly. Child blips render as separate containers below "Write a reply..." instead of at anchor positions.
+  - **GAP**: Need to implement `anchorPosition` field and render inline comments at their anchor positions within parent content.
+
+- **Blip container structure**
+  - Legacy: ONE container per expanded blip containing:
+    1. Toolbar
+    2. Content with INLINE COMMENTS embedded at anchor positions
+    3. REPLIES (child blips with no anchor) as collapsed rows
+    4. "Write a reply..." input at the very bottom
+  - Modern: Wrong structure - child blips rendered as separate containers AFTER "Write a reply..." instead of integrated into the parent's view.
+  - **GAP**: Need to fix render order and integrate inline comments at anchor positions.
+
+- **Topic = Meta-Blip (Title is First Line)**
+  - Legacy: Topic IS a blip (the root/meta-blip). Title is just the first line of content with H1/bold styling. Topic content is fully editable like any blip. Can have inline comments (Ctrl+Enter) anywhere in topic content.
+  - Modern: Topic title is a SEPARATE field, edited via special textarea. Topic content only used for tag extraction. No inline comments in topic content.
+  - **GAP**: Topic should be treated as a full editable blip with title as first line. Need to unify Topic and Blip rendering/editing.
+
 - **Current gaps (parity)**
-  - Blip toolbar rendering: modern BlipMenu not visible in the React view; legacy inline buttons still show.
+  - **Topic as meta-blip missing**: Topic should be editable like any blip, with title as styled first line
+  - **Topic-level toolbars missing**: No collaboration toolbar (Invite, avatars, Share) or topic-level Edit toolbar at top of topics.
+  - **Blip collapse behavior wrong**: Modern shows all blips expanded with toolbars. Legacy collapses blips by default, showing only `Label [+]`. Toolbar only appears on expanded/focused blip.
+  - **No [+]/[−] expand icons**: Legacy uses [+] (collapsed) and [−] (expanded) icons. Green [+] for unread content.
+  - **Child blip render order wrong**: Should be: content → inline comments at anchors → replies at bottom → "Write a reply..."
+  - **Child blip format inconsistent**: Child blips should render same as any collapsed blip (`Label [+] avatar date`), not as `□ Untitled blip`
+  - **Inline comment anchoring missing**: Ctrl+Enter should create blip at cursor position, not at bottom
   - Follow-the-green/Next control not exposed in the right pane.
   - CORS/config friction in dev; needs stable allowed origins and cookie reuse.
   - Some routes still fall back to legacy forms (old topic edit).

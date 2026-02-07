@@ -15,7 +15,11 @@ import { Underline } from './extensions/Underline';
 import { TextColor } from './extensions/TextColor';
 import { ImageGadget } from './extensions/ImageGadget';
 import { InlineCommentsVisibility } from './extensions/InlineCommentsVisibility';
+import { BlipKeyboardShortcuts } from './extensions/BlipKeyboardShortcuts';
 import { ChartGadget, PollGadget } from './extensions/GadgetNodes';
+import { BlipThreadNode } from './extensions/BlipThreadNode';
+import { TagNode } from './extensions/TagNode';
+import { TaskWidgetNode } from './extensions/TaskWidget';
 import { FEATURES } from '@shared/featureFlags';
 
 export const createYjsDocument = (initialContent?: any): Y.Doc => {
@@ -39,7 +43,17 @@ const mockUsers = [
 
 type EditorExtensionOptions = {
   blipId?: string;
+  waveId?: string;
   onToggleInlineComments?: (visible: boolean) => void;
+  /**
+   * Callback to create an inline child blip at the given anchor position.
+   * anchorPosition is the character offset from the start of the content.
+   */
+  onCreateInlineChildBlip?: (anchorPosition: number) => Promise<void> | void;
+  /** Callback to hide (fold) all inline comments. Triggered by Ctrl+Shift+Up. */
+  onHideComments?: () => void;
+  /** Callback to show (unfold) all inline comments. Triggered by Ctrl+Shift+Down. */
+  onShowComments?: () => void;
 };
 
 export const getEditorExtensions = (
@@ -63,6 +77,22 @@ export const getEditorExtensions = (
         onToggle: options?.onToggleInlineComments,
       })
     );
+  }
+
+  // Add blip keyboard shortcuts (Tab/Shift+Tab for indent, Ctrl+Enter for inline child blip)
+  if (options?.blipId || options?.waveId || options?.onCreateInlineChildBlip) {
+    extensions.push(
+      BlipKeyboardShortcuts.configure({
+        blipId: options?.blipId,
+        waveId: options?.waveId,
+        onCreateInlineChildBlip: options?.onCreateInlineChildBlip,
+        onHideComments: options?.onHideComments,
+        onShowComments: options?.onShowComments,
+      })
+    );
+    // BLB: Always include BlipThreadNode when blip shortcuts are enabled
+    // This provides the [+] marker for inline child blips (core BLB functionality)
+    extensions.push(BlipThreadNode.configure({}));
   }
 
   // Add rich editor features if enabled
@@ -94,6 +124,7 @@ export const getEditorExtensions = (
     extensions.push(
       ChartGadget.configure({}),
       PollGadget.configure({})
+      // BlipThreadNode is added with BlipKeyboardShortcuts (core BLB feature)
     );
   }
 
@@ -105,6 +136,12 @@ export const getEditorExtensions = (
         nested: true,
       })
     );
+  }
+
+  // Add #tag and ~task inline widgets (uses same suggestion pattern as mentions)
+  if (FEATURES.MENTIONS) {
+    extensions.push(TagNode.configure({}));
+    extensions.push(TaskWidgetNode.configure({}));
   }
 
   // Add mentions if enabled

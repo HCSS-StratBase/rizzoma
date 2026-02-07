@@ -685,6 +685,37 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     });
   }, []);
 
+  // Global fold-all / unfold-all event listeners (from RightToolsPanel ▲/▼ buttons)
+  useEffect(() => {
+    const collectAllBlipIds = (blipList: BlipData[]): string[] => {
+      const ids: string[] = [];
+      const walk = (list: BlipData[]) => {
+        for (const b of list) {
+          ids.push(b.id);
+          if (b.childBlips) walk(b.childBlips);
+        }
+      };
+      walk(blipList);
+      return ids;
+    };
+
+    const handleFoldAll = () => {
+      setExpandedBlips(new Set());
+    };
+
+    const handleUnfoldAll = () => {
+      const allIds = collectAllBlipIds(blips);
+      setExpandedBlips(new Set(allIds));
+    };
+
+    window.addEventListener('rizzoma:fold-all', handleFoldAll);
+    window.addEventListener('rizzoma:unfold-all', handleUnfoldAll);
+    return () => {
+      window.removeEventListener('rizzoma:fold-all', handleFoldAll);
+      window.removeEventListener('rizzoma:unfold-all', handleUnfoldAll);
+    };
+  }, [blips]);
+
   // Close gear menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1160,12 +1191,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                     <EditorContent editor={topicEditor} />
                   </div>
                 ) : (
-                  <div
-                    className="topic-content-view"
-                    onClick={isAuthed ? startEditingTopic : undefined}
-                    style={isAuthed ? { cursor: 'pointer' } : undefined}
-                    title={isAuthed ? 'Click to edit topic content' : undefined}
-                  >
+                  <div className="topic-content-view">
                     {topicContentHtml ? (
                       <div dangerouslySetInnerHTML={{ __html: topicContentHtml }} />
                     ) : (
@@ -1228,8 +1254,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               contentContainerClassName="topic-blip-content"
               childContainerClassName="topic-blip-children"
               contentClassName="topic-content-view"
-              contentTitle={isAuthed ? 'Click to edit topic content' : undefined}
-              onContentClick={!isEditingTopic && isAuthed ? startEditingTopic : undefined}
+              contentTitle={undefined}
+              onContentClick={undefined}
               contentOverride={topicContentOverride}
               contentFooter={topicContentFooter}
               childFooter={topicChildFooter}

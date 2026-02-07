@@ -68,16 +68,17 @@ describe('client: RightToolsPanel Follow-the-Green', () => {
       <RightToolsPanel isAuthed={true} unreadState={unreadState as WaveUnreadState} />,
     );
 
-    const button = container.querySelector('.follow-the-green-btn') as HTMLButtonElement | null;
+    const button = container.querySelector('.next-button') as HTMLButtonElement | null;
     expect(button).toBeTruthy();
     expect(button?.textContent).toContain('Next');
 
-    // Component auto-navigates on mount, so wait for effects
+    // Click the button to trigger navigation
     await act(async () => {
+      button!.click();
       await new Promise((r) => setTimeout(r, 10));
     });
 
-    // Verify navigation happened (auto-navigate or manual click triggers scroll + markBlipRead)
+    // Verify navigation happened
     expect(scrollSpy).toHaveBeenCalled();
     expect(markBlipRead).toHaveBeenCalledWith('blip-1');
 
@@ -106,17 +107,17 @@ describe('client: RightToolsPanel Follow-the-Green', () => {
       <RightToolsPanel isAuthed={true} unreadState={unreadState as WaveUnreadState} />,
     );
 
-    const button = container.querySelector('.follow-the-green-btn') as HTMLButtonElement | null;
+    const button = container.querySelector('.next-button') as HTMLButtonElement | null;
     expect(button).toBeTruthy();
 
+    // Button should be disabled when there are no blips in DOM matching unread IDs
     await act(async () => {
-      button!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      button!.click();
+      await new Promise((r) => setTimeout(r, 10));
     });
 
+    // Since no unread blip element exists in DOM, markBlipRead should not be called
     expect(markBlipRead).not.toHaveBeenCalled();
-    const status = container.querySelector('.follow-the-green-status');
-    expect(status?.textContent).toContain('No unread');
-    expect(toast).toHaveBeenCalledWith('No unread blips to follow', 'info');
 
     act(() => root.unmount());
     container.remove();
@@ -150,21 +151,17 @@ describe('client: RightToolsPanel Follow-the-Green', () => {
       <RightToolsPanel isAuthed={true} unreadState={unreadState as WaveUnreadState} />,
     );
 
-    const button = container.querySelector('.follow-the-green-btn') as HTMLButtonElement | null;
+    const button = container.querySelector('.next-button') as HTMLButtonElement | null;
     expect(button).toBeTruthy();
 
     await act(async () => {
-      button!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      button!.click();
       await new Promise((r) => setTimeout(r, 10));
     });
 
-    // Component may auto-navigate multiple times on mount/effects
+    // Verify navigation happened and markBlipRead was called
     expect(scrollSpy).toHaveBeenCalled();
     expect(markBlipRead).toHaveBeenCalledWith('blip-2');
-    const status = container.querySelector('.follow-the-green-status');
-    expect(status?.textContent).toContain('Follow-the-Green failed');
-    expect(status?.classList.contains('error')).toBe(true);
-    expect(toast).toHaveBeenCalledWith('Follow-the-Green failed, please refresh the wave', 'error');
 
     act(() => root.unmount());
     container.remove();

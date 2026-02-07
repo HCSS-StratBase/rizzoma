@@ -34,4 +34,42 @@ describe('client: TipTap editor integration', () => {
     expect(module.useSocket).toBeDefined();
     expect(typeof module.useSocket).toBe('function');
   });
+
+  it('getEditorExtensions includes TagNode and TaskWidgetNode', { timeout: 30000 }, async () => {
+    const { getEditorExtensions } = await import('../client/components/editor/EditorConfig');
+    const extensions = getEditorExtensions(undefined, undefined, {
+      blipId: 'test-blip-id',
+    });
+    const names = extensions.map((e: any) => e.name);
+    console.log('[TEST] Extension names:', names);
+    expect(names).toContain('tag');
+    expect(names).toContain('taskWidget');
+    expect(names).toContain('mention');
+  });
+
+  it('TipTap editor resolves tag and taskWidget extensions', { timeout: 30000 }, async () => {
+    const { getEditorExtensions } = await import('../client/components/editor/EditorConfig');
+    const { Editor } = await import('@tiptap/core');
+
+    const extensions = getEditorExtensions(undefined, undefined, {
+      blipId: 'test-blip-id',
+    });
+
+    // Create a headless TipTap editor
+    const editor = new Editor({
+      extensions,
+      content: '<p>Hello world</p>',
+    });
+
+    const resolvedNames = editor.extensionManager.extensions.map((e: any) => e.name);
+    console.log('[TEST] Resolved extension names:', resolvedNames);
+    console.log('[TEST] Schema nodes:', Object.keys(editor.schema.nodes));
+
+    expect(resolvedNames).toContain('tag');
+    expect(resolvedNames).toContain('taskWidget');
+    expect(Object.keys(editor.schema.nodes)).toContain('tag');
+    expect(Object.keys(editor.schema.nodes)).toContain('taskWidget');
+
+    editor.destroy();
+  });
 });

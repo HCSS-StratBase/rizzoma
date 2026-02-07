@@ -52,7 +52,7 @@ export async function insertDoc<T extends Record<string, any>>(doc: T) {
 
 export async function find<T = any>(
   selector: Record<string, any>,
-  options?: { limit?: number; skip?: number; sort?: Array<Record<string, 'asc' | 'desc'>>; bookmark?: string }
+  options?: { limit?: number; skip?: number; sort?: Array<Record<string, 'asc' | 'desc'>>; bookmark?: string; use_index?: string | [string, string] }
 ) {
   const { base, header } = buildAuth(config.couchDbUrl);
   const url = `${base}/${encodeURIComponent(config.couchDbName)}/_find`;
@@ -61,6 +61,7 @@ export async function find<T = any>(
   if (typeof options?.skip === 'number') body.skip = options.skip;
   if (options?.sort) body.sort = options.sort;
   if (options?.bookmark) body.bookmark = options.bookmark;
+  if (options?.use_index) body.use_index = options.use_index;
   return httpJson<{ docs: T[]; bookmark?: string }>('POST', url, body, header);
 }
 

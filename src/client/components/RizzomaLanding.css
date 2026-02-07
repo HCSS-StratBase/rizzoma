@@ -1,174 +1,193 @@
 .rizzoma-landing {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a5f5c 0%, #0e8b87 50%, #12b5ae 100%);
+  background: #1a8a87;
   color: white;
   display: flex;
   flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', sans-serif;
   position: relative;
-  overflow: hidden;
 }
 
-/* Background patterns */
-.rizzoma-landing::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
-  background-size: 50px 50px;
-  transform: rotate(30deg);
-  pointer-events: none;
-}
-
-.landing-content {
+/* Header section with background illustration */
+.landing-header {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
+  justify-content: flex-start;
+  padding: 40px 20px 60px;
+  background: url('/landing/header-bg.png') center center no-repeat;
+  background-size: cover;
+  min-height: 500px;
   position: relative;
-  z-index: 1;
 }
 
-.rizzoma-logo {
-  display: flex;
-  align-items: center;
-  margin-bottom: 30px;
-  font-size: 36px;
-  font-weight: 300;
+/* Logo */
+.rizzoma-logo-img {
+  height: 45px;
+  margin-bottom: 10px;
 }
 
-.logo-r {
-  display: inline-block;
-  width: 50px;
-  height: 50px;
-  background: white;
-  color: #0e8b87;
-  border-radius: 8px;
-  text-align: center;
-  line-height: 50px;
-  font-weight: 600;
-  margin-right: 15px;
-  font-size: 32px;
-}
-
-.logo-text {
-  letter-spacing: 2px;
-}
-
+/* Title - italic style like original */
 .landing-title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 300;
-  margin: 0 0 60px 0;
+  font-style: italic;
+  margin: 0 0 180px 0;
   text-align: center;
   max-width: 600px;
   line-height: 1.4;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* Features showcase - positioned over the header bg */
 .features-showcase {
   display: flex;
-  gap: 80px;
-  margin-bottom: 60px;
+  gap: 200px;
+  margin-bottom: 40px;
+  position: absolute;
+  bottom: 200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 900px;
+  justify-content: center;
 }
 
 .feature-item {
   text-align: center;
-  opacity: 0.9;
-}
-
-.feature-icon {
-  width: 120px;
-  height: 120px;
-  background: rgba(255,255,255,0.1);
-  border: 2px solid rgba(255,255,255,0.3);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48px;
-  margin: 0 auto 15px;
-  transition: transform 0.3s ease;
-}
-
-.feature-icon:hover {
-  transform: scale(1.05);
 }
 
 .feature-item h3 {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 300;
   margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+/* Enter Rizzoma button - matches original sprite styling */
 .enter-rizzoma-btn {
-  background: white;
-  color: #0e8b87;
+  background: url('/landing/enter-btn-grey.png') center top no-repeat;
+  background-color: transparent;
   border: none;
-  padding: 12px 40px;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: 500;
+  width: 257px;
+  height: 49px;
   cursor: pointer;
   margin-bottom: 15px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.btn-subtitle {
-  font-size: 12px;
-  font-weight: 300;
-  margin-top: 2px;
+  justify-content: center;
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #555;
+  padding: 0;
 }
 
 .enter-rizzoma-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  background-position: center -49px;
 }
 
+.enter-rizzoma-btn:active {
+  background-position: center -98px;
+}
+
+/* Hide text - sprite already contains the button text */
+.btn-text,
+.btn-subtitle {
+  display: none !important;
+  visibility: hidden !important;
+  font-size: 0 !important;
+}
+
+/* Subtitle below button */
 .landing-subtitle {
   font-size: 14px;
-  margin-bottom: 30px;
-  opacity: 0.9;
+  margin: 0;
+  opacity: 0.85;
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
+/* Social buttons */
 .social-buttons {
   display: flex;
   gap: 10px;
-  margin-top: 30px;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .social-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(0,0,0,0.2);
-  border: 1px solid rgba(255,255,255,0.2);
+  gap: 5px;
+  background: #333;
+  border: none;
   color: white;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 3px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
+  text-decoration: none;
   transition: background 0.3s ease;
 }
 
 .social-btn:hover {
-  background: rgba(0,0,0,0.3);
+  background: #444;
+}
+
+.twitter-btn {
+  background: #000;
+}
+
+.linkedin-btn {
+  background: #0077b5;
 }
 
 .social-icon {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
 }
 
+/* MORE section */
+.landing-more {
+  background: linear-gradient(180deg, #1a8a87 0%, #0d4a48 100%);
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.more-btn-container {
+  background: url('/landing/more-btn.png') center center no-repeat;
+  width: 240px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.more-text {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #0a3a38;
+  margin-top: 5px;
+}
+
+/* Footer */
 .landing-footer {
-  background: rgba(0,0,0,0.2);
-  padding: 30px;
+  background: #0a3a38;
+  padding: 20px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -176,23 +195,38 @@
   gap: 20px;
 }
 
-.footer-links,
-.footer-legal,
-.footer-apps {
+.footer-left,
+.footer-center,
+.footer-right {
   display: flex;
   align-items: center;
   gap: 20px;
 }
 
 .footer-link {
-  color: rgba(255,255,255,0.8);
+  color: #2eb8b3;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 13px;
   transition: color 0.3s ease;
 }
 
 .footer-link:hover {
-  color: white;
+  color: #5dd8d3;
+  text-decoration: underline;
+}
+
+.android-app-img {
+  height: 30px;
+}
+
+.open-source-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.osi-icon {
+  font-size: 16px;
 }
 
 /* Login Modal Styles */
@@ -202,7 +236,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -211,17 +245,21 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .login-modal {
   background: white;
   border-radius: 8px;
   padding: 40px;
-  width: 320px;
+  width: 350px;
   position: relative;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   animation: slideIn 0.3s ease;
 }
 
@@ -255,142 +293,67 @@
   color: #666;
 }
 
-.oauth-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  margin-bottom: 10px;
-  transition: opacity 0.3s ease;
-}
-
-.oauth-btn:hover {
-  opacity: 0.9;
-}
-
-.google-btn {
-  background: #d14836;
-  color: white;
-}
-
-.facebook-btn {
-  background: #3b5998;
-  color: white;
-}
-
-.oauth-icon {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.or-divider {
-  text-align: center;
-  color: #999;
-  margin: 20px 0;
-  font-size: 12px;
-  position: relative;
-}
-
-.or-divider::before,
-.or-divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 45%;
-  height: 1px;
-  background: #e0e0e0;
-}
-
-.or-divider::before {
-  left: 0;
-}
-
-.or-divider::after {
-  right: 0;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.login-input {
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: border-color 0.3s ease;
-}
-
-.login-input:focus {
-  outline: none;
-  border-color: #0e8b87;
-}
-
-.submit-btn {
-  background: #0e8b87;
-  color: white;
-  border: none;
-  padding: 12px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  margin-top: 10px;
-  transition: background 0.3s ease;
-}
-
-.submit-btn:hover {
-  background: #0a6f6b;
-}
-
-.login-footer {
-  margin-top: 20px;
-  text-align: center;
-  font-size: 13px;
-  color: #666;
-}
-
-.signup-link,
-.forgot-link {
-  color: #0e8b87;
-  text-decoration: none;
-}
-
-.signup-link:hover,
-.forgot-link:hover {
-  text-decoration: underline;
-}
-
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .features-showcase {
-    flex-direction: column;
+    gap: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-header {
+    min-height: 400px;
+    background-size: auto 100%;
+  }
+
+  .landing-title {
+    font-size: 20px;
+    margin-bottom: 120px;
+  }
+
+  .features-showcase {
     gap: 40px;
+    bottom: 180px;
   }
-  
-  .feature-icon {
-    width: 100px;
-    height: 100px;
-    font-size: 40px;
+
+  .feature-item h3 {
+    font-size: 18px;
   }
-  
+
+  .enter-rizzoma-btn {
+    bottom: 80px;
+  }
+
+  .landing-subtitle {
+    bottom: 50px;
+    font-size: 12px;
+  }
+
+  .social-buttons {
+    bottom: 15px;
+  }
+
   .landing-footer {
     flex-direction: column;
     text-align: center;
+    padding: 15px 20px;
   }
-  
-  .footer-links,
-  .footer-legal,
-  .footer-apps {
+
+  .footer-left,
+  .footer-center,
+  .footer-right {
     flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 500px) {
+  .features-showcase {
+    flex-direction: row;
+    gap: 20px;
+  }
+
+  .feature-item h3 {
+    font-size: 14px;
   }
 }

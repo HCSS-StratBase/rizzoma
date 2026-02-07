@@ -36,7 +36,7 @@ export function CreateTopicModal({ isOpen, onClose, onTopicCreated }: CreateTopi
       method: 'POST',
       body: JSON.stringify({
         title: trimmedTitle,
-        content: '<p>Start your discussion here...</p>',
+        content: `<h1>${trimmedTitle}</h1>`,
         participants: emails
       })
     });

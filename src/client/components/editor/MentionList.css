@@ -63,3 +63,17 @@
 .mention:hover {
   background-color: #bbdefb;
 }
+
+/* Tag inline widget (#tag) */
+.tag-widget {
+  background-color: #fff3e0;
+  border-radius: 4px;
+  padding: 2px 4px;
+  color: #e65100;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tag-widget:hover {
+  background-color: #ffe0b2;
+}

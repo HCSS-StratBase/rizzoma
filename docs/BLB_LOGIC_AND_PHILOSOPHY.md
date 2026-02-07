@@ -617,8 +617,8 @@ All this is **ONE blip** with ONE author:
 | Shortcut | Action |
 |----------|--------|
 | **Escape** | Exit edit mode (saves automatically) |
-| **Ctrl+Shift+ArrowUp** | Toggle inline comments visibility |
-| **Ctrl+Shift+ArrowDown** | Toggle inline comments visibility |
+| **Ctrl+Shift+ArrowUp** | **Hide** all inline comments (collapse all [+]) |
+| **Ctrl+Shift+ArrowDown** | **Show** all inline comments (expand all [+]) |
 
 ## 13. Technical Architecture: Blip Data Model
 
@@ -903,7 +903,9 @@ This section documents critical learnings from hands-on experimentation in live 
 
 The previous documentation described Ctrl+Enter as creating "inline comments at anchor positions within text" - implying margin-note-style annotations embedded in prose. **This was incomplete.**
 
-**The key insight:** When you press **Ctrl+Enter at the end of a LIST ITEM**, you don't get an inline annotation - you get a **SUBBLIP**: a completely new navigable document.
+**The key insight:** When you press **Ctrl+Enter at ANY cursor position** — whether at the end of a list item, mid-sentence in prose, or even mid-word — you create a **SUBBLIP**: a completely new navigable document anchored at that exact position.
+
+> **CORRECTION (2026-02-06):** Ctrl+Enter is NOT limited to list item endings. It works at ANY cursor position in ANY text. The [+] marker always appears at the exact character position where the cursor was. Mid-sentence Ctrl+Enter splits the text: `text-before [+] text-after`.
 
 ### The BLB Pattern is Literal
 
@@ -926,10 +928,11 @@ When you create a list item and then create content below it with Ctrl+Enter, yo
    • Label one
    ```
 
-2. **Position cursor at END of list item, press Ctrl+Enter:**
+2. **Position cursor (e.g., at END of list item) and press Ctrl+Enter:**
    ```
-   • Label one [+]   ← [+] appears immediately!
+   • Label one [+]   ← [+] appears at cursor position!
    ```
+   - Works at ANY cursor position: end of list item, mid-sentence, mid-word
    - The URL CHANGES: `/topic/{topicId}/` → `/topic/{topicId}/0_b_xxx/`
    - You're now INSIDE the subblip, editing a blank document
 
@@ -967,15 +970,15 @@ This URL change is **critical** - it means subblips are addressable, linkable, a
 
 ### Clicking Behavior: Navigation Not Selection
 
-**Key discovery:** Clicking on a list item that has a [+] indicator **navigates INTO the subblip** rather than selecting the text for editing.
+**Key discovery:** Clicking on the [+] indicator **navigates INTO the subblip** rather than selecting the text for editing.
 
 | Click Target | Behavior |
 |--------------|----------|
-| List item WITHOUT [+] | Enters edit mode for that content |
-| List item WITH [+] | **Opens/navigates INTO the subblip** |
-| The [+] icon itself | Opens/navigates INTO the subblip |
+| Text WITHOUT [+] | Enters edit/view mode for that content |
+| The [+] icon itself | **Opens/navigates INTO the subblip** |
+| Text near [+] in view mode | May navigate into the subblip |
 
-This means users can quickly drill down into nested content by clicking the labels.
+> **Note (2026-02-06):** The [+] marker can appear on list items, in mid-sentence prose, or even mid-word. Clicking the [+] icon itself always navigates into the subblip regardless of context.
 
 ### Creating Sibling Entries After Collapsed Subblips
 
@@ -991,25 +994,32 @@ When you have a collapsed subblip and want to add a sibling (not a child), you n
 • Label two        ← Created with End + Enter on previous line
 ```
 
-### The [+] Indicator Meaning (Corrected)
+### The [+] Indicator Meaning (Corrected 2026-02-06)
 
-The [+] indicator does NOT just mean "has hidden content" - it specifically means:
+The [+] indicator means:
 
-**"This list item has a SUBBLIP you can navigate into"**
+**"There is a SUBBLIP (inline comment) anchored at this position that you can navigate into"**
 
-- It's not a generic collapse indicator for nested bullets
 - It represents a **first-class blip document** with its own URL
-- Clicking it navigates INTO that document, not just expands inline
+- Clicking it navigates INTO that document (or expands it inline)
+- It can appear on list items, in mid-sentence prose, or even mid-word
+- Multiple [+] markers can exist within a single sentence at different positions
+- It is NOT limited to list items — any text can have [+] markers
 
-### Reply vs Inline Comment vs Subblip (Corrected Understanding)
+### Reply vs Inline Comment (Corrected 2026-02-06)
 
-| Type | Created By | Where It Appears | URL Changes? |
-|------|-----------|------------------|--------------|
-| **Reply** | "Write a reply..." | Bottom of expanded blip | No |
-| **Inline Comment** | Ctrl+Enter in prose text | At anchor position in text | May change |
-| **Subblip** | Ctrl+Enter at end of LIST ITEM | [+] indicator on list item | **YES - new URL path** |
+> **IMPORTANT:** "Inline Comment" and "Subblip" are the SAME thing. There is NO distinction based on cursor position. Ctrl+Enter ALWAYS creates an inline comment blip, whether at end of a list item, mid-sentence, or mid-word.
 
-The key distinction: **Subblips are the "Blip" in BLB** - they're the hidden bodies behind the bullet/label that users drill into for the full content.
+| Type | Created By | Where It Appears | Has Hide Button? | URL Changes? |
+|------|-----------|------------------|------------------|--------------|
+| **Reply** | "Write a reply..." | Bottom of expanded blip | **NO** — cannot collapse to [+] | No |
+| **Inline Comment (= Subblip)** | Ctrl+Enter at ANY cursor position | [+] marker at exact anchor position | **YES** — can collapse to [+] | YES - new URL path |
+
+**Key distinctions:**
+- **Replies** are standalone thread comments — they cannot be hidden/collapsed
+- **Inline comments** are anchor-positioned subblips — they CAN be hidden to [+]
+- Both are full blip documents with their own content, author, timestamp, and children
+- The "Blip" in BLB refers to inline comments (Ctrl+Enter), NOT replies
 
 ### Final Structure from Hands-On Exercise
 
@@ -1249,3 +1259,157 @@ const blip: Blip = {
 6. Verify: Navigation occurs to `/topic/{waveId}/{blipPath}/`
 7. Verify: "Hide" returns to parent with `[+]` still visible in content
 8. Verify: Clicking `[+]` navigates back to the subblip
+
+## 18. Hands-On BLB Study (2026-02-06) — New Findings
+
+This section documents critical new learnings from a comprehensive hands-on session where a multi-layered BLB topic was created from scratch on live rizzoma.com, testing every feature.
+
+**Study topic:** "BLB Study - Multi-Layer Hierarchy Test" — [rizzoma.com/topic/6cd1d04acf0cf762f920bdcf0fdc9e51/](https://rizzoma.com/topic/6cd1d04acf0cf762f920bdcf0fdc9e51/)
+**Screenshots:** 24 screenshots with companion .md analysis files in `snapshots/blb-study/`
+
+### 18a. Mid-Sentence Inline Comment Anchoring
+
+Ctrl+Enter is NOT limited to end-of-line or end-of-list-item positions. It works at **any character position** in any text:
+
+```
+BEFORE: "...includes a strategic planning component, a financial oversight mechanism, and..."
+                                                  ↑ cursor here, Ctrl+Enter
+
+AFTER:  "...includes a strategic planning component[+], a financial oversight mechanism, and..."
+                                                   ↑ [+] splits the text at anchor point
+```
+
+**Multiple [+] markers in one sentence** — confirmed with 3 inline blips within a single sentence:
+```
+The governance framework includes a strategic planning component[+], a financial oversight
+mechanism[+], and an operational review process[+] that together ensure organizational alignment.
+```
+
+Each [+] anchors at the exact cursor position. When expanded, the inline blip content appears between the text fragments. When collapsed, only the small [+] icon appears inline.
+
+### 18b. Inline Blip Lifecycle (Ctrl+Enter → Edit → Done → View → Hide → [+])
+
+The full lifecycle of an inline comment blip:
+
+```
+1. Ctrl+Enter      → Inline blip CREATED, immediately in EDIT mode (cursor inside)
+                      URL changes to new blip ID
+2. Type content    → Edit mode toolbar: Done, Undo, Redo, formatting, Hide, Delete comment
+3. Click "Done"    → Switches to VIEW mode
+                      View mode toolbar: Edit, Get direct link, Hide, Delete comment, Other
+4. Click "Hide"    → Blip COLLAPSES to [+] marker
+                      Returns to parent blip view
+5. Click [+]       → Expands inline blip back to view mode
+```
+
+**Key:** "Hide" button is available in BOTH edit and view modes. The "Done" button saves and switches to view mode (does NOT collapse).
+
+### 18c. "Hide" vs "Hide comments" — Two Different Operations
+
+| Operation | Scope | Triggered By |
+|-----------|-------|-------------|
+| **"Hide"** | Collapses THIS specific inline blip to [+] | Button on individual inline blip's toolbar |
+| **"Hide replies" (Ctrl+Shift+Up)** | Hides ALL child inline comments of the parent | Topic-level toolbar button |
+| **"Show replies" (Ctrl+Shift+Down)** | Shows ALL child inline comments of the parent | Topic-level toolbar button |
+
+### 18d. Reply vs Inline Comment — The Critical Difference
+
+| Feature | Reply ("Write a reply...") | Inline Comment (Ctrl+Enter) |
+|---------|---------------------------|---------------------------|
+| **Created by** | "Write a reply..." input | Ctrl+Enter OR turquoise Insert Reply button |
+| **Position** | Bottom of parent blip | At exact cursor position |
+| **Has Hide button?** | **NO** — cannot collapse to [+] | **YES** — can collapse to [+] |
+| **Can be hidden?** | Never | Yes, via Hide button or Ctrl+Shift+Up |
+| **Toolbar (view mode)** | Edit, Delete | Edit, Get direct link, **Hide**, Delete comment, Other |
+| **Is "BLB's Blip"?** | No | **Yes** — this IS the Blip in Bullet-Label-Blip |
+
+Both can coexist within the same parent: an inline blip can contain text AND have threaded replies below it.
+
+### 18e. The 5 Turquoise Sidebar Buttons
+
+The right sidebar of the topic view has 5 turquoise/teal buttons (top to bottom):
+
+| Button | Icon | Shortcut | What It Does |
+|--------|------|----------|-------------|
+| **Insert reply** | 💬 | Ctrl+Enter | Creates inline comment at cursor position (identical to Ctrl+Enter) |
+| **Insert mention** | @ | — | Opens contact dropdown → inserts `\|@Name\|` widget inline |
+| **Insert task** | ☑ | ~ | Opens contact + calendar picker → inserts `\|☐ Name DD Mon\|` widget |
+| **Insert tag** | # | — | Opens existing tags dropdown → inserts `#tagname` widget |
+| **Gadgets** | ⚙ | — | Opens gadget palette with 11 gadget types |
+
+### 18f. Inline Widgets — @mention, ~task, #tag
+
+Three types of inline widgets can be embedded in blip content:
+
+#### @mention
+- **Trigger:** Click turquoise @ button, or type `@` in text
+- **Flow:** Contact dropdown appears → select person → widget inserted
+- **Rendering:** `|@Stephan De Spiegeleire|` — teal/green colored inline widget with pipe `|` delimiters
+- **Clicking:** Opens contact profile or action menu
+
+#### ~task
+- **Trigger:** Click turquoise ☑ button, or type `~` in text
+- **Flow:** Checkbox + contact dropdown → select person → calendar date picker → select date
+- **Rendering:** `|☐ Stephan De Spiegeleire 13 Feb|` — widget with checkbox, assignee name, due date
+- **Clicking:** Opens task editor popup (assignee email textbox, date picker, Complete status, Delete/Convert to @/Close)
+- **Task editor popup fields:** assignee email, due date, optional description, status
+
+#### #tag
+- **Trigger:** Click turquoise # button, or type `#` in text
+- **Flow:** `#` inserted + dropdown of existing workspace tags → type or select → Enter to confirm
+- **Rendering:** `#featuretest` — clickable inline widget (NO pipe delimiters, unlike @mention and ~task)
+- **Clicking:** Filters topics by that tag
+- **Note:** Rizzoma strips hyphens from tag names (e.g., "blb-study" → "blbstudy")
+
+### 18g. Gadgets — 11 Embedded Interactive Widget Types
+
+Gadgets are **embedded interactive widgets** that render as **iframes** within the editor content.
+
+| # | Gadget | Purpose |
+|---|--------|---------|
+| 1 | **Add gadget** | Generic gadget URL input |
+| 2 | **LaTeX** | Mathematical formula rendering |
+| 3 | **Google Spreadsheet** | Embedded spreadsheet |
+| 4 | **Bubble on Picture** | Image annotation tool |
+| 5 | **Code formatting** | Syntax-highlighted code blocks |
+| 6 | **Pollo** | Polling/survey widget |
+| 7 | **Yes \| No \| Maybe** | Quick 3-option voting (green/red/yellow buttons) |
+| 8 | **Googley Like Button** | +1/like widget |
+| 9 | **iFrame** | Embed any URL |
+| 10 | **YouTube** | Embedded video player |
+| 11 | **ContentZ** | Content aggregation widget |
+
+**Gadget behavior (Yes|No|Maybe example):**
+- Renders as full-width block element (not inline like @mention)
+- Shows 3 colored buttons: Green=Yes, Red=No, Gold=Maybe
+- Click to vote → your avatar + name appears under your choice
+- Button becomes disabled after voting (one vote per user)
+- Votes persist server-side
+
+**Insertion gotcha:** The cursor must be actively focused inside the editor content BEFORE clicking the Gadgets button. Clicking the gadget palette alone moves focus away from the editor.
+
+### 18h. Widget Rendering Pattern Summary
+
+| Widget Type | Rendering | Inline? | Delimiters | Collapsible? |
+|-------------|-----------|---------|------------|-------------|
+| **@mention** | Colored text widget | Yes (inline) | `\|...\|` pipes | No |
+| **~task** | Checkbox + name + date | Yes (inline) | `\|...\|` pipes | No |
+| **#tag** | Clickable text | Yes (inline) | None | No |
+| **Gadget** | Full-width iframe | No (block) | None | No |
+| **Inline blip [+]** | Small gray icon | Yes (inline) | None | **Yes** (Hide/Show) |
+
+### 18i. BLB Study Screenshots Reference
+
+All 24 screenshots are in `snapshots/blb-study/` with `260206-HHMM-description.png` naming. Each has a companion `.md` analysis file.
+
+**Key reference screenshots:**
+| Screenshot | What It Proves |
+|------------|---------------|
+| `260206-1906-all-five-sections-collapsed-blb.png` | Canonical BLB "Table of Contents" view — 5 bullets with [+] |
+| `260206-1902-three-level-nesting.png` | 3-level recursive BLB hierarchy (root → blip → blip) |
+| `260206-1915-three-midsentence-inline-blips-collapsed.png` | 3 [+] markers within ONE sentence |
+| `260206-1913-reply-inside-inline-blip.png` | Reply vs inline comment — reply has NO Hide button |
+| `260206-1920-mention-task-tag-widgets.png` | @mention + ~task + #tag all on one line |
+| `260206-1922-gadget-dropdown.png` | All 11 gadget types in palette |
+| `260206-1926-yesno-voted.png` | Yes\|No\|Maybe gadget after voting |
+| `260206-1928-insert-reply-button-inline-blip.png` | Insert Reply button splits text mid-word |

@@ -76,6 +76,19 @@ describe('routes: /api/waves unread/next', () => {
         if (sel['type'] === 'read') {
           return okResp({ docs: readDocs.slice() as unknown[] });
         }
+        // Handle blip queries - return flattened blips with _id and timestamps
+        if (sel['type'] === 'blip') {
+          const flatBlips = cloneBlips(waveBlips);
+          const docs: any[] = [];
+          const flatten = (nodes: any[]) => {
+            for (const n of nodes) {
+              docs.push({ _id: n.id, type: 'blip', waveId: sel['waveId'] || 'w1', content: n.content, createdAt: n.createdAt, updatedAt: n.updatedAt });
+              if (n.children) flatten(n.children);
+            }
+          };
+          flatten(flatBlips);
+          return okResp({ docs });
+        }
         return okResp({ docs: [] });
       }
       if (method === 'POST' && /\/project_rizzoma\/?$/.test(path)) {

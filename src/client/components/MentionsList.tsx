@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { api } from '../lib/api';
 import './MentionsList.css';
 
 interface MentionsListProps {
@@ -17,54 +18,58 @@ interface Mention {
   isRead: boolean;
 }
 
+interface MentionsResponse {
+  mentions: Mention[];
+  total: number;
+  unreadCount: number;
+}
+
 export function MentionsList({ isAuthed, onSelectMention }: MentionsListProps): JSX.Element {
   const [mentions, setMentions] = useState<Mention[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const loadMentions = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const response = await api<MentionsResponse>(`/api/mentions?filter=${filter}`);
+      if (response.ok && response.data && typeof response.data === 'object') {
+        const data = response.data as MentionsResponse;
+        setMentions(data.mentions);
+        setUnreadCount(data.unreadCount);
+      }
+    } catch (error) {
+      console.error('Failed to load mentions:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [filter]);
 
   useEffect(() => {
     if (!isAuthed) {
       setLoading(false);
       return;
     }
-    
-    loadMentions();
-  }, [isAuthed]);
 
-  const loadMentions = (): void => {
-    setLoading(true);
-    // Mock data placeholder until API exists
-    const mockMentions: Mention[] = [
-      {
-        id: '1',
-        topicId: '43dc6fb93c4b7c1abc80aa4df6001060',
-        topicTitle: 'Welcome to Rizzoma',
-        mentionText: '@you Great work on the new features!',
-        authorName: 'Alice Johnson',
-        authorId: 'alice',
-        timestamp: new Date().toISOString(),
-        isRead: false,
-      },
-      {
-        id: '2',
-        topicId: '43dc6fb93c4b7c1abc80aa4df6001060',
-        topicTitle: 'Project Planning',
-        mentionText: '@you Can you review this document?',
-        authorName: 'Bob Smith',
-        authorId: 'bob',
-        timestamp: new Date(Date.now() - 86400000).toISOString(),
-        isRead: true,
-      }
-    ];
-    setMentions(mockMentions);
-    setLoading(false);
+    loadMentions();
+  }, [isAuthed, loadMentions]);
+
+  const markAsRead = async (mentionId: string): Promise<void> => {
+    try {
+      await api(`/api/mentions/${mentionId}/read`, { method: 'POST' });
+      setMentions(prev => prev.map(m =>
+        m.id === mentionId ? { ...m, isRead: true } : m
+      ));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Failed to mark mention as read:', error);
+    }
   };
 
-  const filteredMentions = filter === 'unread' 
+  const filteredMentions = filter === 'unread'
     ? mentions.filter(m => !m.isRead)
     : mentions;
-
-  const unreadCount = mentions.filter(m => !m.isRead).length;
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -120,10 +125,15 @@ export function MentionsList({ isAuthed, onSelectMention }: MentionsListProps): 
           </div>
         ) : (
           filteredMentions.map(mention => (
-            <div 
+            <div
               key={mention.id}
               className={`mention-item ${!mention.isRead ? 'unread' : ''}`}
-              onClick={() => onSelectMention(mention.topicId)}
+              onClick={() => {
+                if (!mention.isRead) {
+                  markAsRead(mention.id);
+                }
+                onSelectMention(mention.topicId);
+              }}
             >
               <div className="mention-header">
                 <span className="topic-title">{mention.topicTitle}</span>

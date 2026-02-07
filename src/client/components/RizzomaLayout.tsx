@@ -155,8 +155,9 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
   };
 
   const handleTopicCreated = (topicId: string) => {
-    setSelectedTopicId(topicId);
     setActiveTab('topics');
+    window.location.hash = `#/topic/${topicId}`;
+    window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
   };
 
   const renderSearchPanel = () => {

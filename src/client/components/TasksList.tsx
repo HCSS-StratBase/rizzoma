@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { api } from '../lib/api';
 import './TasksList.css';
 
 interface TasksListProps {
@@ -18,52 +19,65 @@ interface Task {
   createdAt: string;
 }
 
+interface TasksResponse {
+  tasks: Task[];
+  total: number;
+  pendingCount: number;
+  completedCount: number;
+}
+
 export function TasksList({ isAuthed, onSelectTask }: TasksListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [pendingCount, setPendingCount] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
+
+  const loadTasks = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await api<TasksResponse>(`/api/tasks?filter=${filter}`);
+      if (response.ok && response.data && typeof response.data === 'object') {
+        const data = response.data as TasksResponse;
+        setTasks(data.tasks);
+        setPendingCount(data.pendingCount);
+        setCompletedCount(data.completedCount);
+      }
+    } catch (error) {
+      console.error('Failed to load tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [filter]);
 
   useEffect(() => {
     if (!isAuthed) {
       setLoading(false);
       return;
     }
-    
-    loadTasks();
-  }, [isAuthed]);
 
-  const loadTasks = async () => {
+    loadTasks();
+  }, [isAuthed, loadTasks]);
+
+  const toggleTask = async (taskId: string, _currentStatus: boolean) => {
     try {
-      setLoading(true);
-      // Mock data for now
-      const mockTasks: Task[] = [
-        {
-          id: '1',
-          topicId: '43dc6fb93c4b7c1abc80aa4df6001060',
-          topicTitle: 'Project Alpha',
-          taskText: 'Review design documents',
-          assignee: 'you',
-          authorName: 'Team Lead',
-          dueDate: new Date(Date.now() + 86400000).toISOString(),
-          isCompleted: false,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          topicId: '43dc6fb93c4b7c1abc80aa4df6001060',
-          topicTitle: 'Weekly Planning',
-          taskText: 'Update project roadmap',
-          assignee: 'you',
-          authorName: 'Product Manager',
-          isCompleted: true,
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
+      const response = await api<{ isCompleted: boolean }>(`/api/tasks/${taskId}/toggle`, { method: 'POST' });
+      if (response.ok && response.data && typeof response.data === 'object') {
+        const data = response.data as { isCompleted: boolean };
+        setTasks(prev => prev.map(t =>
+          t.id === taskId ? { ...t, isCompleted: data.isCompleted } : t
+        ));
+        // Update counts
+        if (data.isCompleted) {
+          setPendingCount(prev => Math.max(0, prev - 1));
+          setCompletedCount(prev => prev + 1);
+        } else {
+          setPendingCount(prev => prev + 1);
+          setCompletedCount(prev => Math.max(0, prev - 1));
         }
-      ];
-      setTasks(mockTasks);
+      }
     } catch (error) {
-      console.error('Failed to load tasks:', error);
-    } finally {
-      setLoading(false);
+      console.error('Failed to toggle task:', error);
     }
   };
 
@@ -72,9 +86,6 @@ export function TasksList({ isAuthed, onSelectTask }: TasksListProps) {
     if (filter === 'completed') return task.isCompleted;
     return true;
   });
-
-  const pendingCount = tasks.filter(t => !t.isCompleted).length;
-  const completedCount = tasks.filter(t => t.isCompleted).length;
 
   const formatDueDate = (dueDate?: string) => {
     if (!dueDate) return null;
@@ -149,11 +160,11 @@ export function TasksList({ isAuthed, onSelectTask }: TasksListProps) {
               onClick={() => onSelectTask(task.topicId)}
             >
               <div className="task-checkbox">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={task.isCompleted}
                   onClick={e => e.stopPropagation()}
-                  onChange={() => {/* Would toggle task status */}}
+                  onChange={() => toggleTask(task.id, task.isCompleted)}
                 />
               </div>
               <div className="task-content">

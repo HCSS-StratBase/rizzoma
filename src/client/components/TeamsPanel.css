@@ -1,0 +1,185 @@
+.teams-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.teams-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.teams-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.create-team-btn {
+  padding: 6px 12px;
+  background: #4285f4;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.create-team-btn:hover {
+  background: #3367d6;
+}
+
+.create-team-form {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.create-team-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.create-team-form input:focus {
+  outline: none;
+  border-color: #4285f4;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-create {
+  padding: 8px 16px;
+  background: #4285f4;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-create:hover {
+  background: #3367d6;
+}
+
+.btn-cancel {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #666;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: #f5f5f5;
+}
+
+.teams-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.team-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: box-shadow 0.15s;
+}
+
+.team-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.team-avatar {
+  font-size: 28px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 8px;
+}
+
+.team-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.team-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.team-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.member-count {
+  font-size: 12px;
+  color: #666;
+}
+
+.role-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: #e8f0fe;
+  color: #4285f4;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.team-action-btn {
+  padding: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.team-action-btn:hover {
+  opacity: 1;
+}
+
+.teams-footer {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.teams-footer p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.login-prompt {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}

@@ -258,6 +258,19 @@ export function RizzomaBlip({
   // Non-root blips follow the collapse preference
   const effectiveExpanded = isTopicRoot ? true : isExpanded;
 
+  // Listen for global fold-all / unfold-all events (from ▲/▼ buttons)
+  useEffect(() => {
+    if (isTopicRoot || forceExpanded) return; // Topic root and forced-expanded blips don't fold
+    const handleFoldAll = () => setIsExpanded(false);
+    const handleUnfoldAll = () => setIsExpanded(true);
+    window.addEventListener('rizzoma:fold-all', handleFoldAll);
+    window.addEventListener('rizzoma:unfold-all', handleUnfoldAll);
+    return () => {
+      window.removeEventListener('rizzoma:fold-all', handleFoldAll);
+      window.removeEventListener('rizzoma:unfold-all', handleUnfoldAll);
+    };
+  }, [isTopicRoot, forceExpanded]);
+
   // Dispatch edit mode event to RightToolsPanel
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -333,12 +346,20 @@ export function RizzomaBlip({
     createChildBlipRef.current?.(anchorPosition);
   }, []);
 
+  // Refs for hide/show comments callbacks (avoids used-before-declaration issue)
+  const hideCommentsRef = useRef<() => void>();
+  const showCommentsRef = useRef<() => void>();
+  const stableHideComments = useCallback(() => { hideCommentsRef.current?.(); }, []);
+  const stableShowComments = useCallback(() => { showCommentsRef.current?.(); }, []);
+
   // Create inline editor for editing mode
   const inlineEditor = useEditor({
     extensions: getEditorExtensions(undefined, undefined, {
       blipId: blip.id,
       onToggleInlineComments: (visible) => setInlineCommentsVisibility(blip.id, visible),
       onCreateInlineChildBlip: stableCreateInlineChildBlip,
+      onHideComments: stableHideComments,
+      onShowComments: stableShowComments,
     }),
     content: editedContent,
     editable: isEditing,
@@ -990,32 +1011,57 @@ export function RizzomaBlip({
     };
 
     const handleInsertReply = () => {
-      // Exit edit mode and show reply form
-      // The user should click Done first if they want to save their edit
-      setIsEditing(false);
-      setIsActive(true);
-      setShowReplyForm(true);
+      // BLB: Insert Reply (↵) = same as Ctrl+Enter = create inline child blip at cursor
+      // This matches original Rizzoma where the ↵ sidebar button creates an inline comment
+      if (inlineEditor) {
+        const { from } = inlineEditor.state.selection;
+        stableCreateInlineChildBlip(from);
+      }
     };
 
-    const handleInsertGadget = () => {
-      // For now, show a prompt for gadget URL (YouTube, Google Maps, etc.)
-      const url = window.prompt('Enter gadget URL (YouTube, Google Maps, etc.)');
-      if (url) {
-        // Try to embed as an iframe or link
-        if (url.includes('youtube.com') || url.includes('youtu.be')) {
-          // Convert YouTube URL to embed URL
+    const handleInsertGadget = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { type?: string; url?: string } | undefined;
+      const gadgetType = detail?.type || 'iframe';
+      const url = detail?.url;
+
+      if (!inlineEditor) return;
+
+      switch (gadgetType) {
+        case 'youtube': {
+          if (!url) return;
           let embedUrl = url;
           const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
-          if (videoId) {
-            embedUrl = `https://www.youtube.com/embed/${videoId}`;
-          }
+          if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
           inlineEditor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
-        } else if (url.includes('google.com/maps')) {
-          inlineEditor.chain().focus().insertContent(`<iframe width="600" height="450" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
-        } else {
-          // Generic link
-          inlineEditor.chain().focus().setLink({ href: url, target: '_blank' }).insertContent(url).run();
+          break;
         }
+        case 'code':
+          inlineEditor.chain().focus().toggleCodeBlock().run();
+          break;
+        case 'poll':
+          inlineEditor.chain().focus().insertContent({
+            type: 'pollGadget',
+            attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
+          }).run();
+          break;
+        case 'latex':
+          inlineEditor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run();
+          break;
+        case 'iframe':
+        case 'spreadsheet':
+        case 'image': {
+          if (!url) return;
+          if (gadgetType === 'image') {
+            inlineEditor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
+          } else {
+            inlineEditor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
+          }
+          break;
+        }
+        default:
+          // Placeholder for gadgets without dedicated handler
+          inlineEditor.chain().focus().insertContent(`[${gadgetType} gadget]`).run();
+          break;
       }
     };
 
@@ -1309,6 +1355,10 @@ export function RizzomaBlip({
     handleToggleCommentsVisibility();
   };
 
+  // Wire refs so stable callbacks delegate to latest handlers
+  hideCommentsRef.current = handleHideComments;
+  showCommentsRef.current = handleShowComments;
+
   const handleInlineCommentsStatus = useCallback((status: InlineCommentsStatus) => {
     setInlineCommentsNotice(status.loadError);
   }, []);
@@ -1371,10 +1421,9 @@ export function RizzomaBlip({
         <div className="blip-collapsed-row" onClick={handleToggleExpand}>
           <span className="blip-bullet">•</span>
           <span className="blip-collapsed-label-text">{blipLabel}</span>
-          <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>
-            +
-          </span>
-          {/* Author/date hidden on collapsed view to match live Rizzoma */}
+          {listChildren.length > 0 && (
+            <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>+</span>
+          )}
         </div>
       )}
 
@@ -1405,7 +1454,7 @@ export function RizzomaBlip({
               isExpanded={effectiveExpanded}
               onStartEdit={handleStartEdit}
               onFinishEdit={handleFinishEdit}
-              onCollapse={handleCollapse}
+              onCollapse={typeof blip.anchorPosition === 'number' ? handleCollapse : undefined}
               onExpand={handleExpand}
               onSend={handleSendFromToolbar}
               onGetLink={handleCopyLink}
@@ -1414,7 +1463,7 @@ export function RizzomaBlip({
               onHideComments={handleHideComments}
               areCommentsVisible={areCommentsVisible}
               collapseByDefault={collapseByDefault}
-              onToggleCollapseByDefault={blip.permissions.canEdit ? handleToggleCollapsePreference : undefined}
+              onToggleCollapseByDefault={blip.permissions.canEdit && typeof blip.anchorPosition === 'number' ? handleToggleCollapsePreference : undefined}
               onCopyComment={handleCopyComment}
               onPasteAsReply={blip.permissions.canComment ? handlePasteAsReplyFromClipboard : undefined}
               onPasteAtCursor={isEditing ? handlePasteAtCursorFromClipboard : undefined}
@@ -1583,8 +1632,9 @@ export function RizzomaBlip({
                       >
                         <span className="blip-bullet">•</span>
                         <span className="blip-label-text">{label}</span>
-                        <span className={`blip-expand-icon ${childHasUnread ? 'has-unread' : ''}`}>+</span>
-                        {/* Author/date hidden on collapsed view to match live Rizzoma */}
+                        {(childBlip.childBlips?.length ?? 0) > 0 && (
+                          <span className={`blip-expand-icon ${childHasUnread ? 'has-unread' : ''}`}>+</span>
+                        )}
                       </div>
                     )}
                     {/* Expanded child blip */}
