@@ -1293,16 +1293,44 @@ The full lifecycle of an inline comment blip:
 
 ```
 1. Ctrl+Enter      → Inline blip CREATED, immediately in EDIT mode (cursor inside)
-                      URL changes to new blip ID
-2. Type content    → Edit mode toolbar: Done, Undo, Redo, formatting, Hide, Delete comment
-3. Click "Done"    → Switches to VIEW mode
-                      View mode toolbar: Edit, Get direct link, Hide, Delete comment, Other
-4. Click "Hide"    → Blip COLLAPSES to [+] marker
+                      Edit toolbar visible: Done, Undo, Redo, formatting, Hide
+2. Type content    → Edit in TipTap editor
+3. Click "Done"    → Switches to VIEW mode, toolbar stays visible (active state)
+                      Read toolbar: Edit, Hide, Link, Gear
+4. Click outside   → Toolbar HIDES (just text visible, passive state)
+5. Click into blip → Toolbar REAPPEARS (active state again)
+6. Click "Hide"    → Blip COLLAPSES to [+] marker
                       Returns to parent blip view
-5. Click [+]       → Expands inline blip back to view mode
+7. Click [+]       → Expands to PASSIVE view (just text, NO toolbar)
+                      See Section 18b2 for the three-state pattern
 ```
 
 **Key:** "Hide" button is available in BOTH edit and view modes. The "Done" button saves and switches to view mode (does NOT collapse).
+
+### 18b2. Inline Child Three-State Toolbar Pattern
+
+Inline children differ from regular blips in toolbar visibility. Regular blips show their toolbar immediately when expanded. Inline children use a **progressive disclosure** pattern:
+
+| State | Trigger | Toolbar | Content |
+|-------|---------|---------|---------|
+| **Collapsed** | Default / click Hide | None — just `[+]` marker | Hidden |
+| **Expanded (passive)** | Click `[+]` marker | **NO toolbar** — just text | Visible, read-only |
+| **Expanded (active)** | Click anywhere in blip content | Read toolbar: Edit, Hide, Link, Gear | Visible, read-only |
+| **Expanded (editing)** | Click Edit button | Full edit toolbar: Done, undo/redo, formatting | Editable with TipTap |
+
+**Why**: When a user expands `[+]` to read a comment, they want to see the TEXT, not a toolbar cluttering the view. The toolbar only appears when they deliberately interact with the blip (click into it). This matches original Rizzoma behavior where expanded inline comments show clean text first.
+
+**Implementation** (`RizzomaBlip.tsx`):
+- `isActive` state controls toolbar visibility
+- Inline children initialize with `isActive = false` (even though `effectiveExpanded = true`)
+- The `useEffect` that syncs `isActive` with `effectiveExpanded` explicitly skips inline children
+- `handleBlipClick` sets `isActive = true` on click into the blip
+- Click-outside handler (mousedown on document) sets `isActive = false`
+- `BlipMenu` returns `null` when `!isActive`, so no DOM elements render
+
+**CSS** (`BlipMenu.css`):
+- Inline child toolbar uses `position: relative` (not `absolute`) to flow in layout
+- CSS cascade protection: `.inline-child-expanded .blip-container:not(.active) .blip-menu-container { opacity: 0 !important }` prevents parent's `.active` from leaking through portal DOM
 
 ### 18c. "Hide" vs "Hide comments" — Two Different Operations
 
@@ -1336,6 +1364,13 @@ The right sidebar of the topic view has 5 turquoise/teal buttons (top to bottom)
 | **Insert task** | ☑ | ~ | Opens contact + calendar picker → inserts `\|☐ Name DD Mon\|` widget |
 | **Insert tag** | # | — | Opens existing tags dropdown → inserts `#tagname` widget |
 | **Gadgets** | ⚙ | — | Opens gadget palette with 11 gadget types |
+
+**Auto-Enter-Edit-Mode (2026-02-08):** These buttons are now visible whenever a blip with edit permission is active (not just in edit mode). Clicking a button when not editing will:
+1. Queue the insert action in `pendingInsertRef`
+2. Call `handleStartEdit()` to enter edit mode
+3. Once the TipTap editor initializes, execute the queued action via `requestAnimationFrame`
+
+This bridges the gap between "active blip" and "editing blip" — users no longer need to click Edit first before using sidebar insert buttons. The `BLIP_ACTIVE_EVENT` custom event notifies `RightToolsPanel` when an editable blip becomes active, making the buttons visible.
 
 ### 18f. Inline Widgets — @mention, ~task, #tag
 

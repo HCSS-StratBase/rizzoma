@@ -55,6 +55,46 @@
   color: white;
 }
 
+/* Inline child toolbar — positioned in flow (not absolute) so it doesn't overlap content */
+.inline-child-expanded .blip-menu-container {
+  position: relative !important;
+  top: auto !important;
+  left: 0 !important;
+  right: auto !important;
+}
+/* Inline children: hide toolbar unless the child's OWN .blip-container has .active.
+   This prevents parent .active from cascading through the portal. */
+.inline-child-expanded .blip-container:not(.active) .blip-menu-container {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+.inline-child-expanded .blip-container.active .blip-menu-container {
+  opacity: 1;
+  transform: none;
+}
+.inline-child-menu {
+  padding: 2px 4px;
+  gap: 2px;
+  height: auto;
+  min-height: 28px;
+  flex-wrap: wrap;
+}
+.inline-child-menu .menu-group {
+  margin-right: 4px;
+  padding-right: 4px;
+}
+.inline-child-menu .menu-btn {
+  padding: 2px 6px;
+  height: 24px;
+  min-width: 24px;
+  font-size: 12px;
+}
+.inline-child-menu .menu-group:last-child {
+  border-right: none;
+  margin-right: 0;
+  padding-right: 0;
+}
+
 .edit-menu .menu-btn {
   background: none;
   border: none;

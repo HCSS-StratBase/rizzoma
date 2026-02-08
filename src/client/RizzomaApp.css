@@ -19,6 +19,15 @@ body {
   flex-direction: column;
 }
 
+/* Auth overlay for Rizzoma layout */
+.rizzoma-auth-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  background: #f5f5f5;
+}
+
 /* Loading screen */
 .loading-screen {
   display: flex;

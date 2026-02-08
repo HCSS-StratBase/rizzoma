@@ -1,9 +1,8 @@
-/* BlipThread inline marker styles */
+/* BlipThread inline marker styles — unified with .blip-expand-icon (#b3b3b3 gray) */
 
 .blip-thread-marker {
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-  color: #6b7280;
+  font-size: 0; /* Hide textContent — CSS drives the visible symbol */
+  color: #ffffff;
   cursor: pointer;
   padding: 0;
   user-select: none;
@@ -12,40 +11,48 @@
   justify-content: center;
   vertical-align: middle;
   text-decoration: none;
-  border-radius: 2px;
-  width: 14px;
+  border-radius: 3px;
+  width: 16px;
   height: 14px;
-  background: #e5e7eb;
-  border: 1px solid #d1d5db;
-  transition: color 0.15s ease, background-color 0.15s ease;
+  background: #b3b3b3;
+  border: none;
+  margin-left: 2px;
+  transition: background-color 0.15s ease;
+}
+
+/* CSS-driven marker symbol — always shows correct +/− */
+.blip-thread-marker::after {
+  content: "+";
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.blip-thread-marker.expanded::after {
+  content: "\2212"; /* − minus sign */
 }
 
 .blip-thread-marker:hover {
-  color: #374151;
-  background-color: #d1d5db;
+  background: #999999;
 }
 
 /* Unread indicator - green color like Follow-the-Green */
 .blip-thread-marker.has-unread {
-  color: #ffffff;
-  font-weight: bold;
   background: #2e8b57;
-  border-color: #2e8b57;
 }
 
 .blip-thread-marker.has-unread:hover {
-  color: #ffffff;
-  background-color: #246b46;
+  background: #246b46;
 }
 
+/* Expanded state — shows − instead of + */
 .blip-thread-marker.expanded {
-  background: #d1d5db;
-  color: #374151;
+  background: #999999;
 }
 
 .blip-thread-marker.expanded.has-unread {
   background: #2e8b57;
-  color: #ffffff;
 }
 
 /* Selected state in editor */
@@ -64,29 +71,4 @@
 .ProseMirror .blip-thread-marker {
   display: inline-flex;
   white-space: nowrap;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .blip-thread-marker {
-    color: #e5e7eb;
-    background: #374151;
-    border-color: #4b5563;
-  }
-
-  .blip-thread-marker:hover {
-    color: #f3f4f6;
-    background-color: #4b5563;
-  }
-
-  .blip-thread-marker.has-unread {
-    color: #ffffff;
-    background: #22c55e;
-    border-color: #22c55e;
-  }
-
-  .blip-thread-marker.has-unread:hover {
-    color: #ffffff;
-    background-color: #16a34a;
-  }
 }

@@ -73,6 +73,36 @@ export async function createIndex(fields: string[], name?: string) {
   return httpJson<any>('POST', url, body, header);
 }
 
+// All CouchDB indexes needed by the application — created once at startup
+const ALL_INDEXES: Array<{ fields: string[]; name: string }> = [
+  { fields: ['type', 'updatedAt'], name: 'idx_topic_updatedAt' },
+  { fields: ['type', 'authorId', 'updatedAt'], name: 'idx_topic_author_updatedAt' },
+  { fields: ['type', 'createdAt'], name: 'idx_wave_createdAt' },
+  { fields: ['type', 'waveId', 'createdAt'], name: 'idx_blip_wave_createdAt' },
+  { fields: ['type', 'userId', 'waveId'], name: 'idx_read_user_wave' },
+  { fields: ['type', 'topicId', 'createdAt'], name: 'idx_comment_topic_createdAt' },
+  { fields: ['type', 'waveId', 'blipId', 'updatedAt'], name: 'idx_yjs_snapshot' },
+  { fields: ['type', 'waveId', 'seq'], name: 'idx_yjs_update_seq' },
+  { fields: ['type', 'fromBlipId'], name: 'idx_links_from' },
+  { fields: ['type', 'toBlipId'], name: 'idx_links_to' },
+  { fields: ['type', 'updatedAt'], name: 'idx_yjs_snapshot_search' },
+  { fields: ['type', 'userId', 'topicId'], name: 'idx_topic_follow_user_topic' },
+];
+
+/**
+ * Ensure all CouchDB indexes exist. Call once at server startup.
+ * Idempotent — CouchDB ignores duplicate index creation requests.
+ */
+export async function ensureAllIndexes(): Promise<void> {
+  const results = await Promise.allSettled(
+    ALL_INDEXES.map(({ fields, name }) => createIndex(fields, name))
+  );
+  const ok = results.filter(r => r.status === 'fulfilled').length;
+  const fail = results.filter(r => r.status === 'rejected').length;
+  // eslint-disable-next-line no-console
+  console.log(`[couch] indexes: ${ok} ensured, ${fail} failed`);
+}
+
 export async function getDoc<T = any>(id: string) {
   const { base, header } = buildAuth(config.couchDbUrl);
   const url = `${base}/${encodeURIComponent(config.couchDbName)}/${encodeURIComponent(id)}`;

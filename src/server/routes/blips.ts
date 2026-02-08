@@ -220,14 +220,9 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
       return;
     }
     
-    // Check if user can edit (simplified - in real app, check permissions)
-    const canEdit = !blip.authorId || blip.authorId === userId;
-    
-    if (!canEdit) {
-      console.warn('[blips] forbidden update', { blipId: id, userId, ownerId: blip.authorId, requestId: (req as any)?.id });
-      res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
-      return;
-    }
+    // In original Rizzoma, all wave participants can edit any blip (collaborative editing).
+    // Any authenticated user who can access the wave can edit its blips.
+    const canEdit = true;
 
     const updatedBlip: Blip & { _id: string; _rev?: string } = {
       ...blip,
@@ -279,7 +274,7 @@ router.get('/:id', async (req, res): Promise<void> => {
     res.json({
       ...blip,
       permissions: {
-        canEdit: !!userId && (!blip.authorId || blip.authorId === userId),
+        canEdit: !!userId, // All wave participants can edit (original Rizzoma behavior)
         canComment: !!userId,
         canRead: true
       }
@@ -368,7 +363,7 @@ router.get('/', async (req, res): Promise<void> => {
         ...blip,
         isFoldedByDefault: !!(blip as any).isFoldedByDefault,
         permissions: {
-          canEdit: !!userId && blip.authorId === userId,
+          canEdit: !!userId, // All wave participants can edit (original Rizzoma behavior)
           canComment: !!userId,
           canRead: true
         }
@@ -553,12 +548,7 @@ router.post('/:id/move', requireAuth, async (req, res): Promise<void> => {
       return;
     }
 
-    // Check if user can edit the blip
-    const canEdit = !blip.authorId || blip.authorId === userId;
-    if (!canEdit) {
-      res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
-      return;
-    }
+    // All wave participants can edit (original Rizzoma collaborative editing model)
 
     // Prevent moving to self or to a descendant (would create cycle)
     if (newParentId === id) {

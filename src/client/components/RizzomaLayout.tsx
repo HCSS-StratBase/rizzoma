@@ -215,6 +215,7 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
           onTabChange={setActiveTab}
           isAuthed={isAuthed}
           onNewClick={handleNewClick}
+          unreadCount={unreadState?.unreadIds?.length}
         />
       </div>
 

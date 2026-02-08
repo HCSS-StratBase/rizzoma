@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import topicsRouter from './routes/topics.js';
 import { config } from './config.js';
-import { couchDbInfo } from './lib/couch.js';
+import { couchDbInfo, ensureAllIndexes } from './lib/couch.js';
 import path from 'path';
 import authRouter from './routes/auth.js';
 import { requestLogger } from './lib/logger.js';
@@ -106,6 +106,8 @@ initSocket(server, allowedOrigins);
 server.listen(config.port, () => {
   // eslint-disable-next-line no-console
   console.log(`[server] listening on http://localhost:${config.port}`);
+  // Ensure CouchDB indexes exist (non-blocking, logged)
+  ensureAllIndexes().catch(() => {});
 });
 
 // Error handler must be last

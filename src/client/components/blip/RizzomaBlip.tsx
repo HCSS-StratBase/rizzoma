@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 import { BlipMenu } from './BlipMenu';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -30,7 +31,7 @@ import {
   clearCutState,
 } from './clipboardStore';
 import { createUploadTask, type UploadResult, type UploadTask } from '../../lib/upload';
-import { INSERT_EVENTS, EDIT_MODE_EVENT } from '../RightToolsPanel';
+import { INSERT_EVENTS, EDIT_MODE_EVENT, EDITOR_FOCUS_EVENT, EDITOR_BLUR_EVENT, BLIP_ACTIVE_EVENT } from '../RightToolsPanel';
 import './RizzomaBlip.css';
 import { injectInlineMarkers } from './inlineMarkers';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
@@ -80,9 +81,9 @@ function BlipContributorsStack({
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  // Sort contributors with owner first
+  // Deduplicate and sort contributors with owner first
   const sortedContributors = contributors && contributors.length > 0
-    ? [...contributors].sort((a, b) => {
+    ? [...new Map(contributors.map(c => [c.id, c])).values()].sort((a, b) => {
         if (a.role === 'owner' && b.role !== 'owner') return -1;
         if (a.role !== 'owner' && b.role === 'owner') return 1;
         return 0;
@@ -114,7 +115,7 @@ function BlipContributorsStack({
     >
       {toShow.map((contributor, idx) => (
         <img
-          key={contributor.id || idx}
+          key={`${contributor.id}-${idx}`}
           className={`blip-contributor-avatar ${contributor.role === 'owner' ? 'owner' : ''}`}
           style={!expanded ? {
             zIndex: toShow.length - idx,
@@ -202,6 +203,8 @@ interface RizzomaBlipProps {
   contentClassName?: string;
   contentTitle?: string;
   onContentClick?: () => void;
+  // BLB: When true, this blip is rendered as an inline-expanded child — hide toolbar, show minimal UI
+  isInlineChild?: boolean;
 }
 
 type UploadUiState = {
@@ -235,6 +238,7 @@ export function RizzomaBlip({
   contentClassName,
   contentTitle,
   onContentClick,
+  isInlineChild = false,
 }: RizzomaBlipProps) {
   const isPerfMode = typeof window !== 'undefined' && (window.location.hash || '').includes('perf=');
   const initialCollapsePreference = typeof blip.isFoldedByDefault === 'boolean'
@@ -277,8 +281,19 @@ export function RizzomaBlip({
     window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing } }));
   }, [isEditing]);
 
-  // BLB: Toolbar is visible when the blip is expanded (collapsed rows never show it)
-  const [isActive, setIsActive] = useState(forceExpanded);
+  // BLB: Toolbar visibility — inline children start inactive (no toolbar on [+] expand),
+  // regular blips that are force-expanded start active. Toolbar appears on click into content.
+  const [isActive, setIsActive] = useState(forceExpanded && !isInlineChild);
+
+  // Dispatch blip-active-editable event so RightToolsPanel shows insert buttons
+  // even before entering edit mode (enables auto-enter-edit on insert click)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent(BLIP_ACTIVE_EVENT, {
+      detail: { active: isActive && blip.permissions.canEdit },
+    }));
+  }, [isActive, blip.permissions.canEdit]);
+
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [editedContent, setEditedContent] = useState(blip.content);
@@ -316,6 +331,8 @@ export function RizzomaBlip({
   const collapsePreferenceMetadata = getCollapsePreferenceMetadata(blip.id);
   const collapsePreferenceUpdatedAtRef = useRef(collapsePreferenceMetadata?.updatedAt ?? 0);
   const readOnlySelectionWarned = useRef(false);
+  const pendingInsertRef = useRef<string | null>(null);
+  const pendingGadgetDetailRef = useRef<{ type?: string; url?: string } | null>(null);
 
   // Auto-save blip content (debounced, silent)
   const autoSaveBlip = useCallback(async (content: string) => {
@@ -381,6 +398,54 @@ export function RizzomaBlip({
   // Keep editor ref updated for use in callbacks
   inlineEditorRef.current = inlineEditor;
 
+  // Cleanup auto-save timeout on unmount to prevent stale saves to wrong topic
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  // Reset editor state when blip.id changes (guards against stale content on prop changes)
+  const prevBlipIdRef = useRef(blip.id);
+  useEffect(() => {
+    if (prevBlipIdRef.current === blip.id) return;
+    prevBlipIdRef.current = blip.id;
+    // Cancel any pending auto-save for the old blip
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
+    // Reset state to new blip's content
+    setEditedContent(blip.content);
+    lastSavedContentRef.current = blip.content;
+    setIsEditing(false);
+    if (inlineEditor && !inlineEditor.isDestroyed) {
+      inlineEditor.commands.setContent(blip.content);
+    }
+  }, [blip.id, blip.content, inlineEditor]);
+
+  // Dispatch editor focus/blur events for RightToolsPanel insert button visibility
+  useEffect(() => {
+    if (!inlineEditor || !isEditing) return;
+    const handleFocus = () => {
+      window.dispatchEvent(new CustomEvent(EDITOR_FOCUS_EVENT));
+    };
+    const handleBlur = () => {
+      window.dispatchEvent(new CustomEvent(EDITOR_BLUR_EVENT));
+    };
+    inlineEditor.on('focus', handleFocus);
+    inlineEditor.on('blur', handleBlur);
+    // If editor is already focused, dispatch immediately
+    try { if ((inlineEditor as any).isFocused) handleFocus(); } catch { /* ignore */ }
+    return () => {
+      inlineEditor.off('focus', handleFocus);
+      inlineEditor.off('blur', handleBlur);
+    };
+  }, [inlineEditor, isEditing]);
+
   // Handler for creating child blip from keyboard shortcut (Ctrl+Enter)
   // BLB: Creates a SUBBLIP with inline [+] marker, then navigates into it
   // This is defined after inlineEditor so we can use it via ref
@@ -424,11 +489,12 @@ export function RizzomaBlip({
           // The content is auto-saved, so the [+] marker will persist
         }
 
-        const blipPathSegment = newBlipId.includes(':') ? newBlipId.split(':')[1] : newBlipId;
-        if (blipPathSegment) {
-          window.location.hash = `#/topic/${waveId}/${blipPathSegment}/`;
-        } else {
-          toast('Subblip created');
+        // BLB: Expand the new child blip inline (no navigation!)
+        // Refresh topic data so the new child appears in inlineChildren
+        window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+        // Immediately expand the new child inline
+        if (newBlipId) {
+          toggleInlineChild(newBlipId);
         }
       } catch (error) {
         console.error('Error creating child blip:', error);
@@ -443,9 +509,74 @@ export function RizzomaBlip({
   const unreadMarkerActive = hasUnread;
   const inlineChildren = (blip.childBlips || []).filter((child) => typeof child.anchorPosition === 'number');
   const listChildren = (blip.childBlips || []).filter((child) => child.anchorPosition === undefined || child.anchorPosition === null);
+  // Track which inline children are expanded locally (for this blip's inline children)
+  const [localExpandedInline, setLocalExpandedInline] = useState<Set<string>>(new Set());
+
+  const toggleInlineChild = useCallback((childId: string) => {
+    setLocalExpandedInline(prev => {
+      const next = new Set(prev);
+      if (next.has(childId)) {
+        next.delete(childId);
+      } else {
+        next.add(childId);
+      }
+      return next;
+    });
+  }, []);
+
   const viewContentHtml = !isEditing && inlineChildren.length > 0
-    ? injectInlineMarkers(blip.content || '', inlineChildren)
+    ? injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)
     : (blip.content || '');
+
+  // Portal containers for rendering expanded inline children at their marker positions
+  const portalContainers = useRef<Map<string, HTMLElement>>(new Map());
+  const [, setPortalTick] = useState(0);
+
+  useLayoutEffect(() => {
+    if (!contentRef.current) return;
+    const map = new Map<string, HTMLElement>();
+    contentRef.current.querySelectorAll('.inline-child-portal').forEach(el => {
+      const id = el.getAttribute('data-portal-child');
+      if (id) map.set(id, el as HTMLElement);
+    });
+    portalContainers.current = map;
+    if (map.size > 0 || localExpandedInline.size > 0) setPortalTick(t => t + 1);
+  }, [viewContentHtml, !!contentOverride]);
+
+  // Listen for [+] marker clicks (both view mode and edit mode)
+  // The custom event is dispatched by setupBlipThreadClickHandler
+  useEffect(() => {
+    const handleToggleInline = (e: Event) => {
+      const { threadId } = (e as CustomEvent).detail || {};
+      if (!threadId) return;
+      // Check if this threadId matches one of our inline children
+      const match = inlineChildren.find(child => child.id === threadId);
+      if (match) {
+        toggleInlineChild(threadId);
+      }
+    };
+    window.addEventListener('rizzoma:toggle-inline-blip', handleToggleInline);
+    return () => window.removeEventListener('rizzoma:toggle-inline-blip', handleToggleInline);
+  }, [inlineChildren, toggleInlineChild]);
+
+  // Handle clicks on [+] markers in view mode (inside dangerouslySetInnerHTML content)
+  const handleViewContentClick = useCallback((e: React.MouseEvent) => {
+    const target = (e.target as HTMLElement).closest('.blip-thread-marker') as HTMLElement | null;
+    if (target) {
+      const threadId = target.getAttribute('data-blip-thread');
+      if (threadId) {
+        e.preventDefault();
+        e.stopPropagation();
+        const match = inlineChildren.find(child => child.id === threadId);
+        if (match) {
+          toggleInlineChild(threadId);
+        }
+        return;
+      }
+    }
+    // Fall through to original onContentClick
+    onContentClick?.();
+  }, [inlineChildren, toggleInlineChild, onContentClick]);
 
   const handleToggleExpand = () => {
     const next = !isExpanded;
@@ -464,6 +595,13 @@ export function RizzomaBlip({
   };
 
   const handleCollapse = () => {
+    if (isInlineChild) {
+      // Inline children: tell parent to toggle expansion (removes portal, reverts [+] marker)
+      window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+        detail: { threadId: blip.id }
+      }));
+      return;
+    }
     if (!isExpanded) return;
     handleToggleExpand();
   };
@@ -476,7 +614,7 @@ export function RizzomaBlip({
   const handleStartEdit = () => {
     console.log('handleStartEdit called for blip:', blip.id, 'canEdit:', blip.permissions.canEdit);
     if (blip.permissions.canEdit) {
-      const nextContent = injectInlineMarkers(blip.content || '', inlineChildren);
+      const nextContent = injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline);
       setEditedContent(nextContent);
       setIsEditing(true);
       setIsActive(true);
@@ -900,6 +1038,18 @@ export function RizzomaBlip({
     }
   };
 
+  // Inline children: hide toolbar when clicking outside
+  useEffect(() => {
+    if (!isInlineChild || !isActive || isEditing) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (blipContainerRef.current && !blipContainerRef.current.contains(e.target as Node)) {
+        setIsActive(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isInlineChild, isActive, isEditing]);
+
   useEffect(() => {
     if (isPerfMode) return undefined;
     const metadata = getInlineCommentsVisibilityMetadata(blip.id);
@@ -995,36 +1145,37 @@ export function RizzomaBlip({
   }, [isActive, isEditing, blip.permissions.canComment]);
 
   // Handle insert events from RightToolsPanel
+  // Listen when isActive (not just isEditing) so clicks from right panel auto-enter edit mode
   useEffect(() => {
-    if (!isEditing || !inlineEditor) return;
+    if (!isActive) return;
 
-    const handleInsertMention = () => {
-      inlineEditor.chain().focus().insertContent('@').run();
-    };
+    // Helper: execute an insert action immediately when editor is ready
+    const executeInsert = (action: string, editor: any) => {
+      const insertTrigger = (char: string) => {
+        editor.commands['focus']();
+        const { from } = editor.state.selection;
+        const $from = editor.state.doc.resolve(from);
+        const charBefore = from > $from.start() ? editor.state.doc.textBetween(from - 1, from) : '';
+        const prefix = charBefore && charBefore !== ' ' ? ' ' : '';
+        document.execCommand('insertText', false, prefix + char);
+      };
 
-    const handleInsertTask = () => {
-      inlineEditor.chain().focus().insertContent('~').run();
-    };
-
-    const handleInsertTag = () => {
-      inlineEditor.chain().focus().insertContent('#').run();
-    };
-
-    const handleInsertReply = () => {
-      // BLB: Insert Reply (↵) = same as Ctrl+Enter = create inline child blip at cursor
-      // This matches original Rizzoma where the ↵ sidebar button creates an inline comment
-      if (inlineEditor) {
-        const { from } = inlineEditor.state.selection;
-        stableCreateInlineChildBlip(from);
+      switch (action) {
+        case INSERT_EVENTS.MENTION: insertTrigger('@'); break;
+        case INSERT_EVENTS.TASK: insertTrigger('~'); break;
+        case INSERT_EVENTS.TAG: insertTrigger('#'); break;
+        case INSERT_EVENTS.REPLY: {
+          const { from } = editor.state.selection;
+          stableCreateInlineChildBlip(from);
+          break;
+        }
       }
     };
 
-    const handleInsertGadget = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { type?: string; url?: string } | undefined;
+    // Helper: execute a gadget insert action
+    const executeGadgetInsert = (editor: any, detail: { type?: string; url?: string } | null) => {
       const gadgetType = detail?.type || 'iframe';
       const url = detail?.url;
-
-      if (!inlineEditor) return;
 
       switch (gadgetType) {
         case 'youtube': {
@@ -1032,36 +1183,62 @@ export function RizzomaBlip({
           let embedUrl = url;
           const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
           if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
-          inlineEditor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
+          editor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
           break;
         }
         case 'code':
-          inlineEditor.chain().focus().toggleCodeBlock().run();
+          editor.chain().focus().toggleCodeBlock().run();
           break;
         case 'poll':
-          inlineEditor.chain().focus().insertContent({
+          editor.chain().focus().insertContent({
             type: 'pollGadget',
             attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
           }).run();
           break;
         case 'latex':
-          inlineEditor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run();
+          editor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run();
           break;
         case 'iframe':
         case 'spreadsheet':
         case 'image': {
           if (!url) return;
           if (gadgetType === 'image') {
-            inlineEditor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
+            editor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
           } else {
-            inlineEditor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
+            editor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
           }
           break;
         }
         default:
-          // Placeholder for gadgets without dedicated handler
-          inlineEditor.chain().focus().insertContent(`[${gadgetType} gadget]`).run();
+          editor.chain().focus().insertContent(`[${gadgetType} gadget]`).run();
           break;
+      }
+    };
+
+    const handleInsert = (action: string) => {
+      if (isEditing && inlineEditor) {
+        // Editor ready → execute immediately
+        executeInsert(action, inlineEditor);
+      } else if (blip.permissions.canEdit) {
+        // Not editing → queue and enter edit mode
+        pendingInsertRef.current = action;
+        handleStartEdit();
+      }
+    };
+
+    const handleInsertMention = () => handleInsert(INSERT_EVENTS.MENTION);
+    const handleInsertTask = () => handleInsert(INSERT_EVENTS.TASK);
+    const handleInsertTag = () => handleInsert(INSERT_EVENTS.TAG);
+    const handleInsertReply = () => handleInsert(INSERT_EVENTS.REPLY);
+
+    const handleInsertGadget = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { type?: string; url?: string } | undefined;
+      if (isEditing && inlineEditor) {
+        executeGadgetInsert(inlineEditor, detail || null);
+      } else if (blip.permissions.canEdit) {
+        pendingInsertRef.current = INSERT_EVENTS.GADGET;
+        pendingGadgetDetailRef.current = detail || null;
+        handleStartEdit();
       }
     };
 
@@ -1078,6 +1255,82 @@ export function RizzomaBlip({
       window.removeEventListener(INSERT_EVENTS.REPLY, handleInsertReply);
       window.removeEventListener(INSERT_EVENTS.GADGET, handleInsertGadget);
     };
+  }, [isActive, isEditing, inlineEditor, blip.permissions.canEdit]);
+
+  // Consume pending insert when editor becomes ready after auto-entering edit mode
+  useEffect(() => {
+    if (!isEditing || !inlineEditor || !pendingInsertRef.current) return;
+
+    const action = pendingInsertRef.current;
+    pendingInsertRef.current = null;
+
+    // Small delay to let editor fully initialize and become focusable
+    requestAnimationFrame(() => {
+      if (action === INSERT_EVENTS.GADGET) {
+        const detail = pendingGadgetDetailRef.current;
+        pendingGadgetDetailRef.current = null;
+        const gadgetType = detail?.type || 'iframe';
+        const url = detail?.url;
+
+        switch (gadgetType) {
+          case 'youtube': {
+            if (!url) return;
+            let embedUrl = url;
+            const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
+            if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            inlineEditor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
+            break;
+          }
+          case 'code':
+            inlineEditor.chain().focus().toggleCodeBlock().run();
+            break;
+          case 'poll':
+            inlineEditor.chain().focus().insertContent({
+              type: 'pollGadget',
+              attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
+            }).run();
+            break;
+          case 'latex':
+            inlineEditor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run();
+            break;
+          case 'iframe':
+          case 'spreadsheet':
+          case 'image': {
+            if (!url) return;
+            if (gadgetType === 'image') {
+              inlineEditor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
+            } else {
+              inlineEditor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
+            }
+            break;
+          }
+          default:
+            inlineEditor.chain().focus().insertContent(`[${gadgetType} gadget]`).run();
+            break;
+        }
+      } else {
+        // Trigger chars: @, ~, #, ↵
+        const insertTrigger = (char: string) => {
+          inlineEditor.commands['focus']();
+          const { from } = inlineEditor.state.selection;
+          const $from = inlineEditor.state.doc.resolve(from);
+          const charBefore = from > $from.start() ? inlineEditor.state.doc.textBetween(from - 1, from) : '';
+          const prefix = charBefore && charBefore !== ' ' ? ' ' : '';
+          document.execCommand('insertText', false, prefix + char);
+        };
+
+        switch (action) {
+          case INSERT_EVENTS.MENTION: insertTrigger('@'); break;
+          case INSERT_EVENTS.TASK: insertTrigger('~'); break;
+          case INSERT_EVENTS.TAG: insertTrigger('#'); break;
+          case INSERT_EVENTS.REPLY: {
+            const { from } = inlineEditor.state.selection;
+            stableCreateInlineChildBlip(from);
+            break;
+          }
+        }
+      }
+    });
   }, [isEditing, inlineEditor]);
 
   useEffect(() => {
@@ -1404,8 +1657,14 @@ export function RizzomaBlip({
   }, [forceExpanded]);
 
   useEffect(() => {
-    setIsActive(effectiveExpanded || isEditing);
-  }, [effectiveExpanded, isEditing]);
+    if (isInlineChild) {
+      // Inline children: only auto-activate when entering edit mode.
+      // On initial [+] expand, toolbar stays hidden until user clicks into content.
+      if (isEditing) setIsActive(true);
+    } else {
+      setIsActive(effectiveExpanded || isEditing);
+    }
+  }, [effectiveExpanded, isEditing, isInlineChild]);
 
 
   return (
@@ -1430,8 +1689,8 @@ export function RizzomaBlip({
       {/* Expanded View - Full blip with toolbar */}
       {!showCollapsedView && (
         <>
-          {/* Expand/Collapse control - shows [−] when expanded */}
-          {!isTopicRoot && (
+          {/* Expand/Collapse control - shows [−] when expanded (hidden for inline children) */}
+          {!isTopicRoot && !isInlineChild && (
             <div
               className={`blip-expander ${unreadMarkerActive ? 'unread' : 'read'}`}
               onClick={handleToggleExpand}
@@ -1442,11 +1701,12 @@ export function RizzomaBlip({
               <span className="blip-expander-icon">−</span>
             </div>
           )}
-          {/* Inline Blip Menu - Only shown when expanded */}
+          {/* Inline Blip Menu - shown for all non-root blips including inline children */}
           {!isTopicRoot && (
             <BlipMenu
               isActive={isActive}
               isEditing={isEditing}
+              isInlineChild={isInlineChild}
               canEdit={blip.permissions.canEdit}
               canComment={blip.permissions.canComment}
               inlineCommentsNotice={inlineCommentsNotice}
@@ -1536,7 +1796,7 @@ export function RizzomaBlip({
             {inlineEditor && (
               <div style={{ position: 'relative' }}>
                 <EditorContent editor={inlineEditor} />
-                {FEATURES.INLINE_COMMENTS && (
+                {FEATURES.INLINE_COMMENTS && !isInlineChild && areCommentsVisible && (
                   <InlineComments
                     editor={inlineEditor}
                     blipId={blip.id}
@@ -1559,10 +1819,32 @@ export function RizzomaBlip({
                   className={`blip-text${contentClassName ? ` ${contentClassName}` : ''}`}
                   dangerouslySetInnerHTML={{ __html: viewContentHtml }}
                   data-testid="blip-view-content"
-                  onClick={onContentClick}
+                  onClick={handleViewContentClick}
                   title={contentTitle}
                   style={onContentClick ? { cursor: 'pointer' } : undefined}
                 />
+                {/* Expanded inline children rendered via portals at their marker positions */}
+                {inlineChildren
+                  .filter(child => localExpandedInline.has(child.id) && portalContainers.current.has(child.id))
+                  .map(child => createPortal(
+                    <div className="inline-child-expanded">
+                      <RizzomaBlip
+                        blip={{ ...child, isCollapsed: false }}
+                        isRoot={false}
+                        isInlineChild={true}
+                        depth={depth + 1}
+                        onBlipUpdate={onBlipUpdate}
+                        onAddReply={onAddReply}
+                        onToggleCollapse={onToggleCollapse}
+                        onDeleteBlip={onDeleteBlip}
+                        onBlipRead={onBlipRead}
+                        onExpand={onExpand}
+                        expandedBlips={expandedBlips}
+                      />
+                    </div>,
+                    portalContainers.current.get(child.id)!,
+                    `inline-${child.id}`
+                  ))}
               </div>
               {/* Contributors avatars on right side - stacked with owner on top, expandable */}
               {!isTopicRoot && (

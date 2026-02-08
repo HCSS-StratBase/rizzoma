@@ -1,4 +1,4 @@
-import { createIndex, find } from './couch.js';
+import { find } from './couch.js';
 import type { Blip, BlipRead } from '../schemas/wave.js';
 
 export type WaveUnreadCounts = { total: number; unread: number; read: number };
@@ -66,7 +66,6 @@ export async function computeWaveUnreadCounts(
 
   logUnread('cache miss, computing for', userId, ids.length, 'waves');
   const startTime = Date.now();
-  await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
   const normalizeId = (id: string | undefined | null): string[] => {
     const value = String(id || '').trim();
     if (!value) return [];
@@ -77,10 +76,9 @@ export async function computeWaveUnreadCounts(
     if (dashIdx >= 0 && dashIdx < value.length - 1) keys.add(value.slice(dashIdx + 1));
     return Array.from(keys).filter(Boolean);
   };
-  // Process all waves in parallel for better performance
+  // Process all waves in parallel (per-wave queries with indexes are faster than $in)
   await Promise.all(ids.map(async (waveId) => {
     try {
-      // Use proper indexes with sort clauses to avoid full table scans
       const [blipResp, readResp] = await Promise.all([
         find<Blip>(
           { type: 'blip', waveId },

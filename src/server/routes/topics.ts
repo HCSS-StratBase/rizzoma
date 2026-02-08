@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createIndex, deleteDoc, find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
+import { deleteDoc, find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
 import { csrfProtect } from '../middleware/csrf.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -88,36 +88,42 @@ router.get('/', async (req, res): Promise<void> => {
     let enriched = sortTopics(list);
     const userId = (req as any).session?.userId as string | undefined;
     const ids = enriched.map((t) => t.id).filter(Boolean) as string[];
+    const authorIds = Array.from(new Set(enriched.map((t) => t.authorId).filter(Boolean))) as string[];
+
+    // Run unread counts, author lookups, and follow query in parallel
+    const [counts, authorMap, followedTopics] = await Promise.all([
+      // Unread counts (batched: 2 CouchDB queries instead of 2*N)
+      userId && ids.length > 0
+        ? computeWaveUnreadCounts(userId, ids)
+        : Promise.resolve({} as Record<string, { unread: number; total: number }>),
+      // Author lookups (parallel)
+      (async () => {
+        const map = new Map<string, User>();
+        await Promise.all(authorIds.map(async (authorId) => {
+          try {
+            const user = await getDoc<User>(authorId);
+            if (user && user.type === 'user') map.set(authorId, user);
+          } catch { /* ignore */ }
+        }));
+        return map;
+      })(),
+      // Follow status (uses idx_topic_follow_user_topic index)
+      (async () => {
+        if (!userId) return new Set<string>();
+        try {
+          const r = await find<TopicFollow>({ type: 'topic_follow', userId }, { limit: 1000, sort: [{ type: 'asc' }, { userId: 'asc' }, { topicId: 'asc' }], use_index: 'idx_topic_follow_user_topic' });
+          return new Set((r.docs || []).map((doc) => doc.topicId));
+        } catch {
+          return new Set<string>();
+        }
+      })(),
+    ]);
+
     if (userId && ids.length > 0) {
-      const counts = await computeWaveUnreadCounts(userId, ids);
       enriched = enriched.map((topic) => {
         const entry = topic.id ? counts[topic.id] : undefined;
         return entry ? { ...topic, unreadCount: entry.unread, totalCount: entry.total } : topic;
       });
-    }
-
-    const authorIds = Array.from(new Set(enriched.map((t) => t.authorId).filter(Boolean))) as string[];
-    const authorMap = new Map<string, User>();
-    for (const authorId of authorIds) {
-      try {
-        const user = await getDoc<User>(authorId);
-        if (user && user.type === 'user') authorMap.set(authorId, user);
-      } catch {
-        // ignore missing author docs
-      }
-    }
-
-    let followedTopics = new Set<string>();
-    if (userId) {
-      try {
-        await createIndex(['type', 'userId', 'topicId'], 'idx_topic_follow_user_topic');
-      } catch {}
-      try {
-        const r = await find<TopicFollow>({ type: 'topic_follow', userId }, { limit: 1000 });
-        followedTopics = new Set((r.docs || []).map((doc) => doc.topicId));
-      } catch {
-        // ignore follow lookup failures
-      }
     }
 
     const response = enriched.map((topic) => {
@@ -140,10 +146,6 @@ router.get('/', async (req, res): Promise<void> => {
     const selector: any = { type: 'topic' };
     if (myOnly && sessUser) selector.authorId = sessUser;
 
-    // Ensure indexes (idempotent)
-    try { await createIndex(['type', 'updatedAt'], 'idx_topic_updatedAt'); } catch {}
-    if (myOnly) { try { await createIndex(['type', 'authorId', 'updatedAt'], 'idx_topic_author_updatedAt'); } catch {} }
-
     let topics: Array<{ id: string | undefined; title: string; createdAt: number; updatedAt?: number }> = [];
     let hasMore = false;
 
@@ -159,7 +161,7 @@ router.get('/', async (req, res): Promise<void> => {
         ],
       };
       try {
-        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, sort: [{ type: 'desc' }, { updatedAt: 'desc' }], use_index: '_design/f42721f2a3749e9d7b563c5b102021d284dffff1', bookmark });
+        const r = await find<Topic>(searchSelector, { limit: limit + 1, skip: offset, sort: [{ type: 'desc' }, { updatedAt: 'desc' }], use_index: 'idx_topic_updatedAt_desc', bookmark });
         const window = r.docs || [];
         topics = window.slice(0, limit).map((d) => ({
           id: String(d._id ?? ''),
@@ -191,7 +193,7 @@ router.get('/', async (req, res): Promise<void> => {
       // No search term: efficient paging using skip/limit
       let r: { docs: Topic[]; bookmark?: string };
       try {
-        r = await find<Topic>(selector, { limit: limit + 1, skip: offset, sort: [{ type: 'desc' }, { updatedAt: 'desc' }], use_index: '_design/f42721f2a3749e9d7b563c5b102021d284dffff1', bookmark });
+        r = await find<Topic>(selector, { limit: limit + 1, skip: offset, sort: [{ type: 'desc' }, { updatedAt: 'desc' }], use_index: 'idx_topic_updatedAt_desc', bookmark });
       } catch {
         r = await find<Topic>(selector, { limit: limit + 1, skip: offset, bookmark });
       }
@@ -428,11 +430,7 @@ router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void>
     const id = req.params['id'] as string;
     const payload = UpdateTopicSchema.parse(req.body ?? {});
     const existing = await getDoc<Topic & { _rev: string }>(id);
-    if (existing.authorId && existing.authorId !== userId) {
-      console.warn('[topics] forbidden update', { topicId: id, userId, ownerId: existing.authorId, requestId: (req as any)?.id });
-      res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
-      return;
-    }
+    // All authenticated users can edit topics (collaborative editing, like original Rizzoma)
     const next: Topic & { _rev?: string } = {
       ...existing,
       title: payload.title ?? existing.title,

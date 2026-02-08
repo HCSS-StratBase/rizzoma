@@ -23,11 +23,11 @@ declare module '@tiptap/core' {
  * Key characteristics:
  * - Inline atom node (non-editable, self-contained)
  * - Syncs via Yjs automatically as part of the document
- * - Click NAVIGATES into the subblip document (URL changes)
+ * - Click toggles INLINE expansion of the child blip (no navigation)
  *
  * BLB Philosophy:
  * - The [+] marker indicates a child blip exists at this position
- * - Clicking navigates into the subblip document
+ * - Clicking expands/collapses the child blip inline below the marker
  * - Green color indicates unread content in the thread
  */
 export const BlipThreadNode = Node.create({
@@ -107,7 +107,8 @@ export const BlipThreadNode = Node.create({
  * Set up click handler for BlipThread markers.
  * This should be called once to add event delegation for all markers.
  *
- * BLB: Clicking [+] navigates into the subblip document (URL changes).
+ * BLB: Clicking [+] dispatches a custom event to toggle inline expansion.
+ * The parent RizzomaBlip listens for this event and expands/collapses the child inline.
  */
 export function setupBlipThreadClickHandler(): () => void {
   const handler = (e: MouseEvent) => {
@@ -120,16 +121,10 @@ export function setupBlipThreadClickHandler(): () => void {
     e.preventDefault();
     e.stopPropagation();
 
-    const [waveId, blipPath] = threadId.includes(':')
-      ? threadId.split(':', 2)
-      : [null, threadId];
-
-    const hashMatch = window.location.hash.match(/^#\/topic\/([^/]+)/);
-    const topicId = waveId || (hashMatch ? hashMatch[1] : null);
-
-    if (topicId && blipPath) {
-      window.location.hash = `#/topic/${topicId}/${blipPath}/`;
-    }
+    // Dispatch custom event for inline expansion (instead of navigating away)
+    window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+      detail: { threadId },
+    }));
   };
 
   document.addEventListener('click', handler, true);

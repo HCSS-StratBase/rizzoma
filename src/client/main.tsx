@@ -169,12 +169,16 @@ export function App() {
       <div className="rizzoma-app">
         {FEATURES.FOLLOW_GREEN && (
           <div className="notification-bar">
-            Have your Rizzoma Tasks copied to your Google Calendar automatically. 
+            Have your Rizzoma Tasks copied to your Google Calendar automatically.
             <a href="#">Disable extension</a>
           </div>
         )}
         {checkingAuth ? (
           <div className="rizzoma-loading">Loading…</div>
+        ) : !me ? (
+          <div className="rizzoma-auth-overlay">
+            <AuthPanel onSignedIn={(u) => setMe(u)} />
+          </div>
         ) : (
           <RizzomaLayout isAuthed={!!me} user={me} />
         )}

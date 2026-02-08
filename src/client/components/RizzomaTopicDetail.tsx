@@ -13,6 +13,7 @@ import { injectInlineMarkers } from './blip/inlineMarkers';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
 import { getEditorExtensions, defaultEditorProps } from './editor/EditorConfig';
+import { EDIT_MODE_EVENT, INSERT_EVENTS } from './RightToolsPanel';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -213,6 +214,85 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     }
   }, [isEditingTopic]);
 
+  // Notify RightToolsPanel of edit mode changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing: isEditingTopic } }));
+  }, [isEditingTopic]);
+
+  // Handle insert events from RightToolsPanel when topic editor is active
+  useEffect(() => {
+    if (!isEditingTopic || !topicEditor) return;
+
+    // Helper: insert trigger char with space prefix if needed (suggestion plugins require allowedPrefixes=[' '])
+    const insertTrigger = (char: string) => {
+      topicEditor.commands['focus']();
+      const { from } = topicEditor.state.selection;
+      const $from = topicEditor.state.doc.resolve(from);
+      const charBefore = from > $from.start() ? topicEditor.state.doc.textBetween(from - 1, from) : '';
+      const prefix = charBefore && charBefore !== ' ' ? ' ' : '';
+      document.execCommand('insertText', false, prefix + char);
+    };
+    const handleInsertMention = () => insertTrigger('@');
+    const handleInsertTask = () => insertTrigger('~');
+    const handleInsertTag = () => insertTrigger('#');
+    const handleInsertReply = () => {
+      const { from } = topicEditor.state.selection;
+      createInlineChildBlipRef.current?.(from);
+    };
+    const handleInsertGadget = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { type?: string; url?: string } | undefined;
+      const gadgetType = detail?.type || 'iframe';
+      const url = detail?.url;
+      switch (gadgetType) {
+        case 'youtube': {
+          if (!url) return;
+          let embedUrl = url;
+          const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
+          if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+          topicEditor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
+          break;
+        }
+        case 'code':
+          topicEditor.chain().focus().toggleCodeBlock().run(); break;
+        case 'poll':
+          topicEditor.chain().focus().insertContent({
+            type: 'pollGadget',
+            attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
+          }).run();
+          break;
+        case 'latex':
+          topicEditor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run(); break;
+        case 'iframe':
+        case 'spreadsheet':
+        case 'image': {
+          if (!url) return;
+          if (gadgetType === 'image') {
+            topicEditor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
+          } else {
+            topicEditor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
+          }
+          break;
+        }
+        default:
+          topicEditor.chain().focus().insertContent(`[${gadgetType} gadget]`).run(); break;
+      }
+    };
+
+    window.addEventListener(INSERT_EVENTS.MENTION, handleInsertMention);
+    window.addEventListener(INSERT_EVENTS.TASK, handleInsertTask);
+    window.addEventListener(INSERT_EVENTS.TAG, handleInsertTag);
+    window.addEventListener(INSERT_EVENTS.REPLY, handleInsertReply);
+    window.addEventListener(INSERT_EVENTS.GADGET, handleInsertGadget);
+    return () => {
+      window.removeEventListener(INSERT_EVENTS.MENTION, handleInsertMention);
+      window.removeEventListener(INSERT_EVENTS.TASK, handleInsertTask);
+      window.removeEventListener(INSERT_EVENTS.TAG, handleInsertTag);
+      window.removeEventListener(INSERT_EVENTS.REPLY, handleInsertReply);
+      window.removeEventListener(INSERT_EVENTS.GADGET, handleInsertGadget);
+    };
+  }, [isEditingTopic, topicEditor]);
+
   // Sync editor content and editable state when entering edit mode
   // Only set content ONCE when entering edit mode (not on every topicContent change)
   useEffect(() => {
@@ -333,7 +413,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           const rawBlips = blipsResponse.data.blips as Array<any>;
           const unreadSet = unreadStateRef.current?.unreadSet ?? new Set<string>();
           const blipMap = new Map<string, BlipData>();
-          const currentIsAuthed = isAuthedRef.current;
+          const currentIsAuthed = isAuthed;
           rawBlips.forEach(raw => {
             // Generate blipPath from id (e.g., "waveId:b1234567" -> "b1234567")
             const rawId = raw._id || raw.id;
@@ -400,9 +480,11 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       state.isLoading = false;
       state.lastCompleteTime = Date.now();
     }
-  }, [id]);
+  }, [id, isAuthed]);
 
-  // Initial load
+  // Initial load + reload when auth state changes
+  // load depends on [id, isAuthed], so when isAuthed changes (false→true after auth check),
+  // load is recreated and this effect re-fires, reloading with correct permissions
   useEffect(() => { load(); }, [load]);
 
   // BLB: Find and set the current subblip when blipPath changes
@@ -544,8 +626,15 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               return updated;
             });
 
-            // BLB: Navigate into the new subblip document
-            window.location.hash = `#/topic/${id}/${blipPathSegment}/`;
+            // BLB: Expand the new child inline (no navigation!)
+            // Refresh data so the new blip appears in childBlips
+            load(true);
+            // Toggle inline expansion in the RizzomaBlip
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+                detail: { threadId: newBlipId }
+              }));
+            }, 500); // Delay to allow data refresh to complete
           } else {
             toast('Subblip created');
             load(true); // Fallback: reload to show the new blip
@@ -659,11 +748,11 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const handleBlipRead = useCallback(async (blipId: string) => {
     // Mark blip as read
     try {
-      await api(`/api/blips/${encodeURIComponent(blipId)}/read`, { method: 'POST' });
+      await api(`/api/waves/${encodeURIComponent(id)}/blips/${encodeURIComponent(blipId)}/read`, { method: 'POST' });
     } catch {
       // Silent fail for read status
     }
-  }, []);
+  }, [id]);
 
   const handleExpand = useCallback((blipId: string) => {
     setExpandedBlips(prev => {
@@ -877,10 +966,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const topicContentHtmlBase = topic.content && topic.content.trim().length > 0
     ? topic.content
     : `<h1>${topic.title || 'Untitled'}</h1>`;
-  const topicContentHtml = injectInlineMarkers(topicContentHtmlBase, inlineRootBlips);
+  // Don't inject markers here — let RizzomaBlip handle it with expanded state tracking
   const topicBlip: BlipData = {
     id: topic.id,
-    content: topicContentHtml,
+    content: topicContentHtmlBase,
     authorId: topic.authorId,
     authorName: topic.authorName,
     createdAt: topic.createdAt,
@@ -891,7 +980,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       canComment: isAuthed,
       canRead: true,
     },
-    childBlips: listBlips,
+    childBlips: [...listBlips, ...inlineRootBlips],
   };
   const topicContentOverride = isEditingTopic ? (
     <div className="topic-content-edit">
@@ -1192,8 +1281,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                   </div>
                 ) : (
                   <div className="topic-content-view">
-                    {topicContentHtml ? (
-                      <div dangerouslySetInnerHTML={{ __html: topicContentHtml }} />
+                    {topicContentHtmlBase ? (
+                      <div dangerouslySetInnerHTML={{ __html: topicContentHtmlBase }} />
                     ) : (
                       <h1 className="topic-title">{topic.title || 'Untitled'}</h1>
                     )}

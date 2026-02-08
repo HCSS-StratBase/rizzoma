@@ -1132,3 +1132,36 @@
   background-color: transparent;
   border-left: none;
 }
+
+/* Inline-expanded child blips (BLB: [+] expands inline, not navigates) */
+.inline-child-expanded {
+  margin-left: 22px;
+  border-left: 2px solid #ddd;
+  padding-left: 8px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  background: #fafafa;
+  border-radius: 0 3px 3px 0;
+}
+
+/* Minimal styling for inline children — no toolbar, clean content display */
+.inline-child-expanded > .blip-container {
+  margin-left: 0 !important;
+  padding: 4px 0;
+}
+
+.inline-child-expanded > .blip-container > .blip-content {
+  margin-top: 0 !important;
+  min-height: 0 !important;
+}
+
+/* Portal container for inline children rendered at marker positions */
+.inline-child-portal {
+  display: block;
+  list-style: none;
+}
+
+/* Orphaned markers (referencing non-existent children) - hide completely */
+.blip-thread-marker.orphaned {
+  display: none;
+}

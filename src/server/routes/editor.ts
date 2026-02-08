@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { findOne, insertDoc, updateDoc, createIndex } from '../lib/couch.js';
+import { findOne, insertDoc, updateDoc } from '../lib/couch.js';
 import { emitEvent, emitEditorUpdate } from '../lib/socket.js';
 
 // Feature flag: set EDITOR_ENABLE=1 to enable endpoints
@@ -151,12 +151,6 @@ if (!ENABLED) {
     }
   };
 
-  // Ensure indexes
-  (async () => {
-    try { await createIndex(['type', 'waveId', 'blipId', 'updatedAt'], 'idx_yjs_snapshot'); } catch {}
-    try { await createIndex(['type', 'waveId', 'seq'], 'idx_yjs_update_seq'); } catch {}
-  })().catch(() => undefined);
-
   // GET /api/editor/:waveId/snapshot — latest snapshot + next seq
   router.get('/:waveId/snapshot', async (req, res) => {
     const waveId = req.params.waveId;
@@ -289,8 +283,7 @@ if (!ENABLED) {
       const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const selector: any = { type: 'yjs_snapshot', text: { $regex: `(?i).*${safe}.*` } };
       if (blipIdFilter) selector.blipId = blipIdFilter;
-      const { find, createIndex: ensureIndex } = await import('../lib/couch.js');
-      try { await ensureIndex(['type', 'updatedAt'], 'idx_yjs_snapshot_search'); } catch {}
+      const { find } = await import('../lib/couch.js');
       const options: any = { limit: limit + 1, sort: [{ updatedAt: 'desc' }] };
       if (bookmark) options.bookmark = bookmark;
       let r: any;

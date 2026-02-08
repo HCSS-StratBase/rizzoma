@@ -1,0 +1,127 @@
+/* Enhanced Code Block — replaces bare TipTap codeBlock */
+
+.code-block-wrapper {
+  position: relative;
+  margin: 0.75em 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fafafa;
+  font-size: 13px;
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
+  user-select: none;
+}
+
+.code-block-lang-select {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #fff;
+  font-size: 11px;
+  padding: 2px 4px;
+  color: #555;
+  cursor: pointer;
+  outline: none;
+}
+.code-block-lang-select:focus {
+  border-color: #78bcff;
+}
+
+.code-block-copy-btn {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #fff;
+  font-size: 11px;
+  padding: 2px 10px;
+  color: #555;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.code-block-copy-btn:hover {
+  background: #e8e8e8;
+  color: #333;
+}
+.code-block-copy-btn:active {
+  background: #ddd;
+}
+
+/* Code area */
+.code-block-pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-family: 'Consolas', 'Fira Code', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  tab-size: 4;
+  background: #fafafa;
+  counter-reset: code-line;
+}
+
+.code-block-pre code {
+  font-family: inherit;
+  background: none;
+  padding: 0;
+  white-space: pre;
+}
+
+/* highlight.js theme overrides — GitHub-style light */
+.code-block-pre.hljs {
+  background: #fafafa;
+  color: #24292e;
+}
+.code-block-pre .hljs-comment,
+.code-block-pre .hljs-quote {
+  color: #6a737d;
+  font-style: italic;
+}
+.code-block-pre .hljs-keyword,
+.code-block-pre .hljs-selector-tag,
+.code-block-pre .hljs-type {
+  color: #d73a49;
+}
+.code-block-pre .hljs-string,
+.code-block-pre .hljs-addition {
+  color: #032f62;
+}
+.code-block-pre .hljs-number,
+.code-block-pre .hljs-literal {
+  color: #005cc5;
+}
+.code-block-pre .hljs-title,
+.code-block-pre .hljs-section,
+.code-block-pre .hljs-attr {
+  color: #6f42c1;
+}
+.code-block-pre .hljs-built_in,
+.code-block-pre .hljs-builtin-name {
+  color: #e36209;
+}
+.code-block-pre .hljs-name,
+.code-block-pre .hljs-tag {
+  color: #22863a;
+}
+.code-block-pre .hljs-deletion {
+  color: #b31d28;
+  background: #ffeef0;
+}
+.code-block-pre .hljs-addition {
+  background: #f0fff4;
+}
+.code-block-pre .hljs-meta {
+  color: #735c0f;
+}
+.code-block-pre .hljs-variable,
+.code-block-pre .hljs-template-variable {
+  color: #e36209;
+}
+.code-block-pre .hljs-symbol {
+  color: #005cc5;
+}

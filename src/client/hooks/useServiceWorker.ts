@@ -67,6 +67,11 @@ export function useServiceWorker(options: UseServiceWorkerOptions = {}): Service
     }
 
     try {
+      // TEMP: Skip SW registration during dev to avoid stale code caching
+      if (import.meta.env['DEV']) {
+        console.log('[SW Hook] Skipping SW registration in dev mode');
+        return;
+      }
       console.log('[SW Hook] Registering service worker...');
       const registration = await navigator.serviceWorker.register(swPath, {
         scope: '/',

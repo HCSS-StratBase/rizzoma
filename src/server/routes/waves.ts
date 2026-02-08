@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { createIndex, find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
+import { find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
-import type { Blip, Wave, BlipRead } from '../schemas/wave.js';
+import type { Blip, Wave, BlipRead, WaveParticipant } from '../schemas/wave.js';
 import { computeWaveUnreadCounts } from '../lib/unread.js';
+import { sendInviteEmail } from '../services/email.js';
 
 const router = Router();
 type FlatBlip = { id: string; updatedAt: number; createdAt?: number; content?: string; children?: FlatBlip[] };
@@ -13,7 +14,6 @@ router.get('/', async (req, res) => {
   const offset = Math.max(parseInt(String((req.query as any).offset ?? '0'), 10) || 0, 0);
   const q = String((req.query as any).q ?? '').trim();
   try {
-    await createIndex(['type', 'createdAt'], 'idx_wave_createdAt').catch(() => undefined);
     const selector: any = { type: 'wave' };
     if (q) selector.title = { $regex: `(?i).*${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*` };
     let r: { docs: Wave[] };
@@ -68,7 +68,6 @@ router.get('/:id', async (req, res) => {
       if (!String(e?.message || '').startsWith('404')) throw e;
     }
     // fetch blips (works for both modern and legacy data)
-    await createIndex(['type', 'waveId', 'createdAt'], 'idx_blip_wave_createdAt').catch(() => undefined);
     const r = await find<Blip>(
       { type: 'blip', waveId: id },
       { limit: 20000, sort: [{ createdAt: 'asc' }] },
@@ -129,7 +128,7 @@ router.get('/:id/unread', async (req, res) => {
     const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
     const waveData: any = await waveResp.json();
     const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
-    await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
+
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
     (r.docs || []).forEach((d) => readMap.set(String(d.blipId), Number((d as any).readAt || 0)));
@@ -151,7 +150,7 @@ router.get('/:id/next', async (req, res) => {
     const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
     const waveData: any = await waveResp.json();
     const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
-    await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
+
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
     (r.docs || []).forEach((d) => readMap.set(String(d.blipId), Number((d as any).readAt || 0)));
@@ -174,7 +173,7 @@ router.get('/:id/prev', async (req, res) => {
     const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
     const waveData: any = await waveResp.json();
     const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
-    await createIndex(['type', 'userId', 'waveId'], 'idx_read_user_wave').catch(() => undefined);
+
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
     (r.docs || []).forEach((d) => readMap.set(String(d.blipId), Number((d as any).readAt || 0)));
@@ -244,6 +243,113 @@ router.post('/:id/read', async (req, res) => {
     }
   }
   res.json({ ok: true, count: results.length, results });
+});
+
+// GET /api/waves/:id/participants — list wave participants
+router.get('/:id/participants', async (req, res) => {
+  const id = req.params.id;
+  try {
+    const r = await find<WaveParticipant>({ type: 'participant', waveId: id }, { limit: 200 });
+    const participants = (r.docs || []).map(p => ({
+      id: p._id,
+      userId: p.userId,
+      email: p.email,
+      role: p.role,
+      status: p.status,
+    }));
+    res.json({ participants });
+  } catch {
+    // No participants found — return empty list
+    res.json({ participants: [] });
+  }
+});
+
+// POST /api/waves/:id/participants — invite participants by email
+router.post('/:id/participants', async (req, res) => {
+  const userId = req.session?.userId as string | undefined;
+  if (!userId) { res.status(401).json({ error: 'unauthenticated' }); return; }
+
+  const waveId = req.params.id;
+  const { emails, message } = req.body as { emails?: string[]; message?: string };
+
+  if (!emails || !Array.isArray(emails) || emails.length === 0) {
+    res.status(400).json({ error: 'emails array required' });
+    return;
+  }
+
+  // Look up inviter info
+  let inviterName = 'A Rizzoma user';
+  let inviterEmail = '';
+  try {
+    const inviter = await getDoc<any>(userId);
+    inviterName = inviter.name || inviter.email || inviterName;
+    inviterEmail = inviter.email || '';
+  } catch {}
+
+  // Look up topic title from the wave doc
+  let topicTitle = 'Untitled Topic';
+  try {
+    const wave = await getDoc<Wave>(waveId);
+    topicTitle = wave.title || topicTitle;
+  } catch {}
+
+  const baseUrl = process.env['APP_BASE_URL'] || 'http://localhost:3000';
+  const topicUrl = `${baseUrl}/#/topic/${waveId}`;
+  const now = Date.now();
+  const results: { email: string; ok: boolean; error?: string }[] = [];
+
+  for (const email of emails) {
+    try {
+      // Find or reference user by email
+      let targetUserId = `invite:${email}`;
+      try {
+        const userResult = await find<any>({ type: 'user', email }, { limit: 1 });
+        if (userResult.docs?.[0]) {
+          targetUserId = userResult.docs[0]._id;
+        }
+      } catch {}
+
+      // Check if participant already exists
+      const participantId = `participant:wave:${waveId}:user:${targetUserId}`;
+      let alreadyExists = false;
+      try {
+        await getDoc<WaveParticipant>(participantId);
+        alreadyExists = true;
+      } catch {}
+
+      if (!alreadyExists) {
+        // Create participant record
+        await insertDoc({
+          _id: participantId,
+          type: 'participant',
+          waveId,
+          userId: targetUserId,
+          email,
+          role: 'editor',
+          invitedBy: userId,
+          invitedAt: now,
+          status: 'pending',
+        } as WaveParticipant);
+      }
+
+      // Send invite email
+      const emailResult = await sendInviteEmail({
+        inviterName,
+        inviterEmail,
+        topicTitle,
+        topicUrl,
+        recipientEmail: email,
+        message: message || undefined,
+      });
+
+      results.push({ email, ok: emailResult.success, error: emailResult.error });
+    } catch (err: any) {
+      console.error('[waves] invite participant failed', { email, error: err.message });
+      results.push({ email, ok: false, error: err.message });
+    }
+  }
+
+  res.json({ ok: true, invited: results });
 });
 
 export default router;

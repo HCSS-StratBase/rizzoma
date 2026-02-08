@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createIndex, deleteDoc, find, findOne, insertDoc } from '../lib/couch.js';
+import { deleteDoc, find, findOne, insertDoc } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
 
 type LinkDoc = {
@@ -13,11 +13,6 @@ type LinkDoc = {
 };
 
 const router = Router();
-
-(async () => {
-  try { await createIndex(['type', 'fromBlipId'], 'idx_links_from'); } catch {}
-  try { await createIndex(['type', 'toBlipId'], 'idx_links_to'); } catch {}
-})();
 
 // POST /api/links { fromBlipId, toBlipId, waveId }
 router.post('/', async (req, res): Promise<void> => {

@@ -50,30 +50,43 @@
   margin-top: 2px;
 }
 
-/* Mention in the editor */
+/* Mention in the editor — turquoise pill like original Rizzoma |@Name| */
 .mention {
-  background-color: #e3f2fd;
-  border-radius: 4px;
-  padding: 2px 4px;
-  color: #1976d2;
+  background-color: rgb(120, 188, 255);
+  border-radius: 3px;
+  padding: 1px 4px;
+  color: #ffffff;
   font-weight: 500;
   cursor: pointer;
+  display: inline;
+}
+
+.mention::before {
+  content: '|';
+  opacity: 0.5;
+}
+
+.mention::after {
+  content: '|';
+  opacity: 0.5;
 }
 
 .mention:hover {
-  background-color: #bbdefb;
+  background-color: rgb(100, 170, 240);
 }
 
-/* Tag inline widget (#tag) */
+/* Tag inline widget (#tag) — plain turquoise text, no background */
 .tag-widget {
-  background-color: #fff3e0;
-  border-radius: 4px;
-  padding: 2px 4px;
-  color: #e65100;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  color: rgb(120, 188, 255);
   font-weight: 500;
   cursor: pointer;
 }
 
 .tag-widget:hover {
-  background-color: #ffe0b2;
+  color: rgb(80, 150, 220);
+  text-decoration: underline;
 }

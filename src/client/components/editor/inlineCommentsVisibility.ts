@@ -108,7 +108,7 @@ function ensureStorageListener(): void {
 export function getInlineCommentsVisibility(blipId: string): boolean {
   const map = readVisibilityMap();
   const entry = map[blipId];
-  return typeof entry?.value === 'boolean' ? entry.value : true;
+  return typeof entry?.value === 'boolean' ? entry.value : false;
 }
 
 export function getInlineCommentsVisibilityFromStorage(blipId: string): boolean | undefined {

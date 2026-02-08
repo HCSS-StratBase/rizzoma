@@ -17,6 +17,14 @@ export const INSERT_EVENTS = {
 // Edit mode event - dispatched by RizzomaBlip when entering/exiting edit mode
 export const EDIT_MODE_EVENT = 'rizzoma:edit-mode-change' as const;
 
+// Editor focus/blur events — dispatched by RizzomaBlip when TipTap editor gains/loses focus
+export const EDITOR_FOCUS_EVENT = 'rizzoma:editor-focus' as const;
+export const EDITOR_BLUR_EVENT = 'rizzoma:editor-blur' as const;
+
+// Blip active event — dispatched by RizzomaBlip when a blip with edit permission becomes active/inactive
+// Used to show insert buttons before entering edit mode (auto-enter-edit-mode on insert)
+export const BLIP_ACTIVE_EVENT = 'rizzoma:blip-active-editable' as const;
+
 // Helper to dispatch insert events
 export function dispatchInsertEvent(eventType: string, data?: Record<string, unknown>) {
   if (typeof window === 'undefined') return;
@@ -82,15 +90,33 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
   const [navigating, setNavigating] = useState(false);
   const [displayMode, setDisplayMode] = useState<'short' | 'expanded'>('expanded');
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isBlipActiveEditable, setIsBlipActiveEditable] = useState(false);
+  const [isCursorInEditor, setIsCursorInEditor] = useState(false);
 
-  // Listen for edit mode changes from RizzomaBlip
+  // Listen for edit mode changes and blip active events from RizzomaBlip
   useEffect(() => {
     const handleEditModeChange = (e: Event) => {
       const customEvent = e as CustomEvent<{ isEditing: boolean }>;
-      setIsEditMode(customEvent.detail?.isEditing ?? false);
+      const editing = customEvent.detail?.isEditing ?? false;
+      setIsEditMode(editing);
+      if (!editing) setIsCursorInEditor(false);
     };
+    const handleBlipActive = (e: Event) => {
+      const customEvent = e as CustomEvent<{ active: boolean }>;
+      setIsBlipActiveEditable(customEvent.detail?.active ?? false);
+    };
+    const handleFocus = () => setIsCursorInEditor(true);
+    const handleBlur = () => setIsCursorInEditor(false);
     window.addEventListener(EDIT_MODE_EVENT, handleEditModeChange);
-    return () => window.removeEventListener(EDIT_MODE_EVENT, handleEditModeChange);
+    window.addEventListener(BLIP_ACTIVE_EVENT, handleBlipActive);
+    window.addEventListener(EDITOR_FOCUS_EVENT, handleFocus);
+    window.addEventListener(EDITOR_BLUR_EVENT, handleBlur);
+    return () => {
+      window.removeEventListener(EDIT_MODE_EVENT, handleEditModeChange);
+      window.removeEventListener(BLIP_ACTIVE_EVENT, handleBlipActive);
+      window.removeEventListener(EDITOR_FOCUS_EVENT, handleFocus);
+      window.removeEventListener(EDITOR_BLUR_EVENT, handleBlur);
+    };
   }, []);
 
   const unreadCount = unreadState?.unreadIds.length ?? 0;
@@ -270,11 +296,11 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
         </button>
       </div>
 
-      {/* Insert shortcuts - only shown when editing */}
-      {isEditMode && (
-        <div className="insert-shortcuts">
+      {/* Insert shortcuts - visible when editing or when an editable blip is active */}
+      {(isEditMode || isBlipActiveEditable) && <div className="insert-shortcuts">
           <button
             className="insert-btn"
+            onMouseDown={e => e.preventDefault()}
             onClick={handleInsertReply}
             title="Insert reply (Ctrl+Enter)"
           >
@@ -282,6 +308,7 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
           </button>
           <button
             className="insert-btn"
+            onMouseDown={e => e.preventDefault()}
             onClick={handleInsertMention}
             title="Insert mention (@)"
           >
@@ -289,6 +316,7 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
           </button>
           <button
             className="insert-btn"
+            onMouseDown={e => e.preventDefault()}
             onClick={handleInsertTask}
             title="Insert task (~)"
           >
@@ -296,6 +324,7 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
           </button>
           <button
             className="insert-btn"
+            onMouseDown={e => e.preventDefault()}
             onClick={handleInsertTag}
             title="Insert tag (#)"
           >
@@ -303,6 +332,7 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
           </button>
           <button
             className="insert-btn gadget-btn"
+            onMouseDown={e => e.preventDefault()}
             onClick={handleInsertGadget}
             title="Insert gadget"
           >
@@ -314,8 +344,7 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
               onClose={() => setShowGadgetPalette(false)}
             />
           )}
-        </div>
-      )}
+        </div>}
     </div>
   );
 }

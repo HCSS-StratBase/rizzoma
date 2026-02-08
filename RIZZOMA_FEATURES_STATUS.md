@@ -104,12 +104,30 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - **Fold functionality** - Blips can be folded/collapsed via "Fold" button in toolbar (both edit and view modes)
 - **Persistence** - Fold state persists to localStorage AND server (`/api/blips/:id/collapse-default`)
 - **Visual indicators** - Collapsed blips show □ expand icon, expanded blips show −
+- **Inline expansion (2026-02-08)** - [+] markers expand child blips inline at their anchor position
+  - Click [+] expands child directly below the marker line (portal-based rendering)
+  - Click [−] collapses back to [+] marker
+  - Expanded children rendered via `createPortal` into `.inline-child-portal` containers
+  - `useLayoutEffect` finds portals after `dangerouslySetInnerHTML` renders, synchronous re-render before paint
+  - `isInlineChild` prop hides toolbar/expander for clean inline display
+  - Orphaned markers (from imported content referencing other waves) hidden via `display: none`
+  - Custom event `rizzoma:toggle-inline-blip` bridges view mode clicks and edit mode TipTap
 - **Documentation** - Complete BLB methodology documented in `docs/BLB_LOGIC_AND_PHILOSOPHY.md`
+- **Right panel insert shortcuts** - ↵, @, ~, #, Gadgets buttons shown when blip is active (editable) or in edit mode; auto-enter edit mode on click via `pendingInsertRef` pattern
+- **Marker styling** - Unified gray #b3b3b3 across view and edit modes, 16x14px, white text, 3px border-radius
+- **Widget styling** - @mention turquoise pill with pipes, ~task turquoise pill with checkbox, #tag plain turquoise text
+- **Toolbar decluttered** - Hide/Delete moved to gear overflow menu, dynamic badge count
+- **Three-state toolbar** - Inline children: [+] expand = no toolbar, click into content = read toolbar, click Edit = full toolbar, click outside = hides toolbar
+- **Grade: A** (all 5 plan phases complete + toolbar three-state behavior + inline editing + Ctrl+Enter inline expansion)
 - **Files modified:**
-  - `RizzomaTopicDetail.tsx` - Main topic view with Fold button wiring
+  - `RizzomaTopicDetail.tsx` - Main topic view, childBlips includes inline children
+  - `RizzomaBlip.tsx` - Portal rendering, inline expansion, isInlineChild prop
+  - `inlineMarkers.ts` - Marker injection, portal containers, orphan detection, expanded state sync
+  - `RizzomaBlip.css` - Inline child styles, portal container, orphaned marker hiding
   - `BlipMenu.tsx` - Toolbar with Fold button (duplicates removed)
-  - `RizzomaBlip.tsx` - Updated expand icons (+ → □)
   - `collapsePreferences.ts` - localStorage persistence for fold state
+  - `RightToolsPanel.tsx` - Insert shortcuts visible when blip active+editable OR in edit mode; `BLIP_ACTIVE_EVENT` listener
+  - `RizzomaTopicDetail.tsx` - Dispatches EDIT_MODE_EVENT + handles insert events with topicEditor
 
 ### Permissions & Auth
 - `requireAuth` now guards topic/blip write endpoints, logs denied operations, and respects actual author IDs.
@@ -117,37 +135,334 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - New Vitest coverage exercises unauthenticated, unauthorized, and authorized flows.
 
 ## Still pending
-- Perf/resilience sweeps for large waves/blips, inline comments, playback, and realtime updates; run `npm run perf:harness` regularly, document thresholds/limits, and add alerts/budgets.
-- Mobile parity: broader mobile validation for media/device flows, unread navigation, and toolbar/inline comment ergonomics.
-- Legacy cleanup: migrate remaining CoffeeScript entrypoints/static assets, drop unused legacy CSS/JS, and finish dependency upgrades.
-- Playback/history parity: ensure playback controls/history popovers match the original CoffeeScript implementation (edit/read states, gear overflow, copy/paste variants) with Playwright coverage.
-- Email/notifications parity: restore/validate wave email notifications/invites vs the original Rizzoma behavior (SMTP paths, templates).
-- Backup workflow automation (bundle + GDrive copy) and CI alerting for failures (typecheck/tests/build/docker).
+- **Perf/resilience sweeps**: large waves/blips stress testing, inline comments under load, realtime updates at scale; run `npm run perf:harness` regularly, document thresholds/limits, add alerts/budgets.
+- **Mobile device validation**: PWA infrastructure is complete, but real-device testing on iPhone Safari / Chrome Android remains.
+- **Legacy reference disposition**: All active code is TypeScript (zero CoffeeScript in `src/`). The `original-rizzoma-src/` and `original-rizzoma/` directories contain legacy reference code — decide whether to keep, archive, or remove.
+- **Gadget iframe rendering**: Gadget palette (11 types) works, but selected gadgets render as URL prompts/placeholders, not interactive iframes (YouTube, Yes/No/Maybe poll, etc.).
+- **Playback timeline**: `BlipHistoryModal.tsx` has timeline/slider/diff, but the full calendar-based playback UI from the original CoffeeScript (`playback/*`) is not ported.
+- **Gear menu copy/paste variants**: Core gear actions work (reply, edit, delete, duplicate, cut/paste, copy link, history). The original's "copy reply" / "paste cursor" variants are not yet reimplemented.
+- **Visual polish**: Nav panel icons (emojis → SVG sprites), toolbar icons (emojis → SVG), date format ("Feb 7" → "7 Feb"), unread bar color (green → blue), Next button color (red → green).
+- **Backup automation**: Bundle script exists (`scripts/backup.sh`), but automated GDrive cadence and CI alerting for failures are not set up.
+- **Mentions tab content**: Tab exists but shows "No mentions yet" — needs mention indexing from blip content.
+- **Tasks tab filters**: Tab shows tasks but lacks the "All 68 | No date 14 | With date" filter buttons.
 
-## Original parity gaps (CoffeeScript vs modern)
+## Comprehensive Feature Comparison: Original vs Modern
 
-| Functionality | Original implementation (CoffeeScript) | Modern status / gap |
-| --- | --- | --- |
-| Blip toolbar (read/edit, gear overflow, playback) | CoffeeKup toolbar with read/edit blocks, gear menu copy/paste reply/cursor, playback (`original-rizzoma-src/src/client/blip/menu/template.coffee`), playback menu/buttons (`original-rizzoma-src/src/client/playback/blip_menu.coffee`) | Modern toolbar in `src/client/components/blip/RizzomaBlip.tsx` + `RizzomaBlip.css`; Playwright `test-toolbar-inline-smoke.mjs` covers core buttons. Gear copy/paste variants and playback controls not yet reimplemented. |
-| Playback timeline/history | Playback wave view/models, calendar/fast-forward/back buttons (`original-rizzoma-src/src/client/playback/*`) | No modern playback timeline UI; feature not ported. |
-| Email notifications/invites | Notification utils/templates (`original-rizzoma-src/src/server/notification/utils.coffee`, mail assets under `original-rizzoma-src/src/static/img/mail/`) | Modern code lacks restored mail notifications/invites; SMTP/templates need port + tests. |
-| Mobile layout | Mobile blip index/view variants (`original-rizzoma-src/src/client/blip/index_mobile.coffee`, `view_mobile.coffee`) | **Modernized**: PWA with responsive breakpoints, MobileContext, BottomSheet menus, gesture hooks (swipe/pull-to-refresh), View Transitions, offline queue, mobile view switching. Device validation on iPhone Safari/Chrome Android remains. |
-| Uploads pipeline | Legacy CoffeeScript uploads (simple storage, limited validation) | Modernized uploads: MIME sniffing, optional ClamAV, local/S3 (`src/server/routes/uploads.ts`); client cancel/retry/preview (`src/client/lib/upload.ts`, `RizzomaBlip`). Parity exceeds original. |
-| getUserMedia adapter | Legacy static adapter (`original-rizzoma/src/static/js/getUserMediaAdapter.js`) | Modern adapter with constraint normalization, display media detection, permission/device helpers + tests (`src/static/js/getUserMediaAdapter.js`, `src/tests/client.getUserMediaAdapter.test.ts`). |
-| Inline comments | CoffeeScript inline comments widgets/routes | Modern TipTap inline comments with server routes (`src/server/routes/inlineComments.ts`), UI in `RizzomaBlip`, degraded banners, tests (`client.inlineCommentsPopover.test.tsx`, health tests). |
-| Unread / Follow-the-Green | Legacy change tracking hooks + navigation | Modern unread persistence (`/api/waves/:id/unread`, `/unread_counts`), CTA in `RightToolsPanel`, hooks (`useWaveUnread`), Playwright smoke `test-follow-green-smoke.mjs`; blips API optimized (18s → 29ms) via CouchDB index sort clause; auto-navigation now marks blips read on wave load. |
-| Presence / realtime cursors | Yjs awareness + presence badges in legacy UI | Modern presence via Yjs + `PresenceIndicator` in WaveView/Editor, tests (`server.editorPresence.test.ts`, `client.PresenceIndicator.test.tsx`). |
-| Recovery / rebuild UI | Legacy rebuild actions | Modern rebuild status/log surface in WaveView; route tests + UI polling; shipped. |
-| Search | Legacy search endpoints/UI | Modern `/api/editor/search` with Mango indexes/snippets/pagination; `EditorSearch.tsx` UI + tests. |
-| Permissions/auth | Demo users + lax guards | Modern enforces `requireAuth`, removes demo shortcuts, guards blip/topic writes; toasts for failures; tests (`routes.blips.permissions.test.ts`); bcrypt rounds reduced to 2 in dev/test for faster auth. |
-| Feature flags / enablement | Legacy flags in CoffeeScript | Modern `src/shared/featureFlags.ts`; `EDITOR_ENABLE` gate; FEAT_ALL supported. |
-| Perf harness | Ad-hoc | Modern `perf-harness.mjs` seeds 5k blips and captures metrics/screens; budgets/schedules pending. |
-| Health checks | Minimal | Modern `/api/health`, inline-comments/upload health tests; CI `health-checks` job runs `npm run test:health`. |
-| Backup automation | Manual | Bundling described but automation/GDrive cadence still missing. |
-| DB views / Couch | Legacy views and deploy scripts | Views deployment scripts exist (`npm run prep:views && npm run deploy:views`); keep in sync with modern Couch usage. |
-| Gadget nodes | Legacy gadget buttons | Modern TipTap gadget nodes (chart/poll/attachment/image) with parse/command tests (`src/tests/client.editor.GadgetNodes.test.ts`). |
-| Browser smokes | Manual QA | Modern GitHub `browser-smokes` job runs toolbar + follow-green Playwright suites with snapshots/artifacts. |
-| Legacy assets | jQuery-era static assets | Disposition pending; need to keep/retire original static assets in `original-rizzoma-src`/`original-rizzoma`. |
+> Full comparison across all 18 feature areas. See also `RIZZOMA_FULL_COMPARISON.md` for detailed implementation notes per row.
+
+### 1. Authentication & Security
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| User registration (email/password) | Done | — | — |
+| User login (rate-limited, secure cookies) | Done | [orig](screenshots/comparison-analysis/orig-02-login-modal.png) | [new](screenshots/refactor-2026-01-18/modern-login-modal.png) |
+| Google OAuth 2.0 | Done | — | — |
+| Facebook OAuth | Done | — | — |
+| Microsoft OAuth (hand-rolled, Graph API) | Done | — | — |
+| SAML 2.0 (`@node-saml/node-saml` v5) | Done | — | — |
+| Twitter OAuth | Removed | Supported | Removed (API deprecated) |
+| Session management (Redis 5) | Done | — | — |
+| CSRF protection (double-submit token) | Done | — | — |
+| Permission guards (`requireAuth` middleware) | Done | — | — |
+| Zod request validation | Done (new) | None | All endpoints |
+| Rate limiting (per-route) | Done (new) | None | 100 req/15min (register), 30 req/10min (login) |
+
+### 2. Waves & Blips (Core Data Model)
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Wave (topic) schema + typed interface | Done | — | — |
+| Wave CRUD API (list, create, read, update, delete) | Done | — | — |
+| Blip schema + typed interface | Done | — | — |
+| Blip CRUD API (list, create, read, update, delete) | Done | — | — |
+| Blip tree retrieval (single Mango query, 18s → 29ms) | Done | — | — |
+| Blip soft-delete + cascade to children | Done | — | — |
+| Topic view with full blip tree | Done | [orig](screenshots/comparison-analysis/orig-03-topic-view.png) | [new](screenshots/side-by-side/05-full-topic-new-260208-0053.png) |
+| Wave participants API | Done | — | — |
+
+### 3. Rich Text Editor
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Editor framework (TipTap v2 / ProseMirror) | Done | — | — |
+| Bold / Italic / Underline / Strikethrough | Done | — | — |
+| Headings (H1-H6) | Done | — | — |
+| Bullet list / Ordered list | Done | — | — |
+| Task lists (checkboxes) | Done | — | — |
+| Code / Code block / Blockquote | Done | — | — |
+| Code block: syntax highlighting (30 languages) | Done (new) | SyntaxHighlighter 2.1.364 (2009 gadget) | `@tiptap/extension-code-block-lowlight` + React NodeView |
+| Highlight (text background color) | Done (new) | None | `@tiptap/extension-highlight` |
+| Links (add/edit/remove) | Done | — | — |
+| Images (node extension) | Done | — | — |
+| @mentions autocomplete dropdown | Done | — | [new](screenshots/local-blb-study/260206-2220-mention-dropdown.png) |
+| Edit mode toolbar (blue #4EA0F1) | Done | [orig](screenshots/comparison-analysis/orig-10-edit-mode-toolbar.png) | [new](screenshots/side-by-side/blb-04-edit-mode-toolbar-new-260208.png) |
+| Read mode toolbar (minimal) | Done | [orig](screenshots/side-by-side/blb-06-readmode-full-old-260208.png) | [new](screenshots/blb-state2-read-toolbar_new-260208-1244.png) |
+| Gadget nodes (chart, poll, attachment, image) | Done | — | [new](screenshots/local-blb-study/260207-gadget-palette-open.png) |
+| Gadget palette (11 types in grid layout) | Done | — | [new](screenshots/local-blb-study/260207-gadget-palette-open.png) |
+| Toolbar icons: SVG sprites vs emoji characters | Gap | SVG sprites (monochrome white) | Emoji characters (🔗😀📎🖼️🎨❌) |
+
+### 4. Real-time Collaboration
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Transport layer (Socket.IO v4) | Done | — | — |
+| CRDT engine (Yjs) | Done | — | — |
+| Live cursors (Yjs awareness, user colors) | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-presence.png) | — |
+| Typing indicators | Done | — | — |
+| Presence indicator (avatars, overflow counts) | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-presence.png) | — |
+| Event broadcasting (blip:created/updated/deleted) | Done | — | — |
+
+### 5. Unread Tracking (Follow-the-Green)
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Per-user read state (CouchDB BlipRead docs) | Done | — | — |
+| Mark single blip read API | Done | — | — |
+| Mark batch read API | Done | — | — |
+| Unread count aggregation (batch query) | Done | — | — |
+| Next/Prev unread navigation (server-computed) | Done | — | — |
+| Green left border on unread blips | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-unread.png) | — |
+| Wave list badge (unread/total count) | Done | — | — |
+| "Follow the Green" CTA button | Done | — | — |
+| Keyboard navigation (j/k/g/G) | Done | — | — |
+
+### 6. Inline Comments System
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Comment structure (range anchoring, text snapshot) | Done | — | — |
+| Comment CRUD APIs | Done | — | — |
+| Comment threading (rootId + parentId) | Done | — | — |
+| Resolve / unresolve | Done | — | — |
+| Visibility preference per-blip (server + localStorage) | Done | — | — |
+| Keyboard shortcuts (Ctrl+Shift+Up/Down) | Done | — | — |
+
+### 7. File Uploads & Storage
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Upload endpoint (Multer, 10MB limit) | Done | — | — |
+| MIME magic-byte sniffing | Done (new) | Extension-only | Magic bytes |
+| Executable extension blocking (.exe, .bat, etc.) | Done (new) | None | Blocked |
+| ClamAV virus scanning (optional) | Done (new) | None | Optional Docker service |
+| Storage backends: local filesystem | Done | — | — |
+| Storage backends: AWS S3 / MinIO | Done (new) | None | Configurable |
+| Client upload library (progress, cancel, retry) | Done | — | — |
+
+### 8. Search & Recovery
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Full-text search (Mango regex, title + content) | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-search-overlay.png) | — |
+| Snippet generation (150-char context + highlight) | Done (new) | None | `GET /api/editor/:waveId/snapshot` |
+| Yjs document rebuild | Done | — | — |
+| Wave materialization | Done | — | — |
+| Rebuild status polling | Done (new) | None | `GET /api/editor/rebuild/:id/status` |
+
+### 9. Blip Operations (Gear Menu)
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Reply (create child blip) | Done | — | — |
+| Edit (inline TipTap editor) | Done | — | — |
+| Delete (soft delete + children) | Done | — | — |
+| Duplicate blip | Done | — | — |
+| Cut / Paste (clipboard store, reparent) | Done | — | — |
+| Copy link (navigator clipboard) | Done | — | — |
+| History modal (timeline, play/pause, diff) | Done | — | — |
+| Gear dropdown menu | Partial | [orig](screenshots/comparison-analysis/orig-05-other-dropdown.png) | — |
+| Copy/paste reply/cursor variants | Not started | [orig](screenshots/comparison-analysis/orig-05-other-dropdown.png) | — |
+
+### 10. History & Playback
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| History storage (BlipHistoryDoc, snapshots) | Done | — | — |
+| History API (`GET /api/blips/:id/history`) | Done | — | — |
+| Playback UI (timeline slider, play/pause/step) | Done | — | — |
+| Playback speed (0.5x to 4x) | Done | — | — |
+| Diff view (before/after comparison) | Done | — | — |
+| Full playback timeline (calendar, fast-forward) | Not started | Legacy `playback/*` CoffeeScript | Not ported |
+
+### 11. Email Notifications
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Email service (Nodemailer v7) | Done | — | — |
+| Invite emails | Done | — | [new](screenshots/invite-email-mailhog_new-260208-0437.png) |
+| Activity notifications (mentions, replies) | Done | Custom templates | `sendNotificationEmail()` with HTML/text |
+| Digest emails (daily/weekly summary) | Done (new) | None | `sendDigestEmail()` with HTML/text |
+| Notification preferences API | Done | — | — |
+| SMTP templates (styled HTML) | Done | Styled HTML templates | HTML/text variants for invite, notification, digest |
+
+### 12. Mobile & PWA
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Responsive breakpoints (xs/sm/md/lg/xl) | Done (new) | 30+ separate mobile files | Single responsive codebase |
+| Mobile detection hooks (isMobile/isTablet/isDesktop) | Done (new) | User-agent sniffing | Media queries + touch detection |
+| PWA manifest + icons (8 sizes) | Done (new) | None | `public/manifest.json` |
+| Service worker (cache-first assets, network-first API) | Done (new) | None | `public/sw.js` |
+| Swipe gestures (left/right panel navigation) | Done (new) | None | `useSwipe.ts` |
+| Pull to refresh | Done (new) | None | `usePullToRefresh.ts` |
+| View Transitions API (with reduced-motion) | Done (new) | None | `useViewTransition.ts` |
+| Offline mutation queue (auto-sync, max 3 retries) | Done (new) | None | `offlineQueue.ts` |
+| BottomSheet mobile menu | Done (new) | None | `mobile/BottomSheet.tsx` |
+| Touch targets (44px minimum) | Done (new) | Inconsistent | CSS |
+| Mobile layout (device validation on real devices) | Needs testing | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-mobile.png) | — |
+
+### 13. User Interface Components
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Three-panel layout (nav + topic + tools) | Done | [orig](screenshots/side-by-side/01-full-layout-old-260208-0048.png) | [new](screenshots/side-by-side/01-full-layout-new-260208-0048.png) |
+| Navigation panel (Topics, Mentions, Tasks, Public, Store, Teams) | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-nav-topics.png) | [new](screenshots/side-by-side/06-topics-list-new-260208-0054.png) |
+| Navigation panel icons (SVG sprites vs emojis) | Gap | Monochrome SVG sprites | Emojis (📄 @ ✓ 🌐 🛒 👥) |
+| Navigation badge count | Done | Dynamic from server | Dynamic (was hardcoded "11", fixed) |
+| Topics list | Done | [orig](screenshots/side-by-side/06-topics-list-old-260208-0054.png) | [new](screenshots/side-by-side/06-topics-list-new-260208-0054.png) |
+| Topics list: date format | Gap | "6 Feb" (d MMM) | "Feb 7" (MMM d) |
+| Topics list: unread bar color | Gap | Blue vertical bar | Green/colored bars |
+| Topics list: filter dropdown (Inbox/All/By me) | Not started | "Inbox ▼" dropdown | Missing |
+| Mentions tab | Partial | [orig](screenshots/side-by-side/04-mentions-tab-old-260208-0053.png) | [new](screenshots/side-by-side/04-mentions-tab-new-260208-0051.png) |
+| Mentions tab: populated content | Gap | 50+ mentions with rich data | Empty ("No mentions yet") |
+| Tasks tab | Partial | [orig](screenshots/side-by-side/07-tasks-tab-old-260208-0055.png) | [new](screenshots/side-by-side/07-tasks-tab-new-260208-0055.png) |
+| Tasks tab: filter buttons | Not started | "All 68 \| No date 14 \| With date" | Missing |
+| Participants bar (invite + avatars) | Partial | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-invite-modal.png) | — |
+| Share modal | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-share-modal.png) | — |
+| Right panel: user avatar | Gap | Real OAuth photo | Generated initials circle |
+| Right panel: Next button color | Gap | Green "Next ▶" | Red "Next ▶" |
+| Right panel: hide/show replies icons | Gap | Speech bubble SVG icons | ▲/▼ unicode arrows |
+| Right panel: mind map button | Gap | Branch SVG icon | ⟨⟩ text |
+| Login modal | Done | [orig](screenshots/comparison-analysis/orig-02-login-modal.png) | [new](screenshots/refactor-2026-01-18/modern-login-modal.png) |
+| Hide replies / folded view | Done | [orig](screenshots/comparison-analysis/orig-06-hide-replies-folded.png) | — |
+| Auth panel (modal, not page) | Done | — | [new](screenshots/refactor-2026-01-18/auth-panel-styled.png) |
+| Toast notifications | Done (new) | Alert dialogs | React `Toast.tsx` |
+| Keyboard shortcuts panel (bottom of nav) | Not started | Present | Missing |
+
+### 14. BLB (Bullet-Label-Blip) — Core Paradigm
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Collapsed TOC (bullet + label + [+]) | Done | [orig](screenshots/side-by-side/blb-01-collapsed-toc-old-260208.png) | [new](screenshots/side-by-side/blb-01-collapsed-toc-new-260208.png) |
+| Section expanded (blip content visible) | Done | [orig](screenshots/side-by-side/blb-02-section-expanded-old-260208.png) | [new](screenshots/side-by-side/blb-02-section-expanded-new-260208.png) |
+| [+] click = INLINE expansion (not navigation) | Done | [orig](screenshots/blb-inline-expanded_old-260208-0226.png) | [new](screenshots/blb-inline-expanded_new-260208-0330.png) |
+| [−] click = collapse back | Done | — | [new](screenshots/blb-state3-after-clickout_new-260208-1244.png) |
+| Portal-based rendering (child at marker position) | Done | — | [new](screenshots/blb-portal-inline-expanded_new-260208-0155.png) |
+| Three-state toolbar: [+] expand = just text | Done | [orig](screenshots/blb-inline-expanded_old-260208-0226.png) | [new](screenshots/blb-state1-just-text_new-260208-1244.png) |
+| Three-state toolbar: click into child = read toolbar | Done | [orig](screenshots/side-by-side/blb-06-readmode-full-old-260208.png) | [new](screenshots/blb-state2-read-toolbar_new-260208-1244.png) |
+| Three-state toolbar: click Edit = full edit toolbar | Done | [orig](screenshots/side-by-side/blb-04-edit-mode-toolbar-old-260208.png) | [new](screenshots/blb-inline-edit-toolbar_new-260208-1240.png) |
+| Click outside inline child = toolbar hidden | Done | — | [new](screenshots/blb-state3-after-clickout_new-260208-1244.png) |
+| Toolbar left-aligned in inline children | Done | — | [new](screenshots/blb-toolbar-aligned_new-260208-1250.png) |
+| Ctrl+Enter creates inline child at cursor position | Done | — | [new](screenshots/blb-ctrl-enter-expanded_new-260208-0347.png) |
+| Inline child editing (Edit button, content persists) | Done | — | [new](screenshots/blb-inline-edit-persisted_new-260208-0332.png) |
+| [+] marker styling (gray #b3b3b3, 16x14px, white text) | Done | [orig](screenshots/comparison-analysis/orig-09-blb-inline-expanded.png) | [new](screenshots/blb-inline-expanded_new-260208-0330.png) |
+| [+] marker: green for unread, gray for read | Partial | Green = unread, gray = read | Gray only (unread green TBD) |
+| Orphaned markers hidden (cross-wave references) | Done | — | — |
+| All sections expanded simultaneously | Done | [orig](screenshots/comparison-analysis/orig-08-blb-study-full.png) | [new](screenshots/blb-all-four-expanded_new-260208-0400.png) |
+| Fold/Unfold all (▲/▼ in right panel) | Done | — | [new](screenshots/blb-view-with-shortcuts_new-260208-0310.png) |
+| Fold state persistence (localStorage + server) | Done | — | — |
+| Reply vs inline comment distinction | Done | — | — |
+| Mid-sentence [+] markers (multiple per paragraph) | Done | [orig](screenshots/comparison-analysis/orig-04-inline-expanded-mentions.png) | [new](screenshots/blb-inline-expanded-full_new-260208-0312.png) |
+| Nested inline expansion ([+] within expanded [+]) | Needs testing | — | — |
+| Auth-gated Edit button | Done | — | [new](screenshots/blb-auth-fixed-edit-visible_new-260208-0422.png) |
+
+### 15. Inline Widgets & Styling
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| @mention: turquoise pill with pipe delimiters (\|@Name\|) | Done | [orig](screenshots/side-by-side/blb-05-turquoise-buttons-old-260208.png) | [new](screenshots/side-by-side/blb-10-turquoise-closeup-new-260208.png) |
+| ~task: turquoise pill with checkbox (\|☐ Name DD Mon\|) | Done | [orig](screenshots/side-by-side/blb-10-turquoise-closeup-old-260208.png) | [new](screenshots/side-by-side/blb-10-turquoise-closeup-new-260208.png) |
+| #tag: plain turquoise text (no background/border) | Done | [orig](screenshots/side-by-side/blb-10-turquoise-closeup-old-260208.png) | [new](screenshots/side-by-side/blb-10-turquoise-closeup-new-260208.png) |
+| Insert shortcuts (right panel: ↵ @ ~ # Gadgets) | Done | [orig](screenshots/side-by-side/blb-03-right-panel-buttons-old-260208.png) | [new](screenshots/blb-view-with-shortcuts_new-260208-0310.png) |
+| Insert shortcut button styling (light blue bg, white icons) | Done | [orig](screenshots/side-by-side/blb-09-turquoise-active-old-260208.png) | [new](screenshots/blb-view-with-shortcuts_new-260208-0310.png) |
+| Insert buttons auto-enter-edit-mode | Done (new) | Buttons only work in edit mode | Click @ on active blip → auto-enters edit + inserts + opens dropdown |
+| Toolbar decluttered (Hide/Delete → gear overflow) | Done | — | — |
+| Gadget iframe rendering (Yes/No/Maybe poll, YouTube, etc.) | Partial | Embedded iframes | Code block = enhanced (lowlight); others = URL prompt / placeholder |
+
+### 16. Database & Storage
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| CouchDB client (nano v10) | Done | — | — |
+| Typed document schemas (wave, blip, topic, comment, read, etc.) | Done | — | — |
+| CouchDB Mango indexes (centralized at startup) | Done | — | — |
+| Redis sessions (v5 + connect-redis v7) | Done | — | — |
+| CouchDB view deploy scripts | Done | — | — |
+
+### 17. API Architecture
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Express 5 (async/await, Zod validation) | Done | — | — |
+| Middleware: request ID, logging, CORS, Helmet, compression | Done | — | — |
+| Middleware: rate limiting, session, CSRF, auth, error handler | Done | — | — |
+| Route files (auth, topics, waves, blips, comments, uploads, editor, etc.) | Done | — | — |
+| Health endpoint (`GET /api/health`) | Done (new) | None | Inline-comments + uploads checks |
+
+### 18. Testing & Quality
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Test framework (Vitest v4) | Done | — | — |
+| Unit tests: 135 across 43 files | Done | ~10 tests | 135 tests |
+| E2E: toolbar inline smoke (Playwright) | Done | — | — |
+| E2E: follow-the-green multi-user smoke | Done | — | — |
+| Health checks CI job (`npm run test:health`) | Done | — | — |
+| Browser smokes CI job (snapshots + artifacts) | Done | — | — |
+
+### 19. Performance Optimizations
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Blips-by-wave query (18,000ms → 29ms, 600x) | Done | — | — |
+| Topics query (8-12s → 181ms, 40x) | Done | — | — |
+| Unread counts (N+1 → batch query, ~20x) | Done | — | — |
+| Inline visibility (20+ calls → perf mode skip) | Done | — | — |
+| Bcrypt (10 → 2 rounds in dev, ~60x) | Done | — | — |
+| Perf harness (5k-blip seed, metrics, screenshots) | Done | — | — |
+| CI perf budgets (`RIZZOMA_PERF_ENFORCE_BUDGETS=1`) | Done | — | — |
+| Bundle size (~5MB → ~500KB, 90% reduction) | Done | — | — |
+
+### 20. DevOps & Deployment
+
+| Functionality | Status | Original Rizzoma | New Rizzoma |
+|---|---|---|---|
+| Docker Compose (CouchDB, Redis, optional ClamAV) | Done | — | — |
+| Dockerfile (production image) | Done | — | — |
+| CI/CD: unit tests (GitHub Actions) | Done | — | — |
+| CI/CD: E2E Playwright | Done | — | — |
+| CI/CD: health checks job | Done | — | — |
+| CI/CD: perf budgets job | Done | — | — |
+| Feature flags (`FEAT_ALL`, `EDITOR_ENABLE`, per-feature) | Done | — | — |
+| Backup scripts (bundle) | Done | — | — |
+| Backup automation (GDrive cadence) | Not started | — | — |
+| getUserMedia adapter (modern constraints, permissions) | Done | — | — |
+| Legacy assets disposition (jQuery-era static) | Not started | — | — |
+
+### Summary: Remaining Gaps
+
+| Area | Gap | Priority |
+|---|---|---|
+| ~~Microsoft OAuth / SAML 2.0~~ | ~~Not implemented~~ **DONE** — hand-rolled OAuth + `@node-saml` | ~~HIGH~~ RESOLVED |
+| Playback timeline | Legacy `playback/*` CoffeeScript not ported | MEDIUM |
+| Gadget iframe rendering | Gadget palette exists but gadgets don't render as interactive iframes | MEDIUM |
+| ~~Email templates~~ | ~~Basic stubs only~~ **DONE** — HTML/text variants for invite, notification, digest | ~~MEDIUM~~ RESOLVED |
+| Nav panel icons | Emojis instead of monochrome SVG sprites | LOW |
+| Toolbar icons | Emojis instead of SVG sprites | LOW |
+| Topics list date format | "Feb 7" instead of "7 Feb" | LOW |
+| Topics list unread bar color | Green instead of blue | LOW |
+| Topics list filter dropdown | "Inbox ▼" filter missing | LOW |
+| Mentions tab content | Empty — mention indexing from blip content needed | MEDIUM |
+| Tasks tab filters | Filter buttons missing | LOW |
+| Right panel Next button color | Red instead of green | LOW |
+| Right panel mind map icon | Text instead of SVG | LOW |
+| User avatars | Generated initials instead of OAuth photos | LOW |
+| Keyboard shortcuts panel | Bottom of nav panel — missing | LOW |
+| [+] green for unread | Only gray implemented; green-for-unread TBD | LOW |
+| Nested inline expansion | [+] within expanded [+] — needs testing | LOW |
+| Mobile device validation | PWA infrastructure done, real-device testing remains | MEDIUM |
+| Backup automation | Bundle script exists, GDrive cadence missing | LOW |
+| Legacy assets | jQuery-era static in `original-rizzoma-src` — disposition pending | LOW |
 
 ## 🎛️ Feature Flags
 

@@ -126,6 +126,16 @@ services:
     networks:
       - rizzoma-network
 
+  # Mailhog for development email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: rizzoma-mailhog
+    ports:
+      - "1025:1025"   # SMTP server
+      - "8025:8025"   # Web UI for viewing emails
+    networks:
+      - rizzoma-network
+
 networks:
   rizzoma-network:
     driver: bridge

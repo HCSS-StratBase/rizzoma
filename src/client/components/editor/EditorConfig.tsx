@@ -6,9 +6,11 @@ import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Mention } from '@tiptap/extension-mention';
 import { TextStyle } from '@tiptap/extension-text-style';
-import { ReactRenderer } from '@tiptap/react';
+import { ReactRenderer, ReactNodeViewRenderer } from '@tiptap/react';
 import tippy from 'tippy.js';
 import * as Y from 'yjs';
+import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from 'lowlight';
 import { MentionList, MentionListHandle } from './MentionList';
 import { CollaborativeCursor } from './CollaborativeCursors';
 import { Underline } from './extensions/Underline';
@@ -20,7 +22,11 @@ import { ChartGadget, PollGadget } from './extensions/GadgetNodes';
 import { BlipThreadNode } from './extensions/BlipThreadNode';
 import { TagNode } from './extensions/TagNode';
 import { TaskWidgetNode } from './extensions/TaskWidget';
+import { CodeBlockView } from './extensions/CodeBlockView';
 import { FEATURES } from '@shared/featureFlags';
+import './extensions/CodeBlockView.css';
+
+const lowlight = createLowlight(common);
 
 export const createYjsDocument = (initialContent?: any): Y.Doc => {
   const ydoc = new Y.Doc();
@@ -66,8 +72,17 @@ export const getEditorExtensions = (
       // Enable history so undo/redo in BlipMenu works reliably
       heading: {
         levels: [1, 2, 3]
-      }
-    })
+      },
+      // Disable built-in codeBlock — replaced by CodeBlockLowlight with syntax highlighting
+      codeBlock: false,
+    }),
+    CodeBlockLowlight
+      .extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(CodeBlockView);
+        },
+      })
+      .configure({ lowlight }),
   ];
 
   if (options?.blipId || options?.onToggleInlineComments) {

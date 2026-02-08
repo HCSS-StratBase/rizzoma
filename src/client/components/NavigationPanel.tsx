@@ -6,9 +6,10 @@ interface NavigationPanelProps {
   onTabChange: (tab: any) => void;
   isAuthed: boolean;
   onNewClick: () => void;
+  unreadCount?: number;
 }
 
-export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick }: NavigationPanelProps) {
+export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, unreadCount }: NavigationPanelProps) {
   return (
     <div className="navigation-panel">
       <div className="nav-header">
@@ -38,7 +39,7 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick }
             >
               <span className="icon">@</span>
               <span className="label">Mentions</span>
-              <span className="badge">11</span>
+              {(unreadCount ?? 0) > 0 && <span className="badge">{unreadCount}</span>}
             </button>
             
             <button 

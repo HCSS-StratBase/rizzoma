@@ -44,6 +44,7 @@ interface BlipMenuProps {
   onPasteAsNew?: () => void;
   isCut?: boolean;
   isDuplicating?: boolean;
+  isInlineChild?: boolean;
 }
 
 export function BlipMenu({
@@ -52,6 +53,7 @@ export function BlipMenu({
   canEdit,
   canComment,
   editor,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isExpanded = false,
   onStartEdit,
   onFinishEdit,
@@ -83,6 +85,7 @@ export function BlipMenu({
   onPasteAsNew,
   isCut = false,
   isDuplicating = false,
+  isInlineChild = false,
 }: BlipMenuProps) {
   const [textFormatState, setTextFormatState] = useState({
     bold: false,
@@ -161,10 +164,6 @@ export function BlipMenu({
   }, [showEmojiPicker]);
 
   if (!isActive) return null;
-
-  const collapseToggleTitle = collapseByDefault
-    ? 'Expand this thread by default'
-    : 'Collapse this thread by default';
 
   const handleBold = () => editor?.chain().focus().toggleBold().run();
   const handleItalic = () => editor?.chain().focus().toggleItalic().run();
@@ -409,9 +408,9 @@ export function BlipMenu({
   if (isEditing) {
     return (
       <div className="blip-menu-container">
-        <div className="blip-menu edit-menu" data-testid="blip-menu-edit-surface">
+        <div className={`blip-menu edit-menu${isInlineChild ? ' inline-child-menu' : ''}`} data-testid="blip-menu-edit-surface">
           <div className="menu-group">
-            <button 
+            <button
           className="menu-btn done-btn"
           onClick={onFinishEdit}
           title="Finish editing"
@@ -606,33 +605,7 @@ export function BlipMenu({
             </div>
           </div>
 
-          {canEdit && (
-            <div className="menu-group">
-              <button
-                className={`menu-btn ${collapseByDefault ? 'active' : ''}`}
-                onClick={onToggleCollapseByDefault}
-                disabled={!onToggleCollapseByDefault}
-                aria-pressed={collapseByDefault}
-                title={collapseToggleTitle}
-                data-testid="blip-menu-collapse-toggle"
-              >
-                Hide
-              </button>
-            </div>
-          )}
-          {canEdit && (
-            <div className="menu-group">
-              <button
-                className="menu-btn delete-btn"
-                onClick={onDelete}
-                title="Delete comment"
-                disabled={!onDelete || isDeleting}
-                data-testid="blip-menu-delete"
-              >
-                Delete
-              </button>
-            </div>
-          )}
+          {/* Hide and Delete are in the overflow/gear menu to reduce clutter */}
           {/* Mobile menu trigger */}
           {isMobile && (
             <div className="menu-group">
@@ -657,7 +630,7 @@ export function BlipMenu({
   // Read-only menu - Original Rizzoma style: Edit | hide/show comments | link | Hide | Delete | gear
   return (
     <div className="blip-menu-container">
-      <div className="blip-menu read-only-menu" data-testid="blip-menu-read-surface">
+      <div className={`blip-menu read-only-menu${isInlineChild ? ' inline-child-menu' : ''}`} data-testid="blip-menu-read-surface">
         {canEdit && (
           <div className="menu-group">
             <button
@@ -675,21 +648,23 @@ export function BlipMenu({
           <button
             className="menu-btn"
             onClick={onCollapse}
-            title="Collapse"
+            title={isInlineChild ? 'Hide (collapse back to [+])' : 'Collapse'}
             disabled={!onCollapse}
             data-testid="blip-menu-collapse"
           >
-            Collapse
+            {isInlineChild ? 'Hide' : 'Collapse'}
           </button>
-          <button
-            className="menu-btn"
-            onClick={onExpand}
-            title="Expand"
-            disabled={!onExpand}
-            data-testid="blip-menu-expand"
-          >
-            Expand
-          </button>
+          {!isInlineChild && (
+            <button
+              className="menu-btn"
+              onClick={onExpand}
+              title="Expand"
+              disabled={!onExpand}
+              data-testid="blip-menu-expand"
+            >
+              Expand
+            </button>
+          )}
         </div>
 
         <div className="menu-group">
@@ -724,35 +699,7 @@ export function BlipMenu({
           </button>
         </div>
 
-        {canEdit && (
-          <div className="menu-group">
-            <button
-              className={`menu-btn ${collapseByDefault ? 'active' : ''}`}
-              onClick={onToggleCollapseByDefault}
-              disabled={!onToggleCollapseByDefault}
-              aria-pressed={collapseByDefault}
-              title={collapseToggleTitle}
-              data-testid="blip-menu-hidden-toggle"
-            >
-              Hide
-            </button>
-          </div>
-        )}
-
-        {canEdit && (
-          <div className="menu-group">
-            <button
-              className="menu-btn delete-btn"
-              onClick={onDelete}
-              title="Delete comment"
-              disabled={!onDelete || isDeleting}
-              data-testid="blip-menu-delete"
-            >
-              Delete
-            </button>
-          </div>
-        )}
-
+        {/* Hide and Delete are in the overflow/gear menu to reduce clutter */}
         <div className="menu-group" ref={overflowRef}>
           <button
             className={`menu-btn gear-btn ${showOverflow ? 'active' : ''}`}

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { csrfProtect } from '../middleware/csrf.js';
-import { createIndex, deleteDoc, find, getDoc, insertDoc, updateDoc } from '../lib/couch.js';
+import { deleteDoc, find, getDoc, insertDoc, updateDoc } from '../lib/couch.js';
 import { CreateCommentSchema, UpdateCommentSchema } from '../schemas/comment.js';
 import { emitEvent } from '../lib/socket.js';
 
@@ -25,8 +25,6 @@ router.get('/topics/:id/comments', async (req, res): Promise<void> => {
     const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
     const offset = Math.max(parseInt(String((req.query as any).offset ?? '0'), 10) || 0, 0);
     const bookmark = String((req.query as any).bookmark || '').trim() || undefined;
-    // Ensure an index to support topicId + createdAt paging (idempotent)
-    try { await createIndex(['type', 'topicId', 'createdAt'], 'idx_comment_topic_createdAt'); } catch {}
     // Query CouchDB using Mango with server-side sort + paging
     let r: { docs: Comment[]; bookmark?: string };
     try {

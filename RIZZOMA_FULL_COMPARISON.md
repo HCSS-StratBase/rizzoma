@@ -60,6 +60,8 @@ This document provides an exhaustive hierarchical comparison of ALL Rizzoma func
 |----------|----------|--------|
 | **Google OAuth** | `passport-google-oauth` | `passport-google-oauth20` (v2.0.0) |
 | **Facebook OAuth** | `passport-facebook` | `passport-facebook` (v3.0.0) |
+| **Microsoft OAuth** | Not available | Hand-rolled OAuth via Microsoft Graph API |
+| **SAML 2.0** | Not available | `@node-saml/node-saml` v5.1.0, configurable IdP |
 | **Twitter OAuth** | Supported | Removed (API deprecated) |
 | **Local Strategy** | Basic | Enhanced with bcrypt |
 
@@ -208,7 +210,7 @@ interface Blip {
 | **Bullet List** | `<ul>` | `@tiptap/extension-bullet-list` | StarterKit |
 | **Ordered List** | `<ol>` | `@tiptap/extension-ordered-list` | StarterKit |
 | **Task List** | Custom | `@tiptap/extension-task-list` | Separate |
-| **Code Block** | `<pre>` | `@tiptap/extension-code-block` | StarterKit |
+| **Code Block** | `<pre>` + SyntaxHighlighter 2.1 gadget | `@tiptap/extension-code-block-lowlight` + React NodeView (30 languages, copy button) | Enhanced |
 | **Blockquote** | Manual | `@tiptap/extension-blockquote` | StarterKit |
 
 ### 3.4 Inline Elements
@@ -870,8 +872,8 @@ interface BlipHistoryDoc {
 
 | Metric | Original | Modern |
 |--------|----------|--------|
-| **Unit Tests** | ~10 | 131 |
-| **Test Files** | ~3 | 42 |
+| **Unit Tests** | ~10 | 135 |
+| **Test Files** | ~3 | 43 |
 | **E2E Suites** | 0 | 2 |
 | **Coverage** | Unknown | Tracked |
 
@@ -996,7 +998,7 @@ interface BlipHistoryDoc {
 | **Mobile Files** | 30+ separate | 0 (responsive) | -100% |
 | **Bundle Size** | ~5MB+ | ~500KB | -90% |
 | **Build Time** | Minutes | Seconds | 10x faster |
-| **Unit Tests** | ~10 | 131 | 13x more |
+| **Unit Tests** | ~10 | 135 | 13x more |
 | **E2E Tests** | 0 | 2 suites | New |
 | **Type Safety** | None | Full | New |
 
@@ -1009,10 +1011,49 @@ The modernized Rizzoma achieves **100% feature parity** with the original while 
 1. **Better Performance** - 600x faster queries, 90% smaller bundle
 2. **Better Mobile** - Single responsive PWA vs 30+ separate files
 3. **Better Security** - CSRF, virus scanning, MIME validation
-4. **Better Testing** - 131 automated tests vs ~10
+4. **Better Testing** - 135 automated tests vs ~10
 5. **Better DX** - TypeScript, Vite, modern tooling
 6. **Better Reliability** - Offline support, error handling, logging
 
 ---
 
 *Generated: January 18, 2026*
+*Updated: February 8, 2026 — BLB inline expansion (Grade A), enhanced code block, insert buttons auto-enter-edit-mode; see addendum below*
+
+---
+
+## Addendum: BLB Inline Expansion Fix (2026-02-08)
+
+The original comparison (Jan 18) noted that clicking [+] **navigated away** to a separate subblip view. This was the critical BLB paradigm break. **This has been fully fixed.**
+
+### What Changed
+
+| Before (Jan 18) | After (Feb 8) |
+|---|---|
+| [+] click navigates to separate view | [+] click expands child **inline** at marker position |
+| Only one blip visible at a time | Parent + child visible simultaneously |
+| Breadcrumb navigation back | [−] click collapses back |
+| No toolbar control | Three-state toolbar: expand = no toolbar → click = read toolbar → Edit = full toolbar |
+| Ctrl+Enter navigates away | Ctrl+Enter creates inline child, expands it in-place |
+
+### Implementation Details
+
+- **Portal-based rendering**: `createPortal` renders `<RizzomaBlip isInlineChild={true}>` into `.inline-child-portal` containers injected by `inlineMarkers.ts`
+- **Two-pass render**: `dangerouslySetInnerHTML` creates portal containers → `useLayoutEffect` finds them → `setPortalTick` triggers synchronous re-render → `createPortal` renders children before browser paint
+- **Three-state toolbar**: `isActive` state with `useEffect` guard for `isInlineChild` — only auto-activates on `isEditing`, not `effectiveExpanded`
+- **CSS cascade protection**: `.inline-child-expanded .blip-container:not(.active) .blip-menu-container { opacity: 0 !important }` prevents parent `.active` from leaking through portal DOM
+- **Custom event bridge**: `rizzoma:toggle-inline-blip` event dispatched by `BlipThreadNode.tsx`, listened by `RizzomaBlip.tsx`
+
+### Additional Enhancements (Feb 8, continued)
+
+- **Enhanced Code Block Gadget**: Replaced bare `toggleCodeBlock()` with `@tiptap/extension-code-block-lowlight` + React NodeView (`CodeBlockView.tsx`). Features: 30-language selector, Copy button, GitHub-style syntax highlighting via `lowlight@3`. The original Rizzoma used SyntaxHighlighter 2.1.364 (2009) inside an OpenSocial/Shindig iframe gadget — completely replaced with native TipTap integration.
+- **Insert Buttons Auto-Enter-Edit-Mode**: Right panel insert buttons (↵, @, ~, #, Gadgets) now work even when a blip is just active (not editing). Clicking a button auto-enters edit mode via `pendingInsertRef` + `handleStartEdit()`, then fires the queued action when the TipTap editor initializes. New `BLIP_ACTIVE_EVENT` bridges `RizzomaBlip` ↔ `RightToolsPanel` for button visibility.
+
+### Remaining Gaps (as of Feb 8)
+
+- ~~Microsoft OAuth / SAML 2.0~~ — **ACTUALLY IMPLEMENTED** (hand-rolled OAuth via Graph API + `@node-saml/node-saml` v5)
+- Gadget iframe rendering (palette exists; Code Block is enhanced, others are URL prompt/placeholder)
+- Nav panel icons are emojis instead of SVG sprites
+- Toolbar icons are emojis instead of SVG sprites
+- Nested inline expansion ([+] within expanded [+]) needs testing
+- Full playback timeline not ported from CoffeeScript
