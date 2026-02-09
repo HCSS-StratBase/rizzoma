@@ -10,3 +10,11 @@ export type BlipHistoryEntry = {
   updatedAt: number;
   snapshotVersion: number;
 };
+
+export type WaveHistoryResponse = {
+  history: BlipHistoryEntry[];
+  total: number;
+  hasMore: boolean;
+  blipIds: string[];
+  dateRange: { earliest: number; latest: number };
+};

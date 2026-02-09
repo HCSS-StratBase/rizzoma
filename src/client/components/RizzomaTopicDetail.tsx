@@ -6,6 +6,7 @@ import { toast } from './Toast';
 import { InviteModal } from './InviteModal';
 import { ShareModal } from './ShareModal';
 import ExportModal from './ExportModal';
+import { WavePlaybackModal } from './WavePlaybackModal';
 import './RizzomaTopicDetail.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { RizzomaBlip, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
@@ -160,6 +161,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showWavePlayback, setShowWavePlayback] = useState(false);
   const [showCommentsPanel, setShowCommentsPanel] = useState(true);
 
   // Topic content editing state (BLB: topic is meta-blip, title is first line)
@@ -911,6 +913,11 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     });
   };
 
+  const handleWavePlayback = () => {
+    closeGearMenus();
+    setShowWavePlayback(true);
+  };
+
   // Auto-save topic content (BLB: extracts title from first H1/line)
   const autoSaveTopicContent = useCallback(async (content: string) => {
     if (content === lastSavedContentRef.current) {
@@ -1123,6 +1130,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               <button className="gear-menu-item" onClick={handleCopyEmbedCode}>
                 Get embed code
               </button>
+              {FEATURES.WAVE_PLAYBACK && (
+                <>
+                  <div className="gear-menu-divider" />
+                  <button className="gear-menu-item" onClick={handleWavePlayback}>
+                    Wave Timeline
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -1276,6 +1291,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                 <button className="gear-menu-item" onClick={handleCopyEmbedCode}>
                   Get embed code
                 </button>
+                {FEATURES.WAVE_PLAYBACK && (
+                  <>
+                    <div className="gear-menu-divider" />
+                    <button className="gear-menu-item" onClick={handleWavePlayback}>
+                      Wave Timeline
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -1417,6 +1440,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         topicId={id}
         blips={blips}
       />
+      {showWavePlayback && (
+        <WavePlaybackModal
+          waveId={id}
+          topicTitle={topic?.title || 'Untitled'}
+          blips={blips.map(b => ({ id: b.id, label: b.content ? b.content.replace(/<[^>]+>/g, '').trim().slice(0, 60) || `Blip ${b.id.slice(0, 8)}` : `Blip ${b.id.slice(0, 8)}` }))}
+          onClose={() => setShowWavePlayback(false)}
+        />
+      )}
     </div>
   );
 }

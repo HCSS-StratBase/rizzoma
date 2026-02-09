@@ -5,7 +5,44 @@
 ## Current Branch
 `feature/rizzoma-core-features` (main branch is `master`)
 
-## Active Work: Real-Time Collaboration (Y.js + TipTap + Socket.IO)
+## Active Work: Wave-Level Playback (2026-02-09)
+
+### What Was Built
+Wave-level playback modal that shows the entire topic evolving over time — all blips changing chronologically.
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/server/lib/couch.ts` | Modified | Added `idx_blip_history_wave_createdAt` index |
+| `src/shared/featureFlags.ts` | Modified | Added `WAVE_PLAYBACK` flag |
+| `src/shared/types/blips.ts` | Modified | Added `WaveHistoryResponse` type |
+| `src/server/routes/waves.ts` | Modified | Added `GET /api/waves/:id/history` endpoint |
+| `src/client/components/WavePlaybackModal.tsx` | Created | Full wave playback component (442 lines) |
+| `src/client/components/WavePlaybackModal.css` | Created | Styles (split pane, responsive, 482 lines) |
+| `src/client/components/RizzomaTopicDetail.tsx` | Modified | Wired modal into both gear menus |
+| `src/client/lib/htmlDiff.ts` | Created | Shared word-level diff utility (54 lines) |
+| `src/client/components/blip/BlipHistoryModal.tsx` | Refactored | Uses shared htmlDiff instead of inline diff |
+
+### Key Features
+- **Wave state reconstruction**: Aggregates all `blip_history` entries chronologically, rebuilds per-blip state at each step
+- **Split pane**: Left (60%) = changed blip content + optional diff; Right (40%) = mini wave overview with all blips
+- **Color-coded timeline**: Each blip gets a consistent color across the timeline dots
+- **Playback**: Play/Pause/Stop, step, fast-forward/back (3s cluster gap), speed 0.5x-10x
+- **Diff mode**: Compares against previous version of the **same blip** (not just previous timeline entry)
+- **Date jump**: `datetime-local` picker jumps to closest entry
+- **Keyboard shortcuts**: Arrow keys (step), Space (play/pause), Escape (close)
+- **Feature flag**: `FEAT_WAVE_PLAYBACK` (or `FEAT_ALL=1`)
+
+### Verified
+- API endpoint returns history sorted by createdAt
+- Modal opens from both gear menus
+- Slider, step, play/pause, diff mode all functional
+- Escape closes modal
+- 134 tests pass, 9 pre-existing failures (permissions tests)
+- Zero new TypeScript errors
+
+---
+
+## Previous Work: Real-Time Collaboration (Y.js + TipTap + Socket.IO)
 
 ### Plan File
 `/home/stephan/.claude/plans/tranquil-scribbling-wave.md` — 3-phase plan (Awareness → Doc Sync → Persistence). **All three phases are IMPLEMENTED in code.** The remaining work is **testing and debugging cross-tab sync**.

@@ -152,7 +152,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - **Mobile device validation**: PWA infrastructure is complete, but real-device testing on iPhone Safari / Chrome Android remains.
 - **Legacy reference disposition**: All active code is TypeScript (zero CoffeeScript in `src/`). The `original-rizzoma-src/` and `original-rizzoma/` directories contain legacy reference code — decide whether to keep, archive, or remove.
 - **Gadget iframe rendering**: Gadget palette (11 types) works, but selected gadgets render as URL prompts/placeholders, not interactive iframes (YouTube, Yes/No/Maybe poll, etc.).
-- **Playback timeline**: `BlipHistoryModal.tsx` has timeline/slider/diff, but the full calendar-based playback UI from the original CoffeeScript (`playback/*`) is not ported.
+- **~~Playback timeline~~**: DONE — `WavePlaybackModal.tsx` provides wave-level playback with split pane, color-coded timeline dots, date jump, per-blip diff, cluster fast-forward, and keyboard shortcuts. Per-blip playback also available via `BlipHistoryModal.tsx`.
 - **Gear menu copy/paste variants**: Core gear actions work (reply, edit, delete, duplicate, cut/paste, copy link, history). The original's "copy reply" / "paste cursor" variants are not yet reimplemented.
 - **Visual polish**: Nav panel icons (emojis → SVG sprites), toolbar icons (emojis → SVG), date format ("Feb 7" → "7 Feb"), unread bar color (green → blue), Next button color (red → green).
 - **Backup automation**: Bundle script exists (`scripts/backup.sh`), but automated GDrive cadence and CI alerting for failures are not set up.
@@ -292,10 +292,17 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 |---|---|---|---|
 | History storage (BlipHistoryDoc, snapshots) | Done | — | — |
 | History API (`GET /api/blips/:id/history`) | Done | — | — |
-| Playback UI (timeline slider, play/pause/step) | Done | — | — |
-| Playback speed (0.5x to 4x) | Done | — | — |
-| Diff view (before/after comparison) | Done | — | — |
-| Full playback timeline (calendar, fast-forward) | Not started | Legacy `playback/*` CoffeeScript | Not ported |
+| Per-blip playback UI (timeline slider, play/pause/step) | Done | — | — |
+| Per-blip playback speed (0.5x to 4x) | Done | — | — |
+| Per-blip diff view (before/after comparison) | Done | — | — |
+| Wave-level history API (`GET /api/waves/:id/history`) | Done (new) | — | CouchDB indexed query |
+| Wave-level playback modal (all blips chronologically) | Done (new) | Legacy `playback/*` CoffeeScript | `WavePlaybackModal.tsx` |
+| Wave playback: split pane (content + wave overview) | Done (new) | — | Color-coded blip overview |
+| Wave playback: cluster fast-forward/back (3s gap) | Done (new) | — | Skip between edit clusters |
+| Wave playback: date jump (datetime picker) | Done (new) | Calendar picker | `datetime-local` picker |
+| Wave playback: per-blip diff (same blip comparison) | Done (new) | — | Shared `htmlDiff.ts` utility |
+| Wave playback: keyboard shortcuts | Done (new) | — | Arrow/Space/Escape |
+| Wave playback: speed (0.5x to 10x) | Done (new) | — | — |
 
 ### 11. Email Notifications
 
@@ -417,7 +424,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Functionality | Status | Original Rizzoma | New Rizzoma |
 |---|---|---|---|
 | Test framework (Vitest v4) | Done | — | — |
-| Unit tests: 135 across 43 files | Done | ~10 tests | 135 tests |
+| Unit tests: 134 across 44 files | Done | ~10 tests | 134 tests |
 | E2E: toolbar inline smoke (Playwright) | Done | — | — |
 | E2E: follow-the-green multi-user smoke | Done | — | — |
 | Health checks CI job (`npm run test:health`) | Done | — | — |
@@ -457,7 +464,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Area | Gap | Priority |
 |---|---|---|
 | ~~Microsoft OAuth / SAML 2.0~~ | ~~Not implemented~~ **DONE** — hand-rolled OAuth + `@node-saml` | ~~HIGH~~ RESOLVED |
-| Playback timeline | Legacy `playback/*` CoffeeScript not ported | MEDIUM |
+| ~~Playback timeline~~ | ~~Legacy `playback/*` CoffeeScript not ported~~ **DONE** — `WavePlaybackModal.tsx` with split pane, color-coded timeline, date jump, diff, keyboard shortcuts | ~~MEDIUM~~ RESOLVED |
 | Gadget iframe rendering | Gadget palette exists but gadgets don't render as interactive iframes | MEDIUM |
 | ~~Email templates~~ | ~~Basic stubs only~~ **DONE** — HTML/text variants for invite, notification, digest | ~~MEDIUM~~ RESOLVED |
 | Nav panel icons | Emojis instead of monochrome SVG sprites | LOW |
@@ -490,6 +497,7 @@ FEAT_TASK_LISTS=1         # Task checkboxes
 FEAT_FOLLOW_GREEN=1       # "Follow the green" navigation
 FEAT_LIVE_CURSORS=1       # Collaborative cursors
 FEAT_TYPING_INDICATORS=1  # Typing indicators
+FEAT_WAVE_PLAYBACK=1      # Wave-level playback timeline
 
 # Or enable all at once
 FEAT_ALL=1

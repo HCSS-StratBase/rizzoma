@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { BlipHistoryEntry } from '@shared/types/blips';
 import { api } from '../../lib/api';
+import { computeDiff } from '../../lib/htmlDiff';
 import './BlipHistoryModal.css';
 
 type BlipHistoryModalProps = {
@@ -26,63 +27,6 @@ export function BlipHistoryModal({ blipId, onClose }: BlipHistoryModalProps) {
 
   const currentEntry = sortedHistory[currentIndex];
   const prevEntry = currentIndex > 0 ? sortedHistory[currentIndex - 1] : null;
-
-  // Simple diff computation (word-level)
-  const computeDiff = useCallback((oldText: string, newText: string): string => {
-    if (!oldText) return newText;
-    if (!newText) return '<del style="background:#ffcccc">' + oldText + '</del>';
-
-    // Strip HTML for comparison
-    const stripHtml = (html: string) => {
-      const div = document.createElement('div');
-      div.innerHTML = html;
-      return div.textContent || div.innerText || '';
-    };
-
-    const oldPlain = stripHtml(oldText);
-    const newPlain = stripHtml(newText);
-
-    if (oldPlain === newPlain) return newText;
-
-    // Simple word diff
-    const oldWords = oldPlain.split(/\s+/);
-    const newWords = newPlain.split(/\s+/);
-
-    const result: string[] = [];
-    let i = 0, j = 0;
-
-    while (i < oldWords.length || j < newWords.length) {
-      if (i >= oldWords.length) {
-        result.push(`<ins style="background:#ccffcc">${newWords[j]}</ins>`);
-        j++;
-      } else if (j >= newWords.length) {
-        result.push(`<del style="background:#ffcccc">${oldWords[i]}</del>`);
-        i++;
-      } else if (oldWords[i] === newWords[j]) {
-        result.push(newWords[j]);
-        i++;
-        j++;
-      } else {
-        // Find if old word exists later in new
-        const foundInNew = newWords.slice(j).indexOf(oldWords[i]);
-        if (foundInNew > 0 && foundInNew < 5) {
-          // Insert new words
-          for (let k = 0; k < foundInNew; k++) {
-            result.push(`<ins style="background:#ccffcc">${newWords[j + k]}</ins>`);
-          }
-          j += foundInNew;
-        } else {
-          // Replace
-          result.push(`<del style="background:#ffcccc">${oldWords[i]}</del>`);
-          result.push(`<ins style="background:#ccffcc">${newWords[j]}</ins>`);
-          i++;
-          j++;
-        }
-      }
-    }
-
-    return result.join(' ');
-  }, []);
 
   const loadHistory = useCallback(async () => {
     setLoading(true);
@@ -193,7 +137,7 @@ export function BlipHistoryModal({ blipId, onClose }: BlipHistoryModalProps) {
       return computeDiff(prevEntry.content, currentEntry.content);
     }
     return currentEntry.content;
-  }, [currentEntry, prevEntry, showDiff, computeDiff]);
+  }, [currentEntry, prevEntry, showDiff]);
 
   return (
     <div className="blip-history-backdrop" role="dialog" aria-modal="true">

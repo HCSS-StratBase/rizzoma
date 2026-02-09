@@ -56,6 +56,57 @@ router.get('/unread_counts', async (req, res) => {
   }
 });
 
+// GET /api/waves/:id/history — wave-level playback timeline (all blip_history entries)
+router.get('/:id/history', async (req, res) => {
+  const waveId = req.params.id;
+  const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '2000'), 10) || 2000, 1), 5000);
+  const after = parseInt(String((req.query as any).after ?? '0'), 10) || 0;
+  const before = parseInt(String((req.query as any).before ?? '0'), 10) || 0;
+  try {
+    type BlipHistoryDoc = {
+      _id: string;
+      type: 'blip_history';
+      blipId: string;
+      waveId: string;
+      content: string;
+      authorId?: string;
+      authorName?: string;
+      event: 'create' | 'update';
+      createdAt: number;
+      updatedAt: number;
+      snapshotVersion: number;
+    };
+    const selector: any = { type: 'blip_history', waveId };
+    if (after) selector.createdAt = { ...selector.createdAt, $gt: after };
+    if (before) selector.createdAt = { ...(selector.createdAt || {}), $lt: before };
+    const r = await find<BlipHistoryDoc>(selector, {
+      limit: limit + 1,
+      sort: [{ createdAt: 'asc' }],
+      use_index: 'idx_blip_history_wave_createdAt',
+    });
+    const docs = r.docs || [];
+    const hasMore = docs.length > limit;
+    const entries = docs.slice(0, limit).map(d => ({
+      id: d._id,
+      blipId: d.blipId,
+      waveId: d.waveId,
+      content: d.content,
+      authorId: d.authorId,
+      authorName: d.authorName,
+      event: d.event,
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+      snapshotVersion: d.snapshotVersion,
+    }));
+    const blipIds = [...new Set(entries.map(e => e.blipId))];
+    const earliest = entries.length > 0 ? entries[0].createdAt : 0;
+    const latest = entries.length > 0 ? entries[entries.length - 1].createdAt : 0;
+    res.json({ history: entries, total: entries.length, hasMore, blipIds, dateRange: { earliest, latest } });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'wave_history_error', requestId: (req as any)?.id });
+  }
+});
+
 // GET /api/waves/:id — return wave metadata and blip tree
 router.get('/:id', async (req, res) => {
   const id = req.params.id;

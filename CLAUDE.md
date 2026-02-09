@@ -17,6 +17,11 @@ This file is a lightweight status guide for the active branch. Older "phase" tim
 4) Validate PWA on actual mobile devices (iPhone Safari, Chrome Android).
 
 ## Recently Completed Highlights
+- **Wave-level playback (2026-02-09)**: Full wave timeline modal showing all blips evolving chronologically:
+  - `WavePlaybackModal.tsx` with split pane (content + wave overview), color-coded timeline dots
+  - API: `GET /api/waves/:id/history` with CouchDB index, shared `htmlDiff.ts` utility
+  - Playback controls, cluster fast-forward, date jump, per-blip diff, keyboard shortcuts
+  - Feature flag: `FEAT_WAVE_PLAYBACK` (enabled by `FEAT_ALL=1`)
 - **BLB implementation fix (2026-01-19)**: Audited and fixed BLB (Bullet-Label-Blip) functionality:
   - Root cause: `RizzomaTopicDetail.tsx` was active but had non-functional Fold button
   - Fixed: Wired Fold button in edit/view mode, persists to localStorage + server

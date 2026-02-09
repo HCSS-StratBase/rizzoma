@@ -25,6 +25,9 @@ export const FEATURES = {
   TYPING_INDICATORS: env['FEAT_TYPING_INDICATORS'] === '1' || env['FEAT_ALL'] === '1',
   REALTIME_COLLAB: env['FEAT_REALTIME_COLLAB'] === '1' || env['FEAT_ALL'] === '1',
   
+  // Track E: Playback
+  WAVE_PLAYBACK: env['FEAT_WAVE_PLAYBACK'] === '1' || env['FEAT_ALL'] === '1',
+
   // Navigation features
   TASKS: env['FEAT_TASKS'] === '1' || env['FEAT_ALL'] === '1' || env['BUSINESS_ACCOUNT'] === '1',
 } as const;
