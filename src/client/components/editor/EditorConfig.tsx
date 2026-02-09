@@ -69,7 +69,8 @@ export const getEditorExtensions = (
 ): any[] => {
   const extensions = [
     StarterKit.configure({
-      // Enable history so undo/redo in BlipMenu works reliably
+      // Disable history when using Collaboration (Yjs has its own undo manager)
+      history: ydoc ? false : undefined,
       heading: {
         levels: [1, 2, 3]
       },

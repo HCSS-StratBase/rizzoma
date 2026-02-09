@@ -1,6 +1,7 @@
 import type { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
 import { EditorPresenceManager, type PresenceIdentity, type PresenceEmitPayload } from './editorPresence.js';
+import { yjsDocCache } from './yjsDocCache.js';
 
 let io: Server | undefined;
 
@@ -32,6 +33,7 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
     io?.to(payload.room).emit('editor:presence', payload);
   });
   presenceManager.startCleanupTimer();
+  yjsDocCache.start();
 
   io.on('connection', (socket) => {
     socket.emit('hello', { ok: true });
@@ -84,8 +86,80 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
       presenceManager.heartbeat(socket.id);
     });
 
+    // --- Real-time collaboration rooms (awareness + document sync) ---
+    const collabBlips = new Set<string>();
+
+    socket.on('blip:join', async (p: any) => {
+      try {
+        const blipId = String(p?.blipId || '').trim();
+        if (!blipId) return;
+        socket.join(`collab:blip:${blipId}`);
+        collabBlips.add(blipId);
+        yjsDocCache.addRef(blipId);
+        // Load from CouchDB if this is a fresh Y.Doc
+        await yjsDocCache.loadFromDb(blipId);
+        // Always send sync response so client knows when it's safe to seed content.
+        // Empty array signals "no prior state" — client should seed from blip HTML.
+        const state = yjsDocCache.getState(blipId);
+        const stateArr = (state && state.length > 2) ? Array.from(state) : [];
+        // Minimal join trace for debugging room membership
+        if (stateArr.length === 0) console.log(`[socket] blip:join blipId=${blipId.slice(-8)} (fresh Y.Doc)`);
+        socket.emit(`blip:sync:${blipId}`, { state: stateArr });
+      } catch (err) { console.error('[socket] blip:join error:', err); }
+    });
+
+    socket.on('blip:leave', (p: any) => {
+      try {
+        const blipId = String(p?.blipId || '').trim();
+        if (!blipId) return;
+        socket.leave(`collab:blip:${blipId}`);
+        collabBlips.delete(blipId);
+        yjsDocCache.removeRef(blipId);
+      } catch {}
+    });
+
+    socket.on('blip:update', (p: any) => {
+      try {
+        const blipId = String(p?.blipId || '').trim();
+        if (!blipId || !Array.isArray(p.update)) return;
+        const roomName = `collab:blip:${blipId}`;
+        // Relay to other clients FIRST, then apply to cache
+        socket.to(roomName).emit(`blip:update:${blipId}`, { update: p.update });
+        try {
+          const update = new Uint8Array(p.update);
+          yjsDocCache.applyUpdate(blipId, update, 'remote');
+        } catch (cacheErr) { console.warn('[socket] blip:update cache error (relay already sent):', cacheErr); }
+      } catch (err) { console.error('[socket] blip:update error:', err); }
+    });
+
+    socket.on('blip:sync:request', (p: any) => {
+      try {
+        const blipId = String(p?.blipId || '').trim();
+        if (!blipId || !Array.isArray(p.stateVector)) return;
+        const sv = new Uint8Array(p.stateVector);
+        const diff = yjsDocCache.encodeDiffUpdate(blipId, sv);
+        if (diff && diff.length > 2) {
+          socket.emit(`blip:sync:${blipId}`, { state: Array.from(diff) });
+        }
+      } catch {}
+    });
+
+    socket.on('awareness:update', (p: any) => {
+      try {
+        const blipId = String(p?.blipId || '').trim();
+        if (!blipId) return;
+        socket.to(`collab:blip:${blipId}`).emit(`awareness:update:${blipId}`, {
+          states: p.states || {}
+        });
+      } catch {}
+    });
+
     socket.on('disconnect', () => {
       presenceManager.disconnect(socket.id);
+      for (const blipId of collabBlips) {
+        yjsDocCache.removeRef(blipId);
+      }
+      collabBlips.clear();
     });
   });
 }

@@ -87,6 +87,7 @@
     "tippy.js": "^6.3.7",
     "winston": "^3.17.0",
     "y-protocols": "^1.0.6",
+    "yjs": "^13.6.27",
     "zod": "^3.24.4"
   },
   "devDependencies": {
@@ -131,8 +132,7 @@
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vite": "^7.0.0",
-    "vitest": "^4.0.18",
-    "yjs": "^13.6.27"
+    "vitest": "^4.0.18"
   },
   "optionalDependencies": {
     "@aws-sdk/client-s3": "^3.981.0",

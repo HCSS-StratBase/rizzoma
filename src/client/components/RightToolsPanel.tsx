@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import './RightToolsPanel.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { emitWaveUnread } from '../lib/socket';
@@ -35,6 +35,8 @@ interface RightToolsPanelProps {
   isAuthed: boolean;
   user?: { id?: string; email?: string; name?: string; avatar?: string } | null;
   unreadState?: WaveUnreadState | null;
+  onNextTopic?: () => void;
+  nextTopicAvailable?: boolean;
 }
 
 // Generate fallback avatar URL from email using Gravatar
@@ -68,7 +70,7 @@ function getInitials(name?: string, email?: string): string {
   return '??';
 }
 
-export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
+export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvailable }: RightToolsPanelProps) {
   const isPerfMode = (() => {
     try {
       if (typeof window === 'undefined') return false;
@@ -148,26 +150,74 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
     dispatchInsertEvent(INSERT_EVENTS.GADGET, { type, url });
   }, []);
 
+  // Track the last blip expanded by Follow-the-Green so we can collapse it before jumping to next
+  const lastExpandedRef = useRef<{ blipId: string; isInline: boolean } | null>(null);
+
   const handleFollowGreen = async () => {
     if (navigating) return;
     setNavigating(true);
 
     const nextUnreadId = unreadState?.unreadIds[0] ?? null;
+    if (!nextUnreadId) {
+      setNavigating(false);
+      return;
+    }
 
-    // Find the unread blip element
-    const findBlipElement = (blipId: string): HTMLElement | null => {
-      const escape = (val: string) => {
-        if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(val);
-        return val.replace(/["\\]/g, '\\$&');
-      };
-      return document.querySelector(`[data-blip-id="${escape(blipId)}"]`) as HTMLElement | null;
+    const cssEscape = (val: string) => {
+      if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(val);
+      return val.replace(/["\\]/g, '\\$&');
     };
 
-    let target: HTMLElement | null = nextUnreadId ? findBlipElement(nextUnreadId) : null;
+    // Collapse the previously expanded blip before jumping to next
+    if (lastExpandedRef.current) {
+      const prev = lastExpandedRef.current;
+      // Deactivate toolbar
+      window.dispatchEvent(new CustomEvent('rizzoma:deactivate-blip', { detail: { blipId: prev.blipId } }));
+      // Collapse
+      if (prev.isInline) {
+        window.dispatchEvent(new CustomEvent('rizzoma:collapse-inline-blip', { detail: { threadId: prev.blipId } }));
+      } else {
+        window.dispatchEvent(new CustomEvent('rizzoma:collapse-blip', { detail: { blipId: prev.blipId } }));
+      }
+    }
 
+    // 1. Try finding already-rendered blip element (list children or expanded inline children)
+    let target: HTMLElement | null =
+      document.querySelector(`[data-blip-id="${cssEscape(nextUnreadId)}"]`) as HTMLElement | null;
+
+    // 2. If not found, the blip is likely a collapsed inline child ([+] marker).
+    //    Find its thread marker and expand it.
+    let wasInline = false;
     if (!target) {
-      const fallback = document.querySelector('.blip-item.unread');
-      target = fallback as HTMLElement | null;
+      const marker = document.querySelector(
+        `[data-blip-thread="${cssEscape(nextUnreadId)}"]`
+      ) as HTMLElement | null;
+
+      if (marker) {
+        wasInline = true;
+        // Scroll the marker into view first so user sees it
+        marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Dispatch toggle event to expand the inline child
+        window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+          detail: { threadId: nextUnreadId },
+        }));
+
+        // Wait for the expanded blip element to render (poll up to ~500ms)
+        target = await new Promise<HTMLElement | null>((resolve) => {
+          let attempts = 0;
+          const check = () => {
+            attempts++;
+            const el = document.querySelector(
+              `[data-blip-id="${cssEscape(nextUnreadId)}"]`
+            ) as HTMLElement | null;
+            if (el) resolve(el);
+            else if (attempts > 30) resolve(null);
+            else requestAnimationFrame(check);
+          };
+          requestAnimationFrame(check);
+        });
+      }
     }
 
     if (!target) {
@@ -175,19 +225,21 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
       return;
     }
 
+    // Record what we expanded so we can collapse it on next jump
+    lastExpandedRef.current = { blipId: nextUnreadId, isInline: wasInline };
+
     // Scroll to the blip
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    // Click to select it
-    const blipLine = target.querySelector('.blip-line') as HTMLElement;
-    if (blipLine) {
-      blipLine.click();
-    }
+    // Activate the blip (show toolbar) via custom event — avoids triggering
+    // handleBlipClick's onBlipRead which would send a duplicate mark-read POST
+    window.dispatchEvent(new CustomEvent('rizzoma:activate-blip', {
+      detail: { blipId: nextUnreadId },
+    }));
 
     // Mark as read
-    const blipId = target.getAttribute('data-blip-id');
-    if (blipId && unreadState?.markBlipRead) {
-      await unreadState.markBlipRead(blipId);
+    if (unreadState?.markBlipRead) {
+      await unreadState.markBlipRead(nextUnreadId);
       if (unreadState.refresh) await unreadState.refresh();
       if (unreadState.waveId) emitWaveUnread(unreadState.waveId);
     }
@@ -229,16 +281,27 @@ export function RightToolsPanel({ user, unreadState }: RightToolsPanelProps) {
         </div>
       )}
 
-      {/* Follow the Green - Next button */}
-      <button
-        className={`next-button ${unreadCount > 0 ? 'has-unread' : ''}`}
-        onClick={handleFollowGreen}
-        disabled={unreadCount === 0 || navigating}
-        title={unreadCount > 0 ? `${unreadCount} unread - click to navigate` : 'No unread blips'}
-      >
-        Next
-        <span className="next-arrow">▶</span>
-      </button>
+      {/* Follow the Green - Next / Next Topic buttons */}
+      {unreadCount === 0 && nextTopicAvailable ? (
+        <button
+          className="next-button next-topic-button"
+          onClick={onNextTopic}
+          title="Jump to next topic with unread blips"
+        >
+          Next Topic
+          <span className="next-arrow">▶▶</span>
+        </button>
+      ) : (
+        <button
+          className={`next-button ${unreadCount > 0 ? 'has-unread' : ''}`}
+          onClick={handleFollowGreen}
+          disabled={unreadCount === 0 || navigating}
+          title={unreadCount > 0 ? `${unreadCount} unread - click to navigate` : 'No unread blips'}
+        >
+          Next
+          <span className="next-arrow">▶</span>
+        </button>
+      )}
 
       {/* Fold/Unfold controls */}
       <div className="fold-controls">

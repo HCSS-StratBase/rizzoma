@@ -1,21 +1,15 @@
-import { useEffect, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
-
-let globalSocket: Socket | null = null;
+import { useState, useEffect } from 'react';
+import { getSocket } from '../lib/socket';
+import type { Socket } from 'socket.io-client';
 
 export function useSocket(): Socket | null {
-  const [socket, setSocket] = useState<Socket | null>(globalSocket);
-  
+  const [socket, setSocket] = useState<Socket | null>(() => {
+    try { return getSocket(); } catch { return null; }
+  });
   useEffect(() => {
-    if (!globalSocket) {
-      globalSocket = io();
+    if (!socket) {
+      try { setSocket(getSocket()); } catch {}
     }
-    setSocket(globalSocket);
-    
-    return () => {
-      // Don't disconnect on unmount as other components might be using it
-    };
   }, []);
-  
   return socket;
 }

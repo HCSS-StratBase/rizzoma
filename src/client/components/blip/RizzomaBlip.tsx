@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
+import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 import { BlipMenu } from './BlipMenu';
@@ -11,18 +11,18 @@ import { InlineComments, InlineCommentsStatus } from '../editor/InlineComments';
 import { FEATURES } from '@shared/featureFlags';
 import { BlipHistoryModal } from './BlipHistoryModal';
 import { api, ensureCsrf } from '../../lib/api';
-import { 
-  getInlineCommentsVisibility, 
+import {
+  getInlineCommentsVisibility,
   getInlineCommentsVisibilityFromStorage,
   getInlineCommentsVisibilityMetadata,
-  setInlineCommentsVisibility, 
-  subscribeInlineCommentsVisibility 
+  setInlineCommentsVisibility,
+  subscribeInlineCommentsVisibility
 } from '../editor/inlineCommentsVisibility';
-import { 
-  getCollapsePreference, 
+import {
+  getCollapsePreference,
   getCollapsePreferenceMetadata,
-  setCollapsePreference, 
-  subscribeCollapsePreference 
+  setCollapsePreference,
+  subscribeCollapsePreference
 } from './collapsePreferences';
 import {
   getBlipClipboardPayload,
@@ -34,6 +34,9 @@ import { createUploadTask, type UploadResult, type UploadTask } from '../../lib/
 import { INSERT_EVENTS, EDIT_MODE_EVENT, EDITOR_FOCUS_EVENT, EDITOR_BLUR_EVENT, BLIP_ACTIVE_EVENT } from '../RightToolsPanel';
 import './RizzomaBlip.css';
 import { injectInlineMarkers } from './inlineMarkers';
+import { useCollaboration } from '../editor/useCollaboration';
+import { yjsDocManager } from '../editor/YjsDocumentManager';
+import { useAuth } from '../../hooks/useAuth';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
 export type BlipContributor = {
@@ -353,6 +356,9 @@ export function RizzomaBlip({
     }
   }, [blip.id, onBlipUpdate]);
 
+  // Ref to suppress auto-save during Y.Doc seeding (setContent triggers onUpdate)
+  const seedingYdocRef = useRef(false);
+
   // Refs to hold current editor and callback (avoids stale closures in useEditor)
   const createChildBlipRef = useRef<(anchorPosition: number) => Promise<void>>();
   const inlineEditorRef = useRef<Editor | null>(null);
@@ -369,21 +375,82 @@ export function RizzomaBlip({
   const stableHideComments = useCallback(() => { hideCommentsRef.current?.(); }, []);
   const stableShowComments = useCallback(() => { showCommentsRef.current?.(); }, []);
 
-  // Create inline editor for editing mode
+  // --- Real-time collaboration (awareness + document sync) ---
+  // Activate based on canEdit (NOT isEditing or authUser) so the Collaboration extension
+  // is present from editor creation. canEdit already gates unauthenticated users.
+  // authUser is only needed for setUser() which updates cursor name/color later.
+  const { user: authUser } = useAuth();
+  // Skip collab for topic root — RizzomaTopicDetail.tsx owns the collab-enabled topicEditor.
+  // Without this guard, both components would create SocketIOProviders for the same blipId,
+  // causing duplicate socket room joins and update relay loops.
+  const collabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && effectiveExpanded && blip.permissions.canEdit && !isTopicRoot);
+  const ydoc = useMemo(
+    () => collabEnabled ? yjsDocManager.getDocument(blip.id) : undefined,
+    [blip.id, collabEnabled]
+  );
+  const collabProvider = useCollaboration(ydoc, blip.id, collabEnabled);
+
+  // collabActive = all collab deps are ready (enabled + ydoc + provider).
+  // Used as useEditor dep to force editor recreation with the Collaboration extension.
+  // Without this, useEditor's setOptions() doesn't properly reinitialize ProseMirror
+  // plugins, leaving the visible editor without ySyncPlugin.
+  const collabActive = collabEnabled && !!ydoc && !!collabProvider;
+
+  // Set real user info on the collaboration provider
+  useEffect(() => {
+    if (collabProvider && authUser) {
+      const colors = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4'];
+      collabProvider.setUser({
+        id: authUser.id,
+        name: authUser.name || authUser.email,
+        color: colors[parseInt(authUser.id, 36) % colors.length]
+      });
+    }
+  }, [collabProvider, authUser]);
+
+  // Stabilize onToggleInlineComments callback for extensions memoization
+  const stableToggleInlineComments = useCallback(
+    (visible: boolean) => setInlineCommentsVisibility(blip.id, visible),
+    [blip.id]
+  );
+
+  // Memoize extensions to prevent TipTap from recreating ProseMirror plugins on every render.
+  // Without this, ySyncPlugin gets destroyed/recreated each render, preventing Y.Doc sync.
+  const extensions = useMemo(
+    () => getEditorExtensions(
+      collabActive ? ydoc : undefined,
+      collabActive ? collabProvider : undefined,
+      {
+        blipId: blip.id,
+        onToggleInlineComments: stableToggleInlineComments,
+        onCreateInlineChildBlip: stableCreateInlineChildBlip,
+        onHideComments: stableHideComments,
+        onShowComments: stableShowComments,
+      }
+    ),
+    [blip.id, collabActive, ydoc, collabProvider, stableToggleInlineComments, stableCreateInlineChildBlip, stableHideComments, stableShowComments]
+  );
+
+  // Create inline editor for editing mode.
+  // With synchronous provider creation (useCollaboration), collabActive is true from the
+  // first render when all deps are ready. This ensures Collaboration extension is included
+  // in the initial editor creation — no need for deps-based recreation.
   const inlineEditor = useEditor({
-    extensions: getEditorExtensions(undefined, undefined, {
-      blipId: blip.id,
-      onToggleInlineComments: (visible) => setInlineCommentsVisibility(blip.id, visible),
-      onCreateInlineChildBlip: stableCreateInlineChildBlip,
-      onHideComments: stableHideComments,
-      onShowComments: stableShowComments,
-    }),
+    extensions,
     content: editedContent,
     editable: isEditing,
     editorProps: defaultEditorProps,
-    onUpdate: ({ editor }: { editor: Editor }) => {
+    onUpdate: ({ editor, transaction }: { editor: Editor; transaction: any }) => {
+      // Skip auto-save during Y.Doc seeding (setContent triggers onUpdate)
+      if (seedingYdocRef.current) return;
+
       const html = editor.getHTML();
       setEditedContent(html);
+
+      // When collab is active, only auto-save for local edits (not remote Y.Doc sync).
+      // Remote updates have transaction.origin set to the ySyncPlugin binding.
+      const isRemoteSync = transaction?.origin != null && typeof transaction.origin === 'object';
+      if (isRemoteSync) return;
 
       // Debounced auto-save (300ms delay)
       if (autoSaveTimeoutRef.current) {
@@ -397,6 +464,46 @@ export function RizzomaBlip({
 
   // Keep editor ref updated for use in callbacks
   inlineEditorRef.current = inlineEditor;
+
+  // Seed Y.Doc from blip HTML content after the server sync response arrives.
+  // TipTap's Collaboration extension renders from Y.Doc fragment 'default' (ignoring the content prop).
+  // The server always sends a blip:sync response — if it contains state, the Y.Doc is populated
+  // automatically; if empty, we seed from the saved blip HTML so only one client ever seeds.
+  useEffect(() => {
+    if (!inlineEditor || inlineEditor.isDestroyed || !collabEnabled || !ydoc || !collabProvider) return;
+
+    const trySeed = () => {
+      if (inlineEditor.isDestroyed) return;
+      const frag = ydoc.getXmlFragment('default');
+      if (frag.length === 0 && blip.content) {
+        seedingYdocRef.current = true;
+        inlineEditor.commands.setContent(blip.content);
+        seedingYdocRef.current = false;
+      }
+    };
+
+    if (collabProvider.synced) {
+      trySeed();
+      return;
+    }
+
+    // Wait for server sync before seeding; timeout fallback if server never responds
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      trySeed();
+    }, 2000);
+
+    collabProvider.onSynced(() => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      trySeed();
+    });
+
+    return () => { done = true; clearTimeout(timer); };
+  }, [inlineEditor, collabEnabled, ydoc, collabProvider, blip.content]);
 
   // Cleanup auto-save timeout on unmount to prevent stale saves to wrong topic
   useEffect(() => {
@@ -558,6 +665,55 @@ export function RizzomaBlip({
     window.addEventListener('rizzoma:toggle-inline-blip', handleToggleInline);
     return () => window.removeEventListener('rizzoma:toggle-inline-blip', handleToggleInline);
   }, [inlineChildren, toggleInlineChild]);
+
+  // Listen for activation-only events (from Follow-the-Green) — activates blip without triggering mark-read
+  useEffect(() => {
+    const handleActivate = (e: Event) => {
+      const { blipId: targetId } = (e as CustomEvent).detail || {};
+      if (targetId === blip.id) {
+        setIsActive(true);
+      }
+    };
+    window.addEventListener('rizzoma:activate-blip', handleActivate);
+    return () => window.removeEventListener('rizzoma:activate-blip', handleActivate);
+  }, [blip.id]);
+
+  // Collapse-only for list children (from Follow-the-Green — collapse previous before jumping to next)
+  useEffect(() => {
+    if (isTopicRoot) return; // never collapse root
+    const handle = (e: Event) => {
+      if ((e as CustomEvent).detail?.blipId === blip.id) setIsExpanded(false);
+    };
+    window.addEventListener('rizzoma:collapse-blip', handle);
+    return () => window.removeEventListener('rizzoma:collapse-blip', handle);
+  }, [blip.id, isTopicRoot]);
+
+  // Collapse-only for inline children (NOT toggle — only removes from expanded set)
+  useEffect(() => {
+    const handle = (e: Event) => {
+      const { threadId } = (e as CustomEvent).detail || {};
+      if (!threadId) return;
+      if (inlineChildren.some(c => c.id === threadId)) {
+        setLocalExpandedInline(prev => {
+          if (!prev.has(threadId)) return prev;
+          const next = new Set(prev);
+          next.delete(threadId);
+          return next;
+        });
+      }
+    };
+    window.addEventListener('rizzoma:collapse-inline-blip', handle);
+    return () => window.removeEventListener('rizzoma:collapse-inline-blip', handle);
+  }, [inlineChildren]);
+
+  // Deactivate blip (hide toolbar) — from Follow-the-Green collapse-before-jump
+  useEffect(() => {
+    const handle = (e: Event) => {
+      if ((e as CustomEvent).detail?.blipId === blip.id) setIsActive(false);
+    };
+    window.addEventListener('rizzoma:deactivate-blip', handle);
+    return () => window.removeEventListener('rizzoma:deactivate-blip', handle);
+  }, [blip.id]);
 
   // Handle clicks on [+] markers in view mode (inside dangerouslySetInnerHTML content)
   const handleViewContentClick = useCallback((e: React.MouseEvent) => {

@@ -103,6 +103,17 @@
   font-size: 16px;
 }
 
+/* Next Topic button - blue variant shown when current topic has no unread */
+.next-topic-button {
+  background: #4EA0F1 !important;
+  border-color: #3B8FE0 !important;
+  color: white !important;
+}
+
+.next-topic-button:hover {
+  background: #3B8FE0 !important;
+}
+
 /* View toggle */
 .view-toggle {
   display: flex;

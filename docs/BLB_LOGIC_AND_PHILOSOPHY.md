@@ -1448,3 +1448,34 @@ All 24 screenshots are in `snapshots/blb-study/` with `260206-HHMM-description.p
 | `260206-1922-gadget-dropdown.png` | All 11 gadget types in palette |
 | `260206-1926-yesno-voted.png` | Yes\|No\|Maybe gadget after voting |
 | `260206-1928-insert-reply-button-inline-blip.png` | Insert Reply button splits text mid-word |
+
+---
+
+## Follow-the-Green Integration with BLB
+
+The "Follow the Green" navigation system integrates deeply with the BLB architecture:
+
+### How Next Works with BLB
+1. **List children (bullets)**: If unread blip is a collapsed list child, Next dispatches `rizzoma:activate-blip` to expand it and show the toolbar
+2. **Inline children ([+] markers)**: If unread blip is behind a collapsed [+] marker, Next dispatches `rizzoma:toggle-inline-blip` to expand the inline child, then polls for the rendered element
+
+### Collapse-Before-Jump
+When clicking Next repeatedly, the previous blip is collapsed before expanding the next one. This prevents accumulated expanded blips from cluttering the view:
+- `rizzoma:deactivate-blip` → hides toolbar on previous blip
+- `rizzoma:collapse-blip` → collapses list children (sets `isExpanded = false`)
+- `rizzoma:collapse-inline-blip` → collapses inline children (removes from `localExpandedInline` set, NOT a toggle)
+
+### Next Topic
+When all blips in the current topic are read, a blue "Next Topic ▶▶" button appears. `RizzomaTopicsList` dispatches `rizzoma:topics-loaded` with per-topic unread counts; `RizzomaLayout` computes the next topic with unread and passes navigation callback to `RightToolsPanel`.
+
+### Event Flow
+```
+User clicks Next
+  → RightToolsPanel.handleFollowGreen()
+    → Collapse previous: deactivate-blip + collapse-blip/collapse-inline-blip
+    → Find next: querySelector [data-blip-id] or [data-blip-thread]
+    → Expand: toggle-inline-blip (if inline) or direct (if list)
+    → Activate: rizzoma:activate-blip
+    → Mark read: POST /api/waves/:id/blips/:blipId/read
+    → Record: lastExpandedRef = { blipId, isInline }
+```

@@ -208,9 +208,23 @@ router.post('/:waveId/blips/:blipId/read', async (req, res) => {
         return;
       }
       const doc: BlipRead = { _id: keyId, type: 'read', userId, waveId, blipId, readAt: now };
-      const r = await insertDoc(doc as any);
-      try { console.log('[waves] emit wave:unread (single insert)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
-      res.status(201).json({ ok: true, id: r.id, rev: r.rev, readAt: now });
+      try {
+        const r = await insertDoc(doc as any);
+        try { console.log('[waves] emit wave:unread (single insert)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
+        res.status(201).json({ ok: true, id: r.id, rev: r.rev, readAt: now });
+      } catch (insertErr: any) {
+        // Handle 409 conflict from concurrent insert — re-fetch and update
+        if (insertErr?.message?.startsWith('409')) {
+          const retried = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId, blipId }).catch(() => null);
+          if (retried && retried._id && retried._rev) {
+            const r = await updateDoc({ ...retried, readAt: now } as any);
+            try { emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
+            res.json({ ok: true, id: r.id, rev: r.rev, readAt: now });
+            return;
+          }
+        }
+        throw insertErr;
+      }
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'read_mark_error', requestId: (req as any)?.id });
     }

@@ -26,8 +26,8 @@ function getSocket(): Socket {
     });
     socket.on('connect', () => console.log('[socket] connected', socket?.id));
     socket.on('connect_error', (err) => console.error('[socket] connect_error', err));
-    socket.on('wave:unread', (payload) => console.log('[socket] wave:unread (global)', payload));
-    socket.onAny((event, ...args) => console.log('[socket:any]', event, args));
+    // Expose for debugging
+    if (typeof window !== 'undefined') (window as any).__socket = socket;
   }
   return socket;
 }
@@ -157,7 +157,6 @@ export function subscribeWaveUnread(waveId: string, onEvent: (payload: WaveUnrea
   const s = getSocket();
   s.emit('wave:unread:join', { waveId, userId: userId || undefined });
   const handler = (p: any) => {
-    console.log('[socket] wave:unread event received', p);
     if (!p || p.waveId !== waveId) return;
     onEvent({ waveId: String(p.waveId), userId: p.userId ? String(p.userId) : undefined });
   };
@@ -179,3 +178,5 @@ export function emitWaveUnread(waveId: string, userId?: string | null) {
     s.emit('wave:unread', { waveId, userId: userId || undefined });
   } catch {}
 }
+
+export { getSocket };

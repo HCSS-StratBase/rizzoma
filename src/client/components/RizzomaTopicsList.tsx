@@ -80,7 +80,12 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: 
 
       const response = await api(`/api/topics?${params.toString()}`);
       if (response.ok && response.data) {
-        setTopics((response.data as any).topics || []);
+        const topicsList = (response.data as any).topics || [];
+        setTopics(topicsList);
+        // Dispatch event so RizzomaLayout can track which topics have unread blips
+        window.dispatchEvent(new CustomEvent('rizzoma:topics-loaded', {
+          detail: { topics: topicsList.map((t: Topic) => ({ id: t.id, unreadCount: t.unreadCount || 0 })) }
+        }));
       }
     } catch (error) {
       console.error('Failed to load topics:', error);

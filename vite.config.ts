@@ -15,6 +15,7 @@ export default defineConfig({
     'import.meta.env.FEAT_VISUAL_DIFF': JSON.stringify(process.env.FEAT_VISUAL_DIFF || ''),
     'import.meta.env.FEAT_LIVE_CURSORS': JSON.stringify(process.env.FEAT_LIVE_CURSORS || ''),
     'import.meta.env.FEAT_TYPING_INDICATORS': JSON.stringify(process.env.FEAT_TYPING_INDICATORS || ''),
+    'import.meta.env.FEAT_REALTIME_COLLAB': JSON.stringify(process.env.FEAT_REALTIME_COLLAB || ''),
   },
   root: './src/client',
   publicDir: '../../public',

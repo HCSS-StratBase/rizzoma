@@ -32,6 +32,9 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - **Change tracking (experimental)** - Local hook to track unread changes per user in developer/test views.
 - **Green indicators** - Visual highlighting of new or unread content.
 - **Navigation helper** - "Follow the Green" button with unread count.
+- **Collapse-before-jump** - Previous expanded blip auto-collapses when navigating to next unread (no view clutter).
+- **Next Topic navigation** - Blue "Next Topic ▶▶" button appears when current topic fully read; jumps to next topic with unread.
+- **Inline expansion** - Next button expands collapsed inline children ([+] markers) via `rizzoma:toggle-inline-blip` event.
 - **Time indicators** - Shows when content changed.
 - **Persistent tracking** - Saves read state to localStorage or per-wave unread docs.
 - **Files created:**
@@ -41,15 +44,25 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
   - `FollowTheGreen.tsx` / `RightToolsPanel.tsx` - Rizzoma layout Follow-the-Green CTA and tools panel.
   - `FollowGreen.css` / `FollowTheGreen.css` - Green visual styling.
 
-### Track D: Real-time Collaboration
+### Track D: Real-time Collaboration (VERIFIED 2026-02-09)
+- **Y.js + TipTap + Socket.IO** - Full CRDT-based real-time document sync
+- **Cross-tab sync verified** - Socket.IO room-based relay delivers Y.js updates between tabs; content syncs via both Y.js CRDT merge and API refresh
+- **Persistence round-trip verified** - Y.Doc state persisted to CouchDB via server-side yjsDocCache, restored on reconnection
+- **Relay-first architecture** - Server relays `blip:update` to room members BEFORE applying to local cache, ensuring cache errors don't block delivery
 - **Live cursors** - See where others are typing
 - **Collaborative selection** - See what others have selected
 - **Typing indicators** - "User is typing..." display
-- **Presence awareness** - Full Yjs awareness protocol
+- **Presence awareness** - Full Yjs awareness protocol with loop prevention (`applyingRemoteAwareness` flag)
 - **User colors** - Each user gets a unique color
-- **Files created:**
+- **Reconnection handling** - `setupReconnect` re-joins rooms and sends state vector on reconnect; server sends diff update
+- **Feature flags** - Gated by `REALTIME_COLLAB` + `LIVE_CURSORS` (both enabled by `FEAT_ALL=1`)
+- **Files:**
+  - `CollaborativeProvider.ts` - SocketIOProvider with Y.Doc sync, awareness, reconnection
+  - `useCollaboration.ts` - React hook with synchronous provider creation (critical for TipTap plugin init)
+  - `YjsDocumentManager.ts` - Client-side Y.Doc singleton cache
+  - `src/server/lib/yjsDocCache.ts` - Server-side Y.Doc cache with CouchDB persistence
+  - `src/server/lib/socket.ts` - Collab handlers: blip:join/leave/update, sync:request, awareness relay
   - `CollaborativeCursors.tsx/css` - Cursor system
-  - Enhanced `CollaborativeProvider.ts` with awareness
 
 ### Unread tracking & presence
 - **Per-user read state** - `/api/waves/:id/unread`, `/next`, `/prev`, and `/blips/:blipId/read` persist `readAt` vs `updatedAt`.

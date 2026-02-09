@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 // DISABLED: Socket subscription was causing infinite loop
 // import { subscribeTopicDetail } from '../lib/socket';
@@ -14,6 +14,9 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
 import { getEditorExtensions, defaultEditorProps } from './editor/EditorConfig';
 import { EDIT_MODE_EVENT, INSERT_EVENTS } from './RightToolsPanel';
+import { useCollaboration } from './editor/useCollaboration';
+import { yjsDocManager } from './editor/YjsDocumentManager';
+import { FEATURES } from '@shared/featureFlags';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -178,18 +181,40 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     }
   }, []);
 
+  // --- Real-time collaboration for topic root blip ---
+  // RizzomaBlip skips collab for topic root (isTopicRoot), so this is the sole owner.
+  const topicCollabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && isAuthed);
+  const topicYdoc = useMemo(
+    () => topicCollabEnabled ? yjsDocManager.getDocument(id) : undefined,
+    [id, topicCollabEnabled]
+  );
+  const topicCollabProvider = useCollaboration(topicYdoc, id, topicCollabEnabled);
+  const topicCollabActive = topicCollabEnabled && !!topicYdoc && !!topicCollabProvider;
+  const seedingTopicYdocRef = useRef(false);
+
   // TipTap editor for topic content (meta-blip editing)
   const topicEditor = useEditor({
-    extensions: getEditorExtensions(undefined, undefined, {
-      waveId: id,
-      onCreateInlineChildBlip: stableCreateInlineChildBlip,
-    }),
+    extensions: getEditorExtensions(
+      topicCollabActive ? topicYdoc : undefined,
+      topicCollabActive ? topicCollabProvider : undefined,
+      {
+        waveId: id,
+        onCreateInlineChildBlip: stableCreateInlineChildBlip,
+      }
+    ),
     content: '',
     editable: false,
     editorProps: defaultEditorProps,
-    onUpdate: ({ editor }: { editor: Editor }) => {
+    onUpdate: ({ editor, transaction }: { editor: Editor; transaction: any }) => {
+      // Skip auto-save during Y.Doc seeding
+      if (seedingTopicYdocRef.current) return;
+
       const html = editor.getHTML();
       setTopicContent(html);
+
+      // Skip auto-save for remote Y.Doc sync updates (origin is ySyncPlugin object)
+      const isRemoteSync = transaction?.origin != null && typeof transaction.origin === 'object';
+      if (isRemoteSync) return;
 
       // Debounced auto-save (300ms delay)
       if (topicSaveTimeoutRef.current) {
@@ -293,21 +318,39 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     };
   }, [isEditingTopic, topicEditor]);
 
-  // Sync editor content and editable state when entering edit mode
-  // Only set content ONCE when entering edit mode (not on every topicContent change)
+  // Sync editor content and editable state when entering edit mode.
+  // With Collaboration, wait for server sync before seeding — only seed if Y.Doc is empty.
   useEffect(() => {
     if (topicEditor && isEditingTopic && topicContent && !hasSetInitialContentRef.current) {
-      hasSetInitialContentRef.current = true;
-      topicEditor.commands.setContent(topicContent);
-      topicEditor.setEditable(true);
-      // Focus after content is set
-      setTimeout(() => {
-        topicEditor.commands['focus']('end');
-      }, 50);
+      const setContentAndFocus = () => {
+        if (topicEditor.isDestroyed) return;
+        topicEditor.setEditable(true);
+        setTimeout(() => { topicEditor.commands['focus']('end'); }, 50);
+      };
+
+      if (topicCollabActive && topicYdoc && topicCollabProvider) {
+        // Collab: wait for server sync, only seed if Y.Doc fragment is empty
+        hasSetInitialContentRef.current = true;
+        topicCollabProvider.onSynced(() => {
+          if (topicEditor.isDestroyed) return;
+          const frag = topicYdoc!.getXmlFragment('default');
+          if (frag.length === 0) {
+            seedingTopicYdocRef.current = true;
+            topicEditor.commands.setContent(topicContent);
+            seedingTopicYdocRef.current = false;
+          }
+          setContentAndFocus();
+        });
+      } else {
+        // No collab: set content directly
+        hasSetInitialContentRef.current = true;
+        topicEditor.commands.setContent(topicContent);
+        setContentAndFocus();
+      }
     } else if (topicEditor && !isEditingTopic) {
       topicEditor.setEditable(false);
     }
-  }, [topicEditor, isEditingTopic, topicContent]);
+  }, [topicEditor, isEditingTopic, topicContent, topicCollabActive, topicYdoc, topicCollabProvider]);
 
   // Use refs to avoid dependency issues in callbacks
   const unreadStateRef = useRef(unreadState);

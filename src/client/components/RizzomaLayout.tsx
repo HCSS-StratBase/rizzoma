@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { NavigationPanel } from './NavigationPanel';
 import { RizzomaTopicsList } from './RizzomaTopicsList';
 import { MentionsList } from './MentionsList';
@@ -57,6 +57,27 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [perfSkipTopics, setPerfSkipTopics] = useState(getInitialPerfSkip);
   const unreadState = useWaveUnread(selectedTopicId);
+
+  // Track which topics have unread blips (for "Next Topic" button)
+  const [topicsWithUnread, setTopicsWithUnread] = useState<Array<{ id: string; unreadCount: number }>>([]);
+
+  useEffect(() => {
+    const handle = (e: Event) => {
+      const { topics } = (e as CustomEvent).detail || {};
+      if (Array.isArray(topics)) setTopicsWithUnread(topics);
+    };
+    window.addEventListener('rizzoma:topics-loaded', handle);
+    return () => window.removeEventListener('rizzoma:topics-loaded', handle);
+  }, []);
+
+  const nextUnreadTopic = useMemo(() =>
+    topicsWithUnread.find(t => t.id !== selectedTopicId && t.unreadCount > 0),
+    [topicsWithUnread, selectedTopicId]
+  );
+
+  const handleNextTopic = useCallback(() => {
+    if (nextUnreadTopic) window.location.hash = `#/topic/${nextUnreadTopic.id}`;
+  }, [nextUnreadTopic]);
 
   // Mobile state
   const mobileContext = useMobileContextSafe();
@@ -270,6 +291,8 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
           isAuthed={isAuthed}
           user={user}
           unreadState={selectedTopicId ? unreadState : null}
+          onNextTopic={handleNextTopic}
+          nextTopicAvailable={!!nextUnreadTopic}
         />
       
       {/* Create Topic Modal */}

@@ -342,7 +342,10 @@ interface BlipRead {
 |---------|----------|--------|
 | **Unread Blip Styling** | `.unread` class | Green left border |
 | **Wave Badge** | Count in list | Colored badge |
-| **CTA Button** | None | "Follow the Green" button |
+| **CTA Button** | Green "Next" button | "Follow the Green" Next button (green when unread) |
+| **Collapse-before-jump** | N/A | Previous blip auto-collapses on Next click |
+| **Next Topic** | N/A | Blue "Next Topic ▶▶" when current topic fully read |
+| **Inline expansion** | Click [+] manually | Next auto-expands collapsed inline children |
 | **Keyboard Nav** | j/k keys | Preserved |
 
 ### 5.5 Client Hooks
@@ -350,7 +353,8 @@ interface BlipRead {
 | Hook | File | Function |
 |------|------|----------|
 | `useWaveUnread` | `hooks/useWaveUnread.ts` | Wave-level unread state |
-| Navigation buttons | `RightToolsPanel.tsx` | Next/prev controls |
+| Navigation buttons | `RightToolsPanel.tsx` | Next/Next Topic/collapse-before-jump |
+| Topics loaded event | `RizzomaTopicsList.tsx` | `rizzoma:topics-loaded` for cross-topic unread |
 | CTA component | `FollowTheGreen.tsx` | Jump to next unread |
 
 ### 5.6 Test Coverage
