@@ -1,6 +1,7 @@
 # Rizzoma Feature Testing Status
 
 ## 🟢 Current Status
+- **Full Vitest run (2026-02-10)**: 44 test files passed, 146 tests passed, 3 skipped, **0 failures**. All 9 pre-existing failures fixed (permission-model mismatches, BlipMenu selector drift, feature flags missing in test env, inline comment visibility default, timeout tuning).
 - **Health checks (2026-02-03)**: `npm run test:health` pass (server health, inline comments health, upload edge cases).
 - **Perf harness (2026-02-03, 1000 blips)**: `RIZZOMA_PERF_BLIPS=1000 npm run perf:harness` pass; metrics under `snapshots/perf/metrics-1770076098998-*.json` and renders under `snapshots/perf/render-1770076098998-*.png` (stage durations ~1.40s landing / ~0.54s expanded, windowed 200 ~2.45s / ~2.72s; TTF ~2.45s landing / ~3.23s expanded).
 - **Browser smokes `test:follow-green` (2026-02-03)**: Desktop + mobile profiles pass; snapshots under `snapshots/follow-the-green/1770081675832-*` and `snapshots/follow-the-green/1770081713734-*`.
@@ -13,7 +14,7 @@
 - **getUserMedia adapter (2026-02-02)**: `npm test -- --run src/tests/client.getUserMediaAdapter.test.ts` pass.
 - **BLB Playwright snapshots (2026-02-03)**: `node test-blb-snapshots.mjs` pass; refreshed BLB snapshot set under `snapshots/blb/1770080861419-*`.
 - **Perf harness (2026-02-02, 1000 blips)**: `RIZZOMA_PERF_BLIPS=1000 npm run perf:harness` captured metrics under `snapshots/perf/metrics-1770070825186-*.json` and renders under `snapshots/perf/render-1770070825186-*.png`; landing-labels and expanded-root both passed budgets (stage duration ~1.39s landing, ~0.56s expanded; memory ~23MB). Windowed 200-label time ~2.3–2.6s.
-- **Full Vitest run (2026-01-18)**: 42 test files passed, 131 tests passed, 3 skipped. Duration ~110s.
+- **Full Vitest run (2026-01-18)**: 42 test files passed, 131 tests passed, 3 skipped. Duration ~110s. (Superseded by 2026-02-10 run.)
 - **Perf harness E2E (2026-01-18)**: N+1 fix verified - no individual `/inline-comments-visibility` API calls. Load time 298ms for 20 blips.
 - **Browser smokes `test:toolbar-inline` (2026-01-17)**: Chromium passes; Firefox/WebKit may timeout in CI due to browser startup delays.
 - **Browser smokes `test:follow-green` (2026-01-17)**: Desktop profile passes. Auto-navigation feature now works correctly.

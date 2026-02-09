@@ -380,6 +380,9 @@ export function BlipMenu({
           type="button"
           role="menuitem"
           className="menu-dropdown-item"
+          title={collapseByDefault ? 'Expand this thread by default' : 'Collapse this thread by default'}
+          aria-pressed={collapseByDefault ? 'true' : 'false'}
+          data-testid="blip-menu-collapse-default"
           onClick={() => {
             onToggleCollapseByDefault?.();
             setShowOverflow(false);
@@ -394,6 +397,7 @@ export function BlipMenu({
           role="menuitem"
           className="menu-dropdown-item"
           disabled={isDeleting}
+          data-testid="blip-menu-delete"
           onClick={() => {
             onDelete?.();
             setShowOverflow(false);

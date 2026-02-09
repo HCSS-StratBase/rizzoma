@@ -194,17 +194,13 @@ describe('client: BlipMenu toolbar', () => {
     const commentsBtn = container.querySelector('[data-testid="blip-menu-comments-hide"]');
     const collapseBtn = container.querySelector('[data-testid="blip-menu-collapse"]');
     const expandBtn = container.querySelector('[data-testid="blip-menu-expand"]');
-    const linkBtn = container.querySelector('button[title="Get Direct Link"]');
-    const deleteBtn = container.querySelector('[data-testid="blip-menu-delete"]');
-    const collapseDefaultBtn = container.querySelector('button[title="Collapse this thread by default"]');
+    const linkBtn = container.querySelector('[data-testid="blip-menu-get-link"]');
 
     expect(editBtn).toBeTruthy();
     expect(commentsBtn).toBeTruthy();
     expect(collapseBtn).toBeTruthy();
     expect(expandBtn).toBeTruthy();
     expect(linkBtn).toBeTruthy();
-    expect(deleteBtn).toBeTruthy();
-    expect(collapseDefaultBtn).toBeTruthy();
 
     act(() => editBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(baseProps.onStartEdit).toHaveBeenCalled();
@@ -220,6 +216,16 @@ describe('client: BlipMenu toolbar', () => {
 
     act(() => linkBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(baseProps.onGetLink).toHaveBeenCalled();
+
+    // Delete and collapse-default are in the overflow/gear menu
+    const gear = container.querySelector('button[title="More options"]');
+    expect(gear).toBeTruthy();
+    act(() => gear!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+
+    const deleteBtn = container.querySelector('[data-testid="blip-menu-delete"]');
+    const collapseDefaultBtn = container.querySelector('[data-testid="blip-menu-collapse-default"]');
+    expect(deleteBtn).toBeTruthy();
+    expect(collapseDefaultBtn).toBeTruthy();
 
     act(() => collapseDefaultBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(baseProps.onToggleCollapseByDefault).toHaveBeenCalled();
@@ -521,17 +527,14 @@ describe('client: BlipMenu toolbar', () => {
     };
     ({ container, root } = renderMenu(<BlipMenu {...baseProps} editor={editor as any} />));
 
-    const deleteBtn = container.querySelector('[data-testid="blip-menu-delete"]') as HTMLButtonElement | null;
-    expect(deleteBtn?.disabled).toBe(true);
-
+    // Delete button is in the overflow/gear menu
     const gear = container.querySelector('button[title="More options"]') as HTMLButtonElement | null;
     expect(gear).toBeTruthy();
     act(() => gear!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    const overflowDelete = Array.from(container.querySelectorAll('.menu-dropdown-item')).find((btn) => {
-      const text = btn.textContent ?? '';
-      return text.includes('Delete blip') || text.includes('Deleting…');
-    }) as HTMLButtonElement | undefined;
-    expect(overflowDelete?.disabled).toBe(true);
+
+    const deleteBtn = container.querySelector('[data-testid="blip-menu-delete"]') as HTMLButtonElement | null;
+    expect(deleteBtn).toBeTruthy();
+    expect(deleteBtn?.disabled).toBe(true);
 
     act(() => root.unmount());
     container.remove();
@@ -542,15 +545,26 @@ describe('client: BlipMenu toolbar', () => {
     };
     ({ container, root } = renderMenu(<BlipMenu {...baseProps} editor={editor as any} />));
 
+    // Open overflow to find enabled delete button
+    const gear2 = container.querySelector('button[title="More options"]') as HTMLButtonElement | null;
+    act(() => gear2!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+
     const enabledDelete = container.querySelector('[data-testid="blip-menu-delete"]') as HTMLButtonElement | null;
+    expect(enabledDelete).toBeTruthy();
     expect(enabledDelete?.disabled).toBe(false);
     act(() => enabledDelete!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(baseProps.onDelete).toHaveBeenCalled();
   });
 
   it('toggles collapse state button labels', () => {
-    const foldBtn = container.querySelector('button[title="Collapse this thread by default"]');
+    // Collapse-by-default is in the overflow/gear menu
+    const overflowToggle = container.querySelector('[data-testid="blip-menu-overflow-toggle"]');
+    expect(overflowToggle).toBeTruthy();
+    act(() => overflowToggle!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+
+    const foldBtn = container.querySelector('[data-testid="blip-menu-collapse-default"]');
     expect(foldBtn).toBeTruthy();
+    expect(foldBtn?.getAttribute('title')).toBe('Collapse this thread by default');
     act(() => foldBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(baseProps.onToggleCollapseByDefault).toHaveBeenCalled();
 
@@ -566,8 +580,14 @@ describe('client: BlipMenu toolbar', () => {
       />
     ));
 
-    const expandedTitleBtn = container.querySelector('button[title="Expand this thread by default"]');
+    // Open overflow in read mode to find the toggle
+    const gear = container.querySelector('button[title="More options"]');
+    expect(gear).toBeTruthy();
+    act(() => gear!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+
+    const expandedTitleBtn = container.querySelector('[data-testid="blip-menu-collapse-default"]');
     expect(expandedTitleBtn).toBeTruthy();
+    expect(expandedTitleBtn?.getAttribute('title')).toBe('Expand this thread by default');
     expect(expandedTitleBtn?.getAttribute('aria-pressed')).toBe('true');
   });
 });

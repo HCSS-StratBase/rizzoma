@@ -13,6 +13,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    env: {
+      FEAT_ALL: '1',
+    },
     include: [
       'src/tests/middleware.*.test.ts',
       'src/tests/routes.waves*.test.ts',

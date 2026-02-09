@@ -174,7 +174,7 @@ describe('routes: /api/uploads edgecases', () => {
   let writeFileSpy: any;
 
   // Increase timeout for module loading with mocks
-  vi.setConfig({ testTimeout: 15000 });
+  vi.setConfig({ testTimeout: 30000 });
 
   beforeEach(() => {
     vi.clearAllMocks();
