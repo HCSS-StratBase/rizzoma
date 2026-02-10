@@ -425,7 +425,6 @@ router.post('/:id/unfollow', csrfProtect(), requireAuth, async (req, res): Promi
 
 // PATCH /api/topics/:id
 router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
-  const userId = req.user!.id;
   try {
     const id = req.params['id'] as string;
     const payload = UpdateTopicSchema.parse(req.body ?? {});

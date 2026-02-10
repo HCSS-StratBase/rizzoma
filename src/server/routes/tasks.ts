@@ -100,7 +100,7 @@ router.get('/', requireAuth, async (req, res): Promise<void> => {
 // POST /api/tasks/:id/toggle - Toggle task completion status
 router.post('/:id/toggle', requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
-  const taskId = req.params['id'];
+  const taskId = String(req.params['id']);
 
   try {
     const doc = await getDoc<TaskDoc & { _rev: string }>(taskId);
@@ -135,7 +135,7 @@ router.post('/:id/toggle', requireAuth, async (req, res): Promise<void> => {
 // PATCH /api/tasks/:id - Update task (due date, text, etc.)
 router.patch('/:id', requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
-  const taskId = req.params['id'];
+  const taskId = String(req.params['id']);
   const updates = req.body || {};
 
   try {

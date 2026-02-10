@@ -12,7 +12,6 @@ import { EditorSearch } from './components/EditorSearch';
 import { EditorAdmin } from './components/EditorAdmin';
 import { GreenNavigation } from './components/GreenNavigation';
 import { RizzomaLayout } from './components/RizzomaLayout';
-import { RizzomaLanding } from './components/RizzomaLanding';
 import { FEATURES } from '@shared/featureFlags';
 import { MobileProvider } from './contexts/MobileContext';
 import { useServiceWorker, useInstallPrompt } from './hooks/useServiceWorker';

@@ -37,7 +37,7 @@ const isPerfRequest = (req: { headers?: Record<string, string | string[] | undef
   const header = req.headers?.['x-rizzoma-perf'];
   const headerValue = Array.isArray(header) ? header[0] : header;
   if (headerValue === '1' || headerValue === 'true') return true;
-  const perfQuery = req.query?.perf;
+  const perfQuery = req.query?.['perf'];
   const perfValue = Array.isArray(perfQuery) ? perfQuery[0] : perfQuery;
   return perfValue === '1' || perfValue === 'true' || perfValue === 'full';
 };
@@ -222,7 +222,7 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
     
     // In original Rizzoma, all wave participants can edit any blip (collaborative editing).
     // Any authenticated user who can access the wave can edit its blips.
-    const canEdit = true;
+    // In original Rizzoma, all wave participants can edit (collaborative editing)
 
     const updatedBlip: Blip & { _id: string; _rev?: string } = {
       ...blip,

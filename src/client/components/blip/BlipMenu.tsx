@@ -53,8 +53,7 @@ export function BlipMenu({
   canEdit,
   canComment,
   editor,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isExpanded = false,
+  isExpanded: _isExpanded = false,
   onStartEdit,
   onFinishEdit,
   onCollapse,

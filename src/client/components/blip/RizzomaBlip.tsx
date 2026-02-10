@@ -230,7 +230,7 @@ export function RizzomaBlip({
   onBlipRead,
   onExpand,
   expandedBlips,
-  onNavigateToSubblip,
+  onNavigateToSubblip: _onNavigateToSubblip,
   forceExpanded = false,
   renderMode = 'default',
   contentOverride,
@@ -470,10 +470,10 @@ export function RizzomaBlip({
   // The server always sends a blip:sync response — if it contains state, the Y.Doc is populated
   // automatically; if empty, we seed from the saved blip HTML so only one client ever seeds.
   useEffect(() => {
-    if (!inlineEditor || inlineEditor.isDestroyed || !collabEnabled || !ydoc || !collabProvider) return;
+    if (!inlineEditor || (inlineEditor as any).isDestroyed || !collabEnabled || !ydoc || !collabProvider) return;
 
     const trySeed = () => {
-      if (inlineEditor.isDestroyed) return;
+      if ((inlineEditor as any).isDestroyed) return;
       const frag = ydoc.getXmlFragment('default');
       if (frag.length === 0 && blip.content) {
         seedingYdocRef.current = true;
@@ -529,7 +529,7 @@ export function RizzomaBlip({
     setEditedContent(blip.content);
     lastSavedContentRef.current = blip.content;
     setIsEditing(false);
-    if (inlineEditor && !inlineEditor.isDestroyed) {
+    if (inlineEditor && !(inlineEditor as any).isDestroyed) {
       inlineEditor.commands.setContent(blip.content);
     }
   }, [blip.id, blip.content, inlineEditor]);

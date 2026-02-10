@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { RightToolsPanel } from '../client/components/RightToolsPanel';
 import { FEATURES } from '@shared/featureFlags';
 import type { WaveUnreadState } from '../client/hooks/useWaveUnread';
-import { toast } from '../client/components/Toast';
+import { toast as _toast } from '../client/components/Toast';
 
 vi.mock('../client/components/Toast', () => ({
   toast: vi.fn(),

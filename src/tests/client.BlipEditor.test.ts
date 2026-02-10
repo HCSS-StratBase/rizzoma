@@ -49,7 +49,8 @@ describe('client: TipTap editor integration', () => {
 
   it('TipTap editor resolves tag and taskWidget extensions', { timeout: 30000 }, async () => {
     const { getEditorExtensions } = await import('../client/components/editor/EditorConfig');
-    const { Editor } = await import('@tiptap/core');
+    const tiptap = await import('@tiptap/core');
+    const Editor = (tiptap as any).Editor;
 
     const extensions = getEditorExtensions(undefined, undefined, {
       blipId: 'test-blip-id',

@@ -325,7 +325,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   useEffect(() => {
     if (topicEditor && isEditingTopic && topicContent && !hasSetInitialContentRef.current) {
       const setContentAndFocus = () => {
-        if (topicEditor.isDestroyed) return;
+        if ((topicEditor as any).isDestroyed) return;
         topicEditor.setEditable(true);
         setTimeout(() => { topicEditor.commands['focus']('end'); }, 50);
       };
@@ -334,7 +334,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         // Collab: wait for server sync, only seed if Y.Doc fragment is empty
         hasSetInitialContentRef.current = true;
         topicCollabProvider.onSynced(() => {
-          if (topicEditor.isDestroyed) return;
+          if ((topicEditor as any).isDestroyed) return;
           const frag = topicYdoc!.getXmlFragment('default');
           if (frag.length === 0) {
             seedingTopicYdocRef.current = true;
@@ -735,7 +735,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       const markers = Array.from(document.querySelectorAll<HTMLElement>('.blip-thread-marker'));
       markers.forEach((marker) => {
         const threadId = marker.getAttribute('data-blip-thread') || '';
-        const hasUnread = threadId && unreadSet.has(threadId);
+        const hasUnread = !!(threadId && unreadSet.has(threadId));
         marker.classList.toggle('has-unread', hasUnread);
         marker.textContent = '+';
       });

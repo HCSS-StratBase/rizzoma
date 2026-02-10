@@ -90,9 +90,9 @@ describe('routes: /api/topics follow + list enrichment', () => {
         let resultDocs: Doc[] = [];
 
         if (type === 'topic') {
-          resultDocs = Array.from(docs.values()).filter((doc) => doc.type === 'topic');
+          resultDocs = Array.from(docs.values()).filter((doc) => doc['type'] === 'topic');
         } else if (type === 'topic_follow') {
-          resultDocs = Array.from(docs.values()).filter((doc) => doc.type === 'topic_follow' && doc.userId === selector['userId']);
+          resultDocs = Array.from(docs.values()).filter((doc) => doc['type'] === 'topic_follow' && doc['userId'] === selector['userId']);
         } else if (type === 'read' || type === 'blip') {
           resultDocs = [];
         }

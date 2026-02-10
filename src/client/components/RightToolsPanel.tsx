@@ -93,7 +93,7 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
   const [displayMode, setDisplayMode] = useState<'short' | 'expanded'>('expanded');
   const [isEditMode, setIsEditMode] = useState(false);
   const [isBlipActiveEditable, setIsBlipActiveEditable] = useState(false);
-  const [isCursorInEditor, setIsCursorInEditor] = useState(false);
+  const [_isCursorInEditor, setIsCursorInEditor] = useState(false);
 
   // Listen for edit mode changes and blip active events from RizzomaBlip
   useEffect(() => {

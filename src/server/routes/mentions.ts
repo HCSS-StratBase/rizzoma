@@ -93,7 +93,7 @@ router.post('/:id/read', requireAuth, async (req, res): Promise<void> => {
   const mentionId = req.params['id'];
 
   try {
-    const doc = await getDoc<MentionDoc & { _rev: string }>(mentionId);
+    const doc = await getDoc<MentionDoc & { _rev: string }>(String(mentionId));
 
     if (!doc || doc.type !== 'mention') {
       res.status(404).json({ error: 'mention_not_found' });

@@ -53,7 +53,7 @@ describe('server: YjsDocCache', () => {
   });
 
   it('applies updates and marks dirty', () => {
-    const doc = yjsDocCache.getOrCreate('blip-1');
+    yjsDocCache.getOrCreate('blip-1');
     // Create an update by modifying a separate doc and extracting the update
     const sourceDoc = new Y.Doc();
     const text = sourceDoc.getText('test');
@@ -144,10 +144,10 @@ describe('server: YjsDocCache', () => {
 
     expect(insertDoc).toHaveBeenCalledTimes(1);
     const insertCall = vi.mocked(insertDoc).mock.calls[0][0];
-    expect(insertCall.type).toBe('yjs_snapshot');
-    expect(insertCall.blipId).toBe('wave1:blip1');
-    expect(insertCall.waveId).toBe('wave1');
-    expect(typeof insertCall.snapshotB64).toBe('string');
+    expect(insertCall['type']).toBe('yjs_snapshot');
+    expect(insertCall['blipId']).toBe('wave1:blip1');
+    expect(insertCall['waveId']).toBe('wave1');
+    expect(typeof insertCall['snapshotB64']).toBe('string');
 
     sourceDoc.destroy();
   });
