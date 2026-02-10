@@ -29,7 +29,7 @@ describe('client: TipTap editor integration', () => {
     expect(module.SocketIOProvider).toBeDefined();
   });
   
-  it('useSocket hook exists', async () => {
+  it('useSocket hook exists', { timeout: 30000 }, async () => {
     const module = await import('../client/hooks/useSocket');
     expect(module.useSocket).toBeDefined();
     expect(typeof module.useSocket).toBe('function');

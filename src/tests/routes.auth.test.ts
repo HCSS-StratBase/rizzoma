@@ -82,7 +82,7 @@ describe('routes: /api/auth', () => {
       next();
     });
     app.use('/api/auth', authRouter);
-  });
+  }, 30000); // bcrypt with 10 rounds is CPU-heavy on WSL2
 
   it('registers a new user', async () => {
     const server = app.listen(0);
