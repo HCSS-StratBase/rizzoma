@@ -68,8 +68,9 @@
       "url": "/?layout=rizzoma#/topics",
       "icons": [
         {
-          "src": "/icons/icon-96x96.png",
-          "sizes": "96x96"
+          "src": "/icons/icon-96x96.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
         }
       ]
     }

@@ -17,6 +17,7 @@ This file is a lightweight status guide for the active branch. Older "phase" tim
 4) Validate PWA on actual mobile devices (iPhone Safari, Chrome Android).
 
 ## Recently Completed Highlights
+- **Test/Perf/PWA sweep (2026-02-10)**: 146/146 tests pass (fixed 2 WSL2-flaky timeouts). Perf harness 100-blip benchmark: landing-labels 289ms / expanded-root 523ms / 18MB memory — both PASS. PWA audit 98/100: fixed manifest.json shortcut icon `.png` → `.svg`.
 - **Mobile hardening (2026-02-10)**: Touch targets (44px min) added to 11 CSS files, dead `mobile.tsx` stub removed, pull-to-refresh now waits for actual data reload, `100dvh` for mobile address bar, GadgetPalette responsive grid, iOS zoom prevention (`font-size: 16px` on inputs).
 - **Zero TypeScript errors + real health check (2026-02-10)**: Fixed all 25 `tsc` errors across 14 files (unused vars, Express 5 param types, TipTap `isDestroyed` cast, index signature access). Upgraded `/api/health` from stub to real CouchDB connectivity check with latency, version, and uptime reporting (503 on failure).
 - **Wave-level playback (2026-02-09)**: Full wave timeline modal showing all blips evolving chronologically:

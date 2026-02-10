@@ -5,9 +5,28 @@
 ## Current Branch
 `feature/rizzoma-core-features` (main branch is `master`)
 
-## Latest Work: Mobile Hardening (2026-02-10)
+## Latest Work: Test/Perf/PWA Sweep (2026-02-10)
 
-### What Was Done
+### Test Suite: 146/146 pass (3 skipped)
+- Fixed 2 flaky timeouts caused by WSL2 slowness:
+  - `client.BlipEditor.test.ts`: useSocket hook `{ timeout: 30000 }` (socket.io-client import heavy)
+  - `routes.auth.test.ts`: beforeAll bcrypt hash `, 30000` (CPU-heavy on WSL2)
+- Commit: `1523d18a`
+
+### Perf Harness: 100-blip benchmark — BOTH stages PASS
+- **landing-labels**: Stage 288.7ms, FCP 492ms, memory 18MB, 100/100 blips
+- **expanded-root**: Stage 522.6ms, FCP 492ms, memory 18MB, 100/100 blips
+- Budgets: firstRenderTarget 3000ms, memoryTarget 100MB — both well within limits
+- Metrics saved: `snapshots/perf/metrics-1770686732259-*.json`
+
+### PWA Audit: 98/100 ready
+- manifest.json, sw.js, offline queue, app shell — all present and correct
+- **Fixed**: shortcut icon referenced `.png` instead of `.svg` in `public/manifest.json` line 71
+- Only gap: no real device testing yet (need iPhone Safari + Chrome Android)
+
+### Previous: Mobile Hardening (2026-02-10)
+
+#### What Was Done
 - Deleted dead `mobile.tsx`/`mobile.html` stubs and Vite entry point
 - Fixed pull-to-refresh to wait for actual data reload via `rizzoma:topics-loaded` event (was fake 500ms sleep)
 - Added `100dvh` dynamic viewport height (accounts for mobile address bar)
@@ -15,7 +34,7 @@
 - GadgetPalette: responsive 2-col/1-col grid for small screens
 - Input `font-size: 16px` on touch devices to prevent iOS auto-zoom
 
-### Files Changed (14 files, commit fbe0315a)
+#### Files Changed (14 files, commit fbe0315a)
 | File | Change |
 |------|--------|
 | `src/client/mobile.html` | Deleted |
@@ -33,7 +52,7 @@
 | `src/client/components/blip/BlipHistoryModal.css` | Touch targets |
 | `src/client/components/blip/RizzomaBlip.css` | Touch targets for collapsed rows, expander, reply buttons |
 
-### Completed: Playwright Mobile Viewport Screenshots (9 screenshots)
+#### Completed: Playwright Mobile Viewport Screenshots (9 screenshots)
 - iPhone SE (375x667): auth panel, topic list, BLB topic detail
 - iPhone 14 Pro (393x852): topic list, BLB topic detail
 - Pixel 7 (412x915): topic list, COLLAB TEST detail, BLB topic detail
@@ -343,4 +362,4 @@ npx vitest run src/tests/server.yjsDocCache.test.ts
 - All screenshots go in `screenshots/` or `screenshots/side-by-side/`
 
 ---
-*Updated: 2026-02-08 — Real-time collaboration implementation complete, cross-tab sync testing in progress*
+*Updated: 2026-02-10 — Test/Perf/PWA sweep complete, 146/146 tests pass, perf baselines captured*
