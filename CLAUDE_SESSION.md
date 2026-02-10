@@ -1,11 +1,36 @@
-# Claude Session Context (2026-02-09)
+# Claude Session Context (2026-02-10)
 
 **Read this file first when resuming work on this project.**
 
 ## Current Branch
 `feature/rizzoma-core-features` (main branch is `master`)
 
-## Active Work: Wave-Level Playback (2026-02-09)
+## Latest Work: TypeScript Cleanup + Health Check (2026-02-10)
+
+### What Was Done
+- Fixed all 25 TypeScript errors → `tsc --noEmit` is now **zero errors**
+- Upgraded `/api/health` from `{ status: 'ok' }` stub to real CouchDB connectivity check
+- Collab debug logs (`[collab-dbg]`, `__dbg`) were already cleaned up in prior session
+
+### Files Changed (14 files, commit abee6236)
+| File | Fix |
+|------|-----|
+| `src/client/main.tsx` | Removed unused `RizzomaLanding` import |
+| `src/client/components/RizzomaTopicDetail.tsx` | Cast `isDestroyed` via `(as any)`, `!!` for `classList.toggle` |
+| `src/client/components/RightToolsPanel.tsx` | Prefix unused `isCursorInEditor` |
+| `src/client/components/blip/BlipMenu.tsx` | Rename destructured `isExpanded` → `_isExpanded` |
+| `src/client/components/blip/RizzomaBlip.tsx` | Rename unused `onNavigateToSubblip`, cast `isDestroyed` |
+| `src/server/routes/blips.ts` | Bracket notation for index sig, removed unused `canEdit` |
+| `src/server/routes/health.ts` | Real health check: CouchDB ping, latency, version, uptime, 503 on failure |
+| `src/server/routes/mentions.ts` | `String()` wrap for Express 5 param type |
+| `src/server/routes/tasks.ts` | `String()` wrap (2 locations) |
+| `src/server/routes/topics.ts` | Removed unused `userId` |
+| `src/tests/client.BlipEditor.test.ts` | Fixed `Editor` import for @tiptap/core module shape |
+| `src/tests/client.RightToolsPanel.followGreen.test.tsx` | Prefix unused `toast` import |
+| `src/tests/routes.topics.follow.test.ts` | Bracket notation for index sig access |
+| `src/tests/server.yjsDocCache.test.ts` | Bracket notation, removed unused `doc` var |
+
+## Previous Work: Wave-Level Playback (2026-02-09)
 
 ### What Was Built
 Wave-level playback modal that shows the entire topic evolving over time — all blips changing chronologically.
