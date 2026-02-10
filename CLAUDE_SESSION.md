@@ -33,11 +33,12 @@
 | `src/client/components/blip/BlipHistoryModal.css` | Touch targets |
 | `src/client/components/blip/RizzomaBlip.css` | Touch targets for collapsed rows, expander, reply buttons |
 
-### Pending: Playwright Mobile Viewport Screenshots
-Blocked by WSL2 EIO errors. When dev server can start, run Playwright with:
-- iPhone SE: 375x667
-- iPhone 14 Pro: 393x852
-- Pixel 7: 412x915
+### Completed: Playwright Mobile Viewport Screenshots (9 screenshots)
+- iPhone SE (375x667): auth panel, topic list, BLB topic detail
+- iPhone 14 Pro (393x852): topic list, BLB topic detail
+- Pixel 7 (412x915): topic list, COLLAB TEST detail, BLB topic detail
+- Desktop (1280x800): BLB topic detail (comparison)
+- All viewports render cleanly — no overflow, clipping, or layout issues
 
 ## Previous Work: TypeScript Cleanup + Health Check (2026-02-10)
 
