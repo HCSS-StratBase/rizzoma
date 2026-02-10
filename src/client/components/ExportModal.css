@@ -178,3 +178,21 @@
     padding: 10px 12px;
   }
 }
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .export-modal-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .export-format-option {
+    min-height: 44px;
+    padding: 14px;
+  }
+
+  .export-btn {
+    min-height: 44px;
+    padding: 10px 24px;
+  }
+}

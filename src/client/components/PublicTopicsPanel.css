@@ -64,3 +64,16 @@
   text-align: center;
   color: #666;
 }
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .panel-search input {
+    min-height: 44px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+
+  .topic-item {
+    min-height: 44px;
+    padding: 14px 12px;
+  }
+}

@@ -116,3 +116,16 @@
 .or-divider::after {
   margin-left: 0.75rem;
 }
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .oauth-btn {
+    min-height: 44px;
+    padding: 12px 1rem;
+    font-size: 1rem;
+  }
+
+  .submit-btn {
+    min-height: 44px;
+  }
+}

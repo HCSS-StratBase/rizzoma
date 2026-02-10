@@ -244,3 +244,33 @@
 .checkbox-option input[type="checkbox"] {
   width: auto;
 }
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .close-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    min-height: 44px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    min-height: 44px;
+    padding: 10px 20px;
+  }
+
+  .btn-copy {
+    min-height: 44px;
+  }
+
+  .radio-option,
+  .checkbox-option {
+    min-height: 44px;
+    padding: 8px 0;
+  }
+}

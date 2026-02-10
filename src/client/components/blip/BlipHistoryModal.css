@@ -447,3 +447,28 @@
     margin-top: 4px;
   }
 }
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .playback-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .speed-select {
+    min-height: 44px;
+  }
+
+  .blip-history-header button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .blip-history-footer button {
+    min-height: 44px;
+  }
+
+  .blip-history-entry-btn {
+    min-height: 44px;
+  }
+}

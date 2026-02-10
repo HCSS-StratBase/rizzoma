@@ -132,3 +132,52 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .gadget-palette {
+    right: 8px;
+    left: 8px;
+    bottom: 8px;
+    width: auto;
+  }
+
+  .gadget-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 380px) {
+  .gadget-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .gadget-palette-close {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gadget-tile {
+    padding: 14px 8px;
+    min-height: 44px;
+  }
+
+  .gadget-url-back,
+  .gadget-url-ok {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .gadget-url-field {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+}

@@ -26,7 +26,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'src/client/index.html'),
-        mobile: path.resolve(__dirname, 'src/client/mobile.html'),
         settings: path.resolve(__dirname, 'src/client/settings.html'),
         testEditor: path.resolve(__dirname, 'src/client/test-editor.html'),
       },

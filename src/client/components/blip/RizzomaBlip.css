@@ -1165,3 +1165,34 @@
 .blip-thread-marker.orphaned {
   display: none;
 }
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .child-blip-collapsed {
+    padding: 10px 8px;
+    min-height: 44px;
+  }
+
+  .blip-collapsed-row {
+    padding: 10px 0;
+    min-height: 44px;
+  }
+
+  .blip-expander {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .btn-send-reply,
+  .btn-cancel-reply {
+    min-height: 44px;
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .reply-textarea {
+    min-height: 80px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+}

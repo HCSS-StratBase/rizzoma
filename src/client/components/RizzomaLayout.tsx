@@ -112,12 +112,14 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
     },
   });
 
-  // Pull to refresh for topic list
+  // Pull to refresh for topic list — dispatches refresh and waits for topics-loaded response
   const handleRefresh = useCallback(async () => {
-    // Trigger a refresh by invalidating data
-    // This is a placeholder - actual implementation depends on data fetching strategy
     window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise<void>((resolve) => {
+      const done = () => { window.removeEventListener('rizzoma:topics-loaded', done); resolve(); };
+      window.addEventListener('rizzoma:topics-loaded', done, { once: true });
+      setTimeout(done, 5000); // fallback timeout
+    });
   }, []);
 
   usePullToRefresh(listContainerRef, {

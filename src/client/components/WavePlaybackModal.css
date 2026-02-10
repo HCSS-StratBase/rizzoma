@@ -479,4 +479,44 @@
   .wave-playback-date-jump {
     flex-wrap: wrap;
   }
+
+  .wave-timeline-dot {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .wave-playback-btns .playback-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .wave-playback-btns .speed-select {
+    min-height: 44px;
+  }
+
+  .wave-playback-date-jump button {
+    min-height: 44px;
+  }
+
+  .wave-playback-date-jump input[type="datetime-local"] {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .wave-playback-footer button {
+    min-height: 44px;
+  }
+
+  .wave-playback-header button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .wave-timeline-dot {
+    width: 18px;
+    height: 18px;
+  }
 }
