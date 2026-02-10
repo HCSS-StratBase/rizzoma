@@ -5,7 +5,41 @@
 ## Current Branch
 `feature/rizzoma-core-features` (main branch is `master`)
 
-## Latest Work: TypeScript Cleanup + Health Check (2026-02-10)
+## Latest Work: Mobile Hardening (2026-02-10)
+
+### What Was Done
+- Deleted dead `mobile.tsx`/`mobile.html` stubs and Vite entry point
+- Fixed pull-to-refresh to wait for actual data reload via `rizzoma:topics-loaded` event (was fake 500ms sleep)
+- Added `100dvh` dynamic viewport height (accounts for mobile address bar)
+- Added touch-friendly `@media (hover: none) and (pointer: coarse)` media queries to 11 CSS files
+- GadgetPalette: responsive 2-col/1-col grid for small screens
+- Input `font-size: 16px` on touch devices to prevent iOS auto-zoom
+
+### Files Changed (14 files, commit fbe0315a)
+| File | Change |
+|------|--------|
+| `src/client/mobile.html` | Deleted |
+| `src/client/mobile.tsx` | Deleted |
+| `vite.config.ts` | Removed mobile entry point |
+| `src/client/components/RizzomaLayout.tsx` | Pull-to-refresh waits for `rizzoma:topics-loaded` event |
+| `src/client/components/RizzomaLayout.css` | Added `100dvh` |
+| `src/client/components/AuthPanel.css` | Touch targets (44px min) |
+| `src/client/components/CreateTopicModal.css` | Touch targets + iOS zoom prevention |
+| `src/client/components/ExportModal.css` | Touch targets |
+| `src/client/components/GadgetPalette.css` | Responsive grid + touch targets |
+| `src/client/components/PublicTopicsPanel.css` | Touch targets + iOS zoom prevention |
+| `src/client/components/RightToolsPanel.css` | Touch targets |
+| `src/client/components/WavePlaybackModal.css` | Touch targets + larger timeline dots |
+| `src/client/components/blip/BlipHistoryModal.css` | Touch targets |
+| `src/client/components/blip/RizzomaBlip.css` | Touch targets for collapsed rows, expander, reply buttons |
+
+### Pending: Playwright Mobile Viewport Screenshots
+Blocked by WSL2 EIO errors. When dev server can start, run Playwright with:
+- iPhone SE: 375x667
+- iPhone 14 Pro: 393x852
+- Pixel 7: 412x915
+
+## Previous Work: TypeScript Cleanup + Health Check (2026-02-10)
 
 ### What Was Done
 - Fixed all 25 TypeScript errors → `tsc --noEmit` is now **zero errors**
