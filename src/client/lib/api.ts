@@ -1,4 +1,6 @@
-export type ApiResponse<T = any> = { ok: boolean; data: T | string | null; status: number; requestId?: string };
+import { offlineQueue, type QueuedMutation } from './offlineQueue';
+
+export type ApiResponse<T = any> = { ok: boolean; data: T | string | null; status: number; requestId?: string; queued?: boolean };
 
 export function readCookie(name: string): string | undefined {
   const escaped = name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
@@ -51,12 +53,34 @@ export async function api<T = any>(path: string, init?: RequestInit): Promise<Ap
     return { ok: true, data: { topics: [], hasMore: false } as T, status: 200 };
   }
 
-  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+  const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(method);
+
+  if (isMutation) {
     if (!headers['x-csrf-token']) {
       const token = readCookie('XSRF-TOKEN');
       if (token) headers['x-csrf-token'] = token;
     }
   }
+
+  // Queue mutations when offline (except auth routes which must be online)
+  if (isMutation && typeof navigator !== 'undefined' && !navigator.onLine && !path.startsWith('/api/auth')) {
+    let body: unknown;
+    if (init?.body) {
+      try {
+        body = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
+      } catch {
+        body = init.body;
+      }
+    }
+    offlineQueue.enqueue({
+      method: method as QueuedMutation['method'],
+      url: path,
+      body,
+    });
+    console.log('[api] Offline — mutation queued:', path, method);
+    return { ok: true, data: { queued: true } as T, status: 202, queued: true };
+  }
+
   const res = await fetch(path, { credentials: 'include', ...init, headers });
   const duration = Date.now() - start;
   const text = await res.text();

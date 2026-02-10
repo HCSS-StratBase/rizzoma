@@ -5,23 +5,57 @@
 ## Current Branch
 `feature/rizzoma-core-features` (main branch is `master`)
 
-## Latest Work: Test/Perf/PWA Sweep (2026-02-10)
+## Latest Work: Four-Item Sweep (2026-02-10)
 
-### Test Suite: 146/146 pass (3 skipped)
-- Fixed 2 flaky timeouts caused by WSL2 slowness:
-  - `client.BlipEditor.test.ts`: useSocket hook `{ timeout: 30000 }` (socket.io-client import heavy)
-  - `routes.auth.test.ts`: beforeAll bcrypt hash `, 30000` (CPU-heavy on WSL2)
-- Commit: `1523d18a`
+### 1. getUserMedia Adapter Modernized
+- Converted `getUserMediaAdapter.js` → `.ts` (ES module, full TypeScript types)
+- **Removed**: legacy prefixed APIs (`webkitGetUserMedia`, `mozGetUserMedia`, `msGetUserMedia`, `mozSrcObject`, `webkitRTCPeerConnection`), global pollution (`window.getUserMedia` etc.), IIFE pattern
+- **Added**: `requestDisplayMedia()` for screen sharing, proper TypeScript types
+- Tests: 10/10 pass (was 8, added `requestDisplayMedia` + `reattachMediaStream` tests)
 
-### Perf Harness: 100-blip benchmark — BOTH stages PASS
+### 2. Offline Queue Wired into API
+- `api()` in `api.ts` now queues mutations when `!navigator.onLine` (except auth routes)
+- Returns `{ ok: true, status: 202, queued: true }` for queued mutations
+- `offlineQueue.initialize()` called at app startup in `main.tsx`
+- Auto-syncs when back online (existing `offlineQueue` infrastructure)
+
+### 3. PWA Install + Notification UI
+- New `PWAPrompts.tsx` + `.css` — fixed-bottom banner with three states:
+  - **Install prompt**: "Install Rizzoma for faster access" (uses `useInstallPrompt` hook)
+  - **Notification opt-in**: "Enable notifications for updates" (`Notification.requestPermission()`)
+  - **Offline indicator**: Shows pending mutation count while offline
+- Dismissals persist to `localStorage`; auto-hides when already installed/granted
+- Touch-friendly (44px min targets on mobile)
+- Wired into `RizzomaLayout.tsx`
+
+### 4. Collab Testing Hardened
+- **Server tests** (`server.yjsDocCache.test.ts`): 15 tests (was 11, +4):
+  - Reconnection via state vector diff
+  - Two clients editing concurrently via server cache
+  - Dirty set cleared after persist
+  - Destroy cleanup verification
+- **Client tests** (`client.collaborativeProvider.test.ts`): 9 NEW tests:
+  - Room join on connect, skip on disconnect
+  - Local updates sent to server
+  - Remote updates applied to doc
+  - No echo of remote updates (origin guard)
+  - onSynced callback lifecycle
+  - Reconnection (re-join + state vector)
+  - setUser awareness
+  - Destroy cleanup
+
+### Test Suite: 161/161 pass (3 skipped)
+- 15 new tests added across 3 files
+
+### Previous: Test/Perf/PWA Sweep (2026-02-10)
+
+#### Perf Harness: 100-blip benchmark — BOTH stages PASS
 - **landing-labels**: Stage 288.7ms, FCP 492ms, memory 18MB, 100/100 blips
 - **expanded-root**: Stage 522.6ms, FCP 492ms, memory 18MB, 100/100 blips
 - Budgets: firstRenderTarget 3000ms, memoryTarget 100MB — both well within limits
-- Metrics saved: `snapshots/perf/metrics-1770686732259-*.json`
 
-### PWA Audit: 98/100 ready
-- manifest.json, sw.js, offline queue, app shell — all present and correct
-- **Fixed**: shortcut icon referenced `.png` instead of `.svg` in `public/manifest.json` line 71
+#### PWA Audit: 98/100 ready → fixed
+- **Fixed**: shortcut icon referenced `.png` instead of `.svg` in `public/manifest.json`
 - Only gap: no real device testing yet (need iPhone Safari + Chrome Android)
 
 ### Previous: Mobile Hardening (2026-02-10)
@@ -362,4 +396,4 @@ npx vitest run src/tests/server.yjsDocCache.test.ts
 - All screenshots go in `screenshots/` or `screenshots/side-by-side/`
 
 ---
-*Updated: 2026-02-10 — Test/Perf/PWA sweep complete, 146/146 tests pass, perf baselines captured*
+*Updated: 2026-02-10 — Four-item sweep complete (getUserMedia, offline queue, PWA UI, collab tests), 161/161 pass*

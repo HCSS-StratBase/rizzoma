@@ -9,6 +9,7 @@ import { TeamsPanel } from './TeamsPanel';
 import { RizzomaTopicDetail } from './RizzomaTopicDetail';
 import { RightToolsPanel } from './RightToolsPanel';
 import { CreateTopicModal } from './CreateTopicModal';
+import { PWAPrompts } from './PWAPrompts';
 import './RizzomaLayout.css';
 import { useWaveUnread } from '../hooks/useWaveUnread';
 import { ensureWaveUnreadJoin } from '../lib/socket';
@@ -303,6 +304,9 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
         onClose={() => setShowCreateModal(false)}
         onTopicCreated={handleTopicCreated}
       />
+
+      {/* PWA install prompt + notification opt-in + offline indicator */}
+      <PWAPrompts />
     </div>
   );
 }

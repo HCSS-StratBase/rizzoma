@@ -166,4 +166,86 @@ describe('server: YjsDocCache', () => {
 
     sourceDoc.destroy();
   });
+
+  // --- Reconnection / state vector sync tests ---
+
+  it('simulates reconnection: client catches up via state vector diff', () => {
+    // Client A edits
+    const clientA = new Y.Doc();
+    clientA.getText('default').insert(0, 'hello');
+    const updateA = Y.encodeStateAsUpdate(clientA);
+    yjsDocCache.applyUpdate('blip-recon', updateA, 'clientA');
+
+    // Client B has stale state (empty doc)
+    const clientB = new Y.Doc();
+    const clientBSV = Y.encodeStateVector(clientB);
+
+    // Server computes diff for client B
+    const diff = yjsDocCache.encodeDiffUpdate('blip-recon', clientBSV);
+    expect(diff).not.toBeNull();
+
+    // Client B applies diff → catches up
+    Y.applyUpdate(clientB, diff!);
+    expect(clientB.getText('default').toString()).toBe('hello');
+
+    clientA.destroy();
+    clientB.destroy();
+  });
+
+  it('simulates two clients editing concurrently via server cache', () => {
+    // Client A writes "Hello"
+    const clientA = new Y.Doc();
+    clientA.getText('default').insert(0, 'Hello');
+    yjsDocCache.applyUpdate('blip-multi', Y.encodeStateAsUpdate(clientA), 'A');
+
+    // Client B writes " World" at the end
+    const clientB = new Y.Doc();
+    // First sync B from server
+    const stateForB = yjsDocCache.getState('blip-multi')!;
+    Y.applyUpdate(clientB, stateForB);
+    clientB.getText('default').insert(5, ' World');
+    yjsDocCache.applyUpdate('blip-multi', Y.encodeStateAsUpdate(clientB), 'B');
+
+    // Server doc should have merged content
+    const serverDoc = yjsDocCache.getOrCreate('blip-multi');
+    const merged = serverDoc.getText('default').toString();
+    expect(merged).toContain('Hello');
+    expect(merged).toContain('World');
+
+    clientA.destroy();
+    clientB.destroy();
+  });
+
+  it('dirty set is cleared after successful persist', async () => {
+    vi.mocked(findOne).mockResolvedValue(null);
+    vi.mocked(insertDoc).mockResolvedValue({ ok: true, id: 'x', rev: '1' } as any);
+
+    const doc = new Y.Doc();
+    doc.getText('t').insert(0, 'data');
+    yjsDocCache.applyUpdate('blip-dirty', Y.encodeStateAsUpdate(doc), 'test');
+
+    // First persist should insert
+    await yjsDocCache.persistDirty();
+    expect(insertDoc).toHaveBeenCalledTimes(1);
+
+    // Second persist should NOT insert again (dirty cleared)
+    vi.mocked(insertDoc).mockClear();
+    await yjsDocCache.persistDirty();
+    expect(insertDoc).not.toHaveBeenCalled();
+
+    doc.destroy();
+  });
+
+  it('destroy cleans up all docs and intervals', () => {
+    yjsDocCache.getOrCreate('blip-a');
+    yjsDocCache.getOrCreate('blip-b');
+    yjsDocCache.addRef('blip-a');
+    yjsDocCache.addRef('blip-b');
+
+    yjsDocCache.destroy();
+
+    // After destroy, getState returns null for all
+    expect(yjsDocCache.getState('blip-a')).toBeNull();
+    expect(yjsDocCache.getState('blip-b')).toBeNull();
+  });
 });

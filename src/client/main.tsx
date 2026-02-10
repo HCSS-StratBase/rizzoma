@@ -16,7 +16,11 @@ import { FEATURES } from '@shared/featureFlags';
 import { MobileProvider } from './contexts/MobileContext';
 import { useServiceWorker, useInstallPrompt } from './hooks/useServiceWorker';
 import { useOfflineToast } from './hooks/useOfflineStatus';
+import { offlineQueue } from './lib/offlineQueue';
 import { setupBlipThreadClickHandler } from './components/editor/extensions/BlipThreadNode';
+
+// Initialize offline queue (loads pending mutations from localStorage, auto-syncs when online)
+offlineQueue.initialize();
 import './RizzomaApp.css';
 import './styles/breakpoints.css';
 import './styles/view-transitions.css';

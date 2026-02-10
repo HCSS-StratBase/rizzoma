@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
-const adapterModulePath = '../client/lib/getUserMediaAdapter.js';
+const adapterModulePath = '../client/lib/getUserMediaAdapter';
 
 async function loadAdapter() {
   const module = await import(adapterModulePath);
@@ -20,10 +20,6 @@ describe('getUserMediaAdapter', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     delete (globalThis as any).navigator;
-    delete (globalThis as any).getUserMedia;
-    delete (globalThis as any).requestUserMedia;
-    delete (globalThis as any).attachMediaStream;
-    delete (globalThis as any).reattachMediaStream;
   });
 
   it('prefers navigator.mediaDevices.getUserMedia when available', async () => {
@@ -40,32 +36,20 @@ describe('getUserMediaAdapter', () => {
 
     expect(result).toBe(stream);
     expect(getUserMediaSpy).toHaveBeenCalledWith(constraints);
-    expect(typeof (globalThis as any).getUserMedia).toBe('function');
-
-    const success = vi.fn();
-    const failure = vi.fn();
-    const legacyResult = await (globalThis as any).getUserMedia(constraints, success, failure);
-    expect(legacyResult).toBe(stream);
-    expect(success).toHaveBeenCalledWith(stream);
-    expect(failure).not.toHaveBeenCalled();
+    expect(adapter.hasModernApi).toBe(true);
+    expect(adapter.canRequestMedia).toBe(true);
   });
 
-  it('falls back to legacy navigator.getUserMedia implementation', async () => {
-    const legacyStream = { id: 'legacy-stream' };
-    const legacyStub = vi.fn((_, resolve) => {
-      resolve(legacyStream);
-    });
+  it('rejects when only legacy navigator.getUserMedia is available (no mediaDevices)', async () => {
     (globalThis as any).navigator = {
       userAgent: 'Firefox/123.0',
-      getUserMedia: legacyStub,
+      getUserMedia: vi.fn(),
     };
 
     const adapter = await loadAdapter();
-    const result = await adapter.requestUserMedia();
-
-    expect(result).toBe(legacyStream);
-    expect(legacyStub).toHaveBeenCalledTimes(1);
     expect(adapter.hasModernApi).toBe(false);
+    expect(adapter.canRequestMedia).toBe(false);
+    await expect(adapter.requestUserMedia()).rejects.toThrow(/WebRTC-capable/);
   });
 
   it('rejects when no media APIs are available', async () => {
@@ -160,5 +144,38 @@ describe('getUserMediaAdapter', () => {
 
     const adapter = await loadAdapter();
     expect(adapter.supportsDisplayMedia).toBe(true);
+  });
+
+  it('requestDisplayMedia calls getDisplayMedia', async () => {
+    const displayStream = { id: 'screen-share' };
+    const getDisplayMediaSpy = vi.fn().mockResolvedValue(displayStream);
+    (globalThis as any).navigator = {
+      userAgent: 'Chrome/122.0.0',
+      mediaDevices: {
+        getUserMedia: vi.fn().mockResolvedValue({}),
+        getDisplayMedia: getDisplayMediaSpy,
+      },
+    };
+
+    const adapter = await loadAdapter();
+    const result = await adapter.requestDisplayMedia();
+    expect(result).toBe(displayStream);
+    expect(getDisplayMediaSpy).toHaveBeenCalled();
+  });
+
+  it('reattachMediaStream copies srcObject between elements', async () => {
+    (globalThis as any).navigator = {
+      userAgent: 'Chrome/122.0.0',
+      mediaDevices: { getUserMedia: vi.fn().mockResolvedValue({}) },
+    };
+
+    const adapter = await loadAdapter();
+    const stream = { id: 'reattach-test' };
+    const source: any = { srcObject: stream, play: vi.fn().mockResolvedValue(undefined) };
+    const target: any = { srcObject: null, play: vi.fn().mockResolvedValue(undefined) };
+
+    adapter.reattachMediaStream(target, source);
+    expect(target.srcObject).toBe(stream);
+    expect(target.play).toHaveBeenCalled();
   });
 });
