@@ -5,6 +5,10 @@ Branch context guardrails:
 - `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-02-03; refresh if more changes land.
 - Re-read checkpoint: 2026-02-04 01:55 local — BLB child unread highlight removed (green [+] only) and BLB snapshots refreshed (`snapshots/blb/1770165748162-*`); drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
 
+Private repo note:
+- Direct work on `master` is allowed for this private/solo repo.
+- Keep `master-archive-2026-02-24` as rollback anchor; use short-lived feature branches only for risky work.
+
 Quick start for the next batch (copy/paste):
 ```
 codex exec '

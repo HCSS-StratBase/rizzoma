@@ -3,8 +3,13 @@
 Last Updated: 2026-02-04 (BLB child unread highlight removed; BLB snapshots refreshed)
 
 Branch context guardrails:
-- Active branch: `feature/rizzoma-core-features`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.
-- The "Current State" section below reflects `feature/rizzoma-core-features` as of 2026-02-03; revalidate after further changes.
+- Active branch: `master`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.
+- The "Current State" section below is inherited from `feature/rizzoma-core-features` snapshot content and should be refreshed for `master` as changes land.
+
+Branching mode (private repo):
+- Direct development on `master` is acceptable in this private/solo setup.
+- Preserve `master-archive-2026-02-24` as rollback anchor when master pointer changes are performed.
+- Use feature branches when isolation is needed for risky or long-running work.
 
 ### Drift warnings (actively curating)
 - Some onboarding/status docs (`README*.md`, `README_MODERNIZATION.md`, `MODERNIZATION_STRATEGY.md`, `PARALLEL_DEVELOPMENT_PLAN.md`) still talk about demo-mode shortcuts, “all core features green,” or aggressive auto-merge flows that predate the unread/perf backlog. Treat them as historical until we rewrite them with the current perf harness + CI gating expectations.
@@ -24,7 +29,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (feature/rizzoma-core-features @ 2026-02-04)
+Current State (master @ 2026-02-24; inherited snapshot from feature/rizzoma-core-features @ 2026-02-04)
 - FEAT_ALL required: start both server (:8000) and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Tests last run (2026-02-04): `node test-blb-snapshots.mjs` pass with snapshots under `snapshots/blb/1770165748162-*`. Earlier 2026-02-03 runs: Playwright `npm run test:toolbar-inline` pass (assertions active; snapshots under `snapshots/toolbar-inline/1770080797945-*-final.png`). Playwright `npm run test:follow-green` pass (desktop+mobile) with snapshots under `snapshots/follow-the-green/1770081675832-*` and `snapshots/follow-the-green/1770081713734-*`. Earlier 2026-02-03 runs: `npm run test:health` pass; `npm test -- --run src/tests/client.BlipMenu.test.tsx` pass; perf harness 1000 blips pass with metrics under `snapshots/perf/metrics-1770076098998-*.json` and renders under `snapshots/perf/render-1770076098998-*.png`. Prior runs: `npm test -- --run src/tests/routes.topics.follow.test.ts` pass (2026-02-02). Historical BLB snapshot runs remain below; re-run before merges.
 - BLB inline `[+]` markers now navigate into subblip documents; Ctrl+Enter inserts marker and navigates into the new subblip (topic + blip editors).

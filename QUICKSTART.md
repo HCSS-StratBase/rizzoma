@@ -39,6 +39,13 @@ docker compose up -d app couchdb redis rabbitmq sphinx minio clamav
 
 The app is always required. The only choice is whether it runs locally (`npm run dev`) or in the `app` container.
 
+## 🌿 Branching Mode (Private Repo)
+
+For this private/solo repo, working directly on `master` is acceptable.
+- Keep small, frequent commits on `master`.
+- Keep a rollback anchor branch (`master-archive-2026-02-24`) before major branch-pointer changes.
+- Use temporary feature branches only for risky or long-running experiments.
+
 You can also run the all-in-one script, which will start services, wait for health checks, and launch the app:
 ```bash
 ./scripts/start-all.sh
