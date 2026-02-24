@@ -7,6 +7,7 @@ type AuthUser = { id?: string; email?: string };
 type OAuthStatus = { google: boolean; facebook: boolean; microsoft: boolean; saml: boolean };
 
 export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void }): JSX.Element {
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -76,13 +77,13 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !busy) {
-      void act('login');
+      void act(mode);
     }
   };
 
   return (
     <div className="auth-panel">
-      <h3 className="auth-title">Sign in to continue</h3>
+      <h3 className="auth-title">{mode === 'login' ? 'Sign in to continue' : 'Create an account'}</h3>
 
       {/* OAuth buttons */}
       <button
@@ -123,7 +124,7 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
         </button>
       )}
 
-      <div className="or-divider">or sign in with email</div>
+      <div className="or-divider">{mode === 'login' ? 'or sign in with email' : 'or sign up with email'}</div>
 
       <div className="login-form">
         <input
@@ -151,18 +152,45 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
 
         <button
           className="submit-btn"
-          onClick={() => { void act('login'); }}
+          onClick={() => { void act(mode); }}
           disabled={busy}
         >
-          {busy ? 'Signing in...' : 'Sign In'}
+          {busy ? (mode === 'login' ? 'Signing in...' : 'Creating account...') : (mode === 'login' ? 'Sign In' : 'Create Account')}
         </button>
       </div>
 
       <div className="login-footer">
-        <span>Don't have an account? </span>
-        <a href="#" className="signup-link" onClick={(e) => { e.preventDefault(); void act('register'); }}>
-          Sign up
-        </a>
+        {mode === 'login' ? (
+          <>
+            <span>Don't have an account? </span>
+            <a
+              href="#"
+              className="signup-link"
+              onClick={(e) => {
+                e.preventDefault();
+                setError(null);
+                setMode('register');
+              }}
+            >
+              Sign up
+            </a>
+          </>
+        ) : (
+          <>
+            <span>Already have an account? </span>
+            <a
+              href="#"
+              className="signup-link"
+              onClick={(e) => {
+                e.preventDefault();
+                setError(null);
+                setMode('login');
+              }}
+            >
+              Sign in
+            </a>
+          </>
+        )}
       </div>
     </div>
   );

@@ -74,6 +74,10 @@ codex exec '
 3) Services
 - Docker Desktop with WSL integration ON (if on Windows/WSL)
 - Start: `docker compose up -d couchdb redis` (add `clamav` if you plan to set `CLAMAV_HOST`/`CLAMAV_PORT` for upload scanning)
+- If you want full container mode (including app in Docker), run:
+  `docker compose up -d app couchdb redis rabbitmq sphinx minio clamav`
+  - This starts the actual app container `rizzoma-app`.
+  - Local-dev mode still uses host app (`npm run dev`) with Docker only for infra.
 
 4) Legacy Views (if DB lacks them)
 - `npm run prep:views && npm run deploy:views`

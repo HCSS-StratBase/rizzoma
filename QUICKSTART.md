@@ -17,6 +17,28 @@ npm run dev
 
 This brings up CouchDB/Redis, then runs the API + UI locally (Vite + TSX). Use real authentication via the AuthPanel; demo/query-string logins are not supported on this branch.
 
+## 🧭 App Run Modes (Important)
+
+There are two supported ways to run the app itself:
+
+1. Local app process (recommended for day-to-day development)
+```bash
+docker compose up -d couchdb redis
+FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev
+```
+- App runs on the host (`:3000` + `:8000`)
+- Fastest edit/debug loop
+
+2. Containerized app process (`rizzoma-app`)
+```bash
+docker compose up -d app couchdb redis rabbitmq sphinx minio clamav
+```
+- App runs inside Docker container `rizzoma-app`
+- Better container parity checks
+- Use this when you explicitly want full compose/container mode
+
+The app is always required. The only choice is whether it runs locally (`npm run dev`) or in the `app` container.
+
 You can also run the all-in-one script, which will start services, wait for health checks, and launch the app:
 ```bash
 ./scripts/start-all.sh
