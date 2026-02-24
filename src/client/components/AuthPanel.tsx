@@ -62,10 +62,12 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
     const r = await api(`/api/auth/${kind}`, { method: 'POST', body: JSON.stringify({ email, password }) });
     setBusy(false);
     if (!r.ok) {
-      setError(kind === 'login' ? 'Invalid email or password' : 'Registration failed');
+      const serverMsg = typeof r.data === 'object' && r.data && 'error' in r.data ? String((r.data as any).error) : '';
+      const detail = serverMsg ? ` [${serverMsg}]` : ` [HTTP ${r.status}]`;
+      setError(kind === 'login' ? `Invalid email or password${detail}` : `Registration failed${detail}`);
       const reqId = (r as unknown as { requestId?: string | undefined }).requestId;
       const idTag = (reqId !== undefined && reqId !== '') ? ` (${reqId})` : '';
-      toast(`${kind === 'login' ? 'Login' : 'Register'} failed${idTag}`, 'error');
+      toast(`${kind === 'login' ? 'Login' : 'Register'} failed${detail}${idTag}`, 'error');
     } else {
       onSignedIn(r.data as AuthUser);
       toast(kind === 'login' ? 'Welcome back!' : 'Account created!', 'info');
@@ -141,6 +143,8 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={busy}
+          autoCapitalize="off"
+          autoCorrect="off"
         />
 
         {error && <div className="auth-error">{error}</div>}

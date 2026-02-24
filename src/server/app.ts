@@ -40,7 +40,9 @@ const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true);
-    const allowAll = !isProd && allowedOrigins.includes('*');
+    // In dev mode, allow any origin (needed for LAN/mobile testing via IP)
+    if (!isProd) return cb(null, true);
+    const allowAll = allowedOrigins.includes('*');
     if (allowAll || allowedOrigins.includes(origin)) return cb(null, true);
     return cb(new Error('CORS not allowed'));
   },
