@@ -34,7 +34,7 @@ const app = express();
 app.use(helmet());
 // reflect origin from allowlist for credentialed requests
 const isProd = process.env['NODE_ENV'] === 'production';
-const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002,http://127.0.0.1:3003,http://127.0.0.1:3004,http://127.0.0.1:3005')
+const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost:8788,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002,http://127.0.0.1:3003,http://127.0.0.1:3004,http://127.0.0.1:3005,http://127.0.0.1:8788')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
@@ -104,12 +104,14 @@ app.get('/{*path}', (_req, res, next) => {
   if (process.env['NODE_ENV'] === 'production') {
     res.sendFile(path.join(staticDir, 'index.html'));
   } else {
-    // In development, if they hit the backend port, redirect to the Vite port
+    // In development, if they hit the reserved Rizzoma backend port, redirect
+    // them to the Vite UI port. 8788 is the canonical Rizzoma backend port
+    // (see src/server/config.ts and CLAUDE.md "Reserved Ports" section).
     const host = _req.get('host') || 'localhost';
-    if (host.includes(':8000')) {
-      return res.redirect(`http://${host.replace(':8000', ':3000')}${_req.originalUrl}`);
+    if (host.includes(':8788')) {
+      return res.redirect(`http://${host.replace(':8788', ':3000')}${_req.originalUrl}`);
     }
-    // Fallback if not on port 8000 but still in dev
+    // Fallback if not on the Rizzoma backend port but still in dev
     res.status(404).send('Rizzoma Dev Server: Please use port 3000 for the UI');
   }
 });

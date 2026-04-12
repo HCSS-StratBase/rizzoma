@@ -11,7 +11,7 @@ function getSocket(): Socket {
       if (override) return override;
       try {
         const current = new URL(window.location.href);
-        if (current.port === '3000') current.port = '8000';
+        if (current.port === '3000') current.port = '8788';
         return current.origin;
       } catch {
         return window.location.origin || '/';

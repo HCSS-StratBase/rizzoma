@@ -234,6 +234,36 @@ Required reimplementation target:
 - Remaining hard gap:
   - the subblip page itself is still visually too weak compared with original Rizzoma
 
+### 2026-04-13 - Execution 6 Complete
+- Tightened the subblip page chrome toward the legacy Rizzoma topic surface and reverified the full round trip on a fresh client running the new reserved Rizzoma backend port (`8788`, replaces the prior `8000` collision with `google_workspace_mcp`).
+- Code changes:
+  - `src/client/components/RizzomaTopicDetail.tsx` — removed the `PARENT CONTEXT` caps label, the bullet/header/meta nested layout, and the `SUBBLIP` caps label from the subblip parent context block. Parent context now renders as a compact title + 2-line clamped snippet inline above the focused blip.
+  - `src/client/components/RizzomaTopicDetail.css` — rewrote `.subblip-view` to match the `.topic-meta-blip` chrome (1160px width, same gradient/border/shadow/radius, blur backdrop, max-height). Rewrote `.subblip-nav-bar` and `.subblip-hide-btn` to match the legacy gray utility-strip texture instead of the previous blue gradient pill. Flattened `.subblip-stage` to a transparent in-container scroll region and `.subblip-focus-shell` so the focused blip uses normal blip chrome (no extra rounded card, no extra padding, no rail bar).
+  - Reserved backend port migration: `src/server/config.ts`, `src/server/app.ts` (CORS allowlist + dev redirect), `vite.config.ts`, `package.json`, `docker-compose.yml`, `Dockerfile`, `.github/workflows/ci.yml`, `scripts/start-all.sh`, `src/client/lib/socket.ts`, `src/server/routes/notifications.ts`, `create-demo-topic.cjs`. Reserved-port policy documented in `CLAUDE.md` "Reserved Ports", `CLAUDE_SESSION.md`, `docs/HANDOFF.md`, `docs/RESTART.md`.
+- Live verification:
+  - dev client: `http://127.0.0.1:3000` (Vite UI) backed by Express server on `:8788` (the reserved port)
+  - command: `node scripts/capture_live_inline_comment_flow.cjs screenshots/260413-inline-comment-audit-pass55 http://127.0.0.1:3000`
+- Trusted pack:
+  - `screenshots/260413-inline-comment-audit-pass55/04-subblip-done-mode.{png,html}`
+  - `screenshots/260413-inline-comment-audit-pass55/06-returned-to-topic.{png,html}`
+  - `screenshots/260413-inline-comment-audit-pass55/07-after-marker-click.{png,html}`
+  - `screenshots/260413-inline-comment-audit-pass55/summary.json`
+- DOM-state judgment (from `summary.json`):
+  - `subblipReadVisible: true`
+  - `subblipBodyHtml: "<p>Inline subblip body created from Ctrl+Enter.</p>"`
+  - `parentReturnedInEditMode: false`
+  - `markerCount: 1` (after Hide; one preserved `[+]` marker in topic body)
+  - `urlAfterMarkerClick` matches the original subblip path (re-entry intact)
+- Visual judgment:
+  - the subblip page is now contained in the same 1160px frame as the topic-meta-blip, no longer floating on a sea of empty white
+  - the parent topic title + snippet is now visible above the focused blip as inline context
+  - the focused blip exposes its real toolbar (Edit / Collapse / Expand / + / ↓ / ↑) directly
+  - the breadcrumb is now a thin gray utility strip with a flat gray Hide button (not a blue gradient pill)
+- Remaining hard gap (narrower but not closed):
+  - the parent context row is still a single-line title + snippet, not a full read-only blip preview with author/date/bullet — tracked as task #34
+  - sibling navigation across multiple anchored subblips under the same parent is still missing — tracked as task #35
+  - the lower half of the subblip view is still mostly empty when the focused blip has no nested children
+
 ## Non-Acceptance Rule
 
 This area must not be called “accepted” again unless all of the following are true in the live UI:

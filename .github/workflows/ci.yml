@@ -89,7 +89,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in {1..40}; do
-            if curl -fsS http://127.0.0.1:3000 >/dev/null 2>&1 && curl -fsS http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
+            if curl -fsS http://127.0.0.1:3000 >/dev/null 2>&1 && curl -fsS http://127.0.0.1:8788/api/health >/dev/null 2>&1; then
               echo "Dev stack is ready"
               exit 0
             fi
@@ -183,7 +183,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in {1..40}; do
-            if curl -fsS http://127.0.0.1:3000 >/dev/null 2>&1 && curl -fsS http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
+            if curl -fsS http://127.0.0.1:3000 >/dev/null 2>&1 && curl -fsS http://127.0.0.1:8788/api/health >/dev/null 2>&1; then
               echo "Dev stack is ready"
               exit 0
             fi

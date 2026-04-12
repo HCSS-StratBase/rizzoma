@@ -79,8 +79,8 @@ sleep 3
 
 # Check if app is running
 echo -e "\n${YELLOW}🔍 Checking application status...${NC}"
-if curl -s http://localhost:8000/api/health | grep -q "ok"; then
-    echo -e "  - API Server: ${GREEN}✓${NC} (http://localhost:8000)"
+if curl -s http://localhost:8788/api/health | grep -q "ok"; then
+    echo -e "  - API Server: ${GREEN}✓${NC} (http://localhost:8788)"
 else
     echo -e "  - API Server: ${RED}✗${NC} (not responding)"
 fi
@@ -94,7 +94,7 @@ fi
 echo -e "\n${GREEN}✅ Rizzoma is ready!${NC}"
 echo -e "\n📍 Access points:"
 echo "  - Main App: http://localhost:3000"
-echo "  - API: http://localhost:8000/api"
+echo "  - API: http://localhost:8788/api"
 echo "  - CouchDB: http://localhost:5984/_utils/ (admin/password)"
 echo "  - RabbitMQ: http://localhost:15672 (admin/password)"
 echo -e "\n💡 Editor features enabled via EDITOR_ENABLE=1"

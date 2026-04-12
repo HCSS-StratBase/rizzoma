@@ -192,7 +192,7 @@ codex exec '
 - `npm run prep:views && npm run deploy:views`
 
 5) Run Dev
-- `npm run dev` → server :8000, client :3000 (set `FEAT_ALL=1`; for smokes you can run `SESSION_STORE=memory REDIS_URL=memory://`)
+- `npm run dev` → server :8788 (reserved Rizzoma backend port — see CLAUDE.md "Reserved Ports"), client :3000 (set `FEAT_ALL=1`; for smokes you can run `SESSION_STORE=memory REDIS_URL=memory://`)
 - Open http://localhost:3000
 
 6) Editor Flag

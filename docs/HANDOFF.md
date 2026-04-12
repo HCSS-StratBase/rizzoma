@@ -30,7 +30,7 @@ PR Ops (CLI)
 - After merges, refresh the GDrive bundle (commands below).
 
 Current State (master @ 2026-03-30; includes gadget registry phase 1, trusted embed adapters, accepted fresh live UI artifacts, and fixed topic-root app persistence)
-- FEAT_ALL required: start both server (:8000) and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
+- FEAT_ALL required: start both server (:8788, the reserved Rizzoma backend port — see CLAUDE.md "Reserved Ports") and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Docker Desktop WSL integration was re-enabled on 2026-03-29; `docker compose up -d couchdb redis` works again from WSL for local live-app verification.
 - Current stack note: the backend only boots on the present Express/router combo after changing the fallback route in `src/server/app.ts` from `app.get('*', ...)` to `app.get('/{*path}', ...)`. This fix is currently in the working tree and should be preserved until a cleaner routing adjustment lands.
 - Latest live-app artifacts (2026-03-29):
@@ -164,7 +164,7 @@ Restart Checklist (any machine)
 - Node 20.19.0; `npm ci` (or `npm install`)
 - Services: `docker compose up -d couchdb redis` (add `clamav` if `CLAMAV_HOST`/`CLAMAV_PORT` are set for upload scanning)
 - Legacy views: `npm run prep:views && npm run deploy:views`
-- Dev: `npm run dev` (server :8000, client :3000)
+- Dev: `npm run dev` (server :8788, client :3000) — 8788 is the reserved Rizzoma backend port (avoids :8000 collision with `google_workspace_mcp`); see CLAUDE.md "Reserved Ports".
 - Flag: set `EDITOR_ENABLE=1`
 - Verify: `npm run typecheck && npm test && npm run build`
 

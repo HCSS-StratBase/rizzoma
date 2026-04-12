@@ -259,7 +259,7 @@ docker compose up -d couchdb redis
 # 2. Start dev server (FEAT_ALL=1 enables REALTIME_COLLAB + LIVE_CURSORS)
 FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev
 
-# 3. Wait for "listening on http://localhost:8000" and "VITE ready"
+# 3. Wait for "listening on http://localhost:8788" and "VITE ready" (8788 is the reserved Rizzoma backend port)
 
 # 4. Open http://localhost:3000 in TWO browser tabs
 # 5. Log in as dev@example.com / password123 in both
@@ -382,7 +382,8 @@ npx vitest run src/tests/server.yjsDocCache.test.ts
 - **HMR DOES NOT work for .tsx/.ts changes** — MUST kill and restart Vite
 - **ZOMBIE PROCESSES**: `ps -ef | grep vite` + `kill -9` each PID. `pkill -f` misses some
 - **Always verify port**: `ss -tlnp | grep 300` — Vite configured port is 3000
-- **Docker rizzoma-app conflicts**: if running, it takes ports 3000+8000
+- **Reserved ports**: Vite UI = `3000`, Express backend = `8788` (NOT 8000 — that's held by `google_workspace_mcp` on this machine). Full reserved-port policy in `CLAUDE.md` "Reserved Ports" section.
+- **Docker rizzoma-app conflicts**: if running, it takes ports 3000+8788
 - **SW caches in dev**: bypassed via `import.meta.env['DEV']` check
 - **Server startup is slow** (~15-25s for both ports)
 - **Feature flags**: `FEAT_ALL=1` env var required; evaluated at module load time

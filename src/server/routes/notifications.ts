@@ -64,7 +64,7 @@ router.post('/invite', requireAuth, async (req, res): Promise<void> => {
       return;
     }
 
-    const baseUrl = process.env['APP_URL'] || 'http://localhost:8000';
+    const baseUrl = process.env['APP_URL'] || 'http://localhost:8788';
     const topicUrl = `${baseUrl}/?layout=rizzoma#/topic/${topicId}`;
 
     const result = await sendInviteEmail({

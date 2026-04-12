@@ -55,7 +55,15 @@ This file is a lightweight status guide for the active branch. Older "phase" tim
 - Run app: `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev` and sign in via AuthPanel (no demo/query-string logins).  
 - Tests: `npm run test`, `npm run test:toolbar-inline`, `npm run test:follow-green`, `npm run perf:harness` (as needed).  
 - Snapshots: `npm run snapshots:pull` to fetch latest artifacts without rerunning Playwright.  
-- Health: `curl http://localhost:8000/api/health`.
+- Health: `curl http://localhost:8788/api/health` (Vite UI on `:3000` proxies `/api` to the backend).
+
+## Reserved Ports (DO NOT change without grep + doc sweep)
+- **Vite UI**: `3000` — only port the user opens in the browser.
+- **Express backend**: `8788` — distinctive Rizzoma-reserved port. Chosen to avoid the common `:8000` collision with `google_workspace_mcp` and other dev services. Override with `PORT` env var only when running multiple Rizzoma backends side by side.
+- **CouchDB**: `5984` (Docker)
+- **Redis**: `6379` (Docker)
+- All capture/Playwright verifiers take the Vite UI URL as an arg (defaults to `127.0.0.1:3000` or a fresh `:4xxx` Vite session); the backend URL is only used directly by `curl` health checks, the dev redirect, and `notifications.ts` invite emails.
+- If you change this port, grep for `8788` across `src/server/`, `src/client/lib/socket.ts`, `vite.config.ts`, `docker-compose.yml`, `Dockerfile`, `.github/workflows/`, `package.json`, `scripts/start-all.sh`, `create-demo-topic.cjs`, and refresh `CLAUDE.md`, `CLAUDE_SESSION.md`, `AGENTS.md`, `docs/HANDOFF.md`, `docs/RESTART.md`.
 
 ## Notes
 - Use `RIZZOMA_FEATURES_STATUS.md` for the authoritative feature snapshot; update after meaningful test runs.

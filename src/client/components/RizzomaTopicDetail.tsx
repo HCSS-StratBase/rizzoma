@@ -1846,28 +1846,16 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           <div className="subblip-stage">
             {currentSubblipContext && (
               <div className="subblip-parent-context">
-                <div className="subblip-context-label">{currentSubblipContext.label}</div>
-                <div className="subblip-parent-row">
-                  <span className="subblip-parent-bullet">•</span>
-                  <div className="subblip-parent-copy">
-                    <div className="subblip-parent-header">
-                      <div className="subblip-parent-title">
-                        {currentSubblipContext.title}
-                      </div>
-                      <div className="subblip-parent-meta">
-                        {currentSubblipContext.meta}
-                      </div>
-                    </div>
-                    <div className="subblip-parent-snippet">
-                      {currentSubblipContext.snippet}
-                    </div>
-                  </div>
+                <div className="subblip-parent-title">
+                  {currentSubblipContext.title}
+                </div>
+                <div className="subblip-parent-snippet">
+                  {currentSubblipContext.snippet}
                 </div>
               </div>
             )}
 
             <div className="subblip-focus-shell">
-              <div className="subblip-focus-label">Subblip</div>
               <RizzomaBlip
                 key={currentSubblip.id}
                 blip={currentSubblip}
