@@ -321,21 +321,8 @@
   font-size: 16px;
 }
 
-.blip-menu-banner {
-  display: inline-flex;
-  align-items: center;
-  max-width: 520px;
-  background: rgba(248, 250, 252, 0.97);
-  color: #7a6a46;
-  border: 1px solid rgba(206, 214, 224, 0.9);
-  border-left: 3px solid rgba(217, 168, 46, 0.82);
-  border-radius: 999px;
-  padding: 3px 9px;
-  font-size: 9px;
-  font-weight: 600;
-  line-height: 1.25;
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
-}
+/* .blip-menu-banner removed in Hard Gap #11 (2026-04-13) — degraded-state
+   inline-comment banner no longer renders in the BlipMenu toolbar. */
 
 .menu-upload-progress {
   margin-left: 6px;

@@ -1,0 +1,119 @@
+{
+  "topicId": "ff955fcd14cbbf6212be3a9f7000d287",
+  "siblingA": {
+    "id": "ff955fcd14cbbf6212be3a9f7000d287:b1776037237204",
+    "blipPath": "b1776037237204"
+  },
+  "siblingB": {
+    "id": "ff955fcd14cbbf6212be3a9f7000d287:b1776037237251",
+    "blipPath": "b1776037237251"
+  },
+  "base": "http://127.0.0.1:3000",
+  "timestamp": "2026-04-12T23:40:41.186Z",
+  "steps": [
+    {
+      "step": "loaded_at_sibling_A",
+      "screenshot": "screenshots/260413-subblip-siblings-pass8/01-loaded-at-sibling-A.png",
+      "html": "screenshots/260413-subblip-siblings-pass8/01-loaded-at-sibling-A.html"
+    },
+    {
+      "step": "navigated_to_sibling_B",
+      "screenshot": "screenshots/260413-subblip-siblings-pass8/02-navigated-to-sibling-B.png",
+      "html": "screenshots/260413-subblip-siblings-pass8/02-navigated-to-sibling-B.html"
+    },
+    {
+      "step": "back_to_sibling_A",
+      "screenshot": "screenshots/260413-subblip-siblings-pass8/03-back-to-sibling-A.png",
+      "html": "screenshots/260413-subblip-siblings-pass8/03-back-to-sibling-A.html"
+    },
+    {
+      "step": "forward_to_sibling_B",
+      "screenshot": "screenshots/260413-subblip-siblings-pass8/04-forward-to-sibling-B.png",
+      "html": "screenshots/260413-subblip-siblings-pass8/04-forward-to-sibling-B.html"
+    }
+  ],
+  "states": {
+    "loadedAtA": {
+      "url": "http://127.0.0.1:3000/#/topic/ff955fcd14cbbf6212be3a9f7000d287/b1776037237204/?layout=rizzoma",
+      "hash": "#/topic/ff955fcd14cbbf6212be3a9f7000d287/b1776037237204/?layout=rizzoma",
+      "siblingButtons": 2,
+      "counter": "1 / 2",
+      "prevDisabled": true,
+      "nextDisabled": false,
+      "parentPreviewKind": "topic",
+      "parentPreviewText": "Topic context · 2 anchored comments in this topicSubblip siblings audit 1776037237155#MetaTopicFirst anchor: parent inline preview should render here.Second anchor: prev/next sibling navigation under the same parent.This topic exercises the subblip view parent preview (#34) and sibling navigation (#35).",
+      "focusedBodyText": "First sibling subblip body.",
+      "focusedMode": "read",
+      "focusedBlipId": "ff955fcd14cbbf6212be3a9f7000d287:b1776037237204",
+      "breadcrumbCurrent": "First sibling subblip body."
+    },
+    "navigatedToB": {
+      "url": "http://127.0.0.1:3000/#/topic/ff955fcd14cbbf6212be3a9f7000d287/b1776037237251/",
+      "hash": "#/topic/ff955fcd14cbbf6212be3a9f7000d287/b1776037237251/",
+      "siblingButtons": 2,
+      "counter": "2 / 2",
+      "prevDisabled": false,
+      "nextDisabled": true,
+      "parentPreviewKind": "topic",
+      "parentPreviewText": "Topic context · 2 anchored comments in this topicSubblip siblings audit 1776037237155#MetaTopicFirst anchor: parent inline preview should render here.Second anchor: prev/next sibling navigation under the same parent.This topic exercises the subblip view parent preview (#34) and sibling navigation (#35).",
+      "focusedBodyText": "Second sibling subblip body.",
+      "focusedMode": "read",
+      "focusedBlipId": "ff955fcd14cbbf6212be3a9f7000d287:b1776037237251",
+      "breadcrumbCurrent": "Second sibling subblip body."
+    },
+    "backToA": {
+      "url": "http://127.0.0.1:3000/#/topic/ff955fcd14cbbf6212be3a9f7000d287/b1776037237204/",
+      "hash": "#/topic/ff955fcd14cbbf6212be3a9f7000d287/b1776037237204/",
+      "siblingButtons": 2,
+      "counter": "1 / 2",
+      "prevDisabled": true,
+      "nextDisabled": false,
+      "parentPreviewKind": "topic",
+      "parentPreviewText": "Topic context · 2 anchored comments in this topicSubblip siblings audit 1776037237155#MetaTopicFirst anchor: parent inline preview should render here.Second anchor: prev/next sibling navigation under the same parent.This topic exercises the subblip view parent preview (#34) and sibling navigation (#35).",
+      "focusedBodyText": "First sibling subblip body.",
+      "focusedMode": "read",
+      "focusedBlipId": "ff955fcd14cbbf6212be3a9f7000d287:b1776037237204",
+      "breadcrumbCurrent": "First sibling subblip body."
+    },
+    "forwardToB": {
+      "url": "http://127.0.0.1:3000/#/topic/ff955fcd14cbbf6212be3a9f7000d287/b1776037237251/",
+      "hash": "#/topic/ff955fcd14cbbf6212be3a9f7000d287/b1776037237251/",
+      "siblingButtons": 2,
+      "counter": "2 / 2",
+      "prevDisabled": false,
+      "nextDisabled": true,
+      "parentPreviewKind": "topic",
+      "parentPreviewText": "Topic context · 2 anchored comments in this topicSubblip siblings audit 1776037237155#MetaTopicFirst anchor: parent inline preview should render here.Second anchor: prev/next sibling navigation under the same parent.This topic exercises the subblip view parent preview (#34) and sibling navigation (#35).",
+      "focusedBodyText": "Second sibling subblip body.",
+      "focusedMode": "read",
+      "focusedBlipId": "ff955fcd14cbbf6212be3a9f7000d287:b1776037237251",
+      "breadcrumbCurrent": "Second sibling subblip body."
+    }
+  },
+  "assertions": {
+    "loadedOnSiblingA": true,
+    "siblingButtonsRenderedOnA": true,
+    "counterShows1of2OnA": true,
+    "prevDisabledOnA": true,
+    "nextEnabledOnA": true,
+    "focusedBodyA1": true,
+    "focusedReadModeA1": true,
+    "navigatedToB_url": true,
+    "counterShows2of2OnB": true,
+    "prevEnabledOnB": true,
+    "nextDisabledOnB": true,
+    "focusedBodyB1": true,
+    "focusedReadModeB1": true,
+    "backOnSiblingA": true,
+    "counterShows1of2OnA2": true,
+    "focusedBodyA2": true,
+    "forwardOnSiblingB": true,
+    "counterShows2of2OnB2": true,
+    "focusedBodyB2": true,
+    "parentPreviewVisibleA": true,
+    "parentPreviewVisibleB": true,
+    "parentPreviewKindMatches": true,
+    "parentTextConsistent": true,
+    "focusedBodyChangesAcrossSiblings": true
+  }
+}

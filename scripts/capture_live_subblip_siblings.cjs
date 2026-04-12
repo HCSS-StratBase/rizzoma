@@ -209,23 +209,14 @@ async function main() {
     100,
   );
 
-  // PATCH the topic content to embed the [+] markers in the same paragraphs
-  // the UI would have injected them into. The marker syntax matches what the
-  // BlipThreadNode TipTap extension produces.
-  const markerA = `<span data-blip-thread="${siblingA.id}" class="blip-thread-marker">+</span>`;
-  const markerB = `<span data-blip-thread="${siblingB.id}" class="blip-thread-marker">+</span>`;
-  const topicContentWithMarkers = baseTopicContent
-    .replace("for Ctrl+Enter.</p>", `for Ctrl+Enter.${markerA}</p>`)
-    .replace("under the same parent.</p>", `under the same parent.${markerB}</p>`);
-  // Note: the literal substitution targets are slightly off because the seed
-  // text doesn't actually contain "Ctrl+Enter." — fall back to anchor-aware
-  // substitutions if the simple replace was a no-op.
-  const finalTopicContent = topicContentWithMarkers.includes("blip-thread-marker")
-    ? topicContentWithMarkers
-    : baseTopicContent
-        .replace("render here.</p>", `render here.${markerA}</p>`)
-        .replace("under the same parent.</p>", `under the same parent.${markerB}</p>`);
-  await patchTopicContent(page, topicId, topicTitle, finalTopicContent);
+  // Note: we deliberately do NOT PATCH the topic content with [+] markers.
+  // The markers are decorative — the parent-context preview renders the
+  // topic body via dangerouslySetInnerHTML and the sibling navigation reads
+  // from topicInlineRootBlips (inline children with anchorPosition), not
+  // from the markers in topic.content. Skipping the PATCH avoids a CouchDB
+  // 409 Document update conflict (the topic _rev gets bumped server-side
+  // when blips are created against it, so a follow-up PATCH from the
+  // initial _rev fails). The sibling-nav contracts hold without the markers.
 
   // Navigate directly to sibling A's subblip URL.
   await page.goto(`${base}/#/topic/${topicId}/${siblingA.blipPath}/?layout=rizzoma`, { waitUntil: "domcontentloaded" });

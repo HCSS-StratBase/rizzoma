@@ -248,7 +248,11 @@ describe('client: BlipMenu toolbar', () => {
     expect((commentsBtn as HTMLButtonElement | null)?.disabled).toBe(false);
   });
 
-  it('surfaces a read-only banner and disables paste-as-reply when comments are read-only', () => {
+  it('omits the read-only banner and still disables paste-as-reply when comments are read-only', () => {
+    // Hard Gap #11 (2026-04-13): the degraded-state inline-comment banner has
+    // been removed from the BlipMenu surface entirely. Read-only state must
+    // still hide the comment-write affordances and disable paste-as-reply,
+    // but the alien notice no longer pollutes the toolbar.
     act(() => root.unmount());
     container.remove();
     baseProps = {
@@ -266,8 +270,7 @@ describe('client: BlipMenu toolbar', () => {
     ));
 
     const banner = container.querySelector('[data-testid="blip-menu-comments-disabled"]');
-    expect(banner).toBeTruthy();
-    expect(banner?.textContent).toContain('read-only');
+    expect(banner).toBeNull();
 
     const hideBtn = container.querySelector('[data-testid="blip-menu-comments-hide"]') as HTMLButtonElement | null;
     const showBtn = container.querySelector('[data-testid="blip-menu-comments-show"]') as HTMLButtonElement | null;
@@ -284,44 +287,11 @@ describe('client: BlipMenu toolbar', () => {
     expect(pasteReply?.getAttribute('title')).toContain('read-only');
   });
 
-  it('shows API failure notices when inline comments report an error', () => {
-    act(() => root.unmount());
-    container.remove();
-    baseProps = {
-      ...createBaseProps(),
-      inlineCommentsNotice: 'Inline comments are temporarily unavailable',
-    } as any;
-    ({ container, root } = renderMenu(
-      <BlipMenu
-        {...baseProps}
-        isEditing={false}
-        editor={editor as any}
-      />
-    ));
-
-    const banner = container.querySelector('[data-testid="blip-menu-comments-disabled"]');
-    expect(banner).toBeTruthy();
-    expect(banner?.textContent).toContain('temporarily unavailable');
-  });
-
-  it('renders inline comment notices while editing', () => {
-    act(() => root.unmount());
-    container.remove();
-    baseProps = {
-      ...createBaseProps(),
-      inlineCommentsNotice: 'Inline comments are temporarily unavailable',
-    } as any;
-    ({ container, root } = renderMenu(
-      <BlipMenu
-        {...baseProps}
-        editor={editor as any}
-      />
-    ));
-
-    const banner = container.querySelector('[data-testid="blip-menu-comments-disabled"]');
-    expect(banner).toBeTruthy();
-    expect(banner?.textContent).toContain('temporarily unavailable');
-  });
+  // Hard Gap #11 (2026-04-13): the inlineCommentsNotice prop has been removed
+  // from BlipMenu entirely. The two prior tests that exercised it (API failure
+  // notices in read mode and edit mode) have been deleted along with the
+  // banner JSX — original Rizzoma never showed degraded-state notices in the
+  // blip toolbar.
 
   it('shows highlight palette and applies color', () => {
     const bgBtn = container.querySelector('button[title="Text background color"]');

@@ -37,7 +37,6 @@ interface BlipMenuProps {
   onSend?: () => void;
   isSending?: boolean;
   isDeleting?: boolean;
-  inlineCommentsNotice?: string | null;
   // New copy/paste variants
   onDuplicate?: () => void;
   onCut?: () => void;
@@ -78,7 +77,6 @@ export function BlipMenu({
   onInsertImage,
   isUploading = false,
   uploadProgress = null,
-  inlineCommentsNotice = null,
   onDuplicate,
   onCut,
   onPasteAsNew,
@@ -205,17 +203,12 @@ export function BlipMenu({
     }
     setShowBgPalette(false);
   };
-  const commentsReadOnlyMessage = 'Inline comments are read-only for this blip.';
-  const inlineCommentsBannerMessage = inlineCommentsNotice ?? (!canComment ? commentsReadOnlyMessage : null);
-  const commentsBanner = inlineCommentsBannerMessage && !isEditing ? (
-    <div
-      className="blip-menu-banner"
-      role="status"
-      data-testid="blip-menu-comments-disabled"
-    >
-      {inlineCommentsBannerMessage}
-    </div>
-  ) : null;
+  // Hard Gap #11 (2026-04-13): the degraded-state inline-comment banner has
+  // been removed from the main thread surface. Original Rizzoma never showed
+  // a "comments unavailable" or "read-only for this blip" notice in the blip
+  // toolbar — it just hid the comment affordances. We mirror that here. The
+  // `inlineCommentsNotice` prop has been removed entirely; no caller in the
+  // current codebase passes it.
 
   // Mobile menu items
   const mobileMenuItems = createBlipMenuItems({
@@ -353,7 +346,7 @@ export function BlipMenu({
         role="menuitem"
         className="menu-dropdown-item"
         disabled={!canComment || !onPasteAsReply || !clipboardAvailable}
-        title={!canComment ? commentsReadOnlyMessage : undefined}
+        title={!canComment ? 'Inline comments are read-only for this blip.' : undefined}
         onClick={() => {
           if (!canComment) return;
           onPasteAsReply?.();
@@ -634,7 +627,6 @@ export function BlipMenu({
             </div>
           )}
         </div>
-        {commentsBanner}
         {mobileMenu}
       </div>
     );
@@ -740,7 +732,6 @@ export function BlipMenu({
           </button>
         )}
       </div>
-      {commentsBanner}
       {mobileMenu}
     </div>
   );
