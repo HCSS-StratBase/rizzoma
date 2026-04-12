@@ -1,7 +1,12 @@
-// Focused live verifier for the subblip parent-blip preview (#34) and the
-// sibling prev/next navigation (#35). Creates a topic with 2 inline anchor
-// points, Ctrl+Enters at each to create 2 sibling subblips, then exercises
-// the sibling nav buttons in the subblip view.
+// Focused live verifier for the subblip parent inline preview (#34) and the
+// sibling prev/next navigation (#35).
+//
+// Strategy: create both anchored sibling subblips via the /api/blips POST
+// endpoint directly, with their bodies pre-baked. Then PATCH the topic to
+// inject the [+] markers. This bypasses the Ctrl+Enter / typeAndDoneSubblip
+// flow that was producing flaky empty bodies — both siblings already have
+// their content persisted before the verifier loads the topic, so the
+// rendering contracts can be exercised on real, settled state.
 //
 // Usage:
 //   node scripts/capture_live_subblip_siblings.cjs <outDir> [baseUrl]
@@ -22,8 +27,8 @@ async function login(page, base, email, password) {
   await page.waitForTimeout(1500);
 }
 
-async function createTopic(page, title, content) {
-  const result = await page.evaluate(async ({ topicTitle, topicContent }) => {
+async function apiPost(page, urlPath, body) {
+  return await page.evaluate(async ({ url, payload }) => {
     const readCookie = (name) => {
       const escaped = name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
       const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
@@ -31,21 +36,70 @@ async function createTopic(page, title, content) {
     };
     await fetch("/api/auth/csrf", { credentials: "include" });
     const token = readCookie("XSRF-TOKEN");
-    const response = await fetch("/api/topics", {
+    const response = await fetch(url, {
       method: "POST",
       credentials: "include",
       headers: {
         "content-type": "application/json",
         ...(token ? { "x-csrf-token": token } : {}),
       },
-      body: JSON.stringify({ title: topicTitle, content: topicContent }),
+      body: JSON.stringify(payload),
     });
     return { ok: response.ok, status: response.status, data: await response.json().catch(() => null) };
-  }, { topicTitle: title, topicContent: content });
+  }, { url: urlPath, payload: body });
+}
+
+async function apiPatch(page, urlPath, body) {
+  return await page.evaluate(async ({ url, payload }) => {
+    const readCookie = (name) => {
+      const escaped = name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+      const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
+      return match?.[1] ? decodeURIComponent(match[1]) : undefined;
+    };
+    await fetch("/api/auth/csrf", { credentials: "include" });
+    const token = readCookie("XSRF-TOKEN");
+    const response = await fetch(url, {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        "content-type": "application/json",
+        ...(token ? { "x-csrf-token": token } : {}),
+      },
+      body: JSON.stringify(payload),
+    });
+    return { ok: response.ok, status: response.status, data: await response.json().catch(() => null) };
+  }, { url: urlPath, payload: body });
+}
+
+async function createTopic(page, title, content) {
+  const result = await apiPost(page, "/api/topics", { title, content });
   if (!result?.ok || !result?.data?.id) {
     throw new Error(`Failed to create topic (${result?.status ?? "unknown"}): ${JSON.stringify(result?.data ?? null)}`);
   }
   return result.data.id;
+}
+
+async function createInlineChildBlip(page, waveId, content, anchorPosition) {
+  const result = await apiPost(page, "/api/blips", {
+    waveId,
+    content,
+    parentId: null,
+    anchorPosition,
+  });
+  if (!result?.ok || !result?.data) {
+    throw new Error(`Failed to create inline child blip (${result?.status ?? "unknown"}): ${JSON.stringify(result?.data ?? null)}`);
+  }
+  const newBlip = result.data;
+  const id = newBlip.id || newBlip._id;
+  const blipPath = id && id.includes(":") ? id.split(":")[1] : id;
+  return { id, blipPath, content: newBlip.content };
+}
+
+async function patchTopicContent(page, topicId, title, content) {
+  const result = await apiPatch(page, `/api/topics/${encodeURIComponent(topicId)}`, { title, content });
+  if (!result?.ok) {
+    throw new Error(`Failed to patch topic (${result?.status ?? "unknown"}): ${JSON.stringify(result?.data ?? null)}`);
+  }
 }
 
 async function shot(page, outDir, index, slug) {
@@ -57,40 +111,6 @@ async function shot(page, outDir, index, slug) {
   return { screenshot: filePath, html: htmlPath };
 }
 
-async function ctrlEnterAtParagraph(page, paragraphIndex) {
-  const editor = page.locator(".topic-content-edit .ProseMirror").first();
-  await editor.click();
-  const paragraph = editor.locator("li p").nth(paragraphIndex);
-  await paragraph.click();
-  await page.keyboard.press("End");
-  await page.keyboard.press("Control+Enter");
-  await page.waitForSelector(".subblip-view .blip-editor-container .ProseMirror", { timeout: 15000 });
-  await page.waitForTimeout(500);
-}
-
-async function typeAndDoneSubblip(page, body) {
-  const subblipEditor = page.locator(".subblip-view .blip-editor-container .ProseMirror[contenteditable=\"true\"]").first();
-  await subblipEditor.click();
-  await subblipEditor.pressSequentially(body);
-  await page.waitForFunction((expected) => {
-    const el = document.querySelector(".subblip-view .blip-editor-container .ProseMirror[contenteditable=\"true\"]");
-    return !!el && (el.textContent || "").includes(expected);
-  }, body, { timeout: 5000 });
-  await page.waitForTimeout(300);
-  const doneButton = page.locator(".subblip-view [data-testid=\"blip-menu-done\"]").first();
-  await doneButton.click();
-  const reachedRead = await page.locator(".subblip-view .blip-view-mode").first().waitFor({ timeout: 2500 }).then(() => true).catch(() => false);
-  if (!reachedRead) {
-    await doneButton.evaluate((button) => {
-      button.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
-      button.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true }));
-      button.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-    });
-  }
-  await page.waitForSelector(".subblip-view .blip-view-mode", { timeout: 15000 });
-  await page.waitForTimeout(300);
-}
-
 async function readSubblipState(page) {
   return await page.evaluate(() => {
     const navBar = document.querySelector(".subblip-view .subblip-nav-bar");
@@ -98,10 +118,6 @@ async function readSubblipState(page) {
     const prevDisabled = navBar?.querySelector(".subblip-sibling-prev")?.hasAttribute("disabled") ?? null;
     const nextDisabled = navBar?.querySelector(".subblip-sibling-next")?.hasAttribute("disabled") ?? null;
     const siblingButtons = navBar?.querySelectorAll(".subblip-sibling-btn").length || 0;
-    // Parent preview can be either a real RizzomaBlip render (when the parent
-    // is a non-root blip in allBlipsMap) or the topic-context fallback (when
-    // the parent is the topic root, which is the common case for inline
-    // comments anchored to the meta-blip).
     const parentBlipNode = document.querySelector(".subblip-view .subblip-parent-context-blip .rizzoma-blip");
     const parentTopicNode = document.querySelector(".subblip-view .subblip-parent-context-topic");
     const parentPreviewKind = parentBlipNode ? "blip" : (parentTopicNode ? "topic" : null);
@@ -112,6 +128,7 @@ async function readSubblipState(page) {
     const focusedEditEl = document.querySelector('.subblip-view .subblip-focus-shell .blip-editor-container .ProseMirror');
     const focusedBodyText = (focusedReadEl || focusedEditEl)?.textContent?.trim() || null;
     const focusedMode = focusedReadEl ? "read" : (focusedEditEl ? "edit" : null);
+    const focusedBlipId = document.querySelector(".subblip-view .subblip-focus-shell .rizzoma-blip")?.getAttribute("data-blip-id") || null;
     const breadcrumbCurrent = document.querySelector(".subblip-view .current-blip-label")?.textContent?.trim() || null;
     return {
       url: window.location.href,
@@ -124,9 +141,24 @@ async function readSubblipState(page) {
       parentPreviewText,
       focusedBodyText,
       focusedMode,
+      focusedBlipId,
       breadcrumbCurrent,
     };
   });
+}
+
+async function clickSiblingButton(page, direction) {
+  const selector = direction === "prev"
+    ? ".subblip-view .subblip-sibling-prev"
+    : ".subblip-view .subblip-sibling-next";
+  const previousHash = await page.evaluate(() => window.location.hash);
+  await page.locator(selector).first().click();
+  await page.waitForFunction(
+    (prev) => window.location.hash !== prev,
+    previousHash,
+    { timeout: 5000 },
+  );
+  await page.waitForTimeout(400);
 }
 
 async function main() {
@@ -147,97 +179,115 @@ async function main() {
   const steps = [];
 
   await login(page, base, email, password);
-  const topicId = await createTopic(
+
+  const topicTitle = `Subblip siblings audit ${Date.now()}`;
+  const baseTopicContent = [
+    `<h1>${topicTitle}</h1>`,
+    "<p>#MetaTopic</p>",
+    "<ul>",
+    "<li><p>First anchor: parent inline preview should render here.</p></li>",
+    "<li><p>Second anchor: prev/next sibling navigation under the same parent.</p></li>",
+    "</ul>",
+    "<p>This topic exercises the subblip view parent preview (#34) and sibling navigation (#35).</p>",
+  ].join("");
+  const topicId = await createTopic(page, topicTitle, baseTopicContent);
+
+  // Create both anchored sibling subblips via the API with pre-baked bodies.
+  // anchorPosition values are display-order keys (smaller = earlier sibling);
+  // they match the cursor offsets the UI would have produced for the two
+  // bullet paragraphs. Both blips are children of the topic root (parentId=null).
+  const siblingA = await createInlineChildBlip(
     page,
-    `Subblip siblings audit ${Date.now()}`,
-    [
-      "<h1>Subblip siblings audit</h1>",
-      "<p>#MetaTopic</p>",
-      "<ul>",
-      "<li><p>First anchor: parent inline preview should render here.</p></li>",
-      "<li><p>Second anchor: prev/next sibling navigation under the same parent.</p></li>",
-      "</ul>",
-      "<p>This topic exercises the subblip view parent preview (#34) and sibling navigation (#35).</p>",
-    ].join(""),
+    topicId,
+    "<p>First sibling subblip body.</p>",
+    10,
+  );
+  const siblingB = await createInlineChildBlip(
+    page,
+    topicId,
+    "<p>Second sibling subblip body.</p>",
+    100,
   );
 
-  await page.goto(`${base}/#/topic/${topicId}?layout=rizzoma`, { waitUntil: "domcontentloaded" });
+  // PATCH the topic content to embed the [+] markers in the same paragraphs
+  // the UI would have injected them into. The marker syntax matches what the
+  // BlipThreadNode TipTap extension produces.
+  const markerA = `<span data-blip-thread="${siblingA.id}" class="blip-thread-marker">+</span>`;
+  const markerB = `<span data-blip-thread="${siblingB.id}" class="blip-thread-marker">+</span>`;
+  const topicContentWithMarkers = baseTopicContent
+    .replace("for Ctrl+Enter.</p>", `for Ctrl+Enter.${markerA}</p>`)
+    .replace("under the same parent.</p>", `under the same parent.${markerB}</p>`);
+  // Note: the literal substitution targets are slightly off because the seed
+  // text doesn't actually contain "Ctrl+Enter." — fall back to anchor-aware
+  // substitutions if the simple replace was a no-op.
+  const finalTopicContent = topicContentWithMarkers.includes("blip-thread-marker")
+    ? topicContentWithMarkers
+    : baseTopicContent
+        .replace("render here.</p>", `render here.${markerA}</p>`)
+        .replace("under the same parent.</p>", `under the same parent.${markerB}</p>`);
+  await patchTopicContent(page, topicId, topicTitle, finalTopicContent);
+
+  // Navigate directly to sibling A's subblip URL.
+  await page.goto(`${base}/#/topic/${topicId}/${siblingA.blipPath}/?layout=rizzoma`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(".wave-container .rizzoma-topic-detail", { timeout: 30000 });
-  await page.waitForTimeout(1200);
-  steps.push({ step: "topic_loaded", ...(await shot(page, outDir, 1, "topic-loaded")) });
-
-  await page.locator(".topic-blip-toolbar .topic-tb-btn", { hasText: "Edit" }).first().click();
-  await page.waitForSelector(".topic-content-edit .ProseMirror", { timeout: 10000 });
-  steps.push({ step: "topic_edit_mode", ...(await shot(page, outDir, 2, "topic-edit-mode")) });
-
-  // First sibling
-  await ctrlEnterAtParagraph(page, 0);
-  await typeAndDoneSubblip(page, "First sibling subblip body.");
+  await page.waitForSelector(".subblip-view", { timeout: 15000 });
+  await page.waitForTimeout(800);
   const stateA1 = await readSubblipState(page);
-  steps.push({ step: "first_sibling_done", ...(await shot(page, outDir, 3, "first-sibling-done")) });
+  steps.push({ step: "loaded_at_sibling_A", ...(await shot(page, outDir, 1, "loaded-at-sibling-A")) });
 
-  // Hide back to topic and re-enter edit mode
-  await page.locator(".subblip-hide-btn").first().click();
-  await page.waitForFunction(() => (
-    document.querySelectorAll(".topic-content-view .blip-thread-marker").length > 0 ||
-    document.querySelectorAll(".topic-content-edit .blip-thread-marker").length > 0
-  ), { timeout: 10000 });
-  await page.waitForTimeout(500);
-  await page.locator(".topic-blip-toolbar .topic-tb-btn", { hasText: "Edit" }).first().click().catch(() => undefined);
-  await page.waitForSelector(".topic-content-edit .ProseMirror", { timeout: 10000 });
-
-  // Second sibling
-  await ctrlEnterAtParagraph(page, 1);
-  await typeAndDoneSubblip(page, "Second sibling subblip body.");
+  // Navigate to sibling B via the next sibling button.
+  await clickSiblingButton(page, "next");
   const stateB1 = await readSubblipState(page);
-  steps.push({ step: "second_sibling_done", ...(await shot(page, outDir, 4, "second-sibling-done")) });
+  steps.push({ step: "navigated_to_sibling_B", ...(await shot(page, outDir, 2, "navigated-to-sibling-B")) });
 
-  // Click prev sibling — should navigate back to first sibling without going through topic
-  await page.locator(".subblip-sibling-prev").first().click();
-  await page.waitForFunction(
-    (expectedFragment) => (window.location.hash || "").includes(expectedFragment),
-    null,
-    { timeout: 5000 },
-  ).catch(() => undefined);
-  await page.waitForTimeout(500);
+  // Navigate back to sibling A via the prev sibling button.
+  await clickSiblingButton(page, "prev");
   const stateA2 = await readSubblipState(page);
-  steps.push({ step: "after_prev_sibling", ...(await shot(page, outDir, 5, "after-prev-sibling")) });
+  steps.push({ step: "back_to_sibling_A", ...(await shot(page, outDir, 3, "back-to-sibling-A")) });
 
-  // Click next sibling — should navigate forward to second sibling
-  await page.locator(".subblip-sibling-next").first().click();
-  await page.waitForTimeout(500);
+  // Navigate forward to sibling B again to confirm round trip.
+  await clickSiblingButton(page, "next");
   const stateB2 = await readSubblipState(page);
-  steps.push({ step: "after_next_sibling", ...(await shot(page, outDir, 6, "after-next-sibling")) });
-
-  // Verify the parent preview shows the same context in BOTH siblings
-  const parentTextConsistent = stateA2.parentPreviewText && stateB2.parentPreviewText
-    ? stateA2.parentPreviewText === stateB2.parentPreviewText
-    : false;
+  steps.push({ step: "forward_to_sibling_B", ...(await shot(page, outDir, 4, "forward-to-sibling-B")) });
 
   fs.writeFileSync(path.join(outDir, "summary.json"), JSON.stringify({
     topicId,
+    siblingA,
+    siblingB,
     base,
     timestamp: new Date().toISOString(),
     steps,
     states: {
-      firstSiblingAfterDone: stateA1,
-      secondSiblingAfterDone: stateB1,
-      afterPrevSibling: stateA2,
-      afterNextSibling: stateB2,
+      loadedAtA: stateA1,
+      navigatedToB: stateB1,
+      backToA: stateA2,
+      forwardToB: stateB2,
     },
     assertions: {
-      siblingButtonsRenderedOnSecond: stateB1.siblingButtons === 2,
-      counterShows1of2OnPrev: stateA2.counter === "1 / 2",
-      counterShows2of2OnNext: stateB2.counter === "2 / 2",
-      prevDisabledOnFirst: stateA2.prevDisabled === true,
-      nextEnabledOnFirst: stateA2.nextDisabled === false,
-      prevEnabledOnSecond: stateB2.prevDisabled === false,
-      nextDisabledOnSecond: stateB2.nextDisabled === true,
-      parentPreviewVisibleA: stateA2.parentPreviewKind !== null,
-      parentPreviewVisibleB: stateB2.parentPreviewKind !== null,
-      parentPreviewKindMatches: stateA2.parentPreviewKind === stateB2.parentPreviewKind,
-      parentTextConsistent,
-      focusedBodyChangesAcrossSiblings: stateA2.focusedBodyText !== stateB2.focusedBodyText,
+      loadedOnSiblingA: stateA1.focusedBlipId === siblingA.id,
+      siblingButtonsRenderedOnA: stateA1.siblingButtons === 2,
+      counterShows1of2OnA: stateA1.counter === "1 / 2",
+      prevDisabledOnA: stateA1.prevDisabled === true,
+      nextEnabledOnA: stateA1.nextDisabled === false,
+      focusedBodyA1: stateA1.focusedBodyText === "First sibling subblip body.",
+      focusedReadModeA1: stateA1.focusedMode === "read",
+      navigatedToB_url: stateB1.focusedBlipId === siblingB.id,
+      counterShows2of2OnB: stateB1.counter === "2 / 2",
+      prevEnabledOnB: stateB1.prevDisabled === false,
+      nextDisabledOnB: stateB1.nextDisabled === true,
+      focusedBodyB1: stateB1.focusedBodyText === "Second sibling subblip body.",
+      focusedReadModeB1: stateB1.focusedMode === "read",
+      backOnSiblingA: stateA2.focusedBlipId === siblingA.id,
+      counterShows1of2OnA2: stateA2.counter === "1 / 2",
+      focusedBodyA2: stateA2.focusedBodyText === "First sibling subblip body.",
+      forwardOnSiblingB: stateB2.focusedBlipId === siblingB.id,
+      counterShows2of2OnB2: stateB2.counter === "2 / 2",
+      focusedBodyB2: stateB2.focusedBodyText === "Second sibling subblip body.",
+      parentPreviewVisibleA: stateA1.parentPreviewKind !== null,
+      parentPreviewVisibleB: stateB1.parentPreviewKind !== null,
+      parentPreviewKindMatches: stateA1.parentPreviewKind === stateB1.parentPreviewKind,
+      parentTextConsistent: stateA1.parentPreviewText === stateB1.parentPreviewText,
+      focusedBodyChangesAcrossSiblings: stateA1.focusedBodyText !== stateB1.focusedBodyText,
     },
   }, null, 2));
   fs.writeFileSync(path.join(outDir, "final.html"), await page.content());
