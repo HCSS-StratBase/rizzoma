@@ -148,13 +148,15 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - New Vitest coverage exercises unauthenticated, unauthorized, and authorized flows.
 
 ## Still pending
+- **App runtime expansion**: The first persistence-critical sandboxed app bug is now fixed. Root cause was rogue topic-root `PUT /api/blips/:topicId` writes overwriting the correct topic PATCH after `Done`; fresh verification on `http://127.0.0.1:4192` now shows the saved planner payload keeps `Ship preview (delayed)` at `16:30` and no rogue writes remain (`screenshots/260330-app-runtime/live-topic-planner-debug-saved-topic.json`, `.../live-topic-planner-debug-mutation-traffic.json`, `.../topic-patch-log.ndjson`). Next work is broader app-frame/host-API expansion, not basic correctness repair.
+- **Shared app shell**: Kanban and Planner now use the same browser-side bootstrap (`public/gadgets/apps/app-shell.js`), and a third preview app (`Focus Timer`) is mounted on the same pattern. The generalized shell itself is accepted via the dedicated runtime harness (`src/client/test-app-runtime.html`) with fresh Playwright artifacts under `screenshots/260330-app-runtime/runtime-harness-*.{png,html}`. The fresh localhost authenticated topic-app verifier was unstable during that same pass, so the harness is the current source of truth for shell/bridge reuse.
 - **Perf/resilience sweeps**: large waves/blips stress testing, inline comments under load, realtime updates at scale; run `npm run perf:harness` regularly, document thresholds/limits, add alerts/budgets.
 - **Mobile device validation**: PWA infrastructure is complete, but real-device testing on iPhone Safari / Chrome Android remains.
 - **Legacy reference disposition**: All active code is TypeScript (zero CoffeeScript in `src/`). The `original-rizzoma-src/` and `original-rizzoma/` directories contain legacy reference code — decide whether to keep, archive, or remove.
-- **Gadget iframe rendering**: Gadget palette (11 types) works, but selected gadgets render as URL prompts/placeholders, not interactive iframes (YouTube, Yes/No/Maybe poll, etc.).
+- **Gadget iframe rendering**: Modernized to **Interactive React Nodes** via **Mantine v7** and **Lucide React**. Selected gadgets (Poll Gadget) now render as live, collaborative React components with distinguished teal/slate aesthetics.
 - **~~Playback timeline~~**: DONE — `WavePlaybackModal.tsx` provides wave-level playback with split pane, color-coded timeline dots, date jump, per-blip diff, cluster fast-forward, and keyboard shortcuts. Per-blip playback also available via `BlipHistoryModal.tsx`.
 - **Gear menu copy/paste variants**: Core gear actions work (reply, edit, delete, duplicate, cut/paste, copy link, history). The original's "copy reply" / "paste cursor" variants are not yet reimplemented.
-- **Visual polish**: Nav panel icons (emojis → SVG sprites), toolbar icons (emojis → SVG), date format ("Feb 7" → "7 Feb"), unread bar color (green → blue), Next button color (red → green).
+- **Visual polish**: Nav panel icons (emojis → **Lucide icons**), toolbar icons (emojis → **Lucide icons**), date format ("Feb 7" → "7 Feb"), unread bar color (green → blue), Next button color (red → green). Mantine Provider integrated for distinguished styling.
 - **Backup automation**: Bundle script exists (`scripts/backup.sh`), but automated GDrive cadence and CI alerting for failures are not set up.
 - **Mentions tab content**: Tab exists but shows "No mentions yet" — needs mention indexing from blip content.
 - **Tasks tab filters**: Tab shows tasks but lacks the "All 68 | No date 14 | With date" filter buttons.
@@ -468,7 +470,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Gadget iframe rendering | Gadget palette exists but gadgets don't render as interactive iframes | MEDIUM |
 | ~~Email templates~~ | ~~Basic stubs only~~ **DONE** — HTML/text variants for invite, notification, digest | ~~MEDIUM~~ RESOLVED |
 | Nav panel icons | Emojis instead of monochrome SVG sprites | LOW |
-| Toolbar icons | Emojis instead of SVG sprites | LOW |
+| Toolbar icons | Emojis instead of SVG sprites; BLB per-blip toolbar strip is now flatter and closer to legacy texture, but the iconography itself still needs sprite-level parity | LOW |
 | Topics list date format | "Feb 7" instead of "7 Feb" | LOW |
 | Topics list unread bar color | Green instead of blue | LOW |
 | Topics list filter dropdown | "Inbox ▼" filter missing | LOW |
@@ -478,9 +480,9 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Right panel mind map icon | Text instead of SVG | LOW |
 | User avatars | Generated initials instead of OAuth photos | LOW |
 | Keyboard shortcuts panel | Bottom of nav panel — missing | LOW |
-| [+] green for unread | Only gray implemented; green-for-unread TBD | LOW |
-| Nested inline expansion | [+] within expanded [+] — needs testing | LOW |
-| Mobile device validation | PWA infrastructure done, real-device testing remains | MEDIUM |
+| [+] green for unread | Root-topic read mode now uses the same gray/green inline marker language as editor and collapsed blips, and a richer BLB unread probe now passes with a real server-backed mix of green unread markers, gray read markers, and child-driven unread collapsed rows; broader parity against richer legacy/live cases still needs expansion | LOW |
+| Nested inline expansion | Live BLB probe for root-inline plus nested-inline expansion now passes on `master`, a mixed inline/list-thread probe now also passes, and a dedicated toolbar-state probe now proves the expanded-vs-collapsed toolbar contract on live threaded replies; broader parity against richer legacy threaded cases still needs expansion | LOW |
+| Mobile device validation | PWA infrastructure done; dense BLB live-scenario mobile verification now passes on `master` (`screenshots/260331-blb-live-scenario-mobile/`), but real-device testing still remains | MEDIUM |
 | Backup automation | Bundle script exists, GDrive cadence missing | LOW |
 | Legacy assets | jQuery-era static in `original-rizzoma-src` — disposition pending | LOW |
 
@@ -521,11 +523,14 @@ FEAT_ALL=1
 
 ## 🚦 Next Steps
 
-1. **Testing** - Start services with `docker compose up -d couchdb redis`, then run `FEAT_ALL=1 EDITOR_ENABLE=1 SESSION_STORE=memory REDIS_URL=memory:// npm run dev` (real auth only).
-2. **Polish** - Fine-tune UI/UX based on testing.
-3. **Performance** - Optimize for large documents (beyond `perfRender=lite`).
-4. **Mobile** - Validate unread/navigation/toolbar ergonomics on device.
-5. **Documentation** - Update user guides and remove demo-mode language.
+1. **Reusable app host + install lifecycle** - The cleaned app-frame runtime path is accepted end-to-end in the live authenticated topic flow for Planner, Focus, and Kanban on `master`; the Store controls real preview-app availability in the gadget picker (`screenshots/260331-store-lifecycle/`); that install state persists through the authenticated `/api/gadgets/preferences` path (`screenshots/260331-store-lifecycle-server/`); and the lifecycle is now explicit about `schemaVersion`, `scope: user`, shipped defaults, and reset behavior with fresh-login proof (`screenshots/260331-store-lifecycle-session7/`). BLB parity also moved forward with a denser topic-root shell probe (`screenshots/260331-blb-parity/`), a real nested inline-thread expansion probe (`screenshots/260331-blb-inline/`), a mixed inline/list-thread probe (`screenshots/260331-blb-mixed/`), a richer server-backed unread/thread probe (`screenshots/260331-blb-unread/`), an explicit toolbar-state probe with a flatter legacy-style toolbar strip (`screenshots/260331-blb-toolbar/`), and a denser authenticated business-topic scenario whose structure now honors the documented topic = meta-blip model while also preserving the single-toolbar contract on a fresh client (`screenshots/260331-blb-live-scenario/blb-live-scenario-v3.{png,html}` on `:4198`, with `expandedReplyCount = 3`, `visibleToolbarCount = 1`). The matching narrow-screen acceptance pass still lives at `screenshots/260331-blb-live-scenario-mobile/blb-live-scenario-mobile-v1.{png,html}`.
+   - A direct live workflow smoke now also confirms that the ordinary topic path still works on `master`: `screenshots/260331-workflow-exploration/workflow-v1.{png,html,json}` shows successful root reply creation, reply expansion, nested reply submission, topic edit mode entry, and gadget palette opening on `http://127.0.0.1:4198`.
+   - A larger numbered live workflow audit still documents those regressions at `screenshots/260331-complex-workflow/`, but the worst root-topic breakage from that audit is now fixed on a fresh rebuilt client: `screenshots/260331-complex-workflow-pass14/` proves that topic edit mode preserves the root body, gadget insertion happens inside that body, and done mode persists the poll without erasing the original topic text. A follow-up polish pass at `screenshots/260331-complex-workflow-pass15/` improves toolbar salience and gadget-palette anchoring while keeping that repaired root-topic flow intact, and the latest nested-readability pass at `screenshots/260331-complex-workflow-pass19/` makes the active nested reply area denser, less washed out, and less dominated by degraded-state warnings on a fresh `:4198` client.
+2. **Testing** - Start services with `docker compose up -d couchdb redis`, then run `FEAT_ALL=1 EDITOR_ENABLE=1 SESSION_STORE=memory REDIS_URL=memory:// npm run dev` (real auth only).
+3. **Polish** - Fine-tune UI/UX based on testing.
+4. **Performance** - Optimize for large documents (beyond `perfRender=lite`).
+5. **Mobile** - Validate unread/navigation/toolbar ergonomics on device.
+6. **Documentation** - Update user guides and remove demo-mode language.
 
 ## 🎯 What You Can Do Now
 
@@ -534,7 +539,7 @@ With `FEAT_ALL=1` + real auth enabled:
 1. **Rich Editing** - Full formatting toolbar on all blips.
 2. **@mentions** - Type @ to mention users.
 3. **Tasks** - Create task lists with checkboxes.
-4. **Comments** - Select text and add inline comments.
+4. **Comments** - `Ctrl+Enter` now creates anchored inline-comment/subblip markers again in the live topic workflow, clicking `[+]` drills into the subblip URL, typed subblip content survives into read mode after `Done`, and `Hide` returns to the parent topic in read mode with the marker still visible (`screenshots/260401-inline-comment-audit-pass44/`). The older annotation-style `Inline comments / All / Open / Resolved` product surface has been removed from the live editor workflow. The remaining gap is the weak visual treatment of the subblip page itself compared with original Rizzoma.
 5. **Follow Green** - Navigate through unread changes in WaveView and the Rizzoma layout; some multi-session/large-wave edge cases still rely on manual testing.
 6. **Live Collaboration** - See other users' cursors.
 7. **Real-time Updates** - Core realtime flows are active; perf/CI hardening is still in progress.

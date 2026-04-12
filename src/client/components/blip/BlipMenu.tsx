@@ -207,7 +207,7 @@ export function BlipMenu({
   };
   const commentsReadOnlyMessage = 'Inline comments are read-only for this blip.';
   const inlineCommentsBannerMessage = inlineCommentsNotice ?? (!canComment ? commentsReadOnlyMessage : null);
-  const commentsBanner = inlineCommentsBannerMessage ? (
+  const commentsBanner = inlineCommentsBannerMessage && !isEditing ? (
     <div
       className="blip-menu-banner"
       role="status"
@@ -412,19 +412,29 @@ export function BlipMenu({
     return (
       <div className="blip-menu-container">
         <div className={`blip-menu edit-menu${isInlineChild ? ' inline-child-menu' : ''}`} data-testid="blip-menu-edit-surface">
-          <div className="menu-group">
+          <div className="menu-group done-group">
             <button
-          className="menu-btn done-btn"
-          onClick={onFinishEdit}
-          title="Finish editing"
-          disabled={isSending}
-          data-testid="blip-menu-done"
-        >
-          Done
-        </button>
-      </div>
+              type="button"
+              className="menu-btn done-btn"
+              onMouseDown={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onFinishEdit();
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onFinishEdit();
+              }}
+              title="Finish editing"
+              disabled={isSending}
+              data-testid="blip-menu-done"
+            >
+              Done
+            </button>
+          </div>
           
-          <div className="menu-group">
+          <div className="menu-group history-group">
             <button 
               className="menu-btn"
               onClick={handleUndo}
@@ -445,7 +455,7 @@ export function BlipMenu({
             </button>
           </div>
 
-          <div className="menu-group">
+          <div className="menu-group insert-group">
             <button
               className="menu-btn"
               title="Insert link"
@@ -502,7 +512,7 @@ export function BlipMenu({
             )}
           </div>
 
-          <div className="menu-group">
+          <div className="menu-group format-group">
             <button 
               className={`menu-btn ${textFormatState.bold ? 'active' : ''}`}
               onClick={handleBold}
@@ -537,7 +547,7 @@ export function BlipMenu({
             </button>
           </div>
 
-          <div className="menu-group">
+          <div className="menu-group highlight-group">
             <div className="menu-dropdown color-dropdown">
               <button
                 className={`menu-btn ${showBgPalette ? 'active' : ''}`}
@@ -573,7 +583,7 @@ export function BlipMenu({
             </button>
           </div>
 
-          <div className="menu-group">
+          <div className="menu-group list-group">
             <button 
               className="menu-btn"
               onClick={handleBulletList}
@@ -592,7 +602,7 @@ export function BlipMenu({
             </button>
           </div>
 
-          <div className="menu-group">
+          <div className="menu-group overflow-group">
             <div className="menu-dropdown" ref={overflowRef}>
               <button
                 className={`menu-btn gear-btn ${showOverflow ? 'active' : ''}`}
@@ -611,7 +621,7 @@ export function BlipMenu({
           {/* Hide and Delete are in the overflow/gear menu to reduce clutter */}
           {/* Mobile menu trigger */}
           {isMobile && (
-            <div className="menu-group">
+            <div className="menu-group mobile-group">
               <button
                 className="menu-btn mobile-menu-btn"
                 onClick={() => setShowMobileMenu(true)}
@@ -635,7 +645,7 @@ export function BlipMenu({
     <div className="blip-menu-container">
       <div className={`blip-menu read-only-menu${isInlineChild ? ' inline-child-menu' : ''}`} data-testid="blip-menu-read-surface">
         {canEdit && (
-          <div className="menu-group">
+          <div className="menu-group edit-group">
             <button
               className="menu-btn edit-btn"
               onClick={onStartEdit}
@@ -647,7 +657,7 @@ export function BlipMenu({
           </div>
         )}
 
-        <div className="menu-group">
+        <div className="menu-group expand-group">
           <button
             className="menu-btn"
             onClick={onCollapse}
@@ -670,7 +680,7 @@ export function BlipMenu({
           )}
         </div>
 
-        <div className="menu-group">
+        <div className="menu-group comments-group">
           <button
             className="menu-btn"
             onClick={onHideComments}
@@ -691,7 +701,7 @@ export function BlipMenu({
           </button>
         </div>
 
-        <div className="menu-group">
+        <div className="menu-group link-group">
           <button
             className="menu-btn"
             onClick={onGetLink}
@@ -703,7 +713,7 @@ export function BlipMenu({
         </div>
 
         {/* Hide and Delete are in the overflow/gear menu to reduce clutter */}
-        <div className="menu-group" ref={overflowRef}>
+        <div className="menu-group overflow-group" ref={overflowRef}>
           <button
             className={`menu-btn gear-btn ${showOverflow ? 'active' : ''}`}
             title="More options"

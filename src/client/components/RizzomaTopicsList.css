@@ -4,45 +4,48 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #E3EAF0;
+  background: transparent;
 }
 
 /* Search Header */
 .topics-header {
-  padding: 9px 8px;
+  padding: 12px 12px 10px;
   position: relative;
 }
 
 .search-query-container {
   position: relative;
-  margin: 0 17px 0 0;
+  margin: 0;
 }
 
 .search-query {
   width: 100%;
   box-sizing: border-box;
-  height: 32px;
-  border: 1px solid #CCD9E5;
-  border-radius: 5px;
+  height: 38px;
+  border: 1px solid rgba(158, 176, 196, 0.32);
+  border-radius: 12px;
   outline: none;
-  padding: 0 40px 0 10px;
+  padding: 0 44px 0 13px;
   font-size: 13px;
-  background: white;
+  background: rgba(255, 255, 255, 0.86);
+  color: #29415a;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
 }
 
 .search-query:focus {
-  border-color: #5DABF7;
+  border-color: rgba(93, 171, 247, 0.55);
+  box-shadow: 0 0 0 4px rgba(93, 171, 247, 0.15);
 }
 
 .search-icon {
   position: absolute;
-  right: 2px;
-  top: 2px;
+  right: 5px;
+  top: 5px;
   height: 28px;
-  width: 33px;
-  border-radius: 0 4px 4px 0;
+  width: 30px;
+  border-radius: 10px;
   cursor: pointer;
-  background: #5DABF7;
+  background: linear-gradient(180deg, #69b6fb, #4d99ec);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
@@ -57,30 +60,38 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  border-top: 1px solid #FFF;
+  border-top: 1px solid rgba(255, 255, 255, 0.7);
+  padding: 4px 6px 12px;
 }
 
 /* Search Result Item (Topic) */
 .search-result-item {
   cursor: pointer;
-  min-height: 43px;
+  min-height: 58px;
   position: relative;
   display: block;
-  color: #2C2C2C;
+  color: #223649;
   text-decoration: none;
-  padding: 17px 10px 13px 15px;
-  border-bottom: 1px solid #FFF;
+  margin: 0 4px 8px;
+  padding: 16px 12px 14px 16px;
+  border-bottom: none;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.52);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+  transition: transform 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .search-result-item:hover {
-  background: rgba(93, 171, 247, 0.1);
+  background: rgba(255, 255, 255, 0.88);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
 }
 
 /* Selected/Active state */
 .search-result-item.active,
 .search-result-item.active .item-snippet {
   color: white;
-  background: #5DABF7;
+  background: linear-gradient(180deg, #5daadf, #4f90d0);
 }
 
 .search-result-item.active .last-changed {
@@ -90,11 +101,12 @@
 /* Unread indicator bar on left */
 .unread-blips-indicator {
   position: absolute;
-  background: white;
-  width: 3px;
-  top: 5px;
-  bottom: 5px;
+  background: rgba(255, 255, 255, 0.68);
+  width: 4px;
+  top: 10px;
+  bottom: 10px;
   left: 10px;
+  border-radius: 999px;
 }
 
 .unread-blips-indicator > div {
@@ -113,15 +125,22 @@
 
 /* Text content area */
 .text-content {
-  margin-left: 10px;
-  margin-right: 75px;
+  margin-left: 12px;
+  margin-right: 78px;
 }
 
 .wave-title {
-  font-size: 15px;
+  font-size: 14px;
   overflow: hidden;
-  height: 35px;
+  min-height: 32px;
   line-height: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.wave-title > span:first-child {
+  display: block;
+  margin-bottom: 2px;
 }
 
 .search-result-item.unread .wave-title {
@@ -129,16 +148,20 @@
 }
 
 .item-snippet {
-  color: #7A7A7A;
-  font-weight: normal;
+  color: #6d7f90;
+  font-weight: 500;
   font-size: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Wave info area (right side) */
 .wave-info {
   position: absolute;
-  right: 5px;
-  top: 15px;
+  right: 10px;
+  top: 14px;
   text-align: center;
   width: 60px;
 }
@@ -148,13 +171,13 @@
   display: none;
   text-align: center;
   margin-top: 4px;
-  font-size: 12px;
+  font-size: 11px;
   padding: 4px 8px;
-  border: 1px solid #CCD9E5;
-  border-radius: 3px;
-  background: white;
+  border: 1px solid rgba(204, 217, 229, 0.9);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
   cursor: pointer;
-  color: #2C2C2C;
+  color: #28435c;
 }
 
 .wave-info .follow:hover {
@@ -198,7 +221,7 @@
   background-size: cover;
   background-position: center;
   background-color: #CCD9E5;
-  border-radius: 3px;
+  border-radius: 10px;
   color: white;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
   overflow: hidden;
@@ -209,8 +232,8 @@
   font-family: 'PT Sans Narrow', Arial, sans-serif;
   font-size: 12px;
   line-height: 13px;
-  color: #666;
-  margin-top: 2px;
+  color: #66798d;
+  margin-top: 4px;
 }
 
 /* Loading and empty states */

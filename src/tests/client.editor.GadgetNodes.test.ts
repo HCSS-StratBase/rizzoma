@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
+import { Editor } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
 import { ChartGadget, PollGadget } from '../client/components/editor/extensions/GadgetNodes';
 
 // Access TipTap extension config via .config property
@@ -116,5 +118,31 @@ describe('client: PollGadget extension', () => {
         attrs: expect.objectContaining({ question: 'Vote' }),
       }),
     );
+  });
+
+  it('serializes poll nodes through editor.getHTML with the data-poll contract', () => {
+    const editor = new Editor({
+      extensions: [StarterKit, PollGadget],
+      content: '',
+    });
+
+    editor.commands.insertContent({
+      type: 'pollGadget',
+      attrs: {
+        question: 'Vote',
+        options: [{ id: 'opt-1', label: 'Yes', votes: 0 }],
+        allowMultiple: false,
+      },
+    });
+
+    const html = editor.getHTML();
+
+    expect(html).toContain('data-gadget-type="poll"');
+    expect(html).toContain('data-poll-question="Vote"');
+    expect(html).toContain('data-poll-allow-multiple="false"');
+    expect(html).not.toContain(' question=');
+    expect(html).not.toContain(' allowmultiple=');
+
+    editor.destroy();
   });
 });

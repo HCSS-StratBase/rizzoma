@@ -1,0 +1,8 @@
+[
+  {
+    "url": "http://127.0.0.1:4192/api/topics/9012be97aa78eaa471f308772c0326f3",
+    "status": 200,
+    "ok": true,
+    "body": "{\"id\":\"9012be97aa78eaa471f308772c0326f3\",\"rev\":\"2-8cba0271608b54233e1dce4cbe266416\"}"
+  }
+]

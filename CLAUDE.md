@@ -1,4 +1,4 @@
-# Rizzoma Project Status (feature/rizzoma-core-features)
+# Rizzoma Project Status (master)
 
 > **Session Continuity**: Read `CLAUDE_SESSION.md` first for detailed context from the last working session (recent fixes, test status, gotchas, key files).
 

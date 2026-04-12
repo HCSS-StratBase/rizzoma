@@ -1,0 +1,130 @@
+{
+  "url": "http://127.0.0.1:4193/#/topic/9012be97aa78eaa471f308772c049b15?layout=rizzoma",
+  "title": "Rizzoma",
+  "markers": {
+    "hasTopicDetail": false,
+    "hasTopicToolbar": false,
+    "toolbarText": null,
+    "hasAuthEmail": false,
+    "bodyPreview": ""
+  },
+  "logs": [
+    {
+      "type": "console",
+      "level": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "console",
+      "level": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "console",
+      "level": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[SW Hook] Skipping SW registration in dev mode"
+    },
+    {
+      "type": "console",
+      "level": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[api] /api/auth/me GET 401 11ms"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[SW Hook] Skipping SW registration in dev mode"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[api] /api/auth/oauth-status GET 200 19ms"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[api] /api/auth/login POST 200 14ms"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[SW Hook] Skipping SW registration in dev mode"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[api] /api/auth/me GET 200 19ms"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[api] /api/topics?limit=20&offset=0 GET 200 85ms"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[SW Hook] Skipping SW registration in dev mode"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[SW Hook] Skipping SW registration in dev mode"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[api] /api/topics/9012be97aa78eaa471f308772c049b15 GET 200 18ms"
+    },
+    {
+      "type": "console",
+      "level": "error",
+      "text": "Warning: React has detected a change in the order of Hooks called by %s. This will lead to bugs and errors if not fixed. For more information, read the Rules of Hooks: https://reactjs.org/link/rules-of-hooks\n\n   Previous render            Next render\n   ------------------------------------------------------\n%s   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n%s RizzomaTopicDetail 1. useState                   useState\n2. useState                   useState\n3. useState                   useState\n4. useState                   useState\n5. useState                   useState\n6. useRef                     useRef\n7. useState                   useState\n8. useState                   useState\n9. useState                   useState\n10. useState                  useState\n11. useState                  useState\n12. useRef                    useRef\n13. useCallback               useCallback\n14. useState                  useState\n15. useState                  useState\n16. useState                  useState\n17. useState                  useState\n18. useRef                    useRef\n19. useRef                    useRef\n20. useState                  useState\n21. useState                  useState\n22. useState                  useState\n23. useState                  useState\n24. useState                  useState\n25. useState                  useState\n26. useRef                    useRef\n27. useRef                    useRef\n28. useState                  useState\n29. useRef                    useRef\n30. useRef                    useRef\n31. useRef                    useRef\n32. useRef                    useRef\n33. useRef                    useRef\n34. useRef                    useRef\n35. useRef                    useRef\n36. useRef                    useRef\n37. useRef                    useRef\n38. useCallback               useCallback\n39. useMemo                   useMemo\n40. useState                  useState\n41. useEffect                 useEffect\n42. useRef                    useRef\n43. useRef                    useRef\n44. useEffect                 useEffect\n45. useRef                    useRef\n46. useRef                    useRef\n47. useState                  useState\n48. useSyncExternalStore      useSyncExternalStore\n49. useDebugValue             useDebugValue\n50. useEffect                 useEffect\n51. useState                  useState\n52. useRef                    useRef\n53. useMemo                   useMemo\n54. useSyncExternalStore      useSyncExternalStore\n55. useEffect                 useEffect\n56. useDebugValue             useDebugValue\n57. useLayoutEffect           useLayoutEffect\n58. useDebugValue             useDebugValue\n59. useRef                    useRef\n60. useEffect                 useEffect\n61. useEffect                 useEffect\n62. useEffect                 useEffect\n63. useEffect                 useEffect\n64. useEffect                 useEffect\n65. useRef                    useRef\n66. useRef                    useRef\n67. useEffect                 useEffect\n68. useEffect                 useEffect\n69. useEffect                 useEffect\n70. useEffect                 useEffect\n71. useCallback               useCallback\n72. useEffect                 useEffect\n73. useEffect                 useEffect\n74. useCallback               useCallback\n75. useCallback               useCallback\n76. useEffect                 useEffect\n77. useRef                    useRef\n78. useCallback               useCallback\n79. useEffect                 useEffect\n80. useEffect                 useEffect\n81. useEffect                 useEffect\n82. useEffect                 useEffect\n83. useCallback               useCallback\n84. useCallback               useCallback\n85. useCallback               useCallback\n86. useCallback               useCallback\n87. useCallback               useCallback\n88. useCallback               useCallback\n89. useCallback               useCallback\n90. useEffect                 useEffect\n91. useEffect                 useEffect\n92. useCallback               useCallback\n93. useCallback               useCallback\n94. useCallback               useCallback\n95. undefined                 useEffect\n \n    at RizzomaTopicDetail (http://127.0.0.1:4193/components/RizzomaTopicDetail.tsx:284:38)\n    at div\n    at div\n    at div\n    at RizzomaLayout (http://127.0.0.1:4193/components/RizzomaLayout.tsx:46:33)\n    at div\n    at App (http://127.0.0.1:4193/main.tsx:90:23)\n    at MobileProvider (http://127.0.0.1:4193/contexts/MobileContext.tsx:17:34)\n    at MantineThemeProvider (http://127.0.0.1:4193/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/@mantine_core.js?v=225c4fe6:3527:3)\n    at MantineProvider (http://127.0.0.1:4193/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/@mantine_core.js?v=225c4fe6:4029:3)"
+    },
+    {
+      "type": "pageerror",
+      "text": "Error: Rendered more hooks than during the previous render."
+    },
+    {
+      "type": "pageerror",
+      "text": "Error: Rendered more hooks than during the previous render."
+    },
+    {
+      "type": "console",
+      "level": "error",
+      "text": "The above error occurred in the <RizzomaTopicDetail> component:\n\n    at RizzomaTopicDetail (http://127.0.0.1:4193/components/RizzomaTopicDetail.tsx:284:38)\n    at div\n    at div\n    at div\n    at RizzomaLayout (http://127.0.0.1:4193/components/RizzomaLayout.tsx:46:33)\n    at div\n    at App (http://127.0.0.1:4193/main.tsx:90:23)\n    at MobileProvider (http://127.0.0.1:4193/contexts/MobileContext.tsx:17:34)\n    at MantineThemeProvider (http://127.0.0.1:4193/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/@mantine_core.js?v=225c4fe6:3527:3)\n    at MantineProvider (http://127.0.0.1:4193/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/@mantine_core.js?v=225c4fe6:4029:3)\n\nConsider adding an error boundary to your tree to customize error handling behavior.\nVisit https://reactjs.org/link/error-boundaries to learn more about error boundaries."
+    },
+    {
+      "type": "pageerror",
+      "text": "Error: Rendered more hooks than during the previous render."
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[socket] connected VKik_pCmvE3P61-FAAA5"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[api] /api/waves/9012be97aa78eaa471f308772c049b15/unread GET 200 38ms"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[api] /api/waves/9012be97aa78eaa471f308772c049b15/participants GET 200 18ms"
+    },
+    {
+      "type": "console",
+      "level": "log",
+      "text": "[api] /api/blips?waveId=9012be97aa78eaa471f308772c049b15&limit=500 GET 200 12ms"
+    }
+  ]
+}

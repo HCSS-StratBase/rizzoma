@@ -14,6 +14,16 @@ import { GreenNavigation } from './components/GreenNavigation';
 import { RizzomaLayout } from './components/RizzomaLayout';
 import { FEATURES } from '@shared/featureFlags';
 import { MobileProvider } from './contexts/MobileContext';
+import { MantineProvider, createTheme } from '@mantine/core';
+import '@mantine/core/styles.css';
+import '@mantine/charts/styles.css';
+
+const theme = createTheme({
+  primaryColor: 'teal',
+  defaultRadius: 'md',
+  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+});
+
 import { useServiceWorker, useInstallPrompt } from './hooks/useServiceWorker';
 import { useOfflineToast } from './hooks/useOfflineStatus';
 import { offlineQueue } from './lib/offlineQueue';
@@ -248,9 +258,11 @@ export function App() {
 const container = document.getElementById('root');
 if (container) {
   createRoot(container).render(
-    <MobileProvider>
-      <App />
-    </MobileProvider>
+    <MantineProvider theme={theme}>
+      <MobileProvider>
+        <App />
+      </MobileProvider>
+    </MantineProvider>
   );
 }
 

@@ -18,7 +18,7 @@ import { TextColor } from './extensions/TextColor';
 import { ImageGadget } from './extensions/ImageGadget';
 import { InlineCommentsVisibility } from './extensions/InlineCommentsVisibility';
 import { BlipKeyboardShortcuts } from './extensions/BlipKeyboardShortcuts';
-import { ChartGadget, PollGadget } from './extensions/GadgetNodes';
+import { AppFrameGadget, ChartGadget, EmbedFrameGadget, PollGadget } from './extensions/GadgetNodes';
 import { BlipThreadNode } from './extensions/BlipThreadNode';
 import { TagNode } from './extensions/TagNode';
 import { TaskWidgetNode } from './extensions/TaskWidget';
@@ -84,6 +84,14 @@ export const getEditorExtensions = (
         },
       })
       .configure({ lowlight }),
+    (ImageGadget as any).configure({
+      inline: false,
+      allowBase64: true,
+    }),
+    ChartGadget.configure({}),
+    EmbedFrameGadget.configure({}),
+    AppFrameGadget.configure({}),
+    PollGadget.configure({}),
   ];
 
   if (options?.blipId || options?.onToggleInlineComments) {
@@ -130,16 +138,7 @@ export const getEditorExtensions = (
           rel: 'noopener noreferrer',
           target: '_blank',
         },
-      }),
-      (ImageGadget as any).configure({
-        inline: false,
-        allowBase64: true,
       })
-    );
-
-    extensions.push(
-      ChartGadget.configure({}),
-      PollGadget.configure({})
       // BlipThreadNode is added with BlipKeyboardShortcuts (core BLB feature)
     );
   }

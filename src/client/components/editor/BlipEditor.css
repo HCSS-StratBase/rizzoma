@@ -119,41 +119,47 @@
 
 /* Gadget node styling */
 .blip-editor .ProseMirror .gadget-block {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid rgba(139, 159, 181, 0.22);
+  border-radius: 18px;
   padding: 10px;
-  margin: 8px 0;
-  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+  margin: 12px 0;
+  background:
+    radial-gradient(circle at top right, rgba(112, 190, 201, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(249, 252, 253, 0.98), rgba(239, 246, 250, 0.96));
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
 }
 
 .blip-editor .ProseMirror .gadget-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .blip-editor .ProseMirror .gadget-chip {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  background: #312e81;
-  color: #fff;
+  padding: 4px 10px;
+  background: rgba(18, 126, 142, 0.12);
+  color: #136776;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .blip-editor .ProseMirror .gadget-title {
-  font-weight: 600;
-  color: #111827;
+  font-weight: 700;
+  color: #183247;
 }
 
 .blip-editor .ProseMirror .gadget-body {
-  padding: 6px 4px;
-  color: #374151;
-  background: #fff;
-  border: 1px dashed #cbd5e1;
-  border-radius: 6px;
+  padding: 8px 10px;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(151, 173, 196, 0.18);
+  border-radius: 14px;
 }
 
 .blip-editor .ProseMirror .gadget-preview {
@@ -187,4 +193,45 @@
 .blip-editor .ProseMirror .gadget-option-votes {
   font-size: 12px;
   color: #6b7280;
+}
+
+.blip-editor .ProseMirror .gadget-embed-frame {
+  max-width: 760px;
+}
+
+.blip-editor .ProseMirror .gadget-embed-frame .gadget-body {
+  padding: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(12, 19, 30, 0.96), rgba(15, 23, 42, 0.92));
+  border: 1px solid rgba(14, 116, 144, 0.18);
+}
+
+.blip-editor .ProseMirror .gadget-embed-frame iframe {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-height: 320px;
+  border: 0;
+  background: #0f172a;
+}
+
+.blip-editor .ProseMirror .gadget-embed-frame[data-embed-provider="youtube"] iframe {
+  aspect-ratio: 16 / 9;
+  min-height: auto;
+}
+
+.blip-editor .ProseMirror .gadget-embed-frame[data-embed-provider="spreadsheet"] iframe {
+  min-height: 420px;
+}
+
+.blip-editor .ProseMirror img[src] {
+  display: block;
+  width: min(100%, 760px);
+  height: auto;
+  margin: 16px 0;
+  border-radius: 18px;
+  border: 1px solid rgba(139, 159, 181, 0.2);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.1);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(232, 240, 247, 0.92));
 }

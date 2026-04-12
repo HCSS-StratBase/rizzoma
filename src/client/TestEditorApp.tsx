@@ -1,16 +1,35 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { BlipEditor } from './components/editor/BlipEditor';
 import { getEnabledFeatures } from '@shared/featureFlags';
+import { GadgetPalette, type GadgetType } from './components/GadgetPalette';
+import { INSERT_EVENTS, dispatchInsertEvent } from './components/RightToolsPanel';
 import './components/editor/BlipEditor.css';
 
 export function TestEditorApp(): JSX.Element {
   const [content1, setContent1] = useState('<p>This is the first editor for testing rich text features.</p>');
   const [content2, setContent2] = useState('<p>This is the second editor for testing real-time collaboration.</p>');
+  const [showGadgetPalette, setShowGadgetPalette] = useState(false);
+
+  const handleGadgetSelect = useCallback((type: GadgetType, url?: string) => {
+    dispatchInsertEvent(INSERT_EVENTS.GADGET, { type, url });
+  }, []);
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <h1>Rizzoma Editor Test</h1>
-      
+
+      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+        <button onClick={() => setShowGadgetPalette(true)}>Open Gadget Palette</button>
+        {showGadgetPalette && (
+          <div style={{ position: 'absolute', zIndex: 100, background: 'white', border: '1px solid #ccc' }}>
+            <GadgetPalette
+              onSelect={handleGadgetSelect}
+              onClose={() => setShowGadgetPalette(false)}
+            />
+          </div>
+        )}
+      </div>
+...
       <div style={{ marginBottom: '20px', padding: '10px', background: '#f5f5f5', borderRadius: '5px' }}>
         <h3>Active Features:</h3>
         <ul>

@@ -107,8 +107,7 @@ export const BlipThreadNode = Node.create({
  * Set up click handler for BlipThread markers.
  * This should be called once to add event delegation for all markers.
  *
- * BLB: Clicking [+] dispatches a custom event to toggle inline expansion.
- * The parent RizzomaBlip listens for this event and expands/collapses the child inline.
+ * BLB: Clicking [+] navigates into the anchored child blip.
  */
 export function setupBlipThreadClickHandler(): () => void {
   const handler = (e: MouseEvent) => {
@@ -121,10 +120,10 @@ export function setupBlipThreadClickHandler(): () => void {
     e.preventDefault();
     e.stopPropagation();
 
-    // Dispatch custom event for inline expansion (instead of navigating away)
-    window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
-      detail: { threadId },
-    }));
+    const [waveId, ...pathParts] = threadId.split(':');
+    const blipPath = pathParts.join(':');
+    if (!waveId || !blipPath) return;
+    window.location.hash = `#/topic/${waveId}/${blipPath}/`;
   };
 
   document.addEventListener('click', handler, true);

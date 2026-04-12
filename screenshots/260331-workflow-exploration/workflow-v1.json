@@ -1,0 +1,49 @@
+{
+  "topicId": "9012be97aa78eaa471f308772c0b247b",
+  "base": "http://127.0.0.1:4198",
+  "timestamp": "2026-03-31T16:51:25.505Z",
+  "steps": [
+    {
+      "step": "create_root_reply",
+      "ok": true,
+      "detail": {
+        "rootReplyCount": 1
+      }
+    },
+    {
+      "step": "expand_root_reply",
+      "ok": true,
+      "detail": {
+        "expandedReplyCount": 1
+      }
+    },
+    {
+      "step": "open_nested_reply_form",
+      "ok": true,
+      "detail": {
+        "replyTextareaVisible": true
+      }
+    },
+    {
+      "step": "create_nested_reply",
+      "ok": true,
+      "detail": {
+        "nestedCollapsedCount": 1
+      }
+    },
+    {
+      "step": "enter_topic_edit_mode",
+      "ok": true,
+      "detail": {
+        "topicEditorVisible": true
+      }
+    },
+    {
+      "step": "open_gadget_palette",
+      "ok": true,
+      "detail": {
+        "gadgetTileCount": 10
+      }
+    }
+  ]
+}

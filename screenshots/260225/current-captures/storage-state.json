@@ -1,0 +1,39 @@
+{
+  "cookies": [
+    {
+      "name": "XSRF-TOKEN",
+      "value": "10f10c4234f1854088e16ffee7ced761",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1772582249.458089,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "rizzoma.sid",
+      "value": "s%3AJnV3WIdVILJNM0stKHuAm_ku1nQmo0cw.89k2KMeyVsQNhUOIHvWA2xzvaLD6jlA%2FlOMlq6NJmz0",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1772582240.800037,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        {
+          "name": "inlineCommentsVisibility",
+          "value": "{\"c7febb62dc333aa08f4a50aea8002d8e\":{\"value\":true,\"updatedAt\":1771977442313},\"c7febb62dc333aa08f4a50aea8002d8e:b1771977442003\":{\"value\":true,\"updatedAt\":1771977442351}}"
+        },
+        {
+          "name": "blipCollapsePreferences",
+          "value": "{\"c7febb62dc333aa08f4a50aea8002d8e\":{\"isCollapsed\":false,\"updatedAt\":1771977442312},\"c7febb62dc333aa08f4a50aea8002d8e:b1771977442003\":{\"isCollapsed\":false,\"updatedAt\":1771977442358}}"
+        }
+      ]
+    }
+  ]
+}

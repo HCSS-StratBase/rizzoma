@@ -31,6 +31,12 @@ export function dispatchInsertEvent(eventType: string, data?: Record<string, unk
   window.dispatchEvent(new CustomEvent(eventType, { detail: data }));
 }
 
+// Performance/Test helper: Expose events to window
+if (typeof window !== 'undefined') {
+  (window as any).RIZZOMA_INSERT_EVENTS = INSERT_EVENTS;
+  (window as any).rizzomaDispatchInsertEvent = dispatchInsertEvent;
+}
+
 interface RightToolsPanelProps {
   isAuthed: boolean;
   user?: { id?: string; email?: string; name?: string; avatar?: string } | null;
@@ -361,6 +367,10 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
 
       {/* Insert shortcuts - visible when editing or when an editable blip is active */}
       {(isEditMode || isBlipActiveEditable) && <div className="insert-shortcuts">
+          <div className="insert-shortcuts-header">
+            <div className="insert-shortcuts-title">Insert</div>
+            <div className="insert-shortcuts-subtitle">into active blip</div>
+          </div>
           <button
             className="insert-btn"
             onMouseDown={e => e.preventDefault()}
@@ -397,8 +407,10 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
             className="insert-btn gadget-btn"
             onMouseDown={e => e.preventDefault()}
             onClick={handleInsertGadget}
-            title="Insert gadget"
+            title="Open gadget palette for active blip"
+            data-testid="right-tools-insert-gadget"
           >
+            <span className="insert-icon gadget-insert-icon">▦</span>
             <span className="insert-label">Gadgets</span>
           </button>
           {showGadgetPalette && (

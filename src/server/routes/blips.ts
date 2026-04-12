@@ -215,6 +215,10 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
     }
 
     const blip = await getDoc<Blip & { _id: string; _rev: string }>(id);
+    if ((blip as any).type !== 'blip') {
+      res.status(400).json({ error: 'not_a_blip', requestId: (req as any)?.id });
+      return;
+    }
     if (blip.deleted) {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;

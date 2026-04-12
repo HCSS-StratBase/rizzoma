@@ -51,12 +51,7 @@ export function InlineComments({
   const [loadErrorType, setLoadErrorType] = useState<'auth' | 'network' | null>(null);
   const [isFetchingComments, setIsFetchingComments] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
-  const [navigationFilter, setNavigationFilter] = useState<'all' | 'open' | 'resolved'>('all');
-  const [navigationCursor, setNavigationCursor] = useState<string | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
-  const readOnlyBannerMessage = !canComment && !loadError
-    ? 'Inline comments are read-only for this blip.'
-    : null;
 
   const groupedComments = useMemo(() => {
     const map = new Map<string, { range: InlineComment['range']; comments: ThreadedComment[] }>();
@@ -91,24 +86,6 @@ export function InlineComments({
   useEffect(() => {
     groupedRef.current = groupedComments;
   }, [groupedComments]);
-
-  const rangeOrder = useMemo(
-    () => Array.from(groupedComments.entries())
-      .sort((a, b) => a[1].range.start - b[1].range.start)
-      .map(([key]) => key),
-    [groupedComments]
-  );
-
-  const filteredRangeKeys = useMemo(() => {
-    if (navigationFilter === 'all') return rangeOrder;
-    const filtered = Array.from(groupedComments.entries())
-      .filter(([_, value]) => navigationFilter === 'resolved'
-        ? value.comments.every((comment) => comment.resolved)
-        : value.comments.some((comment) => !comment.resolved))
-      .sort((a, b) => a[1].range.start - b[1].range.start)
-      .map(([key]) => key);
-    return filtered;
-  }, [groupedComments, navigationFilter, rangeOrder]);
 
   // Add comment button when text is selected
   useEffect(() => {
@@ -152,18 +129,6 @@ export function InlineComments({
       y: rect.top + window.scrollY,
     });
   }, []);
-
-  const focusRangeByKey = useCallback((rangeKey: string) => {
-    if (!editor) return;
-    const element = (editor.view as any)?.dom?.querySelector(
-      `.commented-text[data-comment-range="${rangeKey}"]`
-    ) as HTMLElement | null;
-    if (!element) return;
-    setPinnedRangeKey(rangeKey);
-    setHoveredRangeKey(rangeKey);
-    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    updateAnchorFromElement(element);
-  }, [editor, updateAnchorFromElement]);
 
   useEffect(() => {
     if (!editor || !FEATURES.INLINE_COMMENTS) return;
@@ -528,37 +493,9 @@ export function InlineComments({
     }
   }, [blipId, replyDrafts, canComment, loadError]);
 
-  const openCount = comments.filter((comment) => !comment.resolved).length;
-  const resolvedCount = comments.length - openCount;
   const activeRangeKey = pinnedRangeKey ?? hoveredRangeKey;
   const activeGroup = activeRangeKey ? groupedComments.get(activeRangeKey) : undefined;
   const interactionDisabled = !canComment || !!loadError;
-  const navDisabled = !!loadError;
-  const handleRetryLoad = useCallback(() => {
-    if (isFetchingComments) return;
-    setReloadToken((token) => token + 1);
-  }, [isFetchingComments]);
-
-  useEffect(() => {
-    if (!isVisible || navDisabled) return;
-    const handleNavShortcut = (event: KeyboardEvent) => {
-      if (!(event.altKey && (event.key === 'ArrowDown' || event.key === 'ArrowUp'))) return;
-      const target = event.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      if (filteredRangeKeys.length === 0) return;
-      event.preventDefault();
-      const activeKey = pinnedRangeKey || navigationCursor || filteredRangeKeys[0];
-      const currentIndex = Math.max(0, filteredRangeKeys.indexOf(activeKey));
-      const nextIndex = event.key === 'ArrowDown'
-        ? (currentIndex + 1) % filteredRangeKeys.length
-        : (currentIndex - 1 + filteredRangeKeys.length) % filteredRangeKeys.length;
-      const nextKey = filteredRangeKeys[nextIndex];
-      setNavigationCursor(nextKey);
-      focusRangeByKey(nextKey);
-    };
-    window.addEventListener('keydown', handleNavShortcut);
-    return () => window.removeEventListener('keydown', handleNavShortcut);
-  }, [filteredRangeKeys, focusRangeByKey, isVisible, navDisabled, navigationCursor, pinnedRangeKey]);
 
   const renderCommentThread = (comment: ThreadedComment, depth = 0) => {
     const replyDraft = replyDrafts[comment.id];
@@ -682,106 +619,6 @@ export function InlineComments({
 
   return (
     <>
-      {loadError && (
-        <div
-          className="inline-comments-banner persistent"
-          role="status"
-          data-testid="inline-comments-error"
-        >
-          <span>{loadError}</span>
-          {loadErrorType !== 'auth' && (
-            <button
-              type="button"
-              onClick={handleRetryLoad}
-              disabled={isFetchingComments}
-              data-testid="inline-comments-retry"
-            >
-              {isFetchingComments ? 'Retrying…' : 'Retry'}
-            </button>
-          )}
-        </div>
-      )}
-      {!loadError && isFetchingComments && (
-        <div
-          className="inline-comments-banner loading"
-          role="status"
-          data-testid="inline-comments-loading"
-        >
-          Loading inline comments…
-        </div>
-      )}
-
-      <div
-        className="inline-comment-nav"
-        aria-label="Inline comment navigation"
-        data-testid="inline-comment-nav"
-      >
-        <div className="inline-comment-nav-header">
-          <span>Inline comments</span>
-          <span className="inline-comment-nav-shortcuts">Alt+↑ / Alt+↓</span>
-        </div>
-        {readOnlyBannerMessage && (
-          <div className="inline-comments-banner" role="status" data-testid="inline-comments-readonly">
-            {readOnlyBannerMessage}
-          </div>
-        )}
-        <div className="inline-comment-nav-filters">
-          <button
-            type="button"
-            className={navigationFilter === 'all' ? 'active' : ''}
-            onClick={() => setNavigationFilter('all')}
-            data-testid="inline-comment-filter-all"
-          >
-            All ({rangeOrder.length})
-          </button>
-          <button
-            type="button"
-            className={navigationFilter === 'open' ? 'active' : ''}
-            onClick={() => setNavigationFilter('open')}
-            data-testid="inline-comment-filter-open"
-          >
-            Open ({openCount})
-          </button>
-          <button
-            type="button"
-            className={navigationFilter === 'resolved' ? 'active' : ''}
-            onClick={() => setNavigationFilter('resolved')}
-            data-testid="inline-comment-filter-resolved"
-          >
-            Resolved ({resolvedCount})
-          </button>
-        </div>
-        <ul className="inline-comment-nav-list">
-          {filteredRangeKeys.map((key) => {
-            const group = groupedComments.get(key);
-            if (!group) return null;
-            const isActive = key === (pinnedRangeKey ?? hoveredRangeKey);
-            const snippet = group.range.text.length > 50
-              ? `${group.range.text.substring(0, 50)}…`
-              : group.range.text;
-            return (
-              <li key={key}>
-                <button
-                  type="button"
-                  className={`inline-comment-nav-item ${isActive ? 'active' : ''}`}
-                  onClick={() => focusRangeByKey(key)}
-                  disabled={navDisabled}
-                >
-                  <span className="inline-comment-nav-snippet">{snippet}</span>
-                  <span className="inline-comment-nav-meta">
-                    {group.comments.length} {group.comments.length === 1 ? 'comment' : 'comments'}
-                    {group.comments.every((c) => c.resolved) ? ' • resolved' : ''}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-          {filteredRangeKeys.length === 0 && (
-            <li className="inline-comment-nav-empty">No inline comments yet</li>
-          )}
-        </ul>
-      </div>
-
       {/* Comment button for selected text */}
       {selectedRange && !showCommentForm && !interactionDisabled && (
         <button

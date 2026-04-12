@@ -1,0 +1,63 @@
+{
+  "topicId": "9012be97aa78eaa471f308772c0ccdc6",
+  "base": "http://127.0.0.1:4197",
+  "timestamp": "2026-03-31T19:24:13.870Z",
+  "steps": [
+    {
+      "step": "topic_loaded",
+      "screenshot": "screenshots/260331-complex-workflow-pass17c/01-topic-loaded.png",
+      "html": "screenshots/260331-complex-workflow-pass17c/01-topic-loaded.html"
+    },
+    {
+      "step": "root_reply_a_created",
+      "screenshot": "screenshots/260331-complex-workflow-pass17c/02-root-reply-a-created.png",
+      "html": "screenshots/260331-complex-workflow-pass17c/02-root-reply-a-created.html"
+    },
+    {
+      "step": "root_reply_b_created",
+      "screenshot": "screenshots/260331-complex-workflow-pass17c/03-root-reply-b-created.png",
+      "html": "screenshots/260331-complex-workflow-pass17c/03-root-reply-b-created.html"
+    },
+    {
+      "step": "root_reply_a_expanded",
+      "screenshot": "screenshots/260331-complex-workflow-pass17c/04-root-reply-a-expanded.png",
+      "html": "screenshots/260331-complex-workflow-pass17c/04-root-reply-a-expanded.html"
+    },
+    {
+      "step": "nested_reply_form_open",
+      "screenshot": "screenshots/260331-complex-workflow-pass17c/05-nested-reply-form-open.png",
+      "html": "screenshots/260331-complex-workflow-pass17c/05-nested-reply-form-open.html"
+    },
+    {
+      "step": "nested_reply_created",
+      "screenshot": "screenshots/260331-complex-workflow-pass17c/06-nested-reply-created.png",
+      "html": "screenshots/260331-complex-workflow-pass17c/06-nested-reply-created.html"
+    },
+    {
+      "step": "nested_reply_expanded",
+      "screenshot": "screenshots/260331-complex-workflow-pass17c/07-nested-reply-expanded.png",
+      "html": "screenshots/260331-complex-workflow-pass17c/07-nested-reply-expanded.html"
+    },
+    {
+      "step": "topic_edit_mode",
+      "screenshot": "screenshots/260331-complex-workflow-pass17c/08-topic-edit-mode.png",
+      "html": "screenshots/260331-complex-workflow-pass17c/08-topic-edit-mode.html"
+    },
+    {
+      "step": "gadget_palette_open",
+      "screenshot": "screenshots/260331-complex-workflow-pass17c/09-gadget-palette-open.png",
+      "html": "screenshots/260331-complex-workflow-pass17c/09-gadget-palette-open.html"
+    },
+    {
+      "step": "poll_inserted",
+      "screenshot": "screenshots/260331-complex-workflow-pass17c/10-poll-inserted.png",
+      "html": "screenshots/260331-complex-workflow-pass17c/10-poll-inserted.html"
+    },
+    {
+      "step": "done_mode_after_poll",
+      "screenshot": "screenshots/260331-complex-workflow-pass17c/11-done-mode-after-poll.png",
+      "html": "screenshots/260331-complex-workflow-pass17c/11-done-mode-after-poll.html"
+    }
+  ],
+  "finalHtmlPath": "screenshots/260331-complex-workflow-pass17c/final.html"
+}

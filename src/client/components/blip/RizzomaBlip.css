@@ -22,9 +22,9 @@
 }
 
 .rizzoma-blip.nested-blip {
-  border-left: 1px solid #e0e0e0;
-  padding-left: 10px;
-  margin-top: 8px;
+  border-left: 2px solid rgba(136, 155, 177, 0.34);
+  padding-left: 14px;
+  margin-top: 12px;
 }
 
 .blip-expander {
@@ -133,8 +133,14 @@
 /* Blip Content */
 .blip-content {
   position: relative;
-  padding: 4px 0;
+  padding: 12px 14px 14px;
   min-height: 24px;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at top right, rgba(92,170,247,0.06), transparent 22%),
+    linear-gradient(180deg, rgba(255,255,255,0.992), rgba(248,251,253,0.972));
+  border: 1px solid rgba(156, 175, 196, 0.32);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.055);
 }
 
 .blip-content.collapsed {
@@ -147,10 +153,10 @@
 }
 
 .blip-text {
-  line-height: 1.5;
-  color: #333;
-  padding: 4px;
-  border-radius: 3px;
+  line-height: 1.7;
+  color: #203447;
+  padding: 4px 8px;
+  border-radius: 8px;
   min-height: 24px;
   user-select: text;
 }
@@ -247,7 +253,7 @@
 .blip-content-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -255,7 +261,7 @@
 .blip-bullet {
   font-size: 14px;
   line-height: 1.4;
-  color: #444;
+  color: #586b7f;
   flex-shrink: 0;
 }
 
@@ -284,7 +290,7 @@
 
 .blip-author-date {
   font-size: 11px;
-  color: #888;
+  color: #7b8ca0;
   white-space: nowrap;
 }
 
@@ -293,7 +299,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
   margin-left: auto;
   padding-left: 12px;
@@ -321,6 +327,63 @@
   object-fit: cover;
   border: 2px solid #fff;
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 500px) {
+  .blip-content-row {
+    gap: 8px;
+  }
+
+  .blip-author-info,
+  .blip-contributors-info {
+    gap: 2px;
+    padding-left: 8px;
+  }
+
+  .blip-author-avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  .blip-contributors-stack {
+    width: 28px;
+    height: 28px;
+  }
+
+  .blip-contributor-avatar {
+    width: 20px;
+    height: 20px;
+    border-width: 1px;
+  }
+
+  .blip-author-date {
+    max-width: 48px;
+    font-size: 10px;
+    line-height: 1.1;
+    white-space: normal;
+    text-align: right;
+  }
+
+  .blip-container.expanded {
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+
+  .blip-collapsed-row {
+    padding: 5px 6px;
+  }
+
+  .blip-collapsed-label-text {
+    font-size: 13px;
+  }
+
+  .blip-container.inline-child .blip-content-row {
+    gap: 6px;
+  }
+
+  .blip-container.inline-child .blip-text {
+    padding: 2px 2px 2px 0;
+  }
 }
 
 /* Stacked mode - avatars positioned absolutely */
@@ -476,45 +539,53 @@
 
 .blip-toolbar-simple {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 8px;
+  right: 8px;
   opacity: 0;
   transition: opacity 0.2s ease;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 72%;
 }
 
 .btn-edit {
-  padding: 4px 8px;
-  background: linear-gradient(to bottom, #f8f8f8, #e8e8e8);
-  border: 1px solid #ccc;
-  border-radius: 3px;
+  padding: 5px 10px;
+  background: rgba(255,255,255,0.98);
+  border: 1px solid rgba(132, 148, 166, 0.24);
+  border-radius: 999px;
   font-size: 12px;
-  color: #333;
+  color: #405469;
   cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
 }
 
 .btn-edit:hover {
-  background: linear-gradient(to bottom, #fff, #f0f0f0);
-  border-color: #999;
+  background: #ffffff;
+  border-color: rgba(92, 170, 247, 0.34);
 }
 
 /* Editor Container */
 .blip-editor-container {
-  margin: 4px 0;
+  margin: 8px 0 0;
 }
 
 /* TipTap ProseMirror editor styling for inline blip editor */
 .blip-editor-container .ProseMirror {
   outline: none;
   min-height: 1.5rem;
-  padding: 8px;
-  background: #fff;
-  border: 1px solid #4285f4;
-  border-radius: 4px;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.995), rgba(248,251,254,0.985));
+  border: 1px solid rgba(93, 151, 211, 0.72);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.88);
 }
 
 .blip-editor-container .ProseMirror:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.14);
 }
 
 .blip-editor-container .ProseMirror p {
@@ -644,19 +715,19 @@
 
 /* Reply Input - Original Rizzoma style */
 .blip-reply-inline {
-  margin-top: 8px;
+  margin-top: 14px;
   display: flex;
   align-items: flex-start;
 }
 
 .reply-placeholder-input {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 9px 12px;
+  border: 1px solid rgba(179, 194, 210, 0.88);
+  border-radius: 9px;
   font-size: 13px;
-  color: #999;
-  background: #fafafa;
+  color: #7a8794;
+  background: linear-gradient(180deg, rgba(251,253,254,0.98), rgba(245,249,252,0.98));
   cursor: text;
 }
 
@@ -743,10 +814,10 @@
 
 /* Child Blips */
 .child-blips {
-  margin-top: 8px;
-  margin-left: 16px;
-  border-left: 2px solid #e0e0e0;
-  padding-left: 12px;
+  margin-top: 14px;
+  margin-left: 18px;
+  border-left: 2px solid rgba(131, 151, 173, 0.32);
+  padding-left: 14px;
 }
 
 .rizzoma-blip.topic-root .child-blips {
@@ -757,37 +828,53 @@
 
 /* Child blip wrapper */
 .child-blip-wrapper {
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 /* Collapsed child blip row - inline like original Rizzoma: • Label [+] */
 .child-blip-collapsed {
-  padding: 3px 8px;
+  padding: 7px 9px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 8px;
   transition: background-color 0.15s ease;
   font-size: 14px;
   line-height: 1.5;
+  background: rgba(248, 251, 253, 0.98);
+  border: 1px solid rgba(196, 209, 223, 0.72);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.028);
 }
 
 .child-blip-collapsed .blip-bullet {
   font-size: 14px;
-  color: #666;
+  color: #6b7c8f;
   margin-right: 6px;
 }
 
 .child-blip-collapsed:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgba(239, 247, 253, 0.99);
 }
 
 .child-blip-collapsed.has-unread {
-  background-color: transparent;
+  background: linear-gradient(90deg, rgba(232, 247, 239, 0.98), rgba(248, 252, 249, 0.94));
+  box-shadow:
+    inset 2px 0 0 #2e8b57,
+    0 6px 14px rgba(33, 71, 51, 0.05);
+  border-color: rgba(131, 180, 151, 0.45);
   border-left: none;
-  padding-left: 8px;
+  padding-left: 9px;
+}
+
+.child-blip-collapsed.has-unread .blip-bullet {
+  color: #2e8b57;
+}
+
+.child-blip-collapsed.has-unread .blip-label-text {
+  color: #1f4733;
+  font-weight: 600;
 }
 
 .child-blip-collapsed .blip-label-text {
-  color: #333;
+  color: #31465c;
   font-size: 14px;
 }
 
@@ -869,8 +956,28 @@
 }
 
 .root-blip .blip-text {
-  font-size: 15px;
-  padding: 8px;
+  font-size: 16px;
+  padding: 10px 12px;
+}
+
+.root-blip .blip-text.topic-content-view figure[data-gadget-type="app-frame"] {
+  margin: 20px 0 0;
+}
+
+.root-blip .blip-text.topic-content-view figure[data-gadget-type="app-frame"] .gadget-header,
+.root-blip .blip-text.topic-content-view figure[data-gadget-type="app-frame"] .gadget-preview {
+  display: none;
+}
+
+.root-blip .blip-text.topic-content-view figure[data-gadget-type="app-frame"] .gadget-body {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.root-blip .blip-text.topic-content-view figure[data-gadget-type="app-frame"] iframe {
+  display: block;
+  width: 100%;
 }
 
 /* Animations */
@@ -886,9 +993,24 @@
 /* Active blip styling (when clicked/selected) - only for expanded blips */
 /* Collapsed blips should look like simple list items without any active styling */
 .blip-container.active.expanded {
-  border: 2px solid #57AAD9;
-  border-radius: 4px;
-  background-color: rgba(87, 170, 217, 0.02);
+  border: 1px solid rgba(111, 136, 161, 0.34);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.988), rgba(244,248,251,0.972));
+  box-shadow:
+    0 12px 26px rgba(15, 23, 42, 0.055),
+    0 0 0 2px rgba(89, 145, 195, 0.075);
+}
+
+.blip-container.inline-child.active.expanded {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.blip-container.inline-child.unread > .blip-content {
+  background: linear-gradient(180deg, rgba(234, 247, 239, 0.72), rgba(255,255,255,0.64));
+  border-radius: 14px;
 }
 
 /* Collapsed blips never get active styling - they're just list items */
@@ -898,7 +1020,23 @@
 }
 
 .blip-container.active .blip-text {
-  background-color: rgba(87, 170, 217, 0.05);
+  background-color: rgba(92, 170, 247, 0.075);
+}
+
+.blip-container[data-active-blip="false"] .blip-menu-container {
+  opacity: 0 !important;
+  transform: translateY(-2px) !important;
+  pointer-events: none;
+}
+
+.blip-container[data-active-blip="false"] .blip-text {
+  background-color: transparent !important;
+}
+
+.blip-container[data-active-blip="true"] .blip-menu-container {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  pointer-events: auto;
 }
 
 /* Ensure menu appears when blip is active */
@@ -998,11 +1136,13 @@
 
 /* Collapsed row - shows only bullet + label + [+] icon inline like live Rizzoma */
 .blip-collapsed-row {
-  padding: 3px 0;
+  padding: 8px 10px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 8px;
   transition: background-color 0.15s ease;
   line-height: 1.5;
+  background: rgba(248, 251, 253, 0.98);
+  border: 1px solid rgba(191, 206, 221, 0.74);
 }
 
 .blip-collapsed-row .blip-bullet {
@@ -1010,13 +1150,14 @@
 }
 
 .blip-collapsed-row:hover {
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: rgba(234, 244, 252, 0.96);
   /* Subtle hover - no card effect */
 }
 
 .blip-collapsed-label-text {
   font-size: 14px;
-  color: #333;
+  color: #264056;
+  font-weight: 500;
 }
 
 /* [+] inline icon - matches original Rizzoma gray rounded square style */
@@ -1068,7 +1209,15 @@
 
 /* Expanded state - show full content with toolbar */
 .blip-container.expanded {
-  /* No special border for expanded - the toolbar provides visual distinction */
+  margin-bottom: 14px;
+  padding-left: 4px;
+}
+
+.blip-container.expanded:not(.active):not(.inline-child) > .blip-content {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.985), rgba(248,250,252,0.968));
+  border-color: rgba(154, 171, 189, 0.28);
+  box-shadow: 0 9px 20px rgba(15, 23, 42, 0.035);
 }
 
 .blip-container.collapsed {
@@ -1083,7 +1232,7 @@
 /* Root blips when expanded need the expander positioned correctly */
 .blip-container.root-blip.expanded > .blip-expander {
   left: -24px;
-  top: 40px; /* Below the BlipMenu toolbar */
+  top: 16px;
 }
 
 /* Nested blip indentation */
@@ -1102,7 +1251,7 @@
 .blip-container.expanded .blip-expander {
   position: absolute;
   left: -20px;
-  top: 40px; /* Below the toolbar */
+  top: 18px;
 }
 
 .blip-expander-icon {
@@ -1123,7 +1272,7 @@
 /* Active collapsed row - minimal indication like live Rizzoma */
 /* Just a subtle background on hover, no border */
 .blip-container.collapsed.active .blip-collapsed-row {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgba(92, 170, 247, 0.1);
   /* No border - collapsed blips are simple list items */
 }
 
@@ -1135,24 +1284,65 @@
 
 /* Inline-expanded child blips (BLB: [+] expands inline, not navigates) */
 .inline-child-expanded {
-  margin-left: 22px;
-  border-left: 2px solid #ddd;
+  margin-left: 14px;
+  border-left: 1px solid rgba(125, 145, 170, 0.22);
   padding-left: 8px;
-  margin-top: 4px;
-  margin-bottom: 4px;
-  background: #fafafa;
-  border-radius: 0 3px 3px 0;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  background: transparent;
+  border-radius: 0;
 }
 
 /* Minimal styling for inline children — no toolbar, clean content display */
 .inline-child-expanded > .blip-container {
   margin-left: 0 !important;
-  padding: 4px 0;
+  padding: 2px 0;
 }
 
 .inline-child-expanded > .blip-container > .blip-content {
   margin-top: 0 !important;
   min-height: 0 !important;
+}
+
+.blip-container.inline-child.expanded {
+  margin-bottom: 2px;
+}
+
+.blip-container.inline-child > .blip-content {
+  padding: 2px 4px 4px;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.blip-container.inline-child .blip-content-row {
+  gap: 8px;
+}
+
+.blip-container.inline-child .blip-text {
+  padding: 2px 4px;
+  line-height: 1.55;
+}
+
+.blip-container.inline-child .blip-contributors-info {
+  opacity: 0.7;
+}
+
+.blip-container.inline-child .child-blips {
+  margin-top: 4px;
+}
+
+.blip-container.inline-child .write-reply-section {
+  margin-top: 4px;
+}
+
+.blip-container.inline-child .write-reply-input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.72);
+  border-color: rgba(132, 148, 166, 0.18);
+  box-shadow: none;
 }
 
 /* Portal container for inline children rendered at marker positions */

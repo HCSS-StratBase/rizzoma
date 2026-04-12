@@ -24,6 +24,7 @@ import { inlineCommentsRouter } from './routes/inlineComments.js';
 import { uploadsPath, uploadsRouter } from './routes/uploads.js';
 import healthRouter from './routes/health.js';
 import notificationsRouter from './routes/notifications.js';
+import gadgetsRouter from './routes/gadgets.js';
 import mentionsRouter from './routes/mentions.js';
 import tasksRouter from './routes/tasks.js';
 
@@ -81,19 +82,37 @@ app.use('/api/blips', blipsRouter);
 app.use('/api', inlineCommentsRouter);
 app.use('/api/uploads', uploadsRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/gadgets', gadgetsRouter);
 app.use('/api/mentions', mentionsRouter);
 app.use('/api/tasks', tasksRouter);
 
-// Placeholder root
-app.get('/', (_req, res) => {
-  res.type('text').send('Rizzoma modern server running');
-});
+// Static assets and SPA fallback
+const staticDir = path.resolve(process.cwd(), 'dist', 'client');
 
-// Static assets in production
 if (process.env['NODE_ENV'] === 'production') {
-  const staticDir = path.resolve(process.cwd(), 'dist', 'client');
   app.use(express.static(staticDir));
 }
+
+// Root and SPA navigation handler
+// Express 5 / path-to-regexp v8 rejects bare "*" routes.
+app.get('/{*path}', (_req, res, next) => {
+  // Skip API and upload routes
+  if (_req.path.startsWith('/api') || _req.path.startsWith('/uploads')) {
+    return next();
+  }
+
+  if (process.env['NODE_ENV'] === 'production') {
+    res.sendFile(path.join(staticDir, 'index.html'));
+  } else {
+    // In development, if they hit the backend port, redirect to the Vite port
+    const host = _req.get('host') || 'localhost';
+    if (host.includes(':8000')) {
+      return res.redirect(`http://${host.replace(':8000', ':3000')}${_req.originalUrl}`);
+    }
+    // Fallback if not on port 8000 but still in dev
+    res.status(404).send('Rizzoma Dev Server: Please use port 3000 for the UI');
+  }
+});
 app.use('/uploads', express.static(uploadsPath, {
   fallthrough: false,
   maxAge: '1d',

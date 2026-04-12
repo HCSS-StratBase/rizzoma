@@ -1,0 +1,8503 @@
+<!DOCTYPE html><html lang="en"><head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Rizzoma</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="description" content="Collaborative real-time communication and document management">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Rizzoma">
+    <meta name="application-name" content="Rizzoma">
+    <meta name="msapplication-TileColor" content="#2c3e50">
+    <meta name="msapplication-config" content="none">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/icons/icon-192x192.svg">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.svg">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.svg">
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-192x192.svg">
+
+    <!-- iOS Splash Screens (optional, can be generated later) -->
+    <!-- <link rel="apple-touch-startup-image" href="/splash.png" /> -->
+
+    <!-- Preconnect to API for faster loading -->
+    <link rel="preconnect" href="/">
+  <style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/AuthPanel.css">.auth-panel {
+  /* Container - inherits from parent modal */
+}
+
+.auth-title {
+  color: #2c3e50;
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0 0 1.5rem;
+  text-align: center;
+}
+
+.auth-error {
+  color: #e74c3c;
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 0.75rem;
+  background: #fdf2f2;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+/* OAuth button base styles */
+.oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  margin-bottom: 0.5rem;
+}
+
+.oauth-icon {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+/* Google button */
+.google-btn {
+  background: #fff;
+  color: #444;
+  border-color: #ddd;
+}
+.google-btn:hover:not(:disabled) {
+  background: #f8f8f8;
+  border-color: #ccc;
+}
+
+/* Facebook button */
+.facebook-btn {
+  background: #1877f2;
+  color: #fff;
+  border-color: #1877f2;
+}
+.facebook-btn:hover:not(:disabled) {
+  background: #166fe5;
+}
+
+/* Microsoft button */
+.microsoft-btn {
+  background: #2f2f2f;
+  color: #fff;
+  border-color: #2f2f2f;
+}
+.microsoft-btn:hover:not(:disabled) {
+  background: #444;
+}
+
+/* SAML/SSO button */
+.saml-btn {
+  background: #5c6bc0;
+  color: #fff;
+  border-color: #5c6bc0;
+}
+.saml-btn:hover:not(:disabled) {
+  background: #4a5ab9;
+}
+
+/* Disabled button state for OAuth */
+.oauth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Submit button disabled state */
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Or divider */
+.or-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #888;
+  font-size: 0.8rem;
+  margin: 1rem 0;
+}
+.or-divider::before,
+.or-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+.or-divider::before {
+  margin-right: 0.75rem;
+}
+.or-divider::after {
+  margin-left: 0.75rem;
+}
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .oauth-btn {
+    min-height: 44px;
+    padding: 12px 1rem;
+    font-size: 1rem;
+  }
+
+  .submit-btn {
+    min-height: 44px;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/editor/MentionList.css">.mention-list {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+  position: relative;
+  min-width: 200px;
+}
+
+.mention-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s;
+}
+
+.mention-item:hover {
+  background-color: #f5f5f5;
+}
+
+.mention-item.is-selected {
+  background-color: #e3f2fd;
+}
+
+.mention-item.is-empty {
+  padding: 8px 12px;
+  color: #666;
+  font-style: italic;
+  cursor: default;
+}
+
+.mention-label {
+  font-weight: 500;
+  color: #333;
+}
+
+.mention-email {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* Mention in the editor — turquoise pill like original Rizzoma |@Name| */
+.mention {
+  background-color: rgb(120, 188, 255);
+  border-radius: 3px;
+  padding: 1px 4px;
+  color: #ffffff;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline;
+}
+
+.mention::before {
+  content: '|';
+  opacity: 0.5;
+}
+
+.mention::after {
+  content: '|';
+  opacity: 0.5;
+}
+
+.mention:hover {
+  background-color: rgb(100, 170, 240);
+}
+
+/* Tag inline widget (#tag) — plain turquoise text, no background */
+.tag-widget {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  color: rgb(120, 188, 255);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tag-widget:hover {
+  color: rgb(80, 150, 220);
+  text-decoration: underline;
+}</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/editor/CollaborativeCursors.css">/* Collaborative Cursors Styling */
+
+/* Remote cursor */
+.collaboration-cursor {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 2px solid;
+  border-left-color: var(--cursor-color, #666);
+  pointer-events: none;
+}
+
+.collaboration-cursor-label {
+  position: absolute;
+  top: -20px;
+  left: -1px;
+  padding: 2px 8px;
+  background-color: var(--cursor-color, #666);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px 4px 4px 0;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+  animation: cursor-fade-in 0.3s;
+}
+
+/* Remote selection */
+.collaboration-selection {
+  background-color: var(--selection-color, rgba(0, 123, 255, 0.2));
+  animation: selection-fade-in 0.3s;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: #f0f0f0;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #666;
+  margin-left: 8px;
+}
+
+.typing-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.typing-dots span {
+  width: 4px;
+  height: 4px;
+  background: #999;
+  border-radius: 50%;
+  animation: typing-bounce 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.typing-text {
+  font-style: italic;
+}
+
+/* Animations */
+@keyframes cursor-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes selection-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes typing-bounce {
+  0%, 80%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  40% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+
+/* Presence list */
+.presence-list {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  z-index: 100;
+}
+
+.presence-list-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.presence-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.presence-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.presence-name {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.presence-status {
+  font-size: 11px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .collaboration-cursor-label {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+  
+  .presence-list {
+    top: auto;
+    bottom: 20px;
+    right: 10px;
+  }
+}</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/editor/extensions/BlipThread.css">/* BlipThread inline marker styles — unified with .blip-expand-icon (#b3b3b3 gray) */
+
+.blip-thread-marker {
+  font-size: 0; /* Hide textContent — CSS drives the visible symbol */
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  text-decoration: none;
+  border-radius: 3px;
+  width: 16px;
+  height: 14px;
+  background: #b3b3b3;
+  border: none;
+  margin-left: 2px;
+  transition: background-color 0.15s ease;
+}
+
+/* CSS-driven marker symbol — always shows correct +/− */
+.blip-thread-marker::after {
+  content: "+";
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.blip-thread-marker.expanded::after {
+  content: "\2212"; /* − minus sign */
+}
+
+.blip-thread-marker:hover {
+  background: #999999;
+}
+
+/* Unread indicator - green color like Follow-the-Green */
+.blip-thread-marker.has-unread {
+  background: #2e8b57;
+}
+
+.blip-thread-marker.has-unread:hover {
+  background: #246b46;
+}
+
+/* Expanded state — shows − instead of + */
+.blip-thread-marker.expanded {
+  background: #999999;
+}
+
+.blip-thread-marker.expanded.has-unread {
+  background: #2e8b57;
+}
+
+/* Selected state in editor */
+.blip-thread-marker.selected {
+  background-color: rgba(78, 160, 241, 0.2);
+  outline: 1px solid rgba(78, 160, 241, 0.5);
+}
+
+/* ProseMirror node view wrapper */
+.blip-thread-marker.ProseMirror-selectednode {
+  background-color: rgba(78, 160, 241, 0.3);
+  outline: 2px solid #4ea0f1;
+}
+
+/* Ensure proper inline flow */
+.ProseMirror .blip-thread-marker {
+  display: inline-flex;
+  white-space: nowrap;
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/editor/extensions/TaskWidget.css">/* Task widget — turquoise pill like original Rizzoma |☐ Name DD Mon| */
+.task-widget {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: rgb(120, 188, 255);
+  border-radius: 3px;
+  padding: 1px 6px;
+  color: #ffffff;
+  font-weight: 500;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.task-widget:hover {
+  background-color: rgb(100, 170, 240);
+}
+
+.task-widget.task-done {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.task-checkbox {
+  margin: 0;
+  cursor: pointer;
+}
+
+.task-assignee {
+  font-size: 13px;
+}
+
+.task-due {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-left: 2px;
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/editor/extensions/CodeBlockView.css">/* Enhanced Code Block — replaces bare TipTap codeBlock */
+
+.code-block-wrapper {
+  position: relative;
+  margin: 0.75em 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fafafa;
+  font-size: 13px;
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
+  user-select: none;
+}
+
+.code-block-lang-select {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #fff;
+  font-size: 11px;
+  padding: 2px 4px;
+  color: #555;
+  cursor: pointer;
+  outline: none;
+}
+.code-block-lang-select:focus {
+  border-color: #78bcff;
+}
+
+.code-block-copy-btn {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #fff;
+  font-size: 11px;
+  padding: 2px 10px;
+  color: #555;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.code-block-copy-btn:hover {
+  background: #e8e8e8;
+  color: #333;
+}
+.code-block-copy-btn:active {
+  background: #ddd;
+}
+
+/* Code area */
+.code-block-pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-family: 'Consolas', 'Fira Code', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  tab-size: 4;
+  background: #fafafa;
+  counter-reset: code-line;
+}
+
+.code-block-pre code {
+  font-family: inherit;
+  background: none;
+  padding: 0;
+  white-space: pre;
+}
+
+/* highlight.js theme overrides — GitHub-style light */
+.code-block-pre.hljs {
+  background: #fafafa;
+  color: #24292e;
+}
+.code-block-pre .hljs-comment,
+.code-block-pre .hljs-quote {
+  color: #6a737d;
+  font-style: italic;
+}
+.code-block-pre .hljs-keyword,
+.code-block-pre .hljs-selector-tag,
+.code-block-pre .hljs-type {
+  color: #d73a49;
+}
+.code-block-pre .hljs-string,
+.code-block-pre .hljs-addition {
+  color: #032f62;
+}
+.code-block-pre .hljs-number,
+.code-block-pre .hljs-literal {
+  color: #005cc5;
+}
+.code-block-pre .hljs-title,
+.code-block-pre .hljs-section,
+.code-block-pre .hljs-attr {
+  color: #6f42c1;
+}
+.code-block-pre .hljs-built_in,
+.code-block-pre .hljs-builtin-name {
+  color: #e36209;
+}
+.code-block-pre .hljs-name,
+.code-block-pre .hljs-tag {
+  color: #22863a;
+}
+.code-block-pre .hljs-deletion {
+  color: #b31d28;
+  background: #ffeef0;
+}
+.code-block-pre .hljs-addition {
+  background: #f0fff4;
+}
+.code-block-pre .hljs-meta {
+  color: #735c0f;
+}
+.code-block-pre .hljs-variable,
+.code-block-pre .hljs-template-variable {
+  color: #e36209;
+}
+.code-block-pre .hljs-symbol {
+  color: #005cc5;
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/editor/InlineComments.css">/* Inline Comments Styling */
+
+/* Add comment button */
+.add-comment-button {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffc107;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 100;
+}
+
+.add-comment-button:hover {
+  background: #ffb300;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Comment form */
+.inline-comment-form {
+  position: absolute;
+  right: -320px;
+  top: 0;
+  width: 300px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 200;
+}
+
+.comment-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  color: #666;
+}
+
+.comment-form-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #999;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.inline-comment-form textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  border: none;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.comment-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px;
+  border-top: 1px solid #eee;
+}
+
+.comment-form-actions button {
+  padding: 6px 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.comment-form-actions button.primary {
+  background: #ffc107;
+  border-color: #ffc107;
+  color: white;
+}
+
+.comment-form-actions button.primary:hover {
+  background: #ffb300;
+}
+
+.comment-form-actions button.primary:disabled {
+  background: #ccc;
+  border-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Inline comment display */
+.inline-comments-popover {
+  position: fixed;
+  width: 320px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+  padding: 12px;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.inline-comments-popover::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid rgba(0, 0, 0, 0.12);
+}
+
+.inline-comments-popover::after {
+  content: '';
+  position: absolute;
+  top: 13px;
+  left: -6px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 7px solid #fff;
+}
+
+.inline-comments-popover.pinned {
+  border-color: #ffc107;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+.inline-comments-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.inline-comments-popover-close {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.inline-comments-popover-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.inline-comment {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  transition: all 0.2s;
+}
+
+.inline-comment:last-child {
+  border-bottom: none;
+}
+
+.inline-comment:hover {
+  background: #f9f9f9;
+}
+
+.inline-comment.resolved {
+  opacity: 0.6;
+}
+
+.inline-comment-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.comment-header strong {
+  font-size: 13px;
+  color: #333;
+}
+
+.comment-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comment-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e7eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.comment-avatar.fallback {
+  font-size: 12px;
+}
+
+.comment-name-block {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.comment-email {
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.comment-time {
+  font-size: 11px;
+  color: #999;
+}
+
+.comment-text-preview {
+  font-size: 12px;
+  color: #555;
+  font-style: italic;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  background: #fff9c4;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 193, 7, 0.45);
+  line-height: 1.3;
+}
+
+.comment-content {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.resolve-button {
+  padding: 4px 12px;
+  border: 1px solid #4caf50;
+  background: white;
+  color: #4caf50;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.resolve-button:hover {
+  background: #4caf50;
+  color: white;
+}
+
+.reopen-button {
+  padding: 4px 12px;
+  border: 1px solid #2563eb;
+  background: white;
+  color: #2563eb;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reopen-button:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
+.reply-button {
+  padding: 4px 10px;
+  border: 1px solid #ddd;
+  background: #f8f8f8;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.inline-comment-reply {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.inline-comment-reply textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 60px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px;
+  font-size: 13px;
+}
+
+.inline-comment-replies {
+  margin-top: 6px;
+  border-left: 2px solid #f0f0f0;
+  padding-left: 8px;
+}
+
+.inline-comments-banner {
+  background: #fff9c4;
+  color: #5f370e;
+  border: 1px solid rgba(255, 193, 7, 0.45);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.inline-comments-banner.loading {
+  background: #eff4ff;
+  color: #1e3a8a;
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.inline-comments-banner.persistent {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.inline-comments-banner button {
+  margin-left: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid #d27f00;
+  background: #ffd54f;
+  color: #4a2c00;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.inline-comments-banner button:hover:not(:disabled) {
+  background: #ffca28;
+}
+
+.inline-comments-banner button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.inline-comment-nav {
+  position: absolute;
+  top: 0;
+  right: -340px;
+  width: 320px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 10px 12px;
+  z-index: 120;
+}
+
+.inline-comment-nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #111827;
+}
+
+.inline-comment-nav-shortcuts {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.inline-comment-nav-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.inline-comment-nav-filters button {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f8fafc;
+  cursor: pointer;
+  font-size: 12px;
+  color: #374151;
+  transition: all 0.15s ease;
+}
+
+.inline-comment-nav-filters button.active {
+  background: #312e81;
+  color: #fff;
+  border-color: #312e81;
+}
+
+.inline-comment-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.inline-comment-nav-item {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inline-comment-nav-item:hover:not(:disabled),
+.inline-comment-nav-item.active {
+  border-color: #312e81;
+  background: #eef2ff;
+}
+
+.inline-comment-nav-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.inline-comment-nav-snippet {
+  font-size: 13px;
+  color: #111827;
+}
+
+.inline-comment-nav-meta {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.inline-comment-nav-empty {
+  padding: 8px 4px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* Highlighted text in editor */
+.commented-text {
+  background-color: #fff9c4;
+  border-bottom: 2px solid #ffc107;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.15s ease;
+  text-decoration: underline;
+  text-decoration-color: #ffc107;
+  text-decoration-thickness: 2px;
+  text-decoration-skip-ink: none;
+}
+
+.commented-text:hover {
+  background-color: #ffecb3;
+}
+
+.commented-text::after {
+  content: attr(data-comment-count);
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ffc107;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile adjustments */
+@media (max-width: 1200px) {
+  .inline-comment-form,
+  .inline-comments-popover {
+    position: fixed;
+    right: 20px;
+    top: 100px;
+    z-index: 1000;
+  }
+
+  .inline-comment-nav {
+    position: relative;
+    right: auto;
+    width: 100%;
+    margin-top: 12px;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/editor/BlipEditor.css">.blip-editor {
+  min-height: 1.5rem;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.blip-editor.editable {
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.blip-editor.read-only {
+  background-color: transparent;
+}
+
+.blip-editor .ProseMirror {
+  outline: none;
+  min-height: 1.5rem;
+}
+
+.blip-editor .ProseMirror p {
+  margin: 0;
+}
+
+.blip-editor .ProseMirror h1 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+.blip-editor .ProseMirror h2 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+.blip-editor .ProseMirror h3 {
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+.blip-editor .ProseMirror ul,
+.blip-editor .ProseMirror ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.blip-editor .ProseMirror blockquote {
+  border-left: 3px solid #e5e7eb;
+  margin: 0.5rem 0;
+  padding-left: 1rem;
+}
+
+.blip-editor .ProseMirror code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+}
+
+.blip-editor .ProseMirror pre {
+  background-color: #f3f4f6;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  overflow-x: auto;
+}
+
+.blip-editor .ProseMirror pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.editable-blip-content {
+  margin: 0.5rem 0;
+}
+
+.editable-blip-content .blip-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editable-blip-content .btn {
+  padding: 0.25rem 0.75rem;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.editable-blip-content .btn-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.editable-blip-content .btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.editable-blip-content .btn-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.editable-blip-content .btn-success:hover {
+  background-color: #059669;
+}
+
+.editable-blip-content .btn-secondary {
+  background-color: #6b7280;
+  color: white;
+}
+
+.editable-blip-content .btn-secondary:hover {
+  background-color: #4b5563;
+}
+
+/* Gadget node styling */
+.blip-editor .ProseMirror .gadget-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 8px 0;
+  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+}
+
+.blip-editor .ProseMirror .gadget-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.blip-editor .ProseMirror .gadget-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: #312e81;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.blip-editor .ProseMirror .gadget-title {
+  font-weight: 600;
+  color: #111827;
+}
+
+.blip-editor .ProseMirror .gadget-body {
+  padding: 6px 4px;
+  color: #374151;
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+}
+
+.blip-editor .ProseMirror .gadget-preview {
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.blip-editor .ProseMirror .gadget-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.blip-editor .ProseMirror .gadget-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.blip-editor .ProseMirror .gadget-list-item:last-child {
+  border-bottom: none;
+}
+
+.blip-editor .ProseMirror .gadget-option-label {
+  font-weight: 500;
+}
+
+.blip-editor .ProseMirror .gadget-option-votes {
+  font-size: 12px;
+  color: #6b7280;
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/PresenceIndicator.css">.presence-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #2c3e50;
+}
+
+.presence-label {
+  font-weight: 600;
+}
+
+.presence-muted {
+  color: #7f8c8d;
+}
+
+.presence-error {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.presence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  border: 1px solid #d1fae5;
+}
+
+.presence-count {
+  background: #16a085;
+  color: #fff;
+  border-radius: 999px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.presence-avatars {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.presence-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #d1fae5;
+  color: #0f5132;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.presence-overflow {
+  font-size: 11px;
+  color: #0f5132;
+  font-weight: 600;
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/CreateTopicModal.css">.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group .hint {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  font-weight: normal;
+  margin-top: 4px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: white;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.btn-secondary:disabled {
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* Additional modal styles */
+.modal-description {
+  margin: 0 0 20px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+/* Share link row */
+.share-link-group {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.share-link-row {
+  display: flex;
+  gap: 8px;
+}
+
+.share-link-input {
+  flex: 1;
+  background: #f5f5f5 !important;
+  cursor: text;
+}
+
+.btn-copy {
+  padding: 10px 16px;
+  background: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.btn-copy:hover {
+  background: #3367d6;
+}
+
+/* Radio groups */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.radio-option input[type="radio"] {
+  width: auto;
+  margin-top: 4px;
+}
+
+.radio-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.radio-label strong {
+  font-weight: 500;
+}
+
+.radio-hint {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Checkbox groups */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-option input[type="checkbox"] {
+  width: auto;
+}
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .close-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    min-height: 44px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    min-height: 44px;
+    padding: 10px 20px;
+  }
+
+  .btn-copy {
+    min-height: 44px;
+  }
+
+  .radio-option,
+  .checkbox-option {
+    min-height: 44px;
+    padding: 8px 0;
+  }
+}</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/ExportModal.css">.export-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.export-modal {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 440px;
+  overflow: hidden;
+}
+
+.export-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.export-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.export-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.export-modal-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.export-modal-body {
+  padding: 20px;
+}
+
+.export-modal-subtitle {
+  margin: 0 0 16px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.export-format-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.export-format-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.export-format-option:hover {
+  border-color: #4EA0F1;
+  background: #f8fbff;
+}
+
+.export-format-option.selected {
+  border-color: #4EA0F1;
+  background: #e8f4fd;
+}
+
+.export-format-option input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0 0;
+  accent-color: #4EA0F1;
+  cursor: pointer;
+}
+
+.format-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.format-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.format-desc {
+  font-size: 12px;
+  color: #777;
+}
+
+.export-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.export-btn {
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.export-btn.cancel {
+  background: white;
+  border: 1px solid #ccc;
+  color: #666;
+}
+
+.export-btn.cancel:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+.export-btn.primary {
+  background: #4EA0F1;
+  border: 1px solid #4EA0F1;
+  color: white;
+}
+
+.export-btn.primary:hover:not(:disabled) {
+  background: #3d8fe0;
+}
+
+.export-btn.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mobile adjustments */
+@media (max-width: 500px) {
+  .export-modal {
+    width: 95%;
+    margin: 10px;
+  }
+
+  .export-modal-body {
+    padding: 16px;
+  }
+
+  .export-format-option {
+    padding: 10px 12px;
+  }
+}
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .export-modal-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .export-format-option {
+    min-height: 44px;
+    padding: 14px;
+  }
+
+  .export-btn {
+    min-height: 44px;
+    padding: 10px 24px;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/WavePlaybackModal.css">/* WavePlaybackModal - Wave-level Timeline Playback UI */
+
+.wave-playback-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 16px;
+}
+
+.wave-playback-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 1100px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.wave-playback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.wave-playback-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 80%;
+}
+
+.wave-playback-header button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.wave-playback-header button:hover {
+  background: #e0e0e0;
+}
+
+/* Status & Error */
+.wave-playback-status {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.wave-playback-error {
+  padding: 20px;
+  text-align: center;
+  color: #c0392b;
+  background: #ffeaea;
+  margin: 16px;
+  border-radius: 8px;
+}
+
+/* Date Jump */
+.wave-playback-date-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #fafbfc;
+  border-bottom: 1px solid #eee;
+}
+
+.wave-playback-date-jump label {
+  font-size: 13px;
+  color: #555;
+  font-weight: 500;
+}
+
+.wave-playback-date-jump input[type="datetime-local"] {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  background: white;
+}
+
+.wave-playback-date-jump button {
+  padding: 6px 14px;
+  border: 1px solid #3498db;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #3498db;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.wave-playback-date-jump button:hover {
+  background: #2980b9;
+}
+
+/* Timeline Controls */
+.wave-playback-controls {
+  padding: 12px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafbfc;
+}
+
+.wave-timeline-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.wave-timeline-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+  min-width: 24px;
+}
+
+.wave-timeline-slider {
+  flex: 1;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e0e0e0;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.wave-timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #3498db;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.wave-timeline-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.wave-timeline-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #3498db;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* Playback Controls */
+.wave-playback-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wave-playback-btns .playback-btn {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 40px;
+}
+
+.wave-playback-btns .playback-btn:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.wave-playback-btns .playback-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.wave-playback-btns .playback-btn.primary {
+  background: #3498db;
+  border-color: #2980b9;
+  color: white;
+}
+
+.wave-playback-btns .playback-btn.primary:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.wave-playback-btns .speed-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.wave-playback-btns .diff-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.wave-playback-btns .diff-toggle input {
+  cursor: pointer;
+}
+
+/* Current Change Info */
+.wave-playback-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  background: #e8f4fd;
+  border-bottom: 1px solid #c5ddf5;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.wave-playback-info .wp-step {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.wave-playback-info .wp-blip-label {
+  color: #555;
+}
+
+.wave-playback-info .wp-author {
+  color: #666;
+  font-style: italic;
+}
+
+.wave-playback-info .wp-time {
+  color: #888;
+  margin-left: auto;
+}
+
+/* Split Pane */
+.wave-playback-split-pane {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 200px;
+  max-height: 400px;
+}
+
+/* Left: Changed Blip Content */
+.wave-playback-content-pane {
+  flex: 3;
+  overflow-y: auto;
+  padding: 16px 20px;
+  border-right: 1px solid #e0e0e0;
+}
+
+.wave-playback-content-pane h4 {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wave-playback-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.wave-playback-content p {
+  margin: 0 0 8px 0;
+}
+
+.wave-playback-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Right: Mini Wave Overview */
+.wave-playback-overview-pane {
+  flex: 2;
+  overflow-y: auto;
+  padding: 12px 16px;
+  background: #fafbfc;
+}
+
+.wave-playback-overview-pane h4 {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wave-overview-blip {
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  border-left: 4px solid #ddd;
+  background: white;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #555;
+  transition: all 0.15s;
+  max-height: 80px;
+  overflow: hidden;
+}
+
+.wave-overview-blip.highlighted {
+  border-left-color: #3498db;
+  background: #e8f4fd;
+  box-shadow: 0 1px 4px rgba(52, 152, 219, 0.15);
+}
+
+.wave-overview-blip-label {
+  font-weight: 600;
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wave-overview-blip-label .blip-color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.wave-overview-blip-content {
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Color-coded Timeline Dots */
+.wave-timeline-dots {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+
+.wave-timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.wave-timeline-dot:hover {
+  transform: scale(1.3);
+  opacity: 0.8;
+}
+
+.wave-timeline-dot.active {
+  transform: scale(1.5);
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #333;
+}
+
+/* Footer */
+.wave-playback-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.wave-playback-footer button {
+  padding: 8px 18px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  background: white;
+  transition: all 0.15s;
+}
+
+.wave-playback-footer button:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.wave-playback-footer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wave-playback-footer button.primary {
+  background: #3498db;
+  border-color: #2980b9;
+  color: white;
+}
+
+.wave-playback-footer button.primary:hover {
+  background: #2980b9;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .wave-playback-modal {
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .wave-playback-split-pane {
+    flex-direction: column;
+    max-height: none;
+  }
+
+  .wave-playback-content-pane {
+    border-right: none;
+    border-bottom: 1px solid #e0e0e0;
+    max-height: 250px;
+  }
+
+  .wave-playback-overview-pane {
+    max-height: 200px;
+  }
+
+  .wave-playback-btns {
+    justify-content: center;
+  }
+
+  .wave-playback-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .wave-playback-info .wp-time {
+    margin-left: 0;
+  }
+
+  .wave-playback-date-jump {
+    flex-wrap: wrap;
+  }
+
+  .wave-timeline-dot {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .wave-playback-btns .playback-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .wave-playback-btns .speed-select {
+    min-height: 44px;
+  }
+
+  .wave-playback-date-jump button {
+    min-height: 44px;
+  }
+
+  .wave-playback-date-jump input[type="datetime-local"] {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .wave-playback-footer button {
+    min-height: 44px;
+  }
+
+  .wave-playback-header button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .wave-timeline-dot {
+    width: 18px;
+    height: 18px;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/RizzomaTopicDetail.css">/* RizzomaTopicDetail - Matching real Rizzoma */
+
+.rizzoma-topic-detail {
+  background: white;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #333;
+}
+
+.rizzoma-topic-detail.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+}
+
+/* ========================================
+   TOPIC COLLABORATION TOOLBAR
+   Original Rizzoma: Invite | avatars | +N | Share | gear
+======================================== */
+.topic-collab-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px;
+  background: linear-gradient(to bottom, #f8f8f8, #eee);
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.collab-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.15s ease;
+}
+
+.collab-btn:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+.invite-btn {
+  color: #4285f4;
+  font-weight: 500;
+}
+
+.share-btn {
+  color: #666;
+}
+
+.gear-btn {
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.gear-btn.active {
+  background: #ddd;
+}
+
+.gear-menu-container {
+  position: relative;
+}
+
+.gear-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 180px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 4px 0;
+}
+
+.gear-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+  transition: background-color 0.15s ease;
+}
+
+.gear-menu-item:hover {
+  background: #f0f0f0;
+}
+
+.gear-menu-divider {
+  height: 1px;
+  background: #ddd;
+  margin: 4px 0;
+}
+
+.collab-participants {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.participant-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  margin-left: -8px;
+}
+
+.participant-avatar:first-child {
+  margin-left: 0;
+}
+
+.participant-avatar.owner {
+  border-color: #4EA0F1;
+}
+
+.participant-avatar.pending {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.participant-overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: #e0e0e0;
+  color: #666;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: -8px;
+  cursor: default;
+}
+
+.participant-count {
+  font-size: 12px;
+  color: #666;
+  background: #e8e8e8;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+/* ========================================
+   UNIFIED TOPIC META-BLIP CONTAINER
+   BLB Philosophy: Topic IS the root blip
+   Contains: toolbar + content + child blips + reply input
+======================================== */
+.topic-meta-blip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Meta-blip toolbar (like BlipMenu for regular blips) */
+.topic-blip-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #e6e6e6;
+  border-bottom: 1px solid #cfcfcf;
+  flex-shrink: 0;
+}
+
+.topic-blip-toolbar.editing {
+  background: #d9edf9;
+  border-bottom-color: #bcd7ea;
+}
+
+.topic-tb-btn {
+  padding: 2px 6px;
+  font-size: 12px;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  color: #555;
+  transition: background-color 0.15s ease;
+}
+
+.topic-tb-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.topic-tb-btn.primary {
+  background: #5caaf7;
+  color: white;
+  font-weight: 500;
+}
+
+.topic-tb-btn.primary:hover {
+  background: #4A9BE8;
+}
+
+.topic-tb-btn.active {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Insert comment button - styled like original */
+.topic-tb-btn.insert-comment-btn {
+  color: #10B981;
+  font-weight: 500;
+}
+
+.topic-tb-btn.insert-comment-btn:hover {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.topic-toolbar-spacer {
+  flex: 1;
+}
+
+/* Meta info in toolbar (avatars + date) */
+.topic-meta-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topic-avatars-stack-small {
+  display: flex;
+  align-items: center;
+}
+
+.topic-avatar-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  border: 1px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.topic-avatar-small.owner {
+  border-color: #4EA0F1;
+}
+
+.topic-date-small {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* Meta-blip content area - unified with children (BLB: one blip container) */
+.topic-blip-content {
+  padding: 8px 16px 6px;
+  background: white;
+  /* No bottom padding - flows directly into children */
+}
+
+/* Meta-blip body - one scrollable container for topic + children */
+.topic-blip-body {
+  flex: 1;
+  overflow-y: auto;
+  background: white;
+}
+
+/* Child blips area - seamless continuation of topic content (BLB: unified container) */
+.topic-blip-children {
+  padding: 0 16px 16px;
+  background: white;
+  /* Same background as content - appears as ONE container */
+}
+
+.empty-state-inline {
+  color: #999;
+  font-size: 13px;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+/* REMOVED: Old separate topic-edit-toolbar and topic-header
+   These are now unified inside topic-meta-blip */
+
+/* Legacy header styles (kept for reference, may be removed) */
+.topic-header {
+  display: none; /* Hidden - now part of topic-blip-content */
+}
+
+.topic-header-left {
+  flex: 1;
+}
+
+.topic-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #222;
+  line-height: 1.3;
+}
+
+.topic-title:hover {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+}
+
+/* Inline title editing */
+.topic-title-edit {
+  width: 100%;
+  font-size: 18px;
+  font-weight: bold;
+  color: #222;
+  line-height: 1.3;
+  border: 1px solid #5CAAF7;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 32px;
+  background: #fafbfc;
+  box-sizing: border-box;
+}
+
+.topic-title-edit:focus {
+  outline: none;
+  border-color: #4A9BE8;
+  box-shadow: 0 0 0 3px rgba(92, 170, 247, 0.2);
+}
+
+.topic-title-edit::placeholder {
+  color: #999;
+}
+
+/* BLB: Topic content editing (topic is meta-blip) */
+.topic-content-edit {
+  width: 100%;
+  border: 1px solid #5CAAF7;
+  border-radius: 3px;
+  padding: 8px 12px;
+  background: #fafbfc;
+  box-sizing: border-box;
+  min-height: 40px;
+}
+
+.topic-content-edit:focus-within {
+  border-color: #4A9BE8;
+  box-shadow: 0 0 0 3px rgba(92, 170, 247, 0.2);
+}
+
+.topic-content-edit .ProseMirror {
+  outline: none;
+  min-height: 24px;
+}
+
+.topic-content-edit .ProseMirror h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #222;
+  line-height: 1.3;
+}
+
+.topic-content-edit .ProseMirror p {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.topic-content-edit .ProseMirror p:first-child {
+  margin-top: 0;
+}
+
+/* Topic content view (read-only mode) */
+.topic-content-view {
+  width: 100%;
+}
+
+.topic-content-view:hover {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+}
+
+.topic-content-view h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #222;
+  line-height: 1.3;
+}
+
+.topic-content-view p {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.topic-content-view p:first-child {
+  margin-top: 0;
+}
+
+.topic-tags {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.topic-tag {
+  background: #e8e8e8;
+  color: #555;
+  padding: 2px 10px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.topic-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-left: 20px;
+}
+
+.topic-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+}
+
+.topic-date {
+  font-size: 12px;
+  color: #888;
+}
+
+/* Stacked avatars in topic header - like original Rizzoma */
+.topic-avatars-stack {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  cursor: pointer;
+}
+
+.topic-avatar-stacked {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  object-fit: cover;
+}
+
+.topic-avatar-stacked.owner {
+  border-color: #4EA0F1;
+}
+
+/* Topic-level toolbar */
+.topic-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+}
+
+.topic-toolbar .tb-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.topic-toolbar .add-blip-btn {
+  font-weight: 600;
+}
+
+.toolbar-hint {
+  color: #888;
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Body - now handled by topic-blip-children inside the unified container */
+.topic-body {
+  display: none; /* Replaced by topic-blip-children */
+}
+
+/* Blips container - using RizzomaBlip components */
+.blips-container {
+  margin: 0;
+  padding: 0;
+}
+
+/* Blips list (legacy) */
+.blips-list {
+  list-style: disc;
+  margin: 0;
+  padding: 0 0 0 24px;
+}
+
+.blip-item {
+  margin-bottom: 4px;
+}
+
+.blip-item::marker {
+  color: #888;
+}
+
+.blip-item.unread::marker {
+  color: #89E340;
+}
+
+/* Blip line: label + [+] button */
+.blip-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.blip-line:hover {
+  background: #f5f5f5;
+}
+
+.blip-label {
+  font-size: 14px;
+  color: #333;
+}
+
+.blip-label.unread {
+  font-weight: 600;
+}
+
+/* [+]/[-] button */
+.blip-expand-btn {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #5CB8B2;
+  color: white;
+  border: none;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.blip-expand-btn:hover {
+  background: #4AA8A2;
+}
+
+.blip-expand-btn.expanded {
+  background: #999;
+}
+
+.blip-expand-btn.has-unread {
+  background: #89E340;
+}
+
+/* Expanded box - light gray background */
+.blip-expanded-box {
+  margin: 8px 0 8px 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+/* Toolbar at TOP of expanded box - minimal like real Rizzoma */
+.blip-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 0;
+  background: transparent;
+  border-bottom: none;
+  border-radius: 0;
+  flex-wrap: wrap;
+}
+
+.blip-toolbar.editing {
+  background: #d4edfc;
+  border-bottom-color: #b8d4e8;
+}
+
+.tb-btn {
+  padding: 4px 8px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #333;
+  min-width: 24px;
+  text-align: center;
+}
+
+.tb-btn:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.tb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tb-btn.primary {
+  background: #5CAAF7;
+  color: white;
+  border-color: #4A9BE8;
+}
+
+.tb-btn.primary:hover:not(:disabled) {
+  background: #4A9BE8;
+}
+
+/* Colorful toolbar icons */
+.tb-btn.edit-btn {
+  color: #5CAAF7;
+  font-weight: 600;
+}
+
+.tb-btn.link-btn {
+  color: #3B82F6;
+}
+
+.tb-btn.delete-btn {
+  color: #EF4444;
+}
+
+.tb-btn.settings-btn {
+  color: #6B7280;
+}
+
+.tb-btn.bold-btn {
+  color: #1F2937;
+  font-weight: 700;
+}
+
+.tb-btn.italic-btn {
+  color: #4B5563;
+}
+
+.tb-btn.underline-btn {
+  color: #374151;
+}
+
+.tb-btn.strike-btn {
+  color: #6B7280;
+}
+
+.tb-btn.hidden-btn {
+  color: #10B981;
+}
+
+.tb-btn.fold-btn {
+  color: #6B7280;
+  border: 1px solid #D1D5DB;
+}
+
+.tb-btn.fold-btn:hover {
+  color: #374151;
+  border-color: #9CA3AF;
+}
+
+.tb-btn.fold-btn.active {
+  color: #10B981;
+  background: #ECFDF5;
+  border-color: #10B981;
+}
+
+/* Content row: content on left, avatar/date on right */
+.blip-content-row {
+  display: flex;
+  padding: 12px;
+  gap: 16px;
+}
+
+.blip-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.blip-full-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.blip-edit-area {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  border: 1px solid #ccd9e5;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.blip-edit-area:focus {
+  outline: none;
+  border-color: #5CAAF7;
+  box-shadow: 0 0 0 2px rgba(92, 170, 247, 0.2);
+}
+
+.blip-box-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.blip-avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.blip-box-date {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* Nested children */
+.blip-children {
+  list-style: circle;
+  margin: 0;
+  padding: 8px 0 8px 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.blip-children .blip-children {
+  list-style: square;
+}
+
+/* Reply row at bottom */
+.blip-reply-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #e0e0e0;
+  background: #fff;
+  border-radius: 0 0 4px 4px;
+}
+
+.reply-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.reply-input:focus {
+  outline: none;
+  border-color: #5CAAF7;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+}
+
+/* Error */
+.error-message {
+  background: #fee;
+  border: 1px solid #fcc;
+  color: #c00;
+  padding: 16px;
+  margin: 20px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-message button {
+  padding: 6px 16px;
+  background: white;
+  border: 1px solid #c00;
+  color: #c00;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+/* Toolbar dividers and spacers */
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: #ccc;
+  margin: 0 4px;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+/* Cancel button */
+.tb-btn.cancel-btn {
+  color: #666;
+  background: #f5f5f5;
+}
+
+.tb-btn.cancel-btn:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+
+/* Reply button */
+.tb-btn.reply-btn {
+  color: #10B981;
+  font-weight: 500;
+}
+
+/* Write a reply section - minimal like real Rizzoma */
+.write-reply-section {
+  margin-top: 12px;
+  padding: 0;
+}
+
+.write-reply-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #666;
+  background: #fafafa;
+  box-sizing: border-box;
+}
+
+.write-reply-input:focus {
+  outline: none;
+  border-color: #5CAAF7;
+  background: white;
+  color: #333;
+}
+
+.write-reply-input::placeholder {
+  color: #999;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .topic-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .topic-header-right {
+    flex-direction: row;
+    margin-left: 0;
+  }
+
+  .topic-title {
+    font-size: 16px;
+  }
+
+  .topic-title-edit {
+    font-size: 16px;
+    min-height: 28px;
+  }
+
+  .blip-toolbar {
+    gap: 4px;
+  }
+
+  .tb-btn {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+}
+
+/* ========================================
+   BLB SUBBLIP VIEW
+   Shown when navigating into a subblip
+======================================== */
+.subblip-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.subblip-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(to bottom, #f8f9fa, #e8e9ea);
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.subblip-hide-btn {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #4ea0f1;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.subblip-hide-btn:hover {
+  background: #3d8fd8;
+}
+
+.subblip-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #666;
+  flex-wrap: wrap;
+}
+
+.subblip-breadcrumb a {
+  color: #4285f4;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.subblip-breadcrumb a:hover {
+  color: #1a73e8;
+  text-decoration: underline;
+}
+
+.current-blip-label {
+  color: #333;
+  font-weight: 500;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subblip-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/mobile/BottomSheet.css">/**
+ * Bottom Sheet Styles
+ * Mobile: slides up from bottom
+ * Desktop: centered modal
+ */
+
+/* Overlay backdrop */
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0);
+  transition: background-color var(--animation-normal, 300ms) ease;
+  /* Safe area padding for notched devices */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-sheet-overlay.open {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.bottom-sheet-overlay.reduced-motion {
+  transition: none;
+}
+
+.bottom-sheet-overlay.reduced-motion .bottom-sheet {
+  transition: none;
+}
+
+/* Sheet container */
+.bottom-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  background: white;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(100%);
+  transition: transform var(--animation-normal, 300ms) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-sheet-overlay.open .bottom-sheet {
+  transform: translateY(0);
+}
+
+/* Mobile-specific styles */
+.bottom-sheet.mobile {
+  border-radius: 16px 16px 0 0;
+  max-height: 85vh;
+}
+
+/* Desktop modal variant */
+.bottom-sheet.desktop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  opacity: 0;
+  max-width: 480px;
+  border-radius: 12px;
+  margin: 0;
+}
+
+.bottom-sheet-overlay.open .bottom-sheet.desktop {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+/* Content wrapper for touch handling */
+.bottom-sheet-content {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+  overflow: hidden;
+  will-change: transform;
+}
+
+/* Drag handle for mobile */
+.bottom-sheet-handle {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 8px;
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+.bottom-sheet-handle:active {
+  cursor: grabbing;
+}
+
+.bottom-sheet-handle-bar {
+  width: 36px;
+  height: 4px;
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+/* Header with title and close button */
+.bottom-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.bottom-sheet-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.bottom-sheet-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.bottom-sheet-close:hover {
+  background-color: #f3f4f6;
+}
+
+.bottom-sheet-close:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Body content area */
+.bottom-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  /* Safe area padding at bottom */
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Touch scrolling optimization */
+.bottom-sheet-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.bottom-sheet-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bottom-sheet-body::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 2px;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .bottom-sheet-overlay {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .bottom-sheet {
+    border-radius: 12px;
+    max-width: 480px;
+  }
+
+  .bottom-sheet-handle {
+    display: none;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .bottom-sheet-close {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Animation variants for different entrance styles */
+.bottom-sheet[data-animation="slide"] {
+  transform: translateY(100%);
+}
+
+.bottom-sheet-overlay.open .bottom-sheet[data-animation="slide"] {
+  transform: translateY(0);
+}
+
+.bottom-sheet[data-animation="fade"] {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.bottom-sheet-overlay.open .bottom-sheet[data-animation="fade"] {
+  transform: translateY(0);
+  opacity: 1;
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/mobile/BottomSheetMenu.css">/**
+ * Bottom Sheet Menu Styles
+ * List of tappable menu items optimized for touch
+ */
+
+.bottom-sheet-menu {
+  display: flex;
+  flex-direction: column;
+  margin: -16px;
+  padding: 8px 0;
+}
+
+/* Menu item button */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 20px;
+  margin: 0;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: 16px;
+  font-family: inherit;
+  color: #1f2937;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  /* Ensure touch target is large enough */
+  min-height: 48px;
+}
+
+.menu-item:hover:not(.disabled) {
+  background-color: #f3f4f6;
+}
+
+.menu-item:active:not(.disabled) {
+  background-color: #e5e7eb;
+}
+
+.menu-item:focus-visible {
+  outline: none;
+  background-color: #e5e7eb;
+  box-shadow: inset 0 0 0 2px #3b82f6;
+}
+
+/* Disabled state */
+.menu-item.disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Destructive action (delete, etc.) */
+.menu-item.destructive {
+  color: #dc2626;
+}
+
+.menu-item.destructive:hover:not(.disabled) {
+  background-color: #fef2f2;
+}
+
+.menu-item.destructive:active:not(.disabled) {
+  background-color: #fee2e2;
+}
+
+/* Active/selected state */
+.menu-item.active {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+/* Icon container */
+.menu-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+/* Label text */
+.menu-item-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Checkmark for active items */
+.menu-item-check {
+  color: #2563eb;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Separator line between groups */
+.menu-separator {
+  height: 1px;
+  margin: 8px 20px;
+  background-color: #e5e7eb;
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .menu-item {
+    min-height: 52px;
+    padding: 16px 20px;
+  }
+
+  /* Remove hover states on touch devices */
+  .menu-item:hover:not(.disabled) {
+    background-color: transparent;
+  }
+
+  .menu-item:active:not(.disabled) {
+    background-color: #e5e7eb;
+  }
+}
+
+/* Desktop refinements */
+@media (min-width: 768px) {
+  .menu-item {
+    padding: 12px 16px;
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .menu-item-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 16px;
+  }
+
+  .menu-separator {
+    margin: 6px 16px;
+  }
+}
+
+/* Animation for items appearing */
+@keyframes menu-item-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bottom-sheet-menu .menu-item {
+  animation: menu-item-appear 200ms ease forwards;
+}
+
+.bottom-sheet-menu .menu-item:nth-child(1) { animation-delay: 0ms; }
+.bottom-sheet-menu .menu-item:nth-child(2) { animation-delay: 20ms; }
+.bottom-sheet-menu .menu-item:nth-child(3) { animation-delay: 40ms; }
+.bottom-sheet-menu .menu-item:nth-child(4) { animation-delay: 60ms; }
+.bottom-sheet-menu .menu-item:nth-child(5) { animation-delay: 80ms; }
+.bottom-sheet-menu .menu-item:nth-child(6) { animation-delay: 100ms; }
+.bottom-sheet-menu .menu-item:nth-child(7) { animation-delay: 120ms; }
+.bottom-sheet-menu .menu-item:nth-child(8) { animation-delay: 140ms; }
+.bottom-sheet-menu .menu-item:nth-child(9) { animation-delay: 160ms; }
+.bottom-sheet-menu .menu-item:nth-child(10) { animation-delay: 180ms; }
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .bottom-sheet-menu .menu-item {
+    animation: none;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/blip/BlipMenu.css">.blip-menu-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.blip-menu-container > * {
+  pointer-events: auto;
+}
+
+.blip-menu {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 4px;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 13px;
+  font-family: Arial, sans-serif;
+}
+
+/* Read-only menu styling - minimal like real Rizzoma */
+.read-only-menu {
+  background: transparent;
+  color: #555;
+}
+
+.read-only-menu .menu-btn {
+  background: none;
+  border: none;
+  color: #333;
+  padding: 4px 10px;
+  margin: 0 2px;
+  border-radius: 3px;
+  cursor: pointer;
+  height: 28px;
+  line-height: 20px;
+  font-size: 13px;
+}
+
+.read-only-menu .menu-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Edit menu styling */
+.edit-menu {
+  background: #4EA0F1;
+  color: white;
+}
+
+/* Inline child toolbar — positioned in flow (not absolute) so it doesn't overlap content */
+.inline-child-expanded .blip-menu-container {
+  position: relative !important;
+  top: auto !important;
+  left: 0 !important;
+  right: auto !important;
+}
+/* Inline children: hide toolbar unless the child's OWN .blip-container has .active.
+   This prevents parent .active from cascading through the portal. */
+.inline-child-expanded .blip-container:not(.active) .blip-menu-container {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+.inline-child-expanded .blip-container.active .blip-menu-container {
+  opacity: 1;
+  transform: none;
+}
+.inline-child-menu {
+  padding: 2px 4px;
+  gap: 2px;
+  height: auto;
+  min-height: 28px;
+  flex-wrap: wrap;
+}
+.inline-child-menu .menu-group {
+  margin-right: 4px;
+  padding-right: 4px;
+}
+.inline-child-menu .menu-btn {
+  padding: 2px 6px;
+  height: 24px;
+  min-width: 24px;
+  font-size: 12px;
+}
+.inline-child-menu .menu-group:last-child {
+  border-right: none;
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.edit-menu .menu-btn {
+  background: none;
+  border: none;
+  color: white;
+  padding: 4px 8px;
+  margin: 0 2px;
+  border-radius: 3px;
+  cursor: pointer;
+  height: 28px;
+  line-height: 20px;
+  font-size: 13px;
+  min-width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-menu .menu-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.edit-menu .menu-btn:active,
+.edit-menu .menu-btn.active {
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.edit-menu .menu-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.edit-menu .menu-btn:disabled:hover {
+  background: none;
+}
+
+/* Menu groups */
+.menu-group {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  padding-right: 8px;
+}
+
+.menu-group:last-child {
+  border-right: none;
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.read-only-menu .menu-group {
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Special button styles */
+.done-btn {
+  background: rgba(255, 255, 255, 0.2) !important;
+  font-weight: bold;
+  padding: 4px 12px !important;
+}
+
+.done-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.edit-btn {
+  font-weight: bold;
+}
+
+.delete-btn {
+  color: #d32f2f !important;
+}
+
+.gear-btn {
+  position: relative;
+}
+
+/* Emoji picker */
+.emoji-picker-container {
+  position: relative;
+  display: inline-block;
+}
+
+.emoji-picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Ensure emoji picker doesn't go off-screen on the left */
+@media (max-width: 600px) {
+  .emoji-picker-dropdown {
+    left: 0;
+    transform: none;
+    width: 100vw;
+    max-width: 350px;
+  }
+}
+
+/* Hidden checkbox - Original Rizzoma style */
+.menu-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  margin: 0 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #333;
+  user-select: none;
+}
+
+.menu-checkbox:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.menu-checkbox input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #4285f4;
+}
+
+.menu-checkbox .checkbox-label {
+  font-size: 11px;
+}
+
+.menu-checkbox.checked {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.menu-checkbox.checked .checkbox-label {
+  font-weight: 500;
+}
+
+.color-dropdown {
+  position: relative;
+}
+
+.blip-menu-color-palette {
+  position: absolute;
+  top: 32px;
+  left: 0;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  padding: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  z-index: 5;
+}
+
+.blip-menu-color-swatch {
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.blip-menu-color-swatch:hover {
+  transform: scale(1.05);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+/* Dropdown menu */
+.menu-dropdown {
+  position: relative;
+}
+
+.menu-dropdown-panel {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  padding: 4px 0;
+  z-index: 10;
+}
+
+.menu-dropdown-item {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #333;
+}
+
+.menu-dropdown-item:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.menu-dropdown-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.other-btn {
+  font-size: 16px;
+}
+
+.blip-menu-banner {
+  background: #fff9c4;
+  color: #5f370e;
+  border: 1px solid rgba(255, 193, 7, 0.45);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  line-height: 1.3;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.menu-upload-progress {
+  margin-left: 6px;
+  font-size: 10px;
+  color: #f5f7fb;
+}
+
+/* Format buttons */
+.menu-btn strong,
+.menu-btn em {
+  font-size: 11px;
+}
+
+/* Mobile: Compact toolbar with essential buttons */
+@media (max-width: 500px) {
+  .blip-menu {
+    height: auto;
+    min-height: 36px;
+    padding: 4px 6px;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  .menu-group {
+    margin-right: 4px;
+    padding-right: 4px;
+    border-right-width: 1px;
+  }
+
+  .menu-btn {
+    padding: 6px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    font-size: 13px !important;
+  }
+
+  .done-btn {
+    padding: 6px 10px !important;
+  }
+
+  /* Hide less essential button groups on mobile, but keep overflow */
+  .menu-group.format-group {
+    display: none;
+  }
+
+  /* Keep overflow toggle visible for accessing hidden actions */
+  .menu-group.overflow-group {
+    display: flex !important;
+  }
+
+  /* Dropdown panel positioning for mobile */
+  .menu-dropdown-panel {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 12px 12px 0 0;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .menu-dropdown-item {
+    padding: 14px 16px;
+    font-size: 14px;
+  }
+
+  /* Nested blip adjustment */
+  .nested-blip .blip-menu-container {
+    left: 16px;
+  }
+}
+
+/* Offset for non-root blips */
+.nested-blip .blip-menu-container {
+  left: 32px;
+}
+
+/* Animation for menu appearance */
+.blip-menu-container {
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.blip-container.active .blip-menu-container {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+/* Mobile menu trigger button */
+.mobile-menu-btn {
+  font-size: 18px !important;
+  font-weight: bold;
+  padding: 4px 10px !important;
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .menu-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .done-btn,
+  .edit-btn {
+    min-width: 60px;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/blip/BlipHistoryModal.css">/* BlipHistoryModal - Timeline Playback UI */
+
+.blip-history-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.blip-history-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.blip-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.blip-history-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.blip-history-header button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.blip-history-header button:hover {
+  background: #e0e0e0;
+}
+
+/* Status & Error */
+.blip-history-status {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.blip-history-error {
+  padding: 20px;
+  text-align: center;
+  color: #c0392b;
+  background: #ffeaea;
+  margin: 16px;
+  border-radius: 8px;
+}
+
+/* Timeline Controls */
+.blip-timeline-controls {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafbfc;
+}
+
+.timeline-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.timeline-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+  min-width: 24px;
+}
+
+.timeline-slider {
+  flex: 1;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e0e0e0;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #3498db;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.timeline-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.timeline-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #3498db;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* Playback Controls */
+.playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.playback-btn {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 40px;
+}
+
+.playback-btn:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.playback-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.playback-btn.primary {
+  background: #3498db;
+  border-color: #2980b9;
+  color: white;
+}
+
+.playback-btn.primary:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.speed-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.diff-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.diff-toggle input {
+  cursor: pointer;
+}
+
+/* Timeline Visual */
+.timeline-visual {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+
+.timeline-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #bbb;
+  background: white;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.timeline-dot:hover {
+  transform: scale(1.2);
+  border-color: #3498db;
+}
+
+.timeline-dot.active {
+  background: #3498db;
+  border-color: #2980b9;
+  transform: scale(1.3);
+}
+
+.timeline-dot.create {
+  border-color: #27ae60;
+}
+
+.timeline-dot.create.active {
+  background: #27ae60;
+  border-color: #1e8449;
+}
+
+.timeline-dot.update {
+  border-color: #f39c12;
+}
+
+.timeline-dot.update.active {
+  background: #f39c12;
+  border-color: #d68910;
+}
+
+/* Current Version Info */
+.blip-history-current-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: #e8f4fd;
+  border-bottom: 1px solid #c5ddf5;
+  flex-wrap: wrap;
+}
+
+.blip-history-current-info .history-version {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 15px;
+}
+
+.blip-history-current-info .history-event {
+  font-size: 13px;
+  color: #555;
+}
+
+.blip-history-current-info .history-time {
+  font-size: 13px;
+  color: #888;
+}
+
+.blip-history-current-info .history-author {
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Content Display */
+.blip-history-content-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  min-height: 150px;
+  max-height: 300px;
+}
+
+.blip-history-content {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.blip-history-content p {
+  margin: 0 0 12px 0;
+}
+
+.blip-history-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Version List (collapsible) */
+.blip-history-versions {
+  border-top: 1px solid #e0e0e0;
+}
+
+.blip-history-versions summary {
+  padding: 12px 20px;
+  cursor: pointer;
+  background: #f8f9fa;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  user-select: none;
+}
+
+.blip-history-versions summary:hover {
+  background: #f0f0f0;
+}
+
+.blip-history-list {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.blip-history-entry-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  width: 100%;
+}
+
+.blip-history-entry-btn:hover {
+  background: #e8f4fd;
+  border-color: #c5ddf5;
+}
+
+.blip-history-entry-btn.active {
+  background: #3498db;
+  border-color: #2980b9;
+  color: white;
+}
+
+.blip-history-entry-btn.active .history-event,
+.blip-history-entry-btn.active .history-time,
+.blip-history-entry-btn.active .history-author {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.blip-history-entry-btn .history-version {
+  font-weight: 600;
+  min-width: 32px;
+}
+
+.blip-history-entry-btn .history-event {
+  font-size: 12px;
+  color: #888;
+}
+
+.blip-history-entry-btn .history-time {
+  font-size: 12px;
+  color: #888;
+  margin-left: auto;
+}
+
+.blip-history-entry-btn .history-author {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Footer */
+.blip-history-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.blip-history-footer button {
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  background: white;
+  transition: all 0.15s;
+}
+
+.blip-history-footer button:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.blip-history-footer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.blip-history-footer button.primary {
+  background: #3498db;
+  border-color: #2980b9;
+  color: white;
+}
+
+.blip-history-footer button.primary:hover {
+  background: #2980b9;
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  .blip-history-modal {
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .playback-controls {
+    justify-content: center;
+  }
+
+  .blip-history-current-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .timeline-visual {
+    justify-content: center;
+  }
+
+  .blip-history-entry-btn {
+    flex-wrap: wrap;
+  }
+
+  .blip-history-entry-btn .history-time {
+    margin-left: 0;
+    width: 100%;
+    margin-top: 4px;
+  }
+}
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .playback-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .speed-select {
+    min-height: 44px;
+  }
+
+  .blip-history-header button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .blip-history-footer button {
+    min-height: 44px;
+  }
+
+  .blip-history-entry-btn {
+    min-height: 44px;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/RightToolsPanel.css">/* RightToolsPanel - Minimal like real Rizzoma */
+
+.right-tools-panel {
+  width: 80px;
+  min-width: 80px;
+  background: #F5F5F5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  gap: 16px;
+  border-left: 1px solid #DDD;
+}
+
+/* User Avatar Section */
+.user-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.user-avatar-large {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 2px solid #fff;
+}
+
+.user-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-initials {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.avatar-initials.hidden {
+  display: none;
+}
+
+.user-name {
+  font-size: 10px;
+  color: #555;
+  text-align: center;
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* Next button (Follow the Green) */
+.next-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: #E8E8E8;
+  border: 1px solid #CCC;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #666;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.next-button:hover:not(:disabled) {
+  background: #DDD;
+  border-color: #BBB;
+}
+
+.next-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.next-button.has-unread {
+  background: #89E340;
+  border-color: #7AD030;
+  color: white;
+}
+
+.next-button.has-unread:hover:not(:disabled) {
+  background: #7AD030;
+}
+
+.next-arrow {
+  font-size: 16px;
+}
+
+/* Next Topic button - blue variant shown when current topic has no unread */
+.next-topic-button {
+  background: #4EA0F1 !important;
+  border-color: #3B8FE0 !important;
+  color: white !important;
+}
+
+.next-topic-button:hover {
+  background: #3B8FE0 !important;
+}
+
+/* View toggle */
+.view-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.view-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.view-btn:hover {
+  background: #E8E8E8;
+}
+
+.view-btn.active {
+  background: #E0E0E0;
+  border-color: #CCC;
+  color: #333;
+}
+
+.view-icon {
+  font-size: 16px;
+}
+
+.view-label {
+  white-space: nowrap;
+}
+
+/* Fold/Unfold controls */
+.fold-controls {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  justify-content: center;
+}
+
+.fold-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #E8E8E8;
+  border: 1px solid #CCC;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  color: #666;
+  transition: all 0.15s;
+}
+
+.fold-btn:hover {
+  background: #DDD;
+  border-color: #BBB;
+}
+
+.fold-icon {
+  font-size: 10px;
+}
+
+/* Display mode toggle (short/expanded) */
+.display-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.display-btn {
+  padding: 4px 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.display-btn:hover {
+  background: #E8E8E8;
+}
+
+.display-btn.active {
+  background: #E0E0E0;
+  border-color: #CCC;
+  color: #333;
+}
+
+/* Insert shortcuts */
+.insert-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding-top: 8px;
+  border-top: 1px solid #DDD;
+  margin-top: 8px;
+}
+
+.insert-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 8px 4px;
+  background: rgb(120, 188, 255);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #fff;
+  transition: all 0.15s;
+  min-height: 36px;
+}
+
+.insert-btn:hover {
+  background: rgb(100, 170, 240);
+}
+
+.insert-btn:active {
+  background: rgb(80, 155, 230);
+}
+
+.insert-icon {
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.insert-btn.gadget-btn {
+  font-size: 10px;
+  padding: 8px 4px;
+}
+
+.insert-label {
+  font-weight: 500;
+}
+
+/* Mobile: Hide on small screens */
+@media (max-width: 768px) {
+  .right-tools-panel {
+    width: 50px;
+    min-width: 50px;
+    padding: 8px 4px;
+  }
+
+  .view-label {
+    display: none;
+  }
+}
+
+@media (max-width: 500px) {
+  .right-tools-panel {
+    display: none;
+  }
+}
+
+/* Touch-friendly targets for tablets */
+@media (hover: none) and (pointer: coarse) {
+  .next-button {
+    min-height: 44px;
+  }
+
+  .view-btn {
+    min-height: 44px;
+    padding: 10px 4px;
+  }
+
+  .fold-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .display-btn {
+    min-height: 44px;
+    padding: 10px 6px;
+  }
+
+  .insert-btn {
+    min-height: 44px;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/GadgetPalette.css">.gadget-palette {
+  position: absolute;
+  right: 60px;
+  bottom: 40px;
+  width: 280px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 8px;
+}
+
+.gadget-palette-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  padding: 4px 4px 8px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 8px;
+}
+
+.gadget-palette-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #999;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.gadget-palette-close:hover {
+  color: #333;
+}
+
+.gadget-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.gadget-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.gadget-tile:hover {
+  background: #e3f2fd;
+  border-color: #90caf9;
+}
+
+.gadget-tile-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.gadget-tile-label {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.gadget-url-input {
+  padding: 4px;
+}
+
+.gadget-url-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.gadget-url-field {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.gadget-url-field:focus {
+  outline: none;
+  border-color: #42a5f5;
+}
+
+.gadget-url-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.gadget-url-back,
+.gadget-url-ok {
+  padding: 4px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  background: #fff;
+}
+
+.gadget-url-back:hover {
+  background: #f5f5f5;
+}
+
+.gadget-url-ok {
+  background: #1976d2;
+  color: #fff;
+  border-color: #1976d2;
+}
+
+.gadget-url-ok:hover {
+  background: #1565c0;
+}
+
+.gadget-url-ok:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .gadget-palette {
+    right: 8px;
+    left: 8px;
+    bottom: 8px;
+    width: auto;
+  }
+
+  .gadget-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 380px) {
+  .gadget-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .gadget-palette-close {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gadget-tile {
+    padding: 14px 8px;
+    min-height: 44px;
+  }
+
+  .gadget-url-back,
+  .gadget-url-ok {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .gadget-url-field {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/blip/RizzomaBlip.css">/* Rizzoma Blip Styles */
+.rizzoma-blip {
+  position: relative;
+  transition: background-color 0.2s ease;
+  /* Collapsed blips should look like simple list items - no extra spacing */
+}
+
+/* Root blip: only has min-height when expanded */
+.rizzoma-blip.root-blip {
+  width: 100%;
+}
+
+/* Expanded root blips need min-height for content */
+.rizzoma-blip.root-blip.expanded {
+  min-height: 120px;
+}
+
+.rizzoma-blip.unread {
+  background-color: transparent;
+  border-left: none;
+  padding-left: 0;
+}
+
+.rizzoma-blip.nested-blip {
+  border-left: 1px solid #e0e0e0;
+  padding-left: 10px;
+  margin-top: 8px;
+}
+
+.blip-expander {
+  position: absolute;
+  left: -14px;
+  top: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 12px;
+  color: #888;
+  background: #f2f2f2;
+  border: 1px solid #dcdcdc;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.blip-expander.unread {
+  color: #2e8b57;
+  border-color: #2e8b57;
+  background: #e9f7ef;
+}
+
+.blip-expander:hover {
+  background: #e6e6e6;
+}
+
+/* Blip Header */
+.blip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #666;
+}
+
+.blip-collapse-control {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  margin-left: -20px;
+  justify-content: center;
+}
+
+.collapse-icon {
+  font-size: 14px;
+  font-weight: bold;
+  color: #999;
+  user-select: none;
+  transition: transform 0.2s ease;
+}
+
+.blip-collapse-control:hover .collapse-icon {
+  color: #333;
+  transform: scale(1.2);
+}
+
+.unread-indicator {
+  color: #ff6b6b;
+  font-size: 8px;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+.blip-author {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.author-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.author-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.blip-time {
+  color: #999;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.blip-unread-marker {
+  width: 4px;
+  height: 4px;
+  background-color: #ff6b6b;
+  border-radius: 50%;
+  margin-left: auto;
+}
+
+/* Blip Content */
+.blip-content {
+  position: relative;
+  padding: 4px 0;
+  min-height: 24px;
+}
+
+.blip-content.collapsed {
+  display: none;
+}
+
+/* Perf/expanded override: when parent container forces expanded, honor it */
+.blip-content.force-expanded {
+  display: block;
+}
+
+.blip-text {
+  line-height: 1.5;
+  color: #333;
+  padding: 4px;
+  border-radius: 3px;
+  min-height: 24px;
+  user-select: text;
+}
+
+/* Inline comment button */
+.inline-comment-btn {
+  position: fixed;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 1000;
+  white-space: nowrap;
+}
+
+.inline-comment-btn:hover {
+  background: #45a049;
+}
+
+.inline-comment-floating-form {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  width: 260px;
+  z-index: 1001;
+}
+
+.inline-comment-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.inline-comment-form-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.inline-comment-form-textarea {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: 6px;
+  font-size: 12px;
+  resize: none;
+}
+
+.inline-comment-form-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.inline-comment-form-actions button {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.inline-comment-form-actions .primary {
+  background: #4EA0F1;
+  color: #fff;
+}
+
+.inline-comment-form-actions .primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* View Mode */
+.blip-view-mode {
+  position: relative;
+}
+
+.blip-view-mode:hover .blip-toolbar-simple {
+  opacity: 1;
+}
+
+/* Original Rizzoma-style content row with bullet + content + avatar */
+.blip-content-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Simple bullet like live Rizzoma */
+.blip-bullet {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #444;
+  flex-shrink: 0;
+}
+
+.blip-main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.blip-author-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 12px;
+}
+
+.blip-author-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+}
+
+.blip-author-date {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* Contributors avatars - stacked like original Rizzoma with owner on top */
+.blip-contributors-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 12px;
+}
+
+.blip-contributors-stack {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+}
+
+.blip-contributors-stack.expanded {
+  width: auto;
+  height: auto;
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+
+.blip-contributor-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Stacked mode - avatars positioned absolutely */
+.blip-contributors-stack:not(.expanded) .blip-contributor-avatar {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Expanded mode - avatars in a row */
+.blip-contributors-stack.expanded .blip-contributor-avatar {
+  position: static;
+}
+
+.blip-contributor-avatar.owner {
+  border-color: #4EA0F1;
+}
+
+.blip-contributors-overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: #e0e0e0;
+  color: #666;
+  font-size: 10px;
+  font-weight: 500;
+  border: 2px solid #fff;
+}
+
+.blip-history-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1400;
+}
+
+.blip-history-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: min(720px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.blip-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.blip-history-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.blip-history-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.blip-history-list {
+  padding: 12px 16px;
+  overflow-y: auto;
+  gap: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.blip-history-entry {
+  border: 1px solid #ededed;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fafafa;
+}
+
+.blip-history-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: #444;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.history-version {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.history-event {
+  text-transform: capitalize;
+}
+
+.history-author {
+  color: #111;
+  font-weight: 500;
+}
+
+.blip-history-content {
+  background: #fff;
+  border-radius: 6px;
+  padding: 8px;
+  border: 1px dashed #e0e0e0;
+}
+
+.blip-history-footer {
+  padding: 10px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.blip-history-footer button {
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.blip-history-footer .primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.blip-history-status {
+  padding: 16px;
+  text-align: center;
+  color: #555;
+}
+
+.blip-history-error {
+  padding: 16px;
+  text-align: center;
+  color: #b91c1c;
+}
+
+.blip-toolbar-simple {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.btn-edit {
+  padding: 4px 8px;
+  background: linear-gradient(to bottom, #f8f8f8, #e8e8e8);
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #333;
+  cursor: pointer;
+}
+
+.btn-edit:hover {
+  background: linear-gradient(to bottom, #fff, #f0f0f0);
+  border-color: #999;
+}
+
+/* Editor Container */
+.blip-editor-container {
+  margin: 4px 0;
+}
+
+/* TipTap ProseMirror editor styling for inline blip editor */
+.blip-editor-container .ProseMirror {
+  outline: none;
+  min-height: 1.5rem;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #4285f4;
+  border-radius: 4px;
+}
+
+.blip-editor-container .ProseMirror:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.blip-editor-container .ProseMirror p {
+  margin: 0 0 0.5em 0;
+}
+
+.blip-editor-container .ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+/* List styling in editor */
+.blip-editor-container .ProseMirror ul,
+.blip-editor-container .ProseMirror ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+  list-style-position: outside;
+}
+
+.blip-editor-container .ProseMirror ul {
+  list-style-type: disc;
+}
+
+.blip-editor-container .ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.blip-editor-container .ProseMirror li {
+  margin: 0.25em 0;
+}
+
+.blip-editor-container .ProseMirror li p {
+  display: inline;
+  margin: 0;
+}
+
+/* Nested lists - indent further */
+.blip-editor-container .ProseMirror ul ul,
+.blip-editor-container .ProseMirror ol ol,
+.blip-editor-container .ProseMirror ul ol,
+.blip-editor-container .ProseMirror ol ul {
+  margin: 0.25em 0;
+  padding-left: 1.5em;
+}
+
+.blip-editor-container .ProseMirror ul ul {
+  list-style-type: circle;
+}
+
+.blip-editor-container .ProseMirror ul ul ul {
+  list-style-type: square;
+}
+
+.blip-editor-container .blip-editor {
+  background-color: #fff;
+  border: 1px solid #4285f4;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.blip-editor-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-save,
+.btn-cancel {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-save {
+  background-color: #4285f4;
+  color: white;
+}
+
+.btn-save:hover {
+  background-color: #3367d6;
+}
+
+.btn-cancel {
+  background-color: #f1f3f4;
+  color: #333;
+}
+
+.btn-cancel:hover {
+  background-color: #e0e0e0;
+}
+
+/* Blip Actions */
+.blip-actions {
+  margin-top: 4px;
+}
+
+.btn-reply {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background: linear-gradient(to bottom, #f8f8f8, #e8e8e8);
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reply:hover {
+  background: linear-gradient(to bottom, #fff, #f0f0f0);
+  border-color: #999;
+}
+
+.btn-reply:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.reply-icon {
+  font-size: 12px;
+  transform: scaleX(-1);
+}
+
+/* Reply Input - Original Rizzoma style */
+.blip-reply-inline {
+  margin-top: 8px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.reply-placeholder-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #999;
+  background: #fafafa;
+  cursor: text;
+}
+
+.reply-placeholder-input:hover {
+  border-color: #bbb;
+  background: #fff;
+}
+
+.reply-placeholder-input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.blip-reply-form-inline {
+  width: 100%;
+}
+
+/* Reply Form */
+.blip-reply-form {
+  margin-top: 8px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.reply-textarea {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.reply-textarea:focus {
+  outline: none;
+  border-color: #4285f4;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.reply-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+.btn-send-reply,
+.btn-cancel-reply {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-send-reply {
+  background-color: #34a853;
+  color: white;
+}
+
+.btn-send-reply:hover:not(:disabled) {
+  background-color: #2e8b47;
+}
+
+.btn-send-reply:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-cancel-reply {
+  background-color: #f1f3f4;
+  color: #333;
+}
+
+.btn-cancel-reply:hover {
+  background-color: #e0e0e0;
+}
+
+/* Child Blips */
+.child-blips {
+  margin-top: 8px;
+  margin-left: 16px;
+  border-left: 2px solid #e0e0e0;
+  padding-left: 12px;
+}
+
+.rizzoma-blip.topic-root .child-blips {
+  margin-left: 0;
+  border-left: none;
+  padding-left: 0;
+}
+
+/* Child blip wrapper */
+.child-blip-wrapper {
+  margin-bottom: 4px;
+}
+
+/* Collapsed child blip row - inline like original Rizzoma: • Label [+] */
+.child-blip-collapsed {
+  padding: 3px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.child-blip-collapsed .blip-bullet {
+  font-size: 14px;
+  color: #666;
+  margin-right: 6px;
+}
+
+.child-blip-collapsed:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.child-blip-collapsed.has-unread {
+  background-color: transparent;
+  border-left: none;
+  padding-left: 8px;
+}
+
+.child-blip-collapsed .blip-label-text {
+  color: #333;
+  font-size: 14px;
+}
+
+/* Hide right side avatar/date on collapsed view - live Rizzoma doesn't show this */
+.blip-collapsed-right {
+  display: none !important;
+}
+
+.blip-collapsed-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.blip-collapsed-date {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* Collapsed Info */
+.blip-collapsed-info {
+  padding: 4px 8px;
+  background-color: #f1f3f4;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.blip-collapsed-info:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.collapsed-count {
+  font-style: italic;
+}
+
+.blip-collapsed-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  margin: 6px 0;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.blip-collapsed-label .blip-expand-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.blip-collapsed-label .blip-label-text {
+  flex: 1;
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.blip-collapsed-label .blip-label-title {
+  font-weight: 600;
+}
+
+/* Root Blip Specific */
+.root-blip {
+  border: none;
+  padding: 0;
+}
+
+.root-blip .blip-text {
+  font-size: 15px;
+  padding: 8px;
+}
+
+/* Animations */
+@keyframes highlight {
+  0% { background-color: #fff3cd; }
+  100% { background-color: transparent; }
+}
+
+.rizzoma-blip.highlight {
+  animation: highlight 2s ease;
+}
+
+/* Active blip styling (when clicked/selected) - only for expanded blips */
+/* Collapsed blips should look like simple list items without any active styling */
+.blip-container.active.expanded {
+  border: 2px solid #57AAD9;
+  border-radius: 4px;
+  background-color: rgba(87, 170, 217, 0.02);
+}
+
+/* Collapsed blips never get active styling - they're just list items */
+.blip-container.active.collapsed {
+  border: none !important;
+  background-color: transparent !important;
+}
+
+.blip-container.active .blip-text {
+  background-color: rgba(87, 170, 217, 0.05);
+}
+
+/* Ensure menu appears when blip is active */
+.blip-container.active .blip-menu-container {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.upload-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #f8fafc;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+}
+
+.upload-status.error {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.upload-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.upload-preview img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.upload-file-icon {
+  font-size: 32px;
+}
+
+.upload-details {
+  flex: 1;
+}
+
+.upload-file-name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.upload-progress-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.upload-progress-fill {
+  height: 100%;
+  background: #10b981;
+  transition: width 0.2s ease;
+}
+
+.upload-error {
+  margin-top: 6px;
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.upload-actions button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #1f2937;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.upload-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.upload-actions button:hover {
+  background: #f3f4f6;
+}
+
+/* ========================================
+   BLB COLLAPSED/EXPANDED STATES
+   Original Rizzoma-style behavior
+======================================== */
+
+/* Collapsed row - shows only bullet + label + [+] icon inline like live Rizzoma */
+.blip-collapsed-row {
+  padding: 3px 0;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+  line-height: 1.5;
+}
+
+.blip-collapsed-row .blip-bullet {
+  margin-right: 6px;
+}
+
+.blip-collapsed-row:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  /* Subtle hover - no card effect */
+}
+
+.blip-collapsed-label-text {
+  font-size: 14px;
+  color: #333;
+}
+
+/* [+] inline icon - matches original Rizzoma gray rounded square style */
+.blip-expand-icon {
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: bold;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 14px;
+  background: #b3b3b3;
+  border: none;
+  border-radius: 3px;
+  margin-left: 2px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.blip-expand-icon:hover {
+  background: #999999;
+}
+
+/* Green [+] for unread content - THE KEY VISUAL CUE */
+.blip-expand-icon.has-unread {
+  background: #2e8b57;
+}
+
+/* Collapsed author info (smaller, inline) */
+/* Hide author section on collapsed rows - live Rizzoma doesn't show this */
+.blip-collapsed-author {
+  display: none !important;
+}
+
+.blip-author-avatar-small {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.blip-author-date-small {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* Expanded state - show full content with toolbar */
+.blip-container.expanded {
+  /* No special border for expanded - the toolbar provides visual distinction */
+}
+
+.blip-container.collapsed {
+  /* Collapsed blips are minimal */
+  min-height: auto;
+  margin-bottom: 2px;
+}
+
+/* BLB: Root blips CAN be collapsed - no special hiding */
+/* The original Rizzoma collapsed all blips by default */
+
+/* Root blips when expanded need the expander positioned correctly */
+.blip-container.root-blip.expanded > .blip-expander {
+  left: -24px;
+  top: 40px; /* Below the BlipMenu toolbar */
+}
+
+/* Nested blip indentation */
+.blip-container.nested-blip {
+  margin-left: 0 !important; /* Handled by inline style based on depth */
+}
+
+/* Sub-bullet style for nested blips */
+.blip-container.nested-blip .blip-bullet {
+  content: '◦';
+  font-size: 14px;
+  color: #888;
+}
+
+/* Expander icon position adjustment for expanded state */
+.blip-container.expanded .blip-expander {
+  position: absolute;
+  left: -20px;
+  top: 40px; /* Below the toolbar */
+}
+
+.blip-expander-icon {
+  font-family: monospace;
+  font-size: 11px;
+}
+
+/* When blip is collapsed, hide the full content */
+.blip-container.collapsed > .blip-content {
+  display: none !important;
+}
+
+/* When blip is collapsed, hide the BlipMenu */
+.blip-container.collapsed > .blip-menu-container {
+  display: none !important;
+}
+
+/* Active collapsed row - minimal indication like live Rizzoma */
+/* Just a subtle background on hover, no border */
+.blip-container.collapsed.active .blip-collapsed-row {
+  background-color: rgba(0, 0, 0, 0.04);
+  /* No border - collapsed blips are simple list items */
+}
+
+/* Unread collapsed blip */
+.blip-container.collapsed.unread .blip-collapsed-row {
+  background-color: transparent;
+  border-left: none;
+}
+
+/* Inline-expanded child blips (BLB: [+] expands inline, not navigates) */
+.inline-child-expanded {
+  margin-left: 22px;
+  border-left: 2px solid #ddd;
+  padding-left: 8px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  background: #fafafa;
+  border-radius: 0 3px 3px 0;
+}
+
+/* Minimal styling for inline children — no toolbar, clean content display */
+.inline-child-expanded > .blip-container {
+  margin-left: 0 !important;
+  padding: 4px 0;
+}
+
+.inline-child-expanded > .blip-container > .blip-content {
+  margin-top: 0 !important;
+  min-height: 0 !important;
+}
+
+/* Portal container for inline children rendered at marker positions */
+.inline-child-portal {
+  display: block;
+  list-style: none;
+}
+
+/* Orphaned markers (referencing non-existent children) - hide completely */
+.blip-thread-marker.orphaned {
+  display: none;
+}
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .child-blip-collapsed {
+    padding: 10px 8px;
+    min-height: 44px;
+  }
+
+  .blip-collapsed-row {
+    padding: 10px 0;
+    min-height: 44px;
+  }
+
+  .blip-expander {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .btn-send-reply,
+  .btn-cancel-reply {
+    min-height: 44px;
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .reply-textarea {
+    min-height: 80px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/editor/FollowGreen.css">/* Follow the Green - Visual indicators for unread content */
+
+/* Unread blip indicator */
+.blip-unread {
+  position: relative;
+}
+
+.blip-unread::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #4caf50;
+  border-radius: 2px;
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+/* Green highlight for new content */
+.blip-content-new {
+  background: linear-gradient(to right, 
+    transparent 0%, 
+    rgba(76, 175, 80, 0.1) 2%, 
+    rgba(76, 175, 80, 0.1) 98%, 
+    transparent 100%
+  );
+  transition: background 0.3s ease;
+}
+
+/* Active highlight when navigating */
+.blip-highlight-active {
+  background: rgba(76, 175, 80, 0.2);
+  box-shadow: inset 0 0 0 2px #4caf50;
+  animation: highlight-flash 0.6s ease;
+}
+
+/* Time indicator */
+.change-time {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-size: 11px;
+  color: #4caf50;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* Navigation helper */
+.green-navigation {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.green-navigation-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.green-navigation-button:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.green-navigation-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.green-count {
+  background: white;
+  color: #4caf50;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+/* Diff highlighting for changed text */
+.text-added {
+  background-color: rgba(76, 175, 80, 0.3);
+  text-decoration: none;
+}
+
+.text-removed {
+  background-color: rgba(244, 67, 54, 0.3);
+  text-decoration: line-through;
+}
+
+/* Animations */
+@keyframes pulse-green {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes highlight-flash {
+  0% {
+    background: rgba(76, 175, 80, 0.2);
+  }
+  50% {
+    background: rgba(76, 175, 80, 0.4);
+  }
+  100% {
+    background: rgba(76, 175, 80, 0.2);
+  }
+}
+
+/* Integration with editor */
+.editor-with-changes {
+  position: relative;
+}
+
+.editor-change-indicator {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background: #4caf50;
+  border-radius: 50%;
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .green-navigation {
+    bottom: 60px;
+    right: 10px;
+    padding: 8px;
+  }
+  
+  .green-navigation-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/NavigationPanel.css">.navigation-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-header {
+  padding: 16px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-button {
+  width: 100%;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: background-color 0.2s;
+}
+
+.nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.new-button {
+  background: #e74c3c;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.new-button:hover {
+  background: #c0392b;
+}
+
+.nav-tabs {
+  flex: 1;
+  padding: 8px 0;
+  overflow-y: auto;
+}
+
+.nav-tab {
+  width: 100%;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.nav-tab:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-tab.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.nav-tab.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #3498db;
+}
+
+.nav-tab.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nav-tab .icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.nav-tab .label {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.nav-tab .badge {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: #e74c3c;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.nav-tab .lock {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 12px;
+}
+
+.nav-footer {
+  padding: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-help {
+  width: 100%;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.nav-help:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-tab .label,
+  .nav-help .label {
+    display: none;
+  }
+  
+  .nav-tab,
+  .nav-button,
+  .nav-help {
+    padding: 8px;
+  }
+}</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/RizzomaTopicsList.css">/* Rizzoma Topics List - Original Style */
+
+.rizzoma-topics-list {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #E3EAF0;
+}
+
+/* Search Header */
+.topics-header {
+  padding: 9px 8px;
+  position: relative;
+}
+
+.search-query-container {
+  position: relative;
+  margin: 0 17px 0 0;
+}
+
+.search-query {
+  width: 100%;
+  box-sizing: border-box;
+  height: 32px;
+  border: 1px solid #CCD9E5;
+  border-radius: 5px;
+  outline: none;
+  padding: 0 40px 0 10px;
+  font-size: 13px;
+  background: white;
+}
+
+.search-query:focus {
+  border-color: #5DABF7;
+}
+
+.search-icon {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  height: 28px;
+  width: 33px;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  background: #5DABF7;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.search-icon:hover {
+  background-color: #4A9BE8;
+}
+
+/* Topics Container */
+.topics-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-top: 1px solid #FFF;
+}
+
+/* Search Result Item (Topic) */
+.search-result-item {
+  cursor: pointer;
+  min-height: 43px;
+  position: relative;
+  display: block;
+  color: #2C2C2C;
+  text-decoration: none;
+  padding: 17px 10px 13px 15px;
+  border-bottom: 1px solid #FFF;
+}
+
+.search-result-item:hover {
+  background: rgba(93, 171, 247, 0.1);
+}
+
+/* Selected/Active state */
+.search-result-item.active,
+.search-result-item.active .item-snippet {
+  color: white;
+  background: #5DABF7;
+}
+
+.search-result-item.active .last-changed {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Unread indicator bar on left */
+.unread-blips-indicator {
+  position: absolute;
+  background: white;
+  width: 3px;
+  top: 5px;
+  bottom: 5px;
+  left: 10px;
+}
+
+.unread-blips-indicator > div {
+  position: absolute;
+  z-index: 2;
+  background: #89E340;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  transition: height 0.2s ease;
+}
+
+.search-result-item.active .unread-blips-indicator > div {
+  background: #336699;
+}
+
+/* Text content area */
+.text-content {
+  margin-left: 10px;
+  margin-right: 75px;
+}
+
+.wave-title {
+  font-size: 15px;
+  overflow: hidden;
+  height: 35px;
+  line-height: 17px;
+}
+
+.search-result-item.unread .wave-title {
+  font-weight: bold;
+}
+
+.item-snippet {
+  color: #7A7A7A;
+  font-weight: normal;
+  font-size: 12px;
+}
+
+/* Wave info area (right side) */
+.wave-info {
+  position: absolute;
+  right: 5px;
+  top: 15px;
+  text-align: center;
+  width: 60px;
+}
+
+/* Follow/Unfollow button - hidden by default */
+.wave-info .follow {
+  display: none;
+  text-align: center;
+  margin-top: 4px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid #CCD9E5;
+  border-radius: 3px;
+  background: white;
+  cursor: pointer;
+  color: #2C2C2C;
+}
+
+.wave-info .follow:hover {
+  background: #f0f0f0;
+  border-color: #5DABF7;
+}
+
+.search-result-item.active .wave-info .follow {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.search-result-item.active .wave-info .follow:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Info section - avatar and date */
+.wave-info .info {
+  display: block;
+}
+
+/* Show follow button, hide info on active or hover */
+.search-result-item.active .wave-info .follow,
+.search-result-item.show-follow-button .wave-info .follow {
+  display: block;
+}
+
+.search-result-item.active .wave-info .info,
+.search-result-item.show-follow-button .wave-info .info {
+  display: none;
+}
+
+/* Avatar */
+.last-editing.avatar {
+  height: 30px;
+  width: 30px;
+  display: inline-block;
+  font-size: 12px;
+  line-height: 30px;
+  background-size: cover;
+  background-position: center;
+  background-color: #CCD9E5;
+  border-radius: 3px;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+/* Date/time */
+.last-changed {
+  font-family: 'PT Sans Narrow', Arial, sans-serif;
+  font-size: 12px;
+  line-height: 13px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* Loading and empty states */
+.loading,
+.no-topics {
+  text-align: center;
+  padding: 40px 20px;
+  color: #706F6F;
+  font-size: 16px;
+}
+
+/* Remove the old footer - we don't need it anymore */
+.topics-footer {
+  display: none;
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/MentionsList.css">.mentions-list {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.mentions-filter {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #ccc;
+}
+
+.mentions-filter button {
+  flex: 1;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.mentions-filter button:hover {
+  background: #f8f8f8;
+}
+
+.mentions-filter button.active {
+  background: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+.mentions-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.mention-item {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.mention-item:hover {
+  border-color: #999;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mention-item.unread {
+  border-left: 3px solid #3498db;
+  background: #f0f8ff;
+}
+
+.mention-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.topic-title {
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.mention-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.author-name {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.mention-text {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.unread-indicator {
+  position: absolute;
+  top: 12px;
+  left: 8px;
+  width: 8px;
+  height: 8px;
+  background: #3498db;
+  border-radius: 50%;
+}
+
+.no-mentions {
+  text-align: center;
+  color: #666;
+  padding: 32px 16px;
+  font-size: 14px;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.login-prompt p {
+  color: #666;
+  font-size: 14px;
+}
+
+.loading {
+  text-align: center;
+  padding: 32px 16px;
+  color: #666;
+  font-size: 14px;
+}</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/TasksList.css">.tasks-list {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.tasks-filter {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #ccc;
+}
+
+.tasks-filter button {
+  flex: 1;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.tasks-filter button:hover {
+  background: #f8f8f8;
+}
+
+.tasks-filter button.active {
+  background: #27ae60;
+  color: white;
+  border-color: #27ae60;
+}
+
+.tasks-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.task-item {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.task-item:hover {
+  border-color: #999;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.task-item.completed {
+  opacity: 0.7;
+}
+
+.task-checkbox {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+.task-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.task-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.topic-title {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-text {
+  font-size: 13px;
+  color: #333;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.task-item.completed .task-text {
+  text-decoration: line-through;
+  color: #666;
+}
+
+.task-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.assignee {
+  font-weight: 500;
+}
+
+.author {
+  color: #888;
+}
+
+.due-soon {
+  color: #f39c12;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.overdue {
+  color: #e74c3c;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.no-tasks {
+  text-align: center;
+  color: #666;
+  padding: 32px 16px;
+  font-size: 14px;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.login-prompt p {
+  color: #666;
+  font-size: 14px;
+}
+
+.loading {
+  text-align: center;
+  padding: 32px 16px;
+  color: #666;
+  font-size: 14px;
+}</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/PublicTopicsPanel.css">.public-topics-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+}
+
+.panel-search {
+  margin-bottom: 12px;
+}
+
+.panel-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.panel-search input:focus {
+  outline: none;
+  border-color: #4285f4;
+}
+
+.topics-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.topic-item {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.topic-item:hover {
+  background: #f5f5f5;
+}
+
+.topic-item .topic-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.topic-item .topic-meta {
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  gap: 8px;
+}
+
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.loading {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  .panel-search input {
+    min-height: 44px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+
+  .topic-item {
+    min-height: 44px;
+    padding: 14px 12px;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/StorePanel.css">.store-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.store-header {
+  margin-bottom: 16px;
+}
+
+.store-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.store-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.store-search {
+  margin-bottom: 12px;
+}
+
+.store-search input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.store-search input:focus {
+  outline: none;
+  border-color: #4285f4;
+}
+
+.store-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.category-btn {
+  padding: 6px 12px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.category-btn:hover {
+  background: #e0e0e0;
+}
+
+.category-btn.active {
+  background: #4285f4;
+  color: white;
+}
+
+.gadgets-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gadget-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  transition: box-shadow 0.15s;
+}
+
+.gadget-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gadget-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.gadget-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.gadget-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.gadget-description {
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.install-btn {
+  padding: 6px 12px;
+  background: #4285f4;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.install-btn:hover {
+  background: #3367d6;
+}
+
+.install-btn.installed {
+  background: #34a853;
+}
+
+.install-btn.installed:hover {
+  background: #2d8f47;
+}
+
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/TeamsPanel.css">.teams-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.teams-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.teams-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.create-team-btn {
+  padding: 6px 12px;
+  background: #4285f4;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.create-team-btn:hover {
+  background: #3367d6;
+}
+
+.create-team-form {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.create-team-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.create-team-form input:focus {
+  outline: none;
+  border-color: #4285f4;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-create {
+  padding: 8px 16px;
+  background: #4285f4;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-create:hover {
+  background: #3367d6;
+}
+
+.btn-cancel {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #666;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: #f5f5f5;
+}
+
+.teams-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.team-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: box-shadow 0.15s;
+}
+
+.team-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.team-avatar {
+  font-size: 28px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 8px;
+}
+
+.team-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.team-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.team-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.member-count {
+  font-size: 12px;
+  color: #666;
+}
+
+.role-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: #e8f0fe;
+  color: #4285f4;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.team-action-btn {
+  padding: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.team-action-btn:hover {
+  opacity: 1;
+}
+
+.teams-footer {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.teams-footer p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.login-prompt {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/PWAPrompts.css">.pwa-prompts {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+  width: calc(100% - 32px);
+}
+
+.pwa-prompt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  animation: pwa-slide-up 0.3s ease-out;
+}
+
+@keyframes pwa-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pwa-prompt--install {
+  background: #2c3e50;
+  color: #fff;
+}
+
+.pwa-prompt--notif {
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.pwa-prompt--offline {
+  background: #ffeeba;
+  color: #856404;
+  border: 1px solid #ffc107;
+}
+
+.pwa-prompt__icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+.pwa-prompt__text {
+  flex: 1;
+  line-height: 1.3;
+}
+
+.pwa-prompt__btn {
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+  padding: 4px 12px;
+  flex-shrink: 0;
+}
+
+.pwa-prompt__btn--primary {
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+  font-weight: 600;
+}
+
+.pwa-prompt--notif .pwa-prompt__btn--primary {
+  background: #2c3e50;
+  color: #fff;
+}
+
+.pwa-prompt__btn--dismiss {
+  background: transparent;
+  color: inherit;
+  opacity: 0.6;
+  font-size: 18px;
+  padding: 2px 6px;
+  line-height: 1;
+}
+
+.pwa-prompt__btn--dismiss:hover {
+  opacity: 1;
+}
+
+/* Touch-friendly sizing on mobile */
+@media (hover: none) and (pointer: coarse) {
+  .pwa-prompt__btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 16px;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/components/RizzomaLayout.css">.rizzoma-layout {
+  display: flex;
+  height: 100vh;
+  height: 100dvh; /* dynamic viewport height — accounts for mobile address bar */
+  width: 100%;
+  background: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* Navigation Panel - Far Left */
+.navigation-container {
+  width: 80px;
+  min-width: 80px;
+  background: #2c3e50;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+  z-index: 3;
+}
+
+/* Search/List Panel - Left Center */
+.tabs-container {
+  width: 320px;
+  min-width: 320px;
+  background: #e8e8e8;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+  transition: width 0.3s ease;
+  z-index: 2;
+}
+
+.tabs-container.collapsed {
+  width: 40px;
+  min-width: 40px;
+}
+
+.tabs-header {
+  height: 48px;
+  background: #d0d0d0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid #bbb;
+}
+
+.tabs-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.collapse-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.tabs-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+/* Wave/Content Panel - Center Right */
+.wave-container {
+  flex: 1;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+  z-index: 1;
+}
+
+.inner-wave-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* No Topic Selected */
+.no-topic-selected {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  text-align: center;
+  padding: 40px;
+}
+
+.no-topic-selected h2 {
+  margin: 0 0 16px 0;
+  font-size: 28px;
+  font-weight: 300;
+  color: #333;
+}
+
+.no-topic-selected p {
+  margin: 0;
+  font-size: 16px;
+  color: #888;
+}
+
+/* Panel Placeholder */
+.panel-placeholder {
+  padding: 24px;
+  text-align: center;
+  color: #666;
+}
+
+.panel-placeholder h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.panel-placeholder p {
+  margin: 0;
+  font-size: 14px;
+  color: #888;
+}
+
+/* Resizer handle for panels */
+.resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+}
+
+.resize-handle:hover {
+  background: #3498db;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .tabs-container {
+    width: 280px;
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .navigation-container {
+    width: 60px;
+    min-width: 60px;
+  }
+
+  .tabs-container {
+    width: 240px;
+    min-width: 240px;
+  }
+}
+
+/* Mobile Layout - Progressive Enhancement */
+
+/* Mobile hidden utility */
+.mobile-hidden {
+  display: none !important;
+}
+
+/* Mobile: Hide sidebars, full-width content */
+@media (max-width: 768px) {
+  .rizzoma-layout.mobile-layout {
+    flex-direction: column;
+  }
+
+  .mobile-layout .navigation-container {
+    display: none;
+  }
+
+  /* Show tabs-container as full width when on list view */
+  .mobile-layout .tabs-container {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-layout .tabs-container.mobile-hidden {
+    display: none !important;
+  }
+
+  /* Show wave-container as full width when on content view */
+  .mobile-layout .wave-container {
+    width: 100%;
+    min-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-layout .wave-container.mobile-hidden {
+    display: none !important;
+  }
+
+  /* Hide right panel on mobile */
+  .mobile-layout .right-tools-panel {
+    display: none;
+  }
+
+  /* Mobile header for back navigation */
+  .mobile-header {
+    display: flex;
+    height: 48px;
+    min-height: 48px;
+    background: #2c3e50;
+    color: white;
+    align-items: center;
+    padding: 0 12px;
+    gap: 12px;
+    flex-shrink: 0;
+    /* Safe area for notched devices */
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .mobile-header .back-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-header .title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-header .menu-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Touch-friendly adjustments */
+  .mobile-layout .tabs-content {
+    padding: 4px;
+  }
+
+  .mobile-layout .tabs-header {
+    padding: 0 12px;
+  }
+
+  /* Hide collapse button on mobile - use swipe instead */
+  .mobile-layout .collapse-btn {
+    display: none;
+  }
+}
+
+/* Ensure mobile header is hidden on desktop */
+@media (min-width: 769px) {
+  .mobile-header {
+    display: none !important;
+  }
+
+  .mobile-hidden {
+    display: flex !important;
+  }
+}
+
+/* Transition animations for mobile view switching */
+.mobile-layout .tabs-container,
+.mobile-layout .wave-container {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+/* Slide transition when switching views */
+.mobile-layout.mobile-view-list .wave-container:not(.mobile-hidden) {
+  transform: translateX(100%);
+  position: absolute;
+  inset: 0;
+}
+
+.mobile-layout.mobile-view-content .tabs-container:not(.mobile-hidden) {
+  transform: translateX(-100%);
+  position: absolute;
+  inset: 0;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-layout .tabs-container,
+  .mobile-layout .wave-container {
+    transition: none;
+  }
+}</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/RizzomaApp.css">/* Reset and base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  color: #333;
+  background: #f5f5f5;
+  overflow: hidden;
+}
+
+.rizzoma-app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Auth overlay for Rizzoma layout */
+.rizzoma-auth-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  background: #f5f5f5;
+}
+
+/* Loading screen */
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: white;
+}
+
+.loading-screen h2 {
+  font-size: 18px;
+  font-weight: normal;
+  color: #666;
+}
+
+/* Notification bar */
+.notification-bar {
+  background: #fff3cd;
+  color: #856404;
+  padding: 8px 15px;
+  font-size: 12px;
+  border-bottom: 1px solid #ffeaa7;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notification-bar a {
+  color: #856404;
+  text-decoration: underline;
+}
+
+.notification-bar a:hover {
+  text-decoration: none;
+}</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/styles/breakpoints.css">/**
+ * Breakpoint System - CSS Custom Properties
+ *
+ * Standard breakpoints for responsive design:
+ * - xs: 320px  (small phones)
+ * - sm: 480px  (large phones)
+ * - md: 768px  (tablets)
+ * - lg: 1024px (small desktops)
+ * - xl: 1200px (large desktops)
+ */
+
+:root {
+  /* Breakpoint values */
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1200px;
+
+  /* Common spacing that adapts to screen size */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Touch target sizes (minimum 44px for accessibility) */
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+
+  /* Safe areas for notched devices */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+
+  /* Animation durations */
+  --animation-fast: 150ms;
+  --animation-normal: 300ms;
+  --animation-slow: 500ms;
+
+  /* Easing curves */
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Mobile-first: Default styles apply to all screens */
+
+/* Small phones and up (xs: 320px+) */
+@media (min-width: 320px) {
+  :root {
+    --content-padding: var(--spacing-sm);
+    --panel-width: 100%;
+  }
+}
+
+/* Large phones and up (sm: 480px+) */
+@media (min-width: 480px) {
+  :root {
+    --content-padding: var(--spacing-md);
+  }
+}
+
+/* Tablets and up (md: 768px+) */
+@media (min-width: 768px) {
+  :root {
+    --content-padding: var(--spacing-lg);
+    --panel-width: 320px;
+  }
+}
+
+/* Small desktops and up (lg: 1024px+) */
+@media (min-width: 1024px) {
+  :root {
+    --content-padding: var(--spacing-xl);
+    --panel-width: 360px;
+  }
+}
+
+/* Large desktops (xl: 1200px+) */
+@media (min-width: 1200px) {
+  :root {
+    --panel-width: 400px;
+  }
+}
+
+/* Touch device overrides */
+@media (hover: none) and (pointer: coarse) {
+  :root {
+    /* Ensure touch-friendly sizing on touch devices */
+    --button-min-height: var(--touch-target-min);
+    --input-min-height: var(--touch-target-min);
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --animation-fast: 0ms;
+    --animation-normal: 0ms;
+    --animation-slow: 0ms;
+  }
+}
+</style><style type="text/css" data-vite-dev-id="/mnt/c/Rizzoma/src/client/styles/view-transitions.css">/**
+ * View Transitions Styles
+ *
+ * These styles define animations for the View Transitions API.
+ * They apply to ::view-transition pseudo-elements created by the browser.
+ */
+
+/* Opt-in to view transitions */
+@view-transition {
+  navigation: auto;
+}
+
+/* Default crossfade transition */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--animation-normal, 300ms);
+  animation-timing-function: var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+}
+
+/* Fade out old content */
+::view-transition-old(root) {
+  animation: fade-out var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+/* Fade in new content */
+::view-transition-new(root) {
+  animation: fade-in var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Navigation transitions - forward (push) */
+[data-nav-direction="forward"]::view-transition-old(root) {
+  animation: slide-out-left var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+[data-nav-direction="forward"]::view-transition-new(root) {
+  animation: slide-in-right var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+/* Navigation transitions - back (pop) */
+[data-nav-direction="back"]::view-transition-old(root) {
+  animation: slide-out-right var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+[data-nav-direction="back"]::view-transition-new(root) {
+  animation: slide-in-left var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+@keyframes slide-out-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-30%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(30%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(30%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-30%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Mobile slide transitions (full screen slides) */
+@media (max-width: 768px) {
+  [data-nav-direction="forward"]::view-transition-old(root) {
+    animation: mobile-slide-out-left var(--animation-normal, 300ms) var(--ease-out) forwards;
+  }
+
+  [data-nav-direction="forward"]::view-transition-new(root) {
+    animation: mobile-slide-in-right var(--animation-normal, 300ms) var(--ease-out) forwards;
+  }
+
+  [data-nav-direction="back"]::view-transition-old(root) {
+    animation: mobile-slide-out-right var(--animation-normal, 300ms) var(--ease-out) forwards;
+  }
+
+  [data-nav-direction="back"]::view-transition-new(root) {
+    animation: mobile-slide-in-left var(--animation-normal, 300ms) var(--ease-out) forwards;
+  }
+
+  @keyframes mobile-slide-out-left {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
+  @keyframes mobile-slide-in-right {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes mobile-slide-out-right {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes mobile-slide-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+}
+
+/* Cross-fade transition type */
+::view-transition-group(crossfade) {
+  animation-duration: var(--animation-fast, 150ms);
+}
+
+::view-transition-old(crossfade) {
+  animation: fade-out var(--animation-fast, 150ms) var(--ease-out) forwards;
+}
+
+::view-transition-new(crossfade) {
+  animation: fade-in var(--animation-fast, 150ms) var(--ease-out) forwards;
+}
+
+/* Scale transition for modals/sheets */
+::view-transition-old(modal) {
+  animation: scale-out var(--animation-normal, 300ms) var(--ease-out) forwards;
+}
+
+::view-transition-new(modal) {
+  animation: scale-in var(--animation-normal, 300ms) var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) forwards;
+}
+
+@keyframes scale-out {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Topic card transition */
+::view-transition-group(topic-card) {
+  animation-duration: var(--animation-normal, 300ms);
+}
+
+::view-transition-old(topic-card),
+::view-transition-new(topic-card) {
+  animation-timing-function: var(--ease-out);
+  /* Maintain aspect ratio during morph */
+  object-fit: cover;
+}
+
+/* Blip transition */
+::view-transition-group(blip) {
+  animation-duration: var(--animation-fast, 150ms);
+}
+
+/* Shared element transitions */
+[style*="view-transition-name"] {
+  will-change: transform;
+  contain: layout;
+}
+
+/* Reduced motion: disable all animations */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Still allow instant changes */
+  ::view-transition-old(root) {
+    display: none;
+  }
+
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+/* Debug mode - show transition groups */
+.debug-transitions ::view-transition-group(*) {
+  outline: 2px solid red;
+}
+
+.debug-transitions ::view-transition-old(*) {
+  outline: 2px dashed blue;
+}
+
+.debug-transitions ::view-transition-new(*) {
+  outline: 2px dashed green;
+}
+</style></head>
+  <body>
+    <div id="root"><div class="rizzoma-app"><div class="notification-bar">Have your Rizzoma Tasks copied to your Google Calendar automatically.<a href="#">Disable extension</a></div><div class="rizzoma-auth-overlay"><div class="auth-panel"><h3 class="auth-title">Sign in to continue</h3><button class="oauth-btn google-btn" title="Sign in with Google"><span class="oauth-icon">G</span>Sign in with Google</button><button class="oauth-btn facebook-btn" title="Sign in with Facebook"><span class="oauth-icon">f</span>Sign in with Facebook</button><button class="oauth-btn microsoft-btn" title="Sign in with Microsoft"><span class="oauth-icon">M</span>Sign in with Microsoft</button><div class="or-divider">or sign in with email</div><div class="login-form"><input type="email" class="login-input" placeholder="Email address" value="dev@example.com"><input type="password" class="login-input" placeholder="Password" autocapitalize="off" autocorrect="off" value="devpass123"><button class="submit-btn">Sign In</button></div><div class="login-footer"><span>Don't have an account? </span><a href="#" class="signup-link">Sign up</a></div></div></div></div></div>
+    <script type="module" src="/main.tsx"></script>
+  
+
+
+</body></html>

@@ -1,12 +1,14 @@
 /* RizzomaTopicDetail - Matching real Rizzoma */
 
 .rizzoma-topic-detail {
-  background: white;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.98), rgba(241, 247, 252, 0.94) 30%, rgba(226, 235, 244, 0.98) 100%);
   height: 100%;
   display: flex;
   flex-direction: column;
   font-size: 14px;
-  color: #333;
+  color: #223447;
+  padding-bottom: 20px;
 }
 
 .rizzoma-topic-detail.loading {
@@ -24,35 +26,37 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 20px;
-  background: linear-gradient(to bottom, #f8f8f8, #eee);
-  border-bottom: 1px solid #ddd;
+  padding: 14px 22px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(242,247,252,0.96));
+  border-bottom: 1px solid rgba(138, 156, 176, 0.2);
   flex-shrink: 0;
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.85);
 }
 
 .collab-btn {
-  padding: 6px 12px;
-  font-size: 13px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
   background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid rgba(132, 148, 166, 0.24);
+  border-radius: 10px;
   cursor: pointer;
-  color: #333;
+  color: #334155;
   transition: all 0.15s ease;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
 }
 
 .collab-btn:hover {
-  background: #f5f5f5;
-  border-color: #bbb;
+  background: #f8fbff;
+  border-color: rgba(92, 170, 247, 0.36);
 }
 
 .invite-btn {
-  color: #4285f4;
-  font-weight: 500;
+  color: #0f7f73;
 }
 
 .share-btn {
-  color: #666;
+  color: #475569;
 }
 
 .gear-btn {
@@ -114,9 +118,9 @@
 .participant-avatar {
   width: 28px;
   height: 28px;
-  border-radius: 4px;
+  border-radius: 10px;
   border: 2px solid #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 12px rgba(15,23,42,0.08);
   margin-left: -8px;
 }
 
@@ -163,14 +167,21 @@
    Contains: toolbar + content + child blips + reply input
 ======================================== */
 .topic-meta-blip {
-  flex: 1;
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
   background: transparent;
   border: none;
   border-radius: 0;
-  margin: 0;
+  width: min(1160px, calc(100% - 24px));
+  margin: 12px auto 16px;
   overflow: hidden;
+  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.09);
+  border: 1px solid rgba(148, 169, 192, 0.24);
+  background: linear-gradient(180deg, rgba(255,255,255,0.99), rgba(246,250,253,0.97));
+  backdrop-filter: blur(4px);
+  border-radius: 10px;
+  max-height: calc(100vh - 120px);
 }
 
 /* Meta-blip toolbar (like BlipMenu for regular blips) */
@@ -178,36 +189,44 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  background: #e6e6e6;
-  border-bottom: 1px solid #cfcfcf;
+  padding: 8px 14px;
+  background: linear-gradient(180deg, rgba(242, 248, 254, 0.995), rgba(220, 234, 246, 0.985));
+  border-bottom: 1px solid rgba(138, 156, 176, 0.32);
   flex-shrink: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    inset 0 -1px 0 rgba(173, 192, 210, 0.44);
 }
 
 .topic-blip-toolbar.editing {
-  background: #d9edf9;
-  border-bottom-color: #bcd7ea;
+  background: linear-gradient(180deg, #cfe5f8, #bdd8ef);
+  border-bottom-color: rgba(109, 153, 188, 0.98);
 }
 
 .topic-tb-btn {
-  padding: 2px 6px;
-  font-size: 12px;
-  background: none;
-  border: none;
-  border-radius: 3px;
+  padding: 5px 9px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(157, 180, 203, 0.44);
+  border-radius: 4px;
   cursor: pointer;
-  color: #555;
-  transition: background-color 0.15s ease;
+  color: #2f506e;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.74);
 }
 
 .topic-tb-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(99, 154, 198, 0.6);
+  color: #203f5c;
 }
 
 .topic-tb-btn.primary {
-  background: #5caaf7;
+  background: linear-gradient(180deg, #5caaf7, #4d9ee9);
   color: white;
-  font-weight: 500;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(77, 158, 233, 0.22);
 }
 
 .topic-tb-btn.primary:hover {
@@ -215,7 +234,9 @@
 }
 
 .topic-tb-btn.active {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(92, 170, 247, 0.18);
+  border-color: rgba(79, 141, 191, 0.68);
+  color: #1f4f7a;
 }
 
 /* Insert comment button - styled like original */
@@ -247,9 +268,9 @@
 .topic-avatar-small {
   width: 24px;
   height: 24px;
-  border-radius: 3px;
+  border-radius: 8px;
   border: 1px solid #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(15,23,42,0.08);
 }
 
 .topic-avatar-small.owner {
@@ -258,28 +279,35 @@
 
 .topic-date-small {
   font-size: 11px;
-  color: #888;
+  color: #7b8ca0;
   white-space: nowrap;
 }
 
 /* Meta-blip content area - unified with children (BLB: one blip container) */
 .topic-blip-content {
-  padding: 8px 16px 6px;
-  background: white;
+  padding: 18px 22px 10px;
+  background: transparent;
   /* No bottom padding - flows directly into children */
 }
 
 /* Meta-blip body - one scrollable container for topic + children */
 .topic-blip-body {
-  flex: 1;
+  flex: 0 1 auto;
   overflow-y: auto;
-  background: white;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.985), rgba(248, 251, 254, 0.98));
+  min-height: 0;
+  border: 1px solid rgba(173, 190, 208, 0.34);
+  border-radius: 18px;
+  box-shadow:
+    0 18px 38px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
 /* Child blips area - seamless continuation of topic content (BLB: unified container) */
 .topic-blip-children {
-  padding: 0 16px 16px;
-  background: white;
+  padding: 6px 22px 18px;
+  background: transparent;
   /* Same background as content - appears as ONE container */
 }
 
@@ -345,12 +373,15 @@
 /* BLB: Topic content editing (topic is meta-blip) */
 .topic-content-edit {
   width: 100%;
-  border: 1px solid #5CAAF7;
-  border-radius: 3px;
-  padding: 8px 12px;
-  background: #fafbfc;
+  border: 1px solid rgba(92, 170, 247, 0.64);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.998), rgba(244,249,253,0.992));
   box-sizing: border-box;
   min-height: 40px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    0 8px 18px rgba(69, 126, 173, 0.08);
 }
 
 .topic-content-edit:focus-within {
@@ -361,21 +392,37 @@
 .topic-content-edit .ProseMirror {
   outline: none;
   min-height: 24px;
+  color: #1e3448;
 }
 
 .topic-content-edit .ProseMirror h1 {
   margin: 0;
-  font-size: 18px;
+  font-size: 21px;
   font-weight: bold;
-  color: #222;
-  line-height: 1.3;
+  color: #18324a;
+  line-height: 1.24;
 }
 
 .topic-content-edit .ProseMirror p {
-  margin: 8px 0 0 0;
+  margin: 9px 0 0 0;
   font-size: 14px;
-  color: #333;
-  line-height: 1.5;
+  color: #294158;
+  line-height: 1.58;
+}
+
+.topic-content-edit .ProseMirror ul,
+.topic-content-edit .ProseMirror ol {
+  margin: 12px 0 0;
+  padding-left: 28px;
+  color: #223b51;
+}
+
+.topic-content-edit .ProseMirror li {
+  margin: 5px 0;
+}
+
+.topic-content-edit .ProseMirror li p {
+  margin: 0;
 }
 
 .topic-content-edit .ProseMirror p:first-child {
@@ -385,45 +432,124 @@
 /* Topic content view (read-only mode) */
 .topic-content-view {
   width: 100%;
-}
-
-.topic-content-view:hover {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 4px;
+  padding: 10px 0 16px;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(250, 253, 255, 0.985), rgba(242, 248, 252, 0.96));
+  border: 1px solid rgba(186, 202, 220, 0.52);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.94);
 }
 
 .topic-content-view h1 {
   margin: 0;
-  font-size: 18px;
-  font-weight: bold;
-  color: #222;
-  line-height: 1.3;
+  padding: 0 18px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #12273d;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
 }
 
 .topic-content-view p {
-  margin: 8px 0 0 0;
+  margin: 10px 0 0 0;
+  padding: 0 18px;
   font-size: 14px;
-  color: #333;
-  line-height: 1.5;
+  color: #253d53;
+  line-height: 1.68;
 }
 
 .topic-content-view p:first-child {
   margin-top: 0;
 }
 
+.topic-content-view ul,
+.topic-content-view ol {
+  margin: 12px 0 0;
+  padding: 0 18px 0 38px;
+  color: #243b53;
+}
+
+.topic-content-view li {
+  margin: 6px 0;
+  line-height: 1.55;
+}
+
+.topic-content-view li > p {
+  margin: 0;
+}
+
+.topic-content-view ul ul,
+.topic-content-view ol ol,
+.topic-content-view ul ol,
+.topic-content-view ol ul {
+  margin-top: 4px;
+}
+
+.topic-content-view .blip-thread-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 14px;
+  margin-left: 2px;
+  border-radius: 3px;
+  border: none;
+  background: #b3b3b3;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: middle;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.topic-content-view .blip-thread-marker:hover {
+  background: #999999;
+}
+
+.topic-content-view .blip-thread-marker.has-unread {
+  background: #2e8b57;
+}
+
+.topic-content-view .blip-thread-marker.has-unread:hover {
+  background: #246b46;
+}
+
+.topic-content-view figure[data-gadget-type="app-frame"] {
+  margin: 16px 0 0;
+}
+
+.topic-content-view figure[data-gadget-type="app-frame"] .gadget-header,
+.topic-content-view figure[data-gadget-type="app-frame"] .gadget-preview {
+  display: none;
+}
+
+.topic-content-view figure[data-gadget-type="app-frame"] .gadget-body {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.topic-content-view figure[data-gadget-type="app-frame"] iframe {
+  display: block;
+  width: 100%;
+}
+
 .topic-tags {
-  margin-top: 8px;
+  margin-top: 16px;
+  padding: 0 14px;
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
 }
 
 .topic-tag {
-  background: #e8e8e8;
-  color: #555;
-  padding: 2px 10px;
-  border-radius: 3px;
-  font-size: 13px;
+  background: rgba(92, 170, 247, 0.14);
+  color: #2d5f89;
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .topic-header-right {
@@ -845,19 +971,20 @@
 
 /* Write a reply section - minimal like real Rizzoma */
 .write-reply-section {
-  margin-top: 12px;
+  margin-top: 16px;
+  padding-top: 8px;
   padding: 0;
 }
 
 .write-reply-input {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
+  padding: 11px 14px;
+  border: 1px solid rgba(132, 148, 166, 0.24);
+  border-radius: 12px;
   font-size: 13px;
   font-family: inherit;
-  color: #666;
-  background: #fafafa;
+  color: #5f7084;
+  background: rgba(255,255,255,0.86);
   box-sizing: border-box;
 }
 
@@ -866,6 +993,7 @@
   border-color: #5CAAF7;
   background: white;
   color: #333;
+  box-shadow: 0 0 0 4px rgba(92, 170, 247, 0.14);
 }
 
 .write-reply-input::placeholder {
@@ -912,65 +1040,244 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  padding: 16px 18px 28px;
+  gap: 12px;
+  align-items: stretch;
+  background:
+    radial-gradient(circle at top right, rgba(104, 188, 255, 0.06), transparent 24%),
+    linear-gradient(180deg, rgba(246,250,254,0.99), rgba(228,238,248,0.95));
 }
 
 .subblip-nav-bar {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
-  background: linear-gradient(to bottom, #f8f9fa, #e8e9ea);
-  border-bottom: 1px solid #ddd;
+  width: min(1080px, calc(100% - 8px));
+  margin: 0 auto;
+  padding: 9px 13px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.992), rgba(233,242,250,0.985));
+  border: 1px solid rgba(137, 164, 189, 0.28);
+  border-bottom-color: rgba(124, 151, 177, 0.38);
+  border-radius: 12px;
+  box-shadow:
+    0 12px 26px rgba(24, 44, 79, 0.07),
+    inset 0 1px 0 rgba(255,255,255,0.92);
   flex-shrink: 0;
 }
 
 .subblip-hide-btn {
-  padding: 6px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  background: #4ea0f1;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #62b0ff, #438fe0);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 10px;
   cursor: pointer;
   transition: background 0.15s ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28);
 }
 
 .subblip-hide-btn:hover {
-  background: #3d8fd8;
+  background: linear-gradient(180deg, #549fe9, #3b84d2);
 }
 
 .subblip-breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
-  color: #666;
+  font-size: 12px;
+  color: #657b90;
   flex-wrap: wrap;
+  text-transform: none;
 }
 
 .subblip-breadcrumb a {
-  color: #4285f4;
+  color: #4a7fbd;
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, opacity 0.15s ease;
+  font-weight: 600;
 }
 
 .subblip-breadcrumb a:hover {
-  color: #1a73e8;
-  text-decoration: underline;
+  color: #3369aa;
+  opacity: 1;
 }
 
 .current-blip-label {
-  color: #333;
-  font-weight: 500;
-  max-width: 300px;
+  color: #1f3c58;
+  font-weight: 700;
+  max-width: 720px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.subblip-content {
+.subblip-stage {
+  width: min(1080px, calc(100% - 8px));
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.997), rgba(243,248,252,0.992));
+  border: 1px solid rgba(140, 163, 186, 0.34);
+  border-radius: 14px;
+  box-shadow:
+    0 14px 30px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255,255,255,0.96);
+  overflow: hidden;
+}
+
+.subblip-parent-context {
+  padding: 10px 16px 10px 14px;
+  background: linear-gradient(180deg, rgba(244,249,253,0.99), rgba(232,241,248,0.986));
+  border-bottom: 1px solid rgba(153, 176, 198, 0.34);
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.78);
+}
+
+.subblip-context-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6c8297;
+  margin-bottom: 6px;
+}
+
+.subblip-parent-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.subblip-parent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.subblip-parent-bullet {
+  color: #5d7186;
+  font-size: 16px;
+  line-height: 1.2;
+  margin-top: 2px;
+  flex: 0 0 auto;
+}
+
+.subblip-parent-copy {
+  min-width: 0;
   flex: 1;
-  padding: 16px;
-  overflow-y: auto;
+}
+
+.subblip-parent-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #163149;
+  margin-bottom: 4px;
+}
+
+.subblip-parent-snippet {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #40586f;
+  max-width: 920px;
+}
+
+.subblip-parent-meta {
+  font-size: 11px;
+  color: #758aa0;
+  white-space: nowrap;
+}
+
+.subblip-focus-shell {
+  position: relative;
+  padding: 14px 18px 18px 24px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.997), rgba(248,251,254,0.994));
+}
+
+.subblip-focus-shell::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(142, 166, 191, 0.2), rgba(106, 141, 177, 0.56), rgba(154, 180, 205, 0.16));
+}
+
+.subblip-focus-label {
+  margin: 0 0 6px 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #758aa0;
+}
+
+.subblip-focus-shell > .rizzoma-blip {
+  width: 100%;
+  margin-top: 0;
+}
+
+.subblip-focus-shell > .rizzoma-blip.nested-blip {
+  border-left: none;
+  padding-left: 0;
+}
+
+.subblip-focus-shell > .rizzoma-blip.expanded {
+  min-height: 0;
+}
+
+.subblip-focus-shell .blip-menu-container {
+  margin: 0 0 6px 0;
+}
+
+.subblip-focus-shell .blip-content {
+  border-radius: 10px;
+  padding: 12px 12px 10px;
+  border-color: rgba(145, 168, 191, 0.58);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.999), rgba(246,250,253,0.996));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.97),
+    0 4px 10px rgba(15, 23, 42, 0.04);
+}
+
+.subblip-focus-shell .blip-text {
+  padding: 0;
+  line-height: 1.58;
+  background: transparent;
+  border-radius: 0;
+  border: 0;
+}
+
+.subblip-focus-shell .blip-author-date {
+  color: #6f859a;
+  margin-top: 3px;
+}
+
+.subblip-focus-shell .reply-input {
+  margin-top: 10px;
+}
+
+.subblip-focus-shell .blip-content-row {
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.subblip-focus-shell .blip-author-info,
+.subblip-focus-shell .blip-contributors-info {
+  padding-left: 10px;
+}
+
+.subblip-focus-shell .blip-bullet {
+  color: #4d6177;
+}
+
+.subblip-focus-shell .child-blips {
+  margin-top: 10px;
+  padding-top: 4px;
 }

@@ -1,3 +1,4 @@
+import { appendFileSync } from 'node:fs';
 import { Router } from 'express';
 import { deleteDoc, find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
@@ -52,6 +53,7 @@ type TopicListItem = {
 };
 
 const MAX_SNIPPET_LENGTH = 140;
+const TOPIC_PATCH_DEBUG_LOG = 'screenshots/260330-app-runtime/topic-patch-log.ndjson';
 
 function stripHtml(input: string): string {
   return input.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -428,6 +430,19 @@ router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void>
   try {
     const id = req.params['id'] as string;
     const payload = UpdateTopicSchema.parse(req.body ?? {});
+    try {
+      appendFileSync(
+        TOPIC_PATCH_DEBUG_LOG,
+        `${JSON.stringify({
+          stage: 'incoming',
+          at: Date.now(),
+          id,
+          userId: req.user?.id,
+          title: payload.title ?? null,
+          content: payload.content ?? null,
+        })}\n`
+      );
+    } catch {}
     const existing = await getDoc<Topic & { _rev: string }>(id);
     // All authenticated users can edit topics (collaborative editing, like original Rizzoma)
     const next: Topic & { _rev?: string } = {
@@ -437,10 +452,36 @@ router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void>
       updatedAt: Date.now(),
     };
     const r = await updateDoc(next as any);
+    try {
+      appendFileSync(
+        TOPIC_PATCH_DEBUG_LOG,
+        `${JSON.stringify({
+          stage: 'updated',
+          at: Date.now(),
+          id,
+          userId: req.user?.id,
+          rev: r['rev'],
+          title: next.title,
+          content: next.content ?? null,
+        })}\n`
+      );
+    } catch {}
     res.json({ id: r['id'], rev: r['rev'] });
     try { emitEvent('topic:updated', { id: r['id'], title: next.title, updatedAt: next.updatedAt }); } catch {}
     return;
   } catch (e: any) {
+    try {
+      appendFileSync(
+        TOPIC_PATCH_DEBUG_LOG,
+        `${JSON.stringify({
+          stage: 'error',
+          at: Date.now(),
+          id: req.params['id'] as string,
+          userId: req.user?.id,
+          error: e?.message || 'update_error',
+        })}\n`
+      );
+    } catch {}
     if (e?.issues) { res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id }); return; }
     if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
     res.status(500).json({ error: e?.message || 'update_error', requestId: (req as any)?.id });

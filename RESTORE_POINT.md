@@ -5,6 +5,17 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-03-30 18:20 local re-read) Re-read RESTORE_POINT/docs/HANDOFF/docs/RESTART during the shared app-shell generalization pass. Added the runtime-harness verification note for `src/client/test-app-runtime.html`, the new shared browser-side shell (`public/gadgets/apps/app-shell.js`), and accepted harness artifacts under `screenshots/260330-app-runtime/`.
+- (2026-03-30 05:10 local re-read) Re-read RESTORE_POINT/docs/HANDOFF/docs/RESTART while closing the planner app persistence bug. Updated worklog + handoff/restart/testing/status docs to record the actual root cause (rogue `PUT /api/blips/:topicId` writes from the topic-root `RizzomaBlip` path), the server hardening in `src/server/routes/blips.ts`, and the accepted fresh-client verification under `screenshots/260330-app-runtime/` from `:4192`.
+- (2026-03-30 01:45 local re-read) Re-read RESTORE_POINT/docs/HANDOFF/docs/RESTART during the `PollGadget` contract repair. Added `docs/worklog-260330.md` to capture the serializer fix in `src/client/components/editor/extensions/GadgetNodes.ts`, the new real-path Vitest coverage in `src/tests/client.editor.GadgetNodes.test.ts`, and fresh Playwright artifacts under `screenshots/260330-poll-fix/` from a clean feature-flagged client on `:4174`.
+- (2026-03-30 03:30 local re-read) Re-read RESTORE_POINT/docs/HANDOFF/docs/RESTART during gadget registry phase 1. Updated the worklog plus handoff/restart notes to point at the new shared gadget layer (`src/client/gadgets/*`), the removal of fake gadgets from the live picker, and the fresh accepted live artifacts under `screenshots/260330-live-poll/` from the clean `:4179` client.
+- (2026-03-29 19:30 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART during the dirty gadget/editor batch triage. Updated handoff/restart plus a new `docs/worklog-260329.md` to record: Docker Desktop WSL integration restored, live dev stack verified again with `docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`, the current Express fallback-route boot fix in `src/server/app.ts`, dirty-batch `PollGadget` test failures, and live topic captures under `screenshots/260329-live/`.
+- (2026-02-25 02:35 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART and documented today's exhaustive screenshot/parity batch under `screenshots/260225/`:
+  - `ui-exhaustive-1771981300160` (175 screenshots + 175 per-screenshot notes),
+  - `TODAY_RUN_EXHAUSTIVE_ANALYSIS_260225.md`,
+  - `COMPARISON_EXHAUSTIVE_260225.md`,
+  - `docs/UI_ELEMENTS_EXHAUSTIVE.md`.
+  Updated branch-context references in `docs/HANDOFF.md` and `docs/RESTART.md` to `master` and noted the remaining live-reference parity gaps (gear/share/share-modal/search-overlay/unread).
 - (2026-02-04 01:55 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Removed child unread yellow highlight (green [+] only), reran BLB snapshot harness (`snapshots/blb/1770165748162-*`), updated changelog/worklog/handoff/restart. Branch/date guardrails unchanged.
 - (2026-02-04 01:20 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. BLB toolbar visibility now tied to expanded state, reran BLB snapshot harness (`snapshots/blb/1770164188794-*`), updated changelog/worklog. Branch/date guardrails unchanged.
 - (2026-02-03 04:33 local re-read) Re-read RESTORE_POINT/README_MODERNIZATION/docs/HANDOFF/docs/RESTART. Updated `scripts/start-all.sh` to avoid hanging on missing `sphinx`, documented the flow in QUICKSTART, and logged in worklog/changelog. Branch/date guardrails unchanged.
@@ -128,6 +139,190 @@
   - (2025-12-11) Inline comments visibility helper now stores `{ value, updatedAt }`, diffs storage events, and `RizzomaBlip.tsx` guards fetch/patch requests with change tokens; extended `client.inlineCommentsVisibilityStorage.test.ts` exercises metadata + cross-tab broadcasts.
 
 ### Testing and QA coverage
+- [x] Restore `PollGadget` parse/render compatibility and rerun the focused Vitest/Playwright check.
+  - (2026-03-29) `npm run build` passed, but `npm test -- --run src/tests/client.editor.GadgetNodes.test.ts` failed because `PollGadget` no longer emits/parses the expected `data-poll-*` contract. Live Playwright verification against the real app succeeded after bringing Docker + FEAT_ALL-backed dev services back up, with artifacts saved under `screenshots/260329-live/`.
+  - (2026-03-30) Fixed `PollGadget` serializer/parsing in `src/client/components/editor/extensions/GadgetNodes.ts`, added a real `editor.getHTML()` regression test to `src/tests/client.editor.GadgetNodes.test.ts`, and verified both the focused Vitest and fresh Playwright poll capture (`screenshots/260330-poll-fix/test-editor-poll-4174.{png,html}`) now show the correct `data-poll-*` contract without raw `question=` / `allowmultiple=` leakage.
+  - (2026-03-30) Continued the visual QA loop into the authenticated live app and accepted `screenshots/260330-live-ui/blb-topic-v5.{png,html}` as the new live-shell baseline after refining `RizzomaLayout`, `NavigationPanel`, `RizzomaTopicsList`, `RightToolsPanel`, `RizzomaTopicDetail`, and `RizzomaApp` styling against the real `BLB Study - Local Parity Test` topic on a clean feature-flagged Vite client (`http://127.0.0.1:4175`).
+  - (2026-03-30) Validated the real authenticated gadget flow with `scripts/capture_live_topic_poll.cjs`, fixed the live topic/blip insertion paths to use canonical poll defaults, hardened poll option normalization for legacy/string-array payloads, and accepted `screenshots/260330-live-poll/live-topic-poll-v7.{png,html}` on a fresh feature-flagged Vite client (`http://127.0.0.1:4176`) as the first acceptable end-to-end live poll insertion artifact.
+- [x] Start Phase 1 gadget-platform cleanup: central registry + shared insert path.
+  - (2026-03-30) Added `src/client/gadgets/{types,defaults,registry,insert}.ts`, moved the live picker onto the registry, removed the fake placeholder gadgets from the actual picker surface, and refactored `BlipEditor`, `RizzomaTopicDetail`, and `RizzomaBlip` to use the shared insert helper.
+  - (2026-03-30) Fresh clients on `:4178`/`:4179` exposed and then closed the real regressions hidden by the older stale servers: `pollGadget` missing from some editor schemas and the queued blip path losing `executeGadgetInsert`. Accepted fresh artifacts are now `screenshots/260330-live-poll/live-topic-palette-v8.{png,html}` and `screenshots/260330-live-poll/live-topic-poll-v15.{png,html}` from `http://127.0.0.1:4179`.
+- [x] Start trusted embed adapters on top of the gadget registry baseline.
+  - (2026-03-30) Added `src/client/gadgets/embedAdapters/{common,youtube,spreadsheet,iframe,image,index}.ts`, taught `GadgetPalette.tsx` to validate/normalize URL gadgets before insert, and introduced `embedFrameGadget` in `src/client/components/editor/extensions/GadgetNodes.ts` so trusted embeds render as real block nodes instead of escaped iframe text.
+  - (2026-03-30) Live verification now uses `scripts/capture_live_topic_gadget_url.cjs`, which creates a fresh disposable topic per run and captures either the focused topic pane or the palette error state. Accepted artifacts are `screenshots/260330-embed-adapters/live-topic-youtube-v4.{png,html}` and `screenshots/260330-embed-adapters/live-topic-youtube-error-v4.{png,html}` from `http://127.0.0.1:4180`.
+  - (2026-03-30) Expanded the same trusted adapter/node path across the remaining real URL gadgets. Accepted fresh artifacts are `screenshots/260330-embed-adapters/live-topic-sheet-v1.{png,html}`, `screenshots/260330-embed-adapters/live-topic-iframe-v1.{png,html}`, and `screenshots/260330-embed-adapters/live-topic-image-v1.{png,html}` from the same `http://127.0.0.1:4180` clean client. `src/tests/client.gadgets.embedAdapters.test.ts` now passes with 6 focused cases.
+- [x] Define the first installable-app/runtime boundary and align the Store to it.
+  - (2026-03-30) Added app-manifest/runtime scaffolding in `src/client/gadgets/apps/{catalog,runtime}.ts`, expanded gadget typing with `kind`/`availability`/host-API vocabulary, and replaced the old fake-install `StorePanel` with a runtime catalog that honestly distinguishes built-in gadgets, trusted embeds, and sandboxed app previews.
+  - (2026-03-30) Added `src/tests/client.gadgets.appsCatalog.test.ts`; the focused gadget-platform suite `npm test -- --run src/tests/client.gadgets.embedAdapters.test.ts src/tests/client.gadgets.appsCatalog.test.ts` passes (9 tests total).
+  - (2026-03-30) Accepted fresh live Store/runtime artifacts are `screenshots/260330-app-runtime/live-store-panel-v2.{png,html}` from `http://127.0.0.1:4181`.
+- [x] Mount the first real sandboxed app preview inside a topic.
+  - (2026-03-30) Added `kanbanApp` to the live gadget picker/insert path, introduced `AppFrameGadget` + `SandboxAppGadgetView`, and created the first preview app shell at `public/gadgets/apps/kanban-board/index.html`.
+  - (2026-03-30) The first preview app now exercises a minimal host bridge over `postMessage` (`host.getNodeData`, `host.getUserContext`, `host.resize`, `host.updateNodeData`) instead of being a dead iframe mount.
+  - (2026-03-30) Added `src/tests/client.gadgets.insert.test.ts`; `npm test -- --run src/tests/client.gadgets.appsCatalog.test.ts src/tests/client.gadgets.insert.test.ts` passes (4 tests total).
+  - (2026-03-30) Accepted fresh live topic-app artifacts are `screenshots/260330-app-runtime/live-topic-kanban-v3.{png,html}` from `http://127.0.0.1:4182`.
+- [x] Fix topic-root persistence for sandboxed app gadgets so edited app state survives `Done`.
+  - (2026-03-30) Root cause was not the iframe app or `finishEditingTopic()` HTML computation. The real overwrite path was rogue `PUT /api/blips/:topicId` traffic coming from the topic-root `RizzomaBlip` lifecycle, which treated the topic document like a normal editable blip and wrote stale planner payloads after the correct topic PATCH.
+  - (2026-03-30) Fixed by hardening topic-root edit/save guards in `src/client/components/RizzomaTopicDetail.tsx` and `src/client/components/blip/RizzomaBlip.tsx`, and by rejecting non-blip documents in `src/server/routes/blips.ts`.
+  - (2026-03-30) Accepted fresh verification from `http://127.0.0.1:4192`:
+    - persisted topic payload `screenshots/260330-app-runtime/live-topic-planner-debug-saved-topic.json`
+    - UI artifact `screenshots/260330-app-runtime/live-topic-planner-debug-after-done.{png,html}`
+    - route/mutation proof `screenshots/260330-app-runtime/topic-patch-log.ndjson`
+    - no rogue writes `screenshots/260330-app-runtime/live-topic-planner-debug-mutation-traffic.json`
+  - (2026-03-30) Final saved planner state keeps `Ship preview (delayed)` at `16:30`, so the app-runtime baseline is now correct enough to extend.
+- [x] Generalize the browser-side app shell so multiple preview apps share the same bootstrap/host-bridge pattern.
+  - (2026-03-30) Moved per-app defaults into `src/client/gadgets/apps/catalog.ts`, simplified app insertion in `src/client/gadgets/insert.ts`, added the shared browser-side shell in `public/gadgets/apps/app-shell.js` + `shared-styles.css`, and migrated the Kanban + Planner app pages onto that shell.
+  - (2026-03-30) Added a third preview app (`public/gadgets/apps/focus-timer/index.html`) on the same shell to prove the runtime can host a different layout/state model.
+  - (2026-03-30) Added a dedicated verification harness at `src/client/test-app-runtime.html` and extended `scripts/capture_live_topic_app.cjs` to capture that harness directly.
+  - (2026-03-30) Focused tests pass: `npm test -- --run src/tests/client.gadgets.appsCatalog.test.ts src/tests/client.gadgets.insert.test.ts` (7 tests).
+  - (2026-03-30) Accepted fresh harness artifacts:
+    - `screenshots/260330-app-runtime/runtime-harness-planner-v1.{png,html}`
+    - `screenshots/260330-app-runtime/runtime-harness-focus-v1.{png,html}`
+  - (2026-03-30) The localhost authenticated topic-app path was unstable during the same batch, so the harness is the honest source of truth for this shared-shell refactor until the live verifier is cleaned up.
+- [x] Planner sandbox app topic flow is now fully verified on `master`.
+  - (2026-03-30) Fixed the last topic-root app-runtime bugs:
+    - topic title pollution during app-frame edits
+    - planner persistence after `Done`
+    - read-mode iframe bootstrapping from saved `data-app-data`
+  - Verified from a fresh feature-flagged client at `http://127.0.0.1:4193` with:
+    - `node scripts/probe_live_planner_iframe.cjs http://127.0.0.1:4193`
+    - `node scripts/capture_live_topic_app.cjs screenshots/260330-app-runtime/live-topic-planner-vfinal.png screenshots/260330-app-runtime/live-topic-planner-vfinal.html http://127.0.0.1:4193 Planner`
+    - `npm test -- --run src/tests/client.gadgets.appsCatalog.test.ts src/tests/client.gadgets.insert.test.ts` (7 tests passed)
+  - Accepted artifacts:
+    - `screenshots/260330-app-runtime/live-topic-planner-vfinal.{png,html}`
+  - Key runtime files:
+    - `src/client/components/RizzomaTopicDetail.tsx`
+    - `src/client/components/blip/RizzomaBlip.tsx`
+    - `src/client/components/editor/extensions/GadgetNodes.ts`
+    - `public/gadgets/apps/runtime-host.js`
+- [x] Verified the cleaned app-frame topic path across all three preview apps on `master`.
+  - (2026-03-31) Follow-on live verification on the clean `http://127.0.0.1:4193` client now passes for:
+    - Planner
+    - Focus
+    - Kanban
+  - Accepted artifacts:
+    - `screenshots/260330-app-runtime/live-topic-planner-vfinal.{png,html}`
+    - `screenshots/260331-app-runtime/live-topic-focus-v1.{png,html}`
+    - `screenshots/260331-app-runtime/live-topic-kanban-v1.{png,html}`
+  - Supporting change:
+    - `scripts/capture_live_topic_app.cjs` now creates artifact directories automatically before writing post-save debug files.
+- [x] Make preview-app install state real in the Store and picker.
+  - (2026-03-31) Added `src/client/gadgets/apps/installState.ts` for workspace-level preview-app install state, updated `StorePanel` so preview apps have real install/remove controls, and updated `GadgetPalette` so only installed sandboxed apps appear in the picker.
+  - (2026-03-31) Removed duplicate preview-app rows from the Store and added `scripts/capture_live_store_install_lifecycle.cjs` plus `scripts/capture_live_topic_palette.cjs` for live verification.
+  - (2026-03-31) Accepted clean-client artifacts on `http://127.0.0.1:4196`:
+    - `screenshots/260331-store-lifecycle/store-focus-removed.{png,html}`
+    - `screenshots/260331-store-lifecycle/palette-focus-removed.{png,html}`
+    - `screenshots/260331-store-lifecycle/store-focus-installed.{png,html}`
+    - `screenshots/260331-store-lifecycle/palette-focus-installed.{png,html}`
+- [x] Persist preview-app install state through a real authenticated server preference path.
+  - (2026-03-31) Added `src/server/routes/gadgets.ts` with `GET/PATCH /api/gadgets/preferences`, mounted it in `src/server/app.ts`, and updated `src/client/gadgets/apps/installState.ts` so preview-app install state now hydrates/saves through the authenticated server/CouchDB path rather than only `localStorage`.
+  - (2026-03-31) Updated `StorePanel`, `GadgetPalette`, and `scripts/capture_live_store_install_lifecycle.cjs` to use the new server-backed preference path.
+  - (2026-03-31) Accepted clean-client artifacts on `http://127.0.0.1:4196`:
+    - `screenshots/260331-store-lifecycle-server/store-focus-removed.{png,html}`
+    - `screenshots/260331-store-lifecycle-server/palette-focus-removed.{png,html}`
+    - `screenshots/260331-store-lifecycle-server/store-focus-installed.{png,html}`
+    - `screenshots/260331-store-lifecycle-server/palette-focus-installed.{png,html}`
+  - (2026-03-31) Focused tests:
+    - `npm test -- --run src/tests/client.gadgets.appsCatalog.test.ts src/tests/client.gadgets.insert.test.ts src/tests/client.gadgets.appInstallState.test.ts src/tests/server.gadgetPreferences.test.ts`
+    - result: pass (4 files, 13 tests)
+- [x] Make gadget preference lifecycle explicit and verify it across fresh sessions.
+  - (2026-03-31) Expanded the gadget-preferences contract with `schemaVersion`, `scope: user`, `defaultInstalledAppIds`, and an explicit reset-to-default path.
+  - (2026-03-31) Added `Reset preview apps` to the Store and clarified that preview-app availability is stored per signed-in user.
+  - (2026-03-31) Hardened the lifecycle verifier so it waits for the real server-backed save and reopens fresh browser sessions between remove/install checks.
+  - (2026-03-31) Accepted cross-session artifacts on the clean `:4196` client:
+    - `screenshots/260331-store-lifecycle-session7/store-focus-removed.{png,html}`
+    - `screenshots/260331-store-lifecycle-session7/palette-focus-removed.{png,html}`
+    - `screenshots/260331-store-lifecycle-session7/store-focus-installed.{png,html}`
+    - `screenshots/260331-store-lifecycle-session7/palette-focus-installed.{png,html}`
+  - (2026-03-31) Focused tests:
+    - `npm test -- --run src/tests/server.gadgetPreferences.test.ts src/tests/client.gadgets.appInstallState.test.ts src/tests/client.gadgets.appsCatalog.test.ts src/tests/client.gadgets.insert.test.ts`
+    - result: pass (4 files, 14 tests)
+- [x] Tighten BLB topic-root shell density against the legacy live references.
+  - (2026-03-31) Flattened and widened the root topic shell in `src/client/components/RizzomaTopicDetail.css`, tightened read-mode spacing/typography, and added explicit list/thread-marker styling so BLB-style topic reading is denser and closer to the legacy texture.
+  - (2026-03-31) Upgraded `scripts/capture_blb_probe.cjs` so the parity probe now seeds a more realistic BLB-style topic root with intro copy, nested lists, inline thread markers, and a closing note above the reply box.
+  - (2026-03-31) Accepted live artifacts on the clean `:4196` client:
+    - `screenshots/260331-blb-parity/blb-probe-v1.{png,html}`
+- [x] Verify real nested inline-thread expansion inside the BLB topic shell.
+  - (2026-03-31) Extended `scripts/capture_blb_probe.cjs` with an `inline` mode that creates a root inline child plus a nested inline child and clicks both `[+]` markers before capture.
+  - (2026-03-31) Added the `inline-child` class in `src/client/components/blip/RizzomaBlip.tsx` and tightened `src/client/components/blip/RizzomaBlip.css` so inline-expanded threads are lighter and less card-heavy.
+  - (2026-03-31) Gated inline-child reply inputs in `src/client/components/blip/RizzomaBlip.tsx` so they stay quiet until the inline child is active.
+  - (2026-03-31) Accepted live artifacts on the clean `:4196` client:
+    - `screenshots/260331-blb-inline/blb-inline-probe-v1.{png,html}`
+- [x] Verify mixed inline-thread plus list-thread texture inside the BLB topic shell.
+  - (2026-03-31) Extended `scripts/capture_blb_probe.cjs` with a `mixed` mode that seeds both inline-thread expansion and a separate list-thread reply with a nested child.
+  - (2026-03-31) Tightened collapsed list-thread row styling in `src/client/components/blip/RizzomaBlip.css` so the lower mixed-thread region remains visually legible beside the inline-expanded thread.
+  - (2026-03-31) Accepted live artifacts on the clean `:4196` client:
+    - `screenshots/260331-blb-mixed/blb-mixed-probe-v1.{png,html}`
+- [x] Verify richer unread/threaded BLB parity with real read-state writes.
+  - (2026-03-31) Extended `scripts/capture_blb_probe.cjs` with an `unread` mode that mixes:
+    - one unread inline-expanded thread,
+    - one nested inline child explicitly marked read,
+    - multiple additional read inline markers that stay neutral gray,
+    - and a collapsed list-thread row that remains unread because of a nested child.
+  - (2026-03-31) Added real `POST /api/waves/:waveId/blips/:blipId/read` calls inside the probe so the unread/read split is backed by the server route instead of CSS-only defaults.
+  - (2026-03-31) Tightened unread collapsed-row and inline-child styling in `src/client/components/blip/RizzomaBlip.css` so the mixed unread split is clearer in the live topic shell.
+  - (2026-03-31) Accepted live artifacts on the clean `:4196` client:
+    - `screenshots/260331-blb-unread/blb-unread-probe-v1.{png,html}`
+- [x] Verify toolbar-state parity for expanded vs collapsed BLB replies.
+  - (2026-03-31) Extended `scripts/capture_blb_probe.cjs` with a `toolbar` mode that keeps one list-thread reply expanded as the toolbar case, keeps a second list-thread reply collapsed as the no-toolbar comparison, and preserves the inline thread as a non-active reference state.
+  - (2026-03-31) Hardened collapsed-row expansion in `src/client/components/blip/RizzomaBlip.tsx` by stopping propagation on collapsed-row clicks and driving `handleToggleExpand()` directly from the collapsed row.
+  - (2026-03-31) Accepted live artifacts on the clean `:4196` client:
+    - `screenshots/260331-blb-toolbar/blb-toolbar-probe-v1.{png,html}`
+- [x] Tighten BLB per-blip toolbar texture against the legacy utility-strip reference.
+  - (2026-03-31) Flattened the per-blip toolbar in `src/client/components/blip/BlipMenu.css`: thinner height, smaller buttons, light-gray edit strip, quieter separators, and less dominant inline-child toolbar sizing.
+  - (2026-03-31) Re-accepted the clean `:4196` toolbar artifacts after the visual pass:
+    - `screenshots/260331-blb-toolbar/blb-toolbar-probe-v1.{png,html}`
+- [x] Establish a denser live BLB scenario baseline beyond the stripped-down probe topics.
+  - (2026-03-31) Added `scripts/capture_blb_live_scenario.cjs` to seed and capture a more natural authenticated business-topic shell with mixed inline/list unread states, an expanded list reply with toolbar, and a collapsed unread comparison reply.
+  - (2026-03-31) Corrected the scenario anchor positions so inline markers stop corrupting the topic title and land inside the intended body rows.
+  - (2026-03-31) Accepted live artifacts on the clean `:4196` client:
+    - `screenshots/260331-blb-live-scenario/blb-live-scenario-v1.{png,html}`
+- [x] Verify toolbar-focus parity in the denser authenticated BLB live scenario.
+  - (2026-03-31) Extended `scripts/capture_blb_live_scenario.cjs` so the same business-topic shell now seeds two expanded list replies plus a collapsed unread comparison reply, then re-activates the intended primary reply before capture.
+  - (2026-03-31) Tightened inactive-expanded reply styling in `src/client/components/blip/RizzomaBlip.css` so the primary active reply keeps focus while the secondary expanded reply stays visually quieter.
+  - (2026-03-31) The live scenario verifier now records DOM-state counts and passed with:
+    - `expandedReplyCount = 2`
+    - `visibleToolbarCount = 1`
+    - `primaryExpandedIsActive = true`
+  - (2026-03-31) Accepted live artifacts on the clean `:4196` client:
+    - `screenshots/260331-blb-live-scenario/blb-live-scenario-v2.{png,html}`
+- [x] Refactor non-root blip activation onto a shared active-blip path and keep the accepted toolbar probe green.
+  - (2026-03-31) Added a shared window-level active-blip source of truth in `src/client/components/blip/RizzomaBlip.tsx` and routed non-root click/expand activation through it instead of relying on scattered local `setIsActive(true)` paths.
+  - (2026-03-31) Re-ran the accepted toolbar probe on the clean `:4196` client to confirm the single-toolbar expanded-vs-collapsed contract still holds:
+    - `screenshots/260331-blb-toolbar/blb-toolbar-probe-v1.{png,html}`
+  - (2026-03-31) Fixed the richer multi-reply toolbar-focus leak in the dense live scenario by deriving top-level/list reply active state from the shared active-blip owner instead of stale local `isActive`. Accepted fresh artifact on the clean `:4197` client:
+    - `screenshots/260331-blb-live-scenario/blb-live-scenario-v3.{png,html}`
+  - (2026-03-31) Naturalized the dense live business-topic scenario copy while keeping the accepted one-toolbar contract intact on the clean `:4197` client. The same `blb-live-scenario-v3.{png,html}` artifact now reads more like a real working thread instead of seeded placeholder text.
+  - (2026-03-31) Extended the same dense live scenario to use a more uneven unread distribution: both expanded replies now mix read and unread grandchildren, while the collapsed comparison reply keeps its unread marker via a remaining unread child. The accepted `blb-live-scenario-v3.{png,html}` artifact still holds the one-toolbar contract on the clean `:4197` client.
+  - (2026-03-31) Added a dedicated mobile verifier `scripts/capture_blb_live_scenario_mobile.cjs` and tightened small-screen toolbar/header layout in `src/client/components/blip/BlipMenu.{tsx,css}` plus `src/client/components/blip/RizzomaBlip.css`. Accepted mobile artifact on the clean `:4197` client:
+    - `screenshots/260331-blb-live-scenario-mobile/blb-live-scenario-mobile-v1.{png,html}`
+  - (2026-03-31) Extended `scripts/capture_blb_live_scenario.cjs` with step-level timing and DOM-count output. The accepted dense live scenario now also emits:
+    - `screenshots/260331-blb-live-scenario/blb-live-scenario-v3.metrics.json`
+    This is a coarse baseline for the denser live BLB state, not yet a strict perf budget gate.
+  - (2026-03-31) Tightened the same dense live perf probe to wait for actual thread-state transitions instead of using fixed sleeps. The accepted `blb-live-scenario-v3.metrics.json` baseline on the clean `:4197` client now records:
+    - `initialLoadMs = 290`
+    - `inlineExpandMs = 308`
+    - `inlineActivateMs = 280`
+    - `primaryExpandMs = 19`
+    - `secondaryExpandMs = 25`
+    - `primaryActivateMs = 44`
+    - `totalScenarioMs = 4227`
+    with the same accepted toolbar/unread state (`expandedReplyCount = 2`, `visibleToolbarCount = 1`, `collapsedUnreadHasUnreadIcon = true`).
+  - (2026-03-31) Broadened the same dense live scenario with an additional neutral collapsed top-level thread and read child. The accepted `blb-live-scenario-v3.{png,html,metrics.json}` artifact on the clean `:4197` client now proves:
+    - `expandedReplyCount = 2`
+    - `visibleToolbarCount = 1`
+    - `collapsedUnreadHasUnreadIcon = true`
+    - `collapsedReadVisible = true`
+    - `domBlipCount = 6`
+  - (2026-03-31) Made the same dense live scenario less uniformly seeded by varying paragraph density and child ordering across the expanded and collapsed replies. The accepted `blb-live-scenario-v3.{png,html,metrics.json}` artifact on the clean `:4197` client still holds the same one-toolbar state with updated metrics:
+    - `totalScenarioMs = 5227`
+    - `domBlipCount = 6`
+  - (2026-03-31) Inserted a neutral collapsed middle follow-up thread between the two expanded top-level replies so the accepted dense live scenario feels less hand-stacked. The accepted `blb-live-scenario-v3.{png,html,metrics.json}` artifact on the clean `:4197` client now proves:
+    - `expandedReplyCount = 2`
+    - `visibleToolbarCount = 1`
+    - `midCollapsedVisible = true`
+    - `collapsedUnreadHasUnreadIcon = true`
+    - `collapsedReadVisible = true`
+    - `domBlipCount = 7`
 - [ ] Test every functionality that's added or modified and update that md file accordingly (or create one if there isn't one already!)
 - [x] Add coverage for Follow-the-Green navigation/unread tracking (wave-level) plus degraded-path toasts for editor actions; re-run full Vitest suite and add browser smoke.
   - (2026-03-05) Added `src/tests/client.RightToolsPanel.followGreen.test.tsx` and `src/tests/client.useWaveUnread.test.tsx` to cover the modern Follow-the-Green CTA (`RightToolsPanel`/`FollowTheGreen`) and the `useWaveUnread` hook (initial load, optimistic mark-read, socket `deleted` events, and large-wave stress). `test-follow-green-smoke.mjs` now exercises the multi-user browser flow, and the CTA surfaces inline status/toasts when no unread blips exist or mark-read fails.
@@ -155,6 +350,237 @@
 - [ ] Refresh `TESTING_STATUS.md` with the next real run (typecheck/tests/build) and note outstanding UI/browser smoke gaps.
   - (2026-03-05) Partially refreshed to clarify Follow-the-Green coverage, FEAT_ALL status, and remaining gaps for large-wave/perf paths; a new end-to-end run is still pending.
 - [ ] Add doc notes for backup workflow refinements and any CI additions.
+
+### 2026-03-31 17:50 CET - BLB Dense Live Hierarchy Correction
+- Re-read `docs/BLB_LOGIC_AND_PHILOSOPHY.md` and the original topic/blip references after the user correctly flagged that the dense live scenario had drifted into a flatter fake hierarchy.
+- `scripts/capture_blb_live_scenario.cjs` now keeps the topic as the root/meta-blip, creates one real top-level discussion thread under it, moves the previously “indented” business rows under that parent as genuine child replies, and leaves one separate root-level follow-up as a true sibling.
+- `src/client/components/blip/RizzomaBlip.tsx` now ignores ancestor activation when the click originated inside a nested descendant blip.
+- Latest structural verification:
+  - `node scripts/capture_blb_live_scenario.cjs http://127.0.0.1:4196 screenshots/260331-blb-live-scenario`
+  - artifacts: `screenshots/260331-blb-live-scenario/blb-live-scenario-v3.{png,html}` and `blb-live-scenario-v3.metrics.json`
+  - structural state: `mainThreadExpandedVisible=true`, `primaryExpandedVisible=true`, `secondaryExpandedVisible=true`, `midCollapsedVisible=true`, `collapsedUnreadVisible=true`, `collapsedReadVisible=true`, `rootFollowUpVisible=true`
+  - open follow-up: `expandedReplyCount = 4`, `visibleToolbarCount = 3`
+  - interpretation: the topic/blip hierarchy is now honest again; dense nested toolbar ownership is still the next BLB fix
+
+### 2026-03-31 18:10 CET - BLB Dense Live Toolbar Recovery
+- `RizzomaBlip.tsx` now assigns active ownership when a collapsed child reply expands.
+- Fresh client verification on `http://127.0.0.1:4198` restored the single-toolbar contract on the hierarchy-corrected dense live scenario.
+- Latest accepted verification:
+  - `node scripts/capture_blb_live_scenario.cjs http://127.0.0.1:4198 screenshots/260331-blb-live-scenario`
+  - accepted state: `expandedReplyCount = 3`, `visibleToolbarCount = 1`, `primaryExpandedIsActive = true`, `mainThreadExpandedVisible = true`, `primaryExpandedVisible = true`, `secondaryExpandedVisible = true`, `midCollapsedVisible = true`, `collapsedUnreadVisible = true`, `collapsedReadVisible = true`, `rootFollowUpVisible = true`
+  - interpretation: the dense live topic now matches the documented topic/root structure and the active-toolbar ownership contract again
+
+### 2026-03-31 18:55 CET - Basic Live Blip Workflow Smoke
+- Added `scripts/explore_live_blip_workflow.cjs` to sanity-check the ordinary live workflow instead of only seeded parity topics.
+- Fresh verification on `http://127.0.0.1:4198`:
+  - `node scripts/explore_live_blip_workflow.cjs screenshots/260331-workflow-exploration/workflow-v1.png screenshots/260331-workflow-exploration/workflow-v1.html screenshots/260331-workflow-exploration/workflow-v1.json http://127.0.0.1:4198`
+  - artifacts: `screenshots/260331-workflow-exploration/workflow-v1.{png,html,json}`
+  - verified steps: root reply create, root reply expand, nested reply form open, nested reply submit, topic edit mode, gadget palette open
+- Interpretation:
+  - the basic "create a blip, reply, edit, open gadgets" flow is alive on `master`
+  - the bigger problem is confusing structure/affordance drift, not total workflow collapse
+
+### 2026-03-31 19:00 CET - Complex Live Workflow Audit Against Legacy References
+- Added `scripts/capture_complex_live_workflow.cjs` to capture a larger numbered step pack through the real UI instead of a single end-state screenshot.
+- Fresh verification on `http://127.0.0.1:4198`:
+  - `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow http://127.0.0.1:4198`
+  - result: pass
+- Artifacts:
+  - `screenshots/260331-complex-workflow/01-topic-loaded.png`
+  - `screenshots/260331-complex-workflow/02-root-reply-a-created.png`
+  - `screenshots/260331-complex-workflow/03-root-reply-b-created.png`
+  - `screenshots/260331-complex-workflow/04-root-reply-a-expanded.png`
+  - `screenshots/260331-complex-workflow/05-nested-reply-form-open.png`
+  - `screenshots/260331-complex-workflow/06-nested-reply-created.png`
+  - `screenshots/260331-complex-workflow/07-nested-reply-expanded.png`
+  - `screenshots/260331-complex-workflow/08-topic-edit-mode.png`
+  - `screenshots/260331-complex-workflow/09-gadget-palette-open.png`
+  - `screenshots/260331-complex-workflow/10-poll-inserted.png`
+  - `screenshots/260331-complex-workflow/11-done-mode-after-poll.png`
+  - `screenshots/260331-complex-workflow/final.html`
+  - `screenshots/260331-complex-workflow/summary.json`
+  - `screenshots/260331-complex-workflow/ANALYSIS.md`
+- Compared against the legacy screenshot references in `screenshots/rizzoma-live/feature/rizzoma-core-features/`.
+- Interpretation:
+  - basic workflow actions still work
+  - the modern UI is still materially worse than the legacy UI in hierarchy strength, nested-thread legibility, toolbar obviousness, and gadget-entry anchoring
+
+### 2026-03-31 19:35 CET - Complex Workflow Repair Pass on Fresh Client
+- Reworked the worst audit regressions in the live topic workflow:
+  - stronger topic/blip/tool surfaces
+  - smaller degraded-state banners moved out of the main edit band
+  - tighter gadget palette anchoring
+  - poll gadget card density reduced
+- Most importantly, fixed the root topic editor bootstrap in `src/client/components/RizzomaTopicDetail.tsx`:
+  - entering topic edit mode now seeds from the visible topic body when available
+  - the unstable topic-root collaboration bootstrap path is disabled for now
+  - fresh debug on `http://127.0.0.1:4197` shows the topic editor is editable and holds the full title + body HTML again
+- Accepted verification:
+  - `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow-pass14 http://127.0.0.1:4197`
+  - accepted artifacts:
+    - `screenshots/260331-complex-workflow-pass14/08-topic-edit-mode.png`
+    - `screenshots/260331-complex-workflow-pass14/09-gadget-palette-open.png`
+    - `screenshots/260331-complex-workflow-pass14/10-poll-inserted.png`
+    - `screenshots/260331-complex-workflow-pass14/11-done-mode-after-poll.png`
+    - `screenshots/260331-complex-workflow-pass14/final.html`
+    - `screenshots/260331-complex-workflow-pass14/summary.json`
+- Accepted result:
+  - topic edit mode no longer blanks the meta-blip body
+  - poll insertion no longer wipes the topic body
+  - done mode persists both the original body and the inserted poll
+
+### 2026-03-31 19:45 CET - Complex Workflow Visual Polish Follow-up
+- Tightened the remaining edit-band chrome in:
+  - `src/client/components/RizzomaTopicDetail.css`
+  - `src/client/components/blip/BlipMenu.css`
+  - `src/client/components/GadgetPalette.css`
+- Fresh accepted verification:
+  - `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow-pass15 http://127.0.0.1:4197`
+  - accepted artifacts:
+    - `screenshots/260331-complex-workflow-pass15/09-gadget-palette-open.png`
+    - `screenshots/260331-complex-workflow-pass15/10-poll-inserted.png`
+    - `screenshots/260331-complex-workflow-pass15/11-done-mode-after-poll.png`
+- Accepted result:
+  - right-rail gadget insertion reads more like an anchored utility flyout
+  - the topic toolbar strip has stronger presence
+  - the repaired root topic body preservation remains intact
+
+### 2026-03-31 21:30 CET - Complex Workflow Nested Readability Pass
+- Continued the same live workflow loop with a fresh forced client after confirming the `:4197` bundle had gone stale and was no longer reflecting the latest CSS edits.
+- Tightened nested-thread readability and dense gadget rendering in:
+  - `src/client/components/blip/RizzomaBlip.css`
+  - `src/client/components/blip/BlipMenu.css`
+  - `src/client/components/editor/InlineComments.css`
+  - `src/client/components/editor/extensions/PollGadgetView.tsx`
+- Fresh client:
+  - restarted Vite and verified on `http://127.0.0.1:4198`
+- Fresh accepted verification:
+  - `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow-pass19 http://127.0.0.1:4198`
+  - accepted artifacts:
+    - `screenshots/260331-complex-workflow-pass19/10-poll-inserted.png`
+    - `screenshots/260331-complex-workflow-pass19/11-done-mode-after-poll.png`
+    - `screenshots/260331-complex-workflow-pass19/final.html`
+    - `screenshots/260331-complex-workflow-pass19/summary.json`
+- Accepted result:
+  - nested reply cards are denser and less washed out
+  - the toolbar-surface inline-comments warning is demoted into a smaller status chip
+  - the poll gadget is more compact inside nested replies
+  - the repaired root-topic workflow still holds on the fresh client
+- Honest boundary:
+  - the UI is still not visually equal to legacy Rizzoma
+  - but the nested-thread area is materially less bloated and easier to scan than in the earlier complex-workflow passes
+
+### 2026-03-31 22:45 CET - Hard Structural Gap Audit
+- Re-read the three governing docs:
+  - `docs/BLB_LOGIC_AND_PHILOSOPHY.md`
+  - `docs/TOPIC_RENDER_UNIFICATION.md`
+  - `docs/EDITOR_TOOLBAR_PARITY.md`
+- Cross-checked those against the original codebase (`original-rizzoma/`, `original-rizzoma-src/`) and the live legacy screenshot pack.
+- Wrote `docs/RIZZOMA_HARD_GAP_LIST_260331.md`.
+- Main judgment:
+  - the remaining failures are structural mismatches, not mere polish debt
+- Immediate hard-gap priorities from that audit:
+  - remove detached title/body behavior
+  - remove the alien inline-comments nav/filter surface from the live workflow
+  - reimplement true anchored inline comments as a first-class interaction
+  - only then continue gadget-entry parity work
+
+### 2026-03-31 23:05 CET - Hard Gap Execution 1: Inline-Comments Surface Removal
+- Executed the first hard-gap item from `docs/RIZZOMA_HARD_GAP_LIST_260331.md`.
+- Code change:
+  - `src/client/components/editor/InlineComments.tsx`
+- Removed:
+  - the visible `Inline comments` navigation panel
+  - the `All / Open / Resolved` filter strip
+  - the Alt+arrow navigation path tied to that panel
+- Kept:
+  - anchored selection comment button
+  - comment form
+  - anchored inline-comment popover on highlighted ranges
+- Verification:
+  - `npm run lint:branch-context`
+  - stale `:4198` reruns were rejected as untrustworthy
+  - forced a fresh Vite client, which came up on `http://127.0.0.1:4199`
+  - trusted rerun:
+    - `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow-pass23 http://127.0.0.1:4199`
+- Trusted artifacts:
+  - `screenshots/260331-complex-workflow-pass23/08-topic-edit-mode.png`
+  - `screenshots/260331-complex-workflow-pass23/09-gadget-palette-open.png`
+  - `screenshots/260331-complex-workflow-pass23/10-poll-inserted.png`
+  - `screenshots/260331-complex-workflow-pass23/11-done-mode-after-poll.png`
+- Accepted result:
+  - the non-Rizzoma inline-comments panel is gone from the live workflow surface
+  - next hard-gap step is true inline-comment behavior restoration, not more generic polish
+
+### 2026-03-31 23:22 CET - Hard Gap Execution 2: Anchored Inline-Comment Path Restored
+- Removed the remaining annotation-style inline-comment UI from the live blip/topic surfaces.
+- Code changes:
+  - `src/client/components/blip/RizzomaBlip.tsx`
+  - `src/client/components/editor/BlipEditor.tsx`
+  - `src/client/components/editor/extensions/BlipThreadNode.tsx`
+  - `scripts/capture_live_inline_comment_flow.cjs`
+- Behavior change:
+  - `Ctrl+Enter` remains the only live inline-comment creation path
+  - it inserts a `[+]` marker into the parent content
+  - clicking `[+]` now navigates into the anchored subblip URL instead of invoking the old competing annotation surface
+- Trusted verification on fresh `http://127.0.0.1:4200`:
+  - `node scripts/capture_live_inline_comment_flow.cjs screenshots/260331-inline-comment-audit-pass3 http://127.0.0.1:4200`
+  - `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow-pass24 http://127.0.0.1:4200`
+- Accepted evidence:
+  - `urlBeforeMarkerClick = http://127.0.0.1:4200/#/topic/9012be97aa78eaa471f308772c0d9a2e?layout=rizzoma`
+  - `urlAfterMarkerClick = http://127.0.0.1:4200/#/topic/9012be97aa78eaa471f308772c0d9a2e/b1774992126622/`
+- Honest boundary:
+  - the resulting subblip page is still visually too weak
+  - but the inline-comment interaction is back on the documented anchored-blip path instead of the wrong annotation product
+
+### 2026-04-01 00:20 CET - Hard Gap Execution 3: Anchored Inline-Comment Round Trip Restored
+- Restored the full anchored inline-comment route cycle on a fresh client.
+- Code changes:
+  - `src/client/components/RizzomaTopicDetail.tsx`
+  - `scripts/capture_live_inline_comment_flow.cjs`
+- Accepted verification on fresh `http://127.0.0.1:4201`:
+  - `node scripts/capture_live_inline_comment_flow.cjs screenshots/260401-inline-comment-audit-pass25 http://127.0.0.1:4201`
+- Accepted evidence from `screenshots/260401-inline-comment-audit-pass25/summary.json`:
+  - `urlBeforeMarkerClick = http://127.0.0.1:4201/#/topic/9012be97aa78eaa471f308772c0ee3ef`
+  - `urlAfterMarkerClick = http://127.0.0.1:4201/#/topic/9012be97aa78eaa471f308772c0ee3ef/b1774995568049/`
+  - the post-`Hide` parent topic keeps the marker, and marker click reopens the subblip route
+- Honest boundary:
+  - after `Hide`, the parent topic currently returns in topic edit mode with the marker preserved in the editor DOM (`afterHideState.editMarkerCount = 1`)
+  - this is now structurally working, but still not legacy-quality presentation
+
+### 2026-04-01 00:55 CET - Hard Gap Execution 4: Parent Return Cleanup Accepted
+- Cleaned up the anchored inline-comment parent return on a fresh current-code client.
+- Code changes:
+  - `src/client/components/RizzomaTopicDetail.tsx`
+  - `scripts/capture_live_inline_comment_flow.cjs`
+- Accepted verification on fresh `http://127.0.0.1:4202`:
+  - `node scripts/capture_live_inline_comment_flow.cjs screenshots/260401-inline-comment-audit-pass40 http://127.0.0.1:4202`
+- Accepted evidence from `screenshots/260401-inline-comment-audit-pass40/summary.json`:
+  - `afterHideState.hasTopicContentView = true`
+  - `afterHideState.hasTopicContentEdit = false`
+  - `afterHideState.markerCount = 1`
+  - `afterHideState.topicToolbarButtons = ["Edit", "💬", "🔗", "⚙️"]`
+  - `urlAfterMarkerClick = http://127.0.0.1:4202/#/topic/9012be97aa78eaa471f308772c0fc8c8/b1774997495454/`
+- Honest boundary:
+  - the parent topic now returns correctly in read mode after `Hide`
+  - the remaining hard gap is the weak visual treatment of the subblip route itself, not the parent-return shell
+
+### 2026-04-01 22:55 CET - Hard Gap Execution 5: Typed Subblip Round Trip Accepted
+- Reverified the focused anchored inline-comment path on a fresh current-code client with the audit itself hardened to type into the real editable subblip surface before `Done`.
+- Code changes:
+  - `src/client/components/blip/RizzomaBlip.tsx`
+  - `scripts/capture_live_inline_comment_flow.cjs`
+- Accepted verification on fresh `http://127.0.0.1:4203`:
+  - `node scripts/capture_live_inline_comment_flow.cjs screenshots/260401-inline-comment-audit-pass44 http://127.0.0.1:4203`
+- Accepted evidence from `screenshots/260401-inline-comment-audit-pass44/summary.json`:
+  - `subblipEditorVisible = false`
+  - `subblipReadVisible = true`
+  - `subblipBodyHtml = "<p>Inline subblip body created from Ctrl+Enter.</p>"`
+  - `parentReturnedInEditMode = false`
+  - `afterHideState.markerCount = 1`
+- Honest boundary:
+  - the anchored round trip now holds with real typed content
+  - the remaining hard gap is primarily the weak visual treatment of the subblip page compared with original Rizzoma
 
 ### Operations, automation, and backups
 - [ ] Implement Google Drive bundle automation in `scripts/deploy-updates.sh`; schedule post-merge bundle + copy commands and document cadence.

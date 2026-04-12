@@ -1,15 +1,17 @@
 /* RightToolsPanel - Minimal like real Rizzoma */
 
 .right-tools-panel {
-  width: 80px;
-  min-width: 80px;
-  background: #F5F5F5;
+  width: 104px;
+  min-width: 104px;
+  background:
+    linear-gradient(180deg, rgba(246, 249, 253, 0.98), rgba(234, 240, 247, 0.96));
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 8px;
+  padding: 14px 10px;
   gap: 16px;
-  border-left: 1px solid #DDD;
+  border-left: 1px solid rgba(136, 154, 176, 0.18);
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.76);
 }
 
 /* User Avatar Section */
@@ -26,11 +28,11 @@
   height: 56px;
   border-radius: 50%;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #5fa8ff 0%, #3c7ed4 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 14px 24px rgba(60, 126, 212, 0.22);
   border: 2px solid #fff;
 }
 
@@ -53,7 +55,7 @@
 
 .user-name {
   font-size: 10px;
-  color: #555;
+  color: #5e7389;
   text-align: center;
   max-width: 70px;
   overflow: hidden;
@@ -69,14 +71,15 @@
   align-items: center;
   gap: 4px;
   padding: 12px 8px;
-  background: #E8E8E8;
-  border: 1px solid #CCC;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(170, 186, 204, 0.4);
+  border-radius: 16px;
   cursor: pointer;
   font-size: 11px;
-  color: #666;
+  color: #50657d;
   width: 100%;
   transition: all 0.2s;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
 }
 
 .next-button:hover:not(:disabled) {
@@ -90,8 +93,8 @@
 }
 
 .next-button.has-unread {
-  background: #89E340;
-  border-color: #7AD030;
+  background: linear-gradient(180deg, #8adf42, #73c930);
+  border-color: #73c930;
   color: white;
 }
 
@@ -120,6 +123,7 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
+  padding-top: 4px;
 }
 
 .view-btn {
@@ -130,21 +134,21 @@
   padding: 8px 4px;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 14px;
   cursor: pointer;
   font-size: 10px;
-  color: #666;
+  color: #61778e;
   transition: all 0.2s;
 }
 
 .view-btn:hover {
-  background: #E8E8E8;
+  background: rgba(255, 255, 255, 0.76);
 }
 
 .view-btn.active {
-  background: #E0E0E0;
-  border-color: #CCC;
-  color: #333;
+  background: rgba(93, 171, 247, 0.14);
+  border-color: rgba(93, 171, 247, 0.28);
+  color: #264867;
 }
 
 .view-icon {
@@ -167,14 +171,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  background: #E8E8E8;
-  border: 1px solid #CCC;
-  border-radius: 3px;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(170, 186, 204, 0.36);
+  border-radius: 10px;
   cursor: pointer;
   font-size: 10px;
-  color: #666;
+  color: #5d738a;
   transition: all 0.15s;
 }
 
@@ -199,22 +203,22 @@
   padding: 4px 6px;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 3px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 10px;
-  color: #666;
+  color: #61778e;
   text-align: center;
   transition: all 0.15s;
 }
 
 .display-btn:hover {
-  background: #E8E8E8;
+  background: rgba(255, 255, 255, 0.76);
 }
 
 .display-btn.active {
-  background: #E0E0E0;
-  border-color: #CCC;
-  color: #333;
+  background: rgba(93, 171, 247, 0.14);
+  border-color: rgba(93, 171, 247, 0.28);
+  color: #264867;
 }
 
 /* Insert shortcuts */
@@ -223,9 +227,31 @@
   flex-direction: column;
   gap: 6px;
   width: 100%;
-  padding-top: 8px;
-  border-top: 1px solid #DDD;
+  padding-top: 10px;
+  border-top: 1px solid rgba(170, 186, 204, 0.28);
   margin-top: 8px;
+}
+
+.insert-shortcuts-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0 2px 4px;
+}
+
+.insert-shortcuts-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #50657d;
+}
+
+.insert-shortcuts-subtitle {
+  font-size: 9px;
+  color: #7f92a5;
+  text-align: center;
 }
 
 .insert-btn {
@@ -234,9 +260,9 @@
   justify-content: center;
   width: 100%;
   padding: 8px 4px;
-  background: rgb(120, 188, 255);
+  background: linear-gradient(180deg, #79bcff, #589fe7);
   border: none;
-  border-radius: 3px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 14px;
   color: #fff;
@@ -258,12 +284,27 @@
 }
 
 .insert-btn.gadget-btn {
+  gap: 6px;
+  min-height: 44px;
   font-size: 10px;
-  padding: 8px 4px;
+  padding: 10px 8px;
+  background: linear-gradient(180deg, #3976c8, #25589f);
+  box-shadow: 0 12px 22px rgba(37, 88, 159, 0.28);
+}
+
+.insert-btn.gadget-btn:hover {
+  background: linear-gradient(180deg, #427dcf, #2d5ea5);
+}
+
+.gadget-insert-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .insert-label {
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 /* Mobile: Hide on small screens */

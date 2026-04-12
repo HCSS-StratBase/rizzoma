@@ -1,9 +1,12 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
+Last refreshed: 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
+
 Branch context guardrails:
-- Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
-- `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-02-03; refresh if more changes land.
+- Active branch: `master` (as of 2026-02-25). Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
+- `docs/HANDOFF.md` now reflects `master` as of 2026-02-25; refresh if more changes land.
 - Re-read checkpoint: 2026-02-04 01:55 local — BLB child unread highlight removed (green [+] only) and BLB snapshots refreshed (`snapshots/blb/1770165748162-*`); drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
+- 2026-03-29 reality check: Docker Desktop WSL integration is required again for local live verification, and the current backend stack needs the `src/server/app.ts` fallback route fix (`'/{*path}'`) to boot cleanly.
 
 Private repo note:
 - Direct work on `master` is allowed for this private/solo repo.
@@ -21,14 +24,16 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Run "git checkout feature/rizzoma-core-features" immediately - that is the currently active branch we're working in.
+    - Run "git checkout master" immediately - that is the currently active branch we're working in.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
   Step 0.2:
     - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`). Ensure `http://localhost:3000/` is reachable before Playwright.
+    - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus:
+  0) Build on the registry-backed gadget baseline: the trusted embed adapter/node path is accepted for `YouTube`, `Sheet`, `iFrame`, and `Image`; the cleaned app-frame runtime path is accepted for Planner, Focus, and Kanban; the Store controls real preview-app install/remove state for the gadget picker on the clean `:4196` client; that lifecycle persists through the authenticated `/api/gadgets/preferences` path; and fresh-login lifecycle verification now passes with explicit `schemaVersion`, `scope: user`, defaults, and reset behavior. Next move is to use that stable runtime/store baseline to keep pushing BLB/live parity work.
   1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; move beyond `perfRender=lite` and reduce full-render TTF/memory. Lite-mode perf harness now passes (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB) but full render still needs work.
   2) BLB parity: enforce single-container topic pane (title as first line of the meta-blip body), inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity (toolbar only for expanded blips), unread green markers, and update BLB snapshots. Latest set: `snapshots/blb/1770165748162-*` (2026-02-04).
   3) Toolbar parity: `test:toolbar-inline` now asserts the read toolbar (expanded via collapsed rows). Keep the read toolbar present and smokes green.
@@ -43,6 +48,106 @@ codex exec '
 
   Stop after this batch, refresh RESTORE_POINT.md to mark completions and the new checkpoint timestamp, and rewrite the Codex exec block in AGENTS.md (plus this mirror snippet if it changed) with the next batch's starting steps before exiting to bash.'
 ```
+
+Latest screenshot/parity archive (2026-02-25):
+- `screenshots/260225/INDEX.md`
+- `screenshots/260225/TODAY_RUN_EXHAUSTIVE_ANALYSIS_260225.md`
+- `screenshots/260225/COMPARISON_EXHAUSTIVE_260225.md`
+- `screenshots/260225/ui-exhaustive-1771981300160/` (175 screenshots + 175 per-screenshot notes)
+- `docs/UI_ELEMENTS_EXHAUSTIVE.md`
+
+Latest live verification artifacts:
+- `screenshots/260329-live/topic-c7febb62dc333aa08f4a50aea8004efc.png`
+- `screenshots/260329-live/blb-study-expanded.png`
+- `screenshots/260329-live/blb-study-topic-root.png`
+- `screenshots/260330-poll-fix/test-editor-poll-4174.png`
+- `screenshots/260330-poll-fix/test-editor-poll-4174.html`
+- `screenshots/260330-live-ui/blb-topic-v5.png`
+- `screenshots/260330-live-ui/blb-topic-v5.html`
+- `screenshots/260330-live-poll/live-topic-poll-v15.png`
+- `screenshots/260330-live-poll/live-topic-poll-v15.html`
+- `screenshots/260330-live-poll/live-topic-palette-v8.png`
+- `screenshots/260330-live-poll/live-topic-palette-v8.html`
+- `screenshots/260330-embed-adapters/live-topic-youtube-v4.png`
+- `screenshots/260330-embed-adapters/live-topic-youtube-v4.html`
+- `screenshots/260330-embed-adapters/live-topic-youtube-error-v4.png`
+- `screenshots/260330-embed-adapters/live-topic-youtube-error-v4.html`
+- `screenshots/260330-embed-adapters/live-topic-sheet-v1.png`
+- `screenshots/260330-embed-adapters/live-topic-sheet-v1.html`
+- `screenshots/260330-embed-adapters/live-topic-iframe-v1.png`
+- `screenshots/260330-embed-adapters/live-topic-iframe-v1.html`
+- `screenshots/260330-embed-adapters/live-topic-image-v1.png`
+- `screenshots/260330-embed-adapters/live-topic-image-v1.html`
+- `screenshots/260330-app-runtime/live-store-panel-v2.png`
+- `screenshots/260330-app-runtime/live-store-panel-v2.html`
+- `screenshots/260330-app-runtime/live-topic-kanban-v3.png`
+- `screenshots/260330-app-runtime/live-topic-kanban-v3.html`
+- `screenshots/260330-app-runtime/live-topic-planner-debug-after-done.png`
+- `screenshots/260330-app-runtime/live-topic-planner-debug-after-done.html`
+- `screenshots/260330-app-runtime/live-topic-planner-debug-saved-topic.json`
+- `screenshots/260330-app-runtime/live-topic-planner-debug-mutation-traffic.json`
+- `screenshots/260330-app-runtime/topic-patch-log.ndjson`
+- `screenshots/260330-app-runtime/runtime-harness-planner-v1.png`
+- `screenshots/260330-app-runtime/runtime-harness-planner-v1.html`
+- `screenshots/260330-app-runtime/runtime-harness-focus-v1.png`
+- `screenshots/260330-app-runtime/runtime-harness-focus-v1.html`
+
+Latest accepted UI baseline (2026-03-30):
+- Trust the clean feature-flagged Vite client at `http://127.0.0.1:4175` for the most recent UI work. Earlier long-lived `:3000` / `:4174` processes were stale during part of the visual pass.
+- Accepted live-shell artifact: `screenshots/260330-live-ui/blb-topic-v5.png`
+- Accepted isolated gadget artifact: `screenshots/260330-poll-fix/test-editor-poll-4174-v4.png`
+- Accepted fresh authenticated live gadget artifact: `screenshots/260330-live-poll/live-topic-poll-v15.png`
+- Accepted registry-backed live picker artifact: `screenshots/260330-live-poll/live-topic-palette-v8.png`
+- For the final live gadget verification, use the fresh feature-flagged client at `http://127.0.0.1:4176`.
+- Accepted trusted-embed artifact: `screenshots/260330-embed-adapters/live-topic-youtube-v4.png`
+- Accepted trusted-embed error-state artifact: `screenshots/260330-embed-adapters/live-topic-youtube-error-v4.png`
+- Accepted trusted-embed expansion artifacts:
+  - `screenshots/260330-embed-adapters/live-topic-sheet-v1.png`
+  - `screenshots/260330-embed-adapters/live-topic-iframe-v1.png`
+  - `screenshots/260330-embed-adapters/live-topic-image-v1.png`
+- For the trusted-embed verification pass, use the fresh feature-flagged client at `http://127.0.0.1:4180`.
+- Accepted app-runtime/store artifact: `screenshots/260330-app-runtime/live-store-panel-v2.png`
+- For Store/runtime verification, use the forced fresh client at `http://127.0.0.1:4181`.
+- Accepted in-topic sandboxed app artifact: `screenshots/260330-app-runtime/live-topic-kanban-v3.png`
+- For topic-app verification, use the forced fresh client at `http://127.0.0.1:4182`.
+- Accepted planner-persistence artifact: `screenshots/260330-app-runtime/live-topic-planner-debug-after-done.png`
+- For the planner persistence verification, use the fresh feature-flagged client at `http://127.0.0.1:4192`; earlier `:4191` output was stale and still showed the pre-fix overwrite behavior.
+- Accepted shared-runtime harness artifacts:
+  - `screenshots/260330-app-runtime/runtime-harness-planner-v1.png`
+  - `screenshots/260330-app-runtime/runtime-harness-focus-v1.png`
+- For the generalized shell verification, use `http://localhost:3001/test-app-runtime.html` with `scripts/capture_live_topic_app.cjs` in harness mode; the local authenticated topic-app path was unstable during this sub-batch and still needs a cleanup pass before it can be treated as the fresh source of truth again.
+- Latest accepted BLB topic-root parity pass (2026-03-31):
+  - Accepted artifact: `screenshots/260331-blb-parity/blb-probe-v1.png`
+  - Source of truth: clean feature-flagged client at `http://127.0.0.1:4196`
+  - Verifier: `node scripts/capture_blb_probe.cjs http://127.0.0.1:4196 screenshots/260331-blb-parity`
+  - This probe now seeds a denser BLB-style topic root with nested lists and inline thread markers, so it is a better shell-density comparison than the earlier sparse probe.
+- Latest accepted BLB inline-thread parity pass (2026-03-31):
+  - Accepted artifact: `screenshots/260331-blb-inline/blb-inline-probe-v1.png`
+  - Source of truth: clean feature-flagged client at `http://127.0.0.1:4196`
+  - Verifier: `node scripts/capture_blb_probe.cjs http://127.0.0.1:4196 screenshots/260331-blb-inline inline`
+  - This probe creates a root inline child plus a nested inline child, clicks both `[+]` markers, and captures the authenticated topic shell after real threaded expansion.
+- Latest accepted BLB mixed-thread parity pass (2026-03-31):
+  - Accepted artifact: `screenshots/260331-blb-mixed/blb-mixed-probe-v1.png`
+  - Source of truth: clean feature-flagged client at `http://127.0.0.1:4196`
+  - Verifier: `node scripts/capture_blb_probe.cjs http://127.0.0.1:4196 screenshots/260331-blb-mixed mixed`
+  - This probe combines root inline-thread expansion and a separate list-thread reply with a nested child on the same live topic surface.
+- Latest accepted BLB unread-thread parity pass (2026-03-31):
+  - Accepted artifact: `screenshots/260331-blb-unread/blb-unread-probe-v1.png`
+  - Source of truth: clean feature-flagged client at `http://127.0.0.1:4196`
+  - Verifier: `node scripts/capture_blb_probe.cjs http://127.0.0.1:4196 screenshots/260331-blb-unread unread`
+  - This probe uses the real read-state route to create a believable mix of green unread markers, gray read markers, an active inline-expanded unread thread with toolbar, and a collapsed list-thread row that stays unread because of a nested child.
+- Latest accepted BLB toolbar-state parity pass (2026-03-31):
+  - Accepted artifact: `screenshots/260331-blb-toolbar/blb-toolbar-probe-v1.png`
+  - Source of truth: clean feature-flagged client at `http://127.0.0.1:4196`
+  - Verifier: `node scripts/capture_blb_probe.cjs http://127.0.0.1:4196 screenshots/260331-blb-toolbar toolbar`
+  - This probe proves the expanded-vs-collapsed toolbar contract in the same live topic surface after hardening collapsed-row expansion in `src/client/components/blip/RizzomaBlip.tsx` and flattening `src/client/components/blip/BlipMenu.css` toward the legacy toolbar strip.
+- Latest accepted dense live BLB scenario baseline (2026-03-31):
+  - Accepted artifact: `screenshots/260331-blb-live-scenario/blb-live-scenario-v2.png`
+  - Source of truth: clean feature-flagged client at `http://127.0.0.1:4196`
+  - Verifier: `node scripts/capture_blb_live_scenario.cjs http://127.0.0.1:4196 screenshots/260331-blb-live-scenario`
+  - This is the current richer authenticated BLB baseline for parity work: a plausible business-topic shell with mixed inline/list unread states, two expanded list replies, and a collapsed unread comparison reply in one accepted live capture.
+  - DOM-state acceptance condition from the verifier: `expandedReplyCount = 2`, `visibleToolbarCount = 1`, `primaryExpandedIsActive = true`.
+  - Follow-up note: after centralizing non-root blip activation through a shared active-blip path in `src/client/components/blip/RizzomaBlip.tsx`, the accepted single-toolbar probe still passes, but the richer multi-reply live scenario remains open and needs a fresh accepted closeout before this denser case can be treated as settled again.
 
 Codex exec (restart codex):
 ```
@@ -98,6 +203,55 @@ codex exec '
 - Typecheck: `npm run typecheck`
 - Tests: `npm test`
 - Build: `npm run build`
+- Planner runtime sanity (accepted 2026-03-30 on `master`):
+  - `node scripts/probe_live_planner_iframe.cjs http://127.0.0.1:4193`
+  - `node scripts/capture_live_topic_app.cjs screenshots/260330-app-runtime/live-topic-planner-vfinal.png screenshots/260330-app-runtime/live-topic-planner-vfinal.html http://127.0.0.1:4193 Planner`
+- BLB dense live toolbar-focus sanity (accepted 2026-03-31 on `master`):
+  - `node scripts/capture_blb_live_scenario.cjs http://127.0.0.1:4197 screenshots/260331-blb-live-scenario`
+  - accepted artifact: `screenshots/260331-blb-live-scenario/blb-live-scenario-v3.{png,html}` (naturalized business-thread copy + uneven unread grandchild mix + single-toolbar contract)
+- BLB dense live mobile sanity (accepted 2026-03-31 on `master`):
+  - `node scripts/capture_blb_live_scenario_mobile.cjs http://127.0.0.1:4197 screenshots/260331-blb-live-scenario-mobile`
+  - accepted artifact: `screenshots/260331-blb-live-scenario-mobile/blb-live-scenario-mobile-v1.{png,html}` (same dense live scenario, tightened narrow-screen toolbar/header footprint, single-toolbar contract preserved)
+- BLB dense live perf sanity (baseline added 2026-03-31 on `master`):
+  - `node scripts/capture_blb_live_scenario.cjs http://127.0.0.1:4197 screenshots/260331-blb-live-scenario`
+  - metrics artifact: `screenshots/260331-blb-live-scenario/blb-live-scenario-v3.metrics.json`
+  - current accepted baseline after state-based waits:
+    - `initialLoadMs = 290`
+    - `inlineExpandMs = 308`
+    - `inlineActivateMs = 280`
+    - `primaryExpandMs = 19`
+    - `secondaryExpandMs = 25`
+    - `primaryActivateMs = 44`
+    - `totalScenarioMs = 5276`
+  - current accepted widened state:
+    - `expandedReplyCount = 2`
+    - `visibleToolbarCount = 1`
+    - `collapsedUnreadHasUnreadIcon = true`
+    - `collapsedReadVisible = true`
+    - `domBlipCount = 6`
+  - current accepted less-uniform timing snapshot:
+    - `initialLoadMs = 348`
+    - `inlineExpandMs = 416`
+    - `inlineActivateMs = 246`
+    - `primaryExpandMs = 81`
+    - `secondaryExpandMs = 120`
+    - `primaryActivateMs = 42`
+    - `totalScenarioMs = 5227`
+  - current accepted messier top-level state:
+    - `expandedReplyCount = 2`
+    - `visibleToolbarCount = 1`
+    - `midCollapsedVisible = true`
+    - `collapsedUnreadHasUnreadIcon = true`
+    - `collapsedReadVisible = true`
+    - `domBlipCount = 7`
+  - current accepted messier timing snapshot:
+    - `initialLoadMs = 410`
+    - `inlineExpandMs = 360`
+    - `inlineActivateMs = 425`
+    - `primaryExpandMs = 60`
+    - `secondaryExpandMs = 103`
+    - `primaryActivateMs = 43`
+    - `totalScenarioMs = 5432`
 - Perf harness (optional large-wave sanity): `npm run perf:harness` (seeds a 5k-blip wave and captures time-to-first-render metrics/screenshots under `snapshots/perf/`); log metrics/budgets when you run it.
   - Recent runs: 200-blip PASS (TTF 2173.8ms, FCP 260ms, 101/200 rendered); 1000-blip PASS (2026-02-02) with `perfRender=lite` + `perfLimit=1000` + `x-rizzoma-perf=1` (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB, 1000/1000 rendered; windowed 200 ~2.6–2.9s). Check budgets via `scripts/perf-budget.mjs`.
 
@@ -110,3 +264,119 @@ codex exec '
 - Script: `scripts/backup-bundle.sh` (runs bundle + PowerShell copy; honors `RIZZOMA_BUNDLE_PATH` + `RIZZOMA_GDRIVE_DIR` overrides).
 - Bundle (manual): `git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all`
 - Copy: see commands in `docs/HANDOFF.md` (last run 2026-02-03).
+
+Current BLB dense-live caveat (2026-03-31)
+- `screenshots/260331-blb-live-scenario/blb-live-scenario-v3.{png,html}` now reflects the corrected topic/meta-blip structure on `master` plus restored single-toolbar ownership on a fresh client.
+- Latest accepted run: `node scripts/capture_blb_live_scenario.cjs http://127.0.0.1:4198 screenshots/260331-blb-live-scenario`
+- Accepted state:
+  - `expandedReplyCount = 3`
+  - `visibleToolbarCount = 1`
+  - `primaryExpandedIsActive = true`
+  - `mainThreadExpandedVisible = true`
+  - `primaryExpandedVisible = true`
+  - `secondaryExpandedVisible = true`
+  - `midCollapsedVisible = true`
+  - `collapsedUnreadVisible = true`
+  - `collapsedReadVisible = true`
+  - `rootFollowUpVisible = true`
+
+Current live workflow sanity note (2026-03-31)
+- `node scripts/explore_live_blip_workflow.cjs screenshots/260331-workflow-exploration/workflow-v1.png screenshots/260331-workflow-exploration/workflow-v1.html screenshots/260331-workflow-exploration/workflow-v1.json http://127.0.0.1:4198`
+- This validates the ordinary live path on `master`:
+  - root reply create
+  - root reply expand
+  - nested reply form open
+  - nested reply submit
+  - topic edit mode enter
+  - gadget palette open
+
+Current complex workflow audit note (2026-03-31)
+- `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow http://127.0.0.1:4198`
+- This generates the larger step-by-step live workflow pack under `screenshots/260331-complex-workflow/` and the comparison write-up in `screenshots/260331-complex-workflow/ANALYSIS.md`.
+- Current judgment from that audit:
+  - the real workflow still runs
+  - the modern UI is still materially worse than the original Rizzoma screenshots in hierarchy, nesting readability, toolbar salience, and gadget-entry anchoring
+
+Current complex workflow repair note (2026-03-31)
+- `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow-pass14 http://127.0.0.1:4197`
+- This is the fresh rebuilt acceptance pack for the same workflow after the repair pass.
+- Accepted correction:
+  - topic edit mode now keeps the root topic body
+  - gadget insertion no longer wipes the topic body
+  - done mode persists both the poll and the original topic text
+- Use this pack, not the older `screenshots/260331-complex-workflow/` audit, as the current truth for whether the root topic editing flow is fundamentally broken.
+
+Current complex workflow polish note (2026-03-31)
+- `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow-pass15 http://127.0.0.1:4197`
+- This is the latest accepted visual polish pack for the repaired workflow.
+- Use it to judge the current edit-band/tool-flyout quality after the root-topic fix.
+
+Current complex workflow nested-readability note (2026-03-31)
+- `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow-pass19 http://127.0.0.1:4198`
+- This is the latest accepted pack after tightening nested-thread density, demoting the inline-comments warning, and compacting the poll gadget inside replies.
+- Use it, not `pass15`, as the current truth for the live nested-reply readability state after the root-topic fix.
+
+Current hard structural gap note (2026-03-31)
+- Re-read and use:
+  - `docs/RIZZOMA_HARD_GAP_LIST_260331.md`
+- Treat that file as the governing next-step document for this area.
+- Do not accept more “polish” work here unless it directly resolves one of the hard gaps:
+  - title/body unity
+  - true inline comments
+  - removal of the alien inline-comments nav/filter surface
+  - deterministic active-blip edit behavior
+
+Current hard-gap execution note (2026-03-31)
+- `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow-pass23 http://127.0.0.1:4199`
+- Use `pass23`, not the earlier `pass19` / `pass21` captures, to judge whether the alien inline-comments surface still pollutes the workflow.
+- Accepted correction in `pass23`:
+  - the `Inline comments / All / Open / Resolved` panel is gone from the actual live workflow surface
+- Next required hard-gap step:
+  - restore true anchored inline-comment behavior rather than only removing the wrong UI
+
+Current anchored inline-comment note (2026-03-31)
+- `node scripts/capture_live_inline_comment_flow.cjs screenshots/260331-inline-comment-audit-pass3 http://127.0.0.1:4200`
+- Use `pass3` as the current truth for the focused inline-comment path.
+- Accepted result:
+  - `Ctrl+Enter` inserts the anchored `[+]` marker
+  - `Done` preserves it in topic view
+  - clicking `[+]` changes the URL into the subblip path
+- Matching broad workflow regression check:
+  - `node scripts/capture_complex_live_workflow.cjs screenshots/260331-complex-workflow-pass24 http://127.0.0.1:4200`
+- Honest boundary:
+  - the subblip view reached by the marker is still visually too weak and remains active hard-gap territory
+
+Current inline-comment round-trip note (2026-04-01)
+- `node scripts/capture_live_inline_comment_flow.cjs screenshots/260401-inline-comment-audit-pass25 http://127.0.0.1:4201`
+- Use `pass25` as the current truth for the focused inline-comment route cycle.
+- Accepted result:
+  - anchored marker creation works
+  - subblip route opens directly
+  - `Done` reaches subblip read mode
+  - `Hide` returns to the parent topic with the marker still present
+  - clicking the parent marker reopens the subblip route
+- Honest boundary:
+  - after `Hide`, the parent topic currently returns in topic edit mode with the marker preserved in the editor DOM
+  - the next hard-gap step is to make that parent-return presentation feel like real Rizzoma, not just structurally correct
+
+Current inline-comment parent-return note (2026-04-01)
+- `node scripts/capture_live_inline_comment_flow.cjs screenshots/260401-inline-comment-audit-pass40 http://127.0.0.1:4202`
+- Use `pass40` as the current truth for the focused inline-comment route cycle.
+- Accepted result:
+  - the parent topic now returns in read mode after `Hide`
+  - the parent toolbar shows `Edit`
+  - one anchored `[+]` marker remains visible in topic view
+  - clicking the marker reopens the subblip route
+- Honest boundary:
+  - the remaining hard-gap work is the subblip page presentation itself, not the parent-return mode
+
+Current inline-comment typed-round-trip note (2026-04-01)
+- `node scripts/capture_live_inline_comment_flow.cjs screenshots/260401-inline-comment-audit-pass44 http://127.0.0.1:4203`
+- Use `pass44` as the current truth for the focused inline-comment route cycle.
+- Accepted result:
+  - typed subblip content survives into subblip read mode after `Done`
+  - `Hide` returns to the parent topic in read mode
+  - one anchored `[+]` marker remains visible in topic view
+  - clicking that marker reopens the subblip route
+- Honest boundary:
+  - the remaining hard-gap work is the visual quality of the subblip page itself, not the core route cycle

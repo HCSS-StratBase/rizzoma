@@ -1,0 +1,117 @@
+# Exhaustive UI Screenshot Summary
+
+- Generated: 2026-02-25T01:00:40.616Z
+- Base URL: http://localhost:3000
+- Wave ID used: c7febb62dc333aa08f4a50aea80047a4
+- Profiles: desktop, tablet, mobile
+- Total screenshots: 105
+- PASS: 0
+- PARTIAL: 105
+- FAIL: 0
+
+## Files
+- ui-desktop-0000-auth-login-1771980819549.png | desktop | auth-login | PARTIAL
+- ui-desktop-0001-nav-topics__view-text-view__density-short-1771980819549.png | desktop | nav-topics__view-text-view__density-short | PARTIAL
+- ui-desktop-0002-nav-topics__view-text-view__density-expanded-1771980819549.png | desktop | nav-topics__view-text-view__density-expanded | PARTIAL
+- ui-desktop-0003-nav-topics__view-mind-map__density-short-1771980819549.png | desktop | nav-topics__view-mind-map__density-short | PARTIAL
+- ui-desktop-0004-nav-topics__view-mind-map__density-expanded-1771980819549.png | desktop | nav-topics__view-mind-map__density-expanded | PARTIAL
+- ui-desktop-0005-nav-mentions__view-text-view__density-short-1771980819549.png | desktop | nav-mentions__view-text-view__density-short | PARTIAL
+- ui-desktop-0006-nav-mentions__view-text-view__density-expanded-1771980819549.png | desktop | nav-mentions__view-text-view__density-expanded | PARTIAL
+- ui-desktop-0007-nav-mentions__view-mind-map__density-short-1771980819549.png | desktop | nav-mentions__view-mind-map__density-short | PARTIAL
+- ui-desktop-0008-nav-mentions__view-mind-map__density-expanded-1771980819549.png | desktop | nav-mentions__view-mind-map__density-expanded | PARTIAL
+- ui-desktop-0009-nav-tasks__view-text-view__density-short-1771980819549.png | desktop | nav-tasks__view-text-view__density-short | PARTIAL
+- ui-desktop-0010-nav-tasks__view-text-view__density-expanded-1771980819549.png | desktop | nav-tasks__view-text-view__density-expanded | PARTIAL
+- ui-desktop-0011-nav-tasks__view-mind-map__density-short-1771980819549.png | desktop | nav-tasks__view-mind-map__density-short | PARTIAL
+- ui-desktop-0012-nav-tasks__view-mind-map__density-expanded-1771980819549.png | desktop | nav-tasks__view-mind-map__density-expanded | PARTIAL
+- ui-desktop-0013-nav-publics__view-text-view__density-short-1771980819549.png | desktop | nav-publics__view-text-view__density-short | PARTIAL
+- ui-desktop-0014-nav-publics__view-text-view__density-expanded-1771980819549.png | desktop | nav-publics__view-text-view__density-expanded | PARTIAL
+- ui-desktop-0015-nav-publics__view-mind-map__density-short-1771980819549.png | desktop | nav-publics__view-mind-map__density-short | PARTIAL
+- ui-desktop-0016-nav-publics__view-mind-map__density-expanded-1771980819549.png | desktop | nav-publics__view-mind-map__density-expanded | PARTIAL
+- ui-desktop-0017-nav-store__view-text-view__density-short-1771980819549.png | desktop | nav-store__view-text-view__density-short | PARTIAL
+- ui-desktop-0018-nav-store__view-text-view__density-expanded-1771980819549.png | desktop | nav-store__view-text-view__density-expanded | PARTIAL
+- ui-desktop-0019-nav-store__view-mind-map__density-short-1771980819549.png | desktop | nav-store__view-mind-map__density-short | PARTIAL
+- ui-desktop-0020-nav-store__view-mind-map__density-expanded-1771980819549.png | desktop | nav-store__view-mind-map__density-expanded | PARTIAL
+- ui-desktop-0021-nav-teams__view-text-view__density-short-1771980819549.png | desktop | nav-teams__view-text-view__density-short | PARTIAL
+- ui-desktop-0022-nav-teams__view-text-view__density-expanded-1771980819549.png | desktop | nav-teams__view-text-view__density-expanded | PARTIAL
+- ui-desktop-0023-nav-teams__view-mind-map__density-short-1771980819549.png | desktop | nav-teams__view-mind-map__density-short | PARTIAL
+- ui-desktop-0024-nav-teams__view-mind-map__density-expanded-1771980819549.png | desktop | nav-teams__view-mind-map__density-expanded | PARTIAL
+- ui-desktop-0025-nav-help__view-text-view__density-short-1771980819549.png | desktop | nav-help__view-text-view__density-short | PARTIAL
+- ui-desktop-0026-nav-help__view-text-view__density-expanded-1771980819549.png | desktop | nav-help__view-text-view__density-expanded | PARTIAL
+- ui-desktop-0027-nav-help__view-mind-map__density-short-1771980819549.png | desktop | nav-help__view-mind-map__density-short | PARTIAL
+- ui-desktop-0028-nav-help__view-mind-map__density-expanded-1771980819549.png | desktop | nav-help__view-mind-map__density-expanded | PARTIAL
+- ui-desktop-0029-editor-view-root-1771980819549.png | desktop | editor-view-root | PARTIAL
+- ui-desktop-0030-editor-edit-mode-1771980819549.png | desktop | editor-edit-mode | PARTIAL
+- ui-desktop-0031-editor-reply-focus-1771980819549.png | desktop | editor-reply-focus | PARTIAL
+- ui-desktop-0032-dialog-invite-attempt-1771980819549.png | desktop | dialog-invite-attempt | PARTIAL
+- ui-desktop-0033-dialog-share-attempt-1771980819549.png | desktop | dialog-share-attempt | PARTIAL
+- ui-desktop-0034-auth-signed-in-shell-1771980819549.png | desktop | auth-signed-in-shell | PARTIAL
+- ui-tablet-0035-auth-login-1771980819549.png | tablet | auth-login | PARTIAL
+- ui-tablet-0036-nav-topics__view-text-view__density-short-1771980819549.png | tablet | nav-topics__view-text-view__density-short | PARTIAL
+- ui-tablet-0037-nav-topics__view-text-view__density-expanded-1771980819549.png | tablet | nav-topics__view-text-view__density-expanded | PARTIAL
+- ui-tablet-0038-nav-topics__view-mind-map__density-short-1771980819549.png | tablet | nav-topics__view-mind-map__density-short | PARTIAL
+- ui-tablet-0039-nav-topics__view-mind-map__density-expanded-1771980819549.png | tablet | nav-topics__view-mind-map__density-expanded | PARTIAL
+- ui-tablet-0040-nav-mentions__view-text-view__density-short-1771980819549.png | tablet | nav-mentions__view-text-view__density-short | PARTIAL
+- ui-tablet-0041-nav-mentions__view-text-view__density-expanded-1771980819549.png | tablet | nav-mentions__view-text-view__density-expanded | PARTIAL
+- ui-tablet-0042-nav-mentions__view-mind-map__density-short-1771980819549.png | tablet | nav-mentions__view-mind-map__density-short | PARTIAL
+- ui-tablet-0043-nav-mentions__view-mind-map__density-expanded-1771980819549.png | tablet | nav-mentions__view-mind-map__density-expanded | PARTIAL
+- ui-tablet-0044-nav-tasks__view-text-view__density-short-1771980819549.png | tablet | nav-tasks__view-text-view__density-short | PARTIAL
+- ui-tablet-0045-nav-tasks__view-text-view__density-expanded-1771980819549.png | tablet | nav-tasks__view-text-view__density-expanded | PARTIAL
+- ui-tablet-0046-nav-tasks__view-mind-map__density-short-1771980819549.png | tablet | nav-tasks__view-mind-map__density-short | PARTIAL
+- ui-tablet-0047-nav-tasks__view-mind-map__density-expanded-1771980819549.png | tablet | nav-tasks__view-mind-map__density-expanded | PARTIAL
+- ui-tablet-0048-nav-publics__view-text-view__density-short-1771980819549.png | tablet | nav-publics__view-text-view__density-short | PARTIAL
+- ui-tablet-0049-nav-publics__view-text-view__density-expanded-1771980819549.png | tablet | nav-publics__view-text-view__density-expanded | PARTIAL
+- ui-tablet-0050-nav-publics__view-mind-map__density-short-1771980819549.png | tablet | nav-publics__view-mind-map__density-short | PARTIAL
+- ui-tablet-0051-nav-publics__view-mind-map__density-expanded-1771980819549.png | tablet | nav-publics__view-mind-map__density-expanded | PARTIAL
+- ui-tablet-0052-nav-store__view-text-view__density-short-1771980819549.png | tablet | nav-store__view-text-view__density-short | PARTIAL
+- ui-tablet-0053-nav-store__view-text-view__density-expanded-1771980819549.png | tablet | nav-store__view-text-view__density-expanded | PARTIAL
+- ui-tablet-0054-nav-store__view-mind-map__density-short-1771980819549.png | tablet | nav-store__view-mind-map__density-short | PARTIAL
+- ui-tablet-0055-nav-store__view-mind-map__density-expanded-1771980819549.png | tablet | nav-store__view-mind-map__density-expanded | PARTIAL
+- ui-tablet-0056-nav-teams__view-text-view__density-short-1771980819549.png | tablet | nav-teams__view-text-view__density-short | PARTIAL
+- ui-tablet-0057-nav-teams__view-text-view__density-expanded-1771980819549.png | tablet | nav-teams__view-text-view__density-expanded | PARTIAL
+- ui-tablet-0058-nav-teams__view-mind-map__density-short-1771980819549.png | tablet | nav-teams__view-mind-map__density-short | PARTIAL
+- ui-tablet-0059-nav-teams__view-mind-map__density-expanded-1771980819549.png | tablet | nav-teams__view-mind-map__density-expanded | PARTIAL
+- ui-tablet-0060-nav-help__view-text-view__density-short-1771980819549.png | tablet | nav-help__view-text-view__density-short | PARTIAL
+- ui-tablet-0061-nav-help__view-text-view__density-expanded-1771980819549.png | tablet | nav-help__view-text-view__density-expanded | PARTIAL
+- ui-tablet-0062-nav-help__view-mind-map__density-short-1771980819549.png | tablet | nav-help__view-mind-map__density-short | PARTIAL
+- ui-tablet-0063-nav-help__view-mind-map__density-expanded-1771980819549.png | tablet | nav-help__view-mind-map__density-expanded | PARTIAL
+- ui-tablet-0064-editor-view-root-1771980819549.png | tablet | editor-view-root | PARTIAL
+- ui-tablet-0065-editor-edit-mode-1771980819549.png | tablet | editor-edit-mode | PARTIAL
+- ui-tablet-0066-editor-reply-focus-1771980819549.png | tablet | editor-reply-focus | PARTIAL
+- ui-tablet-0067-dialog-invite-attempt-1771980819549.png | tablet | dialog-invite-attempt | PARTIAL
+- ui-tablet-0068-dialog-share-attempt-1771980819549.png | tablet | dialog-share-attempt | PARTIAL
+- ui-tablet-0069-auth-signed-in-shell-1771980819549.png | tablet | auth-signed-in-shell | PARTIAL
+- ui-mobile-0070-auth-login-1771980819549.png | mobile | auth-login | PARTIAL
+- ui-mobile-0071-nav-topics__view-text-view__density-short-1771980819549.png | mobile | nav-topics__view-text-view__density-short | PARTIAL
+- ui-mobile-0072-nav-topics__view-text-view__density-expanded-1771980819549.png | mobile | nav-topics__view-text-view__density-expanded | PARTIAL
+- ui-mobile-0073-nav-topics__view-mind-map__density-short-1771980819549.png | mobile | nav-topics__view-mind-map__density-short | PARTIAL
+- ui-mobile-0074-nav-topics__view-mind-map__density-expanded-1771980819549.png | mobile | nav-topics__view-mind-map__density-expanded | PARTIAL
+- ui-mobile-0075-nav-mentions__view-text-view__density-short-1771980819549.png | mobile | nav-mentions__view-text-view__density-short | PARTIAL
+- ui-mobile-0076-nav-mentions__view-text-view__density-expanded-1771980819549.png | mobile | nav-mentions__view-text-view__density-expanded | PARTIAL
+- ui-mobile-0077-nav-mentions__view-mind-map__density-short-1771980819549.png | mobile | nav-mentions__view-mind-map__density-short | PARTIAL
+- ui-mobile-0078-nav-mentions__view-mind-map__density-expanded-1771980819549.png | mobile | nav-mentions__view-mind-map__density-expanded | PARTIAL
+- ui-mobile-0079-nav-tasks__view-text-view__density-short-1771980819549.png | mobile | nav-tasks__view-text-view__density-short | PARTIAL
+- ui-mobile-0080-nav-tasks__view-text-view__density-expanded-1771980819549.png | mobile | nav-tasks__view-text-view__density-expanded | PARTIAL
+- ui-mobile-0081-nav-tasks__view-mind-map__density-short-1771980819549.png | mobile | nav-tasks__view-mind-map__density-short | PARTIAL
+- ui-mobile-0082-nav-tasks__view-mind-map__density-expanded-1771980819549.png | mobile | nav-tasks__view-mind-map__density-expanded | PARTIAL
+- ui-mobile-0083-nav-publics__view-text-view__density-short-1771980819549.png | mobile | nav-publics__view-text-view__density-short | PARTIAL
+- ui-mobile-0084-nav-publics__view-text-view__density-expanded-1771980819549.png | mobile | nav-publics__view-text-view__density-expanded | PARTIAL
+- ui-mobile-0085-nav-publics__view-mind-map__density-short-1771980819549.png | mobile | nav-publics__view-mind-map__density-short | PARTIAL
+- ui-mobile-0086-nav-publics__view-mind-map__density-expanded-1771980819549.png | mobile | nav-publics__view-mind-map__density-expanded | PARTIAL
+- ui-mobile-0087-nav-store__view-text-view__density-short-1771980819549.png | mobile | nav-store__view-text-view__density-short | PARTIAL
+- ui-mobile-0088-nav-store__view-text-view__density-expanded-1771980819549.png | mobile | nav-store__view-text-view__density-expanded | PARTIAL
+- ui-mobile-0089-nav-store__view-mind-map__density-short-1771980819549.png | mobile | nav-store__view-mind-map__density-short | PARTIAL
+- ui-mobile-0090-nav-store__view-mind-map__density-expanded-1771980819549.png | mobile | nav-store__view-mind-map__density-expanded | PARTIAL
+- ui-mobile-0091-nav-teams__view-text-view__density-short-1771980819549.png | mobile | nav-teams__view-text-view__density-short | PARTIAL
+- ui-mobile-0092-nav-teams__view-text-view__density-expanded-1771980819549.png | mobile | nav-teams__view-text-view__density-expanded | PARTIAL
+- ui-mobile-0093-nav-teams__view-mind-map__density-short-1771980819549.png | mobile | nav-teams__view-mind-map__density-short | PARTIAL
+- ui-mobile-0094-nav-teams__view-mind-map__density-expanded-1771980819549.png | mobile | nav-teams__view-mind-map__density-expanded | PARTIAL
+- ui-mobile-0095-nav-help__view-text-view__density-short-1771980819549.png | mobile | nav-help__view-text-view__density-short | PARTIAL
+- ui-mobile-0096-nav-help__view-text-view__density-expanded-1771980819549.png | mobile | nav-help__view-text-view__density-expanded | PARTIAL
+- ui-mobile-0097-nav-help__view-mind-map__density-short-1771980819549.png | mobile | nav-help__view-mind-map__density-short | PARTIAL
+- ui-mobile-0098-nav-help__view-mind-map__density-expanded-1771980819549.png | mobile | nav-help__view-mind-map__density-expanded | PARTIAL
+- ui-mobile-0099-editor-view-root-1771980819549.png | mobile | editor-view-root | PARTIAL
+- ui-mobile-0100-editor-edit-mode-1771980819549.png | mobile | editor-edit-mode | PARTIAL
+- ui-mobile-0101-editor-reply-focus-1771980819549.png | mobile | editor-reply-focus | PARTIAL
+- ui-mobile-0102-dialog-invite-attempt-1771980819549.png | mobile | dialog-invite-attempt | PARTIAL
+- ui-mobile-0103-dialog-share-attempt-1771980819549.png | mobile | dialog-share-attempt | PARTIAL
+- ui-mobile-0104-auth-signed-in-shell-1771980819549.png | mobile | auth-signed-in-shell | PARTIAL

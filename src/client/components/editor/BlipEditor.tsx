@@ -4,9 +4,9 @@ import * as Y from 'yjs';
 import { getEditorExtensions, defaultEditorProps } from './EditorConfig';
 import { yjsDocManager } from './YjsDocumentManager';
 import { useCollaboration } from './useCollaboration';
-import { InlineComments } from './InlineComments';
-import { FEATURES } from '@shared/featureFlags';
-import { getInlineCommentsVisibility, setInlineCommentsVisibility, subscribeInlineCommentsVisibility } from './inlineCommentsVisibility';
+import { setInlineCommentsVisibility } from './inlineCommentsVisibility';
+import { insertGadget } from '../../gadgets/insert';
+import type { GadgetInsertDetail } from '../../gadgets/types';
 import './BlipEditor.css';
 
 interface BlipEditorProps {
@@ -28,7 +28,6 @@ export function BlipEditor({
 }: BlipEditorProps): JSX.Element {
   const [localYdoc] = useState(() => ydoc || yjsDocManager.getDocument(blipId));
   const provider = useCollaboration(localYdoc, blipId, enableCollaboration && !isReadOnly);
-  const [areCommentsVisible, setAreCommentsVisible] = useState(() => getInlineCommentsVisibility(blipId));
 
   const editor = useEditor({
     extensions: getEditorExtensions(localYdoc, provider, {
@@ -59,22 +58,26 @@ export function BlipEditor({
   }, [editor, content, isReadOnly]);
 
   useEffect(() => {
-    setAreCommentsVisible(getInlineCommentsVisibility(blipId));
-    const unsubscribe = subscribeInlineCommentsVisibility(({ blipId: targetId, isVisible }) => {
-      if (targetId === blipId) {
-        setAreCommentsVisible(isVisible);
-      }
-    });
-    return unsubscribe;
-  }, [blipId]);
-
-  useEffect(() => {
     return () => {
       if (!ydoc) {
         yjsDocManager.removeDocument(blipId);
       }
     };
   }, [blipId, ydoc]);
+
+  useEffect(() => {
+    if (!editor || isReadOnly) return;
+
+    const handleInsertGadget = (e: Event) => {
+      const detail = (e as CustomEvent<GadgetInsertDetail>).detail;
+      insertGadget(editor as any, detail);
+    };
+
+    window.addEventListener('rizzoma:insert-gadget', handleInsertGadget);
+    return () => {
+      window.removeEventListener('rizzoma:insert-gadget', handleInsertGadget);
+    };
+  }, [editor, isReadOnly]);
 
   if (!editor) {
     return <div>Loading editor...</div>;
@@ -84,14 +87,6 @@ export function BlipEditor({
     <div className={`blip-editor ${isReadOnly ? 'read-only' : 'editable'}`}>
       <div style={{ position: 'relative' }}>
         <EditorContent editor={editor} />
-        {FEATURES.INLINE_COMMENTS && (
-          <InlineComments 
-            editor={editor}
-            blipId={blipId}
-            isVisible={areCommentsVisible}
-            canComment={!isReadOnly}
-          />
-        )}
       </div>
     </div>
   );

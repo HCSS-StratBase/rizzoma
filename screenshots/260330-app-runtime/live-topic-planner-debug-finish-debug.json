@@ -1,0 +1,29 @@
+{
+  "serializedContent": "<h1>Planner persistence debug 1774886076677</h1><figure data-gadget-type=\"app-frame\" data-app-id=\"calendar-planner\" data-app-instance-id=\"app-1774886079221-elkosi\" data-app-title=\"Calendar Planner\" data-app-src=\"/gadgets/apps/calendar-planner/index.html\" data-app-height=\"500\" data-app-data=\"{&quot;milestones&quot;:[{&quot;id&quot;:&quot;m1&quot;,&quot;title&quot;:&quot;Wave audit&quot;,&quot;when&quot;:&quot;09:00&quot;},{&quot;id&quot;:&quot;m2&quot;,&quot;title&quot;:&quot;Parity review&quot;,&quot;when&quot;:&quot;11:30&quot;},{&quot;id&quot;:&quot;m3&quot;,&quot;title&quot;:&quot;Ship preview (delayed)&quot;,&quot;when&quot;:&quot;16:30&quot;}]}\" class=\"gadget-block gadget-app-frame\"></figure>",
+  "currentContent": "<h1>Planner persistence debug 1774886076677</h1><figure data-gadget-type=\"app-frame\" data-app-id=\"calendar-planner\" data-app-instance-id=\"app-1774886079221-elkosi\" data-app-title=\"Calendar Planner\" data-app-src=\"/gadgets/apps/calendar-planner/index.html\" data-app-height=\"500\" data-app-data=\"{&quot;milestones&quot;:[{&quot;id&quot;:&quot;m1&quot;,&quot;title&quot;:&quot;Wave audit&quot;,&quot;when&quot;:&quot;09:00&quot;},{&quot;id&quot;:&quot;m2&quot;,&quot;title&quot;:&quot;Parity review&quot;,&quot;when&quot;:&quot;11:30&quot;},{&quot;id&quot;:&quot;m3&quot;,&quot;title&quot;:&quot;Ship preview (delayed)&quot;,&quot;when&quot;:&quot;16:30&quot;}]}\" class=\"gadget-block gadget-app-frame\"></figure>",
+  "topicContentState": "<figure data-gadget-type=\"app-frame\" data-app-id=\"calendar-planner\" data-app-instance-id=\"app-1774886079221-elkosi\" data-app-title=\"Calendar Planner\" data-app-src=\"/gadgets/apps/calendar-planner/index.html\" data-app-height=\"500\" data-app-data=\"{&quot;milestones&quot;:[{&quot;id&quot;:&quot;m1&quot;,&quot;title&quot;:&quot;Wave audit&quot;,&quot;when&quot;:&quot;09:00&quot;},{&quot;id&quot;:&quot;m2&quot;,&quot;title&quot;:&quot;Parity review&quot;,&quot;when&quot;:&quot;11:30&quot;},{&quot;id&quot;:&quot;m3&quot;,&quot;title&quot;:&quot;Ship preview (delayed)&quot;,&quot;when&quot;:&quot;16:30&quot;}]}\" class=\"gadget-block gadget-app-frame\"></figure>",
+  "eventOverrides": [
+    [
+      "app-1774886079221-elkosi",
+      "{\"milestones\":[{\"id\":\"m1\",\"title\":\"Wave audit\",\"when\":\"09:00\"},{\"id\":\"m2\",\"title\":\"Parity review\",\"when\":\"11:30\"},{\"id\":\"m3\",\"title\":\"Ship preview (delayed)\",\"when\":\"16:30\"}]}"
+    ]
+  ],
+  "liveOverrides": [
+    [
+      "app-1774886079221-elkosi",
+      "{\"milestones\":[{\"id\":\"m1\",\"title\":\"Wave audit\",\"when\":\"09:00\"},{\"id\":\"m2\",\"title\":\"Parity review\",\"when\":\"11:30\"},{\"id\":\"m3\",\"title\":\"Ship preview (delayed)\",\"when\":\"16:30\"}]}"
+    ]
+  ],
+  "iframeOverrides": [
+    [
+      "app-1774886079221-elkosi",
+      "{\"milestones\":[{\"id\":\"m1\",\"title\":\"Wave audit\",\"when\":\"09:00\"},{\"id\":\"m2\",\"title\":\"Parity review\",\"when\":\"11:30\"},{\"id\":\"m3\",\"title\":\"Ship preview (delayed)\",\"when\":\"16:30\"}]}"
+    ]
+  ],
+  "mergedOverrides": [
+    [
+      "app-1774886079221-elkosi",
+      "{\"milestones\":[{\"id\":\"m1\",\"title\":\"Wave audit\",\"when\":\"09:00\"},{\"id\":\"m2\",\"title\":\"Parity review\",\"when\":\"11:30\"},{\"id\":\"m3\",\"title\":\"Ship preview (delayed)\",\"when\":\"16:30\"}]}"
+    ]
+  ]
+}

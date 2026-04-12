@@ -1,0 +1,107 @@
+{
+  "generatedAt": "2026-02-24T23:57:34.476Z",
+  "baseUrl": "http://localhost:3000",
+  "counts": {
+    "total": 24,
+    "captured": 19,
+    "missingOrPartial": 5
+  },
+  "results": {
+    "rizzoma-blip-context": {
+      "captured": true,
+      "note": "edit toolbar context"
+    },
+    "rizzoma-blip-edit": {
+      "captured": true,
+      "note": "edit mode toolbar"
+    },
+    "rizzoma-blip-view": {
+      "captured": true,
+      "note": "blip view"
+    },
+    "rizzoma-blips-nested": {
+      "captured": true,
+      "note": "nested blips visible"
+    },
+    "rizzoma-gear-menu": {
+      "captured": false,
+      "note": "gear/overflow toggle not found; fallback screenshot used"
+    },
+    "rizzoma-invite-modal": {
+      "captured": true,
+      "note": "invite modal"
+    },
+    "rizzoma-invite": {
+      "captured": true,
+      "note": "invite trigger/modal"
+    },
+    "rizzoma-main": {
+      "captured": true,
+      "note": "topic main view"
+    },
+    "rizzoma-mindmap": {
+      "captured": true,
+      "note": "mind map toggle"
+    },
+    "rizzoma-mobile": {
+      "captured": true,
+      "note": "mobile viewport"
+    },
+    "rizzoma-nav-help": {
+      "captured": true,
+      "note": "clicked Help"
+    },
+    "rizzoma-nav-publics": {
+      "captured": true,
+      "note": "clicked Publics"
+    },
+    "rizzoma-nav-store": {
+      "captured": true,
+      "note": "clicked Store"
+    },
+    "rizzoma-nav-tasks": {
+      "captured": true,
+      "note": "clicked Tasks"
+    },
+    "rizzoma-nav-teams": {
+      "captured": true,
+      "note": "clicked Teams"
+    },
+    "rizzoma-nav-topics": {
+      "captured": true,
+      "note": "default topics nav state"
+    },
+    "rizzoma-presence": {
+      "captured": true,
+      "note": "main/presence area"
+    },
+    "rizzoma-replies-expanded": {
+      "captured": true,
+      "note": "replies expanded/visible"
+    },
+    "rizzoma-search-overlay": {
+      "captured": false,
+      "note": "legacy duplicate/share modal unavailable; fallback screenshot used"
+    },
+    "rizzoma-share-modal": {
+      "captured": false,
+      "note": "Share modal unavailable; fallback screenshot used"
+    },
+    "rizzoma-share": {
+      "captured": false,
+      "note": "Share button not found; fallback screenshot used"
+    },
+    "rizzoma-toolbar": {
+      "captured": true,
+      "note": "main with toolbar area"
+    },
+    "rizzoma-unread": {
+      "captured": false,
+      "note": "legacy duplicate/share modal unavailable; fallback screenshot used"
+    },
+    "rizzoma_login": {
+      "captured": true,
+      "note": "unauth auth-panel"
+    }
+  }
+}

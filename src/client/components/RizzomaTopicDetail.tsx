@@ -12,17 +12,23 @@ import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { RizzomaBlip, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
 import { injectInlineMarkers } from './blip/inlineMarkers';
 import { useEditor, EditorContent } from '@tiptap/react';
-import type { Editor } from '@tiptap/core';
+import { generateHTML, type Editor } from '@tiptap/core';
+import { flushSync } from 'react-dom';
 import { getEditorExtensions, defaultEditorProps } from './editor/EditorConfig';
 import { EDIT_MODE_EVENT, INSERT_EVENTS } from './RightToolsPanel';
 import { useCollaboration } from './editor/useCollaboration';
 import { yjsDocManager } from './editor/YjsDocumentManager';
 import { FEATURES } from '@shared/featureFlags';
+import { insertGadget } from '../gadgets/insert';
+import type { GadgetInsertDetail } from '../gadgets/types';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
 const LOAD_THROTTLE_MS = 5000; // Minimum time between loads
 const SOCKET_COOLDOWN_MS = 10000; // Cooldown period after load to ignore socket events
+const APP_FRAME_DATA_EVENT = 'rizzoma:app-frame-data-updated';
+const TOPIC_RETURN_READ_MODE_KEY = '__RIZZOMA_TOPIC_RETURN_READ_MODE__';
+const TOPIC_SUPPRESS_TOOLBAR_UNTIL_KEY = '__RIZZOMA_TOPIC_SUPPRESS_TOOLBAR_UNTIL__';
 
 type LoadingState = { isLoading: boolean; lastLoadTime: number; lastCompleteTime: number };
 declare global {
@@ -40,6 +46,246 @@ function getLoadingState(): Map<string, LoadingState> {
   }
   // Fallback for SSR (shouldn't happen)
   return new Map();
+}
+
+function serializeEditorContent(editor: Editor | null, fallback: string) {
+  if (!editor) return fallback;
+  try {
+    return generateHTML(editor.getJSON(), editor.extensionManager.extensions);
+  } catch {
+    return editor.getHTML() || fallback;
+  }
+}
+
+function isEffectivelyEmptyHtml(html: string) {
+  if (!html) return true;
+  const normalized = html
+    .replace(/<br\s*\/?>/gi, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/<p[^>]*>\s*<\/p>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return normalized.length === 0;
+}
+
+function isEditorEffectivelyEmpty(editor: Editor | null) {
+  if (!editor) return true;
+  const text = editor.getText().replace(/\u200b/g, '').trim();
+  if (text.length > 0) {
+    return false;
+  }
+  return isEffectivelyEmptyHtml(editor.getHTML() || '');
+}
+
+function applyLiveAppFrameOverrides(html: string, overrides: Map<string, string>) {
+  if (!html || overrides.size === 0 || typeof window === 'undefined') {
+    return html;
+  }
+
+  const container = window.document.createElement('div');
+  container.innerHTML = html;
+  const overrideEntries = Array.from(overrides.entries());
+  const figures = Array.from(container.querySelectorAll('figure[data-gadget-type="app-frame"]'));
+  const applied = new Set<string>();
+
+  figures.forEach((node, index) => {
+    const instanceId = node.getAttribute('data-app-instance-id') || '';
+    const exactMatch = overrideEntries.find(([key]) => key === instanceId) || null;
+    const fallbackMatch = exactMatch ? null : overrideEntries[index] || null;
+    const match = exactMatch || fallbackMatch;
+    if (!match) return;
+
+    const [nextInstanceId, nextData] = match;
+    if (!nextData) return;
+    node.setAttribute('data-app-data', nextData);
+    if (!instanceId || instanceId !== nextInstanceId) {
+      node.setAttribute('data-app-instance-id', nextInstanceId);
+    }
+    applied.add(nextInstanceId);
+  });
+
+  if (!applied.size && figures.length === 1 && overrideEntries.length === 1) {
+    const [nextInstanceId, nextData] = overrideEntries[0];
+    figures[0].setAttribute('data-app-instance-id', nextInstanceId);
+    figures[0].setAttribute('data-app-data', nextData);
+  }
+
+  return container.innerHTML;
+}
+
+function summarizeAppFrameData(raw: string) {
+  try {
+    const data = JSON.parse(raw || '{}');
+    if (Array.isArray(data?.columns)) {
+      const totalCards = data.columns.reduce(
+        (sum: number, column: any) => sum + (Array.isArray(column?.cards) ? column.cards.length : 0),
+        0
+      );
+      return `${data.columns.length} columns · ${totalCards} cards`;
+    }
+    if (Array.isArray(data?.milestones)) {
+      const tail = data.milestones[data.milestones.length - 1];
+      return tail?.title ? `Latest: ${tail.title}` : `${data.milestones.length} milestones`;
+    }
+    if (data?.session) {
+      return data.session.label ? `Focus: ${data.session.label}` : `${data.session.duration ?? 0} min · ${data.session.state ?? 'ready'}`;
+    }
+  } catch {
+    // Fall through to generic fallback.
+  }
+  return 'Sandbox preview';
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildAppFrameFigureMarkup(figure: HTMLElement) {
+  const title = figure.getAttribute('data-app-title') || 'Sandboxed app';
+  const appId = figure.getAttribute('data-app-id') || 'app-frame';
+  const src = figure.getAttribute('data-app-src') || '';
+  const height = figure.getAttribute('data-app-height') || '430';
+  const rawData = figure.getAttribute('data-app-data') || '{}';
+  const summary = summarizeAppFrameData(rawData);
+  const className = figure.getAttribute('class') || 'gadget-block gadget-app-frame';
+
+  return `
+    <figure
+      data-gadget-type="app-frame"
+      data-app-id="${escapeHtml(appId)}"
+      data-app-instance-id="${escapeHtml(figure.getAttribute('data-app-instance-id') || 'app-frame')}"
+      data-app-title="${escapeHtml(title)}"
+      data-app-src="${escapeHtml(src)}"
+      data-app-height="${escapeHtml(height)}"
+      data-app-data="${escapeHtml(rawData)}"
+      data-app-summary="${escapeHtml(summary)}"
+      class="${escapeHtml(className)}"
+    >
+      <iframe
+        src="${escapeHtml(src)}"
+        title="${escapeHtml(title)}"
+        loading="lazy"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        allow="clipboard-read; clipboard-write; fullscreen"
+        style="width: 100%; min-height: ${escapeHtml(height)}px; border: 0; border-radius: 16px; background: white; box-shadow: inset 0 0 0 1px rgba(136,156,178,0.18);"
+      ></iframe>
+    </figure>
+  `.trim();
+}
+
+function hydrateAppFrameFigures(html: string) {
+  if (!html || typeof window === 'undefined') {
+    return html;
+  }
+
+  const container = window.document.createElement('div');
+  container.innerHTML = html;
+  container.querySelectorAll('figure[data-gadget-type="app-frame"]').forEach((node) => {
+    const figure = node as HTMLElement;
+    if (figure.querySelector('iframe')) {
+      return;
+    }
+    figure.outerHTML = buildAppFrameFigureMarkup(figure);
+  });
+
+  return container.innerHTML;
+}
+
+function hydrateAppFrameFigureElements(root: ParentNode) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  root.querySelectorAll('figure[data-gadget-type="app-frame"]').forEach((node) => {
+    const figure = node as HTMLElement;
+    if (figure.querySelector('iframe')) {
+      return;
+    }
+    const title = figure.getAttribute('data-app-title') || 'Sandboxed app';
+    const appId = figure.getAttribute('data-app-id') || 'app-frame';
+    const src = figure.getAttribute('data-app-src') || '';
+    const height = figure.getAttribute('data-app-height') || '430';
+    const rawData = figure.getAttribute('data-app-data') || '{}';
+    const summary = summarizeAppFrameData(rawData);
+
+    const iframe = window.document.createElement('iframe');
+    iframe.setAttribute('src', src);
+    iframe.setAttribute('title', title);
+    iframe.setAttribute('loading', 'lazy');
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
+    iframe.setAttribute('allow', 'clipboard-read; clipboard-write; fullscreen');
+    iframe.setAttribute(
+      'style',
+      `width: 100%; min-height: ${height}px; border: 0; border-radius: 16px; background: white; box-shadow: inset 0 0 0 1px rgba(136,156,178,0.18);`
+    );
+
+    figure.setAttribute('data-app-summary', summary);
+    figure.replaceChildren(iframe);
+  });
+}
+
+function extractTopicEditSeedHtml(root: HTMLElement | null) {
+  if (!root || typeof window === 'undefined') {
+    return '';
+  }
+
+  const clone = root.cloneNode(true) as HTMLElement;
+  clone.querySelectorAll('.inline-child-portal').forEach((node) => node.remove());
+  clone.querySelectorAll('iframe').forEach((frame) => {
+    const figure = frame.closest('figure[data-gadget-type="app-frame"]') as HTMLElement | null;
+    if (!figure) {
+      frame.remove();
+    }
+  });
+
+  return clone.innerHTML.trim();
+}
+
+function collectLiveAppFrameOverrides() {
+  const overrides = new Map<string, string>();
+  if (typeof window === 'undefined') {
+    return overrides;
+  }
+
+  window.document
+    .querySelectorAll('.topic-content-edit .app-frame-live-state[data-app-instance-id][data-app-live-data]')
+    .forEach((node) => {
+      const instanceId = node.getAttribute('data-app-instance-id') || '';
+      const liveData = node.getAttribute('data-app-live-data') || '';
+      if (instanceId && liveData) {
+        overrides.set(instanceId, liveData);
+      }
+    });
+
+  return overrides;
+}
+
+function collectIframeAppFrameOverrides() {
+  const overrides = new Map<string, string>();
+  if (typeof window === 'undefined') {
+    return overrides;
+  }
+
+  window.document
+    .querySelectorAll('.topic-content-edit .app-frame-live-state[data-app-instance-id] iframe')
+    .forEach((frame) => {
+      const iframe = frame as HTMLIFrameElement;
+      const instanceId = iframe
+        .closest('.app-frame-live-state')
+        ?.getAttribute('data-app-instance-id') || '';
+      const liveData = (iframe.contentWindow as any)?.__RIZZOMA_APP_STATE;
+      if (instanceId && liveData) {
+        overrides.set(instanceId, JSON.stringify(liveData));
+      }
+    });
+
+  return overrides;
 }
 
 function getPerfBlipLimit(): number {
@@ -122,6 +368,57 @@ function extractTitleFromContent(html: string): string {
   return text.trim().split('\n')[0] || '';
 }
 
+function extractPlainSnippet(html: string, limit = 180): string {
+  const plain = (html || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!plain) return '';
+  return plain.length > limit ? `${plain.slice(0, limit).trim()}…` : plain;
+}
+
+function ensureTopicTitleHeading(html: string, fallbackTitle: string): string {
+  const safeTitle = fallbackTitle.trim() || 'Untitled';
+  if (!html) {
+    return `<h1>${safeTitle}</h1>`;
+  }
+  if (/<h1[\s>]/i.test(html)) {
+    return html;
+  }
+  return `<h1>${safeTitle}</h1>${html}`;
+}
+
+function replaceTopicTitleHeading(html: string, nextTitle: string): string {
+  const safeTitle = nextTitle.trim() || 'Untitled';
+  if (!html) {
+    return `<h1>${safeTitle}</h1>`;
+  }
+  if (/<h1[\s>]/i.test(html)) {
+    return html.replace(/<h1[^>]*>.*?<\/h1>/i, `<h1>${safeTitle}</h1>`);
+  }
+  return `<h1>${safeTitle}</h1>${html}`;
+}
+
+function stripFirstTopicHeading(html: string): string {
+  if (!html) return '';
+  return html.replace(/^\s*<h1[^>]*>.*?<\/h1>/i, '').trim();
+}
+
+function extractTopicTitle(html: string, fallbackTitle: string): string {
+  const h1Match = html?.match(/<h1[^>]*>(.*?)<\/h1>/i);
+  if (h1Match?.[1]) {
+    return h1Match[1].replace(/<[^>]+>/g, '').trim() || fallbackTitle;
+  }
+  return fallbackTitle.trim() || 'Untitled';
+}
+
+function resolveSafeTopicTitle(content: string, extractedTitle: string, fallbackTitle: string): string {
+  if (content.includes('data-gadget-type="app-frame"')) {
+    return fallbackTitle.trim() || extractedTitle || 'Untitled';
+  }
+  return extractedTitle || fallbackTitle.trim() || 'Untitled';
+}
+
 function formatDate(timestamp: number): string {
   const date = new Date(timestamp);
   const now = new Date();
@@ -148,6 +445,20 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const [currentSubblip, setCurrentSubblip] = useState<BlipData | null>(null);
   const [busy, setBusy] = useState(false);
   const [expandedBlips, setExpandedBlips] = useState<Set<string>>(new Set());
+  // Performance: Scroll tracking for virtualization in perf-lite mode
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(1000);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    if (!isPerfLite) return;
+    const target = e.currentTarget;
+    setScrollTop(target.scrollTop);
+    if (target.clientHeight !== viewportHeight) {
+      setViewportHeight(target.clientHeight);
+    }
+  }, [isPerfLite, viewportHeight]);
+
   const [newBlipContent, setNewBlipContent] = useState('');
   // Topic gear menu state (collab toolbar)
   const [showGearMenu, setShowGearMenu] = useState(false);
@@ -166,9 +477,76 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
   // Topic content editing state (BLB: topic is meta-blip, title is first line)
   const [isEditingTopic, setIsEditingTopic] = useState(false);
+  const [forceTopicReadMode, setForceTopicReadMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.sessionStorage.getItem(TOPIC_RETURN_READ_MODE_KEY) === id;
+    } catch {
+      return false;
+    }
+  });
+  const initialSuppressTopicToolbarUntil = (() => {
+    if (typeof window === 'undefined') return 0;
+    try {
+      const raw = window.sessionStorage.getItem(TOPIC_SUPPRESS_TOOLBAR_UNTIL_KEY);
+      const parsed = raw ? Number(raw) : 0;
+      return Number.isFinite(parsed) ? parsed : 0;
+    } catch {
+      return 0;
+    }
+  })();
+  const isEditingTopicRef = useRef(false);
+  const isFinishingTopicEditRef = useRef(false);
   const [topicContent, setTopicContent] = useState('');
   const topicSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const topicSaveAbortRef = useRef<AbortController | null>(null);
   const lastSavedContentRef = useRef<string>('');
+  const latestTopicContentRef = useRef<string>('');
+  const latestAppFrameDataRef = useRef<Map<string, string>>(new Map());
+  const pendingTopicBootstrapRef = useRef<string | null>(null);
+  const bootstrappingTopicEditRef = useRef(false);
+  const returningFromSubblipRef = useRef(false);
+  const suppressTopicToolbarUntilRef = useRef(initialSuppressTopicToolbarUntil);
+  const topicContentViewRef = useRef<HTMLDivElement | null>(null);
+  const topicContentInnerRef = useRef<HTMLDivElement | null>(null);
+  const editingTopicTitleRef = useRef('Untitled');
+  const topicInlineRootBlips = useMemo(
+    () => blips.filter((b) => typeof b.anchorPosition === 'number'),
+    [blips]
+  );
+  const topicContentHtmlBase = useMemo(() => {
+    const baseHtml = topic?.content && topic.content.trim().length > 0
+      ? `<h1>${topic?.title || 'Untitled'}</h1>${hydrateAppFrameFigures(stripFirstTopicHeading(topic.content))}`
+      : `<h1>${topic?.title || 'Untitled'}</h1>`;
+    return injectInlineMarkers(baseHtml, topicInlineRootBlips);
+  }, [topic?.content, topic?.title, topicInlineRootBlips]);
+  const showTopicEditMode = isEditingTopic && !forceTopicReadMode;
+  const currentSubblipParent = useMemo(() => {
+    if (!currentSubblip?.parentBlipId) return null;
+    return allBlipsMap.get(currentSubblip.parentBlipId) || null;
+  }, [allBlipsMap, currentSubblip]);
+  const currentSubblipSiblingCount = currentSubblip
+    ? currentSubblip.parentBlipId
+      ? (allBlipsMap.get(currentSubblip.parentBlipId)?.childBlips?.filter((child) => child.anchorPosition === undefined || child.anchorPosition === null).length || 0)
+      : blips.filter((child) => child.anchorPosition === undefined || child.anchorPosition === null).length
+    : 0;
+  const currentSubblipContext = useMemo(() => {
+    if (!currentSubblip) return null;
+    if (currentSubblipParent) {
+      return {
+        label: 'Parent thread',
+        title: extractTitleFromContent(currentSubblipParent.content) || 'Untitled parent blip',
+        snippet: extractPlainSnippet(currentSubblipParent.content, 220) || 'No parent preview available.',
+        meta: currentSubblipSiblingCount > 0 ? `${currentSubblipSiblingCount} replies in this thread` : 'Focused thread item',
+      };
+    }
+    return {
+      label: 'Topic context',
+      title: topic?.title?.trim() || 'Untitled topic',
+      snippet: extractPlainSnippet(stripFirstTopicHeading(topic?.content || ''), 220) || 'No topic preview available.',
+      meta: 'Focused inline subblip inside the topic root',
+    };
+  }, [currentSubblip, currentSubblipParent, currentSubblipSiblingCount, topic]);
 
   // Ref-based callback for creating inline child blips
   // Using a ref so the TipTap extension always gets the latest version
@@ -185,7 +563,11 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
   // --- Real-time collaboration for topic root blip ---
   // RizzomaBlip skips collab for topic root (isTopicRoot), so this is the sole owner.
-  const topicCollabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && isAuthed);
+  // Topic-root collaboration is currently less reliable than normal blip collaboration:
+  // it can hydrate the meta-blip editor with a blank placeholder and clobber the real
+  // topic body on entry. Keep root-topic editing on the stable non-collab path until
+  // the dedicated topic-root Yjs bootstrap is rebuilt.
+  const topicCollabEnabled = false;
   const topicYdoc = useMemo(
     () => topicCollabEnabled ? yjsDocManager.getDocument(id) : undefined,
     [id, topicCollabEnabled]
@@ -210,9 +592,24 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     onUpdate: ({ editor, transaction }: { editor: Editor; transaction: any }) => {
       // Skip auto-save during Y.Doc seeding
       if (seedingTopicYdocRef.current) return;
+      if (isFinishingTopicEditRef.current || !isEditingTopicRef.current) return;
 
-      const html = editor.getHTML();
+      const html = serializeEditorContent(editor, editor.getHTML());
+      if (
+        bootstrappingTopicEditRef.current &&
+        isEffectivelyEmptyHtml(html) &&
+        !isEffectivelyEmptyHtml(latestTopicContentRef.current)
+      ) {
+        return;
+      }
+
+      if (bootstrappingTopicEditRef.current && !isEffectivelyEmptyHtml(html)) {
+        bootstrappingTopicEditRef.current = false;
+        pendingTopicBootstrapRef.current = null;
+      }
+
       setTopicContent(html);
+      latestTopicContentRef.current = html;
 
       // Skip auto-save for remote Y.Doc sync updates (origin is ySyncPlugin object)
       const isRemoteSync = transaction?.origin != null && typeof transaction.origin === 'object';
@@ -238,18 +635,20 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   useEffect(() => {
     if (!isEditingTopic) {
       hasSetInitialContentRef.current = false;
+      isFinishingTopicEditRef.current = false;
     }
+    isEditingTopicRef.current = isEditingTopic;
   }, [isEditingTopic]);
 
   // Notify RightToolsPanel of edit mode changes
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing: isEditingTopic } }));
-  }, [isEditingTopic]);
+    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing: showTopicEditMode } }));
+  }, [showTopicEditMode]);
 
   // Handle insert events from RightToolsPanel when topic editor is active
   useEffect(() => {
-    if (!isEditingTopic || !topicEditor) return;
+    if (!showTopicEditMode || !topicEditor) return;
 
     // Helper: insert trigger char with space prefix if needed (suggestion plugins require allowedPrefixes=[' '])
     const insertTrigger = (char: string) => {
@@ -268,42 +667,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       createInlineChildBlipRef.current?.(from);
     };
     const handleInsertGadget = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { type?: string; url?: string } | undefined;
-      const gadgetType = detail?.type || 'iframe';
-      const url = detail?.url;
-      switch (gadgetType) {
-        case 'youtube': {
-          if (!url) return;
-          let embedUrl = url;
-          const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
-          if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
-          topicEditor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
-          break;
-        }
-        case 'code':
-          topicEditor.chain().focus().toggleCodeBlock().run(); break;
-        case 'poll':
-          topicEditor.chain().focus().insertContent({
-            type: 'pollGadget',
-            attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
-          }).run();
-          break;
-        case 'latex':
-          topicEditor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run(); break;
-        case 'iframe':
-        case 'spreadsheet':
-        case 'image': {
-          if (!url) return;
-          if (gadgetType === 'image') {
-            topicEditor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
-          } else {
-            topicEditor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
-          }
-          break;
-        }
-        default:
-          topicEditor.chain().focus().insertContent(`[${gadgetType} gadget]`).run(); break;
-      }
+      const detail = (e as CustomEvent<GadgetInsertDetail>).detail;
+      insertGadget(topicEditor as any, detail);
     };
 
     window.addEventListener(INSERT_EVENTS.MENTION, handleInsertMention);
@@ -318,15 +683,39 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       window.removeEventListener(INSERT_EVENTS.REPLY, handleInsertReply);
       window.removeEventListener(INSERT_EVENTS.GADGET, handleInsertGadget);
     };
-  }, [isEditingTopic, topicEditor]);
+  }, [showTopicEditMode, topicEditor]);
 
   // Sync editor content and editable state when entering edit mode.
   // With Collaboration, wait for server sync before seeding — only seed if Y.Doc is empty.
   useEffect(() => {
-    if (topicEditor && isEditingTopic && topicContent && !hasSetInitialContentRef.current) {
+    const handleAppFrameData = (event: Event) => {
+      const detail = (event as CustomEvent<{ instanceId?: string; data?: string }>).detail;
+      if (!detail?.instanceId || !detail?.data) return;
+      latestAppFrameDataRef.current.set(detail.instanceId, detail.data);
+    };
+
+    window.addEventListener(APP_FRAME_DATA_EVENT, handleAppFrameData);
+    return () => window.removeEventListener(APP_FRAME_DATA_EVENT, handleAppFrameData);
+  }, []);
+
+  useEffect(() => {
+    if (topicEditor && showTopicEditMode && topicContent && !hasSetInitialContentRef.current) {
       const setContentAndFocus = () => {
         if ((topicEditor as any).isDestroyed) return;
         topicEditor.setEditable(true);
+        setTimeout(() => {
+          if ((topicEditor as any).isDestroyed) return;
+          const bootstrapContent = pendingTopicBootstrapRef.current;
+          if (bootstrapContent && isEditorEffectivelyEmpty(topicEditor)) {
+            seedingTopicYdocRef.current = true;
+            topicEditor.commands.setContent(bootstrapContent);
+            seedingTopicYdocRef.current = false;
+          }
+          if (!isEditorEffectivelyEmpty(topicEditor)) {
+            bootstrappingTopicEditRef.current = false;
+            pendingTopicBootstrapRef.current = null;
+          }
+        }, 120);
         setTimeout(() => { topicEditor.commands['focus']('end'); }, 50);
       };
 
@@ -336,7 +725,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         topicCollabProvider.onSynced(() => {
           if ((topicEditor as any).isDestroyed) return;
           const frag = topicYdoc!.getXmlFragment('default');
-          if (frag.length === 0) {
+          if (frag.length === 0 || isEditorEffectivelyEmpty(topicEditor)) {
             seedingTopicYdocRef.current = true;
             topicEditor.commands.setContent(topicContent);
             seedingTopicYdocRef.current = false;
@@ -349,10 +738,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         topicEditor.commands.setContent(topicContent);
         setContentAndFocus();
       }
-    } else if (topicEditor && !isEditingTopic) {
+    } else if (topicEditor && !showTopicEditMode) {
       topicEditor.setEditable(false);
     }
-  }, [topicEditor, isEditingTopic, topicContent, topicCollabActive, topicYdoc, topicCollabProvider]);
+  }, [topicEditor, showTopicEditMode, topicContent, topicCollabActive, topicYdoc, topicCollabProvider]);
 
   // Use refs to avoid dependency issues in callbacks
   const unreadStateRef = useRef(unreadState);
@@ -586,22 +975,103 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     }
   }, [blipPath, allBlipsMap]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || currentSubblip) return;
+    try {
+      if (window.sessionStorage.getItem(TOPIC_RETURN_READ_MODE_KEY) === id) {
+        setForceTopicReadMode(true);
+        window.sessionStorage.removeItem(TOPIC_RETURN_READ_MODE_KEY);
+      }
+      const rawSuppressUntil = window.sessionStorage.getItem(TOPIC_SUPPRESS_TOOLBAR_UNTIL_KEY);
+      const suppressUntil = rawSuppressUntil ? Number(rawSuppressUntil) : 0;
+      if (Number.isFinite(suppressUntil) && suppressUntil > Date.now()) {
+        suppressTopicToolbarUntilRef.current = suppressUntil;
+      } else {
+        window.sessionStorage.removeItem(TOPIC_SUPPRESS_TOOLBAR_UNTIL_KEY);
+      }
+    } catch {
+      // Best-effort UI guard only.
+    }
+  }, [currentSubblip, id]);
+
+  useEffect(() => {
+    if (!currentSubblip) return;
+    pendingTopicBootstrapRef.current = null;
+    bootstrappingTopicEditRef.current = false;
+    isFinishingTopicEditRef.current = true;
+    isEditingTopicRef.current = false;
+    setForceTopicReadMode(true);
+    setIsEditingTopic(false);
+    if (topicEditor) {
+      topicEditor.setEditable(false);
+    }
+  }, [currentSubblip, topicEditor]);
+
+  useEffect(() => {
+    if (currentSubblip || !returningFromSubblipRef.current) return;
+    pendingTopicBootstrapRef.current = null;
+    bootstrappingTopicEditRef.current = false;
+    isFinishingTopicEditRef.current = true;
+    isEditingTopicRef.current = false;
+    setForceTopicReadMode(true);
+    setIsEditingTopic(false);
+    if (topicEditor) {
+      topicEditor.setEditable(false);
+    }
+    const timeout = window.setTimeout(() => {
+      isEditingTopicRef.current = false;
+      setIsEditingTopic(false);
+      if (topicEditor) {
+        topicEditor.setEditable(false);
+      }
+      returningFromSubblipRef.current = false;
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [currentSubblip, topicEditor]);
+
   // BLB: Navigation helper to go back to parent
   const navigateToParent = useCallback(() => {
+    returningFromSubblipRef.current = true;
+    suppressTopicToolbarUntilRef.current = Date.now() + 500;
+    isFinishingTopicEditRef.current = true;
+    isEditingTopicRef.current = false;
+    flushSync(() => {
+      setForceTopicReadMode(true);
+      setIsEditingTopic(false);
+    });
+    try {
+      window.sessionStorage.setItem(TOPIC_RETURN_READ_MODE_KEY, id);
+      window.sessionStorage.setItem(TOPIC_SUPPRESS_TOOLBAR_UNTIL_KEY, String(suppressTopicToolbarUntilRef.current));
+    } catch {
+      // Best-effort UI guard only.
+    }
+    if (topicEditor) {
+      topicEditor.setEditable(false);
+    }
+    let nextHash = `#/topic/${id}`;
     if (currentSubblip?.parentBlipId) {
       // Find the parent blip
       const parent = allBlipsMap.get(currentSubblip.parentBlipId);
       if (parent?.blipPath) {
-        window.location.hash = `#/topic/${id}/${parent.blipPath}/`;
-      } else {
-        // Parent is the topic root
-        window.location.hash = `#/topic/${id}`;
+        nextHash = `#/topic/${id}/${parent.blipPath}/`;
       }
-    } else {
-      // No parent - go to topic root
-      window.location.hash = `#/topic/${id}`;
     }
-  }, [currentSubblip, allBlipsMap, id]);
+    window.setTimeout(() => {
+      window.location.hash = nextHash;
+    }, 0);
+  }, [allBlipsMap, currentSubblip, id, topicEditor]);
+
+  const shouldSuppressTopicToolbar = useCallback(() => {
+    const suppressed = Date.now() < suppressTopicToolbarUntilRef.current;
+    if (!suppressed && typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.removeItem(TOPIC_SUPPRESS_TOOLBAR_UNTIL_KEY);
+      } catch {
+        // Best-effort UI guard only.
+      }
+    }
+    return suppressed;
+  }, []);
 
   // BLB: Navigation helper to navigate into a subblip
   const navigateToSubblip = useCallback((blip: BlipData) => {
@@ -640,6 +1110,32 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             const editor = topicEditorRef.current;
             if (editor) {
               (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
+              const fallbackTitle = editingTopicTitleRef.current || topic?.title || 'Untitled';
+              const currentContent = ensureTopicTitleHeading(editor.getHTML(), fallbackTitle);
+              setTopicContent(currentContent);
+              latestTopicContentRef.current = currentContent;
+              lastSavedContentRef.current = currentContent;
+              try {
+                const token = await ensureCsrf();
+                await fetch(`/api/topics/${encodeURIComponent(id)}`, {
+                  method: 'PATCH',
+                  credentials: 'include',
+                  headers: {
+                    'content-type': 'application/json',
+                    ...(token ? { 'x-csrf-token': token } : {}),
+                  },
+                  body: JSON.stringify({ title: fallbackTitle, content: currentContent }),
+                });
+              } catch (persistError) {
+                console.error('[TopicDetail] Failed to persist topic marker before subblip navigation', persistError);
+              }
+              isFinishingTopicEditRef.current = true;
+              isEditingTopicRef.current = false;
+              flushSync(() => {
+                setForceTopicReadMode(true);
+                setIsEditingTopic(false);
+              });
+              editor.setEditable(false);
             }
 
             // BLB: Extract blipPath and navigate to the new subblip
@@ -671,15 +1167,9 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               return updated;
             });
 
-            // BLB: Expand the new child inline (no navigation!)
-            // Refresh data so the new blip appears in childBlips
+            // Refresh and navigate into the new anchored child blip.
             load(true);
-            // Toggle inline expansion in the RizzomaBlip
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
-                detail: { threadId: newBlipId }
-              }));
-            }, 500); // Delay to allow data refresh to complete
+            window.location.hash = `#/topic/${id}/${blipPathSegment}/`;
           } else {
             toast('Subblip created');
             load(true); // Fallback: reload to show the new blip
@@ -692,7 +1182,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         toast('Failed to create comment', 'error');
       }
     };
-  }, [isAuthed, id, load]);
+  }, [ensureCsrf, id, isAuthed, load, topic?.title]);
 
   // Debounced load for socket/event-triggered reloads
   // These pass fromSocket=true so they respect the longer socket cooldown period
@@ -768,8 +1258,43 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   }, [newBlipContent, busy, isAuthed, id, load]);
 
   // Handlers for RizzomaBlip component
-  const handleBlipUpdate = useCallback((_blipId: string, _content: string) => {
-    // Blip was updated - reload to get fresh data
+  const handleBlipUpdate = useCallback((blipId: string, content: string) => {
+    const updatedAt = Date.now();
+
+    pendingBlipsRef.current.set(blipId, {
+      ...(pendingBlipsRef.current.get(blipId) || {
+        id: blipId,
+        content,
+        authorId: '',
+        authorName: 'Anonymous',
+        createdAt: updatedAt,
+        updatedAt,
+        isRead: true,
+        childBlips: [],
+        permissions: { canEdit: true, canComment: true, canRead: true },
+        contributors: [],
+      }),
+      content,
+      updatedAt,
+    });
+
+    setAllBlipsMap(prev => {
+      if (!prev.has(blipId)) return prev;
+      const next = new Map(prev);
+      const current = next.get(blipId);
+      if (current) {
+        next.set(blipId, { ...current, content, updatedAt });
+      }
+      return next;
+    });
+
+    setCurrentSubblip(prev => (
+      prev && prev.id === blipId
+        ? { ...prev, content, updatedAt }
+        : prev
+    ));
+
+    // Keep the broader topic/blip tree in sync after the immediate local update.
     load(true);
   }, [load]);
 
@@ -919,84 +1444,227 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   };
 
   // Auto-save topic content (BLB: extracts title from first H1/line)
-  const autoSaveTopicContent = useCallback(async (content: string) => {
-    if (content === lastSavedContentRef.current) {
+  const autoSaveTopicContent = useCallback(async (content: string, force = false) => {
+    if (!force && content === lastSavedContentRef.current) {
       return;
     }
+    if (!force && latestTopicContentRef.current && content !== latestTopicContentRef.current) {
+      return;
+    }
+    const abortController = new AbortController();
+    if (topicSaveAbortRef.current) {
+      topicSaveAbortRef.current.abort();
+    }
+    topicSaveAbortRef.current = abortController;
     try {
-      const extractedTitle = extractTitleFromContent(content);
-      if (!extractedTitle) return;
+      const fallbackTitle = editingTopicTitleRef.current || 'Untitled';
+      const normalizedContent = content.includes('data-gadget-type="app-frame"')
+        ? replaceTopicTitleHeading(content, fallbackTitle)
+        : content;
+      const finalTitle = fallbackTitle;
+      if (!finalTitle) return;
 
       await ensureCsrf();
       const response = await api(`/api/topics/${encodeURIComponent(id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({ title: extractedTitle, content: content })
+        body: JSON.stringify({ title: finalTitle, content: normalizedContent }),
+        signal: abortController.signal,
       });
+      if (abortController.signal.aborted) {
+        return;
+      }
       if (response.ok) {
-        lastSavedContentRef.current = content;
-        setTopic(prev => prev ? { ...prev, title: extractedTitle, content: content } : prev);
+        lastSavedContentRef.current = normalizedContent;
+        if (latestTopicContentRef.current !== content) {
+          return;
+        }
+        setTopic(prev => prev ? { ...prev, title: finalTitle, content: normalizedContent } : prev);
         // No toast for auto-save - it's real-time
       }
-    } catch {
+    } catch (error) {
+      if ((error as Error)?.name === 'AbortError') {
+        return;
+      }
       // Silent fail for auto-save - will retry on next change
+    } finally {
+      if (topicSaveAbortRef.current === abortController) {
+        topicSaveAbortRef.current = null;
+      }
     }
   }, [id]);
 
   // Start editing topic (BLB: topic is meta-blip)
   const startEditingTopic = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const rawSuppressUntil = window.sessionStorage.getItem(TOPIC_SUPPRESS_TOOLBAR_UNTIL_KEY);
+        const suppressUntil = rawSuppressUntil ? Number(rawSuppressUntil) : 0;
+        if (Number.isFinite(suppressUntil) && suppressUntil > Date.now()) {
+          return;
+        }
+      }
+    } catch {
+      // Best-effort guard only.
+    }
     if (!isAuthed) {
       toast('Sign in to edit', 'error');
       return;
     }
-    // BLB: Topic content should always have title as first H1
-    // Merge title + existing content, ensuring title is H1 at the start
     let initialContent = '';
-    const titleH1 = `<h1>${topic?.title || 'Untitled'}</h1>`;
-
-    if (topic?.content) {
-      // Check if content already starts with the title as H1
-      const contentHasTitle = topic.content.toLowerCase().includes(`<h1>${(topic.title || '').toLowerCase()}</h1>`);
-      if (contentHasTitle) {
-        // Use content as-is
-        initialContent = topic.content;
-      } else {
-        // Wrap content in <p> if it's plain text (no HTML tags)
-        let wrappedContent = topic.content;
-        if (!/<[^>]+>/.test(wrappedContent)) {
-          wrappedContent = `<p>${wrappedContent}</p>`;
-        }
-        // Prepend title as H1 to content
-        initialContent = titleH1 + wrappedContent;
-      }
+    const viewSeed = extractTopicEditSeedHtml(topicContentInnerRef.current);
+    if (viewSeed) {
+      initialContent = viewSeed;
     } else {
-      // No content, just use title as H1
-      initialContent = titleH1;
+      const titleH1 = `<h1>${topic?.title || 'Untitled'}</h1>`;
+      if (topic?.content) {
+        const bodyContent = stripFirstTopicHeading(topic.content);
+        const contentHasTitle = topic.content.toLowerCase().includes(`<h1>${(topic.title || '').toLowerCase()}</h1>`);
+        if (contentHasTitle) {
+          initialContent = titleH1 + bodyContent;
+        } else {
+          let wrappedContent = bodyContent;
+          if (!/<[^>]+>/.test(wrappedContent)) {
+            wrappedContent = `<p>${wrappedContent}</p>`;
+          }
+          initialContent = titleH1 + wrappedContent;
+        }
+      } else {
+        initialContent = titleH1;
+      }
     }
     const inlineRootBlips = blips.filter((b) => typeof b.anchorPosition === 'number');
     const nextContent = injectInlineMarkers(initialContent, inlineRootBlips);
+    editingTopicTitleRef.current = topic?.title || 'Untitled';
+    pendingTopicBootstrapRef.current = nextContent;
+    bootstrappingTopicEditRef.current = true;
     setTopicContent(nextContent);
     lastSavedContentRef.current = nextContent;
+    latestTopicContentRef.current = nextContent;
+    latestAppFrameDataRef.current = new Map();
+    isFinishingTopicEditRef.current = false;
+    setForceTopicReadMode(false);
+    isEditingTopicRef.current = true;
     setIsEditingTopic(true);
     // The useEffect will handle syncing the editor content when isEditingTopic changes
-  }, [isAuthed, topic?.title, topic?.content, blips]);
+    if (topicEditor && !(topicEditor as any).isDestroyed) {
+      topicEditor.setEditable(true);
+      seedingTopicYdocRef.current = true;
+      topicEditor.commands.setContent(nextContent);
+      seedingTopicYdocRef.current = false;
+      window.setTimeout(() => {
+        if ((topicEditor as any).isDestroyed || !isEditingTopicRef.current) return;
+        topicEditor.setEditable(true);
+        if (isEditorEffectivelyEmpty(topicEditor)) {
+          seedingTopicYdocRef.current = true;
+          topicEditor.commands.setContent(nextContent);
+          seedingTopicYdocRef.current = false;
+        }
+      }, 80);
+    }
+  }, [isAuthed, topic?.title, topic?.content, blips, topicEditor]);
 
   // Finish editing topic
   const finishEditingTopic = useCallback(() => {
+    isFinishingTopicEditRef.current = true;
+    isEditingTopicRef.current = false;
+    setForceTopicReadMode(false);
     // Clear any pending save timeout
     if (topicSaveTimeoutRef.current) {
       clearTimeout(topicSaveTimeoutRef.current);
       topicSaveTimeoutRef.current = null;
     }
     // Final save if content changed
-    const currentContent = topicEditor?.getHTML() || topicContent;
+    const liveOverrides = collectLiveAppFrameOverrides();
+    const mergedOverrides = new Map(latestAppFrameDataRef.current);
+    liveOverrides.forEach((value, key) => mergedOverrides.set(key, value));
+    const iframeOverrides = collectIframeAppFrameOverrides();
+    iframeOverrides.forEach((value, key) => mergedOverrides.set(key, value));
+    const fallbackTitle = editingTopicTitleRef.current || 'Untitled';
+    const serializedContent = ensureTopicTitleHeading(
+      serializeEditorContent(topicEditor, topicContent),
+      fallbackTitle
+    );
+    const currentContent = replaceTopicTitleHeading(
+      hydrateAppFrameFigures(applyLiveAppFrameOverrides(serializedContent, mergedOverrides)),
+      fallbackTitle
+    );
+    if (typeof window !== 'undefined') {
+      const finishDebug = {
+        serializedContent,
+        currentContent,
+        topicContentState: topicContent,
+        eventOverrides: Array.from(latestAppFrameDataRef.current.entries()),
+        liveOverrides: Array.from(liveOverrides.entries()),
+        iframeOverrides: Array.from(iframeOverrides.entries()),
+        mergedOverrides: Array.from(mergedOverrides.entries()),
+      };
+      (window as any).__RIZZOMA_LAST_FINISH_DEBUG = finishDebug;
+      try {
+        window.sessionStorage.setItem('__RIZZOMA_LAST_FINISH_DEBUG', JSON.stringify(finishDebug));
+      } catch {
+        // Best-effort debug snapshot only.
+      }
+    }
+    latestTopicContentRef.current = currentContent;
+    const finalTitle = fallbackTitle;
+    if (finalTitle) {
+      setTopic(prev => prev ? { ...prev, title: finalTitle, content: currentContent } : prev);
+    }
     if (currentContent !== lastSavedContentRef.current) {
-      autoSaveTopicContent(currentContent);
+      lastSavedContentRef.current = currentContent;
+      void ensureCsrf()
+        .then((token) =>
+          fetch(`/api/topics/${encodeURIComponent(id)}`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: {
+              'content-type': 'application/json',
+              ...(token ? { 'x-csrf-token': token } : {}),
+            },
+            body: JSON.stringify({ title: finalTitle, content: currentContent }),
+          })
+        )
+        .then((response) => {
+          if (!response?.ok) {
+            lastSavedContentRef.current = '';
+          }
+        })
+        .catch(() => {
+          lastSavedContentRef.current = '';
+        });
     }
     setIsEditingTopic(false);
     if (topicEditor) {
       topicEditor.setEditable(false);
     }
-  }, [autoSaveTopicContent, topicContent, topicEditor]);
+  }, [id, topic?.title, topicContent, topicEditor]);
+
+  useEffect(() => {
+    if (showTopicEditMode || !topicContentViewRef.current || !topicContentInnerRef.current) {
+      return;
+    }
+    topicContentInnerRef.current.innerHTML = topicContentHtmlBase || '';
+    hydrateAppFrameFigureElements(topicContentViewRef.current);
+  }, [showTopicEditMode, topicContentHtmlBase]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    (window as any).__RIZZOMA_TOPIC_EDITOR_DEBUG = {
+      isEditingTopic,
+      forceTopicReadMode,
+      showTopicEditMode,
+      hasTopicEditor: !!topicEditor,
+      topicEditorEditable: topicEditor?.isEditable ?? null,
+      topicEditorHtml: topicEditor?.getHTML?.() ?? null,
+      topicContentState: topicContent,
+      pendingBootstrap: pendingTopicBootstrapRef.current,
+      bootstrapping: bootstrappingTopicEditRef.current,
+      topicContentHtmlBase,
+      viewSeedHtml: extractTopicEditSeedHtml(topicContentInnerRef.current),
+    };
+  }, [isEditingTopic, forceTopicReadMode, showTopicEditMode, topicEditor, topicContent, topicContentHtmlBase]);
 
   if (error) {
     return (
@@ -1011,11 +1679,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   }
 
   const tags = extractTags(topic.content || '');
-  const inlineRootBlips = blips.filter(b => typeof b.anchorPosition === 'number');
+  const inlineRootBlips = topicInlineRootBlips;
   const listBlips = blips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
-  const topicContentHtmlBase = topic.content && topic.content.trim().length > 0
-    ? topic.content
-    : `<h1>${topic.title || 'Untitled'}</h1>`;
   // Don't inject markers here — let RizzomaBlip handle it with expanded state tracking
   const topicBlip: BlipData = {
     id: topic.id,
@@ -1026,13 +1691,13 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     updatedAt: topic.updatedAt,
     isRead: true,
     permissions: {
-      canEdit: isAuthed,
-      canComment: isAuthed,
+      canEdit: false,
+      canComment: false,
       canRead: true,
     },
     childBlips: [...listBlips, ...inlineRootBlips],
   };
-  const topicContentOverride = isEditingTopic ? (
+  const topicContentOverride = showTopicEditMode ? (
     <div className="topic-content-edit">
       <EditorContent editor={topicEditor} />
     </div>
@@ -1153,7 +1818,16 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           <div className="subblip-nav-bar">
             <button
               className="subblip-hide-btn"
-              onClick={navigateToParent}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                navigateToParent();
+              }}
               title="Return to parent (Hide)"
             >
               Hide
@@ -1169,23 +1843,47 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             </span>
           </div>
 
-          {/* Subblip content rendered as root */}
-          <div className="subblip-content">
-            <RizzomaBlip
-              key={currentSubblip.id}
-              blip={currentSubblip}
-              isRoot={true}
-              depth={0}
-              onBlipUpdate={handleBlipUpdate}
-              onAddReply={handleAddReply}
-              onToggleCollapse={handleToggleCollapse}
-              onDeleteBlip={handleDeleteBlip}
-              onBlipRead={handleBlipRead}
-              onExpand={handleExpand}
-              expandedBlips={expandedBlips}
-              onNavigateToSubblip={navigateToSubblip}
-              forceExpanded={true}
-            />
+          <div className="subblip-stage">
+            {currentSubblipContext && (
+              <div className="subblip-parent-context">
+                <div className="subblip-context-label">{currentSubblipContext.label}</div>
+                <div className="subblip-parent-row">
+                  <span className="subblip-parent-bullet">•</span>
+                  <div className="subblip-parent-copy">
+                    <div className="subblip-parent-header">
+                      <div className="subblip-parent-title">
+                        {currentSubblipContext.title}
+                      </div>
+                      <div className="subblip-parent-meta">
+                        {currentSubblipContext.meta}
+                      </div>
+                    </div>
+                    <div className="subblip-parent-snippet">
+                      {currentSubblipContext.snippet}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="subblip-focus-shell">
+              <div className="subblip-focus-label">Subblip</div>
+              <RizzomaBlip
+                key={currentSubblip.id}
+                blip={currentSubblip}
+                isRoot={false}
+                depth={1}
+                onBlipUpdate={handleBlipUpdate}
+                onAddReply={handleAddReply}
+                onToggleCollapse={handleToggleCollapse}
+                onDeleteBlip={handleDeleteBlip}
+                onBlipRead={handleBlipRead}
+                onExpand={handleExpand}
+                expandedBlips={expandedBlips}
+                onNavigateToSubblip={navigateToSubblip}
+                forceExpanded={true}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -1198,24 +1896,26 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       ======================================== */}
       {!currentSubblip && (<div className="topic-meta-blip">
         {/* Meta-blip toolbar (like BlipMenu for regular blips) */}
-        <div className={`topic-blip-toolbar ${isEditingTopic ? 'editing' : ''}`}>
+        <div className={`topic-blip-toolbar ${showTopicEditMode ? 'editing' : ''}`}>
           <button
-            className={`topic-tb-btn ${isEditingTopic ? 'active primary' : ''}`}
-            title={isEditingTopic ? 'Done editing (changes auto-saved)' : 'Edit topic content'}
+            className={`topic-tb-btn ${showTopicEditMode ? 'active primary' : ''}`}
+            title={showTopicEditMode ? 'Done editing (changes auto-saved)' : 'Edit topic content'}
             onClick={() => {
-              if (isEditingTopic) {
+              if (shouldSuppressTopicToolbar()) return;
+              if (showTopicEditMode) {
                 finishEditingTopic();
               } else {
                 startEditingTopic();
               }
             }}
           >
-            {isEditingTopic ? 'Done' : 'Edit'}
+            {showTopicEditMode ? 'Done' : 'Edit'}
           </button>
           <button
             className={`topic-tb-btn ${showCommentsPanel ? 'active' : ''}`}
             title={showCommentsPanel ? 'Hide inline comments' : 'Show inline comments'}
             onClick={() => {
+              if (shouldSuppressTopicToolbar()) return;
               setShowCommentsPanel(!showCommentsPanel);
               toast(showCommentsPanel ? 'Comments hidden' : 'Comments shown');
             }}
@@ -1223,11 +1923,12 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             💬
           </button>
           {/* Insert inline comment button - only visible in edit mode */}
-          {isEditingTopic && (
+          {showTopicEditMode && (
             <button
               className="topic-tb-btn insert-comment-btn"
               title="Insert inline comment at cursor (Ctrl+Enter)"
               onClick={() => {
+                if (shouldSuppressTopicToolbar()) return;
                 console.log('[TopicDetail] Insert comment button clicked');
                 console.log('[TopicDetail] topicEditor:', topicEditor);
                 console.log('[TopicDetail] createInlineChildBlipRef.current:', createInlineChildBlipRef.current);
@@ -1254,6 +1955,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             className="topic-tb-btn"
             title="Copy topic link"
             onClick={() => {
+              if (shouldSuppressTopicToolbar()) return;
               const url = `${window.location.origin}/#/topic/${id}`;
               navigator.clipboard.writeText(url).then(() => {
                 toast('Topic link copied');
@@ -1269,7 +1971,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             <button
               className={`topic-tb-btn ${showEditGearMenu ? 'active' : ''}`}
               title="Other options"
-              onClick={() => setShowEditGearMenu(!showEditGearMenu)}
+              onClick={() => {
+                if (shouldSuppressTopicToolbar()) return;
+                setShowEditGearMenu(!showEditGearMenu);
+              }}
             >
               ⚙️
             </button>
@@ -1337,18 +2042,22 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         </div>
 
         {/* Meta-blip body: topic content + child blips in ONE scrollable container */}
-        <div className="topic-blip-body">
+        <div 
+          ref={scrollContainerRef}
+          className="topic-blip-body"
+          onScroll={isPerfLite ? handleScroll : undefined}
+        >
           {isPerfLite ? (
             <>
               <div className="topic-blip-content">
-                {isEditingTopic ? (
+                {showTopicEditMode ? (
                   <div className="topic-content-edit">
                     <EditorContent editor={topicEditor} />
                   </div>
                 ) : (
-                  <div className="topic-content-view">
+                  <div className="topic-content-view" ref={topicContentViewRef}>
                     {topicContentHtmlBase ? (
-                      <div dangerouslySetInnerHTML={{ __html: topicContentHtmlBase }} />
+                      <div ref={topicContentInnerRef} dangerouslySetInnerHTML={{ __html: topicContentHtmlBase }} />
                     ) : (
                       <h1 className="topic-title">{topic.title || 'Untitled'}</h1>
                     )}
@@ -1363,28 +2072,45 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               <div className="topic-blip-children">
                 {(() => {
                   if (!listBlips.length) return null;
+                  
+                  // Virtualization parameters
+                  const ROW_HEIGHT = 32; // Standard height for perf-lite collapsed row
+                  const BUFFER = 5;
+                  
+                  // Calculate total height
+                  const totalHeight = listBlips.length * ROW_HEIGHT;
+                  
+                  // Determine visible range
+                  const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER);
+                  const endIndex = Math.min(listBlips.length, Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) + BUFFER);
+                  
+                  const visibleBlips = listBlips.slice(startIndex, endIndex);
+                  const topPadding = startIndex * ROW_HEIGHT;
+
                   return (
-                    <div className="blip-list">
-                      {listBlips.map((blip) => {
-                        const text = blip.content
-                          ? blip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-                          : '';
-                        const label = text
-                          ? text.length > 80
-                            ? `${text.slice(0, 80)}…`
-                            : text
-                          : (blip.authorName || 'Blip');
-                        const hasUnread = !blip.isRead;
-                        return (
-                          <div key={blip.id} className="rizzoma-blip perf-blip-row" data-blip-id={blip.id}>
-                            <div className={`blip-collapsed-row perf-collapsed ${hasUnread ? 'has-unread' : ''}`}>
-                              <span className="blip-bullet">•</span>
-                              <span className="blip-collapsed-label-text">{label}</span>
-                              <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>+</span>
+                    <div className="blip-list-virtual" style={{ height: totalHeight, position: 'relative' }}>
+                      <div style={{ transform: `translateY(${topPadding}px)` }}>
+                        {visibleBlips.map((blip) => {
+                          const text = blip.content
+                            ? blip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+                            : '';
+                          const label = text
+                            ? text.length > 80
+                              ? `${text.slice(0, 80)}…`
+                              : text
+                            : (blip.authorName || 'Blip');
+                          const hasUnread = !blip.isRead;
+                          return (
+                            <div key={blip.id} className="rizzoma-blip perf-blip-row" data-blip-id={blip.id} style={{ height: ROW_HEIGHT }}>
+                              <div className={`blip-collapsed-row perf-collapsed ${hasUnread ? 'has-unread' : ''}`}>
+                                <span className="blip-bullet">•</span>
+                                <span className="blip-collapsed-label-text">{label}</span>
+                                <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>+</span>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })()}
@@ -1397,6 +2123,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               blip={topicBlip}
               isRoot={true}
               depth={0}
+              isPerfLite={isPerfLite}
               onBlipUpdate={handleBlipUpdate}
               onAddReply={handleAddReply}
               onToggleCollapse={handleToggleCollapse}

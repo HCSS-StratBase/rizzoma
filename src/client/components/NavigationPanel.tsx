@@ -1,3 +1,13 @@
+import { 
+  FileText, 
+  AtSign, 
+  CheckSquare, 
+  Globe, 
+  ShoppingBag, 
+  Users, 
+  Plus, 
+  HelpCircle 
+} from 'lucide-react';
 import { FEATURES } from '@shared/featureFlags';
 import './NavigationPanel.css';
 
@@ -17,7 +27,7 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, 
           className="nav-button new-button"
           onClick={onNewClick}
         >
-          <span className="icon">+</span>
+          <span className="icon"><Plus size={20} /></span>
           <span className="label">New</span>
         </button>
       </div>
@@ -27,7 +37,7 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, 
           className={`nav-tab ${activeTab === 'topics' ? 'active' : ''}`}
           onClick={() => onTabChange('topics')}
         >
-          <span className="icon">📄</span>
+          <span className="icon" style={{ color: '#64748b' }}><FileText size={20} /></span>
           <span className="label">Topics</span>
         </button>
         
@@ -37,7 +47,7 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, 
               className={`nav-tab ${activeTab === 'mentions' ? 'active' : ''}`}
               onClick={() => onTabChange('mentions')}
             >
-              <span className="icon">@</span>
+              <span className="icon" style={{ color: '#0d9488' }}><AtSign size={20} /></span>
               <span className="label">Mentions</span>
               {(unreadCount ?? 0) > 0 && <span className="badge">{unreadCount}</span>}
             </button>
@@ -47,7 +57,7 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, 
               onClick={() => FEATURES.TASKS && onTabChange('tasks')}
               title={!FEATURES.TASKS ? 'Tasks available for business accounts' : ''}
             >
-              <span className="icon">✓</span>
+              <span className="icon" style={{ color: '#4f46e5' }}><CheckSquare size={20} /></span>
               <span className="label">Tasks</span>
               {!FEATURES.TASKS && <span className="lock">🔒</span>}
             </button>
@@ -58,7 +68,7 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, 
           className={`nav-tab ${activeTab === 'publics' ? 'active' : ''}`}
           onClick={() => onTabChange('publics')}
         >
-          <span className="icon">🌐</span>
+          <span className="icon" style={{ color: '#2563eb' }}><Globe size={20} /></span>
           <span className="label">Publics</span>
         </button>
         
@@ -66,7 +76,7 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, 
           className={`nav-tab ${activeTab === 'store' ? 'active' : ''}`}
           onClick={() => onTabChange('store')}
         >
-          <span className="icon">🛒</span>
+          <span className="icon" style={{ color: '#d97706' }}><ShoppingBag size={20} /></span>
           <span className="label">Store</span>
         </button>
         
@@ -74,14 +84,14 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, 
           className={`nav-tab ${activeTab === 'teams' ? 'active' : ''}`}
           onClick={() => onTabChange('teams')}
         >
-          <span className="icon">👥</span>
+          <span className="icon" style={{ color: '#7c3aed' }}><Users size={20} /></span>
           <span className="label">Teams</span>
         </button>
       </div>
       
       <div className="nav-footer">
         <button className="nav-help">
-          <span className="icon">?</span>
+          <span className="icon"><HelpCircle size={20} /></span>
           <span className="label">Help</span>
         </button>
       </div>

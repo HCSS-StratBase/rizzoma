@@ -1,0 +1,122 @@
+{
+  "topicId": "9012be97aa78eaa471f308772c0ff257",
+  "base": "http://127.0.0.1:4203",
+  "timestamp": "2026-04-01T02:07:43.362Z",
+  "steps": [
+    {
+      "step": "topic_loaded",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass43/01-topic-loaded.png",
+      "html": "screenshots/260401-inline-comment-audit-pass43/01-topic-loaded.html"
+    },
+    {
+      "step": "topic_edit_mode",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass43/02-topic-edit-mode.png",
+      "html": "screenshots/260401-inline-comment-audit-pass43/02-topic-edit-mode.html"
+    },
+    {
+      "step": "after_ctrl_enter",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass43/03-after-ctrl-enter.png",
+      "html": "screenshots/260401-inline-comment-audit-pass43/03-after-ctrl-enter.html"
+    },
+    {
+      "step": "subblip_done_mode",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass43/04-subblip-done-mode.png",
+      "html": "screenshots/260401-inline-comment-audit-pass43/04-subblip-done-mode.html"
+    },
+    {
+      "step": "after_hide_click",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass43/05-after-hide-click.png",
+      "html": "screenshots/260401-inline-comment-audit-pass43/05-after-hide-click.html"
+    },
+    {
+      "step": "returned_to_topic",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass43/06-returned-to-topic.png",
+      "html": "screenshots/260401-inline-comment-audit-pass43/06-returned-to-topic.html"
+    },
+    {
+      "step": "after_marker_click",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass43/07-after-marker-click.png",
+      "html": "screenshots/260401-inline-comment-audit-pass43/07-after-marker-click.html"
+    }
+  ],
+  "summary": {
+    "markerCount": 0,
+    "subblipEditorVisible": true,
+    "subblipReadVisible": false,
+    "subblipBodyHtml": "<p><br class=\"ProseMirror-trailingBreak\"></p>",
+    "parentReturnedInEditMode": false
+  },
+  "afterCtrlEnterState": {
+    "url": "http://127.0.0.1:4203/#/topic/9012be97aa78eaa471f308772c0ff257/b1775009255184/",
+    "hash": "#/topic/9012be97aa78eaa471f308772c0ff257/b1775009255184/",
+    "hasTopicContentView": false,
+    "hasTopicContentEdit": false,
+    "hasSubblipView": true,
+    "topicEditorDebug": {
+      "isEditingTopic": false,
+      "forceTopicReadMode": true,
+      "showTopicEditMode": false,
+      "hasTopicEditor": true,
+      "topicEditorEditable": false,
+      "topicEditorHtml": "<h1>Inline comment audit 1775009252922</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0ff257:b1775009255184\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "topicContentState": "<h1>Inline comment audit 1775009252922</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0ff257:b1775009255184\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "pendingBootstrap": null,
+      "bootstrapping": false,
+      "topicContentHtmlBase": "<h1>Inline comment audit 1775009252922</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0ff257:b1775009255184\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "viewSeedHtml": ""
+    }
+  },
+  "subblipDoneState": {
+    "url": "http://127.0.0.1:4203/#/topic/9012be97aa78eaa471f308772c0ff257/b1775009255184/",
+    "hash": "#/topic/9012be97aa78eaa471f308772c0ff257/b1775009255184/",
+    "hasTopicContentView": false,
+    "hasTopicContentEdit": false,
+    "hasSubblipView": true,
+    "topicEditorDebug": {
+      "isEditingTopic": false,
+      "forceTopicReadMode": true,
+      "showTopicEditMode": false,
+      "hasTopicEditor": true,
+      "topicEditorEditable": false,
+      "topicEditorHtml": "<h1>Inline comment audit 1775009252922</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0ff257:b1775009255184\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "topicContentState": "<h1>Inline comment audit 1775009252922</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0ff257:b1775009255184\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "pendingBootstrap": null,
+      "bootstrapping": false,
+      "topicContentHtmlBase": "<h1>Inline comment audit 1775009252922</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0ff257:b1775009255184\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "viewSeedHtml": ""
+    }
+  },
+  "afterHideState": {
+    "url": "http://127.0.0.1:4203/#/topic/9012be97aa78eaa471f308772c0ff257",
+    "hash": "#/topic/9012be97aa78eaa471f308772c0ff257",
+    "hasTopicContentView": true,
+    "hasTopicContentEdit": false,
+    "hasSubblipView": false,
+    "topicToolbarEditing": false,
+    "topicToolbarButtons": [
+      "Edit",
+      "💬",
+      "🔗",
+      "⚙️"
+    ],
+    "markerCount": 1,
+    "editMarkerCount": 0,
+    "topicContentHtml": "<h1>Inline comment audit 1775009252922</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0ff257:b1775009255184\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+    "topicEditHtml": "",
+    "topicEditorDebug": {
+      "isEditingTopic": false,
+      "forceTopicReadMode": true,
+      "showTopicEditMode": false,
+      "hasTopicEditor": true,
+      "topicEditorEditable": false,
+      "topicEditorHtml": "<h1>Inline comment audit 1775009252922</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0ff257:b1775009255184\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "topicContentState": "<h1>Inline comment audit 1775009252922</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0ff257:b1775009255184\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "pendingBootstrap": null,
+      "bootstrapping": false,
+      "topicContentHtmlBase": "<h1>Inline comment audit 1775009252922</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0ff257:b1775009255184\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "viewSeedHtml": ""
+    }
+  },
+  "urlBeforeMarkerClick": "http://127.0.0.1:4203/#/topic/9012be97aa78eaa471f308772c0ff257",
+  "urlAfterMarkerClick": "http://127.0.0.1:4203/#/topic/9012be97aa78eaa471f308772c0ff257/b1775009255184/"
+}

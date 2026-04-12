@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kanban Board Preview</title>
+    <link rel="stylesheet" href="../shared-styles.css" />
+    <style>
+      body {
+        background:
+          radial-gradient(circle at top right, rgba(16, 185, 129, 0.14), transparent 28%),
+          linear-gradient(180deg, #f8fbfd, #edf4f7);
+      }
+      .board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; flex: 1; }
+      .column { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 18px; background: rgba(255, 255, 255, 0.86); border: 1px solid rgba(136, 156, 178, 0.18); box-shadow: 0 16px 30px rgba(15, 23, 42, 0.06); }
+      .column-title { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #1d4c61; }
+      .card { padding: 12px 12px 13px; border-radius: 14px; background: linear-gradient(180deg, rgba(248, 252, 254, 0.98), rgba(235, 244, 248, 0.94)); border: 1px solid rgba(151, 173, 196, 0.2); color: #183247; font-size: 13px; line-height: 1.45; }
+      @media (max-width: 840px) { .board { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script type="module">
+      import { createPreviewApp } from '../app-shell.js';
+
+      function renderBoard(container, data) {
+        const board = document.createElement('div');
+        board.className = 'board';
+        const columns = Array.isArray(data.columns) ? data.columns : [];
+        columns.forEach((column) => {
+          const columnEl = document.createElement('section');
+          columnEl.className = 'column';
+          const title = document.createElement('div');
+          title.className = 'column-title';
+          title.textContent = column.title;
+          columnEl.appendChild(title);
+
+          (Array.isArray(column.cards) ? column.cards : []).forEach((card) => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            cardEl.textContent = card;
+            columnEl.appendChild(cardEl);
+          });
+          board.appendChild(columnEl);
+        });
+        container.appendChild(board);
+      }
+
+      createPreviewApp({
+        title: 'Kanban Board',
+        accent: '#0f766e',
+        description: 'This preview is mounted through the reusable app-frame shell and reads its initial state from the topic host.',
+        toolbarNote: 'One small interaction proves the host bridge can update node data.',
+        actionLabel: 'Add sample card',
+        initialHeight: 520,
+        initialData: { columns: [] },
+        render: renderBoard,
+        onAction(data) {
+          const columns = Array.isArray(data.columns) ? data.columns : [];
+          return {
+            columns: columns.map((column, idx) => idx === 0
+              ? { ...column, cards: [...column.cards, `Sample card ${column.cards.length + 1}`] }
+              : column),
+          };
+        },
+      });
+    </script>
+  </body>
+</html>

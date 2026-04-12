@@ -1,0 +1,28 @@
+{
+  "topicId": "9012be97aa78eaa471f308772c0d72e3",
+  "base": "http://127.0.0.1:4200",
+  "timestamp": "2026-03-31T21:20:26.479Z",
+  "steps": [
+    {
+      "step": "topic_loaded",
+      "screenshot": "screenshots/260331-inline-comment-audit-pass2/01-topic-loaded.png",
+      "html": "screenshots/260331-inline-comment-audit-pass2/01-topic-loaded.html"
+    },
+    {
+      "step": "topic_edit_mode",
+      "screenshot": "screenshots/260331-inline-comment-audit-pass2/02-topic-edit-mode.png",
+      "html": "screenshots/260331-inline-comment-audit-pass2/02-topic-edit-mode.html"
+    },
+    {
+      "step": "after_ctrl_enter",
+      "screenshot": "screenshots/260331-inline-comment-audit-pass2/03-after-ctrl-enter.png",
+      "html": "screenshots/260331-inline-comment-audit-pass2/03-after-ctrl-enter.html"
+    }
+  ],
+  "summary": {
+    "markerCount": 1,
+    "inlineExpandedCount": 0,
+    "rootChildCount": 0,
+    "topicEditorHtml": "<h1>Inline comment audit 1774992022134</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0d72e3:b1774992024418\" class=\"blip-thread-marker\" contenteditable=\"false\" style=\"\">+</span><img class=\"ProseMirror-separator\" alt=\"\"><br class=\"ProseMirror-trailingBreak\"></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>"
+  }
+}

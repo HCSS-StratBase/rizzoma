@@ -1,0 +1,117 @@
+{
+  "topicId": "9012be97aa78eaa471f308772c0f8900",
+  "base": "http://127.0.0.1:4201",
+  "timestamp": "2026-03-31T22:46:31.303Z",
+  "steps": [
+    {
+      "step": "topic_loaded",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass36/01-topic-loaded.png",
+      "html": "screenshots/260401-inline-comment-audit-pass36/01-topic-loaded.html"
+    },
+    {
+      "step": "topic_edit_mode",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass36/02-topic-edit-mode.png",
+      "html": "screenshots/260401-inline-comment-audit-pass36/02-topic-edit-mode.html"
+    },
+    {
+      "step": "after_ctrl_enter",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass36/03-after-ctrl-enter.png",
+      "html": "screenshots/260401-inline-comment-audit-pass36/03-after-ctrl-enter.html"
+    },
+    {
+      "step": "subblip_done_mode",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass36/04-subblip-done-mode.png",
+      "html": "screenshots/260401-inline-comment-audit-pass36/04-subblip-done-mode.html"
+    },
+    {
+      "step": "after_hide_click",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass36/05-after-hide-click.png",
+      "html": "screenshots/260401-inline-comment-audit-pass36/05-after-hide-click.html"
+    },
+    {
+      "step": "returned_to_topic",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass36/06-returned-to-topic.png",
+      "html": "screenshots/260401-inline-comment-audit-pass36/06-returned-to-topic.html"
+    },
+    {
+      "step": "after_marker_click",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass36/07-after-marker-click.png",
+      "html": "screenshots/260401-inline-comment-audit-pass36/07-after-marker-click.html"
+    }
+  ],
+  "summary": {
+    "markerCount": 0,
+    "subblipEditorVisible": false,
+    "subblipReadVisible": true,
+    "subblipBodyHtml": "<p>Inline subblip body created from Ctrl+Enter.</p>",
+    "parentReturnedInEditMode": false
+  },
+  "afterCtrlEnterState": {
+    "url": "http://127.0.0.1:4201/#/topic/9012be97aa78eaa471f308772c0f8900/b1774997181002/",
+    "hash": "#/topic/9012be97aa78eaa471f308772c0f8900/b1774997181002/",
+    "hasTopicContentView": false,
+    "hasTopicContentEdit": false,
+    "hasSubblipView": true,
+    "topicEditorDebug": {
+      "isEditingTopic": true,
+      "hasTopicEditor": true,
+      "topicEditorEditable": true,
+      "topicEditorHtml": "<h1>Inline comment audit 1774997178799</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0f8900:b1774997181002\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "topicContentState": "<h1>Inline comment audit 1774997178799</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0f8900:b1774997181002\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "pendingBootstrap": null,
+      "bootstrapping": false,
+      "topicContentHtmlBase": "<h1>Inline comment audit 1774997178799</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0f8900:b1774997181002\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "viewSeedHtml": ""
+    }
+  },
+  "subblipDoneState": {
+    "url": "http://127.0.0.1:4201/#/topic/9012be97aa78eaa471f308772c0f8900/b1774997181002/",
+    "hash": "#/topic/9012be97aa78eaa471f308772c0f8900/b1774997181002/",
+    "hasTopicContentView": false,
+    "hasTopicContentEdit": false,
+    "hasSubblipView": true,
+    "topicEditorDebug": {
+      "isEditingTopic": true,
+      "hasTopicEditor": true,
+      "topicEditorEditable": true,
+      "topicEditorHtml": "<h1>Inline comment audit 1774997178799</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0f8900:b1774997181002\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "topicContentState": "<h1>Inline comment audit 1774997178799</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0f8900:b1774997181002\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "pendingBootstrap": null,
+      "bootstrapping": false,
+      "topicContentHtmlBase": "<h1>Inline comment audit 1774997178799</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0f8900:b1774997181002\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "viewSeedHtml": ""
+    }
+  },
+  "afterHideState": {
+    "url": "http://127.0.0.1:4201/#/topic/9012be97aa78eaa471f308772c0f8900",
+    "hash": "#/topic/9012be97aa78eaa471f308772c0f8900",
+    "hasTopicContentView": false,
+    "hasTopicContentEdit": true,
+    "hasSubblipView": false,
+    "topicToolbarEditing": true,
+    "topicToolbarButtons": [
+      "Done",
+      "💬",
+      "💬+",
+      "🔗",
+      "⚙️"
+    ],
+    "markerCount": 0,
+    "editMarkerCount": 1,
+    "topicContentHtml": "",
+    "topicEditHtml": "<div><div contenteditable=\"true\" translate=\"no\" class=\"tiptap ProseMirror prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none\" tabindex=\"0\" style=\"\"><h1>Inline comment audit 1774997178799</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0f8900:b1774997181002\" class=\"blip-thread-marker\" contenteditable=\"false\" style=\"\">+</span><img class=\"ProseMirror-separator\" alt=\"\"><br class=\"ProseMirror-trailingBreak\"></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p></div></div>",
+    "topicEditorDebug": {
+      "isEditingTopic": true,
+      "hasTopicEditor": true,
+      "topicEditorEditable": true,
+      "topicEditorHtml": "<h1>Inline comment audit 1774997178799</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0f8900:b1774997181002\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "topicContentState": "<h1>Inline comment audit 1774997178799</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0f8900:b1774997181002\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "pendingBootstrap": null,
+      "bootstrapping": false,
+      "topicContentHtmlBase": "<h1>Inline comment audit 1774997178799</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0f8900:b1774997181002\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "viewSeedHtml": ""
+    }
+  },
+  "urlBeforeMarkerClick": "http://127.0.0.1:4201/#/topic/9012be97aa78eaa471f308772c0f8900",
+  "urlAfterMarkerClick": "http://127.0.0.1:4201/#/topic/9012be97aa78eaa471f308772c0f8900/b1774997181002/"
+}

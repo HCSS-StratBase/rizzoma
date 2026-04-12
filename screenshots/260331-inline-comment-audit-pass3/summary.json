@@ -1,0 +1,40 @@
+{
+  "topicId": "9012be97aa78eaa471f308772c0d9a2e",
+  "base": "http://127.0.0.1:4200",
+  "timestamp": "2026-03-31T21:22:11.735Z",
+  "steps": [
+    {
+      "step": "topic_loaded",
+      "screenshot": "screenshots/260331-inline-comment-audit-pass3/01-topic-loaded.png",
+      "html": "screenshots/260331-inline-comment-audit-pass3/01-topic-loaded.html"
+    },
+    {
+      "step": "topic_edit_mode",
+      "screenshot": "screenshots/260331-inline-comment-audit-pass3/02-topic-edit-mode.png",
+      "html": "screenshots/260331-inline-comment-audit-pass3/02-topic-edit-mode.html"
+    },
+    {
+      "step": "after_ctrl_enter",
+      "screenshot": "screenshots/260331-inline-comment-audit-pass3/03-after-ctrl-enter.png",
+      "html": "screenshots/260331-inline-comment-audit-pass3/03-after-ctrl-enter.html"
+    },
+    {
+      "step": "done_mode",
+      "screenshot": "screenshots/260331-inline-comment-audit-pass3/04-done-mode.png",
+      "html": "screenshots/260331-inline-comment-audit-pass3/04-done-mode.html"
+    },
+    {
+      "step": "after_marker_click",
+      "screenshot": "screenshots/260331-inline-comment-audit-pass3/05-after-marker-click.png",
+      "html": "screenshots/260331-inline-comment-audit-pass3/05-after-marker-click.html"
+    }
+  ],
+  "summary": {
+    "markerCount": 0,
+    "inlineExpandedCount": 0,
+    "rootChildCount": 0,
+    "topicEditorHtml": ""
+  },
+  "urlBeforeMarkerClick": "http://127.0.0.1:4200/#/topic/9012be97aa78eaa471f308772c0d9a2e?layout=rizzoma",
+  "urlAfterMarkerClick": "http://127.0.0.1:4200/#/topic/9012be97aa78eaa471f308772c0d9a2e/b1774992126622/"
+}
