@@ -440,22 +440,28 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.94);
 }
 
+/* Hard Gap #10 (2026-04-13): the topic title must read as the first line
+   of the same meta-blip content surface, not as a detached card header.
+   Original Rizzoma's title is ~17px / 600 weight, sits inline with the body
+   typography rhythm, and flows directly into the next paragraph with only a
+   single line of spacing — no oversized banner, no negative letter-spacing,
+   no enlarged line-height. */
 .topic-content-view h1 {
-  margin: 0;
+  margin: 0 0 4px 0;
   padding: 0 18px;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 600;
   color: #12273d;
-  line-height: 1.18;
-  letter-spacing: -0.02em;
+  line-height: 1.35;
+  letter-spacing: 0;
 }
 
 .topic-content-view p {
-  margin: 10px 0 0 0;
+  margin: 4px 0 0 0;
   padding: 0 18px;
   font-size: 14px;
   color: #253d53;
-  line-height: 1.68;
+  line-height: 1.55;
 }
 
 .topic-content-view p:first-child {
