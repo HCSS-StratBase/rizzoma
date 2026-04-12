@@ -22,9 +22,12 @@
 }
 
 .rizzoma-blip.nested-blip {
+  /* Hard Gap #13 (2026-04-13): the indent rail is the structural cue for
+     "this is a nested reply under the parent." Tightened margin so siblings
+     sit closer together (reads as a list, not a stack of cards). */
   border-left: 2px solid rgba(136, 155, 177, 0.34);
   padding-left: 14px;
-  margin-top: 12px;
+  margin-top: 4px;
 }
 
 .blip-expander {
@@ -812,9 +815,12 @@
   background-color: #e0e0e0;
 }
 
-/* Child Blips */
+/* Child Blips
+   Hard Gap #13 (2026-04-13): the child-blips container is the indent rail
+   that visually subordinates a thread to its parent. Tightened margin-top
+   so the first child sits one line below the parent body, not behind a gap. */
 .child-blips {
-  margin-top: 14px;
+  margin-top: 6px;
   margin-left: 18px;
   border-left: 2px solid rgba(131, 151, 173, 0.32);
   padding-left: 14px;
@@ -828,20 +834,26 @@
 
 /* Child blip wrapper */
 .child-blip-wrapper {
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
-/* Collapsed child blip row - inline like original Rizzoma: • Label [+] */
+/* Collapsed child blip row - inline like original Rizzoma: • Label [+]
+   Hard Gap #13 (2026-04-13): the collapsed nested reply must read as a
+   list item under the parent's indent rail, NOT as a floating padded card.
+   Original Rizzoma renders nested replies as flat bulleted rows that
+   inherit their structural subordination from the parent's indent rail
+   (.child-blips border-left), not from a per-row card with its own border
+   and shadow. */
 .child-blip-collapsed {
-  padding: 7px 9px;
+  padding: 3px 0 3px 0;
   cursor: pointer;
-  border-radius: 8px;
   transition: background-color 0.15s ease;
   font-size: 14px;
   line-height: 1.5;
-  background: rgba(248, 251, 253, 0.98);
-  border: 1px solid rgba(196, 209, 223, 0.72);
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.028);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .child-blip-collapsed .blip-bullet {
@@ -851,17 +863,14 @@
 }
 
 .child-blip-collapsed:hover {
-  background-color: rgba(239, 247, 253, 0.99);
+  background-color: rgba(239, 247, 253, 0.6);
 }
 
 .child-blip-collapsed.has-unread {
-  background: linear-gradient(90deg, rgba(232, 247, 239, 0.98), rgba(248, 252, 249, 0.94));
-  box-shadow:
-    inset 2px 0 0 #2e8b57,
-    0 6px 14px rgba(33, 71, 51, 0.05);
-  border-color: rgba(131, 180, 151, 0.45);
-  border-left: none;
-  padding-left: 9px;
+  background: transparent;
+  box-shadow: inset 2px 0 0 #2e8b57;
+  border: none;
+  padding-left: 6px;
 }
 
 .child-blip-collapsed.has-unread .blip-bullet {
@@ -1135,14 +1144,20 @@
 ======================================== */
 
 /* Collapsed row - shows only bullet + label + [+] icon inline like live Rizzoma */
+/* Hard Gap #13 (2026-04-13): the collapsed nested reply must read as a
+   list item under the parent's indent rail, NOT as a floating padded card.
+   Original Rizzoma renders nested replies as flat bulleted rows that
+   inherit their structural subordination from the parent's indent rail
+   (.child-blips border-left), not from a per-row card with its own
+   background, border, and rounded corners. */
 .blip-collapsed-row {
-  padding: 8px 10px;
+  padding: 3px 0;
   cursor: pointer;
-  border-radius: 8px;
   transition: background-color 0.15s ease;
   line-height: 1.5;
-  background: rgba(248, 251, 253, 0.98);
-  border: 1px solid rgba(191, 206, 221, 0.74);
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .blip-collapsed-row .blip-bullet {
@@ -1150,8 +1165,7 @@
 }
 
 .blip-collapsed-row:hover {
-  background-color: rgba(234, 244, 252, 0.96);
-  /* Subtle hover - no card effect */
+  background-color: rgba(234, 244, 252, 0.55);
 }
 
 .blip-collapsed-label-text {
