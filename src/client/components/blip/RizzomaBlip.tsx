@@ -275,6 +275,10 @@ interface RizzomaBlipProps {
   isInlineChild?: boolean;
   // Performance: When true, render a minimal version of the blip for large-wave optimization
   isPerfLite?: boolean;
+  // BLB: When true, suppress recursive child rendering and the "Write a reply..." input.
+  // Used by the subblip view's parent preview to avoid duplicating the focused subblip
+  // and its siblings inside the parent context strip.
+  hideChildBlips?: boolean;
 }
 
 type UploadUiState = {
@@ -310,6 +314,7 @@ export function RizzomaBlip({
   onContentClick,
   isInlineChild = false,
   isPerfLite = false,
+  hideChildBlips = false,
 }: RizzomaBlipProps) {
   const onNavigateToSubblip = _onNavigateToSubblip;
   const isPerfMode = typeof window !== 'undefined' && (window.location.hash || '').includes('perf=');
@@ -1954,7 +1959,8 @@ export function RizzomaBlip({
         {contentFooter}
 
         {/* Child Blips (Replies) - BEFORE "Write a reply..." per BLB structure */}
-        {(listChildren && listChildren.length > 0) || childFooter ? (
+        {/* Suppress entirely when hideChildBlips is set (used by subblip parent preview). */}
+        {!hideChildBlips && ((listChildren && listChildren.length > 0) || childFooter) ? (
           <div className={`child-blips${childContainerClassName ? ` ${childContainerClassName}` : ''}`}>
             {listChildren && listChildren.length > 0 && (isTopicRoot ? (
               listChildren.map((childBlip) => (
@@ -2040,7 +2046,8 @@ export function RizzomaBlip({
         ) : null}
 
         {/* Reply Input - at the BOTTOM per BLB structure */}
-        {!isTopicRoot && !isEditing && blip.permissions.canComment && (!isInlineChild || effectiveIsActive || showReplyForm) && (
+        {/* hideChildBlips also suppresses the reply input for the parent preview. */}
+        {!hideChildBlips && !isTopicRoot && !isEditing && blip.permissions.canComment && (!isInlineChild || effectiveIsActive || showReplyForm) && (
           <div className="blip-reply-inline">
             {!showReplyForm ? (
               <input

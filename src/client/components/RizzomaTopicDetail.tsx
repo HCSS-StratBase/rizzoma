@@ -530,23 +530,34 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       ? (allBlipsMap.get(currentSubblip.parentBlipId)?.childBlips?.filter((child) => child.anchorPosition === undefined || child.anchorPosition === null).length || 0)
       : blips.filter((child) => child.anchorPosition === undefined || child.anchorPosition === null).length
     : 0;
-  const currentSubblipContext = useMemo(() => {
-    if (!currentSubblip) return null;
-    if (currentSubblipParent) {
-      return {
-        label: 'Parent thread',
-        title: extractTitleFromContent(currentSubblipParent.content) || 'Untitled parent blip',
-        snippet: extractPlainSnippet(currentSubblipParent.content, 220) || 'No parent preview available.',
-        meta: currentSubblipSiblingCount > 0 ? `${currentSubblipSiblingCount} replies in this thread` : 'Focused thread item',
-      };
-    }
-    return {
-      label: 'Topic context',
-      title: topic?.title?.trim() || 'Untitled topic',
-      snippet: extractPlainSnippet(stripFirstTopicHeading(topic?.content || ''), 220) || 'No topic preview available.',
-      meta: 'Focused inline subblip inside the topic root',
-    };
-  }, [currentSubblip, currentSubblipParent, currentSubblipSiblingCount, topic]);
+  // currentSubblipContext was retired in 2026-04-13 Execution 7 — the parent
+  // preview now renders either as a real RizzomaBlip (when currentSubblipParent
+  // is resolvable) or as the topic content via dangerouslySetInnerHTML (when
+  // the focused subblip is anchored directly under the topic root). Both
+  // branches read straight from `currentSubblipParent` / `topic`, so the
+  // intermediate context object is no longer needed.
+
+  // Sibling navigation: inline children sharing the same parent (topic root or
+  // a specific blip), sorted by anchorPosition. Lets the subblip view step
+  // through multiple anchored inline comments under the same parent without
+  // returning to the topic surface in between.
+  const subblipSiblings = useMemo(() => {
+    if (!currentSubblip) return [] as BlipData[];
+    const candidates: BlipData[] = currentSubblipParent
+      ? (currentSubblipParent.childBlips || [])
+      : topicInlineRootBlips;
+    return candidates
+      .filter((b) => b.anchorPosition !== undefined && b.anchorPosition !== null)
+      .slice()
+      .sort((a, b) => (a.anchorPosition ?? 0) - (b.anchorPosition ?? 0));
+  }, [currentSubblip, currentSubblipParent, topicInlineRootBlips]);
+  const subblipSiblingIndex = currentSubblip
+    ? subblipSiblings.findIndex((s) => s.id === currentSubblip.id)
+    : -1;
+  const prevSubblipSibling = subblipSiblingIndex > 0 ? subblipSiblings[subblipSiblingIndex - 1] : null;
+  const nextSubblipSibling = subblipSiblingIndex >= 0 && subblipSiblingIndex < subblipSiblings.length - 1
+    ? subblipSiblings[subblipSiblingIndex + 1]
+    : null;
 
   // Ref-based callback for creating inline child blips
   // Using a ref so the TipTap extension always gets the latest version
@@ -1832,6 +1843,44 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             >
               Hide
             </button>
+            {/* Sibling navigation: prev/next inline siblings under the same parent */}
+            {subblipSiblings.length > 1 && (
+              <span className="subblip-sibling-nav">
+                <button
+                  className="subblip-sibling-btn subblip-sibling-prev"
+                  type="button"
+                  disabled={!prevSubblipSibling}
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (prevSubblipSibling) navigateToSubblip(prevSubblipSibling);
+                  }}
+                  title={prevSubblipSibling ? `Previous sibling: ${extractTitleFromContent(prevSubblipSibling.content) || 'Subblip'}` : 'No previous sibling'}
+                  aria-label="Previous sibling subblip"
+                >
+                  ‹
+                </button>
+                <span className="subblip-sibling-counter" aria-label="Sibling position">
+                  {subblipSiblingIndex + 1} / {subblipSiblings.length}
+                </span>
+                <button
+                  className="subblip-sibling-btn subblip-sibling-next"
+                  type="button"
+                  disabled={!nextSubblipSibling}
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (nextSubblipSibling) navigateToSubblip(nextSubblipSibling);
+                  }}
+                  title={nextSubblipSibling ? `Next sibling: ${extractTitleFromContent(nextSubblipSibling.content) || 'Subblip'}` : 'No next sibling'}
+                  aria-label="Next sibling subblip"
+                >
+                  ›
+                </button>
+              </span>
+            )}
             <span className="subblip-breadcrumb">
               <a href={`#/topic/${id}`} onClick={(e) => { e.preventDefault(); window.location.hash = `#/topic/${id}`; }}>
                 {topic.title}
@@ -1844,14 +1893,41 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           </div>
 
           <div className="subblip-stage">
-            {currentSubblipContext && (
-              <div className="subblip-parent-context">
-                <div className="subblip-parent-title">
-                  {currentSubblipContext.title}
+            {currentSubblipParent && (
+              <div className="subblip-parent-context subblip-parent-context-blip">
+                <div className="subblip-parent-context-label">
+                  Parent thread
+                  {currentSubblipSiblingCount > 0 && (
+                    <span className="subblip-parent-context-meta"> · {currentSubblipSiblingCount} {currentSubblipSiblingCount === 1 ? 'reply' : 'replies'} in this thread</span>
+                  )}
                 </div>
-                <div className="subblip-parent-snippet">
-                  {currentSubblipContext.snippet}
+                <RizzomaBlip
+                  key={`parent-${currentSubblipParent.id}`}
+                  blip={currentSubblipParent}
+                  isRoot={false}
+                  depth={0}
+                  expandedBlips={expandedBlips}
+                  forceExpanded={true}
+                  hideChildBlips={true}
+                  isInlineChild={true}
+                />
+              </div>
+            )}
+            {!currentSubblipParent && topic && (
+              <div className="subblip-parent-context subblip-parent-context-topic">
+                <div className="subblip-parent-context-label">
+                  Topic context
+                  {subblipSiblings.length > 0 && (
+                    <span className="subblip-parent-context-meta"> · {subblipSiblings.length} anchored {subblipSiblings.length === 1 ? 'comment' : 'comments'} in this topic</span>
+                  )}
                 </div>
+                <div className="subblip-parent-topic-title">
+                  {topic.title?.trim() || 'Untitled topic'}
+                </div>
+                <div
+                  className="subblip-parent-topic-content"
+                  dangerouslySetInnerHTML={{ __html: stripFirstTopicHeading(topic.content || '') || '<p>No topic preview available.</p>' }}
+                />
               </div>
             )}
 

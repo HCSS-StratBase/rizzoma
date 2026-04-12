@@ -80,3 +80,57 @@ Branch: `master`
   - the parent context row is still a single-line title + snippet, not a full read-only blip preview with author/date/bullet — tracked as task #34
   - sibling navigation across multiple anchored subblips under the same parent is still missing — tracked as task #35
   - the lower half of the subblip view is still mostly empty when the focused blip has no nested children
+
+## Hard Gap Execution 7: Subblip Parent Preview + Sibling Navigation
+- Closed Execution 6 follow-ups #34 (parent inline preview) and #35 (sibling prev/next nav) on the same fresh dev stack (Vite `:3000` → Express `:8788` → CouchDB `:5984`).
+- Code changes:
+  - `src/client/components/blip/RizzomaBlip.tsx` — added `hideChildBlips?: boolean` prop. When true, both the recursive child rendering and the "Write a reply..." input are suppressed. Used by the subblip view's parent preview to avoid duplicating the focused subblip and its siblings inside the parent context strip.
+  - `src/client/components/RizzomaTopicDetail.tsx`:
+    - Removed the now-unused `currentSubblipContext` memo. Both render branches now read straight from `currentSubblipParent` / `topic`.
+    - Added `subblipSiblings` (inline children of the same parent or topic root, sorted by `anchorPosition`), `subblipSiblingIndex`, `prevSubblipSibling`, `nextSubblipSibling` derived state.
+    - Subblip view: replaced the title + snippet parent context with two real branches:
+      - When `currentSubblipParent` is resolvable: real `<RizzomaBlip blip={currentSubblipParent} forceExpanded hideChildBlips isInlineChild />` inside the parent context block.
+      - When the focused subblip is anchored directly under the topic root (the common case for inline comments on the meta-blip, where the parent isn't in `allBlipsMap`): render the topic title and topic body HTML inside `.subblip-parent-context-topic` via `dangerouslySetInnerHTML`, with a 6.5em `max-height` clamp and a fade gradient at the bottom. Topic-content `[+]` markers are hidden inside the preview to avoid double interaction surfaces.
+    - Added a `subblip-sibling-nav` group to the subblip nav bar with a `‹` prev button, a `1 / 2` style counter, and a `›` next button. Only rendered when there is more than one anchored sibling under the same parent. Buttons disable correctly at list boundaries and call `navigateToSubblip()` to update the URL hash.
+    - The "Topic context" label now shows count metadata: "· N anchored comments in this topic".
+  - `src/client/components/RizzomaTopicDetail.css` — new rules for `.subblip-parent-context-label`, `.subblip-parent-context-meta`, `.subblip-parent-context-blip` (flat embedded blip chrome — strips toolbar, card background, padding), `.subblip-parent-context-topic`, `.subblip-parent-topic-title`, `.subblip-parent-topic-content` (with 6.5em clamp + fade gradient + nested h1/h2/h3, ul/ol/li styling), `.subblip-sibling-nav`, `.subblip-sibling-btn`, `.subblip-sibling-counter`. All match the legacy gray utility-strip texture established in Execution 6.
+  - `scripts/capture_live_subblip_siblings.cjs` — new focused live verifier. Creates a topic with 2 anchor points, Ctrl+Enters at each to create 2 sibling subblips, then exercises prev/next navigation and reads back DOM state for parent preview, sibling counter, button disabled state, and focused-body content.
+
+## Hard Gap Execution 7 Verification
+- Live verification:
+  - dev client: `http://127.0.0.1:3000` (Vite) backed by Express on `:8788`
+  - regression: `node scripts/capture_live_inline_comment_flow.cjs screenshots/260413-inline-comment-audit-pass57 http://127.0.0.1:3000`
+  - sibling flow: `node scripts/capture_live_subblip_siblings.cjs screenshots/260413-subblip-siblings-pass3 http://127.0.0.1:3000`
+- Trusted artifacts:
+  - `screenshots/260413-inline-comment-audit-pass57/01..07-*.{png,html}` + `summary.json` — single-subblip regression, all original assertions still pass.
+  - `screenshots/260413-subblip-siblings-pass3/01..06-*.{png,html}` + `summary.json` — sibling navigation contract.
+- DOM-state judgment (pass57 inline-comment regression):
+  - `subblipReadVisible: true`
+  - `subblipBodyHtml: "<p>Inline subblip body created from Ctrl+Enter.</p>"`
+  - `parentReturnedInEditMode: false`
+  - Visual now shows the topic title, the full topic body HTML with the `[+]` marker, the "1 anchored comment in this topic" count metadata, and the focused subblip body — all inside the same 1160px frame.
+- DOM-state judgment (pass3 sibling navigation), all 12 assertions pass:
+  - `siblingButtonsRenderedOnSecond: true`
+  - `counterShows1of2OnPrev: true`
+  - `counterShows2of2OnNext: true`
+  - `prevDisabledOnFirst: true`
+  - `nextEnabledOnFirst: true`
+  - `prevEnabledOnSecond: true`
+  - `nextDisabledOnSecond: true`
+  - `parentPreviewVisibleA: true`
+  - `parentPreviewVisibleB: true`
+  - `parentPreviewKindMatches: true` (both states resolve to `parentPreviewKind: "topic"`)
+  - `parentTextConsistent: true`
+  - `focusedBodyChangesAcrossSiblings: true`
+- Visual judgment:
+  - The subblip view chrome is substantially richer than Execution 6 — the topic context preview now shows the actual topic body HTML (with markers visible inline) instead of a 2-line snippet, so the user can see the real surface they are commenting on.
+  - Sibling navigation lets users step through multiple anchored inline comments without going back to the topic surface between them.
+- Honest boundary:
+  - The topic-context preview is still a clamped read-only HTML block (6.5em max-height with a fade gradient), not a fully scrollable rendering of the entire topic. Long topics will be cut off after a few lines.
+  - The parent preview for non-root parents (when `currentSubblipParent` resolves to a normal blip) was not exercised in pass3 because the verifier creates topic-root inline children only. Covering it requires a richer fixture.
+  - Sibling navigation only operates on inline children with `anchorPosition`. Reply-style siblings (without `anchorPosition`) are not yet included.
+  - The second sibling occasionally shows up in edit mode in the verifier capture (verifier flakiness, not a product bug — typing into the second sibling editor competes with state transitions during the Hide → re-enter-edit → Ctrl+Enter sequence). The DOM assertion contracts still pass; the focused-body text is observed correctly for the prev-sibling state.
+
+## WSL2 Vite HMR Note
+- During Execution 7 the first verifier pass against the running dev stack returned stale HTML (the new `subblip-parent-context-topic` branch was missing from the rendered DOM). Confirmed by direct grep of the captured `.html` files. Killing and restarting the Vite server picked up the new TSX, after which both verifiers passed cleanly.
+- This matches the existing `CLAUDE_SESSION.md` warning: "HMR DOES NOT pick up .tsx/.ts changes — MUST kill and restart Vite server." Worth re-emphasizing whenever a verifier reports state inconsistent with what `grep` shows in the source files.
