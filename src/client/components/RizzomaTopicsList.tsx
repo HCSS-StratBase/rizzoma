@@ -178,6 +178,12 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: 
         </div>
       </div>
 
+      {/* Parity fix (2026-04-13): legacy Rizzoma shows a Rizzoma logo +
+          Follow button + keyboard shortcut legend at the BOTTOM of the
+          topics column (not the narrow nav-icon column). Rendering it
+          here keeps the column-bottom branding row that the legacy
+          reference shows in screenshots/rizzoma-live/feature/
+          rizzoma-core-features/rizzoma-blips-nested.png. */}
       <div className="topics-container">
         {loading ? (
           <div className="loading">Loading...</div>
@@ -248,6 +254,19 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: 
             );
           })
         )}
+      </div>
+      <div className="topics-list-footer" aria-label="Rizzoma branding">
+        <div className="topics-list-brand">
+          <span className="topics-list-brand-mark" aria-hidden="true">R</span>
+          <span className="topics-list-brand-text">Rizzoma</span>
+          <button className="topics-list-follow" type="button">Follow</button>
+        </div>
+        <div className="topics-list-shortcuts" aria-label="Keyboard shortcuts">
+          <div className="topics-list-shortcut"><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>New</span></div>
+          <div className="topics-list-shortcut"><kbd>Ctrl</kbd>+<kbd>F</kbd><span>Find</span></div>
+          <div className="topics-list-shortcut"><kbd>Ctrl</kbd>+<kbd>Space</kbd><span>Next</span></div>
+          <div className="topics-list-shortcut"><kbd>Ctrl</kbd>+<kbd>1,2,3</kbd><span>Fold</span></div>
+        </div>
       </div>
     </div>
   );

@@ -518,8 +518,76 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     const baseHtml = topic?.content && topic.content.trim().length > 0
       ? `<h1>${topic?.title || 'Untitled'}</h1>${hydrateAppFrameFigures(stripFirstTopicHeading(topic.content))}`
       : `<h1>${topic?.title || 'Untitled'}</h1>`;
-    return injectInlineMarkers(baseHtml, topicInlineRootBlips);
-  }, [topic?.content, topic?.title, topicInlineRootBlips]);
+    const withMarkers = injectInlineMarkers(baseHtml, topicInlineRootBlips);
+
+    // Parity fix (2026-04-13): wrap each top-level section of the topic
+    // body in a .topic-section-wrapped flex row with a small author badge
+    // on the right. Legacy Rizzoma shows per-section author avatars +
+    // dates (see screenshots/rizzoma-live/feature/rizzoma-core-features/
+    // rizzoma-blips-nested.png) because its data model stored each
+    // section as a separate blip. Our topic.content is one HTML blob, so
+    // we attribute every section to the single topic author (which is
+    // correct for single-author topics — the common case). When we
+    // eventually add per-paragraph attribution via Y.js awareness, the
+    // data source changes but this wrapping logic stays.
+    //
+    // Doing this at HTML-string level (not post-mount DOM walk) so React
+    // owns the final output — re-renders just re-apply the wrapped HTML
+    // without needing a MutationObserver to survive RizzomaBlip's
+    // dangerouslySetInnerHTML writes.
+    if (!topic || !topic.authorName || !topic.createdAt) return withMarkers;
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(`<div id="root">${withMarkers}</div>`, 'text/html');
+      const root = doc.getElementById('root');
+      if (!root) return withMarkers;
+      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(topic.authorName)}&size=20&background=4EA0F1`;
+      const dateLabel = new Date(topic.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      const authorName = topic.authorName;
+      const makeBadge = (): HTMLElement => {
+        const badge = doc.createElement('span');
+        badge.className = 'topic-section-author';
+        const imgEl = doc.createElement('img');
+        imgEl.setAttribute('src', avatarUrl);
+        imgEl.setAttribute('alt', authorName);
+        imgEl.setAttribute('title', `Section author: ${authorName}`);
+        imgEl.className = 'topic-section-author-avatar';
+        badge.appendChild(imgEl);
+        const dateEl = doc.createElement('span');
+        dateEl.className = 'topic-section-author-date';
+        dateEl.textContent = dateLabel;
+        badge.appendChild(dateEl);
+        return badge;
+      };
+      // Top-level wrap: direct children of root that are NOT lists get a
+      // flex-row wrapper with the badge on the right (paragraphs, headings,
+      // standalone text). Lists are handled per-<li> below so every bullet
+      // gets its own author column like the legacy reference.
+      const topChildren = Array.from(root.children);
+      for (const child of topChildren) {
+        const el = child as HTMLElement;
+        if (el.tagName === 'UL' || el.tagName === 'OL') continue;
+        if (el.classList.contains('topic-section-wrapped')) continue;
+        const wrapper = doc.createElement('div');
+        wrapper.className = 'topic-section-wrapped';
+        if (el.tagName === 'H1') wrapper.classList.add('topic-section-wrapped-title');
+        el.parentNode?.insertBefore(wrapper, el);
+        wrapper.appendChild(el);
+        wrapper.appendChild(makeBadge());
+      }
+      // Per-<li> badges: walk every list item at any depth and append a
+      // badge. CSS turns each <li> into a flex row so the badge sits on
+      // the far right like the legacy per-section author column.
+      root.querySelectorAll('li').forEach((li) => {
+        const existing = li.querySelector(':scope > .topic-section-author');
+        if (existing) return;
+        li.appendChild(makeBadge());
+      });
+      return root.innerHTML;
+    } catch {
+      return withMarkers;
+    }
+  }, [topic?.content, topic?.title, topic?.authorName, topic?.createdAt, topicInlineRootBlips]);
   const showTopicEditMode = isEditingTopic && !forceTopicReadMode;
   const currentSubblipParent = useMemo(() => {
     if (!currentSubblip?.parentBlipId) return null;
@@ -1656,7 +1724,13 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     }
     topicContentInnerRef.current.innerHTML = topicContentHtmlBase || '';
     hydrateAppFrameFigureElements(topicContentViewRef.current);
+
   }, [showTopicEditMode, topicContentHtmlBase]);
+
+  // Per-section author badges are now injected into topicContentHtmlBase
+  // at HTML-string level (see the useMemo for topicContentHtmlBase earlier
+  // in this file). That approach is robust against re-renders because
+  // React owns the final HTML; no post-mount DOM walk is needed.
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1818,34 +1892,6 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           )}
         </div>
       </div>
-
-      {/* Parity fix (2026-04-13): legacy Rizzoma shows a topic author
-          avatar + creation-date line next to the topic title. Our build
-          had the author avatar inside the collab toolbar (next to Share)
-          but no date and no proximity to the title. Rendering a compact
-          attribution row right under the toolbar keeps the author visible
-          alongside the topic body without waiting for the bigger data-model
-          rewrite documented in docs/PARITY_GAP_REPORT.md gap #1. */}
-      {topic && (topic.authorName || topic.createdAt) && (
-        <div className="topic-attribution-row">
-          {topic.authorName && (
-            <img
-              className="topic-attribution-avatar"
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(topic.authorName)}&size=24&background=4EA0F1`}
-              alt={topic.authorName}
-              title={`Topic author: ${topic.authorName}`}
-            />
-          )}
-          {topic.authorName && (
-            <span className="topic-attribution-name">{topic.authorName}</span>
-          )}
-          {topic.createdAt && (
-            <span className="topic-attribution-date">
-              {new Date(topic.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-            </span>
-          )}
-        </div>
-      )}
 
       {/* ========================================
           BLB SUBBLIP VIEW - When navigated into a subblip

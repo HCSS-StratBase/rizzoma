@@ -85,7 +85,27 @@ async function main() {
 
   await login(page, base, "codex-live+1774803822194@example.com", "CodexLive!1");
 
-  const topicTitle = `HCSS Rizzoma Business Topic (parity test)`;
+  // Seed a handful of varied workspace topics BEFORE the main parity
+  // topic, so the topics-list column in the capture shows realistic
+  // variety (not just rows of "HCSS Rizzoma Business Topic (parity
+  // test)"). These make the side-by-side comparison honest against the
+  // legacy rizzoma-blips-nested.png which shows a varied workspace.
+  const workspaceTopics = [
+    { title: "Проста згадка / Space notification", body: "<p>Space / notification placeholder for workspace context.</p>" },
+    { title: "'WACKO!' — The Influence of Russian Historical", body: "<p>Historical narrative research strand.</p>" },
+    { title: "Cossackdom", body: "<p>Cossack identity and historical framing.</p>" },
+    { title: "LLMs", body: "<p>Language model research notes and prompt experiments.</p>" },
+    { title: "LLM Benchmarks", body: "<p>Benchmarks across GPT-4, Claude, Gemini, Mistral.</p>" },
+    { title: "Integrum", body: "<p>Integrum database research extraction notes.</p>" },
+    { title: "Russian-Ukrainian War corpus", body: "<p>Corpus collection for war-related discourse analysis.</p>" },
+    { title: "Коллективный Разум. Развитие.", body: "<p>Коллективный разум — сбор тем и обсуждений.</p>" },
+    { title: "ШКМ. Коллективный разум. сессия 2, 3", body: "<p>ШКМ session 2 and 3 collective-intelligence notes.</p>" },
+  ];
+  for (const t of workspaceTopics) {
+    try { await createTopic(page, t.title, t.body); } catch {}
+  }
+
+  const topicTitle = `HCSS Rizzoma Business Topic`;
   const topicContent = [
     `<h1>${topicTitle}</h1>`,
     `<p>#MetaTopic</p>`,
@@ -127,7 +147,13 @@ async function main() {
 
   await page.goto(`${base}/#/topic/${topicId}?layout=rizzoma`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(".wave-container .rizzoma-topic-detail", { timeout: 30000 });
-  await page.waitForTimeout(2000);
+  // Dispatch refresh-topics so the topics list picks up the freshly
+  // seeded workspace topics (otherwise it shows cached rows from before
+  // this run's seeding step).
+  await page.evaluate(() => {
+    window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+  });
+  await page.waitForTimeout(2500);
 
   // Full-viewport capture (NOT .wave-container cropped). Matches the
   // 1440x900 dimensions of the legacy rizzoma-blips-nested.png reference
@@ -184,6 +210,9 @@ async function main() {
     totalBlipsRendered: document.querySelectorAll(".rizzoma-blip").length,
     blipAuthorDates: document.querySelectorAll(".blip-author-date").length,
     blipContributorsInfo: document.querySelectorAll(".blip-contributors-info").length,
+    topicSectionWraps: document.querySelectorAll(".topic-section-wrapped").length,
+    topicSectionAuthors: document.querySelectorAll(".topic-section-author").length,
+    topicSectionAuthorAvatars: document.querySelectorAll(".topic-section-author-avatar").length,
     h1Count: document.querySelectorAll(".topic-content-view h1").length,
     ulCount: document.querySelectorAll(".topic-content-view ul").length,
     olCount: document.querySelectorAll(".topic-content-view ol").length,

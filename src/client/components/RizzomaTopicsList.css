@@ -249,3 +249,93 @@
 .topics-footer {
   display: none;
 }
+
+/* Parity fix (2026-04-13): Rizzoma branding + Follow + shortcut legend
+   at the bottom of the topics column, matching the legacy
+   rizzoma-blips-nested.png reference. Sits below the scrollable
+   topics-container in the same flex column so it stays anchored. */
+.topics-list-footer {
+  flex: 0 0 auto;
+  padding: 8px 12px 10px 12px;
+  border-top: 1px solid rgba(138, 156, 176, 0.18);
+  background: rgba(244, 248, 252, 0.92);
+}
+
+.topics-list-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.topics-list-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.topics-list-brand-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #29415a;
+  letter-spacing: 0.01em;
+}
+
+.topics-list-follow {
+  margin-left: auto;
+  padding: 3px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0d8f82;
+  background: transparent;
+  border: 1px solid rgba(13, 143, 130, 0.6);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.topics-list-follow:hover {
+  background: rgba(13, 143, 130, 0.08);
+  color: #0a6e64;
+}
+
+.topics-list-shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 8px;
+  font-size: 9px;
+  color: #6e7e92;
+}
+
+.topics-list-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.topics-list-shortcut kbd {
+  display: inline-block;
+  padding: 1px 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 9px;
+  line-height: 1;
+  color: #29415a;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(138, 156, 176, 0.32);
+  border-radius: 3px;
+}
+
+.topics-list-shortcut span {
+  margin-left: 3px;
+  color: #8a9aad;
+}

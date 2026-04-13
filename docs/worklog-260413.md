@@ -179,3 +179,56 @@ Sustained autonomous loop after the user's "i need you to fix it!!!!!" pushback 
 - **20 tasks closed** in this autonomous loop (P0 #10 #11 #12 #13; P1 #14 #17 #36; P2 #19 #21 #22 #18 (partial); P3 #23 #24 #25 #26 #32; P4 #27 #28 #29 #30).
 - **GDrive bundles**: dated snapshots for each commit pushed via `scripts/backup-bundle.sh` — `rizzoma-260413-title-unified.bundle`, `rizzoma-260413-banner-removed.bundle`, `rizzoma-260413-edit-determinism.bundle`, `rizzoma-260413-blb-hierarchy.bundle`, `rizzoma-260413-hard-gap-sweep.bundle`, `rizzoma-260413-verifier-and-ci-sweep.bundle`, `rizzoma-260413-express-sessions-and-routing-sweep.bundle`, `rizzoma-260413-post-p0-cleanup-sweep.bundle`.
 - **Tana flag**: the MCP token expired partway through the sweep. `_tana_pending.md` at the project root documents all the commits since the last successful Tana post; it needs to be flushed at the start of the next session after a token refresh + session restart.
+
+## Late Afternoon Continuation: Parity Sweep (Per-section Authors + Topics-list Footer)
+
+After the cropping fix (#38) exposed that the previous pass1–pass8 captures missed the topic-body author column entirely, I rewrote the parity capture to drive a realistic HCSS-style business topic and ran an 8-pass iteration loop on `screenshots/260413-parity-side-by-side/rizzoma-blips-nested-pass*`.
+
+### What landed
+1. **`GET /api/topics/:id` now hydrates author** — endpoint was returning only `id/title/content/createdAt/updatedAt`, silently breaking the React-side guard. Added a user-doc lookup with `email.split('@')[0]` fallback for users with no `name` field. (`src/server/routes/topics.ts:350`).
+2. **`topicContentHtmlBase` useMemo wraps top-level paragraphs** — paragraphs (not lists) are wrapped in `.topic-section-wrapped` flex rows with a `.topic-section-author` badge on the right, derived from `topic.authorName + topic.createdAt`. (`src/client/components/RizzomaTopicDetail.tsx:517`).
+3. **Per-`<li>` author badges** — the same useMemo also walks every `<li>` descendant at any depth and appends a badge inside it. CSS uses `position: relative` on `<li>` + `position: absolute` on the badge so disc/decimal list-markers stay visible. (`src/client/components/RizzomaTopicDetail.css:536`).
+4. **Topics-list footer with branding + Follow + shortcut legend** — added `.topics-list-footer` to `RizzomaTopicsList.tsx` containing the R monogram + "Rizzoma" wordmark + outlined "Follow" button + a 2×2 shortcut grid (Ctrl+Enter/New, Ctrl+F/Find, Ctrl+Space/Next, Ctrl+1,2,3/Fold). Anchored via `flex: 0 0 auto` so the scrollable topics-container keeps the footer pinned to the bottom of the topics column. Initially landed in `NavigationPanel.tsx` by mistake (wrong column — that's the narrow icon ribbon); moved to `RizzomaTopicsList.tsx` in pass15. (`src/client/components/RizzomaTopicsList.tsx`, `.css`).
+
+### Audit progression
+| Pass | topicSectionWraps | topicSectionAuthors | Notes |
+|------|---|---|---|
+| pass8 (baseline) | 0 | 0 | author endpoint wasn't returning `authorName` |
+| pass9 | 7 | 7 | top-level wrapping landed |
+| pass11 | 5 | 23 | per-`<li>` badges added (5 paragraphs + 18 list items = 23) |
+| pass12 | 5 | 23 | bullets restored via absolute-positioned badges |
+| pass15 | 5 | 23 | topics-list footer with brand + shortcuts in correct column |
+
+### What's still divergent
+- All badges show the same author + date because the data model only stores one author per topic. Differentiated per-section authorship requires either Y.js awareness history walked at load-time or splitting `topic.content` into a stack of section-blip docs.
+- Topics-list shows test-seed garbage (gap #3 in PARITY_GAP_REPORT.md) — data issue, not UI.
+- Color palette skews lighter than legacy (gap #4) — design evolution, not flagged as regression.
+
+### Process notes
+- **Vite HMR does NOT pick up `.tsx` changes** (per `MEMORY.md` + `CLAUDE_SESSION.md`). Lost ~3 verifier passes to stale serves before remembering to manually kill+restart Vite each time.
+- **`tsx --watch` for the backend also flaked** — had to manually `kill` the node process and respawn with `nohup node --import tsx/esm src/server/app.ts` for the topics.ts change to land. WSL2 inotify quirk.
+- All passes 9–15 verified against the realistic HCSS-style topic seeded by `scripts/capture_realistic_topic_parity.cjs` — fullPage screenshots at 1440×900 matching the legacy reference dimensions, no `.wave-container` cropping.
+
+## Late-Evening Close-Out (pass16–pass20)
+
+Built on the pass15 topics-list footer landing. This block closed gaps #2 and #3 from the parity report and sharpened the topic title treatment.
+
+### Pass16: attribution-row duplication removed
+- Deleted the `.topic-attribution-row` block from `RizzomaTopicDetail.tsx`. The collab toolbar already exposes the author avatar, so the extra row below was redundant noise. Legacy shows one author display, not two.
+
+### Pass17/18: topics-list variety
+- Verifier now seeds 9 varied workspace topics (Cyrillic + English) before the main parity topic: ШКМ. Коллективный разум. сессия 2, 3 / Коллективный Разум. Развитие. / Russian-Ukrainian War corpus / Integrum / LLMs / LLM Benchmarks / Cossackdom / 'WACKO!' — The Influence of Russian Historical / Проста згадка / Space notification.
+- After navigation, dispatches `rizzoma:refresh-topics` so the topics-list component picks up the new rows. Without this the list was still serving stale cached data from before the seed step.
+
+### Pass19: title author badge
+- Removed the `H1` skip in the wrapping useMemo. Top-level children (paragraphs AND the title H1) get `.topic-section-wrapped`; lists still get per-`<li>` badges. Audit jumped to `topicSectionWraps: 6, topicSectionAuthors: 24`.
+
+### Pass20: title section polish
+- Added `.topic-section-wrapped-title` modifier with a bit more breathing room (`margin: 2px 0 8px 0; padding-right: 6px`) so the title badge doesn't collide with the H1 text. Full-page capture confirms the shortcut legend (Ctrl+Enter/New, Ctrl+F/Find, Ctrl+Space/Next, Ctrl+1,2,3/Fold) sits properly below the Rizzoma + Follow row in the topics-list column footer.
+
+### Parity status after pass20
+- Gap #1: **partial** — per-section badges on every `<li>` + title + paragraphs (24 total) but all show the same author/date.
+- Gap #2: **fixed** — topics-list footer with brand + Follow + shortcut legend.
+- Gap #3: **fixed** — varied workspace topics in the topics-list column.
+- Gap #4: **punted** — color palette is design evolution, not regression.
+

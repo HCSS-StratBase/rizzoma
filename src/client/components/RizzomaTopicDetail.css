@@ -475,6 +475,86 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.94);
 }
 
+/* Parity fix (2026-04-13): per-section author badges on the topic body.
+   Each top-level section of the rendered topic.content HTML is wrapped
+   in .topic-section-wrapped after mount (see RizzomaTopicDetail.tsx
+   innerHTML effect). The wrapper is a flex row with the section content
+   on the left and a small author-column badge on the right — matches
+   the legacy Rizzoma reply-row pattern. Works on the current
+   single-author topic data model; when we add per-paragraph attribution
+   via Y.js awareness, the data source changes but this CSS stays. */
+.topic-section-wrapped {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 4px 0;
+  padding: 0 18px;
+}
+
+/* Topic-level title section gets a bit more breathing room so the
+   per-title author badge doesn't visually collide with the h1. */
+.topic-section-wrapped-title {
+  margin: 2px 0 8px 0;
+  padding-right: 6px;
+}
+
+.topic-section-wrapped-title > h1 {
+  padding: 0;
+}
+
+.topic-section-wrapped > *:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* Remove the per-element horizontal padding so the flex row owns it */
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.topic-section-author {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 3px;
+  padding-right: 4px;
+}
+
+.topic-section-author-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.topic-section-author-date {
+  font-size: 10px;
+  color: #8a9aad;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Per-<li> badges: legacy Rizzoma shows an author column on every list
+   item (Oneliner, each sub-bullet, each numbered step). We append a
+   .topic-section-author span inside every <li> in the useMemo and then
+   turn each <li> into a flex row that pushes the badge to the far right
+   via margin-left: auto. Keeping the bullet marker visible means we
+   don't touch display on the <li> directly — instead we make the
+   badge absolute-ish-ly float right via margin-left:auto inside the
+   flexible child layout from <p>. Works because TipTap wraps <li>
+   content in <p>, so we style <li> as a flex row and the <p> stays
+   at flex: 1. */
+.topic-content-view li {
+  position: relative;
+  padding-right: 90px;
+}
+
+.topic-content-view li > .topic-section-author {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+}
+
 /* Hard Gap #10 (2026-04-13): the topic title must read as the first line
    of the same meta-blip content surface, not as a detached card header.
    Original Rizzoma's title is ~17px / 600 weight, sits inline with the body

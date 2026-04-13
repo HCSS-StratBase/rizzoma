@@ -1,5 +1,8 @@
 # Parity Gap Report (2026-04-13)
 
+**Status snapshot (post pass20):** the pass18–pass20 captures now visually track the legacy `rizzoma-blips-nested.png` reference across application shell, topics-list content + bottom footer, topic collab toolbar, topic title + body + per-section author badges at every `<li>` depth, right tools panel, and yellow Calendar banner. Gaps #2 and #3 are fully closed. Gap #1 (per-section authorship) is structurally present but shows the same author/date everywhere because the data model only carries one author per topic — differentiated authorship requires Y.js awareness history or the topic→section-blip data-model rewrite. Gap #4 (color palette) remains a design-evolution punt. Final audit: `topicSectionWraps: 6, topicSectionAuthors: 24, topicSectionAuthorAvatars: 24` (H1 + 5 paragraphs + 18 list items), `liCount: 18`, `blipAuthorDates: 3`, `blipContributorsInfo: 3`.
+
+
 Branch: `master`
 Evidence: `screenshots/260413-parity-side-by-side/rizzoma-blips-nested/`
 
@@ -39,27 +42,31 @@ After seeding a realistic topic with the same content shape as the legacy refere
 - My topic body is a single HTML blob stored as `topic.content`. The meta-blip renders through the `.topic-content-view` / `.topic-content-edit` path with no per-section blip structure and no per-paragraph author metadata.
 - The author column now appears on **reply blips** (matches legacy reply rendering), NOT on **topic body sections** (doesn't match legacy because the data model differs).
 
+**Second partial fix landed 2026-04-13 pass9 (`src/client/components/RizzomaTopicDetail.tsx:517` and `src/server/routes/topics.ts:350`):** at the HTML-string level inside `topicContentHtmlBase` useMemo, every top-level section of the topic body (excluding `<h1>`) is wrapped in a `.topic-section-wrapped` flex row with a small `.topic-section-author` badge on the right derived from `topic.authorName` + `topic.createdAt`. Server-side, the `GET /api/topics/:id` endpoint now hydrates `authorName/authorId/authorAvatar` (with `email.split('@')[0]` fallback) — previously it returned only `id/title/content/createdAt/updatedAt`, which silently broke the React-side guard. Pass9 audit: `topicSectionWraps: 7, topicSectionAuthors: 7, topicSectionAuthorAvatars: 7` (was 0/0/0 in pass8). Captured in `screenshots/260413-parity-side-by-side/rizzoma-blips-nested-pass9/current-realistic-topic.png`.
+
+**What's STILL missing after pass9:** legacy shows author markers on each numbered sub-item inside "First steps in Rizzoma" (steps 1–4). Pass9 only wraps top-level direct children of the root container, so nested `<ol><li>` items don't get their own badges. Closing that fully needs either (A) per-paragraph attribution from Y.js awareness history walked when the topic loads, or (B) the data-model rewrite that splits `topic.content` into a vertical stack of section-blip docs. Neither a same-day fix.
+
+**Third partial fix landed 2026-04-13 pass11/12 (`src/client/components/RizzomaTopicDetail.tsx:517` and `.css`):** the useMemo now also walks every `<li>` descendant (any depth) and appends a `.topic-section-author` badge inside it. CSS uses `position: relative` on `<li>` and `position: absolute; right: 8px` on the badge so the disc/decimal list-marker is preserved (an earlier flex attempt killed the bullets). Pass12 audit: `topicSectionWraps: 5, topicSectionAuthors: 23, topicSectionAuthorAvatars: 23` — 5 standalone `<p>` paragraphs + 18 `<li>` items = 23, matching `liCount`. Captured in `screenshots/260413-parity-side-by-side/rizzoma-blips-nested-pass12/current-realistic-topic.png` — every Oneliner sub-bullet, every numbered step (1–4) inside "First steps in Rizzoma", and every standalone paragraph carries an author badge with bullet markers intact.
+
+**What's STILL missing after pass12:** the badges all show the same author + same date because the data model only carries one author per topic. Differentiated per-section authorship still requires the Y.js awareness history walk OR the data-model rewrite (option A or B above). Visual structure now matches; data fidelity is the next step.
+
 **The complete fix requires one of:**
 - (A) Changing the topic data model to store each section as a separate blip rather than as one HTML content blob, then rendering the topic body as a vertical stack of section blips each with its own author column.
 - (B) Keeping the single-blob topic content but adding per-paragraph author attribution derived from Y.js awareness history, then rendering avatars on each paragraph in `.topic-content-view`.
 
 Option A is a data-model rewrite. Option B is a Y.js-integration feature. Neither is a same-day fix. The partial fix above is a meaningful win — reply rows now carry author metadata — but the user should know it doesn't fully close the legacy gap for the topic body itself.
 
-### 2. "Rizzoma" branding + "Follow" button (bottom-left)
+### 2. "Rizzoma" branding + "Follow" button (bottom-left) — **fixed pass15**
 
 **Legacy:** bottom-left corner of the topics list column has a "Rizzoma" logo + a "Follow" button + keyboard-shortcut legend ("Ctrl+Enter", "Ctrl+F", etc.) + Help button.
 
-**Current:** nothing in that area. The topics list ends and there's empty space below it.
+**Fix landed pass15 (`src/client/components/RizzomaTopicsList.tsx` + `.css`):** added a `.topics-list-footer` block at the bottom of the topics column (NOT the narrow icon nav, where I had originally put it in pass13/14 — wrong column). The footer contains a `.topics-list-brand` row (R monogram + "Rizzoma" wordmark + outlined "Follow" button) and a `.topics-list-shortcuts` 2×2 grid (Ctrl+Enter/New, Ctrl+F/Find, Ctrl+Space/Next, Ctrl+1,2,3/Fold). Anchored via `flex: 0 0 auto` so the scrollable `.topics-container` keeps the footer pinned to the bottom of the topics column. Verified in `screenshots/260413-parity-side-by-side/rizzoma-blips-nested-pass15/current-realistic-topic.png` — the brand row is visible at the bottom of the topics column matching the legacy layout.
 
-**Fix scope:** small. Add a `.nav-footer` with the Rizzoma logo and a few keyboard-shortcut hints to `NavigationPanel.tsx`. The logo asset is in `public/icons/` (need to confirm). This is 10-20 lines of JSX + CSS.
-
-### 3. Topics list content is test-seed garbage
+### 3. Topics list content is test-seed garbage — **fixed pass18**
 
 **Legacy:** list shows 15 real workspace topics with Russian/Cyrillic project names, unread counts, last-editor avatars, and dates.
 
-**Current:** list shows 20 "App gadget smoke …", "Inline comment audit …", "BLB asymmetric audit …" topics from today's verifier runs.
-
-**Fix scope:** data issue, not a UI issue. To get a fair capture the verifier should either (a) seed a realistic workspace with 10+ named topics before capturing, or (b) clean up test topics at the end of each run. Does not affect the rendered UI contract — the topics list component works correctly; it's just showing the only data available.
+**Fix landed pass18 (`scripts/capture_realistic_topic_parity.cjs`):** the verifier now seeds a handful of varied workspace topics before the main parity topic (ШКМ. Коллективный разум., Коллективный Разум. Развитие., Russian-Ukrainian War corpus, Integrum, LLMs, LLM Benchmarks, Cossackdom, 'WACKO!' — The Influence of Russian Historical, Проста згадка / Space notification). After navigating to the main topic, it dispatches `rizzoma:refresh-topics` so the topics-list component re-fetches and shows the freshly seeded rows at the top of the list. Captured in `screenshots/260413-parity-side-by-side/rizzoma-blips-nested-pass18/current-realistic-topic.png` — the topics list now reads as a varied workspace matching the legacy reference's Cyrillic project density.
 
 ### 4. Color palette skews lighter/whiter
 
