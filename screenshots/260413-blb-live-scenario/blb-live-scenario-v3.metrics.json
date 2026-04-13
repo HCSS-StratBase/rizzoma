@@ -1,16 +1,17 @@
 {
   "base": "http://127.0.0.1:3000",
-  "topicId": "ff955fcd14cbbf6212be3a9f700163c6",
-  "capturedAt": "2026-04-13T00:54:13.947Z",
+  "topicId": "ff955fcd14cbbf6212be3a9f700178b0",
+  "capturedAt": "2026-04-13T01:33:43.691Z",
   "timings": {
-    "initialLoadMs": 126,
-    "inlineExpandMs": 889,
-    "inlineActivateMs": 4,
-    "mainThreadExpandMs": 69,
-    "primaryExpandMs": 141,
-    "secondaryExpandMs": 186,
-    "primaryActivateMs": 13,
-    "totalScenarioMs": 4787
+    "initialLoadMs": 425,
+    "inlineExpandMs": 808,
+    "inlineRoundTripOk": 1,
+    "inlineActivateMs": 6,
+    "mainThreadExpandMs": 103,
+    "primaryExpandMs": 225,
+    "secondaryExpandMs": 127,
+    "primaryActivateMs": 111,
+    "totalScenarioMs": 5716
   },
   "state": {
     "expandedReplyCount": 3,

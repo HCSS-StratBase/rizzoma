@@ -300,43 +300,46 @@ async function main() {
   );
   timings.initialLoadMs = Date.now() - stepStartedAt;
 
-  // Hard Gap #14 + #36 boundary: this step originally clicked an inline
-  // [+] marker and waited for .inline-child-expanded to render. After Hard
-  // Gap Execution 2 (2026-03-31), marker clicks navigate to the subblip
-  // route instead of toggling inline expansion, so the wait below would
-  // hang forever. Wrapped in try/catch so the rest of the verifier still
-  // runs and emits useful metrics for the list-thread expansion steps.
-  // Tracked as task #36 for a proper rewrite.
+  // Hard Gap #36 (2026-04-13): this step measures the anchored inline
+  // subblip round trip after Hard Gap Execution 2 (2026-03-31) changed
+  // marker clicks from "expand inline in place" to "navigate to subblip
+  // route." The old behavior (inline expansion) no longer exists in the
+  // product. The renamed step measures the subblip-route navigation
+  // round trip specifically: click marker → land in subblip-view → Hide
+  // back to topic → measure total round-trip time.
+  //
+  // The previous #14 try/catch dual-path fallback is now gone; the step
+  // expects the post-Execution-2 behavior and fails loudly if the marker
+  // doesn't navigate to the subblip view.
   const inlineMarker = page.locator('.wave-container .blip-thread-marker.has-unread').first();
   stepStartedAt = Date.now();
-  try {
-    if (await inlineMarker.count()) {
-      await inlineMarker.click();
-      await waitForDenseState(
-        page,
-        () => (
-          document.querySelectorAll('.wave-container .inline-child-expanded > .blip-container.expanded').length >= 1 ||
-          !!document.querySelector('.wave-container .subblip-view')
-        ),
-        undefined,
-        4000,
-      );
+  let inlineRoundTripOk = false;
+  if (await inlineMarker.count()) {
+    await inlineMarker.click();
+    // Wait for the subblip view to mount. If it doesn't, the marker
+    // behavior has regressed and we want to know.
+    await page.waitForSelector('.wave-container .subblip-view', { timeout: 8000 });
+    // Hide back to the topic so subsequent metrics see the topic shell
+    // again (list-thread expansion steps assume we're on the topic).
+    const hideBtn = page.locator('.subblip-view .subblip-hide-btn').first();
+    if (await hideBtn.count()) {
+      await hideBtn.click();
+      await page.waitForSelector('.wave-container .topic-content-view, .wave-container .topic-content-edit', { timeout: 5000 });
+      inlineRoundTripOk = true;
     }
-    // If we landed in subblip view, navigate back to the topic to keep the
-    // rest of the metrics steps consistent with the legacy expectations.
-    if (await page.locator('.wave-container .subblip-view').count()) {
-      const hideBtn = page.locator('.subblip-view .subblip-hide-btn').first();
-      if (await hideBtn.count()) {
-        await hideBtn.click();
-        await page.waitForSelector('.wave-container .topic-content-view, .wave-container .topic-content-edit', { timeout: 5000 });
-      }
-    }
-  } catch {
-    // Inline expansion step is best-effort; the structural list-thread
-    // expansion steps below are the metrics that matter.
   }
+  // Record the measurement under the same key (inlineExpandMs) for
+  // baseline-comparison continuity with the pre-#36 metrics files. The
+  // semantics shifted from "inline expansion time" to "subblip round-trip
+  // time" — the numbers aren't directly comparable across the boundary,
+  // but the baseline file can be re-written via RIZZOMA_PERF_REBASELINE=1
+  // once the numbers settle.
   timings.inlineExpandMs = Date.now() - stepStartedAt;
+  timings.inlineRoundTripOk = inlineRoundTripOk ? 1 : 0;
 
+  // The inline-text activation step below targeted the old .inline-child-expanded
+  // DOM which no longer exists. Kept as a no-op so the rest of the timings
+  // array stays stable for baseline comparison; the key is retained with 0ms.
   const inlineText = page.locator('.wave-container .inline-child-expanded .blip-text').first();
   stepStartedAt = Date.now();
   if (await inlineText.count()) {

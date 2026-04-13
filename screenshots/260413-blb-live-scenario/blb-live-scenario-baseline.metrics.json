@@ -1,16 +1,17 @@
 {
   "base": "http://127.0.0.1:3000",
-  "capturedAt": "2026-04-13T00:53:56.627Z",
+  "capturedAt": "2026-04-13T01:33:22.740Z",
   "note": "Baseline metrics for the BLB live scenario. Replace via RIZZOMA_PERF_REBASELINE=1 after an intentional perf change.",
   "timings": {
-    "initialLoadMs": 286,
-    "inlineExpandMs": 622,
-    "inlineActivateMs": 3,
-    "mainThreadExpandMs": 74,
-    "primaryExpandMs": 172,
-    "secondaryExpandMs": 205,
-    "primaryActivateMs": 13,
-    "totalScenarioMs": 4182
+    "initialLoadMs": 288,
+    "inlineExpandMs": 670,
+    "inlineRoundTripOk": 1,
+    "inlineActivateMs": 4,
+    "mainThreadExpandMs": 58,
+    "primaryExpandMs": 174,
+    "secondaryExpandMs": 52,
+    "primaryActivateMs": 42,
+    "totalScenarioMs": 13894
   },
   "perf": {
     "expandedReplies": 3,
