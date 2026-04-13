@@ -308,18 +308,29 @@
   padding-left: 12px;
 }
 
-/* Parity fix (2026-04-13): the collapsed row variant pushes the author
-   column to the right edge of the row with a tighter vertical stack so
-   it doesn't inflate the row height. Mirrors the legacy Rizzoma behavior
-   where every reply carries an avatar + date on the right even when the
-   row is collapsed. Avatar sits above the date (column direction), same
-   as the per-section author badges on the topic body — keeps the whole
-   topic-body right gutter visually consistent. */
+/* Parity fix (2026-04-14): the collapsed reply-row author column
+   must visually match the topic-body per-section author column so
+   the whole right gutter reads as one consistent strip. Key rules:
+     - flex-direction: column so avatar sits above the date
+     - align-items: flex-end so both elements share the same right
+       edge (otherwise the 22px avatar looks offset from the wider
+       date text)
+     - compact 40px width matching .topic-section-author
+     - push flush-right via margin-left:auto with zero horizontal
+       padding so the column sits at the card edge. The parent
+       `.topic-blip-children` padding-right (22px by default) is
+       zeroed out below so collapsed reply rows extend to the
+       same right edge as the topic body. */
 .blip-contributors-info-collapsed {
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 1px;
-  padding-left: 12px;
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: auto;
+  margin-right: 0;
+  width: 40px;
+  flex: 0 0 auto;
 }
 
 .blip-contributors-info-collapsed .blip-author-date {
@@ -327,6 +338,21 @@
   color: #8a9aad;
   white-space: nowrap;
   line-height: 1;
+}
+
+/* Shrink the avatar inside collapsed reply rows to match the
+   topic-body per-section avatar (22×22) so the right gutter reads
+   as one consistent column across topic body + replies. */
+.blip-contributors-info-collapsed .blip-contributors-stack {
+  width: 22px;
+  height: 22px;
+}
+
+.blip-contributors-info-collapsed .blip-contributor-avatar {
+  width: 22px;
+  height: 22px;
+  border-width: 1px;
+  border-radius: 50%;
 }
 
 /* The .blip-collapsed-row is already a flex container (bullet + label +

@@ -519,7 +519,12 @@
    specificity bump. */
 .topic-blip-body .topic-blip-content,
 .topic-blip-body .topic-blip-content .blip-content-row,
-.topic-blip-body .topic-blip-content .blip-text.topic-content-view {
+.topic-blip-body .topic-blip-content .blip-text.topic-content-view,
+/* topic-blip-children has padding-right: 22px by default, which
+   inset every reply row's author column 22px inside the topic
+   card. Collapsing that padding lets replies share the same right
+   edge as the topic body for a consistent author-column strip. */
+.topic-blip-body .topic-blip-children {
   padding-right: 0;
 }
 
@@ -553,14 +558,18 @@
   flex: 0 0 auto;
   display: inline-flex;
   flex-direction: column;
-  /* Center-align the avatar and date within the badge column —
-     matches legacy Rizzoma where the avatar is centered above its
-     date label, reading as a clean vertical stack. */
-  align-items: center;
+  /* Right-align inside the column so the 22px avatar and the
+     wider date text share the SAME right edge. Without this the
+     avatar looks offset because flex center-alignment centers
+     each child's own box — the 36px date overlapped both sides
+     of the 22px avatar, which read as "avatar shifted left"
+     visually. flex-end makes the column read as a clean
+     right-flush stack. */
+  align-items: flex-end;
   gap: 1px;
   padding-top: 2px;
   padding-right: 2px;
-  width: 32px;
+  width: 40px;
 }
 
 .topic-section-author-avatar {

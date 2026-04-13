@@ -50,14 +50,91 @@ const getInitialPerfSkip = (): boolean => {
 // Mobile view states
 type MobileView = 'list' | 'content';
 
+// Persisted layout sizes/collapse state — keyed in localStorage so
+// the user's pane layout survives reloads. Widths are clamped to
+// sane bounds on read so a corrupted value can't render a 0px pane.
+const LEFT_WIDTH_KEY = 'rizzoma:leftPaneWidth';
+const RIGHT_WIDTH_KEY = 'rizzoma:rightPaneWidth';
+const LEFT_COLLAPSED_KEY = 'rizzoma:leftPaneCollapsed';
+const RIGHT_COLLAPSED_KEY = 'rizzoma:rightPaneCollapsed';
+const LEFT_DEFAULT = 296;
+const RIGHT_DEFAULT = 104;
+const LEFT_MIN = 180;
+const LEFT_MAX = 600;
+const RIGHT_MIN = 80;
+const RIGHT_MAX = 420;
+
+const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+
+const readNumber = (key: string, def: number, lo: number, hi: number): number => {
+  if (typeof window === 'undefined') return def;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return def;
+    const n = Number(raw);
+    return Number.isFinite(n) ? clamp(n, lo, hi) : def;
+  } catch { return def; }
+};
+
+const readBool = (key: string): boolean => {
+  if (typeof window === 'undefined') return false;
+  try { return window.localStorage.getItem(key) === '1'; } catch { return false; }
+};
+
 export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [currentBlipPath, setCurrentBlipPath] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('topics');
-  const [searchPaneCollapsed, setSearchPaneCollapsed] = useState(false);
+  const [searchPaneCollapsed, setSearchPaneCollapsed] = useState(() => readBool(LEFT_COLLAPSED_KEY));
+  const [rightPaneCollapsed, setRightPaneCollapsed] = useState(() => readBool(RIGHT_COLLAPSED_KEY));
+  const [leftPaneWidth, setLeftPaneWidth] = useState(() => readNumber(LEFT_WIDTH_KEY, LEFT_DEFAULT, LEFT_MIN, LEFT_MAX));
+  const [rightPaneWidth, setRightPaneWidth] = useState(() => readNumber(RIGHT_WIDTH_KEY, RIGHT_DEFAULT, RIGHT_MIN, RIGHT_MAX));
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [perfSkipTopics, setPerfSkipTopics] = useState(getInitialPerfSkip);
   const unreadState = useWaveUnread(selectedTopicId);
+
+  // Persist collapse + width state whenever it changes.
+  useEffect(() => {
+    try { localStorage.setItem(LEFT_COLLAPSED_KEY, searchPaneCollapsed ? '1' : '0'); } catch {}
+  }, [searchPaneCollapsed]);
+  useEffect(() => {
+    try { localStorage.setItem(RIGHT_COLLAPSED_KEY, rightPaneCollapsed ? '1' : '0'); } catch {}
+  }, [rightPaneCollapsed]);
+  useEffect(() => {
+    try { localStorage.setItem(LEFT_WIDTH_KEY, String(leftPaneWidth)); } catch {}
+  }, [leftPaneWidth]);
+  useEffect(() => {
+    try { localStorage.setItem(RIGHT_WIDTH_KEY, String(rightPaneWidth)); } catch {}
+  }, [rightPaneWidth]);
+
+  // Drag-to-resize for both side panels. `startResize` is wired to
+  // the resizer handles on the inside edges; it listens for
+  // pointermove until pointerup and updates the width state so both
+  // the CSS variable and the persisted value track the drag.
+  const startResize = useCallback((side: 'left' | 'right') => (e: React.PointerEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startLeftW = leftPaneWidth;
+    const startRightW = rightPaneWidth;
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      if (side === 'left') {
+        setLeftPaneWidth(clamp(startLeftW + dx, LEFT_MIN, LEFT_MAX));
+      } else {
+        setRightPaneWidth(clamp(startRightW - dx, RIGHT_MIN, RIGHT_MAX));
+      }
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }, [leftPaneWidth, rightPaneWidth]);
 
   // Track which topics have unread blips (for "Next Topic" button)
   const [topicsWithUnread, setTopicsWithUnread] = useState<Array<{ id: string; unreadCount: number }>>([]);
@@ -247,6 +324,7 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
       <div
         ref={listContainerRef}
         className={`tabs-container ${searchPaneCollapsed ? 'collapsed' : ''} ${isMobile && mobileView !== 'list' ? 'mobile-hidden' : ''}`}
+        style={!isMobile && !searchPaneCollapsed ? { width: leftPaneWidth, minWidth: leftPaneWidth } : undefined}
       >
         <div className="tabs-header">
           <h3>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h3>
@@ -262,6 +340,19 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
           <div className="tabs-content">
             {renderSearchPanel()}
           </div>
+        )}
+        {/* Right-edge drag handle to resize the left pane. Only
+            rendered when the pane is expanded and we're not on
+            mobile. Clamps to [LEFT_MIN, LEFT_MAX] during drag. */}
+        {!isMobile && !searchPaneCollapsed && (
+          <div
+            className="pane-resizer pane-resizer-left"
+            onPointerDown={startResize('left')}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize topics pane"
+            title="Drag to resize"
+          />
         )}
       </div>
 
@@ -290,13 +381,44 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
       </div>
 
       {/* Right Tools Panel - Far Right */}
-        <RightToolsPanel
-          isAuthed={isAuthed}
-          user={user}
-          unreadState={selectedTopicId ? unreadState : null}
-          onNextTopic={handleNextTopic}
-          nextTopicAvailable={!!nextUnreadTopic}
-        />
+      <div
+        className={`right-tools-container ${rightPaneCollapsed ? 'collapsed' : ''}`}
+        style={!isMobile && !rightPaneCollapsed ? { width: rightPaneWidth, minWidth: rightPaneWidth } : undefined}
+      >
+        {/* Left-edge drag handle for the right pane (inside-facing
+            edge). Mirrors the left pane's right-edge handle so the
+            user can widen/narrow the right gutter symmetrically. */}
+        {!isMobile && !rightPaneCollapsed && (
+          <div
+            className="pane-resizer pane-resizer-right"
+            onPointerDown={startResize('right')}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize tools pane"
+            title="Drag to resize"
+          />
+        )}
+        {/* Collapse ▶/◀ button mirroring the left pane's collapse
+            button. When collapsed, the panel shrinks to a 40px rail
+            showing only the expand arrow. */}
+        <button
+          className="right-tools-collapse-btn"
+          onClick={() => setRightPaneCollapsed(!rightPaneCollapsed)}
+          title={rightPaneCollapsed ? 'Expand tools' : 'Collapse tools'}
+          aria-label={rightPaneCollapsed ? 'Expand tools' : 'Collapse tools'}
+        >
+          {rightPaneCollapsed ? '◀' : '▶'}
+        </button>
+        {!rightPaneCollapsed && (
+          <RightToolsPanel
+            isAuthed={isAuthed}
+            user={user}
+            unreadState={selectedTopicId ? unreadState : null}
+            onNextTopic={handleNextTopic}
+            nextTopicAvailable={!!nextUnreadTopic}
+          />
+        )}
+      </div>
       
       {/* Create Topic Modal */}
       <CreateTopicModal

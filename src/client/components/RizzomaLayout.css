@@ -35,10 +35,110 @@
   border-right: 1px solid rgba(136, 154, 176, 0.18);
 }
 
+.tabs-container {
+  position: relative;
+}
+
 .tabs-container.collapsed {
   width: 40px;
   min-width: 40px;
   overflow: hidden;
+}
+
+/* Right-tools container wraps the RightToolsPanel plus adds the
+   collapse-btn and the inside-facing resize handle. Mirrors the
+   .tabs-container left-side pattern so both sidebars behave
+   symmetrically: a full expanded width with a drag handle, or a
+   collapsed 40px rail with just the expand arrow. */
+.right-tools-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 104px;
+  background:
+    linear-gradient(180deg, rgba(246, 249, 253, 0.98), rgba(234, 240, 247, 0.96));
+  border-left: 1px solid rgba(136, 154, 176, 0.18);
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.76);
+  transition: width 0.2s ease, min-width 0.2s ease;
+}
+
+.right-tools-container.collapsed {
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  overflow: hidden;
+}
+
+.right-tools-container.collapsed .right-tools-panel {
+  display: none;
+}
+
+.right-tools-collapse-btn {
+  position: absolute;
+  top: 12px;
+  left: 4px;
+  z-index: 5;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(136, 154, 176, 0.3);
+  border-radius: 8px;
+  color: #6a7f96;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.right-tools-collapse-btn:hover {
+  background: #fff;
+  border-color: rgba(90, 164, 242, 0.45);
+  color: #274967;
+}
+
+.right-tools-container.collapsed .right-tools-collapse-btn {
+  top: 12px;
+  left: 6px;
+}
+
+/* Drag-to-resize handles. A 6px-wide invisible strip pinned to the
+   inside edge of each side pane that shows a col-resize cursor on
+   hover. The actual drag is wired in JS via onPointerDown →
+   window pointermove listeners that update the persisted width
+   state. Kept narrow so they don't eat real clickable area. */
+.pane-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.pane-resizer:hover,
+.pane-resizer:active {
+  background: rgba(90, 164, 242, 0.35);
+}
+
+.pane-resizer-left {
+  /* right edge of the left topics pane */
+  right: 0;
+}
+
+.pane-resizer-right {
+  /* left edge of the right tools pane */
+  left: 0;
+}
+
+.right-tools-container.collapsed .pane-resizer-right {
+  display: none;
 }
 
 /* When the topics sidebar is collapsed to its 40px rail, the
