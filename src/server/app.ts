@@ -93,11 +93,23 @@ if (process.env['NODE_ENV'] === 'production') {
   app.use(express.static(staticDir));
 }
 
-// Root and SPA navigation handler
-// Express 5 / path-to-regexp v8 rejects bare "*" routes.
+// Uploads are served from disk; mount BEFORE the SPA catch-all so the
+// catch-all doesn't need to defensively skip /uploads paths itself.
+app.use('/uploads', express.static(uploadsPath, {
+  fallthrough: false,
+  maxAge: '1d',
+}));
+
+// SPA navigation handler (last registered — catch-all for non-/api, non-/uploads
+// GET requests). Uses the Express 5 / path-to-regexp v8 named-wildcard syntax
+// `/{*path}` which is the canonical form under the current stack — bare `*`
+// was dropped in path-to-regexp v8 and is no longer supported. This is not
+// a workaround; it's the correct syntax. See also Hard Gap #29 (2026-04-13).
 app.get('/{*path}', (_req, res, next) => {
-  // Skip API and upload routes
-  if (_req.path.startsWith('/api') || _req.path.startsWith('/uploads')) {
+  // /api paths fall through to the API sub-routers mounted above. If none
+  // of them match, let Express's default 404 handler deal with it rather
+  // than swallow the request inside the SPA fallback.
+  if (_req.path.startsWith('/api')) {
     return next();
   }
 
@@ -115,10 +127,6 @@ app.get('/{*path}', (_req, res, next) => {
     res.status(404).send('Rizzoma Dev Server: Please use port 3000 for the UI');
   }
 });
-app.use('/uploads', express.static(uploadsPath, {
-  fallthrough: false,
-  maxAge: '1d',
-}));
 
 // Create HTTP server and bind socket.io for realtime events
 const server = http.createServer(app);

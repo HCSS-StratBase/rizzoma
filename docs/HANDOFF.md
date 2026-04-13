@@ -40,7 +40,7 @@ PR Ops (CLI)
 Current State (master @ 2026-03-30; includes gadget registry phase 1, trusted embed adapters, accepted fresh live UI artifacts, and fixed topic-root app persistence)
 - FEAT_ALL required: start both server (:8788, the reserved Rizzoma backend port — see CLAUDE.md "Reserved Ports") and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Docker Desktop WSL integration was re-enabled on 2026-03-29; `docker compose up -d couchdb redis` works again from WSL for local live-app verification.
-- Current stack note: the backend only boots on the present Express/router combo after changing the fallback route in `src/server/app.ts` from `app.get('*', ...)` to `app.get('/{*path}', ...)`. This fix is currently in the working tree and should be preserved until a cleaner routing adjustment lands.
+- Express 5 SPA fallback: `src/server/app.ts` uses `app.get('/{*path}', ...)` which is the canonical path-to-regexp v8 syntax under Express 5 (bare `*` was dropped in v8). This was documented as a "workaround" in earlier snapshots but is actually the correct form. Cleaned up in Hard Gap #29 (2026-04-13): the `/uploads` static handler is now mounted BEFORE the SPA catch-all so the catch-all only has to skip `/api` paths, and the code comment explains the syntax is canonical.
 - Latest live-app artifacts (2026-03-29):
   - `screenshots/260329-live/topic-c7febb62dc333aa08f4a50aea8004efc.png`
   - `screenshots/260329-live/blb-study-expanded.png`
