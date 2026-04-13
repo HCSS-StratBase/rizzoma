@@ -1220,7 +1220,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       await ensureCsrf();
       const requestBody = {
         waveId: id,
-        content: '<p></p>', // Minimal placeholder content (server requires non-empty)
+        // Streamlined workflow (task #39, 2026-04-14): fresh inline
+        // comment children are born with a bulleted first line so
+        // the user starts typing directly into a `<li>` without
+        // having to reach for the bullet button. Matches legacy BLB
+        // philosophy: "a blip is a blank sheet but the common case
+        // is a bulleted list". Forces modular contribution over
+        // stream-of-consciousness prose.
+        content: '<ul><li><p></p></li></ul>',
         parentId: null, // This is a child of the topic/wave itself (root-level blip)
         anchorPosition: anchorPosition, // The cursor position where this inline comment is anchored
       };
@@ -1298,19 +1305,15 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
             // Legacy BLB: expand the new child IN PLACE at the
             // marker position instead of navigating to the subblip
-            // drill-down. Refreshing the topic data so the blip
-            // appears in parent.childBlips as an inlineChild, then
-            // dispatching rizzoma:toggle-inline-blip after a short
-            // delay so the listener sees the new id in its
-            // `inlineChildren` set before toggling.
-            load(true);
-            setTimeout(() => {
-              window.dispatchEvent(
-                new CustomEvent('rizzoma:toggle-inline-blip', {
-                  detail: { threadId: newBlipId },
-                }),
-              );
-            }, 150);
+            // drill-down. Stash the new blip id in a global
+            // pending-expansion slot; the topic-root RizzomaBlip
+            // watches `inlineChildren` for pending ids and auto-
+            // expands + auto-edits the child as soon as the load()
+            // refresh finishes and the blip shows up in childBlips.
+            // This avoids the race where a fixed-delay setTimeout
+            // fires before the load() roundtrip has updated state.
+            (window as any).__rizzomaPendingInlineExpand = newBlipId;
+            await load(true);
             // blipPathSegment retained for potential subblip drill-down
             // callers but not used in the inline-expand path.
             void blipPathSegment;

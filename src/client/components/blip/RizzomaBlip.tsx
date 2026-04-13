@@ -669,7 +669,10 @@ export function RizzomaBlip({
           body: JSON.stringify({
             waveId,
             parentId: blip.id,
-            content: '<p></p>', // Empty content for new child blip
+            // Streamlined workflow: seed with an empty bulleted line
+            // so fractal grandchildren start with a `<li>` ready to
+            // type into. Matches the topic-root child creation path.
+            content: '<ul><li><p></p></li></ul>',
             anchorPosition, // Store the position where the [+] marker was created
           }),
         });
@@ -703,21 +706,14 @@ export function RizzomaBlip({
         // the comment I just created." The drill-down remains
         // available by clicking the marker a second time once the
         // inline expansion is visible.
-        window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+        // Stash the new blip id in a global pending-expansion slot
+        // so the nearest RizzomaBlip that picks up this new child
+        // in its `inlineChildren` auto-expands + auto-edits it,
+        // producing a fractal grandchild ready for typing.
         if (newBlipId) {
-          // Small delay so the refresh-topics roundtrip can add the
-          // new blip to the parent's childBlips before we try to
-          // toggle it open — otherwise the toggle event fires before
-          // the RizzomaBlip listener sees the new id in
-          // `inlineChildren`.
-          setTimeout(() => {
-            window.dispatchEvent(
-              new CustomEvent('rizzoma:toggle-inline-blip', {
-                detail: { threadId: newBlipId },
-              }),
-            );
-          }, 100);
+          (window as any).__rizzomaPendingInlineExpand = newBlipId;
         }
+        window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
       } catch (error) {
         console.error('Error creating child blip:', error);
         toast('Failed to create child blip', 'error');
@@ -853,6 +849,66 @@ export function RizzomaBlip({
     return () => window.removeEventListener('rizzoma:collapse-inline-blip', handle);
   }, [inlineChildren]);
 
+  // Streamlined workflow (task #39): when a new inline comment child
+  // is created via Ctrl+Enter (or the Insert comment button), the
+  // creator fires `rizzoma:start-editing-blip` with the new id after
+  // the child has mounted + its inline editor has initialized. The
+  // target RizzomaBlip responds by entering edit mode and focusing
+  // the cursor at the end of the seeded `<li>` content so the user
+  // starts typing immediately — no "click Edit again" step.
+  useEffect(() => {
+    const handle = (e: Event) => {
+      const { blipId } = (e as CustomEvent).detail || {};
+      if (blipId !== blip.id) return;
+      if (isTopicRoot) return;
+      if (!blip.permissions.canEdit) return;
+      if (isEditing) return;
+      handleStartEdit();
+      // Focus the editor + move cursor to the end on the next frame
+      // so the seeded bullet item is the active cursor position.
+      requestAnimationFrame(() => {
+        if (inlineEditor && !(inlineEditor as any).isDestroyed) {
+          inlineEditor.commands.focus('end');
+        }
+      });
+    };
+    window.addEventListener('rizzoma:start-editing-blip', handle);
+    return () => window.removeEventListener('rizzoma:start-editing-blip', handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blip.id, isEditing, inlineEditor, blip.permissions.canEdit]);
+
+  // Pending-expansion watcher: when a new inline comment child is
+  // created, its creator stashes the new id in
+  // `window.__rizzomaPendingInlineExpand`. This effect checks for
+  // that flag on every `inlineChildren` update (which happens right
+  // after load() finishes) and, if the pending id matches one of
+  // our children, auto-expands it + fires the start-editing-blip
+  // event. The flag is cleared the moment it's consumed.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const pending = (window as any).__rizzomaPendingInlineExpand as string | undefined;
+    if (!pending) return;
+    if (!inlineChildren.some((c) => c.id === pending)) return;
+    // Consume the pending flag first so concurrent RizzomaBlips
+    // don't race each other into double-expansion.
+    (window as any).__rizzomaPendingInlineExpand = undefined;
+    setLocalExpandedInline((prev) => {
+      if (prev.has(pending)) return prev;
+      const next = new Set(prev);
+      next.add(pending);
+      return next;
+    });
+    // After the mounted child has had a chance to mount its inline
+    // editor, fire start-editing-blip so it auto-enters edit mode.
+    setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent('rizzoma:start-editing-blip', {
+          detail: { blipId: pending },
+        }),
+      );
+    }, 300);
+  }, [inlineChildren]);
+
   // Deactivate blip (hide toolbar) — from Follow-the-Green collapse-before-jump
   useEffect(() => {
     const handle = (e: Event) => {
@@ -976,7 +1032,20 @@ export function RizzomaBlip({
     // leak path on every exit.
     pendingInsertRef.current = null;
     pendingGadgetDetailRef.current = null;
-  }, [autoSaveBlip, editedContent, inlineEditor]);
+    // Streamlined workflow (task #39, 2026-04-14): Done on an inline
+    // child blip should save AND auto-collapse the child back into
+    // its `[+]` marker in the parent. This removes the "now I have
+    // to click [−] too" step from the write-comment loop. The
+    // parent's localExpandedInline listener picks up the collapse
+    // event and removes this blip from its expanded set.
+    if (isInlineChild) {
+      window.dispatchEvent(
+        new CustomEvent('rizzoma:collapse-inline-blip', {
+          detail: { threadId: blip.id },
+        }),
+      );
+    }
+  }, [autoSaveBlip, editedContent, inlineEditor, isInlineChild, blip.id]);
 
   // handleSaveEdit now just finishes editing - auto-save handles the actual saving
   const handleSaveEdit = useCallback(async () => {
@@ -1401,6 +1470,26 @@ export function RizzomaBlip({
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [effectiveIsActive, isEditing, blip.permissions.canComment]);
+
+  // Streamlined workflow (task #39, 2026-04-14): Escape inside an
+  // inline-child blip's edit mode = save + collapse, mirroring the
+  // Done button. This lets the user write a comment and close it
+  // with a single keypress instead of reaching for the Done button
+  // then the `[−]` marker. Only fires on isInlineChild blips in
+  // editing mode so it doesn't interfere with TipTap's own Escape
+  // handling inside the topic-root editor or non-inline contexts.
+  useEffect(() => {
+    if (!isInlineChild || !isEditing) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (!blipContainerRef.current?.contains(document.activeElement)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      handleFinishEdit();
+    };
+    document.addEventListener('keydown', handleEscape, true);
+    return () => document.removeEventListener('keydown', handleEscape, true);
+  }, [isInlineChild, isEditing, handleFinishEdit]);
 
   // Handle insert events from RightToolsPanel
   // Listen when isActive (not just isEditing) so clicks from right panel auto-enter edit mode
