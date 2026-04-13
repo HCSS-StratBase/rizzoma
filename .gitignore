@@ -49,3 +49,16 @@ snapshots/**
 
 # Development logs
 *.log
+
+# Hard Gap #24 (2026-04-13) — local scratch / dev junk that kept showing up
+# in git status. Documented in docs/HANDOFF.md / CLAUDE_SESSION.md as the
+# four skip-listed items.
+tmp/
+scripts/__pycache__/
+gpu_hog_report.bat
+tana-tools.json
+# Local rizzoma backup bundles (the dated copies live on GDrive — see
+# docs/HANDOFF.md and Rizzoma-backup/README.md). The legacy `rizzoma.bundle`
+# entry above already covers the unsuffixed pointer; this catches the
+# dated variants too.
+rizzoma-*.bundle
