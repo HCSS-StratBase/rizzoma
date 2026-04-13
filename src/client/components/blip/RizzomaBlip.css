@@ -323,7 +323,10 @@
        same right edge as the topic body. */
 .blip-contributors-info-collapsed {
   flex-direction: column;
-  align-items: flex-end;
+  /* Center the 22px avatar and the "Apr 2026" date on the same
+     vertical center axis — matches .topic-section-author so the
+     right gutter reads as a single consistent column. */
+  align-items: center;
   gap: 1px;
   padding-left: 0;
   padding-right: 0;

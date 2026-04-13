@@ -558,14 +558,13 @@
   flex: 0 0 auto;
   display: inline-flex;
   flex-direction: column;
-  /* Right-align inside the column so the 22px avatar and the
-     wider date text share the SAME right edge. Without this the
-     avatar looks offset because flex center-alignment centers
-     each child's own box — the 36px date overlapped both sides
-     of the 22px avatar, which read as "avatar shifted left"
-     visually. flex-end makes the column read as a clean
-     right-flush stack. */
-  align-items: flex-end;
+  /* Center-align so the avatar and the date share the same
+     vertical center axis — the 22px avatar is narrower than the
+     "Apr 2026" date text, and with center alignment both
+     elements' geometric centers line up on the column's centerline.
+     Column width is 40px to comfortably contain the wider date
+     label without overflow. */
+  align-items: center;
   gap: 1px;
   padding-top: 2px;
   padding-right: 2px;
