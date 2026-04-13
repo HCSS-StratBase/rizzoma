@@ -3,12 +3,20 @@ const fs = require('fs');
 const path = require('path');
 
 async function login(page, base, email, password) {
+  // Hard Gap #14 (2026-04-13): replaced the previous fixed waitForTimeout(1500)
+  // with a state-driven wait. The 1500ms padding was the main source of
+  // cold-start jitter in the metrics — it added a fixed delta to every run
+  // regardless of whether the topics list had finished hydrating. Waiting
+  // for the rizzoma-layout shell + topics container to mount gives us a
+  // tighter upper bound on "logged in and ready to load a topic" instead
+  // of "logged in plus 1.5s of padding."
   await page.goto(base, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('input[type="email"]', { timeout: 15000 });
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
-  await page.waitForTimeout(1500);
+  await page.waitForSelector('.rizzoma-layout', { timeout: 15000 });
+  await page.waitForSelector('.rizzoma-topics-list, .topics-container, .navigation-panel', { timeout: 15000 });
 }
 
 async function readCookie(page, name) {
@@ -292,15 +300,41 @@ async function main() {
   );
   timings.initialLoadMs = Date.now() - stepStartedAt;
 
+  // Hard Gap #14 + #36 boundary: this step originally clicked an inline
+  // [+] marker and waited for .inline-child-expanded to render. After Hard
+  // Gap Execution 2 (2026-03-31), marker clicks navigate to the subblip
+  // route instead of toggling inline expansion, so the wait below would
+  // hang forever. Wrapped in try/catch so the rest of the verifier still
+  // runs and emits useful metrics for the list-thread expansion steps.
+  // Tracked as task #36 for a proper rewrite.
   const inlineMarker = page.locator('.wave-container .blip-thread-marker.has-unread').first();
   stepStartedAt = Date.now();
-  await inlineMarker.click();
-  await waitForDenseState(
-    page,
-    () => document.querySelectorAll('.wave-container .inline-child-expanded > .blip-container.expanded').length >= 1,
-    undefined,
-    8000,
-  );
+  try {
+    if (await inlineMarker.count()) {
+      await inlineMarker.click();
+      await waitForDenseState(
+        page,
+        () => (
+          document.querySelectorAll('.wave-container .inline-child-expanded > .blip-container.expanded').length >= 1 ||
+          !!document.querySelector('.wave-container .subblip-view')
+        ),
+        undefined,
+        4000,
+      );
+    }
+    // If we landed in subblip view, navigate back to the topic to keep the
+    // rest of the metrics steps consistent with the legacy expectations.
+    if (await page.locator('.wave-container .subblip-view').count()) {
+      const hideBtn = page.locator('.subblip-view .subblip-hide-btn').first();
+      if (await hideBtn.count()) {
+        await hideBtn.click();
+        await page.waitForSelector('.wave-container .topic-content-view, .wave-container .topic-content-edit', { timeout: 5000 });
+      }
+    }
+  } catch {
+    // Inline expansion step is best-effort; the structural list-thread
+    // expansion steps below are the metrics that matter.
+  }
   timings.inlineExpandMs = Date.now() - stepStartedAt;
 
   const inlineText = page.locator('.wave-container .inline-child-expanded .blip-text').first();
@@ -463,7 +497,65 @@ async function main() {
     perf,
   }, null, 2));
 
-  console.log(JSON.stringify({ id: topic.id, title: topic.title, shotPath, htmlPath, perfPath, state, timings, perf }));
+  // Hard Gap #14 (2026-04-13): baseline-aware metrics output. The first run
+  // writes a baseline alongside the metrics. Each subsequent run compares
+  // its timings against the baseline and prints per-step deltas + a warning
+  // for any step that drifted more than ±25%. This makes the metrics file
+  // useful for catching regressions instead of just being a coarse log.
+  //
+  // To re-baseline after an intentional perf change, set
+  // RIZZOMA_PERF_REBASELINE=1 in the environment.
+  const baselinePath = path.join(outDir, 'blb-live-scenario-baseline.metrics.json');
+  let baseline = null;
+  if (fs.existsSync(baselinePath) && !process.env.RIZZOMA_PERF_REBASELINE) {
+    try {
+      baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+    } catch (err) {
+      console.warn(`[perf] failed to read baseline at ${baselinePath}: ${err && err.message ? err.message : err}`);
+    }
+  }
+  let regressionDeltas = null;
+  let regressionWarnings = [];
+  if (baseline && baseline.timings) {
+    regressionDeltas = {};
+    for (const stepKey of Object.keys(timings)) {
+      const baselineMs = baseline.timings[stepKey];
+      const currentMs = timings[stepKey];
+      if (typeof baselineMs === 'number' && typeof currentMs === 'number' && baselineMs > 0) {
+        const deltaMs = currentMs - baselineMs;
+        const deltaPct = (deltaMs / baselineMs) * 100;
+        regressionDeltas[stepKey] = {
+          baselineMs,
+          currentMs,
+          deltaMs,
+          deltaPct: Math.round(deltaPct * 10) / 10,
+        };
+        if (Math.abs(deltaPct) > 25 && Math.abs(deltaMs) > 50) {
+          regressionWarnings.push(`${stepKey}: ${baselineMs}ms → ${currentMs}ms (${deltaPct >= 0 ? '+' : ''}${Math.round(deltaPct)}%)`);
+        }
+      }
+    }
+  } else {
+    fs.writeFileSync(baselinePath, JSON.stringify({
+      base,
+      capturedAt: new Date().toISOString(),
+      note: 'Baseline metrics for the BLB live scenario. Replace via RIZZOMA_PERF_REBASELINE=1 after an intentional perf change.',
+      timings,
+      perf,
+    }, null, 2));
+    console.log(`[perf] wrote baseline at ${baselinePath} (first run or RIZZOMA_PERF_REBASELINE=1 set)`);
+  }
+
+  if (regressionWarnings.length > 0) {
+    console.log(`[perf] WARNING: ${regressionWarnings.length} step(s) drifted >25% vs baseline:`);
+    for (const warning of regressionWarnings) {
+      console.log(`  - ${warning}`);
+    }
+  } else if (regressionDeltas) {
+    console.log(`[perf] all steps within ±25% of baseline`);
+  }
+
+  console.log(JSON.stringify({ id: topic.id, title: topic.title, shotPath, htmlPath, perfPath, state, timings, perf, regressionDeltas, regressionWarnings }));
   await browser.close();
 }
 

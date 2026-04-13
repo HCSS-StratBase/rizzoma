@@ -1,0 +1,38 @@
+{
+  "base": "http://127.0.0.1:3000",
+  "topicId": "ff955fcd14cbbf6212be3a9f700163c6",
+  "capturedAt": "2026-04-13T00:54:13.947Z",
+  "timings": {
+    "initialLoadMs": 126,
+    "inlineExpandMs": 889,
+    "inlineActivateMs": 4,
+    "mainThreadExpandMs": 69,
+    "primaryExpandMs": 141,
+    "secondaryExpandMs": 186,
+    "primaryActivateMs": 13,
+    "totalScenarioMs": 4787
+  },
+  "state": {
+    "expandedReplyCount": 3,
+    "visibleToolbarCount": 1,
+    "activeExpandedText": "−EditCollapseExpand⤵⤴🔗⚙️•I checked the current business-topic shell against the older live screenshots. The density is much closer now, and the top section no longer feels like a ",
+    "primaryExpandedIsActive": true,
+    "mainThreadExpandedVisible": true,
+    "primaryExpandedVisible": true,
+    "secondaryExpandedVisible": true,
+    "midCollapsedVisible": true,
+    "collapsedUnreadVisible": true,
+    "collapsedUnreadHasUnreadIcon": true,
+    "collapsedReadVisible": true,
+    "rootFollowUpVisible": true
+  },
+  "perf": {
+    "expandedReplies": 3,
+    "unreadIcons": 1,
+    "inlineExpanded": 0,
+    "topicHeight": 1200,
+    "topicWidth": 1200,
+    "domBlipCount": 5,
+    "menuCount": 1
+  }
+}

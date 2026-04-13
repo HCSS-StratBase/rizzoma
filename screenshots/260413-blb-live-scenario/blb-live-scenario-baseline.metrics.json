@@ -1,0 +1,24 @@
+{
+  "base": "http://127.0.0.1:3000",
+  "capturedAt": "2026-04-13T00:53:56.627Z",
+  "note": "Baseline metrics for the BLB live scenario. Replace via RIZZOMA_PERF_REBASELINE=1 after an intentional perf change.",
+  "timings": {
+    "initialLoadMs": 286,
+    "inlineExpandMs": 622,
+    "inlineActivateMs": 3,
+    "mainThreadExpandMs": 74,
+    "primaryExpandMs": 172,
+    "secondaryExpandMs": 205,
+    "primaryActivateMs": 13,
+    "totalScenarioMs": 4182
+  },
+  "perf": {
+    "expandedReplies": 3,
+    "unreadIcons": 1,
+    "inlineExpanded": 0,
+    "topicHeight": 1200,
+    "topicWidth": 1200,
+    "domBlipCount": 5,
+    "menuCount": 1
+  }
+}
