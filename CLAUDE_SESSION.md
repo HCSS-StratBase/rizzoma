@@ -1,9 +1,21 @@
-# Claude Session Context (2026-02-10)
+# Claude Session Context (last refreshed 2026-04-13)
 
 **Read this file first when resuming work on this project.**
 
+## Post-Work Checklist (MANDATORY — Hard Gap #32, 2026-04-13)
+
+After ANY meaningful work batch, in this order:
+
+1. **Docs**: update `CLAUDE.md` / `CLAUDE_SESSION.md` / `docs/HANDOFF.md` / `docs/RESTART.md` / `docs/worklog-YYMMDD.md` as appropriate
+2. **Commit** with `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>` trailer
+3. **Bundle**: `bash scripts/backup-bundle.sh <label>` — one-shot /tmp staging + verify + project copy + GDrive copy (dated + pointer)
+4. **Push**: `git push origin master`
+5. **Tana**: post one batched daily-note entry in HCSS via the 5-step flow in `/mnt/g/My Drive/Tana/tana-workflow.md`. If the MCP token is expired, stage the entry in `_tana_pending.md` at the project root with target day-node ID + tag/field IDs.
+
+The Tana step is not optional. "Done" without a commit pushed + bundle on GDrive + Tana entry (or `_tana_pending.md`) is premature.
+
 ## Current Branch
-`feature/rizzoma-core-features` (main branch is `master`)
+`master` (the `feature/rizzoma-core-features` branch was retired earlier in 2026)
 
 ## Latest Work: Four-Item Sweep (2026-02-10)
 
