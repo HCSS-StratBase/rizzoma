@@ -1,0 +1,86 @@
+{
+  "topicId": "ff955fcd14cbbf6212be3a9f7001249e",
+  "base": "http://127.0.0.1:3000",
+  "timestamp": "2026-04-13T00:03:05.609Z",
+  "initialState": {
+    "topicEditMode": false,
+    "topicReadMode": true,
+    "topicToolbarEditing": false,
+    "gadgetPaletteVisible": false,
+    "pollGadgetCount": 0,
+    "embedFrameCount": 0,
+    "appFrameCount": 0,
+    "codeBlockCount": 0,
+    "sandboxAppCount": 0
+  },
+  "cycles": {
+    "cycle1Edit": {
+      "topicEditMode": true,
+      "topicReadMode": false,
+      "topicToolbarEditing": true,
+      "gadgetPaletteVisible": false,
+      "pollGadgetCount": 0,
+      "embedFrameCount": 0,
+      "appFrameCount": 0,
+      "codeBlockCount": 0,
+      "sandboxAppCount": 0
+    },
+    "cycle1Done": {
+      "topicEditMode": false,
+      "topicReadMode": true,
+      "topicToolbarEditing": false,
+      "gadgetPaletteVisible": false,
+      "pollGadgetCount": 0,
+      "embedFrameCount": 0,
+      "appFrameCount": 0,
+      "codeBlockCount": 0,
+      "sandboxAppCount": 0
+    },
+    "cycle2Edit": {
+      "topicEditMode": true,
+      "topicReadMode": false,
+      "topicToolbarEditing": true,
+      "gadgetPaletteVisible": false,
+      "pollGadgetCount": 0,
+      "embedFrameCount": 0,
+      "appFrameCount": 0,
+      "codeBlockCount": 0,
+      "sandboxAppCount": 0
+    },
+    "cycle2Done": {
+      "topicEditMode": false,
+      "topicReadMode": true,
+      "topicToolbarEditing": false,
+      "gadgetPaletteVisible": false,
+      "pollGadgetCount": 0,
+      "embedFrameCount": 0,
+      "appFrameCount": 0,
+      "codeBlockCount": 0,
+      "sandboxAppCount": 0
+    },
+    "cycle3Edit": {
+      "topicEditMode": true,
+      "topicReadMode": false,
+      "topicToolbarEditing": true,
+      "gadgetPaletteVisible": false,
+      "pollGadgetCount": 0,
+      "embedFrameCount": 0,
+      "appFrameCount": 0,
+      "codeBlockCount": 0,
+      "sandboxAppCount": 0
+    }
+  },
+  "assertions": {
+    "editEntered_cycle1": true,
+    "editEntered_cycle2": true,
+    "editEntered_cycle3": true,
+    "doneExited_cycle1": true,
+    "doneExited_cycle2": true,
+    "noGadgetPaletteEverShown": true,
+    "noPollEverInjected": true,
+    "noEmbedEverInjected": true,
+    "noAppFrameEverInjected": true,
+    "noCodeBlockEverInjected": true,
+    "noSandboxAppEverInjected": true
+  }
+}

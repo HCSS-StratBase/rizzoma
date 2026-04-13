@@ -619,6 +619,12 @@ export function RizzomaBlip({
     setEditedContent(blip.content);
     lastSavedContentRef.current = blip.content;
     setIsEditing(false);
+    // Hard Gap #12 (2026-04-13): also clear any unconsumed pending insert
+    // state when switching to a different blip — see handleFinishEdit for
+    // the rationale (deterministic Edit semantics, no phantom gadget inserts
+    // leaking across edit sessions or blip switches).
+    pendingInsertRef.current = null;
+    pendingGadgetDetailRef.current = null;
     if (inlineEditor && !(inlineEditor as any).isDestroyed) {
       inlineEditor.commands.setContent(blip.content);
     }
@@ -920,6 +926,16 @@ export function RizzomaBlip({
     if (inlineEditor) {
       inlineEditor.setEditable(false);
     }
+    // Hard Gap #12 (2026-04-13): clear any unconsumed pending insert state
+    // when exiting edit mode. Without this, if the user clicked an Insert
+    // button (e.g. gadget palette) but the editor never became ready before
+    // exit, pendingInsertRef would persist across edit sessions and the
+    // NEXT Edit click would auto-fire a phantom gadget insert. Original
+    // Rizzoma's Edit semantics are deterministic: clicking Edit opens
+    // editing for that blip and nothing else. Clearing here closes the
+    // leak path on every exit.
+    pendingInsertRef.current = null;
+    pendingGadgetDetailRef.current = null;
   }, [autoSaveBlip, editedContent, inlineEditor]);
 
   // handleSaveEdit now just finishes editing - auto-save handles the actual saving
