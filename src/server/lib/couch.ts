@@ -88,6 +88,7 @@ const ALL_INDEXES: Array<{ fields: string[]; name: string }> = [
   { fields: ['type', 'updatedAt'], name: 'idx_yjs_snapshot_search' },
   { fields: ['type', 'userId', 'topicId'], name: 'idx_topic_follow_user_topic' },
   { fields: ['type', 'waveId', 'createdAt'], name: 'idx_blip_history_wave_createdAt' },
+  { fields: ['type', 'blipId'], name: 'idx_inline_comment_blip' },
 ];
 
 /**

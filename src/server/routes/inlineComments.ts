@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '../middleware/auth.js';
-import { view, insertDoc, getDoc, updateDoc, deleteDoc } from '../lib/couch.js';
+import { find, insertDoc, getDoc, updateDoc, deleteDoc } from '../lib/couch.js';
 import { InlineComment } from '../../shared/types/comments.js';
 import { FEATURES } from '../../shared/featureFlags.js';
 
@@ -20,6 +20,13 @@ const createCommentSchema = z.object({
 });
 
 // Get comments for a blip
+//
+// Previously used `view('comments', 'by_blip')` against a non-existent
+// `_design/comments` design doc — the fetch 404'd, fell into the
+// catch, and returned `{ comments: [] }` for every call. Result:
+// inline comments never displayed in the UI even when persisted in
+// CouchDB. Switched to a Mango find against the existing
+// `idx_inline_comment_blip` index (task #16 resilience fix).
 router.get('/blip/:blipId/comments', async (req, res): Promise<void> => {
   try {
     if (!FEATURES.INLINE_COMMENTS) {
@@ -27,26 +34,21 @@ router.get('/blip/:blipId/comments', async (req, res): Promise<void> => {
       return;
     }
 
-    const { blipId } = req.params;
-    
-    try {
-      const result = await view<InlineComment>('comments', 'by_blip', {
-        key: blipId,
-        include_docs: true
-      });
-      
-      const comments = result.rows
-        .map((row: { doc?: InlineComment }) => row.doc)
-        .filter((doc): doc is InlineComment => Boolean(doc))
-        .map((comment) => ({
-          ...comment,
-          isAuthenticated: typeof (comment as InlineComment).userId === 'string' && (comment as InlineComment).userId.trim().length > 0,
-        }));
-      res.json({ comments });
-    } catch (error) {
-      // If view doesn't exist, return empty array
-      res.json({ comments: [] });
-    }
+    const blipId = req.params['blipId'] as string;
+
+    const result = await find<InlineComment>(
+      { type: 'inline_comment', blipId },
+      { limit: 500 },
+    );
+
+    const comments = (result.docs || [])
+      .map((comment) => ({
+        ...comment,
+        isAuthenticated:
+          typeof comment.userId === 'string' && comment.userId.trim().length > 0,
+      }));
+
+    res.json({ comments });
   } catch (error) {
     console.error('Error in comments route:', error);
     res.status(500).json({ error: 'Internal server error' });
