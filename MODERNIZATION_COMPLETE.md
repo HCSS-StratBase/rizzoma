@@ -1,8 +1,10 @@
 # Rizzoma Modernization - Complete
 
-**Date:** January 18, 2026
-**Branch:** `feature/rizzoma-core-features`
-**Status:** Complete
+**Date:** January 18, 2026 (last refreshed 2026-04-13)
+**Branch:** `master` (the original snapshot referenced `feature/rizzoma-core-features`; that branch was retired and work moved back to master).
+**Status:** Complete (legacy stack migration); ongoing P0/P1/P2 work tracked in `RIZZOMA_FEATURES_STATUS.md` + the modernization task backlog. See `docs/HANDOFF.md` and `docs/RESTART.md` for the current state.
+
+> This file documents the original CoffeeScript → TypeScript migration milestone. The current backlog (Hard Gaps, perf, mobile, runtime) is tracked separately and lives in `docs/RIZZOMA_HARD_GAP_LIST_260331.md` + `docs/HANDOFF.md`.
 
 ---
 

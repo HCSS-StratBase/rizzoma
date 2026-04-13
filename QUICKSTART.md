@@ -26,7 +26,7 @@ There are two supported ways to run the app itself:
 docker compose up -d couchdb redis
 FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev
 ```
-- App runs on the host (`:3000` + `:8000`)
+- App runs on the host (`:3000` + `:8788`)
 - Fastest edit/debug loop
 
 2. Containerized app process (`rizzoma-app`)
@@ -77,7 +77,7 @@ Once running, you can access:
 | Service | URL | Credentials |
 |---------|-----|-------------|
 | **Main App** | http://localhost:3000 | Register/login in UI |
-| **API** | http://localhost:8000/api | - |
+| **API** | http://localhost:8788/api | - |
 | **CouchDB Admin** | http://localhost:5984/_utils/ | admin/password |
 | **RabbitMQ Admin** | http://localhost:15672 | admin/password |
 
@@ -112,7 +112,7 @@ docker info
 
 # Check port conflicts
 lsof -i :3000
-lsof -i :8000
+lsof -i :8788
 lsof -i :5984
 
 # Clean restart
@@ -138,10 +138,10 @@ npm run dev
 npm run logs
 
 # Check API health
-curl http://localhost:8000/api/health
+curl http://localhost:8788/api/health
 
 # Check dependencies
-curl http://localhost:8000/api/deps
+curl http://localhost:8788/api/deps
 ```
 
 ## 🛑 Stopping Everything
@@ -161,7 +161,7 @@ docker compose down
 ## 📚 Next Steps
 
 - Create your first topic at http://localhost:3000
-- Explore the API at http://localhost:8000/api/topics
+- Explore the API at http://localhost:8788/api/topics
 - Check out `docs/HANDOFF.md` and `docs/RESTART.md` for the active branch status and restart checklist
 - Enable editor features for rich text editing
 

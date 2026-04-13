@@ -4,16 +4,18 @@ This guide provides step-by-step instructions for modernizing the Rizzoma codeba
 
 For live project status and the restart checklist, see `docs/HANDOFF.md` and `docs/RESTART.md`.
 
-## Current Branch Notes (feature/rizzoma-core-features, 2026-02-03)
+## Current Branch Notes (master, last refreshed 2026-04-13)
 
 This document includes historical phase language and legacy shortcuts. For the active branch, treat the following as authoritative:
 - Status and backlog: `RIZZOMA_FEATURES_STATUS.md`
 - Session startup and constraints: `docs/HANDOFF.md`, `docs/RESTART.md`
+- Reserved ports and grep checklist: `CLAUDE.md` "Reserved Ports" section
 
 Operational reality for this branch:
+- Active branch is `master`. The 2026-02-03 reference to `master` was retired when work moved back to master.
 - Demo-mode shortcuts are removed; sign-in flows route through the real `AuthPanel`.
 - Run the stack with `FEAT_ALL=1` and `EDITOR_ENABLE=1` for parity checks and Playwright smokes.
-- Use `npm run dev` (server :8000, client :3000); do not rely on historical `start:all` guidance.
+- Use `npm run dev` (server :8788, client :3000) — port 8788 is the reserved Rizzoma backend port (avoids the :8788 collision with `google_workspace_mcp` and other dev services). Do not rely on historical `start:all` guidance.
 
 ## Prerequisites
 
@@ -89,7 +91,7 @@ gh pr create -R HCSS-StratBase/rizzoma -B master -H <branch> \
 
 ## Progress Snapshot
 
-Branch context: `feature/rizzoma-core-features`. This snapshot is historical; use `RIZZOMA_FEATURES_STATUS.md` for the up-to-date feature/backlog view on this branch.
+Branch context: `master`. This snapshot is historical; use `RIZZOMA_FEATURES_STATUS.md` for the up-to-date feature/backlog view on this branch.
 
 As of now, the modern stack is running end‑to‑end in development:
 
@@ -102,7 +104,7 @@ As of now, the modern stack is running end‑to‑end in development:
 - Docker Compose dev stack (app + CouchDB + Redis + RabbitMQ + Sphinx; optional MinIO)
 - GitHub Actions CI: typecheck, lint and build (and Docker build)
 
-Current branch focus (feature/rizzoma-core-features):
+Current branch focus (master):
 
 - Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; add metrics/logging hooks and run `npm run perf:harness` with budgets.
 - Modernize `getUserMedia` adapter and broaden mobile validation for new media APIs.
@@ -130,7 +132,7 @@ This starts:
 ### Configuration
 
 Server environment variables:
-- `PORT` (default `8000`)
+- `PORT` (default `8788`)
 - `COUCHDB_URL` (default `http://admin:password@localhost:5984`)
 - `COUCHDB_DB` (default `project_rizzoma`)
 - `REDIS_URL` (default `redis://localhost:6379`; compose provides `redis://redis:6379`)
@@ -276,7 +278,7 @@ docker run -d --name rizzoma-prod \
   -e COUCHDB_DB=project_rizzoma \
   -e REDIS_URL=redis://host.docker.internal:6379 \
   -e SESSION_SECRET=change-me \
-  -p 8000:8000 rizzoma:prod
+  -p 8788:8788 rizzoma:prod
 ```
 
 ### Compose production profile
@@ -327,7 +329,7 @@ POST /api/waves/materialize?limit=50
 
 ### Common Issues
 
-1. **Port conflicts:** Ensure ports 3000, 8000, 5984, 6379, 5672 are free
+1. **Port conflicts:** Ensure ports 3000, 8788, 5984, 6379, 5672 are free
 2. **Docker permissions:** Run `docker compose down -v` and restart
 3. **TypeScript errors:** Check for missing type definitions
 4. **Module resolution:** Ensure path aliases are configured correctly
