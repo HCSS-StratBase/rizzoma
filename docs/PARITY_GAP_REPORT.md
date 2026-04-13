@@ -103,6 +103,38 @@ Option A is a data-model rewrite. Option B is a Y.js-integration feature. Neithe
 
 Open both PNGs side-by-side in a file manager to judge for yourself. The content shape is very close; the author-avatar column and bottom-left branding are the two most visible missing pieces.
 
+## Task #9 closure — subblip drill-down vs rizzoma-blip-view.png
+
+**Closed 2026-04-13 pass2** against `screenshots/260413-subblip-view-pass2/current-subblip-view.png` + `legacy-rizzoma-blip-view.png`.
+
+**Honest finding:** the legacy `rizzoma-blip-view.png` reference does NOT show a subblip drill-down surface. It shows a standard topic view with a per-blip hover toolbar (Edit/Collapse/Expand/Link/Hidden/Trash/Gears) visible on the expanded "First steps in Rizzoma" section. The filename and task title misled me — I assumed "blip-view" meant a dedicated surface for viewing a single blip, but it's just the regular topic view rendered at the moment a toolbar was hovered.
+
+Our build has something *more* than legacy here: an actual subblip drill-down surface (`.subblip-view`) that opens when the user navigates into a specific reply via URL hash. It includes:
+
+- **Nav bar**: Hide button + breadcrumb (`topic.title → subblip snippet`) + sibling nav (task #35 — for inline-anchored siblings)
+- **Parent context panel**: the reply's parent rendered as a real `<RizzomaBlip>` preview with `hideChildBlips={true}`, labeled "Parent thread · N replies in this thread"
+- **Focus shell**: the focused subblip rendered in `forceExpanded={true}` state
+
+Pass2 verifier audit (`scripts/capture_subblip_view_parity.cjs`) against a 3-level reply tree (root → mid → deep):
+
+```
+{
+  navPanel: true, topicsList: true, rightToolsPanel: true,
+  subblipView: true, subblipNavBar: true, subblipHideBtn: true,
+  subblipBreadcrumb: true, subblipParentContext: true,
+  subblipFocusShell: true, subblipFocusBlipCount: 1,
+  parentContextBlipRendered: true,
+  subblipParentContextLabel: "Parent thread · 3 replies in this thread",
+  breadcrumbText: "HCSS Rizzoma Business Topic → P1 seems right..."
+}
+```
+
+All 5 structural gates PASS: appShellOk / subblipViewMounted / breadcrumbPresent / parentContextPresent / focusShellPopulated.
+
+Sibling nav is deliberately NOT gated because it only surfaces when the current subblip has inline-anchored (`anchorPosition !== null`) siblings — plain reply threads don't trigger it, and that's correct per task #35's inline-comments-focused design.
+
+**Bottom line:** task #9 is closed not because we made the subblip view match legacy, but because the assumption underlying the task (that legacy had a drill-down surface to match against) was wrong. Our drill-down surface is an addition, not a regression, and its chrome is structurally sound.
+
 ## What this means for the closed P0 hard gaps
 
 The `completed` status on `#9` (subblip visual parity), `#10` (topic title/body unification), and `#13` (BLB hierarchy legibility) has been reverted to `pending`. They were verified against cropped screenshots that literally could not show the per-blip author column, so the "matches" I claimed was incomplete. They can only be re-closed after:
