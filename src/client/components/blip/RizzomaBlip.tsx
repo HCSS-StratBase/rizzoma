@@ -33,6 +33,7 @@ import { createUploadTask, type UploadResult, type UploadTask } from '../../lib/
 import { INSERT_EVENTS, EDIT_MODE_EVENT, EDITOR_FOCUS_EVENT, EDITOR_BLUR_EVENT, BLIP_ACTIVE_EVENT } from '../RightToolsPanel';
 import './RizzomaBlip.css';
 import { injectInlineMarkers } from './inlineMarkers';
+import { LazyBlipSlot, LAZY_MOUNT_THRESHOLD } from './LazyBlipSlot';
 import { useCollaboration } from '../editor/useCollaboration';
 import { yjsDocManager } from '../editor/YjsDocumentManager';
 import { useAuth } from '../../hooks/useAuth';
@@ -1999,22 +2000,64 @@ export function RizzomaBlip({
         {!hideChildBlips && ((listChildren && listChildren.length > 0) || childFooter) ? (
           <div className={`child-blips${childContainerClassName ? ` ${childContainerClassName}` : ''}`}>
             {listChildren && listChildren.length > 0 && (isTopicRoot ? (
-              listChildren.map((childBlip) => (
-                <RizzomaBlip
-                  key={childBlip.id}
-                  blip={childBlip}
-                  isRoot={false}
-                  depth={depth + 1}
-                  onBlipUpdate={onBlipUpdate}
-                  onAddReply={onAddReply}
-                  onToggleCollapse={onToggleCollapse}
-                  onDeleteBlip={onDeleteBlip}
-                  onBlipRead={onBlipRead}
-                  onExpand={onExpand}
-                  expandedBlips={expandedBlips}
-                  isPerfLite={isPerfLite}
-                />
-              ))
+              // Perf fix (2026-04-13 task #15): when the topic has many
+              // root children, wrap each in a LazyBlipSlot so only
+              // children near the viewport pay the full-mount cost.
+              // Small waves (<LAZY_MOUNT_THRESHOLD children) keep the
+              // eager path so mount behavior is unchanged for the
+              // common case.
+              listChildren.length > LAZY_MOUNT_THRESHOLD ? (
+                listChildren.map((childBlip) => {
+                  const text = childBlip.content
+                    ? childBlip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+                    : '';
+                  const label = text
+                    ? (text.length > 80 ? `${text.slice(0, 80)}…` : text)
+                    : (childBlip.authorName || 'Reply');
+                  return (
+                    <LazyBlipSlot
+                      key={childBlip.id}
+                      blipId={childBlip.id}
+                      label={label}
+                      hasUnread={!childBlip.isRead}
+                      hasChildren={(childBlip.childBlips?.length ?? 0) > 0}
+                      onExpand={onExpand}
+                      renderFull={() => (
+                        <RizzomaBlip
+                          blip={childBlip}
+                          isRoot={false}
+                          depth={depth + 1}
+                          onBlipUpdate={onBlipUpdate}
+                          onAddReply={onAddReply}
+                          onToggleCollapse={onToggleCollapse}
+                          onDeleteBlip={onDeleteBlip}
+                          onBlipRead={onBlipRead}
+                          onExpand={onExpand}
+                          expandedBlips={expandedBlips}
+                          isPerfLite={isPerfLite}
+                        />
+                      )}
+                    />
+                  );
+                })
+              ) : (
+                listChildren.map((childBlip) => (
+                  <RizzomaBlip
+                    key={childBlip.id}
+                    blip={childBlip}
+                    isRoot={false}
+                    depth={depth + 1}
+                    onBlipUpdate={onBlipUpdate}
+                    onAddReply={onAddReply}
+                    onToggleCollapse={onToggleCollapse}
+                    onDeleteBlip={onDeleteBlip}
+                    onBlipRead={onBlipRead}
+                    onExpand={onExpand}
+                    expandedBlips={expandedBlips}
+                    isPerfLite={isPerfLite}
+                  />
+                ))
+              )
             ) : (
               listChildren.map((childBlip) => {
                 const childExpanded = expandedBlips?.has(childBlip.id);

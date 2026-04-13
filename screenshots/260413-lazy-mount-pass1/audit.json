@@ -1,0 +1,16 @@
+{
+  "topicId": "ff955fcd14cbbf6212be3a9f70059ede",
+  "blipCount": 120,
+  "initial": {
+    "totalListed": 121,
+    "lazySlots": 105,
+    "mountedBlips": 16,
+    "collapsedRows": 120
+  },
+  "afterScroll": {
+    "totalListed": 121,
+    "lazySlots": 89,
+    "mountedBlips": 32,
+    "collapsedRows": 120
+  }
+}
