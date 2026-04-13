@@ -129,12 +129,41 @@ async function main() {
   await page.waitForSelector(".wave-container .rizzoma-topic-detail", { timeout: 30000 });
   await page.waitForTimeout(2000);
 
-  // Full-viewport capture (NOT .wave-container cropped)
+  // Full-viewport capture (NOT .wave-container cropped). Matches the
+  // 1440x900 dimensions of the legacy rizzoma-blips-nested.png reference
+  // so a side-by-side is fair.
   await page.screenshot({
     path: path.join(outDir, "current-realistic-topic.png"),
     fullPage: false,
   });
   fs.writeFileSync(path.join(outDir, "current-realistic-topic.html"), await page.content());
+
+  // Also take a fullPage capture that scrolls to show the reply blips
+  // below the topic body (the legacy reference fit everything in 900px
+  // because it used denser typography + wider columns; our build needs
+  // a scroll to see the whole thread at 900px).
+  await page.screenshot({
+    path: path.join(outDir, "current-realistic-topic-fullpage.png"),
+    fullPage: true,
+  });
+
+  // Scroll down inside the wave container to bring reply blips into view,
+  // then capture that state so we can judge the per-blip author column
+  // alongside the topic body in a single 1440x900 frame.
+  await page.evaluate(() => {
+    const body = document.querySelector('.wave-container .topic-blip-body') ||
+                 document.querySelector('.wave-container .rizzoma-topic-detail');
+    if (body && body.scrollBy) {
+      body.scrollBy(0, 400);
+    } else {
+      window.scrollBy(0, 400);
+    }
+  });
+  await page.waitForTimeout(300);
+  await page.screenshot({
+    path: path.join(outDir, "current-realistic-topic-scrolled.png"),
+    fullPage: false,
+  });
 
   // Copy the legacy reference next to it so the pair lives in one folder
   const legacyPath = path.resolve(__dirname, "..", "screenshots", "rizzoma-live", "feature", "rizzoma-core-features", "rizzoma-blips-nested.png");

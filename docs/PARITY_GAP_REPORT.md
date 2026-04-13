@@ -24,19 +24,26 @@ After seeding a realistic topic with the same content shape as the legacy refere
 
 ## What honestly doesn't match
 
-### 1. Per-blip author avatars + dates — **the largest gap**
+### 1. Per-blip author avatars + dates — **partially fixed, still incomplete**
 
 **Legacy:** every section in the topic (Oneliner, "This is the 'landing page'", "Unless we see a reason for it", "What is Rizzoma", "First steps", each numbered step 1-4) has an avatar circle on the right of the content row with a date label (Feb 2020, Dec 2017). These are author/contributor markers on each content block.
 
-**Current:** zero `.blip-author-date` elements. Zero `.blip-contributors-info` elements. Even with 4 real reply blips seeded via `/api/blips` the audit shows `blipAuthorDates: 0` and `blipContributorsInfo: 0`. The React render path for the contributor column is not producing output.
+**Before fix (pass2):** zero `.blip-author-date` elements, zero `.blip-contributors-info` elements even with 4 real reply blips seeded. Root cause: the `.blip-contributors-info` div was rendered ONLY inside `.blip-view-mode > .blip-content-row > .blip-main-content` — i.e., only when a non-topic-root blip is EXPANDED. Collapsed reply rows used `.blip-collapsed-row` which had no author metadata at all, and the topic-root render path skipped the contributor column entirely.
 
-**Likely cause:** in `src/client/components/blip/RizzomaBlip.tsx` the `.blip-contributors-info` div is rendered inside the `.blip-view-mode > .blip-content-row > .blip-main-content` tree, which only appears when the blip is EXPANDED. Collapsed replies use `.blip-collapsed-row` which doesn't include author metadata. And the topic-root render path goes through a different branch that skips the contributor column entirely (`{!isTopicRoot && (<div className="blip-contributors-info">...}`). The legacy rendering showed author markers for every content section regardless of collapsed/expanded state — meaning the data path needs to flow to the collapsed-row render AND the topic-root render too, or the topic meta-blip needs to render author markers per content paragraph (closer to a Y.js awareness + authorship feature).
+**Partial fix landed 2026-04-13 (in `src/client/components/blip/RizzomaBlip.tsx`):** added `<div className="blip-contributors-info blip-contributors-info-collapsed">` to the collapsed-row JSX with the same `BlipContributorsStack` + `.blip-author-date` pattern as the expanded view. Gated on `!isTopicRoot` so the topic meta-blip itself is unaffected. CSS extends `.blip-contributors-info` with a collapsed variant that lays the avatar + date horizontally (row direction) and pushes the column to the right edge via `margin-left: auto`.
 
-**Fix scope:** non-trivial. Not a CSS tweak. Needs:
-- A decision on whether the author markers attach to collapsed rows, to topic-root paragraphs, or both.
-- The `contributors` array on `BlipData` populated from real edit history (it's typed but may never be written).
-- The `BlipContributorsStack` component wired into the collapsed-row JSX and/or the topic-content-view's paragraph rendering.
-- CSS for a 24-32px avatar column on the right edge of each row.
+**Pass3 audit** after the fix: `blipAuthorDates: 3`, `blipContributorsInfo: 3` (was 0 in pass2). Captured in `screenshots/260413-parity-side-by-side/rizzoma-blips-nested-pass3/current-realistic-topic-scrolled.png` — the 2 visible reply rows each carry a small avatar + "Apr 2026" date on the right edge, matching the legacy reply-row pattern.
+
+**What's still missing:**
+- The legacy reference shows author markers on EVERY content block of the topic body (Oneliner, What is Rizzoma, First steps, numbered steps 1-4). These are NOT reply blips — they're sections of the meta-blip's content. In the legacy data model each section was apparently a separate blip, so every section had its own author.
+- My topic body is a single HTML blob stored as `topic.content`. The meta-blip renders through the `.topic-content-view` / `.topic-content-edit` path with no per-section blip structure and no per-paragraph author metadata.
+- The author column now appears on **reply blips** (matches legacy reply rendering), NOT on **topic body sections** (doesn't match legacy because the data model differs).
+
+**The complete fix requires one of:**
+- (A) Changing the topic data model to store each section as a separate blip rather than as one HTML content blob, then rendering the topic body as a vertical stack of section blips each with its own author column.
+- (B) Keeping the single-blob topic content but adding per-paragraph author attribution derived from Y.js awareness history, then rendering avatars on each paragraph in `.topic-content-view`.
+
+Option A is a data-model rewrite. Option B is a Y.js-integration feature. Neither is a same-day fix. The partial fix above is a meaningful win — reply rows now carry author metadata — but the user should know it doesn't fully close the legacy gap for the topic body itself.
 
 ### 2. "Rizzoma" branding + "Follow" button (bottom-left)
 

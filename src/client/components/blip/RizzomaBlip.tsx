@@ -1787,7 +1787,15 @@ export function RizzomaBlip({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Collapsed View - Simple like live Rizzoma: bullet + label + [+] only */}
+      {/* Collapsed View - Simple like live Rizzoma: bullet + label + [+] + author */}
+      {/* Parity fix (2026-04-13): the legacy Rizzoma reference renders each
+          reply row with an author avatar + date on the right edge even when
+          collapsed (see screenshots/rizzoma-live/feature/rizzoma-core-features/
+          rizzoma-blips-nested.png). Previously the .blip-contributors-info
+          column only rendered inside .blip-view-mode (expanded state), so
+          collapsed reply rows had no author metadata at all. Rendering the
+          contributors column on the collapsed row too gives every visible
+          reply a consistent author column, matching the legacy surface. */}
       {showCollapsedView && (
         <div
           className="blip-collapsed-row"
@@ -1800,6 +1808,18 @@ export function RizzomaBlip({
           <span className="blip-collapsed-label-text">{blipLabel}</span>
           {listChildren.length > 0 && (
             <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>+</span>
+          )}
+          {!isTopicRoot && (
+            <div className="blip-contributors-info blip-contributors-info-collapsed">
+              <BlipContributorsStack
+                contributors={blip.contributors}
+                fallbackAuthor={blip.authorName}
+                fallbackAvatar={blip.authorAvatar}
+              />
+              <span className="blip-author-date">
+                {new Date(blip.updatedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+              </span>
+            </div>
           )}
         </div>
       )}

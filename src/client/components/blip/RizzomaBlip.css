@@ -308,6 +308,32 @@
   padding-left: 12px;
 }
 
+/* Parity fix (2026-04-13): the collapsed row variant pushes the author
+   column to the right edge of the row with a tighter vertical stack so
+   it doesn't inflate the row height. Mirrors the legacy Rizzoma behavior
+   where every reply carries an avatar + date on the right even when the
+   row is collapsed. */
+.blip-contributors-info-collapsed {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding-left: 12px;
+}
+
+.blip-contributors-info-collapsed .blip-author-date {
+  font-size: 11px;
+  color: #8a9aad;
+  white-space: nowrap;
+}
+
+/* The .blip-collapsed-row is already a flex container (bullet + label +
+   expand-icon); adding the contributors column on the right relies on
+   margin-left:auto from .blip-contributors-info to push it to the edge. */
+.blip-collapsed-row {
+  display: flex;
+  align-items: center;
+}
+
 .blip-contributors-stack {
   position: relative;
   width: 36px;
