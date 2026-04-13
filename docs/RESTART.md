@@ -195,6 +195,19 @@ codex exec '
 - `npm run dev` → server :8788 (reserved Rizzoma backend port — see CLAUDE.md "Reserved Ports"), client :3000 (set `FEAT_ALL=1`; for smokes you can run `SESSION_STORE=memory REDIS_URL=memory://`)
 - Open http://localhost:3000
 
+### OAuth provider notes (port-migration aware, 2026-04-13)
+
+Local dev OAuth credentials live in `.env` (gitignored):
+
+| Provider | Env var | Cloud console project | Notes |
+|---|---|---|---|
+| Google | `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` | Google Cloud project **Rizzoma** (Client ID prefix `46844340633-`) | Authorized redirect URI must include `http://localhost:8788/api/auth/google/callback` after the task #33 port migration from `:8000` to `:8788`. Both entries can coexist. |
+| Microsoft | `MICROSOFT_CLIENT_ID` + `MICROSOFT_CLIENT_SECRET` | Azure App Registration (Client ID prefix `75dcf1a5-`) | Same port-migration caveat applies — needs `http://localhost:8788/api/auth/microsoft/callback` in the Azure app's redirect URI list if you use Microsoft sign-in locally. |
+
+If you see `Error 400: redirect_uri_mismatch` at sign-in, the Cloud Console for that provider still has only the pre-migration `:8000` callback whitelisted; add the `:8788` variant and retry — no server restart needed.
+
+Local email/password signup via the AuthPanel "Sign Up" tab always works without any OAuth config and is the fastest unblock if you just want to poke at the UI.
+
 6) Editor Flag
 - To enable editor endpoints: set `EDITOR_ENABLE=1`
   - For follow-green/toolbar smokes, also set `FEAT_ALL=1` for both server and Vite.
