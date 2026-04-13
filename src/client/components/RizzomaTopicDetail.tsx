@@ -11,6 +11,11 @@ import './RizzomaTopicDetail.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { RizzomaBlip, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
 import { injectInlineMarkers } from './blip/inlineMarkers';
+import {
+  diffAndStampAttribution,
+  hashBlockText,
+  type SectionAttributionMap,
+} from '../lib/sectionAttribution';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { generateHTML, type Editor } from '@tiptap/core';
 import { flushSync } from 'react-dom';
@@ -317,6 +322,8 @@ type TopicFull = {
   updatedAt: number;
   authorId: string;
   authorName: string;
+  authorAvatar?: string;
+  sectionAttribution?: SectionAttributionMap;
 };
 
 type Participant = {
@@ -510,6 +517,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const topicContentViewRef = useRef<HTMLDivElement | null>(null);
   const topicContentInnerRef = useRef<HTMLDivElement | null>(null);
   const editingTopicTitleRef = useRef('Untitled');
+  const currentUserRef = useRef<{ id: string; name?: string; avatar?: string } | null>(null);
   const topicInlineRootBlips = useMemo(
     () => blips.filter((b) => typeof b.anchorPosition === 'number'),
     [blips]
@@ -541,23 +549,47 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       const doc = parser.parseFromString(`<div id="root">${withMarkers}</div>`, 'text/html');
       const root = doc.getElementById('root');
       if (!root) return withMarkers;
-      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(topic.authorName)}&size=20&background=4EA0F1`;
-      const dateLabel = new Date(topic.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      const authorName = topic.authorName;
-      const makeBadge = (): HTMLElement => {
+      const topicAuthorName = topic.authorName;
+      const topicCreatedAt = topic.createdAt;
+      const fmtDate = (ts: number) => new Date(ts).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      const avatarFor = (name: string) =>
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=20&background=4EA0F1`;
+      // Per-block attribution lookup: hash the block's own text, check
+      // topic.sectionAttribution for an entry, fall back to the topic
+      // creator. Works for any block (paragraph, h1, list item).
+      const resolveAttribution = (blockText: string): { name: string; ts: number } => {
+        const hash = hashBlockText(blockText);
+        const entry = topic.sectionAttribution?.[hash];
+        if (entry) {
+          return {
+            name: entry.authorName || entry.authorId || topicAuthorName,
+            ts: entry.updatedAt || topicCreatedAt,
+          };
+        }
+        return { name: topicAuthorName, ts: topicCreatedAt };
+      };
+      const makeBadgeFor = (blockText: string): HTMLElement => {
+        const { name, ts } = resolveAttribution(blockText);
         const badge = doc.createElement('span');
         badge.className = 'topic-section-author';
         const imgEl = doc.createElement('img');
-        imgEl.setAttribute('src', avatarUrl);
-        imgEl.setAttribute('alt', authorName);
-        imgEl.setAttribute('title', `Section author: ${authorName}`);
+        imgEl.setAttribute('src', avatarFor(name));
+        imgEl.setAttribute('alt', name);
+        imgEl.setAttribute('title', `Section author: ${name}`);
         imgEl.className = 'topic-section-author-avatar';
         badge.appendChild(imgEl);
         const dateEl = doc.createElement('span');
         dateEl.className = 'topic-section-author-date';
-        dateEl.textContent = dateLabel;
+        dateEl.textContent = fmtDate(ts);
         badge.appendChild(dateEl);
         return badge;
+      };
+      const getOwnText = (el: HTMLElement): string => {
+        const clone = el.cloneNode(true) as HTMLElement;
+        clone.querySelectorAll('li').forEach((nested) => nested.remove());
+        clone.querySelectorAll('ul, ol').forEach((list) => list.remove());
+        clone.querySelectorAll('.topic-section-author').forEach((badge) => badge.remove());
+        return (clone.textContent || '').trim();
       };
       // Top-level wrap: direct children of root that are NOT lists get a
       // flex-row wrapper with the badge on the right (paragraphs, headings,
@@ -573,21 +605,24 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         if (el.tagName === 'H1') wrapper.classList.add('topic-section-wrapped-title');
         el.parentNode?.insertBefore(wrapper, el);
         wrapper.appendChild(el);
-        wrapper.appendChild(makeBadge());
+        const blockText = (el.textContent || '').trim();
+        wrapper.appendChild(makeBadgeFor(blockText));
       }
       // Per-<li> badges: walk every list item at any depth and append a
-      // badge. CSS turns each <li> into a flex row so the badge sits on
-      // the far right like the legacy per-section author column.
+      // badge resolved against topic.sectionAttribution so each bullet
+      // shows its own author + date when available, falling back to
+      // the topic creator.
       root.querySelectorAll('li').forEach((li) => {
         const existing = li.querySelector(':scope > .topic-section-author');
         if (existing) return;
-        li.appendChild(makeBadge());
+        const blockText = getOwnText(li as HTMLElement);
+        li.appendChild(makeBadgeFor(blockText));
       });
       return root.innerHTML;
     } catch {
       return withMarkers;
     }
-  }, [topic?.content, topic?.title, topic?.authorName, topic?.createdAt, topicInlineRootBlips]);
+  }, [topic?.content, topic?.title, topic?.authorName, topic?.createdAt, topic?.sectionAttribution, topicInlineRootBlips]);
   const showTopicEditMode = isEditingTopic && !forceTopicReadMode;
   const currentSubblipParent = useMemo(() => {
     if (!currentSubblip?.parentBlipId) return null;
@@ -1544,9 +1579,41 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       if (!finalTitle) return;
 
       await ensureCsrf();
+      // Per-section attribution: diff old vs new blocks and stamp any
+      // that changed with the current user. Fetch /api/auth/me once
+      // (or from ref cache) so we can write authorId into the sidecar.
+      let sectionAttribution: Record<string, { authorId: string; authorName?: string; authorAvatar?: string; updatedAt: number }> | undefined;
+      try {
+        if (!currentUserRef.current) {
+          const meRes = await api('/api/auth/me');
+          if (meRes.ok && meRes.data?.user) {
+            currentUserRef.current = {
+              id: meRes.data.user.id,
+              name: meRes.data.user.name || (meRes.data.user.email ? meRes.data.user.email.split('@')[0] : undefined),
+              avatar: meRes.data.user.avatar,
+            };
+          }
+        }
+        const me = currentUserRef.current;
+        if (me && me.id) {
+          sectionAttribution = diffAndStampAttribution({
+            prevAttribution: topic?.sectionAttribution,
+            oldHtml: lastSavedContentRef.current || topic?.content || '',
+            newHtml: normalizedContent,
+            currentUserId: me.id,
+            currentUserName: me.name,
+            currentUserAvatar: me.avatar,
+            now: Date.now(),
+          });
+        }
+      } catch { /* best-effort, fall through without attribution */ }
       const response = await api(`/api/topics/${encodeURIComponent(id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({ title: finalTitle, content: normalizedContent }),
+        body: JSON.stringify({
+          title: finalTitle,
+          content: normalizedContent,
+          ...(sectionAttribution ? { sectionAttribution: Object.fromEntries(Object.entries(sectionAttribution).map(([k, v]) => [k, { authorId: v.authorId, updatedAt: v.updatedAt }])) } : {}),
+        }),
         signal: abortController.signal,
       });
       if (abortController.signal.aborted) {

@@ -5,6 +5,7 @@ import { emitEvent } from '../lib/socket.js';
 import { csrfProtect } from '../middleware/csrf.js';
 import { requireAuth } from '../middleware/auth.js';
 import { CreateTopicSchema, UpdateTopicSchema } from '../schemas/topic.js';
+import { stampInitialAttribution, diffAndStampAttribution } from '../lib/sectionAttribution.js';
 import { computeWaveUnreadCounts } from '../lib/unread.js';
 import { sendInviteEmail } from '../services/email.js';
 import type { WaveParticipant } from '../schemas/wave.js';
@@ -24,6 +25,11 @@ const router = Router();
 
 // Schemas moved to ../schemas/topic
 
+type SectionAttributionEntry = {
+  authorId: string;
+  updatedAt: number;
+};
+
 type Topic = {
   _id?: string;
   type: 'topic';
@@ -32,6 +38,7 @@ type Topic = {
   authorId?: string;
   createdAt: number; // epoch millis
   updatedAt: number; // epoch millis
+  sectionAttribution?: Record<string, SectionAttributionEntry>;
 };
 
 type TopicFollow = {
@@ -234,6 +241,12 @@ router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => 
   try {
     const parsed = CreateTopicSchema.parse(req.body ?? {});
     const now = Date.now();
+    // Seed initial sectionAttribution so a freshly-created topic
+    // already has per-block author entries. First edit after create
+    // will diff against this and only re-stamp changed blocks.
+    const initialAttribution = parsed.content
+      ? stampInitialAttribution({ html: parsed.content, authorId: userId, now })
+      : {};
     const doc: Topic = {
       type: 'topic',
       title: parsed.title,
@@ -241,6 +254,7 @@ router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => 
       authorId: userId,
       createdAt: now,
       updatedAt: now,
+      sectionAttribution: initialAttribution,
     };
     const r = await insertDoc(doc);
     const topicId = r.id;
@@ -362,6 +376,39 @@ router.get('/:id', async (req, res): Promise<void> => {
         }
       } catch { /* ignore */ }
     }
+    // Hydrate section attribution with per-authorId name lookups so the
+    // client can render each block badge without N round-trips.
+    let sectionAttributionHydrated:
+      | Record<string, { authorId: string; authorName?: string; authorAvatar?: string; updatedAt: number }>
+      | undefined;
+    if (doc.sectionAttribution && Object.keys(doc.sectionAttribution).length > 0) {
+      const uniqueAuthorIds = Array.from(new Set(Object.values(doc.sectionAttribution).map((e) => e.authorId).filter(Boolean)));
+      const authorLookupEntries = await Promise.all(
+        uniqueAuthorIds.map(async (aid) => {
+          try {
+            const u = await getDoc<User>(aid);
+            if (u && u.type === 'user') {
+              return [aid, {
+                name: u.name || (u.email ? u.email.split('@')[0] : undefined),
+                avatar: u.avatar ?? undefined,
+              }] as const;
+            }
+          } catch { /* ignore */ }
+          return [aid, { name: undefined, avatar: undefined }] as const;
+        })
+      );
+      const authorLookup = Object.fromEntries(authorLookupEntries);
+      sectionAttributionHydrated = {};
+      for (const [blockHash, entry] of Object.entries(doc.sectionAttribution)) {
+        const lookup = authorLookup[entry.authorId];
+        sectionAttributionHydrated[blockHash] = {
+          authorId: entry.authorId,
+          authorName: lookup?.name,
+          authorAvatar: lookup?.avatar,
+          updatedAt: entry.updatedAt,
+        };
+      }
+    }
     res.json({
       id: doc._id,
       title: doc.title,
@@ -371,6 +418,7 @@ router.get('/:id', async (req, res): Promise<void> => {
       authorId: doc.authorId,
       authorName,
       authorAvatar,
+      sectionAttribution: sectionAttributionHydrated,
     });
     return;
   } catch (e: any) {
@@ -465,11 +513,28 @@ router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void>
     } catch {}
     const existing = await getDoc<Topic & { _rev: string }>(id);
     // All authenticated users can edit topics (collaborative editing, like original Rizzoma)
+    const nowPatch = Date.now();
+    // If the client sent its own sectionAttribution, trust it (the
+    // client diff'd against the local lastSavedContent). Otherwise
+    // compute a fresh diff server-side so attribution stays accurate
+    // even when the client-side stamping path isn't taken (e.g.,
+    // direct API edits via a script or an older client).
+    let nextSectionAttribution = payload.sectionAttribution ?? existing.sectionAttribution;
+    if (!payload.sectionAttribution && payload.content !== undefined && payload.content !== existing.content) {
+      nextSectionAttribution = diffAndStampAttribution({
+        prevAttribution: existing.sectionAttribution,
+        oldHtml: existing.content || '',
+        newHtml: payload.content,
+        currentUserId: req.user!.id,
+        now: nowPatch,
+      });
+    }
     const next: Topic & { _rev?: string } = {
       ...existing,
       title: payload.title ?? existing.title,
       content: payload.content ?? existing.content,
-      updatedAt: Date.now(),
+      sectionAttribution: nextSectionAttribution,
+      updatedAt: nowPatch,
     };
     const r = await updateDoc(next as any);
     try {

@@ -71,6 +71,28 @@ async function createBlip(page, waveId, parentId, content) {
   return { id: result.data.id || result.data._id };
 }
 
+async function patchTopic(page, topicId, body) {
+  return await page.evaluate(async ({ topicId, payload }) => {
+    const readCookie = (name) => {
+      const escaped = name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+      const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
+      return match?.[1] ? decodeURIComponent(match[1]) : undefined;
+    };
+    await fetch("/api/auth/csrf", { credentials: "include" });
+    const token = readCookie("XSRF-TOKEN");
+    const response = await fetch(`/api/topics/${encodeURIComponent(topicId)}`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        "content-type": "application/json",
+        ...(token ? { "x-csrf-token": token } : {}),
+      },
+      body: JSON.stringify(payload),
+    });
+    return { ok: response.ok, status: response.status, data: await response.json().catch(() => null) };
+  }, { topicId, payload: body });
+}
+
 async function main() {
   const outDir = process.argv[2];
   const base = process.argv[3] || "http://127.0.0.1:3000";
@@ -139,6 +161,27 @@ async function main() {
   ].join("");
   const topicId = await createTopic(page, topicTitle, topicContent);
 
+  // Phase 2: simulate a second-authored edit so sectionAttribution
+  // shows at least two distinct timestamps. We can't switch users in
+  // a single-tenant verifier, but a follow-up PATCH ~2s after POST
+  // still proves the diff-and-stamp path works: the server runs
+  // diffAndStampAttribution against the previous content and
+  // re-stamps only the changed blocks with the new timestamp while
+  // unchanged blocks keep their original stamp.
+  await new Promise((r) => setTimeout(r, 2100));
+  const modifiedContent = topicContent.replace(
+    '<strong>Oneliner</strong>',
+    '<strong>Oneliner (updated)</strong>'
+  ).replace(
+    '<strong>What is Rizzoma</strong>',
+    '<strong>What is Rizzoma (revised)</strong>'
+  );
+  try {
+    await patchTopic(page, topicId, { title: topicTitle, content: modifiedContent });
+  } catch (e) {
+    console.error('phase-2 PATCH failed:', e);
+  }
+
   // Seed a few reply blips so the topic reads like a real thread
   await createBlip(page, topicId, null, "<p>First reply from the main thread — establishes the conversation baseline and gives the topic a lived-in density.</p>");
   const reply2 = await createBlip(page, topicId, null, "<p>Second reply — branches into a nested discussion about research design and evaluation criteria.</p>");
@@ -197,6 +240,17 @@ async function main() {
     fs.copyFileSync(legacyPath, path.join(outDir, "legacy-rizzoma-blips-nested.png"));
   }
 
+  // Fetch the raw topic so we can include a sectionAttribution
+  // breakdown in the audit — counts entries and distinct timestamps
+  // to prove the Y.js-awareness-like per-block stamping path works.
+  const topicRaw = await page.evaluate(async (topicId) => {
+    const r = await fetch(`/api/topics/${encodeURIComponent(topicId)}`, { credentials: 'include' });
+    return r.ok ? await r.json() : null;
+  }, topicId);
+  const attrEntries = topicRaw?.sectionAttribution ? Object.values(topicRaw.sectionAttribution) : [];
+  const distinctTimestamps = new Set(attrEntries.map((e) => e.updatedAt)).size;
+  const distinctAuthors = new Set(attrEntries.map((e) => e.authorId)).size;
+
   // DOM audit for the honest report
   const audit = await page.evaluate(() => ({
     viewportWidth: window.innerWidth,
@@ -226,6 +280,11 @@ async function main() {
     base,
     capturedAt: new Date().toISOString(),
     audit,
+    sectionAttribution: {
+      entries: attrEntries.length,
+      distinctTimestamps,
+      distinctAuthors,
+    },
   }, null, 2));
   console.log(JSON.stringify(audit, null, 2));
   await browser.close();

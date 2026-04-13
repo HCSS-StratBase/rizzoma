@@ -50,6 +50,18 @@ After seeding a realistic topic with the same content shape as the legacy refere
 
 **What's STILL missing after pass12:** the badges all show the same author + same date because the data model only carries one author per topic. Differentiated per-section authorship still requires the Y.js awareness history walk OR the data-model rewrite (option A or B above). Visual structure now matches; data fidelity is the next step.
 
+**Real differentiated attribution landed 2026-04-13 pass21–pass23:** rather than walking the Y.js awareness update log (which only carries in-memory session presence, not historical authorship), introduced a `topic.sectionAttribution: Record<textHash, {authorId, updatedAt}>` sidecar on the topic doc. Keyed by a deterministic djb2 hash of each block's normalized text so block reordering doesn't invalidate entries.
+
+Wiring:
+
+1. `src/client/lib/sectionAttribution.ts` + `src/server/lib/sectionAttribution.ts` — mirrored helpers that extract block hashes from HTML (top-level `<p>`/`<h1>` + every `<li>`'s own text excluding nested `<li>`/`<ul>`/`<ol>` content) and run diff-and-stamp. Server uses `parse5` (loads in ~340ms; jsdom took ~30s over the WSL2 `/mnt/c` filesystem and blocked backend startup).
+2. `src/server/routes/topics.ts` POST stamps initial attribution for every block at topic-creation time with the creator's userId. PATCH accepts either a client-computed map (trusted when sent) OR diffs server-side against the previous content.
+3. `GET /:id` hydrates the map with per-authorId name lookups so the client can render each badge without N round-trips.
+4. `src/client/components/RizzomaTopicDetail.tsx` useMemo resolves each block text's hash against `topic.sectionAttribution[hash]` and uses that entry's `authorName + updatedAt`; falls back to `topic.authorName + topic.createdAt` when no entry exists.
+5. Verifier phase-2 PATCH ~2s after the initial POST modifies two blocks ("Oneliner" → "Oneliner (updated)" and "What is Rizzoma" → "What is Rizzoma (revised)"). Pass23 audit: `sectionAttribution: {entries: 24, distinctTimestamps: 2, distinctAuthors: 1}`.
+
+Visual dates in pass23 all render "Apr 2026" because both T0 and T1 fall in the same month/year; the underlying map IS differentiated (2 distinct timestamps), but the badge's month+year format collapses close timestamps. Over real elapsed time (days/months), the visual differentiation appears naturally. Multi-author differentiation requires a second user and isn't exercised by the single-tenant verifier.
+
 **The complete fix requires one of:**
 - (A) Changing the topic data model to store each section as a separate blip rather than as one HTML content blob, then rendering the topic body as a vertical stack of section blips each with its own author column.
 - (B) Keeping the single-blob topic content but adding per-paragraph author attribution derived from Y.js awareness history, then rendering avatars on each paragraph in `.topic-content-view`.

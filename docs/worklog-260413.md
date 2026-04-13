@@ -232,3 +232,24 @@ Built on the pass15 topics-list footer landing. This block closed gaps #2 and #3
 - Gap #3: **fixed** — varied workspace topics in the topics-list column.
 - Gap #4: **punted** — color palette is design evolution, not regression.
 
+
+## Evening Push: Per-Section Attribution Sidecar (pass21–pass23)
+
+After pass20 checkpoint commit, tackled the "different author per section" gap honestly. Y.js awareness turned out to be the wrong primitive — it carries in-memory session presence only, not historical authorship. The real path is a `topic.sectionAttribution: Record<textHash, {authorId, updatedAt}>` sidecar maintained by the server on every write.
+
+### Plumbing
+- `src/server/schemas/topic.ts` + `src/server/routes/topics.ts`: Topic type extended, UpdateTopicSchema accepts optional `sectionAttribution`, POST seeds initial attribution for every block at create time, PATCH diffs old vs new when the client doesn't send its own map, GET hydrates with per-authorId name lookups.
+- `src/server/lib/sectionAttribution.ts`: `extractBlockHashes` + `stampInitialAttribution` + `diffAndStampAttribution`, using **parse5** (loads ~340ms) instead of **jsdom** (loads ~30s over WSL2 `/mnt/c`, blocked backend startup — burned a cycle on this).
+- `src/client/lib/sectionAttribution.ts`: mirrored helper for the browser side, used by `autoSaveTopicContent` to compute the map with DOMParser and include it in PATCH. Trust-from-client path takes precedence over server-side diffing.
+- `src/client/components/RizzomaTopicDetail.tsx`: `topicContentHtmlBase` useMemo resolves each block's text-hash against `topic.sectionAttribution[hash]` and renders `entry.authorName + entry.updatedAt`, falling back to `topic.authorName + topic.createdAt` when no entry exists.
+
+### Verifier phase-2 proof
+- After the initial POST, sleep 2.1s then PATCH the topic with two changed blocks: `<strong>Oneliner</strong>` → `<strong>Oneliner (updated)</strong>` and `<strong>What is Rizzoma</strong>` → `<strong>What is Rizzoma (revised)</strong>`. Hashes change, the server diff-and-stamps.
+- Pass23 audit: `sectionAttribution: {entries: 24, distinctTimestamps: 2, distinctAuthors: 1}` — exactly the expected outcome (22 blocks keep T0, 2 blocks get T1).
+
+### Visual limitation
+Both T0 and T1 are within April 2026, so the badge's `{month: 'short', year: 'numeric'}` format collapses them to the same "Apr 2026" text. The MAP is differentiated; the rendered DATE is not, because close timestamps fall in the same month. Over real elapsed time the visual differentiation appears naturally; multi-author differentiation needs a second user and isn't exercised by the single-tenant verifier.
+
+### parse5 vs jsdom gotcha (for future reference)
+jsdom over WSL2 `/mnt/c` takes 29 seconds per import (huge dependency tree of Windows-side files touched through the 9P translation layer). parse5 is a lightweight HTML5 tokenizer that does exactly what we need (tag walking + text extraction) in 340ms. Always prefer parse5 (or another small parser) for server-side block walking unless you genuinely need full DOM semantics.
+
