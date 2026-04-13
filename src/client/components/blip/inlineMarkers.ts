@@ -60,8 +60,20 @@ export function injectInlineMarkers(html: string, inlineChildren: InlineMarkerSo
   // Build a set of known child IDs for orphan detection
   const knownChildIds = new Set(inlineChildren.map(c => c.id));
 
+  // Build a lookup for per-child unread state so we can hydrate
+  // the `.has-unread` class on BOTH pre-existing markers (baked
+  // into the HTML blob) and newly-injected markers. Without this
+  // hydration pass, markers that live in the stored topic.content
+  // never show green even when the child blip is unread — the
+  // "why don't I see any green in read mode?" bug from the user's
+  // 2026-04-14 smoke test (task #39).
+  const unreadById = new Map<string, boolean>();
+  inlineChildren.forEach((c) => {
+    unreadById.set(c.id, c.isRead === false);
+  });
+
   // Update pre-existing markers in the HTML (from original Rizzoma content)
-  // — sync expanded state, mark orphaned markers
+  // — sync expanded state, mark orphaned markers, hydrate unread state
   const existingMarkers = container.querySelectorAll('.blip-thread-marker');
   existingMarkers.forEach(marker => {
     const threadId = marker.getAttribute('data-blip-thread');
@@ -75,6 +87,14 @@ export function injectInlineMarkers(html: string, inlineChildren: InlineMarkerSo
       } else {
         marker.classList.remove('expanded');
         marker.textContent = '+';
+      }
+      // Hydrate unread state — `.has-unread` drives the green fill
+      // in BlipThread.css. Toggled based on the child's current
+      // isRead state from the parent's inlineChildren source.
+      if (unreadById.get(threadId) === true) {
+        marker.classList.add('has-unread');
+      } else {
+        marker.classList.remove('has-unread');
       }
     } else {
       // Orphaned marker — references a child that doesn't exist in this blip
@@ -103,14 +123,26 @@ export function injectInlineMarkers(html: string, inlineChildren: InlineMarkerSo
       const portal = document.createElement('div');
       portal.className = 'inline-child-portal';
       portal.setAttribute('data-portal-child', childId);
-      // Place portal after the closest block parent (li or p) so child renders below the line
-      const li = marker.closest('li');
-      if (li) {
-        li.appendChild(portal);
+      // Place portal IMMEDIATELY after the marker's containing
+      // inline block (the <p> or <h1> the marker lives in), not at
+      // the end of the outermost <li>. Without this the expanded
+      // child renders below all nested sibling content of the
+      // containing `<li>` — e.g. if the marker is on the header
+      // line of "First steps in Rizzoma" which has a nested <ol>
+      // of 4 numbered steps, the expansion would appear AFTER all
+      // 4 steps instead of directly under the header line.
+      // Walk up from the marker until we hit the nearest block
+      // ancestor that has a parentNode, then insert the portal as
+      // its next sibling.
+      const blockAncestor = marker.closest('p, h1, h2, h3, h4, h5, h6');
+      if (blockAncestor && blockAncestor.parentNode) {
+        blockAncestor.parentNode.insertBefore(portal, blockAncestor.nextSibling);
       } else {
-        const p = marker.closest('p');
-        if (p && p.parentNode) {
-          p.parentNode.insertBefore(portal, p.nextSibling);
+        // Fall back to the old behavior for markers in bare <li>
+        // (no wrapping <p>) or other unusual structures.
+        const li = marker.closest('li');
+        if (li && li.parentNode) {
+          li.parentNode.insertBefore(portal, li.nextSibling);
         } else if (marker.parentNode) {
           marker.parentNode.insertBefore(portal, marker.nextSibling);
         }

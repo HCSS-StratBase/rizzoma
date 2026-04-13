@@ -695,11 +695,20 @@
   border: none;
   background: #b3b3b3;
   color: #ffffff;
-  font-size: 10px;
+  /* font-size: 0 hides the marker's own textContent ("+") so only
+     the ::after pseudo-element (which carries the +/− symbol in
+     BlipThread.css) paints the visible glyph. Without this the
+     marker would render BOTH the textContent and the ::after,
+     producing a double "+" — the "why do I see two greens" bug. */
+  font-size: 0;
   font-weight: 700;
   vertical-align: middle;
   line-height: 1;
   cursor: pointer;
+}
+
+.topic-content-view .blip-thread-marker::after {
+  font-size: 10px;
 }
 
 .topic-content-view .blip-thread-marker:hover {
