@@ -112,9 +112,11 @@ async function markBlipRead(page, waveId, blipId) {
 }
 
 async function shot(page, outDir, index, slug) {
+  // Hard Gap #38 (2026-04-13): full-viewport capture so the nav panel
+  // and right tools panel are visible alongside the wave.
   const filename = `${String(index).padStart(2, "0")}-${slug}.png`;
   const filePath = path.join(outDir, filename);
-  await page.locator(".wave-container").screenshot({ path: filePath });
+  await page.screenshot({ path: filePath, fullPage: false });
   const htmlPath = path.join(outDir, `${String(index).padStart(2, "0")}-${slug}.html`);
   fs.writeFileSync(htmlPath, await page.content());
   return { screenshot: filePath, html: htmlPath };

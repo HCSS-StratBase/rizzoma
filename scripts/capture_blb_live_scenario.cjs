@@ -489,7 +489,12 @@ async function main() {
   const shotPath = path.join(outDir, 'blb-live-scenario-v3.png');
   const htmlPath = path.join(outDir, 'blb-live-scenario-v3.html');
   const perfPath = path.join(outDir, 'blb-live-scenario-v3.metrics.json');
-  await page.locator('.wave-container').screenshot({ path: shotPath });
+  // Hard Gap #38 (2026-04-13): capture the whole viewport so the nav
+  // panel and right tools panel are visible, not just the cropped wave
+  // column. See the parity failure documented in screenshots/260413-full-
+  // page-parity/02-topic-full.png vs the legacy rizzoma-blips-nested.png
+  // reference.
+  await page.screenshot({ path: shotPath, fullPage: false });
   fs.writeFileSync(htmlPath, await page.content());
   fs.writeFileSync(perfPath, JSON.stringify({
     base,

@@ -40,9 +40,14 @@ async function createTopic(page, title, content) {
 }
 
 async function shot(page, outDir, index, slug) {
+  // Hard Gap #38 (2026-04-13): capture the whole viewport so the nav panel
+  // and right tools panel are visible, not just the cropped wave column.
+  // The prior .locator(".wave-container").screenshot(...) crop was hiding
+  // the application shell around the wave and making every "accepted"
+  // capture look like an empty card on a sea of white.
   const filename = `${String(index).padStart(2, "0")}-${slug}.png`;
   const filePath = path.join(outDir, filename);
-  await page.locator(".wave-container").screenshot({ path: filePath });
+  await page.screenshot({ path: filePath, fullPage: false });
   const htmlPath = path.join(outDir, `${String(index).padStart(2, "0")}-${slug}.html`);
   fs.writeFileSync(htmlPath, await page.content());
   return { screenshot: filePath, html: htmlPath };
