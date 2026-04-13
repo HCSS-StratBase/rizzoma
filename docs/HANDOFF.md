@@ -18,6 +18,14 @@ Branching mode (private repo):
 - If link management guidance is still needed, `docs/LINKS_REPARENT.md` was removed; restore or replace before directing contributors to it.
 - Demo-mode login references are stale: the Rizzoma layout routes sign-in through the real `AuthPanel`, so contributors must use authenticated sessions rather than `?demo=true` fallbacks.
 - Playwright smokes are required for merges: the `browser-smokes` GitHub job runs `npm run test:toolbar-inline` + `npm run test:follow-green`, uploads `snapshots/<feature>/` artifacts, and now runs even when the build stage fails so snapshots/artifacts are always available for triage. Pull them locally via `npm run snapshots:pull` if you need to inspect without rerunning Playwright.
+
+## CI gates (Hard Gap #19, 2026-04-13)
+- `.github/workflows/ci.yml` defines five jobs: `build`, `browser-smokes`, `perf-budgets`, `health-checks`, and `ci-gate` (the aggregator).
+  - `build` — typecheck, lint (non-blocking), `npm test`, build, Docker image build (push-only).
+  - `browser-smokes` — runs `test:toolbar-inline` + `test:follow-green` (desktop + mobile) on the dev stack with `FEAT_ALL=1 EDITOR_ENABLE=1`, uploads snapshots. Runs `if: always()`.
+  - `perf-budgets` — runs `npm run perf:harness` against the dev stack with `RIZZOMA_PERF_BLIPS=50` and `RIZZOMA_PERF_ENFORCE_BUDGETS=0` (advisory). Toggle the enforce flag to make perf regressions block merges.
+  - `health-checks` — runs `npm run test:health` (which exercises `server.health.test.ts` + `routes.comments.inlineHealth.test.ts` + `routes.uploads.edgecases.test.ts`). Runs `if: always()` so health regressions surface independently of build/typecheck.
+  - `ci-gate` — single aggregator that depends on all four jobs above and fails if ANY of them failed or were cancelled. **This is the job to require in branch protection** (Settings → Branches → master → Require status checks → check `ci-gate`). With that one box checked, no merge can land if build, browser-smokes, perf-budgets, or health-checks regressed.
 - `README_MODERNIZATION.md` still positions Phase 1 as largely complete and omits the current perf/getUserMedia/health/backups backlog; rewrite before citing it for the active branch.
 - `docs/EDITOR_REALTIME.md` "Next steps" still lists presence/recovery/search as pending even though they shipped; update the roadmap to match the current perf/resilience focus.
 - `TESTING_STATUS.md` and `RIZZOMA_FEATURES_STATUS.md` reflect historical Dec 2025 runs; rerun suites before relying on them.

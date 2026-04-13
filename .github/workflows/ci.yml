@@ -226,6 +226,11 @@ jobs:
           docker compose down || true
 
   health-checks:
+    # Hard Gap #19 (2026-04-13): always run health-checks, even when build
+    # fails. Health regressions (CouchDB connectivity, inline-comment routes,
+    # upload edge cases) are independent of typecheck/lint and need to
+    # surface as their own signal.
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -252,3 +257,37 @@ jobs:
           FEAT_ALL: 1
           EDITOR_ENABLE: 1
         run: npm run test:health
+
+  ci-gate:
+    # Hard Gap #19 (2026-04-13): single aggregator job that GitHub branch
+    # protection can require as the lone "all CI gates passed" check. Lists
+    # every other job as a dependency and fails if ANY of them failed,
+    # cancelled, or were skipped due to a failure upstream. Configure
+    # branch protection on master to require this job (Settings → Branches
+    # → master → Require status checks → "ci-gate") so a merge cannot land
+    # if build, browser-smokes, perf-budgets, or health-checks regressed.
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs: [build, browser-smokes, perf-budgets, health-checks]
+    steps:
+      - name: Verify all upstream jobs succeeded
+        run: |
+          set -euo pipefail
+          declare -A results
+          results[build]='${{ needs.build.result }}'
+          results[browser-smokes]='${{ needs.browser-smokes.result }}'
+          results[perf-budgets]='${{ needs.perf-budgets.result }}'
+          results[health-checks]='${{ needs.health-checks.result }}'
+          failed=0
+          for job in "${!results[@]}"; do
+            outcome="${results[$job]}"
+            echo "  $job: $outcome"
+            if [[ "$outcome" != "success" && "$outcome" != "skipped" ]]; then
+              failed=1
+            fi
+          done
+          if [[ "$failed" == "1" ]]; then
+            echo "::error::One or more CI gates failed. Block the merge until they pass."
+            exit 1
+          fi
+          echo "All CI gates passed."
