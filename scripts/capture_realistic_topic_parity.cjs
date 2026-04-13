@@ -33,6 +33,30 @@ async function login(page, base, email, password) {
   await page.waitForSelector('.rizzoma-topics-list, .topics-container, .navigation-panel', { timeout: 15000 });
 }
 
+// Register-or-login helper for a second collaborator used by phase-2
+// attribution PATCH. Tries register (session cookie set on 201 or 409
+// means user existed → fall through to form login).
+async function ensureUser(page, base, email, password) {
+  await page.goto(base, { waitUntil: "domcontentloaded" });
+  const result = await page.evaluate(async ({ email, password }) => {
+    const r = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
+    return { status: r.status };
+  }, { email, password });
+  if (result?.status === 201) {
+    // Session set by register — just navigate into the app.
+    await page.goto(base, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector('.rizzoma-layout', { timeout: 15000 });
+  } else {
+    // 409 (exists) or other — fall back to form login.
+    await login(page, base, email, password);
+  }
+}
+
 async function apiPost(page, urlPath, body) {
   return await page.evaluate(async ({ url, payload }) => {
     const readCookie = (name) => {
@@ -103,7 +127,13 @@ async function main() {
 
   const browser = await chromium.launch({ headless: true });
   // Match the legacy reference capture dimensions exactly — 1440x900.
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const contextA = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await contextA.newPage();
+  // Second isolated context for the phase-2 collaborator so
+  // topic.sectionAttribution gets a genuinely different authorId when
+  // re-stamping changed blocks. Each context has its own cookie jar.
+  const contextB = await browser.newContext({ viewport: { width: 800, height: 600 } });
+  const pageB = await contextB.newPage();
 
   await login(page, base, "codex-live+1774803822194@example.com", "CodexLive!1");
 
@@ -161,14 +191,20 @@ async function main() {
   ].join("");
   const topicId = await createTopic(page, topicTitle, topicContent);
 
-  // Phase 2: simulate a second-authored edit so sectionAttribution
-  // shows at least two distinct timestamps. We can't switch users in
-  // a single-tenant verifier, but a follow-up PATCH ~2s after POST
-  // still proves the diff-and-stamp path works: the server runs
-  // diffAndStampAttribution against the previous content and
-  // re-stamps only the changed blocks with the new timestamp while
-  // unchanged blocks keep their original stamp.
+  // Phase 2: a SECOND collaborator (contextB) edits two blocks ~2s
+  // after the initial POST. Server diff-and-stamp rewrites those two
+  // hashes with userB's authorId + new timestamp, while the other
+  // 22 blocks keep userA's original stamp. This produces a
+  // genuinely multi-author sectionAttribution map which the rendered
+  // badges then resolve to different avatars + names per block.
   await new Promise((r) => setTimeout(r, 2100));
+  const collabEmail = "parity-editor+1776000000000@example.com";
+  const collabPassword = "ParityEd!1";
+  try {
+    await ensureUser(pageB, base, collabEmail, collabPassword);
+  } catch (e) {
+    console.error('ensureUser for collaborator failed:', e);
+  }
   const modifiedContent = topicContent.replace(
     '<strong>Oneliner</strong>',
     '<strong>Oneliner (updated)</strong>'
@@ -177,7 +213,7 @@ async function main() {
     '<strong>What is Rizzoma (revised)</strong>'
   );
   try {
-    await patchTopic(page, topicId, { title: topicTitle, content: modifiedContent });
+    await patchTopic(pageB, topicId, { title: topicTitle, content: modifiedContent });
   } catch (e) {
     console.error('phase-2 PATCH failed:', e);
   }
@@ -284,6 +320,7 @@ async function main() {
       entries: attrEntries.length,
       distinctTimestamps,
       distinctAuthors,
+      authorIds: Array.from(new Set(attrEntries.map((e) => e.authorId))),
     },
   }, null, 2));
   console.log(JSON.stringify(audit, null, 2));

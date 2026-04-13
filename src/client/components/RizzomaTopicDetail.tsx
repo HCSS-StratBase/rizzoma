@@ -552,8 +552,23 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       const topicAuthorName = topic.authorName;
       const topicCreatedAt = topic.createdAt;
       const fmtDate = (ts: number) => new Date(ts).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      const avatarFor = (name: string) =>
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=20&background=4EA0F1`;
+      // Deterministic per-name background color so different authors
+      // render with visually distinct avatars without randomness
+      // (stable across renders). Hash name → pick from a fixed palette.
+      const avatarPalette = [
+        '4EA0F1', '0D9488', '7C3AED', 'D97706',
+        'E11D48', '059669', '2563EB', 'DB2777',
+        '8B5CF6', 'F59E0B', '06B6D4', 'EC4899',
+      ];
+      const hashName = (s: string) => {
+        let h = 5381;
+        for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+        return (h >>> 0);
+      };
+      const avatarFor = (name: string) => {
+        const color = avatarPalette[hashName(name) % avatarPalette.length];
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=20&background=${color}&color=fff`;
+      };
       // Per-block attribution lookup: hash the block's own text, check
       // topic.sectionAttribution for an entry, fall back to the topic
       // creator. Works for any block (paragraph, h1, list item).
