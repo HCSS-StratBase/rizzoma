@@ -287,7 +287,27 @@ router.post('/:id/read', async (req, res) => {
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
   const id = req.params.id;
-  const blipIds = Array.isArray((req.body || {}).blipIds) ? (req.body as any).blipIds.map((s: any) => String(s)) : [];
+  let blipIds = Array.isArray((req.body || {}).blipIds) ? (req.body as any).blipIds.map((s: any) => String(s)) : [];
+
+  // "Mark entire topic as read" path: when no specific blipIds are
+  // passed, load every blip in the wave and mark all of them read.
+  // Previously this endpoint would silently no-op on an empty body
+  // and return `{ok:true, count:0}` — the gear-menu "Mark topic as
+  // read" used POST with no body, so the user saw a "Topic marked
+  // as read" toast while the green unread indicators stayed lit.
+  if (blipIds.length === 0) {
+    try {
+      const r = await find<{ _id: string }>(
+        { type: 'blip', waveId: id },
+        { limit: 5000 }
+      );
+      blipIds = (r.docs || []).map((d) => String(d._id || '')).filter(Boolean);
+      try { console.log('[waves] mark ALL read — expanded to', blipIds.length, 'blips', { waveId: id, userId }); } catch {}
+    } catch (e) {
+      console.error('[waves] mark ALL read — failed to enumerate blips', e);
+    }
+  }
+
   const results: Array<{ id: string; ok: boolean }> = [];
    try { console.log('[waves] mark many read', { waveId: id, count: blipIds.length, userId }); } catch {}
   for (const bid of blipIds) {

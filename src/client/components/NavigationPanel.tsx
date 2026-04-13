@@ -16,14 +16,21 @@ interface NavigationPanelProps {
   onTabChange: (tab: any) => void;
   isAuthed: boolean;
   onNewClick: () => void;
-  unreadCount?: number;
+  /**
+   * Unread TOPIC count (from useWaveUnread's unreadIds.length). Badges
+   * on the Topics tab — previously misplaced on Mentions, which was
+   * misleading because clicking Mentions routed to a separate list
+   * loaded from /api/mentions that had no relation to topic unread
+   * state, leaving the user with "badge says 6, list is empty".
+   */
+  unreadTopicCount?: number;
 }
 
-export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, unreadCount }: NavigationPanelProps) {
+export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, unreadTopicCount }: NavigationPanelProps) {
   return (
     <div className="navigation-panel">
       <div className="nav-header">
-        <button 
+        <button
           className="nav-button new-button"
           onClick={onNewClick}
         >
@@ -31,25 +38,25 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, 
           <span className="label">New</span>
         </button>
       </div>
-      
+
       <div className="nav-tabs">
-        <button 
+        <button
           className={`nav-tab ${activeTab === 'topics' ? 'active' : ''}`}
           onClick={() => onTabChange('topics')}
         >
           <span className="icon" style={{ color: '#64748b' }}><FileText size={20} /></span>
           <span className="label">Topics</span>
+          {(unreadTopicCount ?? 0) > 0 && <span className="badge">{unreadTopicCount}</span>}
         </button>
-        
+
         {isAuthed && (
           <>
-            <button 
+            <button
               className={`nav-tab ${activeTab === 'mentions' ? 'active' : ''}`}
               onClick={() => onTabChange('mentions')}
             >
               <span className="icon" style={{ color: '#0d9488' }}><AtSign size={20} /></span>
               <span className="label">Mentions</span>
-              {(unreadCount ?? 0) > 0 && <span className="badge">{unreadCount}</span>}
             </button>
             
             <button 

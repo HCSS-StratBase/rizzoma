@@ -314,14 +314,14 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
         <button
           className="fold-btn"
           onClick={handleHideReplies}
-          title="Hide replies (Ctrl+Shift+Up)"
+          title="Hide comments (Ctrl+Shift+Up)"
         >
           <span className="fold-icon">▲</span>
         </button>
         <button
           className="fold-btn"
           onClick={handleShowReplies}
-          title="Show replies (Ctrl+Shift+Down)"
+          title="Show comments (Ctrl+Shift+Down)"
         >
           <span className="fold-icon">▼</span>
         </button>
@@ -375,7 +375,7 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
             className="insert-btn"
             onMouseDown={e => e.preventDefault()}
             onClick={handleInsertReply}
-            title="Insert reply (Ctrl+Enter)"
+            title="Insert comment (Ctrl+Enter)"
           >
             <span className="insert-icon">↵</span>
           </button>

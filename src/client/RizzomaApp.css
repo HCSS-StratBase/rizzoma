@@ -68,3 +68,32 @@ body {
 .notification-bar a:hover {
   background: rgba(255, 255, 255, 0.56);
 }
+
+.notification-bar-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.notification-bar-dismiss {
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: rgba(255, 255, 255, 0.35);
+  color: #5d4c12;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.notification-bar-dismiss:hover {
+  background: rgba(255, 255, 255, 0.6);
+}

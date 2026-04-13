@@ -689,14 +689,34 @@ export function RizzomaBlip({
           // The content is auto-saved, so the [+] marker will persist
         }
 
-        // Refresh topic data so the new child appears in the parent content,
-        // then navigate into the anchored child blip.
+        // Refresh topic data so the new child appears in the parent
+        // content as an inlineChild. Then toggle it open IN PLACE by
+        // dispatching rizzoma:toggle-inline-blip with the new blip's
+        // id — the topic root's RizzomaBlip listens for this event
+        // and expands the child inside the parent blip's content
+        // surface (using its local `localExpandedInline` Set), which
+        // is the legacy BLB behavior the user expects.
+        //
+        // Previously we set `window.location.hash = #/topic/.../<blipPath>/`
+        // which took the user into the subblip drill-down surface —
+        // correct for "focus on this reply" but wrong for "peek at
+        // the comment I just created." The drill-down remains
+        // available by clicking the marker a second time once the
+        // inline expansion is visible.
         window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
         if (newBlipId) {
-          const blipPath = newBlipId.includes(':') ? newBlipId.split(':')[1] : newBlipId;
-          if (blipPath) {
-            window.location.hash = `#/topic/${waveId}/${blipPath}/`;
-          }
+          // Small delay so the refresh-topics roundtrip can add the
+          // new blip to the parent's childBlips before we try to
+          // toggle it open — otherwise the toggle event fires before
+          // the RizzomaBlip listener sees the new id in
+          // `inlineChildren`.
+          setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent('rizzoma:toggle-inline-blip', {
+                detail: { threadId: newBlipId },
+              }),
+            );
+          }, 100);
         }
       } catch (error) {
         console.error('Error creating child blip:', error);
@@ -842,21 +862,40 @@ export function RizzomaBlip({
     return () => window.removeEventListener('rizzoma:deactivate-blip', handle);
   }, [blip.id]);
 
-  // Handle clicks on [+] markers in view mode (inside dangerouslySetInnerHTML content)
+  // Handle clicks on [+] markers in view mode (inside
+  // dangerouslySetInnerHTML content).
+  //
+  // BLB behavior: [+] click expands the anchored child INLINE at the
+  // marker's line — it does NOT navigate to a subblip drill-down.
+  // Previously this called `navigateToThread` which took the user
+  // out of the topic surface, surprising them when they expected a
+  // local peek. Now the local handler toggles the matching child in
+  // `localExpandedInline` directly.
+  //
+  // If the click isn't on a marker, fall through to the parent's
+  // `onContentClick` (which the topic-root path uses for
+  // click-to-edit). Also skip propagation for anchor clicks so
+  // plain hyperlinks in the content still navigate naturally.
   const handleViewContentClick = useCallback((e: React.MouseEvent) => {
-    const target = (e.target as HTMLElement).closest('.blip-thread-marker') as HTMLElement | null;
-    if (target) {
-      const threadId = target.getAttribute('data-blip-thread');
-      if (threadId) {
+    const markerTarget = (e.target as HTMLElement).closest('.blip-thread-marker') as HTMLElement | null;
+    if (markerTarget) {
+      const threadId = markerTarget.getAttribute('data-blip-thread');
+      if (threadId && inlineChildren.some((child) => child.id === threadId)) {
         e.preventDefault();
         e.stopPropagation();
-        navigateToThread(threadId);
+        toggleInlineChild(threadId);
         return;
       }
     }
-    // Fall through to original onContentClick
+    const anchor = (e.target as HTMLElement).closest('a') as HTMLAnchorElement | null;
+    if (anchor && anchor.getAttribute('href') && anchor.getAttribute('href') !== '#') {
+      // Real link — let the browser handle it, don't fire edit-mode.
+      return;
+    }
+    // Fall through to parent click handler (click-to-edit on topic
+    // root, no-op for inline children without an onContentClick).
     onContentClick?.();
-  }, [navigateToThread, onContentClick]);
+  }, [inlineChildren, toggleInlineChild, onContentClick]);
 
   const handleToggleExpand = () => {
     const next = !isExpanded;

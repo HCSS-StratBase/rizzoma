@@ -38,6 +38,22 @@
 .tabs-container.collapsed {
   width: 40px;
   min-width: 40px;
+  overflow: hidden;
+}
+
+/* When the topics sidebar is collapsed to its 40px rail, the
+   "Topics" heading was still rendered at its full size + its 18px
+   header padding, which overflowed the 40px container and bled into
+   the adjacent .wave-container. Hiding the header text + tightening
+   the header padding keeps only the collapse-btn visible as a
+   narrow vertical rail, matching the legacy Rizzoma collapsed state. */
+.tabs-container.collapsed .tabs-header {
+  padding: 0;
+  justify-content: center;
+}
+
+.tabs-container.collapsed .tabs-header h3 {
+  display: none;
 }
 
 .tabs-header {

@@ -312,18 +312,21 @@
    column to the right edge of the row with a tighter vertical stack so
    it doesn't inflate the row height. Mirrors the legacy Rizzoma behavior
    where every reply carries an avatar + date on the right even when the
-   row is collapsed. */
+   row is collapsed. Avatar sits above the date (column direction), same
+   as the per-section author badges on the topic body — keeps the whole
+   topic-body right gutter visually consistent. */
 .blip-contributors-info-collapsed {
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 1px;
   padding-left: 12px;
 }
 
 .blip-contributors-info-collapsed .blip-author-date {
-  font-size: 11px;
+  font-size: 9px;
   color: #8a9aad;
   white-space: nowrap;
+  line-height: 1;
 }
 
 /* The .blip-collapsed-row is already a flex container (bullet + label +

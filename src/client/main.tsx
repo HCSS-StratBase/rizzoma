@@ -100,6 +100,30 @@ export function App() {
 
   const [checkingAuth, setCheckingAuth] = useState(!perfMode);
 
+  // Calendar-banner dismiss state persisted in localStorage so the
+  // yellow "Google Calendar automatically" banner sticks dismissed
+  // across reloads. Legacy Rizzoma also had an × on the banner;
+  // before this fix the banner was a permanent chrome element with
+  // no way to close it besides clicking "Disable extension" (which
+  // didn't do anything either).
+  const CALENDAR_BANNER_DISMISSED_KEY = 'rizzoma:calendarBannerDismissed';
+  const [showCalendarBanner, setShowCalendarBanner] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return window.localStorage.getItem(CALENDAR_BANNER_DISMISSED_KEY) !== '1';
+    } catch {
+      return true;
+    }
+  });
+  const dismissCalendarBanner = () => {
+    setShowCalendarBanner(false);
+    try {
+      window.localStorage.setItem(CALENDAR_BANNER_DISMISSED_KEY, '1');
+    } catch {
+      // Best-effort persist; banner reappears next session if storage blocked.
+    }
+  };
+
   // PWA and offline hooks
   const { skipWaiting } = useServiceWorker({
     onUpdateAvailable: () => {
@@ -180,10 +204,21 @@ export function App() {
   if (forceRizzomaLayout) {
     return (
       <div className="rizzoma-app">
-        {FEATURES.FOLLOW_GREEN && (
+        {FEATURES.FOLLOW_GREEN && showCalendarBanner && (
           <div className="notification-bar">
-            Have your Rizzoma Tasks copied to your Google Calendar automatically.
-            <a href="#">Disable extension</a>
+            <span className="notification-bar-text">
+              Have your Rizzoma Tasks copied to your Google Calendar automatically.{' '}
+              <a href="#">Disable extension</a>
+            </span>
+            <button
+              type="button"
+              className="notification-bar-dismiss"
+              aria-label="Dismiss calendar banner"
+              title="Dismiss"
+              onClick={dismissCalendarBanner}
+            >
+              ×
+            </button>
           </div>
         )}
         {checkingAuth ? (

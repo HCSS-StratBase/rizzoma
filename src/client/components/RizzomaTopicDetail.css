@@ -484,18 +484,52 @@
    single-author topic data model; when we add per-paragraph attribution
    via Y.js awareness, the data source changes but this CSS stays. */
 .topic-section-wrapped {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  position: relative;
   margin: 4px 0;
-  padding: 0 18px;
+  /* Left padding keeps 18px for body alignment with the frame edge;
+     right padding reserves the 44px right column where the author
+     badge sits absolutely positioned at right:0. Using absolute
+     positioning for the badge (rather than a flex end-slot) gives
+     every wrapped section the same right-column X position, so
+     avatars line up vertically across all rows no matter how short
+     or long the paragraph content is. */
+  padding: 0 44px 0 18px;
+}
+
+.topic-section-wrapped > .topic-section-author {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+/* Collapse right padding on EVERY stacked parent between the
+   topic card border and the `.topic-content-view` so the per-row
+   author-badge column can sit flush against the card edge. Without
+   this, ~38-43px of cumulative padding (.topic-content-view 12px +
+   .blip-content-row 12px + .topic-blip-content 14px) was pulling
+   the badge column visibly inward despite per-row right:0 already
+   being honored. This override is scoped to topic-root renders
+   only (`.topic-blip-content` isn't used outside topic-root) so
+   regular blip chrome elsewhere still keeps its padding. */
+/* Boost specificity so this override wins against the more-
+   specific `.blip-content { padding: 12px 14px 14px }` rule in
+   RizzomaBlip.css (both are single-class but RizzomaBlip.css
+   loads later in the import chain, so its padding-right wins on
+   source-order tiebreaks). Compound selectors give us the
+   specificity bump. */
+.topic-blip-body .topic-blip-content,
+.topic-blip-body .topic-blip-content .blip-content-row,
+.topic-blip-body .topic-blip-content .blip-text.topic-content-view {
+  padding-right: 0;
 }
 
 /* Topic-level title section gets a bit more breathing room so the
-   per-title author badge doesn't visually collide with the h1. */
+   per-title author badge doesn't visually collide with the h1.
+   Right padding stays at the unified 44px so the title badge lines
+   up vertically with every other row's badge; the 6px I'd added
+   earlier offset the title badge by 6px from the other rows. */
 .topic-section-wrapped-title {
   margin: 2px 0 8px 0;
-  padding-right: 6px;
 }
 
 .topic-section-wrapped-title > h1 {
@@ -510,13 +544,23 @@
   padding-right: 0;
 }
 
+/* Legacy Rizzoma stacks the author avatar ABOVE the date in a small
+   right-edge column (see rizzoma-blips-nested.png: each section row
+   has a ~24px avatar with a date like "Feb 2020" or "Dec 2017"
+   directly below it). Stacking vertically keeps the column narrow
+   (~28px wide) so it doesn't cannibalize horizontal reading space. */
 .topic-section-author {
   flex: 0 0 auto;
   display: inline-flex;
+  flex-direction: column;
+  /* Center-align the avatar and date within the badge column —
+     matches legacy Rizzoma where the avatar is centered above its
+     date label, reading as a clean vertical stack. */
   align-items: center;
-  gap: 6px;
-  padding-top: 3px;
-  padding-right: 4px;
+  gap: 1px;
+  padding-top: 2px;
+  padding-right: 2px;
+  width: 32px;
 }
 
 .topic-section-author-avatar {
@@ -528,10 +572,11 @@
 }
 
 .topic-section-author-date {
-  font-size: 10px;
+  font-size: 9px;
   color: #8a9aad;
   font-weight: 500;
   white-space: nowrap;
+  line-height: 1;
 }
 
 /* Per-<li> badges: legacy Rizzoma shows an author column on every list
@@ -544,15 +589,36 @@
    flexible child layout from <p>. Works because TipTap wraps <li>
    content in <p>, so we style <li> as a flex row and the <p> stays
    at flex: 1. */
+/* Right-gutter layout: each list item reserves a 44px slot on its
+   right for the author badge and anchors that badge with `right: 0`
+   so it sits FLUSH against the content-view's right padding. The
+   surrounding <ul>/<ol> keeps its 38px left padding (for the bullet)
+   but its right padding is collapsed to 0 so the `<li>` can extend
+   all the way to the topic frame edge. Without this collapse the
+   badge was floating ~18px inside the card, visibly "not
+   right-aligned" even though it was flush with its own list item. */
+/* <li> reserves 44px of padding-right so the body text wraps
+   before it hits the badge column. The badge is absolutely
+   positioned with `right: -44px` so it overshoots the padding
+   and sits in the ul's right gutter, aligning vertically with
+   the top-level wrapped section badges (which use absolute
+   right: 0 in a wrapper that extends the full content width). */
 .topic-content-view li {
   position: relative;
-  padding-right: 90px;
+  padding-right: 44px;
 }
 
 .topic-content-view li > .topic-section-author {
   position: absolute;
-  top: 2px;
-  right: 8px;
+  top: 0;
+  /* `right: -44px` pulls the absolutely positioned badge 44px past
+     the containing li's padding-right edge so it sits in the
+     surrounding ul's right gutter. This makes per-li badges
+     right-align with the wrapper badges (H1, paragraphs) that use
+     the .topic-section-wrapped absolute `right: 0` against a
+     44px-right-padded wrapper. The 44px value matches the
+     padding-right reserved on .topic-content-view li. */
+  right: -44px;
 }
 
 /* Hard Gap #10 (2026-04-13): the topic title must read as the first line
@@ -586,7 +652,11 @@
 .topic-content-view ul,
 .topic-content-view ol {
   margin: 12px 0 0;
-  padding: 0 18px 0 38px;
+  /* Right padding collapsed to 0 so list items can reach the frame
+     edge — the per-<li> .topic-section-author badge is absolutely
+     positioned at right:0 inside its li, and we want that to land
+     flush with the topic card edge, not 18px inside. */
+  padding: 0 0 0 38px;
   color: #243b53;
 }
 

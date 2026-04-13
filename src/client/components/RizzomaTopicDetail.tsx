@@ -1296,9 +1296,24 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               return updated;
             });
 
-            // Refresh and navigate into the new anchored child blip.
+            // Legacy BLB: expand the new child IN PLACE at the
+            // marker position instead of navigating to the subblip
+            // drill-down. Refreshing the topic data so the blip
+            // appears in parent.childBlips as an inlineChild, then
+            // dispatching rizzoma:toggle-inline-blip after a short
+            // delay so the listener sees the new id in its
+            // `inlineChildren` set before toggling.
             load(true);
-            window.location.hash = `#/topic/${id}/${blipPathSegment}/`;
+            setTimeout(() => {
+              window.dispatchEvent(
+                new CustomEvent('rizzoma:toggle-inline-blip', {
+                  detail: { threadId: newBlipId },
+                }),
+              );
+            }, 150);
+            // blipPathSegment retained for potential subblip drill-down
+            // callers but not used in the inline-expand path.
+            void blipPathSegment;
           } else {
             toast('Subblip created');
             load(true); // Fallback: reload to show the new blip
@@ -1869,11 +1884,12 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       <EditorContent editor={topicEditor} />
     </div>
   ) : null;
-  const topicContentFooter = tags.length > 0 ? (
-    <div className="topic-tags">
-      {tags.map((tag, i) => <span key={i} className="topic-tag">{tag}</span>)}
-    </div>
-  ) : null;
+  // Legacy Rizzoma renders tags inline in the topic body (e.g.,
+  // `#MetaTopic` as plain text inside a <p>), not as a separate chip
+  // footer. Rendering an extra `.topic-tags` block below the content
+  // duplicates every tag that already appears in the body. Retiring
+  // the footer entirely; body-inline tags are the source of truth.
+  const topicContentFooter = null;
   const topicChildFooter = isAuthed ? (
     <div className="write-reply-section">
       <input
@@ -2357,7 +2373,16 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               childContainerClassName="topic-blip-children"
               contentClassName="topic-content-view"
               contentTitle={undefined}
-              onContentClick={undefined}
+              // Legacy Rizzoma click-to-edit: tapping anywhere in the
+              // topic body that isn't an interactive element
+              // (marker / link / tag pill / input) drops straight into
+              // edit mode. Without this the user has to hunt for the
+              // top-left "Edit" button to do anything, which is a
+              // surprising behavior deviation vs legacy and what I
+              // shipped in the pass-27 commits. Gated on isAuthed +
+              // not-already-editing + not-viewing-a-subblip so we
+              // don't fire during forced read mode.
+              onContentClick={(!showTopicEditMode && isAuthed && !currentSubblip) ? startEditingTopic : undefined}
               contentOverride={topicContentOverride}
               contentFooter={topicContentFooter}
               childFooter={topicChildFooter}
