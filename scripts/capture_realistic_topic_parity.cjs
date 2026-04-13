@@ -269,6 +269,23 @@ async function main() {
     path: path.join(outDir, "current-realistic-topic-scrolled.png"),
     fullPage: false,
   });
+  // Scroll all the way to the bottom of the topic body so the reply
+  // blips below the topic content come into view. Needed for parity
+  // judgment against legacy's bottom half of rizzoma-blips-nested.png.
+  await page.evaluate(() => {
+    const body = document.querySelector('.wave-container .topic-blip-body') ||
+                 document.querySelector('.wave-container .rizzoma-topic-detail');
+    if (body) {
+      body.scrollTop = body.scrollHeight;
+    } else {
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+  });
+  await page.waitForTimeout(500);
+  await page.screenshot({
+    path: path.join(outDir, "current-realistic-topic-replies.png"),
+    fullPage: false,
+  });
 
   // Copy the legacy reference next to it so the pair lives in one folder
   const legacyPath = path.resolve(__dirname, "..", "screenshots", "rizzoma-live", "feature", "rizzoma-core-features", "rizzoma-blips-nested.png");
