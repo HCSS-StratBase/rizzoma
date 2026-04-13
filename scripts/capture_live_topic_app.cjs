@@ -3,12 +3,18 @@ const fs = require("fs");
 const path = require("path");
 
 async function login(page, base, email, password) {
+  // Hard Gap #21 (2026-04-13): replaced waitForTimeout(1500) with a
+  // state-driven wait on the rizzoma-layout shell + topics container,
+  // matching the same fix applied to capture_blb_live_scenario.cjs in #14.
+  // This eliminates 1.5s of fixed padding from every run regardless of
+  // whether the topics list had finished hydrating.
   await page.goto(base, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('input[type="email"]', { timeout: 15000 });
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
   await page.getByRole("button", { name: "Sign In", exact: true }).click();
-  await page.waitForTimeout(1500);
+  await page.waitForSelector('.rizzoma-layout', { timeout: 15000 });
+  await page.waitForSelector('.rizzoma-topics-list, .topics-container, .navigation-panel', { timeout: 15000 });
 }
 
 async function createTopic(page, title) {
@@ -43,7 +49,10 @@ async function createTopic(page, title) {
 async function main() {
   const shotPath = process.argv[2];
   const htmlPath = process.argv[3];
-  const base = process.argv[4] || "http://127.0.0.1:4182";
+  // Hard Gap #21 (2026-04-13): default to the canonical Vite port :3000
+  // that proxies /api to the reserved Rizzoma backend on :8788. The prior
+  // default (:4182) was a stale zombie port from older test runs.
+  const base = process.argv[4] || "http://127.0.0.1:3000";
   const gadgetLabel = process.argv[5] || 'Kanban';
 
   if (!shotPath || !htmlPath) {
@@ -103,13 +112,25 @@ async function main() {
     console.log(`[capture] topic=${topicId}`);
     await page.goto(`${base}/#/topic/${topicId}?layout=rizzoma`, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".wave-container .rizzoma-topic-detail", { timeout: 30000 });
-    await page.waitForTimeout(1200);
+    // Hard Gap #21 (2026-04-13): replaced waitForTimeout(1200) with a
+    // state-driven wait on the topic toolbar Edit button being mounted
+    // and the topic-content-view actually rendered.
+    await page.waitForSelector(".topic-blip-toolbar .topic-tb-btn", { timeout: 10000 });
+    await page.waitForSelector(".topic-content-view, .topic-content-edit", { timeout: 10000 });
     console.log('[capture] topic ready');
 
     await page.locator(".topic-blip-toolbar .topic-tb-btn", { hasText: "Edit" }).first().click();
-    await page.waitForTimeout(600);
+    // Wait for the ProseMirror editor surface to actually mount before
+    // trying to click into it (instead of guessing 600ms).
+    await page.waitForSelector(".topic-content-edit .ProseMirror", { timeout: 10000 });
     await page.locator(".topic-content-edit .ProseMirror").first().click();
-    await page.waitForTimeout(250);
+    // Wait for focus to settle by polling document.activeElement instead
+    // of guessing 250ms — the focus event fires synchronously but the
+    // selection update is queued.
+    await page.waitForFunction(() => {
+      const el = document.querySelector('.topic-content-edit .ProseMirror');
+      return !!el && el === document.activeElement;
+    }, undefined, { timeout: 5000 }).catch(() => undefined);
     console.log('[capture] editor ready');
     await page.locator(".right-tools-panel .insert-btn.gadget-btn").first().click();
     await page.waitForSelector(".gadget-palette", { timeout: 8000 });
@@ -130,9 +151,19 @@ async function main() {
   await page.frameLocator(frameSelector).locator(`text=${target.expectedText}`).first().waitFor({ timeout: 12000 });
   console.log('[capture] app action verified');
   if (!isHarness) {
-    await page.waitForTimeout(1200);
+    // Hard Gap #21 (2026-04-13): replaced two waitForTimeout calls with
+    // state-driven waits. The 1200ms before clicking Done was guarding
+    // against an in-flight auto-save flush; we now wait explicitly for
+    // the gadget figure node to be serialized into the topic editor.
+    // The 1800ms after Done was guarding for the read-mode transition;
+    // replaced with waitForSelector on .topic-content-view, the same
+    // pattern used in the inline-comment verifier.
+    await page.waitForFunction((appId) => {
+      const node = document.querySelector(`.topic-content-edit figure[data-gadget-type="app-frame"][data-app-id="${appId}"]`);
+      return !!node;
+    }, target.appId, { timeout: 8000 }).catch(() => undefined);
     await page.locator(".topic-blip-toolbar .topic-tb-btn", { hasText: "Done" }).first().click();
-    await page.waitForTimeout(1800);
+    await page.waitForSelector(".topic-content-view", { timeout: 10000 });
     console.log('[capture] topic done clicked');
     const debugHtmlPath = path.join(
       path.dirname(htmlPath),
