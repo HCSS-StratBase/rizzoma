@@ -1819,6 +1819,34 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         </div>
       </div>
 
+      {/* Parity fix (2026-04-13): legacy Rizzoma shows a topic author
+          avatar + creation-date line next to the topic title. Our build
+          had the author avatar inside the collab toolbar (next to Share)
+          but no date and no proximity to the title. Rendering a compact
+          attribution row right under the toolbar keeps the author visible
+          alongside the topic body without waiting for the bigger data-model
+          rewrite documented in docs/PARITY_GAP_REPORT.md gap #1. */}
+      {topic && (topic.authorName || topic.createdAt) && (
+        <div className="topic-attribution-row">
+          {topic.authorName && (
+            <img
+              className="topic-attribution-avatar"
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(topic.authorName)}&size=24&background=4EA0F1`}
+              alt={topic.authorName}
+              title={`Topic author: ${topic.authorName}`}
+            />
+          )}
+          {topic.authorName && (
+            <span className="topic-attribution-name">{topic.authorName}</span>
+          )}
+          {topic.createdAt && (
+            <span className="topic-attribution-date">
+              {new Date(topic.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* ========================================
           BLB SUBBLIP VIEW - When navigated into a subblip
           Shows: Hide button + subblip content + child blips

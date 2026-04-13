@@ -89,6 +89,16 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, 
         </button>
       </div>
       
+      {/* Parity fix (2026-04-13): legacy Rizzoma has a Rizzoma logo + wordmark
+          bottom-left of the nav column, above the Help button. See
+          screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-main.png.
+          Rendering a compact branding row here matches the legacy surface
+          without pulling in the full legacy footer (Follow button, shortcut
+          legend, subscription badge) which are separate features. */}
+      <div className="nav-brand" aria-label="Rizzoma">
+        <span className="nav-brand-mark" aria-hidden="true">R</span>
+        <span className="nav-brand-text">Rizzoma</span>
+      </div>
       <div className="nav-footer">
         <button className="nav-help">
           <span className="icon"><HelpCircle size={20} /></span>

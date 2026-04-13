@@ -129,6 +129,40 @@
   font-size: 12px;
 }
 
+/* Parity fix (2026-04-13): Rizzoma branding row sits just above the
+   nav-footer Help button, matching the legacy nav column's bottom-left
+   "Rizzoma" wordmark position. A dark pill with a white "R" monogram
+   plus the wordmark — compact so it doesn't compete with the topics
+   list above it. */
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 8px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nav-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.nav-brand-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.01em;
+}
+
 .nav-footer {
   padding: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);

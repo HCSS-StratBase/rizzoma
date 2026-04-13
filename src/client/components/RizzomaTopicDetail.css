@@ -33,6 +33,41 @@
   box-shadow: inset 0 -1px 0 rgba(255,255,255,0.85);
 }
 
+/* Parity fix (2026-04-13): topic author attribution row between the
+   collab toolbar and the topic body. Matches the legacy Rizzoma pattern
+   where the topic title carries an author avatar + creation date on
+   the right. Kept compact so it doesn't compete with the body. */
+.topic-attribution-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 22px 4px 22px;
+  background: rgba(242, 247, 252, 0.72);
+  border-bottom: 1px solid rgba(138, 156, 176, 0.18);
+  font-size: 11px;
+  color: #56708a;
+  flex-shrink: 0;
+}
+
+.topic-attribution-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.topic-attribution-name {
+  font-weight: 600;
+  color: #334155;
+}
+
+.topic-attribution-date {
+  color: #8a9aad;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
 .collab-btn {
   padding: 7px 12px;
   font-size: 12px;
