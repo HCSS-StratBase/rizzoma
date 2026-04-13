@@ -82,7 +82,7 @@ describe('routes: blips permissions', () => {
   });
 
   it('allows any authenticated user to update a blip (collaborative editing)', async () => {
-    couch.getDoc.mockResolvedValue({ _id: 'b1', waveId: 'w1', authorId: 'owner', content: '<p>old</p>' });
+    couch.getDoc.mockResolvedValue({ _id: 'b1', type: 'blip', waveId: 'w1', authorId: 'owner', content: '<p>old</p>' });
     couch.updateDoc.mockResolvedValue({ ok: true, id: 'b1', rev: '2-x' });
     const res = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
@@ -94,7 +94,7 @@ describe('routes: blips permissions', () => {
   });
 
   it('allows the author to update a blip', async () => {
-    couch.getDoc.mockResolvedValue({ _id: 'b1', waveId: 'w1', authorId: 'author', content: '<p>old</p>' });
+    couch.getDoc.mockResolvedValue({ _id: 'b1', type: 'blip', waveId: 'w1', authorId: 'author', content: '<p>old</p>' });
     couch.updateDoc.mockResolvedValue({ ok: true, id: 'b1', rev: '2-x' });
     const res = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
