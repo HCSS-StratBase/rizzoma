@@ -86,6 +86,17 @@ async function main() {
       expectedText: 'deep work',
       summarySnippet: 'deep work',
     },
+    Notes: {
+      // Hard Gap #20 (2026-04-13): fourth real preview app. Exercises the
+      // same host bridge contract as Kanban/Planner/Focus but with a
+      // free-form text + checkbox data shape. The catalog initialData
+      // seeds 2 notes, so the first "Capture an insight" action produces
+      // "Insight 3" (notes.length + 1 = 3).
+      appId: 'notes-scratchpad',
+      actionName: 'Capture an insight',
+      expectedText: 'Insight 3',
+      summarySnippet: 'Insight',
+    },
   };
   const target = targetMap[gadgetLabel];
   if (!target) {
@@ -108,6 +119,31 @@ async function main() {
     console.log(`[capture] topic flow base=${base} gadget=${gadgetLabel}`);
     await login(page, base, email, password);
     console.log('[capture] logged in');
+    // Hard Gap #20 (2026-04-13): reset gadget preferences to shipped
+    // defaults at the start of each run so newly-added preview apps (like
+    // notes-scratchpad) are actually in the user's installed list. Without
+    // this, a stored gadget_preferences doc from before a catalog bump
+    // keeps the user on the old default set.
+    await page.evaluate(async () => {
+      const readCookie = (name) => {
+        const escaped = name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+        const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
+        if (!match) return undefined;
+        return match[1] ? decodeURIComponent(match[1]) : undefined;
+      };
+      await fetch('/api/auth/csrf', { credentials: 'include' });
+      const token = readCookie('XSRF-TOKEN');
+      await fetch('/api/gadgets/preferences', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'content-type': 'application/json',
+          ...(token ? { 'x-csrf-token': token } : {}),
+        },
+        body: JSON.stringify({ reset: true }),
+      });
+    });
+    console.log('[capture] gadget preferences reset to shipped defaults');
     const topicId = await createTopic(page, `App gadget smoke ${Date.now()}`);
     console.log(`[capture] topic=${topicId}`);
     await page.goto(`${base}/#/topic/${topicId}?layout=rizzoma`, { waitUntil: "domcontentloaded" });

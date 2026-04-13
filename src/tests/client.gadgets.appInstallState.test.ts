@@ -24,6 +24,7 @@ describe('client: gadget app install state', () => {
       'kanban-board',
       'calendar-planner',
       'focus-timer',
+      'notes-scratchpad',
     ]);
   });
 

@@ -116,6 +116,20 @@ export const GADGET_REGISTRY: Record<GadgetType, GadgetManifest> = {
     accent: '#7c3aed',
     description: 'Mount a sandboxed focus timer preview app inside the topic.',
   },
+  // Hard Gap #20 (2026-04-13): fourth real preview app. Same host-bridge
+  // contract as kanban/planner/focus but with a free-form text + checkbox
+  // data shape to prove the shell generalizes beyond structured records.
+  notesApp: {
+    type: 'notesApp',
+    appId: 'notes-scratchpad',
+    kind: 'app',
+    category: 'productivity',
+    availability: 'preview',
+    label: 'Notes',
+    icon: 'file-text',
+    accent: '#dc2626',
+    description: 'Mount a sandboxed scratchpad preview app inside the topic.',
+  },
 };
 
 export const AVAILABLE_GADGETS = Object.values(GADGET_REGISTRY);

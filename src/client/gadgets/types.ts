@@ -8,7 +8,8 @@ export type GadgetType =
   | 'image'
   | 'kanbanApp'
   | 'calendarApp'
-  | 'focusApp';
+  | 'focusApp'
+  | 'notesApp';
 
 export type GadgetKind = 'native' | 'embed' | 'app';
 export type GadgetCatalogCategory =

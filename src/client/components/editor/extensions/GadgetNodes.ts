@@ -45,6 +45,19 @@ const summarizeAppFrameData = (raw: unknown): string => {
     return `${session?.duration ?? 0} min · ${session?.state ?? 'ready'}`;
   }
 
+  // Hard Gap #20 (2026-04-13): notes-scratchpad data shape — free-form
+  // text array + checklist array. Summarize as note count + checked/total
+  // checklist progress plus a short preview of the latest note so any
+  // "Insight N" capture lands in the summary text.
+  if (Array.isArray((data as any).notes) && Array.isArray((data as any).checklist)) {
+    const notes = (data as any).notes as string[];
+    const checklist = (data as any).checklist as Array<{ done?: boolean }>;
+    const checkedCount = checklist.filter((item) => item && item.done).length;
+    const tailNote = notes[notes.length - 1] || '';
+    const tailPreview = tailNote.split(/\s+/).slice(0, 4).join(' ');
+    return `${notes.length} notes${tailPreview ? ` · ${tailPreview}…` : ''} · ${checkedCount}/${checklist.length} checked`;
+  }
+
   return 'Sandbox preview';
 };
 

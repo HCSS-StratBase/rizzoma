@@ -112,8 +112,8 @@ describe('server: gadget preferences route', () => {
     expect(res.body).toEqual({
       schemaVersion: 1,
       scope: 'user',
-      defaultInstalledAppIds: ['kanban-board', 'calendar-planner', 'focus-timer'],
-      installedAppIds: ['kanban-board', 'calendar-planner', 'focus-timer'],
+      defaultInstalledAppIds: ['kanban-board', 'calendar-planner', 'focus-timer', 'notes-scratchpad'],
+      installedAppIds: ['kanban-board', 'calendar-planner', 'focus-timer', 'notes-scratchpad'],
     });
   });
 
@@ -125,7 +125,7 @@ describe('server: gadget preferences route', () => {
     expect(res.body).toEqual({
       schemaVersion: 1,
       scope: 'user',
-      defaultInstalledAppIds: ['kanban-board', 'calendar-planner', 'focus-timer'],
+      defaultInstalledAppIds: ['kanban-board', 'calendar-planner', 'focus-timer', 'notes-scratchpad'],
       installedAppIds: ['focus-timer', 'github-workbench'],
     });
     expect(docs.get('gadget_prefs:u1')?.installedAppIds).toEqual(['focus-timer', 'github-workbench']);
@@ -149,7 +149,7 @@ describe('server: gadget preferences route', () => {
     expect(res.body).toEqual({
       schemaVersion: 1,
       scope: 'user',
-      defaultInstalledAppIds: ['kanban-board', 'calendar-planner', 'focus-timer'],
+      defaultInstalledAppIds: ['kanban-board', 'calendar-planner', 'focus-timer', 'notes-scratchpad'],
       installedAppIds: ['calendar-planner'],
     });
     expect(docs.get('gadget_prefs:u1')?.installedAppIds).toEqual(['calendar-planner']);
@@ -173,13 +173,14 @@ describe('server: gadget preferences route', () => {
     expect(res.body).toEqual({
       schemaVersion: 1,
       scope: 'user',
-      defaultInstalledAppIds: ['kanban-board', 'calendar-planner', 'focus-timer'],
-      installedAppIds: ['kanban-board', 'calendar-planner', 'focus-timer'],
+      defaultInstalledAppIds: ['kanban-board', 'calendar-planner', 'focus-timer', 'notes-scratchpad'],
+      installedAppIds: ['kanban-board', 'calendar-planner', 'focus-timer', 'notes-scratchpad'],
     });
     expect(docs.get('gadget_prefs:u1')?.installedAppIds).toEqual([
       'kanban-board',
       'calendar-planner',
       'focus-timer',
+      'notes-scratchpad',
     ]);
   });
 });

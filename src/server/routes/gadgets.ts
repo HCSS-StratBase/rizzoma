@@ -4,7 +4,10 @@ import { getDoc, insertDoc, updateDoc } from '../lib/couch.js';
 
 const router = Router();
 
-const PREVIEW_APP_IDS = ['kanban-board', 'calendar-planner', 'focus-timer'] as const;
+// Hard Gap #20 (2026-04-13): notes-scratchpad is the fourth real preview
+// app — same host-bridge contract as kanban/planner/focus but with a
+// free-form text + checkbox data shape to prove the shell generalizes.
+const PREVIEW_APP_IDS = ['kanban-board', 'calendar-planner', 'focus-timer', 'notes-scratchpad'] as const;
 const ALL_APP_IDS = [...PREVIEW_APP_IDS, 'github-workbench'] as const;
 const VALID_APP_IDS = new Set<string>(ALL_APP_IDS);
 

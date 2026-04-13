@@ -66,6 +66,38 @@ export const GADGET_APP_CATALOG: GadgetAppManifest[] = [
     },
   },
   {
+    // Hard Gap #20 (2026-04-13): fourth real preview app. The prior three
+    // (kanban-board, calendar-planner, focus-timer) all exercised structured
+    // record shapes (columns, milestones, timer checklist). notes-scratchpad
+    // exercises free-form text + checkbox data to prove the generalized
+    // app-runtime shell handles a different data shape without any
+    // shell-side code changes — the host bridge + app-shell.js createPreviewApp
+    // contract is truly app-agnostic.
+    id: 'notes-scratchpad',
+    label: 'Notes Scratchpad',
+    icon: '📝',
+    accent: '#dc2626',
+    category: 'productivity',
+    version: '0.1.0',
+    description: 'Sandboxed free-form scratchpad with a notes column and a quick checklist — proves the host bridge handles text + checkbox shapes beyond the structured record demos.',
+    runtime: 'iframe',
+    entry: '/gadgets/apps/notes-scratchpad/index.html',
+    permissions: ['node.read', 'node.write', 'user.context', 'viewport.resize'],
+    availability: 'preview',
+    defaultHeight: '460',
+    initialData: {
+      notes: [
+        'Capture the shape of the conversation — who needs what, by when.',
+        'Cross-link related blips via @mentions or #tags once the thread settles.',
+      ],
+      checklist: [
+        { id: 'cl1', label: 'Skim the parent topic for context', done: true },
+        { id: 'cl2', label: 'Identify one concrete outcome', done: false },
+        { id: 'cl3', label: 'Write the outcome as a new blip', done: false },
+      ],
+    },
+  },
+  {
     id: 'github-workbench',
     label: 'GitHub Workbench',
     icon: '🐙',

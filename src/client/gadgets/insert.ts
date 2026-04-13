@@ -97,6 +97,10 @@ export function insertGadget(editor: TiptapEditorLike, detail?: GadgetInsertDeta
     case 'focusApp': {
       return insertAppFromManifest(editor, 'focus-timer');
     }
+    case 'notesApp': {
+      // Hard Gap #20 (2026-04-13): fourth real preview app.
+      return insertAppFromManifest(editor, 'notes-scratchpad');
+    }
     default:
       return false;
   }
