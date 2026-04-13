@@ -1263,8 +1263,20 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                   body: JSON.stringify({ title: fallbackTitle, content: currentContent }),
                 });
               } catch (persistError) {
-                console.error('[TopicDetail] Failed to persist topic marker before subblip navigation', persistError);
+                console.error('[TopicDetail] Failed to persist topic marker after creating inline child', persistError);
               }
+              // Streamlined workflow (task #39 commit B): drop topic
+              // out of edit mode while the inline child is expanded.
+              // The view-mode render path is the only one that
+              // supports .inline-child-portal mounting — topic edit
+              // mode uses TipTap's <EditorContent> where the
+              // BlipThreadNode is a ProseMirror node with no portal
+              // container. Without this drop, the new child is
+              // created but can't be expanded inline because there's
+              // no DOM anchor for it. When the inline child is
+              // collapsed (Done/Escape), the collapse-inline-blip
+              // event fires → forceTopicReadMode flips back to false
+              // → auto-edit effect re-enters edit mode.
               isFinishingTopicEditRef.current = true;
               isEditingTopicRef.current = false;
               flushSync(() => {
@@ -1741,6 +1753,79 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       }, 80);
     }
   }, [isAuthed, topic?.title, topic?.content, blips, topicEditor]);
+
+  // Streamlined workflow (task #39 commit B, 2026-04-14): when the
+  // topic is loaded + the user is authenticated + we're not viewing
+  // a subblip drill-down, auto-enter edit mode. Removes the "click
+  // Edit first" step: open a topic and you're already editing.
+  // Matches the BLB philosophy that the topic is just a meta-blip
+  // which should behave like any editable surface for an authed
+  // user. The effect re-fires when the topic id changes so
+  // switching between topics keeps the user in edit mode.
+  useEffect(() => {
+    if (!isAuthed) return;
+    if (!topic) return;
+    if (!topicEditor) return;
+    if (currentSubblip) return;
+    if (isEditingTopic) return;
+    if (forceTopicReadMode) return;
+    const t = setTimeout(() => {
+      if (isEditingTopicRef.current) return;
+      startEditingTopic();
+    }, 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthed, topic?.id, topicEditor, currentSubblip, forceTopicReadMode]);
+
+  // Streamlined workflow: when the user clicks a [+] marker while
+  // the topic is in edit mode, the expansion can't render inline
+  // because TipTap's EditorContent path has no .inline-child-portal
+  // anchor. Drop to read mode so the view-mode render path mounts
+  // the portal; the pending-expansion watcher in the topic-root
+  // RizzomaBlip then auto-expands the clicked marker's child.
+  useEffect(() => {
+    const handle = (e: Event) => {
+      const { threadId } = (e as CustomEvent).detail || {};
+      if (!threadId) return;
+      if (!isEditingTopicRef.current) return; // Only drop if in edit mode
+      (window as any).__rizzomaPendingInlineExpand = threadId;
+      isFinishingTopicEditRef.current = true;
+      isEditingTopicRef.current = false;
+      flushSync(() => {
+        setForceTopicReadMode(true);
+        setIsEditingTopic(false);
+      });
+      if (topicEditor) topicEditor.setEditable(false);
+    };
+    window.addEventListener('rizzoma:toggle-inline-blip', handle);
+    return () => window.removeEventListener('rizzoma:toggle-inline-blip', handle);
+  }, [topicEditor]);
+
+  // Streamlined workflow: when an inline child collapses (via
+  // Done/Escape on the child), reset forceTopicReadMode so the
+  // auto-edit effect above re-enters topic edit mode. This gives
+  // the complete loop:
+  //
+  //   auto-edit → Ctrl+Enter → drop to read mode → expand child
+  //   inline → type into child → Done → collapse child → auto-edit
+  //   re-fires → back to topic edit mode
+  //
+  // The user never reaches for a mode toggle.
+  useEffect(() => {
+    const handle = (_e: Event) => {
+      if (forceTopicReadMode) {
+        // Small delay so the collapse event can propagate to the
+        // parent RizzomaBlip's localExpandedInline state first,
+        // avoiding a view→edit flicker while the child is still
+        // visually collapsing.
+        setTimeout(() => {
+          setForceTopicReadMode(false);
+        }, 120);
+      }
+    };
+    window.addEventListener('rizzoma:collapse-inline-blip', handle);
+    return () => window.removeEventListener('rizzoma:collapse-inline-blip', handle);
+  }, [forceTopicReadMode]);
 
   // Finish editing topic
   const finishEditingTopic = useCallback(() => {
