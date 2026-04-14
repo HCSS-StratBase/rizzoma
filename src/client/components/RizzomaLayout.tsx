@@ -265,21 +265,31 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
     if (perfSkipTopics) {
       return null;
     }
+    // Route all sidebar topic-selection callbacks through the URL
+    // hash so bookmarks/refresh/history stay in sync with the
+    // visible topic. The `hashchange` listener above then updates
+    // selectedTopicId. Previously callbacks only called
+    // setSelectedTopicId directly, leaving the URL pointing at the
+    // old topic — the 2026-04-14 user bug where clicking a sidebar
+    // topic updated state but not the URL.
+    const selectTopicFromSidebar = (topicId: string) => {
+      window.location.hash = `#/topic/${topicId}`;
+    };
     switch (activeTab) {
       case 'topics':
         return (
           <RizzomaTopicsList
-            onTopicSelect={setSelectedTopicId}
+            onTopicSelect={selectTopicFromSidebar}
             selectedTopicId={selectedTopicId}
             isAuthed={isAuthed}
           />
         );
       case 'mentions':
-        return <MentionsList isAuthed={isAuthed} onSelectMention={setSelectedTopicId} />;
+        return <MentionsList isAuthed={isAuthed} onSelectMention={selectTopicFromSidebar} />;
       case 'tasks':
-        return <TasksList isAuthed={isAuthed} onSelectTask={setSelectedTopicId} />;
+        return <TasksList isAuthed={isAuthed} onSelectTask={selectTopicFromSidebar} />;
       case 'publics':
-        return <PublicTopicsPanel onSelectTopic={setSelectedTopicId} />;
+        return <PublicTopicsPanel onSelectTopic={selectTopicFromSidebar} />;
       case 'store':
         return <StorePanel />;
       case 'teams':
@@ -364,7 +374,17 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
         <div className="inner-wave-container">
           {selectedTopicId ? (
             <>
+              {/* `key={selectedTopicId}` forces React to unmount the
+                  old topic detail and mount a fresh instance when the
+                  user picks another topic. Without this, the
+                  component reuses all its useState (blips, topic,
+                  allBlipsMap, TipTap editor…) across topic switches,
+                  producing visible state leaks — e.g. clicking
+                  "Perf sweep #16 — 150 blips" left the old topic's
+                  title in place while rendering 150 blips from the
+                  new wave, the 2026-04-14 user smoke test bug. */}
               <RizzomaTopicDetail
+                key={selectedTopicId}
                 id={selectedTopicId}
                 blipPath={currentBlipPath}
                 isAuthed={isAuthed}
