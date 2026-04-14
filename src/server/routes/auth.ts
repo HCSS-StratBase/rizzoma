@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { findOne, insertDoc, getDoc, updateDoc } from '../lib/couch.js';
 import { getCsrfTokenFromSession } from '../middleware/csrf.js';
 import { isSamlEnabled, getSamlInstance, extractUserFromProfile, generateMetadata } from '../lib/saml.js';
+import { logAuthEvent } from '../lib/logger.js';
 // import { config } from '../config.js';
 
 // Use minimal bcrypt rounds in dev/test for speed; 10 in production
@@ -114,7 +115,19 @@ const MICROSOFT_CLIENT_SECRET = process.env['MICROSOFT_CLIENT_SECRET'];
 const MICROSOFT_TENANT = process.env['MICROSOFT_TENANT'] || 'common'; // 'common' for personal+work accounts
 
 const getBaseUrl = (req: any): string => {
-  return process.env['APP_URL'] || `${req.protocol}://${req.get('host')}`;
+  if (process.env['APP_URL']) return process.env['APP_URL'];
+  // Trust X-Forwarded-Host / X-Forwarded-Proto so OAuth callback URLs
+  // reflect the ORIGINAL host the user hit (e.g. the Vite dev server
+  // on the LAN IP), not the internal proxy target. Without this, the
+  // Vite dev proxy rewrites Host to `localhost:8788` and we generate
+  // `http://localhost:8788/api/auth/google/callback` as the
+  // redirect_uri — fine on desktop but unreachable from a phone on
+  // the same LAN. 2026-04-14 task #39.
+  const fwdHost = req.get('x-forwarded-host');
+  const fwdProto = req.get('x-forwarded-proto');
+  const host = fwdHost || req.get('host');
+  const proto = fwdProto || req.protocol || 'http';
+  return `${proto}://${host}`;
 };
 
 // Where to redirect after OAuth success (frontend URL)
@@ -147,6 +160,7 @@ router.get('/google/callback', async (req, res): Promise<void> => {
   }
   const code = req.query['code'] as string;
   if (!code) {
+    logAuthEvent(req, { provider: 'google', ok: false, reason: 'missing_code' });
     res.redirect('/?error=google_auth_failed');
     return;
   }
@@ -170,6 +184,7 @@ router.get('/google/callback', async (req, res): Promise<void> => {
 
     const tokens = await tokenResponse.json() as { access_token?: string; error?: string };
     if (!tokens.access_token) {
+      logAuthEvent(req, { provider: 'google', ok: false, reason: 'token_exchange_failed' });
       res.redirect('/?error=google_token_failed');
       return;
     }
@@ -181,6 +196,7 @@ router.get('/google/callback', async (req, res): Promise<void> => {
     const userData = await userResponse.json() as { email?: string; name?: string; id?: string; picture?: string };
 
     if (!userData.email) {
+      logAuthEvent(req, { provider: 'google', ok: false, reason: 'no_email_in_profile' });
       res.redirect('/?error=google_no_email');
       return;
     }
@@ -218,10 +234,12 @@ router.get('/google/callback', async (req, res): Promise<void> => {
     session.userName = user.name;
     session.userAvatar = user.avatar;
 
+    logAuthEvent(req, { provider: 'google', ok: true, email: user.email });
     const clientUrl = getClientUrl();
     res.redirect(clientUrl ? `${clientUrl}/?layout=rizzoma` : '/?layout=rizzoma');
   } catch (error) {
     console.error('[auth] Google OAuth error:', error);
+    logAuthEvent(req, { provider: 'google', ok: false, reason: 'exception' });
     res.redirect('/?error=google_auth_error');
   }
 });

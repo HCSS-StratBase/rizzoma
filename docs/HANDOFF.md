@@ -187,6 +187,17 @@ Backup (GDrive)
   `powershell.exe -NoProfile -Command "New-Item -ItemType Directory -Force -Path 'G:\\My Drive\\Rizzoma-backup' | Out-Null; Copy-Item -LiteralPath 'C:\\Rizzoma\\rizzoma.bundle' -Destination 'G:\\My Drive\\Rizzoma-backup\\rizzoma.bundle' -Force'"`
 - Last run: 2026-02-03 (bundle created + copied to GDrive via `scripts/backup-bundle.sh`).
 
+Remote access (Tailscale Funnel — 2026-04-14)
+- **Public URL (one for everyone)**: `https://stephan-office.tail4ee1d0.ts.net/`
+- Works from: desktop, phone on WiFi, phone on cellular, any colleague on the public internet. Same URL everywhere. Automatic Let's Encrypt TLS.
+- Enable: `tailscale funnel --bg --https=443 http://127.0.0.1:3000` (run from Windows PowerShell; WSL can also invoke via `/mnt/c/Program\ Files/Tailscale/tailscale.exe`).
+- Disable: `tailscale funnel reset` or `tailscale funnel --https=443 off`.
+- Check state: `tailscale funnel status`. First-time activation may require visiting `https://login.tailscale.com/f/funnel?node=<nodeId>` once to enable Funnel on the tailnet.
+- **Backend env**: `APP_URL=https://stephan-office.tail4ee1d0.ts.net` must be set when launching the backend so OAuth callback URLs are generated against the Funnel hostname (not the internal proxy target). The server honors `X-Forwarded-Host` via `src/server/routes/auth.ts:getBaseUrl()` but `APP_URL` overrides everything and is the most reliable path.
+- **Google OAuth redirect URI** registered in Google Cloud Console: `https://stephan-office.tail4ee1d0.ts.net/api/auth/google/callback`. IP-addressed redirect URIs are rejected by Google; LAN hostnames must end in a public TLD (`.ts.net`, `.duckdns.org`, etc.).
+- **Known issue (2026-04-14)**: Vite's dev server and Tailscale Funnel's H2 upstream forwarder don't play nicely under concurrent load — the browser gets intermittent 502s on module requests and the page renders blank on first load. Hard-refresh usually recovers. Clean fix: build the app with `npm run build` and serve via `npm run preview -- --host --port 3001`, then point the Funnel at 3001 instead of 3000. Production bundle has ~5 files, no concurrency stress.
+- **Logging**: winston with rotating file transport at `logs/rizzoma.log` (10 MB × 5 gens). `trust proxy` is on so real client IPs are captured from `X-Forwarded-For`. `logAuthEvent()` in `src/server/lib/logger.ts` logs OAuth success/failure with `provider`, `email`, `ip`, `ua`, `reason`. Essential once the Funnel is open to the public internet — scanners start probing `/proc/self/environ`, `/api/graphql`, etc. within minutes.
+
 PR Log
 - 2025‑11‑06: #23 merged (B Part 1: snapshots)
 - 2025‑11‑11: #30 merged (B+: realtime incremental updates)

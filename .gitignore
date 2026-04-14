@@ -62,3 +62,7 @@ tana-tools.json
 # entry above already covers the unsuffixed pointer; this catches the
 # dated variants too.
 rizzoma-*.bundle
+
+# Winston rotating file logs (runtime audit trail — see
+# src/server/lib/logger.ts). Never commit .log content.
+logs/
