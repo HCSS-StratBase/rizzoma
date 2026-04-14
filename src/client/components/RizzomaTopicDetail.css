@@ -369,6 +369,29 @@
   display: none;
 }
 
+/* Expanded inline child's own bulleted content should render as a
+   LEVEL-1 list (disc markers, minimal indent) instead of
+   inheriting nested-depth styling (circle markers, cumulative
+   padding). The child lives inside `.inline-child-expanded` which
+   is a DOM descendant of the parent <li>, so CSS sees it as depth
+   2, but the user reads the expansion as a new standalone thread
+   at the parent line's own level — "don't indent the child's
+   content further than the line it's anchored to". */
+.inline-child-expanded .blip-text ul,
+.inline-child-expanded .blip-text ol {
+  padding-left: 22px;
+  list-style-type: disc;
+}
+.inline-child-expanded .blip-text ol {
+  list-style-type: decimal;
+}
+.inline-child-expanded .blip-text ul ul,
+.inline-child-expanded .blip-text ol ol,
+.inline-child-expanded .blip-text ul ol,
+.inline-child-expanded .blip-text ol ul {
+  list-style-type: circle;
+}
+
 .empty-state-inline {
   color: #999;
   font-size: 13px;
