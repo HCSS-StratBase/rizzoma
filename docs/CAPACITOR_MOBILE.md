@@ -50,17 +50,75 @@ The `capacitor.config.ts` honors a `CAP_SERVER_URL` environment variable:
 
 ## First-time Android setup
 
-Prerequisites on the machine running the build:
+You have **two paths** — full Android Studio for an IDE experience, or
+cmdline-tools-only for a lean WSL/CI build. The Rizzoma build was
+verified end-to-end on the cmdline-tools-only path on 2026-04-14 and
+produced a working 6.8 MB debug APK in ~45 seconds.
 
-- **Android Studio** (any recent version) — <https://developer.android.com/studio>
-- **JDK 17+** — Android Studio ships one; if you prefer system-wide,
-  `sudo apt install openjdk-17-jdk` / `brew install --cask temurin`
+### Path A — cmdline-tools only (lean, WSL-friendly, ~200 MB disk)
+
+Prerequisites:
+
+- **OpenJDK 21 JDK** (headless is fine):
+  - Ubuntu/WSL2: `sudo apt-get install -y openjdk-21-jdk-headless`
+  - macOS: `brew install openjdk@21`
+  - Windows native: [Adoptium Temurin 21](https://adoptium.net/)
+
+One-time SDK install:
+
+```bash
+# Download command-line tools
+curl -L -o /tmp/cmdline-tools.zip \
+  https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+
+# Extract into the standard layout Gradle expects
+mkdir -p $HOME/android-sdk/cmdline-tools
+cd $HOME/android-sdk/cmdline-tools
+unzip -q /tmp/cmdline-tools.zip
+mv cmdline-tools latest
+
+# Add to PATH + set ANDROID_HOME
+export ANDROID_HOME=$HOME/android-sdk
+export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+
+# Accept licenses + install SDK packages
+yes | sdkmanager --licenses
+sdkmanager "platform-tools" "platforms;android-34" "platforms;android-35" "build-tools;34.0.0"
+```
+
+Then point the Android project at the SDK (one-time, creates a
+.gitignored file):
+
+```bash
+echo "sdk.dir=$HOME/android-sdk" > android/local.properties
+```
+
+Build:
+
+```bash
+npm run cap:sync                     # rebuild web + copy into android/
+cd android && ./gradlew assembleDebug
+# APK appears at android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Install on a connected device (`adb devices` to check):
+
+```bash
+adb install android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Or sideload via the `dist/apk/rizzoma-debug.apk` copy the build script
+drops alongside the `dist/client/` web bundle.
+
+### Path B — full Android Studio (4 GB, richer debugging)
+
+- **Android Studio** any recent version — <https://developer.android.com/studio>
+- **JDK 17+** — Android Studio ships one; setting `org.gradle.java.home`
+  in `android/gradle.properties` is optional when the bundled JDK is used.
 - **Android SDK** — installed via Android Studio's SDK manager. Needs
   platform 34+, build-tools 34.0.0+, platform-tools.
 - **Device or emulator** — an AVD created in Android Studio, or a
   physical phone with USB debugging enabled.
-
-Sequence:
 
 ```bash
 npm run cap:sync

@@ -49,9 +49,15 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
+    "@capacitor/app": "^8.1.0",
     "@capacitor/cli": "^7.6.1",
     "@capacitor/core": "^8.3.0",
+    "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.3.0",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/share": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@floating-ui/dom": "^1.7.5",
     "@mantine/charts": "^8.3.18",
     "@mantine/core": "^8.3.18",
@@ -106,6 +112,7 @@
     "zod": "^3.24.4"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@swc/core": "^1.15.11",
     "@tiptap/extension-collaboration": "^2.27.2",
     "@tiptap/react": "^2.27.2",

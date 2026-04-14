@@ -28,9 +28,18 @@ import { useServiceWorker, useInstallPrompt } from './hooks/useServiceWorker';
 import { useOfflineToast } from './hooks/useOfflineStatus';
 import { offlineQueue } from './lib/offlineQueue';
 import { setupBlipThreadClickHandler } from './components/editor/extensions/BlipThreadNode';
+import { initCapacitorNativeShell } from './lib/capacitor-native';
 
 // Initialize offline queue (loads pending mutations from localStorage, auto-syncs when online)
 offlineQueue.initialize();
+
+// Initialize Capacitor native shell (status bar, splash, back button,
+// app state listeners). No-op when running in a browser / PWA — the
+// same bundle ships to both paths.
+initCapacitorNativeShell().catch((err) => {
+  // Never crash on init — just log for the native shell debugger.
+  console.warn('[capacitor] init failed', err);
+});
 import './RizzomaApp.css';
 import './styles/breakpoints.css';
 import './styles/view-transitions.css';
