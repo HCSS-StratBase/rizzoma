@@ -7,7 +7,41 @@ import { findOne, insertDoc, getDoc, updateDoc } from '../lib/couch.js';
 import { getCsrfTokenFromSession } from '../middleware/csrf.js';
 import { isSamlEnabled, getSamlInstance, extractUserFromProfile, generateMetadata } from '../lib/saml.js';
 import { logAuthEvent } from '../lib/logger.js';
+import { issueTicket, redeemTicket } from '../lib/authTickets.js';
+import { randomBytes } from 'crypto';
 // import { config } from '../config.js';
+
+// Mobile OAuth handoff: Android's WebView has a Chromium bug where
+// setUserAgentString is dropped on main-frame navigations (issue
+// 40450316) — our overrideUserAgent is silently ignored when the
+// React app does a full-page nav, so Google sees the `wv` marker
+// and rejects the OAuth with a 400. Fix: the native shell launches
+// OAuth in Chrome Custom Tabs (via @capacitor/browser), which is a
+// real Chrome instance with a valid UA.
+//
+// Custom Tabs run in Chrome's cookie jar, not the WebView's, so we
+// can't set a session cookie during the callback. Instead:
+//   1. Before opening Custom Tabs, the app generates a random nonce.
+//   2. The app opens /api/auth/google?mobile=1&nonce=<nonce> in tabs.
+//   3. Backend sets state = mobile_<nonce> on the Google redirect.
+//   4. Google → callback with state.
+//   5. Backend issues an auth ticket keyed BY THE NONCE and renders
+//      a tiny HTML page that closes the tab (window.close()).
+//   6. Chrome Custom Tabs closes, Capacitor's browserFinished event
+//      fires, and the app POSTs the nonce to /api/auth/redeem-ticket
+//      through the WebView's own cookie jar — session cookie lands
+//      in the right place and /api/auth/me returns the user.
+const MOBILE_STATE_PREFIX = 'mobile_';
+const isMobileState = (state: string | undefined | null): boolean =>
+  typeof state === 'string' && state.startsWith(MOBILE_STATE_PREFIX);
+const makeMobileState = (): string => MOBILE_STATE_PREFIX + randomBytes(16).toString('base64url');
+const extractNonceFromState = (state: string): string => state.slice(MOBILE_STATE_PREFIX.length);
+
+/** HTML page shown in Chrome Custom Tabs after a successful mobile
+ *  OAuth callback. Auto-closes the tab which fires browserFinished
+ *  in the Capacitor app; we include a visible fallback in case the
+ *  user's browser blocks window.close on same-origin navigations. */
+const OAUTH_DONE_PAGE = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Signed in</title><style>body{font-family:-apple-system,Roboto,sans-serif;background:#2c3e50;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;text-align:center}h1{margin:0 0 12px;font-size:22px}p{margin:0;opacity:.85}</style></head><body><div><h1>Signed in to Rizzoma</h1><p>You can close this tab and return to the app.</p></div><script>setTimeout(function(){try{window.close()}catch(e){}},400);</script></body></html>`;
 
 // Use minimal bcrypt rounds in dev/test for speed; 10 in production
 // 4 rounds is still slow with bcryptjs fallback, so use 2 rounds for even faster dev/test auth
@@ -82,6 +116,32 @@ router.post('/logout', async (req, res): Promise<void> => {
   return;
 });
 
+// Redeem a one-time ticket issued by a mobile OAuth callback. This
+// endpoint is called by the Capacitor app from inside the WebView
+// after catching the rizzoma://auth-callback deep link, so the
+// session cookie this sets lands in the WebView's cookie jar.
+router.post('/redeem-ticket', authLimiter, async (req, res): Promise<void> => {
+  const body = req.body as { ticket?: unknown } | undefined;
+  const ticket = typeof body?.ticket === 'string' ? body.ticket : '';
+  if (!ticket) {
+    res.status(400).json({ error: 'missing_ticket', requestId: (req as any)?.id });
+    return;
+  }
+  const payload = redeemTicket(ticket);
+  if (!payload) {
+    logAuthEvent(req, { provider: 'ticket', ok: false, reason: 'invalid_or_expired' });
+    res.status(401).json({ error: 'invalid_or_expired_ticket', requestId: (req as any)?.id });
+    return;
+  }
+  const session = req.session as unknown as (typeof req.session & { userId?: string; userEmail?: string; userName?: string; userAvatar?: string });
+  session.userId = payload.userId;
+  session.userEmail = payload.email;
+  session.userName = payload.name;
+  session.userAvatar = payload.avatar;
+  logAuthEvent(req, { provider: 'ticket', ok: true, email: payload.email });
+  res.json({ id: payload.userId, email: payload.email, name: payload.name, avatar: payload.avatar });
+});
+
 router.get('/me', async (req, res): Promise<void> => {
   const session = req.session as unknown as (typeof req.session & { userId?: string; userAvatar?: string }) | undefined;
   const id = session?.userId;
@@ -150,6 +210,11 @@ router.get('/google', (req, res) => {
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('scope', scope);
   authUrl.searchParams.set('access_type', 'offline');
+  if (req.query['mobile'] === '1') {
+    const nonce = typeof req.query['nonce'] === 'string' ? req.query['nonce'] : '';
+    authUrl.searchParams.set('state', nonce ? MOBILE_STATE_PREFIX + nonce : makeMobileState());
+    authUrl.searchParams.set('prompt', 'select_account');
+  }
   res.redirect(authUrl.toString());
 });
 
@@ -227,6 +292,24 @@ router.get('/google/callback', async (req, res): Promise<void> => {
       }
     }
 
+    // Mobile native handoff — see comments at the top of this file.
+    // The state carries the nonce the app generated before opening
+    // Chrome Custom Tabs; we use it as the ticket ID so the app can
+    // redeem it after the tab closes without a deep link round-trip.
+    const state = req.query['state'] as string | undefined;
+    if (isMobileState(state) && user._id) {
+      const nonce = extractNonceFromState(state as string);
+      issueTicket({
+        userId: user._id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+      }, nonce);
+      logAuthEvent(req, { provider: 'google', ok: true, email: user.email, reason: 'mobile_ticket' });
+      res.status(200).type('html').send(OAUTH_DONE_PAGE);
+      return;
+    }
+
     // Set session
     const session = req.session as unknown as (typeof req.session & { userId?: string; userEmail?: string; userName?: string; userAvatar?: string });
     session.userId = user._id;
@@ -258,6 +341,10 @@ router.get('/facebook', (req, res) => {
   authUrl.searchParams.set('redirect_uri', redirectUri);
   authUrl.searchParams.set('scope', scope);
   authUrl.searchParams.set('response_type', 'code');
+  if (req.query['mobile'] === '1') {
+    const nonce = typeof req.query['nonce'] === 'string' ? req.query['nonce'] : '';
+    authUrl.searchParams.set('state', nonce ? MOBILE_STATE_PREFIX + nonce : makeMobileState());
+  }
   res.redirect(authUrl.toString());
 });
 
@@ -337,6 +424,21 @@ router.get('/facebook/callback', async (req, res): Promise<void> => {
       }
     }
 
+    // Mobile native handoff — see top-of-file comment
+    const fbState = req.query['state'] as string | undefined;
+    if (isMobileState(fbState) && user._id) {
+      const nonce = extractNonceFromState(fbState as string);
+      issueTicket({
+        userId: user._id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+      }, nonce);
+      logAuthEvent(req, { provider: 'facebook', ok: true, email: user.email, reason: 'mobile_ticket' });
+      res.status(200).type('html').send(OAUTH_DONE_PAGE);
+      return;
+    }
+
     // Set session
     const session = req.session as unknown as (typeof req.session & { userId?: string; userEmail?: string; userName?: string; userAvatar?: string });
     session.userId = user._id;
@@ -367,6 +469,10 @@ router.get('/microsoft', (req, res) => {
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('scope', scope);
   authUrl.searchParams.set('response_mode', 'query');
+  if (req.query['mobile'] === '1') {
+    const nonce = typeof req.query['nonce'] === 'string' ? req.query['nonce'] : '';
+    authUrl.searchParams.set('state', nonce ? MOBILE_STATE_PREFIX + nonce : makeMobileState());
+  }
   res.redirect(authUrl.toString());
 });
 
@@ -452,6 +558,21 @@ router.get('/microsoft/callback', async (req, res): Promise<void> => {
       };
       const r = await insertDoc(doc);
       user = { ...doc, _id: r.id };
+    }
+
+    // Mobile native handoff — see top-of-file comment
+    const msState = req.query['state'] as string | undefined;
+    if (isMobileState(msState) && user._id) {
+      const nonce = extractNonceFromState(msState as string);
+      issueTicket({
+        userId: user._id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+      }, nonce);
+      logAuthEvent(req, { provider: 'microsoft', ok: true, email: user.email, reason: 'mobile_ticket' });
+      res.status(200).type('html').send(OAUTH_DONE_PAGE);
+      return;
     }
 
     // Set session

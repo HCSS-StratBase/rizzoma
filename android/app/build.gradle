@@ -55,6 +55,12 @@ configurations.all {
         force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24"
         force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24"
         force "org.jetbrains.kotlin:kotlin-stdlib-common:1.9.24"
+        // @capacitor/browser 8.0.3 pulls in androidx.browser:1.9.0,
+        // which requires Android Gradle Plugin 8.9.1+. We're still on
+        // AGP 8.7.2 from the stock Capacitor 8 template; pin the
+        // browser lib to the last AGP-8.7-compatible release instead
+        // of a full AGP upgrade. 2026-04-14 task #40.
+        force "androidx.browser:browser:1.8.0"
     }
     exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-common'
 }

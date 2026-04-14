@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { isNative, launchNativeOAuth } from '../lib/capacitor-native';
 import { toast } from './Toast';
 import './AuthPanel.css';
 
@@ -47,15 +48,25 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
     setInitialized(true);
   }, [initialized]);
 
+  // Inside the Capacitor native shell we cannot use window.location.href
+  // for OAuth — Android WebView drops our overrideUserAgent on main-frame
+  // navigations (Chromium bug 40450316), so Google rejects the request
+  // as `disallowed_useragent`. Route through @capacitor/browser, which
+  // launches Chrome Custom Tabs; the backend completes OAuth there and
+  // hands back a one-time ticket via rizzoma://auth-callback that the
+  // WebView redeems for a session cookie. See capacitor-native.ts.
   const handleGoogleSignIn = () => {
+    if (isNative) { void launchNativeOAuth('google'); return; }
     window.location.href = '/api/auth/google';
   };
 
   const handleFacebookSignIn = () => {
+    if (isNative) { void launchNativeOAuth('facebook'); return; }
     window.location.href = '/api/auth/facebook';
   };
 
   const handleMicrosoftSignIn = () => {
+    if (isNative) { void launchNativeOAuth('microsoft'); return; }
     window.location.href = '/api/auth/microsoft';
   };
 

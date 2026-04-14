@@ -30,6 +30,45 @@ import { offlineQueue } from './lib/offlineQueue';
 import { setupBlipThreadClickHandler } from './components/editor/extensions/BlipThreadNode';
 import { initCapacitorNativeShell } from './lib/capacitor-native';
 
+// Mobile OAuth handoff: when the native Capacitor shell (or even a
+// plain browser) comes back from an OAuth callback, the backend has
+// redirected to /?mobileAuthTicket=<id>. Redeem the ticket synchronously
+// for a session cookie, then strip the query param from the URL so
+// React never sees it. This must run BEFORE createRoot so the very
+// first render sees the authenticated state. 2026-04-14 task #40.
+(() => {
+  if (typeof window === 'undefined') return;
+  const params = new URLSearchParams(window.location.search);
+  const ticket = params.get('mobileAuthTicket');
+  if (!ticket) return;
+  // Remove the ticket from the URL immediately so reload/back doesn't
+  // try to re-redeem an already-spent ticket.
+  params.delete('mobileAuthTicket');
+  const cleaned = window.location.pathname + (params.toString() ? `?${params}` : '') + (window.location.hash || '');
+  window.history.replaceState(null, '', cleaned);
+  // Fire-and-forget redemption; on success the session cookie is set
+  // and the subsequent api('/api/auth/me') bootstrap call in <App />
+  // will pick up the authed user.
+  void fetch('/api/auth/redeem-ticket', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ ticket }),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        console.warn('[mobile-auth] ticket redemption failed', res.status);
+        return;
+      }
+      // Force a reload so React's auth bootstrap re-runs with the new
+      // session cookie in place (simpler than threading state through).
+      window.location.replace('/?layout=rizzoma');
+    })
+    .catch((err) => {
+      console.warn('[mobile-auth] ticket redemption error', err);
+    });
+})();
+
 // Initialize offline queue (loads pending mutations from localStorage, auto-syncs when online)
 offlineQueue.initialize();
 

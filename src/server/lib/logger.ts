@@ -70,7 +70,7 @@ export function requestLogger() {
  * sign-in attempts — who, from where, via which provider.
  */
 export function logAuthEvent(req: any, event: {
-  provider: 'google' | 'facebook' | 'microsoft' | 'saml' | 'local';
+  provider: 'google' | 'facebook' | 'microsoft' | 'saml' | 'local' | 'ticket';
   email?: string | null;
   ok: boolean;
   reason?: string;
