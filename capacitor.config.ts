@@ -43,16 +43,38 @@ const config: CapacitorConfig = {
     : {
         url: remoteUrl,
         cleartext: false,
-        // Allow navigation to anything under the *.ts.net tailnet so
-        // the WebView doesn't refuse to follow OAuth / API redirects
-        // that stay on the same origin. Also covers localhost / LAN
-        // overrides set via CAP_SERVER_URL.
+        // Every host the WebView is allowed to navigate to in-place.
+        // Anything NOT in this list is punted to the system browser,
+        // which is catastrophic for OAuth because the resulting
+        // session cookie lands in Chrome's jar instead of the
+        // WebView's — so the user signs in "successfully" but the
+        // Capacitor app still shows the login screen. The 2026-04-14
+        // fix explicitly whitelists Google/Facebook/Microsoft OAuth
+        // hosts so the entire round-trip stays in-WebView.
         allowNavigation: [
+          // Rizzoma's own backend (the Tailscale Funnel)
           'stephan-office.tail4ee1d0.ts.net',
           '*.ts.net',
+          // Local / LAN dev overrides
           'localhost',
           '127.0.0.1',
           '192.168.*',
+          // Google OAuth + account infrastructure
+          'accounts.google.com',
+          'www.google.com',
+          'oauth2.googleapis.com',
+          'www.googleapis.com',
+          'ssl.gstatic.com',
+          'fonts.gstatic.com',
+          'fonts.googleapis.com',
+          'lh3.googleusercontent.com',
+          // Facebook OAuth
+          'www.facebook.com',
+          'graph.facebook.com',
+          // Microsoft OAuth
+          'login.microsoftonline.com',
+          'login.live.com',
+          'graph.microsoft.com',
         ],
       },
   android: {
