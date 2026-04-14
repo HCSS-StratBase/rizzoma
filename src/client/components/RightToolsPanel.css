@@ -110,15 +110,22 @@
   font-size: 16px;
 }
 
-/* Next Topic button - blue variant shown when current topic has no unread */
+/* Next Topic button — shown when current topic is clear but OTHER
+   topics still have unread. Originally rendered blue (#4EA0F1) but
+   the user expected it to stay green because "Follow the Green" is
+   still active — there is more green to chase. Match the same
+   gradient as `.next-button.has-unread` so visual cue is consistent.
+   The double-arrow glyph (▶▶) is what distinguishes the cross-topic
+   jump from the single-topic jump. 2026-04-14 task #39. */
 .next-topic-button {
-  background: #4EA0F1 !important;
-  border-color: #3B8FE0 !important;
+  background: linear-gradient(180deg, #8adf42, #73c930) !important;
+  border-color: #73c930 !important;
   color: white !important;
 }
 
 .next-topic-button:hover {
-  background: #3B8FE0 !important;
+  background: #7AD030 !important;
+  border-color: #65b022 !important;
 }
 
 /* View toggle */
