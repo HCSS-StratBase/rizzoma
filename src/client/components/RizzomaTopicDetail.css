@@ -424,6 +424,17 @@
   box-shadow: 0 0 0 3px rgba(92, 170, 247, 0.2);
 }
 
+.topic-content-edit .editor-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: -12px -14px 10px -14px;
+  border-radius: 12px 12px 0 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
 .topic-content-edit .ProseMirror {
   outline: none;
   min-height: 24px;

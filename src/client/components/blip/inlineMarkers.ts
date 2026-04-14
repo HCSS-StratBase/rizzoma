@@ -50,6 +50,30 @@ const insertMarkerAtOffset = (container: HTMLElement, offset: number, blipId: st
   container.appendChild(createMarker(doc, blipId, hasUnread, isExpanded));
 };
 
+/**
+ * Delete `.blip-thread-marker` spans whose blip ID is not in `knownIds`.
+ * Used on edit-seed and save paths to prevent stale markers (e.g. from
+ * topics copied between waves) from leaking into the editor — TipTap
+ * drops our `.orphaned` hiding class on re-serialize, so view-mode
+ * CSS hiding alone is not enough.
+ */
+export function stripOrphanMarkers(html: string, knownIds: Set<string>): string {
+  if (!html) return html;
+  if (typeof document === 'undefined') return html;
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  const markers = container.querySelectorAll('.blip-thread-marker');
+  let removed = 0;
+  markers.forEach((marker) => {
+    const threadId = marker.getAttribute('data-blip-thread');
+    if (!threadId || !knownIds.has(threadId)) {
+      marker.parentNode?.removeChild(marker);
+      removed++;
+    }
+  });
+  return removed > 0 ? container.innerHTML : html;
+}
+
 export function injectInlineMarkers(html: string, inlineChildren: InlineMarkerSource[], expandedSet?: Set<string>): string {
   if (!html) return html;
   if (typeof document === 'undefined') return html;

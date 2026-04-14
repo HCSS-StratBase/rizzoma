@@ -10,7 +10,7 @@ import { WavePlaybackModal } from './WavePlaybackModal';
 import './RizzomaTopicDetail.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { RizzomaBlip, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
-import { injectInlineMarkers } from './blip/inlineMarkers';
+import { injectInlineMarkers, stripOrphanMarkers } from './blip/inlineMarkers';
 import {
   diffAndStampAttribution,
   hashBlockText,
@@ -20,6 +20,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import { generateHTML, type Editor } from '@tiptap/core';
 import { flushSync } from 'react-dom';
 import { getEditorExtensions, defaultEditorProps } from './editor/EditorConfig';
+import { EditorToolbar } from './editor/EditorToolbar';
 import { EDIT_MODE_EVENT, INSERT_EVENTS } from './RightToolsPanel';
 import { useCollaboration } from './editor/useCollaboration';
 import { yjsDocManager } from './editor/YjsDocumentManager';
@@ -441,6 +442,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const isPerfLite = perfRenderMode === 'lite';
   const [topic, setTopic] = useState<TopicFull | null>(null);
   const [blips, setBlips] = useState<BlipData[]>([]);
+  const [blipsLoaded, setBlipsLoaded] = useState(false);
   const [allBlipsMap, setAllBlipsMap] = useState<Map<string, BlipData>>(new Map());
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -1026,6 +1028,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           sortBlips(rootBlips);
           setBlips(rootBlips);
           setAllBlipsMap(blipMap); // Store for subblip navigation
+          setBlipsLoaded(true);
         }
 
         // DISABLED: Refreshing unread state here was contributing to infinite loop
@@ -1617,9 +1620,18 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     topicSaveAbortRef.current = abortController;
     try {
       const fallbackTitle = editingTopicTitleRef.current || 'Untitled';
-      const normalizedContent = content.includes('data-gadget-type="app-frame"')
+      const preNormalized = content.includes('data-gadget-type="app-frame"')
         ? replaceTopicTitleHeading(content, fallbackTitle)
         : content;
+      // Strip orphan markers on save — but only when blips have
+      // actually loaded, otherwise we'd wipe real markers too (2026-
+      // 04-14 race).
+      const saveKnownIds = new Set(
+        blips.filter((b) => typeof b.anchorPosition === 'number').map((b) => b.id),
+      );
+      const normalizedContent = blipsLoaded
+        ? stripOrphanMarkers(preNormalized, saveKnownIds)
+        : preNormalized;
       const finalTitle = fallbackTitle;
       if (!finalTitle) return;
 
@@ -1682,7 +1694,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         topicSaveAbortRef.current = null;
       }
     }
-  }, [id]);
+  }, [id, blips, blipsLoaded]);
 
   // Start editing topic (BLB: topic is meta-blip)
   const startEditingTopic = useCallback(() => {
@@ -1724,7 +1736,15 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       }
     }
     const inlineRootBlips = blips.filter((b) => typeof b.anchorPosition === 'number');
-    const nextContent = injectInlineMarkers(initialContent, inlineRootBlips);
+    const knownInlineIds = new Set(inlineRootBlips.map((b) => b.id));
+    // Only strip orphan markers once blips have actually loaded.
+    // Otherwise knownInlineIds is empty and we'd wipe every marker,
+    // including the real ones — the race from the 2026-04-14 smoke
+    // test where auto-edit fires before /api/blips responds.
+    const cleanedInitialContent = blipsLoaded
+      ? stripOrphanMarkers(initialContent, knownInlineIds)
+      : initialContent;
+    const nextContent = injectInlineMarkers(cleanedInitialContent, inlineRootBlips);
     editingTopicTitleRef.current = topic?.title || 'Untitled';
     pendingTopicBootstrapRef.current = nextContent;
     bootstrappingTopicEditRef.current = true;
@@ -1752,7 +1772,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         }
       }, 80);
     }
-  }, [isAuthed, topic?.title, topic?.content, blips, topicEditor]);
+  }, [isAuthed, topic?.title, topic?.content, blips, blipsLoaded, topicEditor]);
 
   // Streamlined workflow (task #39 commit B, 2026-04-14): when the
   // topic is loaded + the user is authenticated + we're not viewing
@@ -1769,13 +1789,18 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     if (currentSubblip) return;
     if (isEditingTopic) return;
     if (forceTopicReadMode) return;
+    // Wait for blips to have loaded so stripOrphanMarkers inside
+    // startEditingTopic has the real known-ids set — otherwise we
+    // wipe every marker (including the real ones) because
+    // knownInlineIds would be empty. The 2026-04-14 race.
+    if (!blipsLoaded) return;
     const t = setTimeout(() => {
       if (isEditingTopicRef.current) return;
       startEditingTopic();
     }, 0);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthed, topic?.id, topicEditor, currentSubblip, forceTopicReadMode]);
+  }, [isAuthed, topic?.id, topicEditor, currentSubblip, forceTopicReadMode, blipsLoaded]);
 
   // Streamlined workflow: when the user clicks a [+] marker while
   // the topic is in edit mode, the expansion can't render inline
@@ -1969,6 +1994,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   };
   const topicContentOverride = showTopicEditMode ? (
     <div className="topic-content-edit">
+      <EditorToolbar editor={topicEditor} />
       <EditorContent editor={topicEditor} />
     </div>
   ) : null;
@@ -2376,6 +2402,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               <div className="topic-blip-content">
                 {showTopicEditMode ? (
                   <div className="topic-content-edit">
+                    <EditorToolbar editor={topicEditor} />
                     <EditorContent editor={topicEditor} />
                   </div>
                 ) : (
