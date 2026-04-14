@@ -628,10 +628,17 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       // Per-<li> badges: walk every list item at any depth and append a
       // badge resolved against topic.sectionAttribution so each bullet
       // shows its own author + date when available, falling back to
-      // the topic creator.
+      // the topic creator. SKIP parent <li> items that contain a
+      // nested <ul>/<ol> — those parents have no meaningful own-text
+      // line to attribute, and appending a block badge after the
+      // nested list renders a stray avatar/date column below the
+      // children that reads as an orphan bullet (2026-04-14 smoke
+      // test). The nested children already carry their own badges.
       root.querySelectorAll('li').forEach((li) => {
         const existing = li.querySelector(':scope > .topic-section-author');
         if (existing) return;
+        const hasNestedList = !!li.querySelector(':scope > ul, :scope > ol');
+        if (hasNestedList) return;
         const blockText = getOwnText(li as HTMLElement);
         li.appendChild(makeBadgeFor(blockText));
       });
