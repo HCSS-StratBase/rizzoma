@@ -6,7 +6,7 @@
 
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
-import { find, updateDoc, getDoc } from '../lib/couch.js';
+import { find, updateDoc, getDoc, getDocsById } from '../lib/couch.js';
 
 const router = Router();
 
@@ -35,29 +35,34 @@ router.get('/', requireAuth, async (req, res): Promise<void> => {
     const selector: Record<string, unknown> = {
       type: 'mention',
       mentionedUserId: userId,
+      // Bound createdAt so Mango uses idx_mention_user_createdAt instead
+      // of falling back to a full-DB scan. 0 == Unix epoch, which
+      // covers every real mention (timestamps are ms since epoch).
+      createdAt: { $gt: 0 },
     };
 
     if (filter === 'unread') {
       selector['isRead'] = false;
     }
 
+    // Main query — sort matches the index so Mango uses it.
     const result = await find<MentionDoc>(selector, {
       limit,
       skip: offset,
       sort: [{ createdAt: 'desc' }],
+      use_index: filter === 'unread'
+        ? 'idx_mention_user_isRead'
+        : 'idx_mention_user_createdAt',
     });
 
-    // Get topic titles for each mention
+    // Batch-fetch topic titles in a single _all_docs request instead
+    // of N serial GETs (the N+1 bug the Loading mentions... spinner
+    // hung on — 2026-04-14 task #39).
     const topicIds = [...new Set(result.docs.map(d => d.topicId))];
+    const topicDocs = await getDocsById<{ title?: string }>(topicIds);
     const topicTitles: Record<string, string> = {};
-
-    for (const topicId of topicIds) {
-      try {
-        const topic = await getDoc<{ title?: string }>(topicId);
-        topicTitles[topicId] = topic?.title || 'Untitled Topic';
-      } catch {
-        topicTitles[topicId] = 'Untitled Topic';
-      }
+    for (const id of topicIds) {
+      topicTitles[id] = topicDocs[id]?.title || 'Untitled Topic';
     }
 
     const mentions = result.docs.map(doc => ({
@@ -72,14 +77,28 @@ router.get('/', requireAuth, async (req, res): Promise<void> => {
       timestamp: new Date(doc.createdAt).toISOString(),
     }));
 
-    // Get total counts
-    const allResult = await find<MentionDoc>({ type: 'mention', mentionedUserId: userId }, { limit: 0 });
-    const unreadResult = await find<MentionDoc>({ type: 'mention', mentionedUserId: userId, isRead: false }, { limit: 0 });
+    // Count unread via a capped, indexed query. Previous impl passed
+    // `limit: 0` which the couch wrapper treated as falsy and
+    // OMITTED from the request body — meaning CouchDB happily
+    // returned every matching doc (unbounded full scan × 2, the
+    // second root cause of the Loading mentions... hang). Cap at
+    // 500 which is enough to show "500+" in the UI and keeps the
+    // indexed query cheap.
+    const COUNT_CAP = 500;
+    const unreadCountResult = await find<{ _id: string }>(
+      { type: 'mention', mentionedUserId: userId, isRead: false },
+      { limit: COUNT_CAP, use_index: 'idx_mention_user_isRead' },
+    );
 
     res.json({
       mentions,
-      total: allResult.docs?.length || 0,
-      unreadCount: unreadResult.docs?.length || 0,
+      // Total is approximate: the current page size informs whether
+      // there are more pages, but we don't pay for a full scan to
+      // produce an exact "how many total mentions" figure (callers
+      // that need paging can use offset + hasMore).
+      total: result.docs.length + offset + (result.docs.length === limit ? 1 : 0),
+      unreadCount: unreadCountResult.docs.length,
+      hasMore: result.docs.length === limit,
     });
   } catch (e: any) {
     console.error('[mentions] list error', e);

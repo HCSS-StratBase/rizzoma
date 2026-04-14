@@ -89,6 +89,8 @@ const ALL_INDEXES: Array<{ fields: string[]; name: string }> = [
   { fields: ['type', 'userId', 'topicId'], name: 'idx_topic_follow_user_topic' },
   { fields: ['type', 'waveId', 'createdAt'], name: 'idx_blip_history_wave_createdAt' },
   { fields: ['type', 'blipId'], name: 'idx_inline_comment_blip' },
+  { fields: ['type', 'mentionedUserId', 'createdAt'], name: 'idx_mention_user_createdAt' },
+  { fields: ['type', 'mentionedUserId', 'isRead'], name: 'idx_mention_user_isRead' },
 ];
 
 /**
@@ -109,6 +111,28 @@ export async function getDoc<T = any>(id: string) {
   const { base, header } = buildAuth(config.couchDbUrl);
   const url = `${base}/${encodeURIComponent(config.couchDbName)}/${encodeURIComponent(id)}`;
   return httpJson<T>('GET', url, undefined, header);
+}
+
+/**
+ * Batch-fetch multiple docs by ID in a single `_all_docs?include_docs=true`
+ * request. Missing IDs are silently omitted from the result. Useful for
+ * hydrating join-like lookups (e.g. topic titles for a list of mentions)
+ * without firing N serial GETs.
+ */
+export async function getDocsById<T = any>(ids: string[]): Promise<Record<string, T>> {
+  if (!ids.length) return {};
+  const unique = [...new Set(ids)];
+  const { base, header } = buildAuth(config.couchDbUrl);
+  const url = `${base}/${encodeURIComponent(config.couchDbName)}/_all_docs?include_docs=true`;
+  const body = { keys: unique };
+  const resp = await httpJson<{ rows: Array<{ id: string; doc: T | null; error?: string }> }>(
+    'POST', url, body, header,
+  );
+  const out: Record<string, T> = {};
+  for (const row of resp.rows || []) {
+    if (row.doc && !row.error) out[row.id] = row.doc;
+  }
+  return out;
 }
 
 export async function findOne<T = any>(selector: Record<string, any>) {
