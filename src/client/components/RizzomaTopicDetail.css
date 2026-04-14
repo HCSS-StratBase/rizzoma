@@ -346,6 +346,18 @@
   /* Same background as content - appears as ONE container */
 }
 
+/* Hide the leading `•` glyph on reply/collapsed rows rendered
+   under the topic body. The topic content above already renders
+   disc bullets for its own <li> items via list-style, so an
+   additional hard-coded bullet span on each reply row reads as
+   an "orphan bullet" floating under the indented list (2026-04-14
+   task #39 user smoke test). Scoped tightly so it only applies
+   inside the topic reply area — regular subblip contexts keep
+   their bullet prefix. */
+.topic-blip-children .blip-collapsed-row .blip-bullet {
+  display: none;
+}
+
 .empty-state-inline {
   color: #999;
   font-size: 13px;
