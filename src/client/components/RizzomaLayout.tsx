@@ -200,9 +200,23 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
     });
   }, []);
 
+  // DISABLED on mobile (2026-04-14, user smoke test): this hook was
+  // attached to `listContainerRef` which points at `.tabs-container`
+  // — the OUTER wrapper whose `scrollTop` is always 0, because the
+  // actually-scrollable child is `.topics-container`. Result:
+  // `isAtTop()` returned true for every touch, so every downward
+  // gesture entered the pull-to-refresh path and its touchmove
+  // handler called `event.preventDefault()`, stealing the native
+  // scroll. User could barely scroll down and not scroll back up.
+  // Re-enable once the hook takes a scroll-container ref distinct
+  // from the wrapper, or is rewired against `.topics-container`
+  // directly via a querySelector. The 60-second polling + the
+  // `rizzoma:refresh-topics` event on mark-read already refresh the
+  // list automatically, so losing the pull-gesture is mostly
+  // cosmetic.
   usePullToRefresh(listContainerRef, {
     onRefresh: handleRefresh,
-    enabled: isMobile && mobileView === 'list',
+    enabled: false,
   });
 
   // Mobile back button handler

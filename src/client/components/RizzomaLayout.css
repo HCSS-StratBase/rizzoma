@@ -322,6 +322,23 @@
     max-width: 100%;
     display: flex;
     flex-direction: column;
+    /* Take remaining vertical space after .mobile-header and allow
+       children with `overflow-y: auto` (the .topics-container list)
+       to actually bound — the classic flexbox-inside-flexbox scroll
+       fix. Without min-height: 0, the inner list grows to content
+       height and the whole body scrolls instead of the list. User
+       smoke test 2026-04-14: "can't scroll topics on phone". */
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  /* iOS momentum scrolling + make sure the topics list honors
+     vertical touch-pan so useSwipe's right-swipe-back doesn't
+     intercept downward drags. */
+  .mobile-layout .topics-container {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
   }
 
   .mobile-layout .tabs-container.mobile-hidden {

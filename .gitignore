@@ -66,3 +66,20 @@ rizzoma-*.bundle
 # Winston rotating file logs (runtime audit trail — see
 # src/server/lib/logger.ts). Never commit .log content.
 logs/
+
+# Capacitor native project build artifacts (2026-04-14). The native
+# project trees THEMSELVES are committed (android/, ios/) because
+# Capacitor does not regenerate them from scratch on sync — devs need
+# the Xcode/Gradle configuration to stay reproducible. Build outputs
+# and local IDE state are ignored.
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/.idea/
+ios/App/Pods/
+ios/App/build/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/

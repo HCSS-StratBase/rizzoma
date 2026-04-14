@@ -40,9 +40,18 @@
     "perf:harness": "node perf-harness.mjs",
     "perf:budget": "node scripts/perf-budget.mjs",
     "snapshots:pull": "bash scripts/fetch-latest-snapshots.sh",
-    "lint:branch-context": "node scripts/check-branch-state.cjs"
+    "lint:branch-context": "node scripts/check-branch-state.cjs",
+    "cap:sync": "npm run build && node node_modules/@capacitor/cli/bin/capacitor sync",
+    "cap:open:android": "node node_modules/@capacitor/cli/bin/capacitor open android",
+    "cap:open:ios": "node node_modules/@capacitor/cli/bin/capacitor open ios",
+    "cap:run:android": "node node_modules/@capacitor/cli/bin/capacitor run android",
+    "cap:run:ios": "node node_modules/@capacitor/cli/bin/capacitor run ios"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^7.6.1",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.0",
     "@floating-ui/dom": "^1.7.5",
     "@mantine/charts": "^8.3.18",
     "@mantine/core": "^8.3.18",
