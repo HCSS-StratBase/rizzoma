@@ -245,6 +245,18 @@
   font-size: 16px;
 }
 
+/* Infinite-scroll sentinel: enough vertical space so the
+   IntersectionObserver with rootMargin:200px reliably fires before
+   the user reaches the real end of the list. */
+.topics-list-sentinel {
+  min-height: 48px;
+  padding: 12px 20px;
+  text-align: center;
+  color: #9b9b9b;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 /* Remove the old footer - we don't need it anymore */
 .topics-footer {
   display: none;
