@@ -99,9 +99,23 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: 
     loadTopics();
     // Polling every 60s instead of 10s to reduce server load from unread count computation
     const interval = setInterval(loadTopics, 60000);
-    const handleRefresh = () => { loadTopics(); };
+    // Debounce the refresh-topics event so a rapid sequence of
+    // mark-read calls (e.g. FtG Next clicked 5× in a row) collapses
+    // into a single /api/topics fetch instead of 5.
+    let refreshTimer: number | null = null;
+    const handleRefresh = () => {
+      if (refreshTimer !== null) window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(() => {
+        refreshTimer = null;
+        loadTopics();
+      }, 250);
+    };
     window.addEventListener('rizzoma:refresh-topics', handleRefresh);
-    return () => { clearInterval(interval); window.removeEventListener('rizzoma:refresh-topics', handleRefresh); };
+    return () => {
+      clearInterval(interval);
+      if (refreshTimer !== null) window.clearTimeout(refreshTimer);
+      window.removeEventListener('rizzoma:refresh-topics', handleRefresh);
+    };
   }, [searchTerm, isAuthed]);
 
   // Cleanup hover timeout on unmount
