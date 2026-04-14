@@ -379,7 +379,8 @@
    content further than the line it's anchored to". */
 .inline-child-expanded .blip-text ul,
 .inline-child-expanded .blip-text ol {
-  padding-left: 22px;
+  padding-left: 28px;
+  margin: 0;
   list-style-type: disc;
 }
 .inline-child-expanded .blip-text ol {
@@ -717,16 +718,16 @@
 .topic-content-view ul,
 .topic-content-view ol {
   margin: 12px 0 0;
-  /* Right padding collapsed to 0 so list items can reach the frame
-     edge — the per-<li> .topic-section-author badge is absolutely
-     positioned at right:0 inside its li, and we want that to land
-     flush with the topic card edge, not 18px inside. */
-  padding: 0 0 0 38px;
+  /* Match .topic-content-edit .ProseMirror ul padding-left (28px)
+     so view and edit modes render the bulleted list at the same
+     indent — user pointed out edit mode looked "much better"
+     because the list was less indented. 2026-04-14 task #39. */
+  padding: 0 0 0 28px;
   color: #243b53;
 }
 
 .topic-content-view li {
-  margin: 6px 0;
+  margin: 5px 0;
   line-height: 1.55;
 }
 
