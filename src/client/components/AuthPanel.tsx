@@ -26,11 +26,21 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
     });
   }, []);
 
-  // Pre-fill dev credentials to avoid blank landing with 401s during smoke
+  // Pre-fill dev credentials to avoid blank landing with 401s during
+  // automated smoke tests. Only triggers on true localhost hostnames
+  // (localhost or 127.0.0.1, with or without port) — NOT on any host
+  // that merely contains the substring "localhost", which previously
+  // matched e.g. `capacitor://localhost` inside the native WebView and
+  // caused the dev credentials to leak into the real Rizzoma sign-in
+  // flow on mobile. 2026-04-14.
   useEffect(() => {
     if (initialized) return;
     const host = window?.location?.host || '';
-    if (host.includes('localhost')) {
+    const hostname = window?.location?.hostname || '';
+    const isLocalhost = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host) ||
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1';
+    if (isLocalhost) {
       setEmail('dev@example.com');
       setPassword('devpass123');
     }
