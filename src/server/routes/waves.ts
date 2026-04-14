@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
 import type { Blip, Wave, BlipRead, WaveParticipant } from '../schemas/wave.js';
-import { computeWaveUnreadCounts } from '../lib/unread.js';
+import { computeWaveUnreadCounts, invalidateUnreadCache } from '../lib/unread.js';
 import { sendInviteEmail } from '../services/email.js';
 
 const router = Router();
@@ -254,6 +254,7 @@ router.post('/:waveId/blips/:blipId/read', async (req, res) => {
       const existing = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId, blipId }).catch(() => null);
       if (existing && existing._id && existing._rev) {
         const r = await updateDoc({ ...existing, readAt: now } as any);
+        invalidateUnreadCache(userId);
         try { console.log('[waves] emit wave:unread (single)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
         res.json({ ok: true, id: r.id, rev: r.rev, readAt: now });
         return;
@@ -261,6 +262,7 @@ router.post('/:waveId/blips/:blipId/read', async (req, res) => {
       const doc: BlipRead = { _id: keyId, type: 'read', userId, waveId, blipId, readAt: now };
       try {
         const r = await insertDoc(doc as any);
+        invalidateUnreadCache(userId);
         try { console.log('[waves] emit wave:unread (single insert)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
         res.status(201).json({ ok: true, id: r.id, rev: r.rev, readAt: now });
       } catch (insertErr: any) {
@@ -269,6 +271,7 @@ router.post('/:waveId/blips/:blipId/read', async (req, res) => {
           const retried = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId, blipId }).catch(() => null);
           if (retried && retried._id && retried._rev) {
             const r = await updateDoc({ ...retried, readAt: now } as any);
+            invalidateUnreadCache(userId);
             try { emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
             res.json({ ok: true, id: r.id, rev: r.rev, readAt: now });
             return;
@@ -310,6 +313,10 @@ router.post('/:id/read', async (req, res) => {
 
   const results: Array<{ id: string; ok: boolean }> = [];
    try { console.log('[waves] mark many read', { waveId: id, count: blipIds.length, userId }); } catch {}
+  // Invalidate the unread-count cache up-front so the topic sidebar
+  // reflects the new state the moment the first blip write lands,
+  // not after the 30 s TTL expires.
+  invalidateUnreadCache(userId);
   for (const bid of blipIds) {
     try {
       const keyId = `read:user:${userId}:wave:${id}:blip:${bid}`;

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getDoc, updateDoc, insertDoc, find } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
 import { requireAuth } from '../middleware/auth.js';
+import { invalidateUnreadCacheForWave } from '../lib/unread.js';
 import type { Blip } from '../schemas/wave.js';
 
 type BlipHistoryDoc = {
@@ -177,6 +178,7 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
     } as any;
 
     const r = await insertDoc(blip as any);
+    invalidateUnreadCacheForWave(waveId);
     if (!isPerfRequest(req)) {
       void touchTopic(waveId);
     }
@@ -236,6 +238,7 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
     };
 
     const r = await updateDoc(updatedBlip as any);
+    invalidateUnreadCacheForWave(blip.waveId);
     if (!isPerfRequest(req)) {
       void touchTopic(blip.waveId);
     }
@@ -314,6 +317,7 @@ router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
     }
 
     await markBlipAndDescendantsDeleted(blip, userId);
+    invalidateUnreadCacheForWave(blip.waveId);
     void touchTopic(blip.waveId);
     try { emitEvent('blip:deleted', { waveId: blip.waveId, blipId: blip._id, userId, deletedAt: Date.now() }); } catch {}
     res.json({ deleted: true, id });
