@@ -1,5 +1,18 @@
 apply plugin: 'com.android.application'
 
+// Auto-bump versionCode on every build so Android's Package Installer
+// treats each new APK as an in-place update instead of refusing with
+// "app already exists". Minutes since epoch fits comfortably in an int
+// (≈ 35M now, int max is 2.1B → valid until year 6053). versionName
+// encodes year-month-day-HHMM so you can visually confirm which build
+// is running from Settings → Apps → Rizzoma → App info. The debug
+// keystore is deterministic per user, so signature-matching is already
+// handled by Gradle — the only missing piece was the monotonic version
+// number. 2026-04-14 task #40.
+def now = new Date()
+def autoVersionCode = (long) (now.getTime() / 60000L)
+def autoVersionName = new java.text.SimpleDateFormat("yyyy.MM.dd.HHmm").format(now)
+
 android {
     namespace "work.hcss.rizzoma"
     compileSdk rootProject.ext.compileSdkVersion
@@ -7,8 +20,8 @@ android {
         applicationId "work.hcss.rizzoma"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode autoVersionCode.intValue()
+        versionName autoVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
