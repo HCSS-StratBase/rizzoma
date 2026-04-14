@@ -31,22 +31,77 @@ Added in `package.json`:
 | `npm run cap:run:android` | Builds + installs + launches on a connected Android device or emulator. |
 | `npm run cap:run:ios` | Same for iOS. |
 
-## Dev-mode vs. production-mode
+## Dev-mode vs. production-mode (remote-shell vs. bundled)
 
-The `capacitor.config.ts` honors a `CAP_SERVER_URL` environment variable:
+`capacitor.config.ts` defaults to **remote-shell mode** — the WebView
+loads the Tailscale Funnel URL at runtime instead of bundled assets.
+This means every build is a fresh pull of the live backend, features
+ship to the native app the instant you rebuild the web side, and the
+native shell is a thin wrapper around the same backend the PWA uses.
 
-- **With `CAP_SERVER_URL` set** (dev mode): the Capacitor WebView loads
-  the URL you pass instead of the bundled `dist/client`. Useful for
-  live-iterating against the desktop's dev server through the Tailscale
-  Funnel without rebuilding the APK every time.
+- **Default (remote shell, recommended for day-to-day)** — no env vars
+  needed. `capacitor.config.ts` points `server.url` at
+  `https://stephan-office.tail4ee1d0.ts.net`. Rebuild with
+  `npm run cap:sync && cd android && ./gradlew assembleDebug` and the
+  APK loads the live Funnel URL.
 
+- **Override remote URL (LAN / ngrok / staging)** — set
+  `CAP_SERVER_URL` before `cap:sync`:
   ```bash
-  CAP_SERVER_URL=https://stephan-office.tail4ee1d0.ts.net npm run cap:run:android
+  CAP_SERVER_URL=http://192.168.86.32:3000 npm run cap:sync
   ```
 
-- **Without `CAP_SERVER_URL`** (production mode): Capacitor serves the
-  files it copied during `cap:sync`. This is what you ship to the
-  stores.
+- **Bundled-assets mode (Play Store / App Store submission)** — set
+  `BUNDLE_ASSETS=1` before `cap:sync`. The `server` block is dropped
+  and Capacitor serves `dist/client` from `capacitor://localhost`
+  inside the WebView. Required for Store review (Apple rejects
+  pure-URL shells) and for offline-first use cases.
+  ```bash
+  BUNDLE_ASSETS=1 npm run cap:sync
+  ```
+  Note: bundled mode still needs the backend reachable for API calls
+  — bake an `API_BASE` env into the client build before shipping, or
+  the app will call `/api/*` relative paths against the WebView
+  origin and get nothing.
+
+## Google OAuth inside a Capacitor WebView
+
+Google enforces a `disallowed_useragent` policy (error 403) that
+rejects OAuth 2.0 from any WebView whose User-Agent string contains
+the Android `wv` marker. This is an anti-phishing measure dating to
+2016. The symptom: tap "Sign in with Google", get
+*"Rizzoma's request does not comply with Google's Use secure browsers
+policy"*.
+
+Two separate config settings make in-WebView Google OAuth work:
+
+1. **`server.allowNavigation`** must include every host the OAuth
+   round-trip visits. Anything NOT in the list gets punted to the
+   system browser, and the resulting session cookie lands in Chrome's
+   (per-app sandboxed) jar instead of the WebView's — the user
+   "signs in" but the Capacitor app still shows the login page. The
+   required hosts:
+
+   - `accounts.google.com`
+   - `www.google.com`
+   - `oauth2.googleapis.com`
+   - `www.googleapis.com`
+   - `ssl.gstatic.com`
+   - `fonts.gstatic.com`
+   - `fonts.googleapis.com`
+   - `lh3.googleusercontent.com`
+
+   Facebook and Microsoft OAuth have their own host lists — already
+   in the default config.
+
+2. **`android.overrideUserAgent` / `ios.overrideUserAgent`** must
+   strip the `wv` marker. We present as mobile Chrome (Android) and
+   mobile Safari (iOS) with a `Rizzoma/1.0` suffix so our server
+   logs can still distinguish native-app traffic from browser
+   traffic. See `capacitor.config.ts`.
+
+Both fixes are already in `capacitor.config.ts` and just work on
+every rebuild. Don't disable them without testing OAuth.
 
 ## First-time Android setup
 
