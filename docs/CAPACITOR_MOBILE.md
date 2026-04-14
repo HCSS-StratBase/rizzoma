@@ -201,6 +201,74 @@ npm run cap:open:ios
 # Capabilities. Pick a device or simulator. Product → Run.
 ```
 
+### iOS colleague handoff (for someone with a Mac, no Rizzoma context)
+
+Use this when the person who has a Mac is not the person writing
+Rizzoma code, and you just want them to smoke-test the iOS build.
+
+**Option A — they clone + build from source (30 min including Xcode
+first-run setup):**
+
+1. `git clone <repo url> && cd Rizzoma && git checkout master`
+2. `nvm install 20.19.0 && nvm use 20.19.0` (or install Node 20.x via brew)
+3. `npm ci`
+4. `npm run cap:sync`
+5. `cd ios/App && pod install && cd -`
+6. `open ios/App/App.xcworkspace` (MUST be the `.xcworkspace`, not the
+   `.xcodeproj` — the workspace includes CocoaPods)
+7. In Xcode: top toolbar → destination → pick any iOS Simulator (e.g.
+   "iPhone 15"). Press ⌘R. First build takes 3–5 min while Xcode
+   compiles everything.
+8. The Rizzoma app should launch in a simulator window. Tap **Sign in
+   with Google** — SFSafariViewController opens, they sign in with any
+   Google account, tap "Done" → app should land logged in.
+
+**Option B — pre-built simulator app via CI (colleague just drags +
+drops, no build step):**
+
+If `.github/workflows/ios-build.yml` has been run for the current
+commit, the GitHub Actions run produces a `Rizzoma-iOS-simulator.zip`
+artifact containing `App.app` (unsigned, simulator-only). To use it:
+
+1. On the Mac: download the artifact from
+   `Actions → iOS build → <run> → Artifacts → Rizzoma-iOS-simulator`.
+2. Unzip it to get `App.app`.
+3. Open any iOS Simulator from Xcode
+   (`Xcode → Open Developer Tool → Simulator`), pick a device.
+4. Drag `App.app` onto the simulator window. It installs as
+   "Rizzoma" and appears on the home screen.
+5. Tap to open, test Google OAuth via the **Sign in with Google**
+   button.
+
+The CI artifact is **simulator-only** — it does not run on a physical
+iPhone because it's unsigned. For a device build, your colleague needs
+to open the project in Xcode (Option A) and sign with their own Apple
+ID in Signing & Capabilities. A free Apple ID is enough for
+sideloading to a personal device; only App Store / TestFlight
+distribution needs the $99/yr Developer Program.
+
+**What the colleague is testing:**
+
+1. App launches to the sign-in screen. Topics sidebar is empty until
+   they sign in.
+2. Tap **Sign in with Google** → `SFSafariViewController` opens → real
+   Safari UA → Google accepts the OAuth request (no
+   `disallowed_useragent` 403, no 400 malformed). They sign in, see
+   the "Signed in to Rizzoma" done page, tap Done.
+3. App reloads with a valid session cookie in the WKWebView's own
+   cookie jar (via the nonce-based ticket handoff — same code path as
+   Android Custom Tabs; see `src/client/lib/capacitor-native.ts`
+   `launchNativeOAuth`).
+4. Topics sidebar scrolls past topic #20 (infinite scroll via
+   IntersectionObserver — the Android ceiling bug fix also applies to
+   iOS).
+5. Tap through a topic, verify blips render, verify swipe / scroll
+   gestures feel right.
+
+**Report back to the Rizzoma dev as a short list of what rendered
+correctly and what didn't.** Screenshots in `screenshots/` are the
+preferred evidence format.
+
 ## Auth flow caveat
 
 The app's Google OAuth flow redirects through

@@ -1,0 +1,117 @@
+name: iOS build
+
+# Build the Capacitor iOS app on a macOS runner and publish the
+# `App.app` bundle as a workflow artifact. This lets contributors
+# without a Mac hand the artifact to someone who does (for simulator
+# testing) or pull it onto an iPhone via Xcode device install, without
+# having to reproduce the whole Node + Xcode + CocoaPods toolchain on
+# their own machine.
+#
+# Why macos-14: GitHub's macOS runners are the only way to run Xcode
+# in CI (Apple prohibits Xcode on non-Apple hardware). macos-14 ships
+# Xcode 15.x and the iOS 17 SDK, which match our capacitor.config.ts
+# UA override (iPhone/CPU iPhone OS 17_0).
+#
+# This workflow does NOT sign the app — unsigned debug builds run in
+# the simulator and on devices paired with an Apple Developer account
+# via Xcode's "Run" button. For TestFlight you need to set up Fastlane
+# or add XCODE_SIGNING_* secrets and a separate release workflow.
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'src/client/**'
+      - 'src/shared/**'
+      - 'ios/**'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/ios-build.yml'
+  pull_request:
+    paths:
+      - 'src/client/**'
+      - 'ios/**'
+      - 'capacitor.config.ts'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: 'npm'
+
+      - name: Show Xcode version
+        run: |
+          xcodebuild -version
+          xcode-select -p
+
+      - name: Install dependencies
+        env:
+          CYPRESS_INSTALL_BINARY: '0'
+        run: |
+          npm config set fund false
+          npm config set audit false
+          npm config set legacy-peer-deps true
+          npm ci --no-audit --no-fund --no-optional || npm install --no-audit --no-fund --no-optional
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Capacitor sync (iOS)
+        # Ships dist/client into ios/App/App/public and regenerates
+        # the iOS Pods bridge with whatever plugins package.json has.
+        run: npx cap sync ios
+
+      - name: Install CocoaPods
+        working-directory: ios/App
+        run: |
+          pod repo update --silent || true
+          pod install
+
+      - name: Build App (iOS Simulator, unsigned)
+        working-directory: ios/App
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package .app for artifact
+        working-directory: ios/App
+        run: |
+          set -euo pipefail
+          APP_PATH="build/Build/Products/Debug-iphonesimulator/App.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "App.app not found at $APP_PATH — build probably failed"
+            find build -name "App.app" -maxdepth 6 || true
+            exit 1
+          fi
+          mkdir -p ../../dist/ios
+          # Zip the .app — GitHub artifact uploads do not preserve
+          # macOS bundle metadata unless you archive first.
+          ditto -c -k --keepParent "$APP_PATH" ../../dist/ios/Rizzoma-simulator.zip
+          ls -lh ../../dist/ios/
+
+      - name: Upload simulator app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rizzoma-iOS-simulator
+          path: dist/ios/Rizzoma-simulator.zip
+          retention-days: 14
+          if-no-files-found: error
