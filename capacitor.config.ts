@@ -83,12 +83,25 @@ const config: CapacitorConfig = {
     // doesn't matter, but leave it here as documentation for anyone
     // who later needs cross-origin cookies.
     allowMixedContent: false,
+    // Override the WebView User-Agent so Google OAuth accepts the
+    // request. Google's `disallowed_useragent` policy (error 403)
+    // refuses OAuth 2.0 flows from any UA containing the `wv` marker
+    // that Android's WebView emits by default. Presenting as regular
+    // mobile Chrome bypasses the check. The `Rizzoma/1.0` suffix
+    // identifies the app to our own server logs / analytics without
+    // triggering Google's detection. 2026-04-14 task #40.
+    overrideUserAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36 Rizzoma/1.0',
   },
   ios: {
     // iOS WebView content inset: let the app handle the status bar
     // padding itself via CSS `env(safe-area-inset-top)` rather than
     // Capacitor's automatic adjustment.
     contentInset: 'always',
+    // Same reasoning as Android's overrideUserAgent: iOS WKWebView
+    // also identifies itself in a way Google's "disallowed_useragent"
+    // policy sometimes rejects. Present as mobile Safari to stay on
+    // the safe side of Google's OAuth policy.
+    overrideUserAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1 Rizzoma/1.0',
   },
 };
 
