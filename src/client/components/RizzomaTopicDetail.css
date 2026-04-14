@@ -358,6 +358,17 @@
   display: none;
 }
 
+/* Same orphan-bullet cleanup for the EXPANDED inline child view.
+   RizzomaBlip renders a hard-coded `•` span inside .blip-content-row
+   of every non-root blip (see RizzomaBlip.tsx:2072). When an inline
+   child is expanded inside the topic body via .inline-child-portal,
+   that bullet sits to the left of the child's actual content list
+   and reads as another stray glyph next to the child's own <ul>
+   markers. Hide it for any inline-child-expanded anywhere. */
+.inline-child-expanded .blip-content-row > .blip-bullet {
+  display: none;
+}
+
 .empty-state-inline {
   color: #999;
   font-size: 13px;
