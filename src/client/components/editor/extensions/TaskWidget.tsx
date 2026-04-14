@@ -4,14 +4,18 @@ import { Suggestion } from '@tiptap/suggestion';
 import type { SuggestionProps } from '@tiptap/suggestion';
 import './TaskWidget.css';
 
-// Reuse the same mock users as mentions
-const mockUsers = [
-  { id: '1', label: 'John Doe' },
-  { id: '2', label: 'Jane Smith' },
-  { id: '3', label: 'Bob Johnson' },
-  { id: '4', label: 'Alice Brown' },
-  { id: '5', label: 'Charlie Davis' },
-];
+type TaskUser = { id: string; label: string };
+
+type TaskWidgetOptions = {
+  /** Wave/topic ID the task belongs to. */
+  waveId: string;
+  /** Blip ID the task is anchored under (may be empty for topic root). */
+  blipId: string;
+  /** Currently signed-in user — always first in the assignee picker. */
+  currentUser: TaskUser | null;
+  /** Real participants from `/api/waves/:id/participants`. */
+  participants: TaskUser[];
+};
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return '';
@@ -21,11 +25,83 @@ function formatDate(dateStr: string): string {
   return `${d.getDate()} ${months[d.getMonth()]}`;
 }
 
-export const TaskWidgetNode = Node.create({
+/**
+ * Merge the current user + wave participants into a deduped suggestion list.
+ * Self is always first so "assign to me" is the default path.
+ */
+function buildAssigneeList(opts: TaskWidgetOptions): TaskUser[] {
+  const out: TaskUser[] = [];
+  const seen = new Set<string>();
+  if (opts.currentUser) {
+    out.push({ id: opts.currentUser.id, label: `${opts.currentUser.label} (me)` });
+    seen.add(opts.currentUser.id);
+  }
+  for (const p of opts.participants) {
+    if (seen.has(p.id)) continue;
+    out.push(p);
+    seen.add(p.id);
+  }
+  return out;
+}
+
+async function createTaskOnServer(
+  opts: TaskWidgetOptions,
+  assignee: TaskUser,
+  dueDate: string,
+): Promise<string | null> {
+  try {
+    // Strip the "(me)" suffix back out before sending to the server.
+    const cleanLabel = assignee.label.replace(/ \(me\)$/, '');
+    const r = await fetch('/api/tasks', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        waveId: opts.waveId,
+        topicId: opts.waveId, // topic id == wave id in this schema
+        blipId: opts.blipId,
+        taskText: '',
+        assigneeId: assignee.id,
+        assigneeName: cleanLabel,
+        dueDate: dueDate || undefined,
+      }),
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return data.id || data.taskId || null;
+  } catch {
+    return null;
+  }
+}
+
+async function toggleTaskOnServer(taskId: string): Promise<boolean | null> {
+  try {
+    const r = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/toggle`, {
+      method: 'POST',
+      credentials: 'same-origin',
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return Boolean(data.isCompleted);
+  } catch {
+    return null;
+  }
+}
+
+export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
   name: 'taskWidget',
   group: 'inline',
   inline: true,
   atom: true,
+
+  addOptions() {
+    return {
+      waveId: '',
+      blipId: '',
+      currentUser: null,
+      participants: [],
+    };
+  },
 
   addAttributes() {
     return {
@@ -35,6 +111,22 @@ export const TaskWidgetNode = Node.create({
         renderHTML: (attributes: Record<string, unknown>) => {
           if (!attributes['assignee']) return {};
           return { 'data-assignee': attributes['assignee'] };
+        },
+      },
+      assigneeId: {
+        default: '',
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-assignee-id') || '',
+        renderHTML: (attributes: Record<string, unknown>) => {
+          if (!attributes['assigneeId']) return {};
+          return { 'data-assignee-id': attributes['assigneeId'] };
+        },
+      },
+      taskId: {
+        default: '',
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-task-id') || '',
+        renderHTML: (attributes: Record<string, unknown>) => {
+          if (!attributes['taskId']) return {};
+          return { 'data-task-id': attributes['taskId'] };
         },
       },
       dueDate: {
@@ -68,6 +160,11 @@ export const TaskWidgetNode = Node.create({
     const dateStr = dueDate ? ` ${formatDate(String(dueDate))}` : '';
     const classes = ['task-widget'];
     if (done) classes.push('task-done');
+    // Mark overdue so CSS can color it red.
+    if (dueDate && !done) {
+      const d = new Date(String(dueDate));
+      if (!isNaN(d.getTime()) && d.getTime() < Date.now()) classes.push('task-overdue');
+    }
 
     return [
       'span',
@@ -77,35 +174,67 @@ export const TaskWidgetNode = Node.create({
   },
 
   addProseMirrorPlugins() {
+    const opts = this.options;
+
     return [
       Suggestion({
         editor: this.editor,
         pluginKey: new PluginKey('taskSuggestion'),
         char: '~',
         items: ({ query }: { query: string }) => {
-          return mockUsers
+          const pool = buildAssigneeList(opts);
+          return pool
             .filter(u => u.label.toLowerCase().includes(query.toLowerCase()))
-            .slice(0, 5);
+            .slice(0, 6);
         },
-        command: ({ editor, range, props: user }: { editor: any; range: any; props: { id: string; label: string } }) => {
+        command: ({ editor, range, props: user }: { editor: any; range: any; props: TaskUser }) => {
           const dateStr = window.prompt('Due date (YYYY-MM-DD, or leave empty):', '') || '';
+          // Fire-and-forget the POST; we still insert the visual widget
+          // immediately so the editor stays responsive. The server ID
+          // is patched into the node attrs when the POST resolves.
+          const cleanLabel = user.label.replace(/ \(me\)$/, '');
+          const tempNode = {
+            type: 'taskWidget',
+            attrs: {
+              assignee: cleanLabel,
+              assigneeId: user.id,
+              taskId: '',
+              dueDate: dateStr,
+              done: false,
+            },
+          };
           editor
             .chain()
             .focus()
             .insertContentAt(range, [
-              {
-                type: 'taskWidget',
-                attrs: { assignee: user.label, dueDate: dateStr, done: false },
-              },
+              tempNode,
               { type: 'text', text: ' ' },
             ])
             .run();
+          // Patch in the real taskId once the server doc exists.
+          createTaskOnServer(opts, user, dateStr).then(taskId => {
+            if (!taskId) return;
+            // Walk the document and patch the most recent taskWidget
+            // matching this assignee that still has an empty taskId.
+            const tr = editor.state.tr;
+            let patched = false;
+            editor.state.doc.descendants((node: any, pos: number) => {
+              if (patched) return false;
+              if (node.type.name !== 'taskWidget') return;
+              if (node.attrs.taskId) return;
+              if (node.attrs.assigneeId !== user.id) return;
+              tr.setNodeMarkup(pos, undefined, { ...node.attrs, taskId });
+              patched = true;
+              return false;
+            });
+            if (patched) editor.view.dispatch(tr);
+          });
         },
         render: () => {
           let element: HTMLDivElement | null = null;
-          let currentItems: Array<{ id: string; label: string }> = [];
+          let currentItems: TaskUser[] = [];
           let selectedIndex = 0;
-          let currentCommand: ((props: any) => void) | null = null;
+          let currentCommand: ((props: TaskUser) => void) | null = null;
 
           const updateDOM = () => {
             if (!element) return;
@@ -117,7 +246,7 @@ export const TaskWidgetNode = Node.create({
           };
 
           return {
-            onStart: (props: SuggestionProps<{ id: string; label: string }>) => {
+            onStart: (props: SuggestionProps<TaskUser>) => {
               element = document.createElement('div');
               element.className = 'mention-list';
               element.style.position = 'fixed';
@@ -125,7 +254,8 @@ export const TaskWidgetNode = Node.create({
               element.addEventListener('click', (e) => {
                 const btn = (e.target as HTMLElement).closest('[data-index]');
                 if (btn && currentCommand) {
-                  currentCommand(currentItems[Number(btn.getAttribute('data-index'))]);
+                  const item = currentItems[Number(btn.getAttribute('data-index'))];
+                  if (item) currentCommand(item);
                 }
               });
 
@@ -141,7 +271,7 @@ export const TaskWidgetNode = Node.create({
               }
               document.body.appendChild(element);
             },
-            onUpdate: (props: SuggestionProps<{ id: string; label: string }>) => {
+            onUpdate: (props: SuggestionProps<TaskUser>) => {
               currentItems = props.items;
               currentCommand = props.command;
               selectedIndex = 0;
@@ -154,6 +284,7 @@ export const TaskWidgetNode = Node.create({
               }
             },
             onKeyDown: (props: { event: KeyboardEvent }) => {
+              if (!currentItems.length) return false;
               if (props.event.key === 'ArrowUp') {
                 selectedIndex = (selectedIndex + currentItems.length - 1) % currentItems.length;
                 updateDOM();
@@ -165,8 +296,9 @@ export const TaskWidgetNode = Node.create({
                 return true;
               }
               if (props.event.key === 'Enter') {
-                if (currentItems[selectedIndex] && currentCommand) {
-                  currentCommand(currentItems[selectedIndex]);
+                const item = currentItems[selectedIndex];
+                if (item && currentCommand) {
+                  currentCommand(item);
                 }
                 return true;
               }
@@ -185,3 +317,34 @@ export const TaskWidgetNode = Node.create({
     ];
   },
 });
+
+/**
+ * Click handler for rendered task widgets — toggles the server-side task
+ * state and flips the `task-done` class. Attached at the document level so
+ * it works for every blip on the page without needing per-widget listeners.
+ */
+export function installTaskWidgetToggleHandler() {
+  if (typeof document === 'undefined') return;
+  if ((window as any).__rizzomaTaskToggleInstalled) return;
+  (window as any).__rizzomaTaskToggleInstalled = true;
+  document.addEventListener('click', async (e) => {
+    const target = (e.target as HTMLElement)?.closest('[data-task-widget]');
+    if (!target) return;
+    const taskId = target.getAttribute('data-task-id');
+    if (!taskId) return;
+    e.stopPropagation();
+    const nextState = await toggleTaskOnServer(taskId);
+    if (nextState === null) return;
+    target.classList.toggle('task-done', nextState);
+    target.classList.toggle('task-overdue', !nextState && (() => {
+      const raw = target.getAttribute('data-due-date') || '';
+      if (!raw) return false;
+      const d = new Date(raw);
+      return !isNaN(d.getTime()) && d.getTime() < Date.now();
+    })());
+    // Flip the leading checkbox glyph in the text content.
+    const txt = target.textContent || '';
+    if (nextState && txt.startsWith('\u2610')) target.textContent = '\u2611' + txt.slice(1);
+    else if (!nextState && txt.startsWith('\u2611')) target.textContent = '\u2610' + txt.slice(1);
+  }, true);
+}

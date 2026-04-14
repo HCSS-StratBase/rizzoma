@@ -715,6 +715,13 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const seedingTopicYdocRef = useRef(false);
 
   // TipTap editor for topic content (meta-blip editing)
+  const currentUserForEditor = currentUserRef.current
+    ? { id: currentUserRef.current.id, label: (currentUserRef.current.name || 'You') }
+    : null;
+  const participantsForEditor = useMemo(
+    () => participants.map(p => ({ id: p.userId, label: p.email.split('@')[0] || p.email })),
+    [participants],
+  );
   const topicEditor = useEditor({
     extensions: getEditorExtensions(
       topicCollabActive ? topicYdoc : undefined,
@@ -722,6 +729,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       {
         waveId: id,
         onCreateInlineChildBlip: stableCreateInlineChildBlip,
+        currentUser: currentUserForEditor,
+        participants: participantsForEditor,
       }
     ),
     content: '',

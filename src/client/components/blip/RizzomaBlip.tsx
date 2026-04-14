@@ -505,19 +505,38 @@ export function RizzomaBlip({
 
   // Memoize extensions to prevent TipTap from recreating ProseMirror plugins on every render.
   // Without this, ySyncPlugin gets destroyed/recreated each render, preventing Y.Doc sync.
+  const waveIdForTask = (blip.id || '').split(':')[0] || '';
+  const currentUserForEditor = useMemo(() => {
+    // Pick from blip.contributors if available — the current user is the
+    // one whose id matches the session. In this scope we don't have direct
+    // session access, so fall back to the first contributor labelled "me".
+    const me = blip.contributors?.find(c => (c as any).isMe);
+    if (me) return { id: me.id, label: me.name || me.email || 'You' };
+    return null;
+  }, [blip.contributors]);
+  const participantsForEditor = useMemo(
+    () => (blip.contributors || []).map(c => ({
+      id: c.id,
+      label: (c.name || c.email || c.id) as string,
+    })),
+    [blip.contributors],
+  );
   const extensions = useMemo(
     () => getEditorExtensions(
       collabActive ? ydoc : undefined,
       collabActive ? collabProvider : undefined,
       {
         blipId: blip.id,
+        waveId: waveIdForTask,
         onToggleInlineComments: stableToggleInlineComments,
         onCreateInlineChildBlip: stableCreateInlineChildBlip,
         onHideComments: stableHideComments,
         onShowComments: stableShowComments,
+        currentUser: currentUserForEditor,
+        participants: participantsForEditor,
       }
     ),
-    [blip.id, collabActive, ydoc, collabProvider, stableToggleInlineComments, stableCreateInlineChildBlip, stableHideComments, stableShowComments]
+    [blip.id, waveIdForTask, collabActive, ydoc, collabProvider, stableToggleInlineComments, stableCreateInlineChildBlip, stableHideComments, stableShowComments, currentUserForEditor, participantsForEditor]
   );
 
   // Create inline editor for editing mode.

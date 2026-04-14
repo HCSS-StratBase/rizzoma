@@ -21,7 +21,7 @@ import { BlipKeyboardShortcuts } from './extensions/BlipKeyboardShortcuts';
 import { AppFrameGadget, ChartGadget, EmbedFrameGadget, PollGadget } from './extensions/GadgetNodes';
 import { BlipThreadNode } from './extensions/BlipThreadNode';
 import { TagNode } from './extensions/TagNode';
-import { TaskWidgetNode } from './extensions/TaskWidget';
+import { TaskWidgetNode, installTaskWidgetToggleHandler } from './extensions/TaskWidget';
 import { CodeBlockView } from './extensions/CodeBlockView';
 import { FEATURES } from '@shared/featureFlags';
 import './extensions/CodeBlockView.css';
@@ -60,6 +60,10 @@ type EditorExtensionOptions = {
   onHideComments?: () => void;
   /** Callback to show (unfold) all inline comments. Triggered by Ctrl+Shift+Down. */
   onShowComments?: () => void;
+  /** Currently signed-in user — injected into the ~task assignee picker so the user can assign tasks to themselves. */
+  currentUser?: { id: string; label: string } | null;
+  /** Real wave participants — injected into the ~task assignee picker. */
+  participants?: Array<{ id: string; label: string }>;
 };
 
 export const getEditorExtensions = (
@@ -156,7 +160,15 @@ export const getEditorExtensions = (
   // Add #tag and ~task inline widgets (uses same suggestion pattern as mentions)
   if (FEATURES.MENTIONS) {
     extensions.push(TagNode.configure({}));
-    extensions.push(TaskWidgetNode.configure({}));
+    extensions.push(TaskWidgetNode.configure({
+      waveId: options?.waveId || '',
+      blipId: options?.blipId || '',
+      currentUser: options?.currentUser || null,
+      participants: options?.participants || [],
+    }));
+    // Global click handler — toggles server-side task state when a
+    // rendered task widget is clicked. Idempotent (install-once).
+    installTaskWidgetToggleHandler();
   }
 
   // Add mentions if enabled

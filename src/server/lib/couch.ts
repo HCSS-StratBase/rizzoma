@@ -91,6 +91,9 @@ const ALL_INDEXES: Array<{ fields: string[]; name: string }> = [
   { fields: ['type', 'blipId'], name: 'idx_inline_comment_blip' },
   { fields: ['type', 'mentionedUserId', 'createdAt'], name: 'idx_mention_user_createdAt' },
   { fields: ['type', 'mentionedUserId', 'isRead'], name: 'idx_mention_user_isRead' },
+  { fields: ['type', 'assigneeId', 'createdAt'], name: 'idx_task_assignee_createdAt' },
+  { fields: ['type', 'assigneeId', 'isCompleted'], name: 'idx_task_assignee_isCompleted' },
+  { fields: ['type', 'waveId', 'blipId', 'createdAt'], name: 'idx_task_wave_blip_createdAt' },
 ];
 
 /**

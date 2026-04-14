@@ -163,12 +163,6 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
     if (navigating) return;
     setNavigating(true);
 
-    const nextUnreadId = unreadState?.unreadIds[0] ?? null;
-    if (!nextUnreadId) {
-      setNavigating(false);
-      return;
-    }
-
     const cssEscape = (val: string) => {
       if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(val);
       return val.replace(/["\\]/g, '\\$&');
@@ -177,9 +171,7 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
     // Collapse the previously expanded blip before jumping to next
     if (lastExpandedRef.current) {
       const prev = lastExpandedRef.current;
-      // Deactivate toolbar
       window.dispatchEvent(new CustomEvent('rizzoma:deactivate-blip', { detail: { blipId: prev.blipId } }));
-      // Collapse
       if (prev.isInline) {
         window.dispatchEvent(new CustomEvent('rizzoma:collapse-inline-blip', { detail: { threadId: prev.blipId } }));
       } else {
@@ -187,35 +179,43 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
       }
     }
 
-    // 1. Try finding already-rendered blip element (list children or expanded inline children)
-    let target: HTMLElement | null =
-      document.querySelector(`[data-blip-id="${cssEscape(nextUnreadId)}"]`) as HTMLElement | null;
-
-    // 2. If not found, the blip is likely a collapsed inline child ([+] marker).
-    //    Find its thread marker and expand it.
+    // Walk unreadIds in order until we find one that's either already
+    // rendered or findable by expanding its anchor marker. Previous
+    // impl only looked at unreadIds[0] and silently exited when that
+    // was a deeply-nested grandchild hidden behind a collapsed parent
+    // — the "clicking Next does nothing" bug from the 2026-04-14
+    // user smoke test.
+    let nextUnreadId: string | null = null;
+    let target: HTMLElement | null = null;
     let wasInline = false;
-    if (!target) {
-      const marker = document.querySelector(
-        `[data-blip-thread="${cssEscape(nextUnreadId)}"]`
+    for (const candidate of unreadState?.unreadIds || []) {
+      // (a) already-rendered blip element
+      const rendered = document.querySelector(
+        `[data-blip-id="${cssEscape(candidate)}"]`
       ) as HTMLElement | null;
-
+      if (rendered) {
+        nextUnreadId = candidate;
+        target = rendered;
+        wasInline = false;
+        break;
+      }
+      // (b) inline child via its anchor marker
+      const marker = document.querySelector(
+        `[data-blip-thread="${cssEscape(candidate)}"]`
+      ) as HTMLElement | null;
       if (marker) {
+        nextUnreadId = candidate;
         wasInline = true;
-        // Scroll the marker into view first so user sees it
         marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // Dispatch toggle event to expand the inline child
         window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
-          detail: { threadId: nextUnreadId },
+          detail: { threadId: candidate },
         }));
-
-        // Wait for the expanded blip element to render (poll up to ~500ms)
         target = await new Promise<HTMLElement | null>((resolve) => {
           let attempts = 0;
           const check = () => {
             attempts++;
             const el = document.querySelector(
-              `[data-blip-id="${cssEscape(nextUnreadId)}"]`
+              `[data-blip-id="${cssEscape(candidate)}"]`
             ) as HTMLElement | null;
             if (el) resolve(el);
             else if (attempts > 30) resolve(null);
@@ -223,10 +223,19 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
           };
           requestAnimationFrame(check);
         });
+        if (target) break;
       }
+      // (c) not findable — try the next unread candidate instead of
+      // silently dead-ending on a grandchild.
     }
 
-    if (!target) {
+    if (!target || !nextUnreadId) {
+      // Surface a toast so the user knows FtG tried but couldn't
+      // reach any unread blip (e.g. all are inside collapsed ancestor
+      // chains we can't auto-expand yet).
+      window.dispatchEvent(new CustomEvent('toast', {
+        detail: { message: 'No reachable unread blip — try scrolling or refresh', type: 'info' },
+      }));
       setNavigating(false);
       return;
     }
