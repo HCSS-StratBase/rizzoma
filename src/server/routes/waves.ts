@@ -4,6 +4,7 @@ import { emitEvent } from '../lib/socket.js';
 import type { Blip, Wave, BlipRead, WaveParticipant } from '../schemas/wave.js';
 import { computeWaveUnreadCounts, invalidateUnreadCache } from '../lib/unread.js';
 import { sendInviteEmail } from '../services/email.js';
+import { noStore } from '../middleware/noStore.js';
 
 const router = Router();
 type FlatBlip = { id: string; updatedAt: number; createdAt?: number; content?: string; children?: FlatBlip[] };
@@ -38,7 +39,8 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/waves/unread_counts?ids=w1,w2,... — per-wave unread/total for current user
-router.get('/unread_counts', async (req, res) => {
+// noStore: per-user dynamic response; prevents weak-ETag 304 replay (see middleware/noStore.ts, BUG #56)
+router.get('/unread_counts', noStore, async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
@@ -169,11 +171,12 @@ function flattenBlips(blips: FlatBlip[]): Array<{ id: string; updatedAt: number 
 }
 
 // GET /api/waves/:id/unread — list unread blip IDs for current user
-router.get('/:id/unread', async (req, res) => {
+// noStore: per-user dynamic (unread list is per-user, not part of the wave doc)
+router.get('/:id/unread', noStore, async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
-  const id = req.params.id;
+  const id = req.params['id'] as string;
   try {
     // get tree
     const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
@@ -191,11 +194,12 @@ router.get('/:id/unread', async (req, res) => {
 });
 
 // GET /api/waves/:id/next?after=blipId — next unread blip id
-router.get('/:id/next', async (req, res) => {
+// noStore: per-user dynamic (next unread is per-user)
+router.get('/:id/next', noStore, async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
-  const id = req.params.id;
+  const id = req.params['id'] as string;
   const after = String((req.query as any).after || '');
   try {
     const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
@@ -214,11 +218,12 @@ router.get('/:id/next', async (req, res) => {
 });
 
 // GET /api/waves/:id/prev?before=blipId — previous unread blip id
-router.get('/:id/prev', async (req, res) => {
+// noStore: per-user dynamic
+router.get('/:id/prev', noStore, async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
-  const id = req.params.id;
+  const id = req.params['id'] as string;
   const before = String((req.query as any).before || '');
   try {
     const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getDoc, updateDoc, insertDoc, find } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
 import { requireAuth } from '../middleware/auth.js';
+import { noStore } from '../middleware/noStore.js';
 import { invalidateUnreadCacheForWave } from '../lib/unread.js';
 import type { Blip } from '../schemas/wave.js';
 
@@ -346,7 +347,11 @@ router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
 });
 
 // GET /api/blips?waveId=:waveId - Get all blips for a wave/topic
-router.get('/', async (req, res): Promise<void> => {
+// noStore: blips returned here carry per-user permissions fields
+// (canEdit / canComment / canRead) and isRead markers — cached body
+// would show the wrong permissions after a session switch and would
+// mask mark-read state changes.
+router.get('/', noStore, async (req, res): Promise<void> => {
   const userId = req.session?.userId;
   const waveId = (req.query as Record<string, string | undefined>)['waveId'];
   const limitParam = (req.query as Record<string, string | undefined>)['limit'];
@@ -382,7 +387,9 @@ router.get('/', async (req, res): Promise<void> => {
   }
 });
 
-router.get('/:id/collapse-default', requireAuth, async (req, res): Promise<void> => {
+// noStore: per-user collapse preference — cached body would show the
+// other user's preference after a session switch.
+router.get('/:id/collapse-default', noStore, requireAuth, async (req, res): Promise<void> => {
   try {
     const blipId = req.params['id'] as string;
     const doc = await getDoc<Blip>(blipId);
@@ -427,7 +434,8 @@ router.patch('/:id/collapse-default', requireAuth, async (req, res): Promise<voi
   }
 });
 
-router.get('/:id/inline-comments-visibility', requireAuth, async (req, res): Promise<void> => {
+// noStore: per-user inline-comments visibility preference
+router.get('/:id/inline-comments-visibility', noStore, requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
     const blipId = req.params['id'] as string;

@@ -6,6 +6,7 @@
 
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { noStore } from '../middleware/noStore.js';
 import { find, updateDoc, getDoc, getDocsById } from '../lib/couch.js';
 
 const router = Router();
@@ -25,7 +26,8 @@ interface MentionDoc {
 }
 
 // GET /api/mentions - Get mentions for current user
-router.get('/', requireAuth, async (req, res): Promise<void> => {
+// noStore: per-user mention list including isRead state (see middleware/noStore.ts)
+router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const filter = req.query['filter'] as string; // 'all' | 'unread'
   const limit = Math.min(parseInt(req.query['limit'] as string) || 50, 100);

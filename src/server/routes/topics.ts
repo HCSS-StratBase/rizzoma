@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { deleteDoc, find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
 import { emitEvent } from '../lib/socket.js';
 import { csrfProtect } from '../middleware/csrf.js';
+import { noStore } from '../middleware/noStore.js';
 import { requireAuth } from '../middleware/auth.js';
 import { CreateTopicSchema, UpdateTopicSchema } from '../schemas/topic.js';
 import { stampInitialAttribution, diffAndStampAttribution } from '../lib/sectionAttribution.js';
@@ -74,27 +75,12 @@ function buildSnippet(content?: string): string | undefined {
 }
 
 // GET /api/topics?limit=20
-router.get('/', async (req, res): Promise<void> => {
-  // The topics list embeds per-user unreadCount / totalCount fields that
-  // are derived from the blip read state, not from the topic documents
-  // themselves. Express's default ETag hashing only covers the response
-  // body — but when only the unread counts change (e.g. after the user
-  // marks a blip read), the response body for the same URL contains the
-  // NEW counts, so a fresh fetch SHOULD miss the cache. The actual bug
-  // is the browser-side HTTP cache: when the browser re-fetches
-  // /api/topics, it sends If-None-Match with the ETag from the prior
-  // response. Express compares the NEW response body's ETag against the
-  // incoming If-None-Match and, because the unread count numbers ARE
-  // inside the response, the hash differs and Express returns a fresh
-  // 200 with new data. HOWEVER — the Express default ETag is a WEAK
-  // hash (`W/...`) that only covers cache size + mtime, not content, so
-  // when two back-to-back /api/topics responses happen to have the same
-  // byte size, the ETag matches and Express returns 304 with no body,
-  // and the browser replays the stale cached body. Symptom: the sidebar
-  // green bar doesn't clear after mark-read until the 60-second poll
-  // eventually delivers a response whose byte size differs. Fix: opt
-  // this endpoint out of the HTTP cache entirely. Task #56, 2026-04-15.
-  res.setHeader('Cache-Control', 'no-store');
+router.get('/', noStore, async (req, res): Promise<void> => {
+  // no-store is required: this response embeds per-user unreadCount /
+  // totalCount fields that can change without the underlying topic
+  // documents changing, and Express's weak ETag would otherwise cause
+  // 304 replay of a stale cached body. See middleware/noStore.ts and
+  // the BUG #56 write-up (2026-04-15) for the full story.
   const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
   const offset = Math.max(parseInt(String((req.query as any).offset ?? '0'), 10) || 0, 0);
   const bookmark = String((req.query as any).bookmark || '').trim() || undefined;

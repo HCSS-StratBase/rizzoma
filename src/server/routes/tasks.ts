@@ -8,6 +8,7 @@
 
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { noStore } from '../middleware/noStore.js';
 import { find, updateDoc, getDoc, getDocsById, insertDoc } from '../lib/couch.js';
 import { randomUUID } from 'crypto';
 
@@ -34,7 +35,8 @@ interface TaskDoc {
 
 // GET /api/tasks - List tasks assigned to the current user.
 // Indexed + batched lookups; see /api/mentions for the same pattern.
-router.get('/', requireAuth, async (req, res): Promise<void> => {
+// noStore: per-user task list including isCompleted state
+router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const filter = req.query['filter'] as string; // 'all' | 'pending' | 'completed'
   const limit = Math.min(parseInt(req.query['limit'] as string) || 50, 100);

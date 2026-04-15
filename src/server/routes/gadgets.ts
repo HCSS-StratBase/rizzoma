@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { noStore } from '../middleware/noStore.js';
 import { getDoc, insertDoc, updateDoc } from '../lib/couch.js';
 
 const router = Router();
@@ -46,7 +47,8 @@ function buildResponse(installedAppIds: unknown): GadgetPreferencesResponse {
   };
 }
 
-router.get('/preferences', requireAuth, async (req, res): Promise<void> => {
+// noStore: per-user gadget install list
+router.get('/preferences', noStore, requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
     const doc = await getDoc<GadgetPreferencesDoc>(prefsDocId(userId));

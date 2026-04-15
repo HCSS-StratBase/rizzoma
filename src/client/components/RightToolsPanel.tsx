@@ -95,7 +95,15 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
   }
 
   const [viewMode, setViewMode] = useState<'text' | 'mindmap'>('text');
+  // `navigating` (state) controls the button's disabled prop for visual
+  // feedback. `navigatingRef` is the synchronous lock that prevents
+  // rapid-fire clicks from racing past each other before React has a
+  // chance to propagate the disabled prop. Without the ref, two clicks
+  // fired in the same React render frame both pass the
+  // `if (navigating) return` guard because the state setter is
+  // asynchronous. Task #72 (2026-04-15).
   const [navigating, setNavigating] = useState(false);
+  const navigatingRef = useRef(false);
   const [displayMode, setDisplayMode] = useState<'short' | 'expanded'>('expanded');
   const [isEditMode, setIsEditMode] = useState(false);
   const [isBlipActiveEditable, setIsBlipActiveEditable] = useState(false);
@@ -160,7 +168,12 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
   const lastExpandedRef = useRef<{ blipId: string; isInline: boolean } | null>(null);
 
   const handleFollowGreen = async () => {
-    if (navigating) return;
+    // Synchronous lock first — guarantees no two clicks race past
+    // each other inside the same React render frame. The state-based
+    // `navigating` is set immediately after for the disabled prop
+    // visual feedback, but it's not load-bearing for correctness.
+    if (navigatingRef.current) return;
+    navigatingRef.current = true;
     setNavigating(true);
 
     const cssEscape = (val: string) => {
@@ -236,6 +249,7 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
       window.dispatchEvent(new CustomEvent('toast', {
         detail: { message: 'No reachable unread blip — try scrolling or refresh', type: 'info' },
       }));
+      navigatingRef.current = false;
       setNavigating(false);
       return;
     }
@@ -259,6 +273,7 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
       if (unreadState.waveId) emitWaveUnread(unreadState.waveId);
     }
 
+    navigatingRef.current = false;
     setNavigating(false);
   };
 

@@ -54,13 +54,29 @@ jobs:
           xcode-select -p
 
       - name: Install dependencies
+        # IMPORTANT: do NOT pass --no-optional here. Vite's `rollup`
+        # ships per-platform native binaries as "optional" dependencies
+        # (`@rollup/rollup-darwin-arm64`, `-linux-x64`, etc.) and the
+        # macos-14 runner is darwin-arm64. Stripping optional deps on
+        # the runner means `vite build` cannot resolve the native
+        # binary and crashes with `Cannot find module
+        # @rollup/rollup-darwin-arm64` — which broke every iOS CI run
+        # since the workflow first shipped (2026-04-14). The lockfile
+        # generated on Stephan's WSL2 (linux-x64) is missing the
+        # darwin-arm64 binary entry, so `npm ci` from that lockfile
+        # fails on the runner; we fall back to a fresh `npm install`
+        # which resolves the optional deps fresh on this platform.
         env:
           CYPRESS_INSTALL_BINARY: '0'
         run: |
           npm config set fund false
           npm config set audit false
           npm config set legacy-peer-deps true
-          npm ci --no-audit --no-fund --no-optional || npm install --no-audit --no-fund --no-optional
+          # Always do a fresh install on the runner so optional
+          # platform-specific binaries land for darwin-arm64. Slower
+          # than `npm ci` but reliable.
+          rm -rf node_modules package-lock.json
+          npm install --no-audit --no-fund
 
       - name: Build web bundle
         run: npm run build

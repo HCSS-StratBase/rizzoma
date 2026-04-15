@@ -36,6 +36,7 @@
     "status": "docker compose ps && echo '\nAPI Health:' && curl -s http://localhost:8788/api/health || echo 'API not responding'",
     "test:toolbar-inline": "node test-toolbar-inline-smoke.mjs",
     "test:follow-green": "node test-follow-green-smoke.mjs",
+    "test:collab": "node test-collab-smoke.mjs",
     "test:health": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts src/tests/server.health.test.ts src/tests/routes.comments.inlineHealth.test.ts src/tests/routes.uploads.edgecases.test.ts",
     "perf:harness": "node perf-harness.mjs",
     "perf:budget": "node scripts/perf-budget.mjs",

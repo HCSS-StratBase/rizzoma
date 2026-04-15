@@ -6,6 +6,7 @@
 
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { noStore } from '../middleware/noStore.js';
 import { sendInviteEmail } from '../services/email.js';
 import { getDoc, insertDoc, updateDoc, find } from '../lib/couch.js';
 
@@ -104,7 +105,8 @@ router.post('/invite', requireAuth, async (req, res): Promise<void> => {
 });
 
 // GET /api/notifications/preferences - Get user notification preferences
-router.get('/preferences', requireAuth, async (req, res): Promise<void> => {
+// noStore: per-user notification preferences
+router.get('/preferences', noStore, requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
 
   try {

@@ -5,6 +5,7 @@ import { hash as bcryptHash, compare as bcryptCompare } from '../lib/bcrypt.js';
 import rateLimit from 'express-rate-limit';
 import { findOne, insertDoc, getDoc, updateDoc } from '../lib/couch.js';
 import { getCsrfTokenFromSession } from '../middleware/csrf.js';
+import { noStore } from '../middleware/noStore.js';
 import { isSamlEnabled, getSamlInstance, extractUserFromProfile, generateMetadata } from '../lib/saml.js';
 import { logAuthEvent } from '../lib/logger.js';
 import { issueTicket, redeemTicket } from '../lib/authTickets.js';
@@ -142,7 +143,10 @@ router.post('/redeem-ticket', authLimiter, async (req, res): Promise<void> => {
   res.json({ id: payload.userId, email: payload.email, name: payload.name, avatar: payload.avatar });
 });
 
-router.get('/me', async (req, res): Promise<void> => {
+// noStore: per-session identity; changes on login/logout without any
+// URL change, so cached bodies would show the wrong user after a
+// session switch.
+router.get('/me', noStore, async (req, res): Promise<void> => {
   const session = req.session as unknown as (typeof req.session & { userId?: string; userAvatar?: string }) | undefined;
   const id = session?.userId;
   if (!id) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
