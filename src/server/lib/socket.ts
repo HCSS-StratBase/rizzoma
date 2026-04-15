@@ -5,6 +5,21 @@ import { yjsDocCache } from './yjsDocCache.js';
 
 let io: Server | undefined;
 
+// Per-blip seed authority lock. When a client calls blip:join on a
+// fresh Y.Doc (no state in memory, no snapshot in CouchDB), the FIRST
+// joiner is granted shouldSeed=true in the blip:sync response and is
+// responsible for running setContent(blip.content) to populate the
+// Y.Doc. Every subsequent joiner — or any joiner once the doc has
+// non-empty state — receives shouldSeed=false. Without this, two tabs
+// joining simultaneously both seed their local Y.Doc from HTML, which
+// creates divergent CRDT histories that y.applyUpdate cannot merge
+// cleanly (the symptom is "typing in tab A shows in tab B's awareness
+// cursor but not in its editor text"). The lock is cleared when the
+// last client disconnects from the blip so a subsequent revisit can
+// re-seed from the current blip HTML if the in-memory doc was reaped
+// or never persisted. Task #57 (2026-04-15).
+const seedAuthorityClaimed = new Set<string>();
+
 function roomForWave(waveId: string) { return `ed:wave:${waveId}`; }
 function roomForBlip(waveId: string, blipId: string) { return `ed:blip:${waveId}:${blipId}`; }
 function buildRooms(waveId: string, blipId?: string) {
@@ -98,13 +113,29 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
         yjsDocCache.addRef(blipId);
         // Load from CouchDB if this is a fresh Y.Doc
         await yjsDocCache.loadFromDb(blipId);
-        // Always send sync response so client knows when it's safe to seed content.
-        // Empty array signals "no prior state" — client should seed from blip HTML.
         const state = yjsDocCache.getState(blipId);
         const stateArr = (state && state.length > 2) ? Array.from(state) : [];
-        // Minimal join trace for debugging room membership
-        if (stateArr.length === 0) console.log(`[socket] blip:join blipId=${blipId.slice(-8)} (fresh Y.Doc)`);
-        socket.emit(`blip:sync:${blipId}`, { state: stateArr });
+        // Seed authority: if the server's Y.Doc has no prior state AND
+        // no client has yet claimed seed authority for this blip in the
+        // current process, the FIRST joiner gets shouldSeed=true and is
+        // responsible for populating the Y.Doc from the blip's HTML.
+        // Every subsequent joiner (or any joiner once state exists) gets
+        // shouldSeed=false and must wait for Y.js updates to arrive.
+        // This avoids the race where both tabs join simultaneously, both
+        // receive an empty state, and both seed their local Y.Doc from
+        // HTML — producing divergent CRDTs that can't merge cleanly.
+        // Task #57 (2026-04-15).
+        let shouldSeed = false;
+        if (stateArr.length === 0) {
+          if (!seedAuthorityClaimed.has(blipId)) {
+            seedAuthorityClaimed.add(blipId);
+            shouldSeed = true;
+            console.log(`[socket] blip:join blipId=${blipId.slice(-8)} (seed authority granted)`);
+          } else {
+            console.log(`[socket] blip:join blipId=${blipId.slice(-8)} (empty state, no seed authority)`);
+          }
+        }
+        socket.emit(`blip:sync:${blipId}`, { state: stateArr, shouldSeed });
       } catch (err) { console.error('[socket] blip:join error:', err); }
     });
 
@@ -115,6 +146,9 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
         socket.leave(`collab:blip:${blipId}`);
         collabBlips.delete(blipId);
         yjsDocCache.removeRef(blipId);
+        // If the seeder bailed before populating the Y.Doc, release
+        // seed authority so the next joiner can seed. Task #57.
+        if (yjsDocCache.isEmpty(blipId)) seedAuthorityClaimed.delete(blipId);
       } catch {}
     });
 
@@ -158,6 +192,9 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
       presenceManager.disconnect(socket.id);
       for (const blipId of collabBlips) {
         yjsDocCache.removeRef(blipId);
+        // Release seed authority if the disconnecting client was the
+        // seeder and never populated the Y.Doc. Task #57.
+        if (yjsDocCache.isEmpty(blipId)) seedAuthorityClaimed.delete(blipId);
       }
       collabBlips.clear();
     });

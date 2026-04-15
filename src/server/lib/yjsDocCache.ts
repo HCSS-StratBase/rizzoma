@@ -41,6 +41,15 @@ class YjsDocCache {
     return Y.encodeStateAsUpdate(entry.doc);
   }
 
+  /** True when the Y.Doc exists but has no CRDT content — used by the
+   *  seed-authority logic in socket.ts to decide whether a fresh
+   *  joiner should seed from blip HTML. Task #57. */
+  isEmpty(blipId: string): boolean {
+    const entry = this.docs.get(blipId);
+    if (!entry) return true;
+    return entry.doc.store.clients.size === 0;
+  }
+
   applyUpdate(blipId: string, update: Uint8Array, origin?: any) {
     const doc = this.getOrCreate(blipId);
     Y.applyUpdate(doc, update, origin);

@@ -472,7 +472,23 @@ export function RizzomaBlip({
   const { user: authUser } = useAuth();
   // Skip collab for topic root — RizzomaTopicDetail.tsx owns the collab-enabled topicEditor.
   // Performance: In perf-lite mode, only enable collab if hovered/active to save memory/sockets.
-  const collabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && effectiveExpanded && blip.permissions.canEdit && !isTopicRoot && (!isPerfLite || isHovered || effectiveIsActive || isEditing));
+  // Collab must be enabled from the FIRST render of the blip, not on
+  // demand when the user expands it. TipTap's useEditor creates the
+  // ProseMirror view exactly once with whatever extensions exist on
+  // first render, and setOptions() does NOT reinitialize plugins
+  // afterwards — so if the Collaboration extension isn't in the
+  // initial list, the ySyncPlugin never wires up and Y.Doc updates
+  // never flow over the socket. (Cursors / awareness still work
+  // because SocketIOProvider handles them directly; and HTTP PUT
+  // persistence still works via onUpdate, which is why the bug was
+  // invisible for weeks — user edits saved, just didn't propagate
+  // live.) We therefore omit `effectiveExpanded` from the guard and
+  // accept the cost of allocating one Y.Doc (cheap, in-memory CRDT
+  // state) per editable non-root blip at mount time. The socket
+  // join still happens synchronously via SocketIOProvider's
+  // constructor, so it's effectively the same connection footprint
+  // as before. 2026-04-15 task #57.
+  const collabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && blip.permissions.canEdit && !isTopicRoot && (!isPerfLite || isHovered || effectiveIsActive || isEditing));
   const ydoc = useMemo(
     () => collabEnabled ? yjsDocManager.getDocument(blip.id) : undefined,
     [blip.id, collabEnabled]
@@ -540,9 +556,16 @@ export function RizzomaBlip({
   );
 
   // Create inline editor for editing mode.
-  // With synchronous provider creation (useCollaboration), collabActive is true from the
-  // first render when all deps are ready. This ensures Collaboration extension is included
-  // in the initial editor creation — no need for deps-based recreation.
+  //
+  // Because `collabEnabled` no longer gates on `effectiveExpanded`,
+  // collab is wired up on the FIRST render of every editable blip,
+  // which means the Collaboration extension is guaranteed to be in
+  // the initial extensions array. TipTap's useEditor creates the
+  // ProseMirror view once and does not reinitialize plugins via
+  // setOptions(), so "extensions present on first render" is the
+  // only reliable way to enable ySyncPlugin without a disruptive
+  // editor destroy/recreate cycle. See task #57 comment above
+  // (near `const collabEnabled`) for the full rationale.
   const inlineEditor = useEditor({
     extensions,
     content: editedContent,
@@ -575,14 +598,27 @@ export function RizzomaBlip({
   inlineEditorRef.current = inlineEditor;
 
   // Seed Y.Doc from blip HTML content after the server sync response arrives.
-  // TipTap's Collaboration extension renders from Y.Doc fragment 'default' (ignoring the content prop).
-  // The server always sends a blip:sync response — if it contains state, the Y.Doc is populated
-  // automatically; if empty, we seed from the saved blip HTML so only one client ever seeds.
+  // TipTap's Collaboration extension renders from Y.Doc fragment 'default'
+  // (ignoring the `content` prop passed to useEditor), so without this
+  // seeding step a collab-enabled blip would render empty for the first
+  // client even when the underlying blip document has HTML content.
+  //
+  // Only ONE client per blip is allowed to seed — the server grants seed
+  // authority to the first joiner via the `shouldSeed` field on the
+  // blip:sync response. This prevents the pre-task-#57 bug where two
+  // tabs joining simultaneously both received an empty state from the
+  // server, both seeded their local Y.Doc from HTML, and ended up with
+  // divergent CRDT histories that y.applyUpdate couldn't merge cleanly
+  // (symptom: tab A's cursor showed in tab B via awareness, but tab A's
+  // typing never appeared in tab B's editor text). If this client is
+  // NOT the seeder, we wait for the actual y.Doc update to arrive from
+  // the seeder and the Collaboration extension renders it automatically.
   useEffect(() => {
     if (!inlineEditor || (inlineEditor as any).isDestroyed || !collabEnabled || !ydoc || !collabProvider) return;
 
     const trySeed = () => {
       if ((inlineEditor as any).isDestroyed) return;
+      if (!collabProvider.shouldSeed) return; // server didn't grant seed authority
       const frag = ydoc.getXmlFragment('default');
       if (frag.length === 0 && blip.content) {
         seedingYdocRef.current = true;

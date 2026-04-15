@@ -9,6 +9,10 @@ export class SocketIOProvider {
   awareness: Awareness;
   /** True once the initial blip:sync response has been received from the server. */
   synced = false;
+  /** True when this client is the one responsible for seeding the Y.Doc
+   *  from blip HTML on first join (only the first client to join a fresh
+   *  blip gets this authority — see task #57 comment in src/server/lib/socket.ts). */
+  shouldSeed = false;
   private syncCallbacks: Array<() => void> = [];
   private reconnectHandler: (() => void) | null = null;
   /** Guard to prevent awareness update loop (receive → emit change → send → relay → receive) */
@@ -52,11 +56,12 @@ export class SocketIOProvider {
       Y.applyUpdate(this.doc, update, this);
     });
 
-    this.socket.on(`blip:sync:${this.blipId}`, (data: { state: number[] }) => {
+    this.socket.on(`blip:sync:${this.blipId}`, (data: { state: number[]; shouldSeed?: boolean }) => {
       if (data.state.length > 0) {
         const state = new Uint8Array(data.state);
         Y.applyUpdate(this.doc, state, this);
       }
+      this.shouldSeed = Boolean(data.shouldSeed);
       this.synced = true;
       this.syncCallbacks.forEach(cb => cb());
       this.syncCallbacks = [];
