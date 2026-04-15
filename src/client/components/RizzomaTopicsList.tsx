@@ -341,10 +341,17 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: 
           <button className="topics-list-follow" type="button">Follow</button>
         </div>
         <div className="topics-list-shortcuts" aria-label="Keyboard shortcuts">
+          {/* Only the shortcuts with actual keydown handlers are
+              advertised. Ctrl+Enter is wired in
+              src/client/components/editor/extensions/BlipKeyboardShortcuts.ts
+              (Mod-Enter → create inline child blip). Ctrl+Space is
+              wired in RizzomaLayout.tsx (task #67, 2026-04-15 — clicks
+              the context-dependent Next/Next-Topic button). Ctrl+F
+              for Find and Ctrl+1/2/3 for Fold were shown in the
+              parity legend before they were implemented; both are
+              removed until wired so the legend reflects reality. */}
           <div className="topics-list-shortcut"><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>New</span></div>
-          <div className="topics-list-shortcut"><kbd>Ctrl</kbd>+<kbd>F</kbd><span>Find</span></div>
           <div className="topics-list-shortcut"><kbd>Ctrl</kbd>+<kbd>Space</kbd><span>Next</span></div>
-          <div className="topics-list-shortcut"><kbd>Ctrl</kbd>+<kbd>1,2,3</kbd><span>Fold</span></div>
         </div>
       </div>
     </div>

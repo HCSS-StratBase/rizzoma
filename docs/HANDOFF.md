@@ -1,6 +1,8 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
+Last Updated: 2026-04-15 (FtG + collab hardening sweep — three independent bugs shipped silently for weeks, now fixed and verified end-to-end via Playwright. See `docs/worklog-260415.md` and `CLAUDE_SESSION.md` for the full rundown. Short version: production builds were silently shipping with every feature flag disabled (`FEAT_ALL` unset in the build pipeline); Y.js cross-tab doc sync was broken by a missing `Collaboration` extension on first editor render plus a Y.Doc seed race; sidebar green bar was stale after mark-read because of an Express weak-ETag 304 replay. All fixed. Also wired `Ctrl+Space` → Next Topic, removed vaporware `Ctrl+F` / `Ctrl+1,2,3` legend entries, and documented the topic-root collab split (reply blips use Y.js, topic-root uses event refetch via `topic:updated`). New APK `2026.04.15.0231` on GDrive ready for mobile smoke testing.)
+
+Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
 - Active branch: `master`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.

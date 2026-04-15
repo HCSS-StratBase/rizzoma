@@ -157,6 +157,44 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
     if (nextUnreadTopic) window.location.hash = `#/topic/${nextUnreadTopic.id}`;
   }, [nextUnreadTopic]);
 
+  // Ctrl+Space → advance through unread (Follow-the-Green keyboard
+  // shortcut). Matches the legend shown at the bottom of the topics
+  // sidebar. Behavior depends on context: if the current topic still
+  // has unread blips, click the in-topic Next button to advance the
+  // cursor and mark-read; if the topic is fully read, click the Next
+  // Topic button to navigate to the next topic with unread. We find
+  // the button by CSS class rather than wiring a direct React action
+  // so the shortcut stays in sync with whatever state the button is
+  // currently showing (Next ▶ vs Next Topic▶▶) without duplicating
+  // the state-derivation logic. Task #67 (2026-04-15).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.code !== 'Space') return;
+      // Don't steal the shortcut when the user is focused in a plain
+      // text field (search box, login form, etc.) where Ctrl+Space
+      // might legitimately be a text-input operation they care about.
+      // We deliberately DO NOT bail on ProseMirror focus: the topic
+      // root editor is auto-focused on page load, so bailing there
+      // would disable the shortcut for 100% of users, and Ctrl+Space
+      // has no meaningful role inside tiptap anyway (unlike Ctrl+B,
+      // Ctrl+Z, etc., which DO map to real editor commands).
+      const active = document.activeElement as HTMLElement | null;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+      // The Next button has class `next-button` always, plus
+      // `next-topic-button` added only when it's in cross-topic mode.
+      // Matching on `.next-button` covers both contexts so Ctrl+Space
+      // advances the in-topic unread queue first, then automatically
+      // jumps to the next topic with unread when the current one
+      // drains. Exactly what users expect from a keyboard shortcut.
+      const btn = document.querySelector<HTMLButtonElement>('button.next-button');
+      if (!btn || btn.disabled) return;
+      e.preventDefault();
+      btn.click();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   // Mobile state
   const mobileContext = useMobileContextSafe();
   const isMobile = mobileContext?.shouldUseMobileUI ?? false;

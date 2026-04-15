@@ -1,6 +1,8 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
+Last refreshed: 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEAT_ALL default, BUG #57 Y.js sync path + seed lock, BUG #56 `/api/topics` cache-control. Three commits pushed through `a2b32294`; close-out UX commit pending. New APK `2026.04.15.0231` on GDrive. See `docs/worklog-260415.md`.)
+
+Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
 - Active branch: `master` (as of 2026-02-25). Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.

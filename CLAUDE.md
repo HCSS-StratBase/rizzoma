@@ -16,7 +16,122 @@ This file is a lightweight status guide for the active branch. Older "phase" tim
 3) Health checks + CI gating for `/api/health`, inline comments, and uploads; keep browser smokes green.
 4) Validate PWA on actual mobile devices (iPhone Safari, Chrome Android).
 
+## FtG + Collab — How It Actually Works (audited 2026-04-15)
+
+Real-time collab and Follow-the-Green have asymmetric sync models.
+Understand this before changing the related code or you WILL ship a
+regression.
+
+### Reply blips use Y.js live document sync
+- Every editable non-root blip instantiates a Y.Doc + SocketIOProvider
+  on FIRST render (see `collabEnabled` in RizzomaBlip.tsx line ~491 —
+  NOT gated on `effectiveExpanded` any more; that was task #57's bug).
+- Typing flows tiptap → y-prosemirror → Y.Doc.on('update') →
+  `socket.emit('blip:update', …)` → server relays to other clients in
+  the `collab:blip:<blipId>` room → receivers call `Y.applyUpdate`.
+- Awareness (cursor position + user label) syncs via `awareness:update`
+  events. Live cursors render in-editor via `CollaborativeCursor`.
+- Y.Doc **seeding is server-authoritative via a seed lock**: the first
+  client to `blip:join` a fresh blip receives `shouldSeed: true` and
+  is the only one allowed to populate the Y.Doc from HTML. Every
+  subsequent joiner receives `shouldSeed: false` and waits for the
+  seeder's y:update to arrive via the normal relay path. Without this
+  lock, two tabs joining simultaneously both seeded independently and
+  created divergent CRDT histories that could not merge (task #57).
+- HTTP PUT autosave (via tiptap onUpdate → debounced fetch) still runs
+  alongside Y.js, so `blip.content` in CouchDB stays in sync with the
+  Y.Doc's HTML serialization. This is the path other users see when
+  they open the topic fresh (before joining the Y.Doc room).
+- Reconnect survives offline: CollaborativeProvider's `setupReconnect`
+  sends a `blip:sync:request` with the local state vector when the
+  socket comes back, and the server returns the diff with missed
+  updates. Verified 2026-04-15 via Playwright.
+
+### Topic-root editor does NOT use Y.js
+- By design, `!isTopicRoot` is part of the `collabEnabled` guard in
+  RizzomaBlip.tsx. Editing the topic title or root paragraph flows
+  through the topic PATCH endpoint, NOT Y.js.
+- Cross-tab sync for topic-root happens via a coarser-grained path:
+  `PATCH /api/topics/:id` emits a `topic:updated` socket event
+  (src/server/routes/topics.ts line ~575); `RizzomaTopicDetail`
+  subscribes via `subscribeTopicDetail()` in
+  `src/client/lib/socket.ts` and refetches the topic on receipt.
+- This means topic-root edits are propagated, but only on
+  transaction boundaries, not character by character. This is a
+  deliberate tradeoff — topic titles and intros change rarely and
+  structurally; Y.js granularity is overkill. If you ever want live
+  topic-root collab (e.g. two people renaming at once), you'd have
+  to wire Y.js through RizzomaTopicDetail's own `useEditor` call,
+  which is a separate code path from RizzomaBlip.
+
+### Follow-the-Green sidebar state
+- `/api/topics` embeds per-user `unreadCount` / `totalCount` fields.
+  The route sets `Cache-Control: no-store` so the browser never
+  serves a stale cached body when counts change without a byte-length
+  shift (task #56 — this bug manifested as sidebar bars that didn't
+  clear on mark-read until a hard reload).
+- Mark-read goes through `POST /api/waves/:id/blips/:id/read` or
+  `POST /api/waves/:id/read` (bulk). Both invalidate the unread cache
+  server-side and emit `blip:read` / `wave:unread` socket events.
+- After successful mark-read, `useWaveUnread` dispatches
+  `rizzoma:refresh-topics` on `window`. `RizzomaTopicsList` listens
+  for that event (250ms debounced) and re-fetches `/api/topics`.
+  Because of the `no-store` header, the fresh response updates the
+  sidebar state in real time.
+- Keyboard shortcuts currently wired: `Ctrl+Enter` (new inline child
+  blip, via `BlipKeyboardShortcuts.ts`); `Ctrl+Space` (Next — clicks
+  the context-dependent `.next-topic-button`, wired in
+  `RizzomaLayout.tsx` on 2026-04-15 task #67). `Tab` / `Shift+Tab`
+  for list indent/outdent, `Ctrl+Shift+Up/Down` for hide/show inline
+  comments. `Ctrl+F` and `Ctrl+1/2/3` were removed from the sidebar
+  legend (task #68) — they were shown but never implemented.
+
+### Feature flag gotcha
+- Every feature in `src/shared/featureFlags.ts` tree-shakes based on
+  `import.meta.env.FEAT_ALL` (or per-feature variants). Vite's
+  `define` block resolves these at BUILD time. Before task #58,
+  `npm run build` didn't set `FEAT_ALL=1` so production builds shipped
+  every feature (including REALTIME_COLLAB, LIVE_CURSORS,
+  FOLLOW_GREEN) as `false`. This has been invisible for weeks and
+  caused the initial "collab is broken" report. Fix: `vite.config.ts`
+  now defaults `FEAT_ALL` to `'1'` when `command === 'build'`. If you
+  need a pared-down build (CI perf runs, feature-flag tests), set
+  `FEAT_ALL=0` explicitly.
+
 ## Recently Completed Highlights
+- **FtG + collab hardening sweep (2026-04-15)**: Full audit uncovered
+  three independent bugs that had shipped for weeks.
+  **#58** — `npm run build` never set `FEAT_ALL=1`, so every
+  production bundle (desktop AND mobile APK) tree-shook every feature
+  flag to false and ran without collab, live cursors, follow-the-green,
+  inline comments, etc. Fix: `vite.config.ts` defaults `FEAT_ALL` to
+  `'1'` for production builds.
+  **#57** — Y.js cross-tab document sync was silently broken in two
+  ways. (a) `collabEnabled` was gated on `effectiveExpanded`, so the
+  Collaboration extension was missing from the editor's initial plugin
+  list and tiptap's `setOptions()` never reinitializes plugins — zero
+  `blip:update` events ever fired from user typing. (b) Y.Doc seed
+  race: two tabs joining a fresh blip both seeded from HTML and
+  produced divergent CRDT histories that couldn't merge. Fix:
+  removed `effectiveExpanded` from the guard so every editable non-root
+  blip wires collab from first render; added server-side
+  `seedAuthorityClaimed` set that grants the first joiner
+  `shouldSeed: true` and every subsequent joiner `shouldSeed: false`.
+  **#56** — Sidebar green bar stayed stale after mark-read until a
+  hard page reload. Root cause: Express's weak ETag + browser 304
+  replay. When two back-to-back `/api/topics` responses had the same
+  byte length (unread count changed 1→0 but JSON shape unchanged), the
+  browser replayed the cached body. Fix: `Cache-Control: no-store` on
+  `/api/topics`.
+  **Legend cleanup (#67 + #68)**: wired `Ctrl+Space` → Next Topic button
+  in RizzomaLayout; removed `Ctrl+F` and `Ctrl+1,2,3` from the sidebar
+  legend (they were shown but never implemented).
+  Verified end-to-end via Playwright: Y.js cross-tab sync shows typed
+  characters in the other tab's editor with inline collaborative cursor
+  labels; sidebar green bar clears in <1s after mark-read; reconnect
+  after disconnect catches up missed updates; CRDT merge handles
+  concurrent edits from two clients without character loss. See
+  screenshots/260415-ftg-collab-audit/ for the verification artifacts.
 - **Four-item sweep (2026-02-10)**: getUserMedia → modern TS ES module (removed legacy prefixed APIs, 10 tests); offline queue wired into `api()` for all 30+ mutation paths; PWA install banner + notification opt-in + offline indicator UI; collab tests hardened (reconnection, multi-client, persistence — 24 new tests total, 161/161 pass).
 - **Test/Perf/PWA sweep (2026-02-10)**: 146/146 tests pass (fixed 2 WSL2-flaky timeouts). Perf harness 100-blip benchmark: landing-labels 289ms / expanded-root 523ms / 18MB memory — both PASS. PWA audit 98/100: fixed manifest.json shortcut icon `.png` → `.svg`.
 - **Mobile hardening (2026-02-10)**: Touch targets (44px min) added to 11 CSS files, dead `mobile.tsx` stub removed, pull-to-refresh now waits for actual data reload, `100dvh` for mobile address bar, GadgetPalette responsive grid, iOS zoom prevention (`font-size: 16px` on inputs).

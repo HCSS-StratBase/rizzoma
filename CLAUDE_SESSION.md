@@ -1,4 +1,136 @@
-# Claude Session Context (last refreshed 2026-04-13)
+# Claude Session Context (last refreshed 2026-04-15)
+
+## Latest Work: FtG + Collab Hardening Sweep (2026-04-15)
+
+Full audit of Follow-the-Green and real-time collaborative editing
+found three independent bugs that had shipped silently for weeks.
+All three are fixed, verified end-to-end via Playwright, and pushed
+to `origin/master`. Every claim below is backed by a Playwright
+observation; if you doubt a specific line, look at
+`screenshots/260415-ftg-collab-audit/` and the commit history.
+
+### Three bugs fixed (commits 7cd88d9c, 47f24f9c, a2b32294)
+
+**#58 — Production build missing `FEAT_ALL=1`.** `npm run build`
+(which `cap:sync` calls) did not set the env var, so Vite's
+`define` block left `import.meta.env.FEAT_ALL` as an empty string,
+and every feature guard in `src/shared/featureFlags.ts` tree-shook
+to false. **Every production build and every APK shipped for weeks
+had collab, live cursors, follow-the-green, inline comments, and
+wave-playback silently disabled.** Fix: `vite.config.ts` uses
+`defineConfig(({ command }) => …)` to detect production builds and
+default `FEAT_ALL` to `'1'` for those. CI perf runs and feature-flag
+tests can still opt out with `FEAT_ALL=0` explicitly. Verified by
+inspecting the rebuilt `styles-*.js` chunk for the `FEAT_ALL:"1"`
+literal.
+
+**#57 — Y.js cross-tab document sync silently broken (two causes).**
+  **(a)** The `collabEnabled` guard in RizzomaBlip.tsx required
+  `effectiveExpanded`, so the Collaboration extension was missing
+  from the editor's initial plugin list and tiptap's `setOptions()`
+  never reinitializes plugins. Result: **zero `blip:update` socket
+  events fired from local typing**. Cursors/awareness still worked
+  (SocketIOProvider wires them directly), HTTP PUT autosave still
+  ran, so the bug was invisible during normal use — data was saved,
+  it just didn't propagate live. Fix: drop `effectiveExpanded` from
+  the guard so every editable non-root blip wires collab from first
+  render. The Y.Doc + socket join are cheap.
+  **(b)** Y.Doc seed race: two tabs joining a fresh blip both
+  received `state: []` from the server, both seeded from blip HTML
+  independently, and produced divergent CRDT histories that
+  `Y.applyUpdate` could not merge cleanly. Fix: per-process
+  `seedAuthorityClaimed` set in `src/server/lib/socket.ts` grants
+  `shouldSeed: true` to the first joiner on a fresh blip; every
+  subsequent joiner gets `shouldSeed: false` and waits for the
+  seeder's y:update via the normal relay. `yjsDocCache.isEmpty()`
+  exposes the state for the lock-release path in `blip:leave` /
+  `disconnect` so a failed seeder doesn't deadlock the blip. Client
+  `trySeed` in RizzomaBlip respects `collabProvider.shouldSeed`.
+  Verified Playwright: tab 0 typed real keystrokes, three
+  `blip:update` outbound events, tab 1's editor visibly rendered
+  `"Seed test blip — fresh Y.DocXY"` with tab 0's cursor label
+  inline.
+
+**#56 — Sidebar green bar stale after mark-read.** `useWaveUnread`
+correctly dispatched `rizzoma:refresh-topics` on mark-read,
+`RizzomaTopicsList` correctly listened and re-fetched `/api/topics`
+via the 250ms-debounced handler — console traces confirmed the
+fetch happened. The bug was **HTTP 304 cache replay**: Express
+generates a weak ETag from the response body length + a cheap hash,
+so when two back-to-back `/api/topics` responses had the same byte
+length (unread count 1→0 but JSON shape unchanged), the browser
+sent `If-None-Match` and got 304 Not Modified. The browser replayed
+the stale cached body and React rendered the old state. Symptom:
+sidebar green bar did not clear after mark-read until hard page
+reload OR the 60-second poll eventually got a response with a
+different byte length. Fix: `res.setHeader('Cache-Control', 'no-store')`
+on the `/api/topics` route in `src/server/routes/topics.ts`. The
+route embeds per-user dynamic unread counts; HTTP caching was
+always wrong for it.
+
+### Additional verification tasks (all PASS)
+
+- **Next Topic button navigation** — click Next Topic when in-topic
+  drained → navigates to the next topic with unread (hash changed
+  topic A → topic B)
+- **Disconnect/reconnect catchup** — tab 1 disconnected socket, tab 0
+  typed `OK`, tab 1 reconnected and the editor caught up to
+  `Reply 1OK` automatically via `setupReconnect`'s
+  `blip:sync:request` with state vector
+- **Simultaneous concurrent edits** — both tabs typed at end
+  concurrently, CRDT merged deterministically to `Reply 1OKT1T0`
+  with no character loss, both tabs converged to identical content
+- **Multi-user sequential** — author typed, reader (separate user
+  session) loaded the topic and saw the full `"<p>Reply 1OKT1T0</p>"`
+  via HTTP GET `/api/blips` with `canEdit/canComment/canRead: true`
+
+### Close-out UX fixes (commit TBD)
+
+- **Wired `Ctrl+Space` → Next button** (task #67). Global keydown
+  listener in `RizzomaLayout.tsx` that queries
+  `button.next-button` and triggers its click handler. Matches both
+  in-topic Next and Next-Topic-button contexts because both buttons
+  share the `next-button` class. Bailed from the shortcut if focus
+  is in an INPUT/TEXTAREA; deliberately DOES NOT bail on ProseMirror
+  focus because the topic root editor is auto-focused on page load
+  and bailing there would disable the shortcut for 100% of users.
+  Ctrl+Space has no meaningful role inside tiptap.
+- **Removed `Ctrl+F` and `Ctrl+1,2,3` from the sidebar legend**
+  (task #68) — both were shown in the parity legend but never
+  implemented. Ctrl+F would collide with the browser's "find in
+  page" anyway. Ctrl+1/2/3 would need a three-level outline fold
+  feature that doesn't exist. Legend now honestly advertises only
+  what's wired: `Ctrl+Enter` (new inline child blip, via
+  BlipKeyboardShortcuts.ts) and `Ctrl+Space` (Next).
+- **Topic-root collab split documented in CLAUDE.md** (task #69).
+  Reply blips use Y.js live document sync; topic-root editor uses
+  event-triggered refetch via the `topic:updated` socket event
+  (already emitted by `src/server/routes/topics.ts` PATCH handler
+  line ~575 → received by `subscribeTopicDetail()` in the client
+  `src/client/lib/socket.ts`). This is a deliberate tradeoff:
+  topic titles and intros change rarely and structurally; Y.js
+  character-level granularity is overkill for them. If you ever
+  want live topic-root collab (two people renaming a topic
+  simultaneously), wire Y.js through RizzomaTopicDetail's own
+  `useEditor` call — it's a separate code path from RizzomaBlip.
+
+### What is NOT claimed to work
+
+- Topic-root editor character-by-character sync (see above — by
+  design, syncs via `topic:updated` event refetch instead)
+- FtG keyboard shortcuts beyond `Ctrl+Enter` and `Ctrl+Space`
+- Rapid-fire Next-button clicks faster than the async mark-read
+  write can commit (minor race, humans don't hit it, Playwright at
+  Playwright-speed does — needs 300-600ms between clicks to drain
+  cleanly)
+- Mobile-specific verification for any of this. The exact same web
+  bundle loads in the Capacitor WebView, so in principle mobile
+  inherits all the fixes verbatim, but I cannot drive the phone
+  from WSL2. The new APK `2026.04.15.0231` on GDrive has all three
+  fixes compiled in and is ready to test.
+
+## Older context below
+
 
 **Read this file first when resuming work on this project.**
 
