@@ -1,7 +1,7 @@
 # 61-comment-keyboard-shortcut — ✅ VERIFIED
 
-**Evidence type**: `SOURCE`
+**Evidence type**: `TEST`
 
 ## Inspection (2026-04-16, pass 9 — final)
 
-Ctrl+Shift+Up = hide comments, Ctrl+Shift+Down = show. Wired in BlipKeyboardShortcuts.ts Mod-Shift-ArrowUp/ArrowDown bindings.
+client.inlineCommentsVisibilityShortcuts.test.ts: 1/1 PASS. Tests Ctrl+Shift+Up/Down keybinding wired in BlipKeyboardShortcuts.

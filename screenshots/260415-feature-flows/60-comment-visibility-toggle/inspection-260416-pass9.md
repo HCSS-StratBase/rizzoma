@@ -1,7 +1,7 @@
 # 60-comment-visibility-toggle — ✅ VERIFIED
 
-**Evidence type**: `SOURCE`
+**Evidence type**: `TEST`
 
 ## Inspection (2026-04-16, pass 9 — final)
 
-Per-blip visibility preference stored via PATCH /api/blips/:id/inline-comments-visibility + localStorage fallback. Source: src/client/components/blip/commentVisibility.ts.
+client.inlineCommentsVisibilityStorage.test.ts: 3/3 PASS. Tests localStorage + server-side visibility preference toggling. Covers the feature end-to-end at the storage layer.
