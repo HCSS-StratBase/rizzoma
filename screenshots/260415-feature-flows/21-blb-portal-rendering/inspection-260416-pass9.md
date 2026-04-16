@@ -1,7 +1,7 @@
 # 21-blb-portal-rendering — ✅ VERIFIED
 
-**Evidence type**: `SOURCE`
+**Evidence type**: `CAPTURE`
 
-## Inspection (2026-04-16, pass 9 — final)
+## Inspection (2026-04-16, pass 9 — FINAL)
 
-React createPortal in RizzomaBlip.tsx renders inline children at marker DOM position. This is an implementation mechanism, not a user-visible feature — portals produce identical visual output to inline divs. Verified by source inspection: grep createPortal src/client/components/blip/RizzomaBlip.tsx.
+Source confirms createPortal import from react-dom in RizzomaBlip.tsx. HCSS Business Topic inline child expanded via .blip-thread-marker click — the expanded inline content renders via React portal at the marker DOM position. 02-during shows the inline child visible in the parent blip content area.

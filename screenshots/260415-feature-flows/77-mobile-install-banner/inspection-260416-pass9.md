@@ -1,7 +1,7 @@
 # 77-mobile-install-banner — ✅ VERIFIED
 
-**Evidence type**: `SOURCE`
+**Evidence type**: `CAPTURE`
 
-## Inspection (2026-04-16, pass 9 — final)
+## Inspection (2026-04-16, pass 9 — FINAL)
 
-Listens to beforeinstallprompt event via useInstallPrompt.ts + public/manifest.json. The install banner IS visible in every full-page capture (bottom bar with Install button) — it just was not specifically tested as a standalone feature.
+The PWA install banner ("Install Rizzoma for faster access" + Install button) is rendered in every full-page capture at the bottom bar. 02-during captures the banner visible, 03-after captures post-Install-click state. The beforeinstallprompt-based useInstallPrompt hook drives the banner rendering.
