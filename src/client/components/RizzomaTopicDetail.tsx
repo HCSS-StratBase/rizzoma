@@ -1384,12 +1384,15 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     return () => {};
   }, [id, debouncedLoad]);
 
-  // Listen for refresh events from RizzomaBlip (e.g., after duplicate/paste)
-  // Using direct load with throttle instead of debounced to avoid feedback loop
+  // Listen for refresh events from RizzomaBlip (e.g., after duplicate/paste/Ctrl+Enter)
+  // BUG FIX (issue #40): previously used fromSocket=true which hit the 10s
+  // SOCKET_COOLDOWN_MS and silently skipped the reload after creating a
+  // grandchild blip. The parent's childBlips never updated, so the new
+  // inline child never appeared. Now uses force=true, fromSocket=false
+  // to ensure the reload always happens after user-initiated mutations.
   useEffect(() => {
     const handleRefresh = () => {
-      // Use direct load with force=true but fromSocket=true for throttling
-      load(true, true);
+      load(true, false);
     };
     window.addEventListener('rizzoma:refresh-topics', handleRefresh);
     return () => window.removeEventListener('rizzoma:refresh-topics', handleRefresh);
