@@ -715,12 +715,12 @@ export function RizzomaBlip({
       try {
         // Extract waveId from the blip id (format: waveId:blipId)
         const waveId = blip.id.split(':')[0];
+        console.log(`[BLB] Creating inline child: parent=${blip.id}, waveId=${waveId}, anchor=${anchorPosition}, depth=${depth}`);
 
         const response = await fetch('/api/blips', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             waveId,
             parentId: blip.id,
@@ -733,7 +733,9 @@ export function RizzomaBlip({
         });
 
         if (!response.ok) {
-          throw new Error('Failed to create child blip');
+          const errText = await response.text().catch(() => '');
+          console.error(`[BLB] Create inline child failed: ${response.status} ${errText}`);
+          throw new Error(`Failed to create child blip: ${response.status}`);
         }
 
         const newBlip = await response.json();
@@ -1113,31 +1115,35 @@ export function RizzomaBlip({
     try {
       // Extract waveId from the blip id (format: waveId:blipId)
       const waveId = blip.id.split(':')[0];
+      const htmlContent = replyContent.startsWith('<') ? replyContent : `<p>${replyContent}</p>`;
+      console.log(`[BLB] Creating reply: parent=${blip.id}, waveId=${waveId}, depth=${depth}`);
 
       const response = await fetch('/api/blips', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           waveId,
           parentId: blip.id,
-          content: replyContent
+          content: htmlContent,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create reply');
+        const errText = await response.text().catch(() => '');
+        console.error(`[BLB] Create reply failed: ${response.status} ${errText}`);
+        throw new Error(`Failed to create reply: ${response.status}`);
       }
 
       await response.json();
+      console.log(`[BLB] Reply created at depth ${depth + 1}`);
 
       onAddReply?.(blip.id, replyContent);
       setReplyContent('');
       setShowReplyForm(false);
       setIsExpanded(true);
     } catch (error) {
-      console.error('Error creating reply:', error);
+      console.error('[BLB] Error creating reply:', error);
       toast('Failed to create reply. Please try again.', 'error');
     }
   };
