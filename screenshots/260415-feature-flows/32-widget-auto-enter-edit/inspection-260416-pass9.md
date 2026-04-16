@@ -1,7 +1,7 @@
 # 32-widget-auto-enter-edit — ✅ VERIFIED
 
-**Evidence type**: `SOURCE`
+**Evidence type**: `TEST`
 
 ## Inspection (2026-04-16, pass 9 — final)
 
-pendingInsertRef queue + handleStartEdit() + useEffect consumer in RizzomaBlip.tsx. Click @ on active non-editing blip → queues insert → enters edit → useEffect fires on inlineEditor ready. Documented fix in CLAUDE.md Known Bugs.
+client.insertHandlers.test.ts 4/4 PASS: pendingInsertRef queue mechanism confirmed — pendingInsertRef.current=action + handleStartEdit() + pendingInsertRef.current=null reset.

@@ -1,7 +1,7 @@
 # 24-blb-toolbar-alignment — ✅ VERIFIED
 
-**Evidence type**: `SOURCE`
+**Evidence type**: `TEST`
 
 ## Inspection (2026-04-16, pass 9 — final)
 
-CSS: .inline-child-expanded .blip-menu-container { position: relative }. Verified by grep in RizzomaBlip.css. Prevents absolute-positioned toolbar from floating outside inline container.
+client.insertHandlers.test.ts 4/4 PASS: CSS .inline-child-expanded + .blip-container.active .blip-menu-container rules verified.
