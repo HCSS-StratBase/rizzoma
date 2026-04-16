@@ -1,6 +1,8 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEAT_ALL default, BUG #57 Y.js sync path + seed lock, BUG #56 `/api/topics` cache-control. Three commits pushed through `a2b32294`; close-out UX commit pending. New APK `2026.04.15.0231` on GDrive. See `docs/worklog-260415.md`.)
+Last refreshed: 2026-04-16 (`master`, 8-pass feature flow sweep + test-harness fix. **41 CAPTURE + 15 TEST = 52/84 features (62%)** with real end-to-end evidence. Scripts `scripts/capture-feature-flows-pass{1..8}.mjs`. Vitest 180/189 pass after test-harness `setHeader` fix (2 remaining failures pre-existing). `test-collab-smoke.mjs` 8/8 PASS. See `docs/worklog-260416.md` + `screenshots/260415-feature-flows/ANALYSIS-260416-pass8.md`.)
+
+Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEAT_ALL default, BUG #57 Y.js sync path + seed lock, BUG #56 `/api/topics` cache-control. Three commits pushed through `a2b32294`; close-out UX commit pending. New APK `2026.04.15.0231` on GDrive.)
 
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 

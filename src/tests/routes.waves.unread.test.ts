@@ -21,7 +21,7 @@ describe('routes: /api/waves unread/next', () => {
   ) => {
     const layer = findRoute(method, path);
     if (!layer) throw new Error(`Route ${method} ${path} not found`);
-    const handler = layer.route.stack[0].handle as (req: any, res: any, next: () => void) => any;
+    const handlers = layer.route.stack.map((e: any) => e.handle) as Array<(req: any, res: any, next: (err?: any) => void) => any>;
     const req: any = {
       method,
       params,
@@ -42,7 +42,16 @@ describe('routes: /api/waves unread/next', () => {
       setHeader(name: string, value: unknown) { (this.headers as any)[name.toLowerCase()] = value; },
       getHeader(name: string) { return (this.headers as any)[name.toLowerCase()]; },
     };
-    await handler(req, res, () => {});
+    for (const handler of handlers) {
+      await new Promise<void>((resolve, reject) => {
+        let done = false;
+        const next = (err?: any) => { if (done) return; done = true; err ? reject(err) : resolve(); };
+        try {
+          const r = handler(req, res, next);
+          if (r && typeof r.then === 'function') r.then(() => { if (!done) { done = true; resolve(); } }).catch(reject);
+        } catch (e) { reject(e); }
+      });
+    }
     return res;
   };
 

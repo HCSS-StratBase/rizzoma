@@ -1,0 +1,13 @@
+# 14-editor-image — ❌ NOT DEMONSTRATED
+
+**Category**: Editor
+**Feature**: Image insert (🖼️).
+
+## Flow captured (pass 4)
+1. `01-before_new.png`
+2. `02-during_new.png`
+3. `03-after_new.png`
+
+## Inspection (2026-04-16, pass 4)
+
+Pass 4 did NOT fix. Same root cause as feature 13 — Bg picker contamination + 🖼️ button selector mismatch. Pass 5 needs the same fix.

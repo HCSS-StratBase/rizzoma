@@ -27,10 +27,13 @@ describe('server: gadget preferences route', () => {
     };
     const res: any = {
       statusCode: 200,
+      headers: {} as Record<string, unknown>,
       body: undefined as any,
       status(code: number) { this.statusCode = code; return this; },
       json(payload: any) { this.body = payload; return this; },
       send(payload: any) { this.body = payload; return this; },
+      setHeader(name: string, value: unknown) { (this.headers as any)[name.toLowerCase()] = value; },
+      getHeader(name: string) { return (this.headers as any)[name.toLowerCase()]; },
     };
 
     const runHandler = (handler: (req: any, res: any, next: (err?: any) => void) => any) =>

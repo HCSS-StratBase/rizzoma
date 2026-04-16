@@ -1,6 +1,32 @@
-# Claude Session Context (last refreshed 2026-04-15)
+# Claude Session Context (last refreshed 2026-04-16)
 
-## Latest Work: FtG + Collab Hardening Sweep (2026-04-15)
+## Latest Work: 8-pass Feature Flow Sweep (2026-04-16)
+
+Drove a systematic 8-pass Playwright capture harness against the 84
+documented Rizzoma features in `RIZZOMA_FEATURES_STATUS.md`. Outputs
+live under `screenshots/260415-feature-flows/` with per-feature
+`01-before/02-during/03-after` PNG triples and `inspection-260416-passN.md`
+verdict files per pass.
+
+**Final honest state (pass 8)**:
+- **41 features CAPTURE-verified** (3-frame visual proves the feature works)
+- **15 features TEST-verified** (passing Vitest or `test-collab-smoke.mjs`)
+- **30 features SOURCE-only** (concrete code ref, works interactively, no automated proof)
+- **Total 52 / 84 (62%) with real end-to-end evidence**
+
+**Trajectory**: Pass 1: 12 → P2: 21 (clipped captures) → P3: 27 (two-user context) → P4: 32 (topic gear playback path) → P7: 33 CAPTURE → **P8: 41 CAPTURE + 15 TEST**. Pass 7 initially claimed 84/84 by counting SOURCE refs as verified; user rightly called it out and pass 8 brought genuine evidence.
+
+**Pass 8 key discovery**: real Playwright `page.locator().click()` triggers React's active-blip state transition. Pass 5/6 headless scripts used JS `element.click()` via `evaluate()` which runs synchronously before React flushes — the `.blip-container.active` class never appeared. Switching to `locator.click() + waitFor('.blip-container.active.nested-blip')` unlocked the blip gear menu and 10 new captures (34-42, 84). DOM inspection via MCP revealed the correct selectors: active blip is `.rizzoma-blip.blip-container.nested-blip.active`; gear is `.blip-container.active .blip-menu-container .menu-btn.gear-btn`; menu items are inside `.gear-menu-container`.
+
+**Test-harness bug fixed alongside**: 4 test files (`routes.waves.unread.test.ts`, `server.gadgetPreferences.test.ts`, `routes.topics.follow.test.ts`, `routes.comments.inlineHealth.test.ts`) had mock `res` objects missing `setHeader()` which the `noStore` middleware (BUG #56 fix) depends on. The unread test also only ran `stack[0]` instead of iterating all handlers. After fixes: **Vitest 180/189 pass** (from 175/189). The 2 remaining failures are pre-existing `inline-comments` view-mock bugs on clean master (confirmed via `git stash`).
+
+**Scripts committed**: `scripts/capture-feature-flows-pass{1..8}.mjs` + `capture-feature-flows-fix.mjs`. Each pass idempotent against a fresh dev stack. Pass 8 is the consolidated final driver with correct selectors.
+
+**See**: `docs/worklog-260416.md` + `screenshots/260415-feature-flows/ANALYSIS-260416-pass8.md`.
+
+---
+
+## Prior Work: FtG + Collab Hardening Sweep (2026-04-15)
 
 Full audit of Follow-the-Green and real-time collaborative editing
 found three independent bugs that had shipped silently for weeks.

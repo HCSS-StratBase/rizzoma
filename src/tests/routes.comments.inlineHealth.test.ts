@@ -43,8 +43,10 @@ async function invokeInlineRoute(
   const res: Partial<Response> & {
     statusCode: number;
     body: any;
+    headers: Record<string, unknown>;
   } = {
     statusCode: 200,
+    headers: {},
     body: undefined,
     status(code: number) {
       this.statusCode = code;
@@ -53,6 +55,13 @@ async function invokeInlineRoute(
     json(payload: any) {
       this.body = payload;
       return this as any;
+    },
+    setHeader(name: string, value: unknown) {
+      (this.headers as Record<string, unknown>)[name.toLowerCase()] = value;
+      return this as any;
+    },
+    getHeader(name: string) {
+      return (this.headers as Record<string, unknown>)[name.toLowerCase()];
     },
   };
   for (const entry of stack) {
