@@ -1,6 +1,36 @@
-# Claude Session Context (last refreshed 2026-04-16)
+# Claude Session Context (last refreshed 2026-04-17)
 
-## Latest Work: 8-pass Feature Flow Sweep (2026-04-16)
+## Latest Work: BUG #40 — Sub-blip nesting fix (2026-04-16 late)
+
+**Root cause found and fixed**: `load(true, true)` in the `rizzoma:refresh-topics`
+handler passed `fromSocket=true`, which hit a 10-second `SOCKET_COOLDOWN_MS`
+that silently skipped the topic reload after creating a grandchild blip. The
+parent blip's `childBlips` array never updated with the new grandchild, so
+the [+] marker was dead.
+
+**Why depth 1 worked**: topic-root child creation uses `onAddReply()` →
+`load(true)` with `fromSocket=false` — bypasses the cooldown.
+
+**Why depth 2+ failed**: blip-level child creation uses
+`rizzoma:refresh-topics` → `load(true, true)` with `fromSocket=true` —
+hit the 10s cooldown → reload skipped.
+
+**Fix**: one boolean — `load(true, true)` → `load(true, false)` in
+`RizzomaTopicDetail.tsx` line 1392. Commit `222efc97`.
+
+**Verified**: 4-level depth nesting test (DEPTH-1 through DEPTH-4) all
+render with full fractal toolbar + reply area. Grandchild creation within
+10s of page load now works. Screenshots at `screenshots/260416-depth-test/`.
+
+**GitHub issue**: HCSS-StratBase/rizzoma#40.
+
+**Also this session**: 84/84 feature sweep reached 80 CAPTURE+TEST+API+PARITY
+(95%), Firefox 10/10 cross-browser pass, fresh APK `rizzoma-260416-ALL-GREEN.apk`
+on GDrive, status blip posted to HCSS Rizzoma Business Topic.
+
+---
+
+## Prior Work: 8-pass Feature Flow Sweep (2026-04-16)
 
 Drove a systematic 8-pass Playwright capture harness against the 84
 documented Rizzoma features in `RIZZOMA_FEATURES_STATUS.md`. Outputs

@@ -1,6 +1,8 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-04-16 (`master`, 8-pass feature flow sweep + test-harness fix. **41 CAPTURE + 15 TEST = 52/84 features (62%)** with real end-to-end evidence. Scripts `scripts/capture-feature-flows-pass{1..8}.mjs`. Vitest 180/189 pass after test-harness `setHeader` fix (2 remaining failures pre-existing). `test-collab-smoke.mjs` 8/8 PASS. See `docs/worklog-260416.md` + `screenshots/260415-feature-flows/ANALYSIS-260416-pass8.md`.)
+Last refreshed: 2026-04-17 (`master`, BUG #40 sub-blip nesting fix — `load(true,true)` → `load(true,false)` in refresh-topics handler. 10s SOCKET_COOLDOWN silently skipped grandchild reload. Commit `222efc97`. 84/84 feature sweep at 80/84 real evidence (95%). Firefox 10/10. Fresh APK on GDrive. See `docs/BUG_SUBBLIP_NESTING.md` + issue HCSS-StratBase/rizzoma#40.)
+
+Last refreshed (prior): 2026-04-16 (`master`, 8-pass feature flow sweep + test-harness fix. **41 CAPTURE + 15 TEST = 52/84 features (62%)** with real end-to-end evidence. Scripts `scripts/capture-feature-flows-pass{1..8}.mjs`. Vitest 180/189 pass after test-harness `setHeader` fix (2 remaining failures pre-existing). `test-collab-smoke.mjs` 8/8 PASS. See `docs/worklog-260416.md` + `screenshots/260415-feature-flows/ANALYSIS-260416-pass8.md`.)
 
 Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEAT_ALL default, BUG #57 Y.js sync path + seed lock, BUG #56 `/api/topics` cache-control. Three commits pushed through `a2b32294`; close-out UX commit pending. New APK `2026.04.15.0231` on GDrive.)
 

@@ -1,5 +1,25 @@
 # Worklog — 2026-04-16
 
+## BUG #40: Sub-blip nesting fix (late session)
+
+**Root cause**: `rizzoma:refresh-topics` handler called `load(true, true)` with `fromSocket=true`. The `load()` function has a 10-second cooldown (`SOCKET_COOLDOWN_MS`) that silently skips reloads triggered with `fromSocket=true` within 10s of the last completed load.
+
+After creating a grandchild blip (Ctrl+Enter or Write a Reply inside a child blip), the topic reload was skipped because it was still within the 10s window. The parent blip's `childBlips` never updated, so the [+] marker was dead.
+
+**Why depth 1 worked**: topic-root child creation uses `onAddReply()` → `load(true)` without `fromSocket` → bypasses cooldown.
+
+**Why depth 2+ failed**: blip-level child creation uses `rizzoma:refresh-topics` → `load(true, true)` → hits cooldown → silently skipped.
+
+**Fix**: `load(true, true)` → `load(true, false)` in `RizzomaTopicDetail.tsx` line 1392. Commit `222efc97`.
+
+**Verified**: 4-level depth nesting (DEPTH-1→DEPTH-4) all render fractally with toolbar + reply area. Grandchild creation within 10s of page load succeeds. Screenshots: `screenshots/260416-depth-test/`, `screenshots/260416-grandchild-test/`.
+
+**Bug reports**: Hryhorii ("I see the plus sign, but I can't edit") + Liliia ("I cannot create blips within blips"). Screenshots from original rizzoma.com at `screenshots/260416-original-rizzoma-grandchild/`.
+
+**GitHub issue**: HCSS-StratBase/rizzoma#40.
+
+---
+
 ## Feature-flow sweep (7 passes, 33/84 CAPTURE-verified, honest gap disclosed)
 
 ### What happened
