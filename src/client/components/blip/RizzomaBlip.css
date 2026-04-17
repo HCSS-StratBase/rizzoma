@@ -899,16 +899,19 @@
   margin-bottom: 2px;
 }
 
-/* Nested child blips (depth > 0) should NOT be heavy cards.
-   Original Rizzoma renders nested replies as flat indented rows
-   under the parent's indent rail, not as separate cards with
-   their own border/shadow/background. Issue #41. */
+/* Nested child blips (depth > 0) should NOT be cards at all.
+   Original Rizzoma renders nested replies as flat indented text
+   under the parent's indent rail — no border, no shadow, no
+   background, no rounded corners. The indent rail (.child-blips
+   border-left) provides all the visual hierarchy needed.
+   Issue #41: stripped all card styling from nested blips. */
 .child-blips .blip-content {
-  border-radius: 8px;
+  border-radius: 0;
   box-shadow: none;
-  background: rgba(248, 251, 253, 0.6);
-  border-color: rgba(156, 175, 196, 0.18);
-  padding: 6px 10px 4px;
+  background: transparent;
+  border: none;
+  padding: 2px 4px 2px 0;
+  min-height: 0;
 }
 
 /* Collapsed child blip row - inline like original Rizzoma: • Label [+]
