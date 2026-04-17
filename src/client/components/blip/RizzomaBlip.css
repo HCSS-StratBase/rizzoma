@@ -136,7 +136,7 @@
 /* Blip Content */
 .blip-content {
   position: relative;
-  padding: 12px 14px 14px;
+  padding: 10px 14px 8px;
   min-height: 24px;
   border-radius: 14px;
   background:
@@ -774,9 +774,11 @@
   transform: scaleX(-1);
 }
 
-/* Reply Input - Original Rizzoma style */
+/* Reply Input - Original Rizzoma style
+   Tightened margin-top from 14px→4px to close the gap between parent
+   content and the "Write a reply..." input (issue #41). */
 .blip-reply-inline {
-  margin-top: 14px;
+  margin-top: 4px;
   display: flex;
   align-items: flex-start;
 }
@@ -808,8 +810,8 @@
 
 /* Reply Form */
 .blip-reply-form {
-  margin-top: 8px;
-  padding: 12px;
+  margin-top: 4px;
+  padding: 8px;
   background-color: #f8f9fa;
   border-radius: 4px;
   border: 1px solid #e0e0e0;
