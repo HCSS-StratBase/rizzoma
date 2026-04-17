@@ -878,9 +878,11 @@
 /* Child Blips
    Hard Gap #13 (2026-04-13): the child-blips container is the indent rail
    that visually subordinates a thread to its parent. Tightened margin-top
-   so the first child sits one line below the parent body, not behind a gap. */
+   so the first child sits one line below the parent body, not behind a gap.
+   Issue #41 (2026-04-17): further tightened to close the visual gap
+   between parent content and reply children. */
 .child-blips {
-  margin-top: 6px;
+  margin-top: 2px;
   margin-left: 18px;
   border-left: 2px solid rgba(131, 151, 173, 0.32);
   padding-left: 14px;
@@ -895,6 +897,18 @@
 /* Child blip wrapper */
 .child-blip-wrapper {
   margin-bottom: 2px;
+}
+
+/* Nested child blips (depth > 0) should NOT be heavy cards.
+   Original Rizzoma renders nested replies as flat indented rows
+   under the parent's indent rail, not as separate cards with
+   their own border/shadow/background. Issue #41. */
+.child-blips .blip-content {
+  border-radius: 8px;
+  box-shadow: none;
+  background: rgba(248, 251, 253, 0.6);
+  border-color: rgba(156, 175, 196, 0.18);
+  padding: 6px 10px 4px;
 }
 
 /* Collapsed child blip row - inline like original Rizzoma: • Label [+]
