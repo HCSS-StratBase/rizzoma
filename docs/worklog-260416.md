@@ -1,5 +1,21 @@
 # Worklog — 2026-04-16
 
+## BUG #41: CSS gap between parent and reply blips (2026-04-17/18)
+
+Nested reply blips rendered as heavy cards (border-radius 14px, box-shadow, gradient background, 14px padding) creating a visible gap between parent blip content and reply children. Original Rizzoma renders replies as flat indented rows.
+
+**Fix** (commit `5bb75bb6`): stripped all card styling from `.child-blips .blip-content`:
+- `border-radius: 0`, `box-shadow: none`, `background: transparent`, `border: none`
+- `padding: 2px 4px 2px 0`
+
+Also tightened: `.blip-reply-inline` margin 14→4px, `.blip-content` bottom padding 14→8px, `.child-blips` margin-top 6→2px.
+
+**Verified**: 3-level reply flow via "Write a Reply..." — all render flat under indent rail. Screenshots: `screenshots/260417-reply-gap/`.
+
+**GitHub issue**: HCSS-StratBase/rizzoma#41.
+
+---
+
 ## BUG #40: Sub-blip nesting fix (late session)
 
 **Root cause**: `rizzoma:refresh-topics` handler called `load(true, true)` with `fromSocket=true`. The `load()` function has a 10-second cooldown (`SOCKET_COOLDOWN_MS`) that silently skips reloads triggered with `fromSocket=true` within 10s of the last completed load.

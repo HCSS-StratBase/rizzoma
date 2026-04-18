@@ -24,9 +24,18 @@ render with full fractal toolbar + reply area. Grandchild creation within
 
 **GitHub issue**: HCSS-StratBase/rizzoma#40.
 
+**BUG #41 (CSS gap)**: Nested reply blips rendered as heavy cards (border,
+shadow, background gradient, 14px padding) creating a visible gap between
+parent and reply. Fixed by stripping all card styling from `.child-blips
+.blip-content` — now transparent background, no border/shadow/radius,
+2px padding. Commit `5bb75bb6`. Issue HCSS-StratBase/rizzoma#41.
+
 **Also this session**: 84/84 feature sweep reached 80 CAPTURE+TEST+API+PARITY
 (95%), Firefox 10/10 cross-browser pass, fresh APK `rizzoma-260416-ALL-GREEN.apk`
 on GDrive, status blip posted to HCSS Rizzoma Business Topic.
+
+**VPS deployment discovered**: Hryhorii deployed to `138.201.62.161:8200`.
+See `docs/VPS_DEPLOYMENT.md`.
 
 ---
 
