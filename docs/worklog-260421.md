@@ -99,22 +99,28 @@ can opt in with `docker compose --profile search up`.
 
 ---
 
-## What Hryhorii needs to do
+## Deploy status (end of session, 2026-04-21 ~00:00 local)
 
-```bash
-ssh root@138.201.62.161
-cd /data/large-projects/stephan/rizzoma
-git pull origin master
-docker compose up -d --build
-```
+The deploy was done in-session by Stephan, not left as a todo
+for Hryhorii:
 
-His local uncommitted docker-compose.yml tweaks (8200:3000
-port, ALLOWED_ORIGINS, persistent volumes) will now diff
-minimally against upstream since sphinx + FEAT_ALL match. He
-can choose to keep his env overrides or overwrite them during
-the pull.
+1. Stashed Hryhorii's VPS-local docker-compose.yml overrides
+2. `git pull origin master` on the VPS brought `c4844c73` down
+3. Stash pop had two conflicts (app + app-prod environment
+   blocks, where upstream added `FEAT_ALL` and VPS had
+   `ALLOWED_ORIGINS` / `APP_BASE_URL` / `APP_URL`). Merged by
+   keeping BOTH sets.
+4. `docker compose up -d --build app` rebuilt the image
+5. Verified `curl -X DELETE /api/blips/<id>` returns
+   `{"deleted":true,...}` and CouchDB doc now has
+   `deleted=True rev=2-...`
 
-After the rebuild, gear-menu "Delete blip" should work. If the
-level-1 `[+]` still disappears after restart, that's a separate
-BUG (editor/autosave race) we haven't root-caused yet — file a
-follow-up issue with reproduction steps.
+The VPS container is running `c4844c73` as of 2026-04-21
+23:53 UTC. No further action needed from Hryhorii. Current
+VPS state is documented in `docs/VPS_DEPLOYMENT.md` (refreshed
+2026-04-22).
+
+If the level-1 `[+]` disappearance after restart recurs, that's
+a separate BUG (editor/autosave race) that wasn't reproduced
+in this session — file a follow-up issue with reproduction
+steps.

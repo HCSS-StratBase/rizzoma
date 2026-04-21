@@ -1,4 +1,10 @@
-# Claude Session Context (last refreshed 2026-04-21)
+# Claude Session Context (last refreshed 2026-04-22)
+
+**Status at refresh**: BUG #43 fix (`c4844c73`) deployed to VPS 2026-04-21 23:53 UTC, verified live. Issues #42 + #43 both closed on GitHub. VPS container picks up `c4844c73` — all of #40, #41, #42, #43 plus `FEAT_ALL=1` are active. VPS_DEPLOYMENT.md refreshed with the actual deployment path (`/data/large-projects/stephan/rizzoma`), container env, and upgrade procedure.
+
+No new bugs reported since yesterday. Outstanding items tracked in `docs/VPS_DEPLOYMENT.md` action-items section: SESSION_SECRET rotation, OAuth wiring, deploy script, HTTPS/nginx.
+
+
 
 ## Latest Work: BUG #43 — gear-menu "Delete blip" silently 404s (2026-04-21)
 

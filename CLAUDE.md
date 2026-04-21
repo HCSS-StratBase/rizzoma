@@ -99,6 +99,52 @@ regression.
   `FEAT_ALL=0` explicitly.
 
 ## Recently Completed Highlights
+- **BUG #43 — gear-menu "Delete blip" 404 (2026-04-21)**: Reported by
+  Hryhorii against the live VPS. Root cause: `linksRouter` was mounted
+  at `/api` in `app.ts`; its `DELETE /:from/:to` route expanded to
+  `DELETE /api/:from/:to` and silently shadowed every two-segment
+  DELETE under `/api/`, including `DELETE /api/blips/<id>`. The links
+  handler never called `next()`, so every blip-delete got a 404
+  `{"error":"not_found"}` — a payload shape that collides exactly
+  with blipsRouter's own missing-blip response, which is why the
+  shadow stayed invisible for weeks.
+  Fix (`c4844c73`): mount linksRouter at `/api/links`; move
+  `GET /:id/links` into blipsRouter so the client's
+  `/api/blips/:id/links` path still resolves. Verified live on VPS
+  after rebuild — `DELETE → {deleted:true}`, CouchDB doc now
+  `deleted=True rev=2`. Full writeup: `docs/BUG_DELETE_BLIP_SHADOW.md`.
+  Same commit also shipped: **#42** — sphinx behind `profiles:
+  ["search"]`, removed from `app`'s `depends_on` (closes the
+  Dockerfile.sphinx-missing bug Hryhorii filed); and **FEAT_ALL=1**
+  added to `app` and `app-prod` services in docker-compose — the
+  VPS container was running `npm run dev` with FEAT_ALL unset,
+  tree-shaking every Track-A..E feature to false (same failure
+  class as #58 but for the dev-server path rather than prod build).
+- **BUG #41 — nested reply CSS gap (2026-04-18)**: Nested reply
+  blips rendered as heavy cards (border-radius 14px, box-shadow,
+  gradient background, 14px padding) creating a visible gap between
+  parent blip content and replies. Original Rizzoma renders replies
+  as flat indented rows. Fix (`5bb75bb6`): strip ALL card styling
+  from `.child-blips .blip-content` — `border-radius: 0`,
+  `box-shadow: none`, `background: transparent`, `border: none`,
+  `padding: 2px 4px 2px 0`. Tightened `.blip-reply-inline` margin
+  14→4px, `.child-blips` margin-top 6→2px, `.blip-content` bottom
+  padding 14→8px. Topic-root children keep full card treatment;
+  only nested children go flat. Verified at 3 reply depths via
+  Playwright. Issue HCSS-StratBase/rizzoma#41.
+- **BUG #40 — sub-blip nesting broken at depth >1 (2026-04-17)**:
+  Reported by Hryhorii and Liliia ("I see the plus sign, but I
+  can't edit" / "I cannot create blips within blips"). Root cause:
+  `rizzoma:refresh-topics` handler in `RizzomaTopicDetail.tsx:1392`
+  called `load(true, true)` with `fromSocket=true`, hitting a
+  10-second `SOCKET_COOLDOWN_MS` that silently skipped the topic
+  reload after grandchild creation. Parent's `childBlips` never
+  updated, so the [+] marker was dead. Depth 1 was immune because
+  topic-root child creation uses `onAddReply()` → `load(true)`
+  without `fromSocket`. Fix (`222efc97`): flip the one boolean:
+  `load(true, true)` → `load(true, false)` to bypass the
+  cooldown. Verified at 4 depth levels. Issue
+  HCSS-StratBase/rizzoma#40.
 - **FtG + collab hardening sweep (2026-04-15)**: Full audit uncovered
   three independent bugs that had shipped for weeks.
   **#58** — `npm run build` never set `FEAT_ALL=1`, so every
