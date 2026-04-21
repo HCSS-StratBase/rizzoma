@@ -13,6 +13,12 @@ services:
       - /app/node_modules
     environment:
       NODE_ENV: development
+      # FEAT_ALL=1 keeps every Track-A..E feature on in the dev server too
+      # (vite.config.ts only auto-enables it for production builds; without
+      # this, `npm run dev` tree-shakes every feature flag to false and the
+      # container serves a stripped-down app — BUG discovered on VPS
+      # 2026-04-21).
+      FEAT_ALL: "1"
       ALLOWED_ORIGINS: http://localhost:3000
       REDIS_URL: redis://redis:6379
       COUCHDB_URL: http://admin:password@couchdb:5984
@@ -22,7 +28,6 @@ services:
       - redis
       - couchdb
       - rabbitmq
-      - sphinx
     networks:
       - rizzoma-network
 
@@ -34,6 +39,7 @@ services:
     profiles: ["prod"]
     environment:
       NODE_ENV: production
+      FEAT_ALL: "1"
       COUCHDB_URL: http://admin:password@couchdb:5984
       COUCHDB_DB: project_rizzoma
       REDIS_URL: redis://redis:6379
@@ -88,7 +94,14 @@ services:
     networks:
       - rizzoma-network
 
+  # Sphinx is vestigial from the pre-modernization CoffeeScript codebase.
+  # The current TypeScript app uses CouchDB Mango queries for search; no
+  # src/ file references Sphinx. Kept behind the `search` profile so an
+  # accidental `docker compose up` doesn't try to build a missing
+  # Dockerfile.sphinx (issue #42). Enable with `--profile search` if you
+  # actually want to bring up the legacy indexer.
   sphinx:
+    profiles: ["search"]
     build:
       context: .
       dockerfile: Dockerfile.sphinx

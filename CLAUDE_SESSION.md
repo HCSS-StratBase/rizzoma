@@ -1,6 +1,60 @@
-# Claude Session Context (last refreshed 2026-04-17)
+# Claude Session Context (last refreshed 2026-04-21)
 
-## Latest Work: BUG #40 — Sub-blip nesting fix (2026-04-16 late)
+## Latest Work: BUG #43 — gear-menu "Delete blip" silently 404s (2026-04-21)
+
+**Reported** by Hryhorii on rizzoma.com (topic HCSS Team Ukraine,
+blip `cp3io`, post dated Apr 20). He observed that clicking
+"Delete blip" from the gear menu on a nested blip does nothing, but
+keyboard-deleting the `[+]` sign in the parent content DOES remove
+the blip reference.
+
+**Root cause**: `linksRouter` was mounted at `/api` in `app.ts`. It
+defines `DELETE /:from/:to`, which under that mount became
+`DELETE /api/:from/:to` and silently shadowed ALL two-segment DELETE
+URLs under `/api/` — including `DELETE /api/blips/<blipId>`. Since
+the linksRouter's handler never calls `next()`, every blip-delete
+request hit the links handler, `findOne({type:'link', fromBlipId:'blips',
+toBlipId:'<id>'})` returned null, and the response was
+`404 {"error":"not_found"}` — which looked identical to what
+blipsRouter itself returns for a genuinely missing blip, hiding
+the shadow for weeks.
+
+**Reproduction**: confirmed on the live VPS (commit 22e90c01),
+curled DELETE `/api/blips/<waveId>%3A<blipId>` → 404 not_found.
+`GET /:id` on the same URL worked fine (no GET shadow), proving
+method-specific routing weirdness.
+
+**Fix** (commit TBD, 2026-04-21):
+- `app.ts`: mount linksRouter at `/api/links` (not `/api`).
+- `blips.ts`: added `GET /:id/links` handler (client still hits
+  `/api/blips/:id/links` — `WaveView.tsx` uses this path unchanged).
+- `links.ts`: removed the orphaned `/blips/:id/links` route.
+
+Verified: 5 blips route tests still pass, TypeScript clean, VPS
+DELETE against live `qwe` blip reproduced the 404 before the fix.
+
+**Full writeup**: `docs/BUG_DELETE_BLIP_SHADOW.md`.
+
+## Also fixed this session (2026-04-21)
+
+- **#42 (docker compose fails on missing Dockerfile.sphinx)**:
+  moved `sphinx` service behind `profiles: ["search"]`, removed
+  from `app`'s `depends_on`. Sphinx is dead legacy — zero `src/`
+  references. Closes Hryhorii's issue #42.
+- **FEAT_ALL=1 in dev docker builds**: `vite.config.ts` only
+  auto-enables all features for production builds. The VPS runs
+  `npm run dev` which saw `FEAT_ALL=''` → every Track-A..E
+  feature tree-shook to false (realtime collab, inline comments,
+  follow-the-green, etc. all disabled). Added `FEAT_ALL: "1"`
+  to both `app` and `app-prod` services in `docker-compose.yml`.
+- **VPS state audit**: the running VPS container was built
+  2026-04-20 from commit 22e90c01 — BUG #40 (SOCKET_COOLDOWN) and
+  BUG #41 (CSS gap) fixes ARE live. Hryhorii's reported symptoms
+  reproduce against current master. OAuth buttons disabled
+  because no `GOOGLE_CLIENT_ID` / `FACEBOOK_*` / `MICROSOFT_*`
+  creds are set on the VPS (not a code bug — deployment config).
+
+## Earlier Work: BUG #40 — Sub-blip nesting fix (2026-04-16 late)
 
 **Root cause found and fixed**: `load(true, true)` in the `rizzoma:refresh-topics`
 handler passed `fromSocket=true`, which hit a 10-second `SOCKET_COOLDOWN_MS`

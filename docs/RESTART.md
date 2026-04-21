@@ -1,6 +1,8 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-04-18 (`master`, BUG #41 CSS gap fix — stripped card styling from nested reply blips. Commit `5bb75bb6`. VPS at `138.201.62.161:8200`. See `docs/VPS_DEPLOYMENT.md` + issue #41.)
+Last refreshed: 2026-04-21 (`master`, BUG #43 — gear-menu "Delete blip" silently 404s. `linksRouter` mounted at `/api` shadowed `DELETE /api/blips/:id` via its catch-all `DELETE /:from/:to`. Fix: mount linksRouter at `/api/links`, move `GET /:id/links` into blipsRouter. Also: `FEAT_ALL: "1"` + sphinx `profiles:["search"]` in docker-compose. VPS at `138.201.62.161:8200` is running commit `22e90c01`; needs `git pull && docker compose up -d --build` to pick up these fixes. See `docs/BUG_DELETE_BLIP_SHADOW.md`.)
+
+Last refreshed (prior): 2026-04-18 (`master`, BUG #41 CSS gap fix — stripped card styling from nested reply blips. Commit `5bb75bb6`. VPS at `138.201.62.161:8200`. See `docs/VPS_DEPLOYMENT.md` + issue #41.)
 
 Last refreshed (prior): 2026-04-17 (`master`, BUG #40 sub-blip nesting fix — `load(true,true)` → `load(true,false)` in refresh-topics handler. 10s SOCKET_COOLDOWN silently skipped grandchild reload. Commit `222efc97`. 84/84 feature sweep at 80/84 real evidence (95%). Firefox 10/10. Fresh APK on GDrive. See `docs/BUG_SUBBLIP_NESTING.md` + issue HCSS-StratBase/rizzoma#40.)
 

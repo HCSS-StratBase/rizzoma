@@ -6,6 +6,16 @@ import { noStore } from '../middleware/noStore.js';
 import { invalidateUnreadCacheForWave } from '../lib/unread.js';
 import type { Blip } from '../schemas/wave.js';
 
+type LinkDoc = {
+  _id?: string;
+  type: 'link';
+  fromBlipId: string;
+  toBlipId: string;
+  waveId: string;
+  authorId?: string;
+  createdAt: number;
+};
+
 type BlipHistoryDoc = {
   _id: string;
   type: 'blip_history';
@@ -328,6 +338,22 @@ router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
       return;
     }
     res.status(500).json({ error: e?.message || 'delete_blip_error', requestId: (req as any)?.id });
+  }
+});
+
+// GET /api/blips/:id/links → { out: [], in: [] }
+// BUG #43 (2026-04-21): moved here from linksRouter because the linksRouter
+// used to be mounted at /api, and its /blips/:id/links route had to live
+// there to resolve correctly. Now that linksRouter is mounted at /api/links,
+// this handler belongs in the blipsRouter (mounted at /api/blips).
+router.get('/:id/links', async (req, res): Promise<void> => {
+  const id = req.params['id'] as string;
+  try {
+    const out = (await find<LinkDoc>({ type: 'link', fromBlipId: id }, { limit: 1000 })).docs || [];
+    const inn = (await find<LinkDoc>({ type: 'link', toBlipId: id }, { limit: 1000 })).docs || [];
+    res.json({ out: out.map((d) => ({ fromBlipId: d.fromBlipId, toBlipId: d.toBlipId, waveId: d.waveId })), in: inn.map((d) => ({ fromBlipId: d.fromBlipId, toBlipId: d.toBlipId, waveId: d.waveId })) });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'links_error', requestId: (req as any)?.id });
   }
 });
 
