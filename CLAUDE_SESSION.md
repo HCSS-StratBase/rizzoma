@@ -1,6 +1,6 @@
 # Claude Session Context (last refreshed 2026-04-22)
 
-**Status at refresh**: master @ `a2e9e91c`, deployed to VPS. Beyond yesterday's BUG #43 fix, today shipped: Vite dev-server now proxies `/uploads/*` to Express (image uploads now display on VPS — verified `content-type: image/png` post-deploy), and gadget palette no longer inserts into multiple editors at once (uses `globalActiveBlipId` to scope). Test suite 183/193 (3 pre-existing failures only). VPS rebuilt + healthy. Bundle on GDrive (`rizzoma-260422-depth-audit-cleanup-260422.bundle`).
+**Status at refresh**: master @ `37241169`, deployed to VPS. Beyond yesterday's BUG #43 fix, today shipped: Vite dev-server now proxies `/uploads/*` to Express (image uploads display); gadget palette scoped via `globalActiveBlipId` (no double-insert) — both UI-verified empirically; pre-existing inline-comments fetch-mock test bug fixed (184/193 now); 37 pre-existing TS errors cleaned (now 0); 8.4GB stale bundle files cleaned from project root. VPS rebuilt + healthy. Bundle on GDrive. GitHub issues #40/#41/#42/#43 all closed; no open issues.
 
 **Depth-10 verified exhaustively** (`screenshots/260422-depth10-test/`): built D1→...→D10 reply chain via API, then click-tested every editor feature on D10 — bold/italic/emoji/@mention/#tag/~task/code block/YouTube gadget/image upload/Delete-via-gear all work. No depth-related limit anywhere in the codebase.
 

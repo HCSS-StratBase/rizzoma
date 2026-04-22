@@ -1,6 +1,8 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-04-22 late-night (`master` @ `a2e9e91c`, deployed to VPS. Two cleanup fixes: Vite `/uploads/*` proxy → image uploads display correctly; gadget palette scoped to most-recently-active blip via `globalActiveBlipId`. Test suite 183/193, no new regressions. VPS rebuilt + verified live (PNG content-type returned). Bundle on GDrive. GitHub issue #43 closing summary posted. See `docs/worklog-260422.md`.)
+Last refreshed: 2026-04-22 02:30am (`master` @ `37241169`, deployed to VPS. Today's fixes UI-verified empirically: gadget palette scoping (CouchDB shows YouTube only in active blip), Vite /uploads proxy (green PNG renders inline). Pre-existing test bug fixed (184/193 vitest). Pre-existing 37 TS errors cleaned (`tsc --noEmit` now 0). Playwright follow-the-green smoke PASSED against VPS. GitHub issues all closed. Project root cleaned 8.4GB. See `docs/worklog-260422.md`.)
+
+Last refreshed (prior): 2026-04-22 late-night (`master` @ `a2e9e91c`, deployed to VPS. Two cleanup fixes: Vite `/uploads/*` proxy → image uploads display correctly; gadget palette scoped to most-recently-active blip via `globalActiveBlipId`. Test suite 183/193, no new regressions. VPS rebuilt + verified live (PNG content-type returned). Bundle on GDrive. GitHub issue #43 closing summary posted. See `docs/worklog-260422.md`.)
 
 Last refreshed (prior): 2026-04-22 late-evening (master @ HEAD, **depth-10 verified exhaustively**: D1→...→D10 reply chain built; every editor feature (bold/italic/emoji/@mention/#tag/~task/code block/YouTube gadget/image upload/Delete) click-tested at D10 with empirical evidence. Discovered Rizzoma's "subblip drill-down" UX pattern (deep-link URL → focused-blip view, no inline render of long chains). No depth limit anywhere. Process: codified Tana project-tag requirement in CLAUDE.md (`#Rizzoma` + `#Rizzoma_modernization` mandatory). VPS at `c4844c73` doesn't need re-deploy.)
 

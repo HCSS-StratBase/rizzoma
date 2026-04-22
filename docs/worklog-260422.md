@@ -108,6 +108,28 @@ After the depth audit established no regressions, knocked off the cleanup queue:
 
 7. **Bundle**: `bash scripts/backup-bundle.sh depth-audit-cleanup-260422` (in progress / will be in `/tmp/` + project root + GDrive).
 
+## Final cleanup batch (commits `93fd6de5`, `37241169`)
+
+After the cleanup-batch deployment, knocked off the entire backlog:
+
+1. **UI-verified the gadget routing fix** — created a fresh reply blip via API, activated it (so `globalActiveBlipId` = reply ID), opened gadget palette, inserted YouTube with marker URL `SCOPETEST99`. CouchDB verification: `SCOPETEST99` in reply (`_rev=3`), absent from topic root. Fix works empirically.
+
+2. **UI-verified the Vite /uploads fix end-to-end** — uploaded a 10x10 green PNG via the editor 🖼️ button. `<img src="/uploads/green-10x10-...png">` rendered inline with the actual green square visible (not a broken icon). `fetch(src)` returned PNG magic bytes (`\x89PNG\r\n\x1a\n`), not SPA HTML. Screenshot at `screenshots/260422-cleanup-verifications/verify-uploads-proxy-working.png`.
+
+3. **Playwright smokes against VPS**:
+   - `test:toolbar-inline` — 16/17 toolbar selectors found (bold/italic/underline/strike/highlight/clear/bullet/ordered/links/attach/image/overflow/undo/redo). Failed on the post-edit transition selector (`.blip-menu-read-surface` timeout). Pre-existing flake; not a regression.
+   - `test:follow-green` — **PASSED** on chromium against VPS. Owner blip create + observer mark-read + wave refresh all worked.
+
+4. **Perf harness** — skipped against VPS (network latency too high; killed by 180s timeout). Not relevant since today's changes (event-routing scoping + dev-server proxy) don't touch render code paths.
+
+5. **Pre-existing inline-comments test fixed** (commit `93fd6de5`, dispatched to subagent) — the failure was a fetch-mock bug, not a route bug. The route was migrated from view→Mango find, but the mock still hard-coded `{docs: []}` for `/_find`. Fixed in 4 lines (mock now filters by selector). Test 184/193 (was 183/193).
+
+6. **All 37 pre-existing TypeScript errors fixed** (commit `37241169`, dispatched to subagent). Root cause: `src/types/tiptap.d.ts` was a harmful module augmentation that redeclared `@tiptap/core` and removed valid exports. Deleted the override + bracket-notation for ~26 TS4111 + cleaned ~6 unused vars/imports. `tsc --noEmit` now clean.
+
+7. **GitHub issues** — all 4 closed (#40, #41, #42, #43). No new open issues.
+
+8. **Project root cleaned** — removed 8.4GB of stale `.bundle` files (kept only today's + `rizzoma.bundle` pointer), test artifacts (`tiny-red.png`, `parity-snap*.md`, `rizzoma-260416-ALL-GREEN.apk`).
+
 ## Commits today
 
 | SHA | Description |
@@ -122,6 +144,9 @@ After the depth audit established no regressions, knocked off the cleanup queue:
 | `0ec7c005` | test: depth-10 reply chain — every level reachable + editable |
 | `3afdc161` | test: every editor feature works at D10 (exhaustive click-test) |
 | `a2e9e91c` | fix: Vite /uploads/* proxy + gadget palette greedy routing |
+| `0e42c587` | docs: refresh after Vite-proxy + gadget routing fixes |
+| `93fd6de5` | test: fix inline-comments mock to match find()-based route |
+| `37241169` | fix(types): clean all 37 TypeScript errors |
 
 ## VPS state
 
