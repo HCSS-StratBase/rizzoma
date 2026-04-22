@@ -86,3 +86,4 @@ DerivedData/
 
 # Built APK output (reproducible from source — do not commit).
 dist/apk/
+.claude/

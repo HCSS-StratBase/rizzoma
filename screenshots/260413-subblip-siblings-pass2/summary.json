@@ -1,0 +1,105 @@
+{
+  "topicId": "ff955fcd14cbbf6212be3a9f7000392a",
+  "base": "http://127.0.0.1:3000",
+  "timestamp": "2026-04-12T22:44:40.456Z",
+  "steps": [
+    {
+      "step": "topic_loaded",
+      "screenshot": "screenshots/260413-subblip-siblings-pass2/01-topic-loaded.png",
+      "html": "screenshots/260413-subblip-siblings-pass2/01-topic-loaded.html"
+    },
+    {
+      "step": "topic_edit_mode",
+      "screenshot": "screenshots/260413-subblip-siblings-pass2/02-topic-edit-mode.png",
+      "html": "screenshots/260413-subblip-siblings-pass2/02-topic-edit-mode.html"
+    },
+    {
+      "step": "first_sibling_done",
+      "screenshot": "screenshots/260413-subblip-siblings-pass2/03-first-sibling-done.png",
+      "html": "screenshots/260413-subblip-siblings-pass2/03-first-sibling-done.html"
+    },
+    {
+      "step": "second_sibling_done",
+      "screenshot": "screenshots/260413-subblip-siblings-pass2/04-second-sibling-done.png",
+      "html": "screenshots/260413-subblip-siblings-pass2/04-second-sibling-done.html"
+    },
+    {
+      "step": "after_prev_sibling",
+      "screenshot": "screenshots/260413-subblip-siblings-pass2/05-after-prev-sibling.png",
+      "html": "screenshots/260413-subblip-siblings-pass2/05-after-prev-sibling.html"
+    },
+    {
+      "step": "after_next_sibling",
+      "screenshot": "screenshots/260413-subblip-siblings-pass2/06-after-next-sibling.png",
+      "html": "screenshots/260413-subblip-siblings-pass2/06-after-next-sibling.html"
+    }
+  ],
+  "states": {
+    "firstSiblingAfterDone": {
+      "url": "http://127.0.0.1:3000/#/topic/ff955fcd14cbbf6212be3a9f7000392a/b1776033861782/",
+      "hash": "#/topic/ff955fcd14cbbf6212be3a9f7000392a/b1776033861782/",
+      "siblingButtons": 0,
+      "counter": null,
+      "prevDisabled": null,
+      "nextDisabled": null,
+      "parentPreviewKind": null,
+      "parentPreviewText": null,
+      "focusedBodyText": null,
+      "focusedMode": "edit",
+      "breadcrumbCurrent": "Subblip"
+    },
+    "secondSiblingAfterDone": {
+      "url": "http://127.0.0.1:3000/#/topic/ff955fcd14cbbf6212be3a9f7000392a/b1776033867248/",
+      "hash": "#/topic/ff955fcd14cbbf6212be3a9f7000392a/b1776033867248/",
+      "siblingButtons": 2,
+      "counter": "2 / 2",
+      "prevDisabled": false,
+      "nextDisabled": true,
+      "parentPreviewKind": null,
+      "parentPreviewText": null,
+      "focusedBodyText": null,
+      "focusedMode": "edit",
+      "breadcrumbCurrent": "Subblip"
+    },
+    "afterPrevSibling": {
+      "url": "http://127.0.0.1:3000/#/topic/ff955fcd14cbbf6212be3a9f7000392a/b1776033861782/",
+      "hash": "#/topic/ff955fcd14cbbf6212be3a9f7000392a/b1776033861782/",
+      "siblingButtons": 2,
+      "counter": "1 / 2",
+      "prevDisabled": true,
+      "nextDisabled": false,
+      "parentPreviewKind": null,
+      "parentPreviewText": null,
+      "focusedBodyText": null,
+      "focusedMode": "edit",
+      "breadcrumbCurrent": "Subblip"
+    },
+    "afterNextSibling": {
+      "url": "http://127.0.0.1:3000/#/topic/ff955fcd14cbbf6212be3a9f7000392a/b1776033867248/",
+      "hash": "#/topic/ff955fcd14cbbf6212be3a9f7000392a/b1776033867248/",
+      "siblingButtons": 2,
+      "counter": "2 / 2",
+      "prevDisabled": false,
+      "nextDisabled": true,
+      "parentPreviewKind": null,
+      "parentPreviewText": null,
+      "focusedBodyText": null,
+      "focusedMode": "edit",
+      "breadcrumbCurrent": "Subblip"
+    }
+  },
+  "assertions": {
+    "siblingButtonsRenderedOnSecond": true,
+    "counterShows1of2OnPrev": true,
+    "counterShows2of2OnNext": true,
+    "prevDisabledOnFirst": true,
+    "nextEnabledOnFirst": true,
+    "prevEnabledOnSecond": true,
+    "nextDisabledOnSecond": true,
+    "parentPreviewVisibleA": false,
+    "parentPreviewVisibleB": false,
+    "parentPreviewKindMatches": true,
+    "parentTextConsistent": false,
+    "focusedBodyChangesAcrossSiblings": false
+  }
+}
