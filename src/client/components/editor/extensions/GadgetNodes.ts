@@ -239,11 +239,11 @@ export const EmbedFrameGadget = Node.create({
   },
 
   renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
-    const src = String(HTMLAttributes.src || '');
-    const title = String(HTMLAttributes.title || 'Embedded content');
-    const provider = String(HTMLAttributes.provider || 'iframe');
-    const width = String(HTMLAttributes.width || '600');
-    const height = String(HTMLAttributes.height || '400');
+    const src = String(HTMLAttributes['src'] || '');
+    const title = String(HTMLAttributes['title'] || 'Embedded content');
+    const provider = String(HTMLAttributes['provider'] || 'iframe');
+    const width = String(HTMLAttributes['width'] || '600');
+    const height = String(HTMLAttributes['height'] || '400');
     const iframeAttrs: Record<string, string> = {
       src,
       width,
@@ -254,8 +254,8 @@ export const EmbedFrameGadget = Node.create({
     };
 
     if (provider === 'youtube') {
-      iframeAttrs.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-      iframeAttrs.allowfullscreen = 'true';
+      iframeAttrs['allow'] = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframeAttrs['allowfullscreen'] = 'true';
     }
 
     return [
@@ -352,14 +352,14 @@ export const PollGadget = Node.create({
     HTMLAttributes: Record<string, any>;
   }) {
     const attrs = node?.attrs ?? HTMLAttributes;
-    const parsedOptions = parsePollOptions(attrs?.options);
+    const parsedOptions = parsePollOptions(attrs?.['options']);
 
     return ['figure', {
       ...HTMLAttributes,
       'data-gadget-type': 'poll',
-      'data-poll-question': attrs?.question || 'Poll question',
+      'data-poll-question': attrs?.['question'] || 'Poll question',
       'data-poll-options': JSON.stringify(parsedOptions),
-      'data-poll-allow-multiple': String(!!attrs?.allowMultiple),
+      'data-poll-allow-multiple': String(!!attrs?.['allowMultiple']),
       class: buildGadgetClassName('gadget-poll', (HTMLAttributes as any)?.class),
     }];
   },
@@ -466,16 +466,16 @@ export const AppFrameGadget = Node.create({
     HTMLAttributes: Record<string, any>;
   }) {
     const attrs = node?.attrs ?? HTMLAttributes;
-    const appData = parseAppData(attrs.data);
-    const title = String(attrs.title || 'Kanban Board');
+    const appData = parseAppData(attrs['data']);
+    const title = String(attrs['title'] || 'Kanban Board');
     const summary = summarizeAppFrameData(appData);
-    const src = String(attrs.src || '/gadgets/apps/kanban-board/index.html');
-    const height = String(attrs.height || '430');
+    const src = String(attrs['src'] || '/gadgets/apps/kanban-board/index.html');
+    const height = String(attrs['height'] || '430');
     return ['figure', {
       ...HTMLAttributes,
       'data-gadget-type': 'app-frame',
-      'data-app-id': String(attrs.appId || 'kanban-board'),
-      'data-app-instance-id': String(attrs.instanceId || 'app-frame'),
+      'data-app-id': String(attrs['appId'] || 'kanban-board'),
+      'data-app-instance-id': String(attrs['instanceId'] || 'app-frame'),
       'data-app-title': title,
       'data-app-src': src,
       'data-app-height': height,

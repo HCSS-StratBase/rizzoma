@@ -197,7 +197,7 @@ export function BlipMenu({
   };
   const handleHighlight = (color: string) => {
     const chain = editor?.chain?.().focus?.();
-    const command = (chain as any)?.setHighlight ? chain.setHighlight({ color }) : null;
+    const command = (chain as any)?.setHighlight ? (chain as any).setHighlight({ color }) : null;
     if (command && typeof command.run === 'function') {
       command.run();
     }

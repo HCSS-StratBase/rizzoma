@@ -58,7 +58,7 @@ function setGlobalActiveBlipId(blipId: string | null) {
   if (typeof window !== 'undefined') {
     const blips = document.querySelectorAll<HTMLElement>('.rizzoma-blip[data-blip-id]');
     blips.forEach((node) => {
-      node.dataset.activeBlip = blipId && node.dataset.blipId === blipId ? 'true' : 'false';
+      node.dataset['activeBlip'] = blipId && node.dataset['blipId'] === blipId ? 'true' : 'false';
     });
     window.dispatchEvent(new CustomEvent('rizzoma:active-blip-changed', { detail: { blipId } }));
   }
@@ -327,7 +327,7 @@ export function RizzomaBlip({
   isPerfLite = false,
   hideChildBlips = false,
 }: RizzomaBlipProps) {
-  const onNavigateToSubblip = _onNavigateToSubblip;
+  void _onNavigateToSubblip;
   const isPerfMode = typeof window !== 'undefined' && (window.location.hash || '').includes('perf=');
   const [isHovered, setIsHovered] = useState(false);
   const initialCollapsePreference = typeof blip.isFoldedByDefault === 'boolean'
@@ -808,19 +808,6 @@ export function RizzomaBlip({
       return next;
     });
   }, []);
-
-  const navigateToThread = useCallback((threadId: string) => {
-    const match = inlineChildren.find((child) => child.id === threadId);
-    if (!match) return;
-    if (onNavigateToSubblip) {
-      onNavigateToSubblip(match);
-      return;
-    }
-    const waveId = threadId.includes(':') ? threadId.split(':')[0] : '';
-    if (typeof window !== 'undefined' && waveId && match.blipPath) {
-      window.location.hash = `#/topic/${waveId}/${match.blipPath}/`;
-    }
-  }, [inlineChildren, onNavigateToSubblip]);
 
   const rawViewContentHtml = !isEditing && inlineChildren.length > 0
     ? injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)

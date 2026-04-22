@@ -61,7 +61,7 @@ async function invokeInlineRoute(
       return this as any;
     },
     getHeader(name: string) {
-      return (this.headers as Record<string, unknown>)[name.toLowerCase()];
+      return (this.headers as Record<string, unknown>)[name.toLowerCase()] as string | number | string[] | undefined;
     },
   };
   for (const entry of stack) {

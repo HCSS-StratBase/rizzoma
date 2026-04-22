@@ -50,7 +50,7 @@ export function InlineComments({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadErrorType, setLoadErrorType] = useState<'auth' | 'network' | null>(null);
   const [isFetchingComments, setIsFetchingComments] = useState(false);
-  const [reloadToken, setReloadToken] = useState(0);
+  const [reloadToken] = useState(0);
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
   const groupedComments = useMemo(() => {

@@ -214,7 +214,6 @@ function hydrateAppFrameFigureElements(root: ParentNode) {
       return;
     }
     const title = figure.getAttribute('data-app-title') || 'Sandboxed app';
-    const appId = figure.getAttribute('data-app-id') || 'app-frame';
     const src = figure.getAttribute('data-app-src') || '';
     const height = figure.getAttribute('data-app-height') || '430';
     const rawData = figure.getAttribute('data-app-data') || '{}';
@@ -376,15 +375,6 @@ function extractTitleFromContent(html: string): string {
   return text.trim().split('\n')[0] || '';
 }
 
-function extractPlainSnippet(html: string, limit = 180): string {
-  const plain = (html || '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (!plain) return '';
-  return plain.length > limit ? `${plain.slice(0, limit).trim()}…` : plain;
-}
-
 function ensureTopicTitleHeading(html: string, fallbackTitle: string): string {
   const safeTitle = fallbackTitle.trim() || 'Untitled';
   if (!html) {
@@ -410,21 +400,6 @@ function replaceTopicTitleHeading(html: string, nextTitle: string): string {
 function stripFirstTopicHeading(html: string): string {
   if (!html) return '';
   return html.replace(/^\s*<h1[^>]*>.*?<\/h1>/i, '').trim();
-}
-
-function extractTopicTitle(html: string, fallbackTitle: string): string {
-  const h1Match = html?.match(/<h1[^>]*>(.*?)<\/h1>/i);
-  if (h1Match?.[1]) {
-    return h1Match[1].replace(/<[^>]+>/g, '').trim() || fallbackTitle;
-  }
-  return fallbackTitle.trim() || 'Untitled';
-}
-
-function resolveSafeTopicTitle(content: string, extractedTitle: string, fallbackTitle: string): string {
-  if (content.includes('data-gadget-type="app-frame"')) {
-    return fallbackTitle.trim() || extractedTitle || 'Untitled';
-  }
-  return extractedTitle || fallbackTitle.trim() || 'Untitled';
 }
 
 function formatDate(timestamp: number): string {

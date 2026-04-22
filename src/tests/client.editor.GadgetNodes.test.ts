@@ -122,7 +122,7 @@ describe('client: PollGadget extension', () => {
 
   it('serializes poll nodes through editor.getHTML with the data-poll contract', () => {
     const editor = new Editor({
-      extensions: [StarterKit, PollGadget],
+      extensions: [StarterKit as any, PollGadget],
       content: '',
     });
 

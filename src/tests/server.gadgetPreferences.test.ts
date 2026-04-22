@@ -131,7 +131,7 @@ describe('server: gadget preferences route', () => {
       defaultInstalledAppIds: ['kanban-board', 'calendar-planner', 'focus-timer', 'notes-scratchpad'],
       installedAppIds: ['focus-timer', 'github-workbench'],
     });
-    expect(docs.get('gadget_prefs:u1')?.installedAppIds).toEqual(['focus-timer', 'github-workbench']);
+    expect(docs.get('gadget_prefs:u1')?.['installedAppIds']).toEqual(['focus-timer', 'github-workbench']);
   });
 
   it('updates an existing preference doc', async () => {
@@ -155,7 +155,7 @@ describe('server: gadget preferences route', () => {
       defaultInstalledAppIds: ['kanban-board', 'calendar-planner', 'focus-timer', 'notes-scratchpad'],
       installedAppIds: ['calendar-planner'],
     });
-    expect(docs.get('gadget_prefs:u1')?.installedAppIds).toEqual(['calendar-planner']);
+    expect(docs.get('gadget_prefs:u1')?.['installedAppIds']).toEqual(['calendar-planner']);
   });
 
   it('resets preferences back to shipped defaults', async () => {
@@ -179,7 +179,7 @@ describe('server: gadget preferences route', () => {
       defaultInstalledAppIds: ['kanban-board', 'calendar-planner', 'focus-timer', 'notes-scratchpad'],
       installedAppIds: ['kanban-board', 'calendar-planner', 'focus-timer', 'notes-scratchpad'],
     });
-    expect(docs.get('gadget_prefs:u1')?.installedAppIds).toEqual([
+    expect(docs.get('gadget_prefs:u1')?.['installedAppIds']).toEqual([
       'kanban-board',
       'calendar-planner',
       'focus-timer',
