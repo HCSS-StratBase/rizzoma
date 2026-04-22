@@ -22,26 +22,22 @@ jobs:
           npm config set legacy-peer-deps true
       - name: Install dependencies (skip Cypress binary)
         id: install
-        continue-on-error: true
         env:
           CYPRESS_INSTALL_BINARY: '0'
         run: |
           npm ci --no-audit --no-fund --no-optional || npm install --no-audit --no-fund --no-optional
-      - name: Typecheck
-        if: ${{ steps.install.outcome == 'success' }}
+      - name: Typecheck (hard gate — 0 errors required)
         run: npm run typecheck
       - name: Lint (non-blocking)
-        if: ${{ steps.install.outcome == 'success' }}
         continue-on-error: true
         run: npm run lint
-      - name: Test
-        if: ${{ steps.install.outcome == 'success' }}
+      - name: Test (hard gate — vitest suite must pass)
         run: npm test
       - name: Build (push-only)
-        if: ${{ steps.install.outcome == 'success' && github.event_name != 'pull_request' }}
+        if: ${{ github.event_name != 'pull_request' }}
         run: npm run build
       - name: Build Docker image (push-only)
-        if: ${{ steps.install.outcome == 'success' && github.event_name != 'pull_request' }}
+        if: ${{ github.event_name != 'pull_request' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -288,11 +284,21 @@ jobs:
           results[browser-smokes]='${{ needs.browser-smokes.result }}'
           results[perf-budgets]='${{ needs.perf-budgets.result }}'
           results[health-checks]='${{ needs.health-checks.result }}'
+          # build is the required typecheck + vitest gate; it must be "success".
+          # downstream jobs (browser-smokes, perf-budgets, health-checks) may
+          # be "skipped" if they were gated on build succeeding and did not run.
+          declare -A allow_skipped
+          allow_skipped[browser-smokes]=1
+          allow_skipped[perf-budgets]=1
+          allow_skipped[health-checks]=1
           failed=0
           for job in "${!results[@]}"; do
             outcome="${results[$job]}"
             echo "  $job: $outcome"
-            if [[ "$outcome" != "success" && "$outcome" != "skipped" ]]; then
+            if [[ "$outcome" != "success" ]]; then
+              if [[ "$outcome" == "skipped" && "${allow_skipped[$job]:-0}" == "1" ]]; then
+                continue
+              fi
               failed=1
             fi
           done
