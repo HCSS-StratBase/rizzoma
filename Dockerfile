@@ -39,4 +39,6 @@ EXPOSE 8788
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD curl -fsS http://localhost:8788/api/health || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "dist/server/app.js"]
+# tsc preserves src/ → dist/ hierarchy (rootDir=src, outDir=dist/server in
+# tsconfig.server.json), so src/server/app.ts emits to dist/server/server/app.js.
+CMD ["node", "dist/server/server/app.js"]
