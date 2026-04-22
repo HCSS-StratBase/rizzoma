@@ -90,6 +90,24 @@ User caught me TWO times today on the same class of mistake (overclaiming verifi
 - `feedback_tana_project_tags.md` — every Rizzoma Tana entry needs `#Rizzoma` + `#Rizzoma_modernization` on top of `#discussion`/`#task`. SYSTEM_INSTRUCTIONS.md doesn't inline these IDs, which is what made the mistake repeatable. Now codified in CLAUDE.md (commit `6c870d13`).
 - Lesson on overclaiming verification: don't say "100% verified" if any path is by-inference. Click-test if the user's standard requires empirical proof.
 
+## Late-night cleanup batch (commit `a2e9e91c`, deployed)
+
+After the depth audit established no regressions, knocked off the cleanup queue:
+
+1. **Test suite green** — `npm test` ran 183/193 pass, 3 fail (all pre-existing: 2 inline-comments view-mock + 1 health-check needing local CouchDB). No new regressions from any of today's changes.
+
+2. **Vite dev-server now proxies `/uploads/*` to Express** (`vite.config.ts`). Without this, files uploaded via the editor's 🖼️ button save fine to disk on the VPS but `<img src="/uploads/...">` fall through to the SPA catch-all and return `index.html` instead of the PNG. Verified live on VPS post-deploy: `curl http://138.201.62.161:8200/uploads/<file>` now returns `content-type: image/png` (was `text/html`). Real user-facing fix — Hryhorii's image uploads now display.
+
+3. **Gadget palette no longer inserts into multiple editors at once**. The palette window-broadcasts `INSERT_EVENTS.GADGET` to every editor in edit mode, so a YouTube insert would land in BOTH the topic root AND any active deep blip (observed during the depth-3 + depth-10 tests). Fix: use the existing `globalActiveBlipId` singleton — exported it as `getGlobalActiveBlipId` and added scoping guards in both handlers. Each handler now skips unless its blip is the most-recently-active.
+
+4. **VPS LLMs test topic cleaned** — cascade-deleted D1 (took D2..D9 with it via `markBlipAndDescendantsDeleted`). User opted to KEEP the 😎 emoji + YouTube embed in the topic root for their own testing.
+
+5. **GitHub issue #43 closing summary posted** ([comment 4293023740](https://github.com/HCSS-StratBase/rizzoma/issues/43#issuecomment-4293023740)) — Hryhorii notified with full status of #40/#41/#42/#43 + the two extra cleanups + verified-at-depth proof + how to pull on VPS.
+
+6. **VPS rebuilt + verified live** — `git pull origin master && docker compose up -d --build app` on the VPS picks up `a2e9e91c`. Health check 200, `/uploads/*` returns PNG.
+
+7. **Bundle**: `bash scripts/backup-bundle.sh depth-audit-cleanup-260422` (in progress / will be in `/tmp/` + project root + GDrive).
+
 ## Commits today
 
 | SHA | Description |
@@ -102,7 +120,8 @@ User caught me TWO times today on the same class of mistake (overclaiming verifi
 | `0a81292a` | docs: refresh after depth-feature audit (worklog-260422 + headers) |
 | `6c870d13` | docs: codify Tana project-tag requirement in CLAUDE.md |
 | `0ec7c005` | test: depth-10 reply chain — every level reachable + editable |
-| (TBD) | test: every rich-feature works at D10 too (exhaustive click-test) |
+| `3afdc161` | test: every editor feature works at D10 (exhaustive click-test) |
+| `a2e9e91c` | fix: Vite /uploads/* proxy + gadget palette greedy routing |
 
 ## VPS state
 

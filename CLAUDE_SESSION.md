@@ -1,6 +1,6 @@
 # Claude Session Context (last refreshed 2026-04-22)
 
-**Status at refresh**: master @ HEAD (multiple commits past the BUG #43 fix `c4844c73`, all test-only — screenshots + READMEs + 1 doc-codification, no code changes). VPS container at `c4844c73` from 2026-04-21 23:53 UTC, no re-deploy needed.
+**Status at refresh**: master @ `a2e9e91c`, deployed to VPS. Beyond yesterday's BUG #43 fix, today shipped: Vite dev-server now proxies `/uploads/*` to Express (image uploads now display on VPS — verified `content-type: image/png` post-deploy), and gadget palette no longer inserts into multiple editors at once (uses `globalActiveBlipId` to scope). Test suite 183/193 (3 pre-existing failures only). VPS rebuilt + healthy. Bundle on GDrive (`rizzoma-260422-depth-audit-cleanup-260422.bundle`).
 
 **Depth-10 verified exhaustively** (`screenshots/260422-depth10-test/`): built D1→...→D10 reply chain via API, then click-tested every editor feature on D10 — bold/italic/emoji/@mention/#tag/~task/code block/YouTube gadget/image upload/Delete-via-gear all work. No depth-related limit anywhere in the codebase.
 
