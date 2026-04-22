@@ -412,6 +412,71 @@ function formatDate(timestamp: number): string {
   return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
+function sortBlipChildren(items: BlipData[]): BlipData[] {
+  return [...items].sort((a, b) => a.createdAt - b.createdAt);
+}
+
+function insertChildIntoBlipList(
+  items: BlipData[],
+  parentBlipId: string,
+  child: BlipData,
+): { items: BlipData[]; inserted: boolean } {
+  let inserted = false;
+  let changed = false;
+
+  const nextItems = items.map((item) => {
+    if (item.id === parentBlipId) {
+      const children = item.childBlips || [];
+      if (children.some((existing) => existing.id === child.id)) {
+        return item;
+      }
+      inserted = true;
+      changed = true;
+      return { ...item, childBlips: sortBlipChildren([...children, child]) };
+    }
+
+    if (!item.childBlips?.length) {
+      return item;
+    }
+
+    const result = insertChildIntoBlipList(item.childBlips, parentBlipId, child);
+    if (!result.inserted) {
+      return item;
+    }
+
+    inserted = true;
+    changed = true;
+    return { ...item, childBlips: result.items };
+  });
+
+  return { items: changed ? nextItems : items, inserted };
+}
+
+function insertChildIntoBlipNode(
+  node: BlipData,
+  parentBlipId: string,
+  child: BlipData,
+): BlipData {
+  if (node.id === parentBlipId) {
+    const children = node.childBlips || [];
+    if (children.some((existing) => existing.id === child.id)) {
+      return node;
+    }
+    return { ...node, childBlips: sortBlipChildren([...children, child]) };
+  }
+
+  if (!node.childBlips?.length) {
+    return node;
+  }
+
+  const result = insertChildIntoBlipList(node.childBlips, parentBlipId, child);
+  if (!result.inserted) {
+    return node;
+  }
+
+  return { ...node, childBlips: result.items };
+}
+
 export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unreadState }: { id: string; blipPath?: string | null; isAuthed?: boolean; unreadState?: WaveUnreadState | null }) {
   const perfRenderMode = getPerfRenderMode();
   const isPerfLite = perfRenderMode === 'lite';
@@ -1467,6 +1532,39 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     load(true);
   }, [load]);
 
+  const handleInlineChildCreated = useCallback((parentBlipId: string, child: BlipData) => {
+    pendingBlipsRef.current.set(child.id, child);
+
+    setAllBlipsMap((prev) => {
+      const next = new Map(prev);
+      next.set(child.id, child);
+      const parent = next.get(parentBlipId);
+      if (parent) {
+        const children = parent.childBlips || [];
+        if (!children.some((existing) => existing.id === child.id)) {
+          next.set(parentBlipId, {
+            ...parent,
+            childBlips: sortBlipChildren([...children, child]),
+          });
+        }
+      }
+      return next;
+    });
+
+    setBlips((prev) => {
+      if (parentBlipId === id) {
+        return prev.some((existing) => existing.id === child.id)
+          ? prev
+          : sortBlipChildren([...prev, child]);
+      }
+      return insertChildIntoBlipList(prev, parentBlipId, child).items;
+    });
+
+    setCurrentSubblip((prev) => (
+      prev ? insertChildIntoBlipNode(prev, parentBlipId, child) : prev
+    ));
+  }, [id]);
+
   const handleDeleteBlip = useCallback(async (blipId: string) => {
     await ensureCsrf();
     const r = await api(`/api/blips/${encodeURIComponent(blipId)}`, { method: 'DELETE' });
@@ -2194,6 +2292,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                   blip={currentSubblipParent}
                   isRoot={false}
                   depth={0}
+                  onInlineChildCreated={handleInlineChildCreated}
                   expandedBlips={expandedBlips}
                   forceExpanded={true}
                   hideChildBlips={true}
@@ -2227,6 +2326,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                 depth={1}
                 onBlipUpdate={handleBlipUpdate}
                 onAddReply={handleAddReply}
+                onInlineChildCreated={handleInlineChildCreated}
                 onToggleCollapse={handleToggleCollapse}
                 onDeleteBlip={handleDeleteBlip}
                 onBlipRead={handleBlipRead}
@@ -2479,6 +2579,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               isPerfLite={isPerfLite}
               onBlipUpdate={handleBlipUpdate}
               onAddReply={handleAddReply}
+              onInlineChildCreated={handleInlineChildCreated}
               onToggleCollapse={handleToggleCollapse}
               onDeleteBlip={handleDeleteBlip}
               onBlipRead={handleBlipRead}
