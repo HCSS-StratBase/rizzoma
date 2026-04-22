@@ -43,6 +43,16 @@ import type { GadgetInsertDetail } from '../../gadgets/types';
 
 let globalActiveBlipId: string | null = null;
 
+// Exported for use by other modules (e.g. RizzomaTopicDetail's gadget-insert
+// handler) that need to scope window-broadcast events to the most-recently-
+// active blip rather than firing on every editor that's currently in edit
+// mode. Without this scoping, gadgets like YouTube embed land in BOTH the
+// topic root and any active deep blip simultaneously (discovered during the
+// 2026-04-22 depth audit).
+export function getGlobalActiveBlipId(): string | null {
+  return globalActiveBlipId;
+}
+
 function setGlobalActiveBlipId(blipId: string | null) {
   globalActiveBlipId = blipId;
   if (typeof window !== 'undefined') {
@@ -1602,6 +1612,14 @@ export function RizzomaBlip({
     const handleInsertGadget = (e: Event) => {
       const detail = (e as CustomEvent<GadgetInsertDetail>).detail;
       if (isTopicRoot) {
+        return;
+      }
+      // BUG (2026-04-22 audit): without this scoping, the gadget palette
+      // window-broadcasts to every active editor — so a YouTube insert from
+      // the right-panel button lands in BOTH the topic root AND any non-root
+      // blip currently in edit mode. Only the most-recently-active blip
+      // should receive the insert.
+      if (globalActiveBlipId !== blip.id) {
         return;
       }
       if (isEditing && inlineEditor) {

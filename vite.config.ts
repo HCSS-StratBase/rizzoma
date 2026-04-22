@@ -66,6 +66,16 @@ export default defineConfig(({ command }) => {
         target: 'http://localhost:8788',
         ws: true,
       },
+      // Forward uploaded files to Express's express.static('/uploads') mount.
+      // Without this, dev-mode requests for /uploads/<file> fall through to
+      // the SPA catch-all and return index.html instead of the PNG/file —
+      // so images uploaded via the editor's 🖼️ button (which save fine to
+      // disk on the VPS) don't actually display in the browser. Discovered
+      // 2026-04-22 during the depth-feature audit on the VPS.
+      '/uploads': {
+        target: 'http://localhost:8788',
+        changeOrigin: true,
+      },
     },
   },
   };

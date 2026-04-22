@@ -9,7 +9,7 @@ import ExportModal from './ExportModal';
 import { WavePlaybackModal } from './WavePlaybackModal';
 import './RizzomaTopicDetail.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
-import { RizzomaBlip, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
+import { RizzomaBlip, type BlipData, type BlipContributor, getGlobalActiveBlipId } from './blip/RizzomaBlip';
 import { injectInlineMarkers, stripOrphanMarkers } from './blip/inlineMarkers';
 import {
   diffAndStampAttribution,
@@ -815,6 +815,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     };
     const handleInsertGadget = (e: Event) => {
       const detail = (e as CustomEvent<GadgetInsertDetail>).detail;
+      // BUG (2026-04-22 audit): without this guard, the topic editor inserts
+      // the gadget alongside whichever non-root blip is also active —
+      // doubling the embed. Only insert at the topic root if no deep blip
+      // is currently the most-recently-active one.
+      const activeBlipId = getGlobalActiveBlipId();
+      if (activeBlipId && activeBlipId !== id) {
+        return;
+      }
       insertGadget(topicEditor as any, detail);
     };
 
