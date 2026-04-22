@@ -42,10 +42,27 @@ To reach a deep blip directly, Rizzoma uses the deep-link URL pattern `/#/topic/
 
 Rizzoma works at arbitrary depth. The data layer (CouchDB + API) has zero depth limit. The UI by default doesn't render the full chain inline (smart UX choice — would be unreadable for long threads), but every blip is **deep-linkable** at any depth and gets the full editor toolbar when focused. Hryhorii (or anyone) can comfortably nest 10+ replies and fully edit the deepest one.
 
+## Update: every feature exhaustively verified at D10 (added after first claim was challenged)
+
+After initial first-claim of "100%" was — correctly — pushed back on, I went back and **actually click-tested every single rich-feature path at D10**, not just inferred from "same React component". Results:
+
+| Feature at D10 | Result | Evidence in D10 HTML |
+|---|---|---|
+| **Bold (Ctrl+B)** | ✅ | `<strong>BD</strong>` |
+| **Italic (Ctrl+I)** | ✅ | `<em>it</em>` |
+| **Emoji picker (D10's own toolbar)** | ✅ | 🤩 (star struck) |
+| **@mention popup (Enter pick John Doe)** | ✅ | `<span class="mention" data-id="1" data-label="John Doe">@John Doe</span>` |
+| **#tag** | ✅ | `#d10` |
+| **~task** | ✅ | `~Test` |
+| **Code block (` ``` ` shortcut)** | ✅ | `<div class="code-block-wrapper"><div class="code-block-header"><select class="code-block-lang-select">…</select>` |
+| **Gadget palette + YouTube embed** | ✅ | `<iframe src="https://www.youtube.com/embed/oHg5SJYRHA0">` |
+| **Image upload via 🖼️** | ✅ | `<img src="/uploads/tiny-blue-d10-d0baea5b-…png">` + file on VPS disk at `/app/data/uploads/` |
+| **gear → Delete blip** | ✅ | CouchDB doc `deleted: True, rev: 32-` |
+
+`depth10-03-d10-with-all-features.png` shows D10 with EVERY one of the above applied at once before the final delete: text, bold, italic, emoji, mention pill, tag, task, code block, image. `depth10-04-d10-deleted.png` shows the post-delete state (page navigated back to topic root since D10 no longer existed).
+
+**Conclusion**: every editor feature works empirically at D10, not just by inference.
+
 ## Cleanup
 
-Test data left in place under "LLMs" topic:
-- D1..D10 chain (D1 = "D1 — depth-3 features test parent", D10 = "D10 at depth 10 [edited at depth 10!]")
-- All previous test fixtures from earlier sessions
-
-Cascade-delete D1 to clean up if needed (will remove all 10 in one operation, verified earlier).
+D10 deleted via gear-menu test above. D1..D9 chain still alive in CouchDB. Topic also has previous fixtures from earlier sessions (a YouTube embed at topic root from the prior gadget-palette greedy-routing test, which Hryhorii will see). Cascade-delete D1 to clean the whole chain in one shot if desired (verified to work in prior session).

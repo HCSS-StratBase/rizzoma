@@ -1,6 +1,12 @@
 # Claude Session Context (last refreshed 2026-04-22)
 
-**Status at refresh**: master @ `48d5608a` (4 commits past the BUG #43 fix `c4844c73`, all test-only — screenshots + READMEs, no code changes). VPS container at `c4844c73` from 2026-04-21 23:53 UTC, no re-deploy needed.
+**Status at refresh**: master @ HEAD (multiple commits past the BUG #43 fix `c4844c73`, all test-only — screenshots + READMEs + 1 doc-codification, no code changes). VPS container at `c4844c73` from 2026-04-21 23:53 UTC, no re-deploy needed.
+
+**Depth-10 verified exhaustively** (`screenshots/260422-depth10-test/`): built D1→...→D10 reply chain via API, then click-tested every editor feature on D10 — bold/italic/emoji/@mention/#tag/~task/code block/YouTube gadget/image upload/Delete-via-gear all work. No depth-related limit anywhere in the codebase.
+
+**Process discoveries today** (after user pushback):
+1. Tana project tags (`#Rizzoma`, `#Rizzoma_modernization`) were missing from my entries on 3 separate sessions because SYSTEM_INSTRUCTIONS.md doesn't inline those IDs. Now codified in CLAUDE.md table + saved as `feedback_tana_project_tags.md` memory + indexed in MEMORY.md.
+2. Don't claim "100% verified" without empirical proof. If the user's standard is exhaustive, click-test every path.
 
 **Today's work (2026-04-22)**: comprehensive depth-feature audit on the live VPS. Every Hryhorii-reported symptom verified end-to-end via Playwright (`screenshots/260421-bug43-delete-blip/`, `260421-bug40-subblip-nesting/`, `260421-plus-marker-persistence/`). Then drilled into editing at DEPTH-3 (`screenshots/260422-deep-editing-verification/` — bold/italic/emoji/Done/Delete/cascade) and finally every remaining rich feature at DEPTH-3 (`screenshots/260422-deeper-features-at-depth/` — @mention popup/`#tag`/`~task`/code block/gadget palette/YouTube embed/image upload). **No depth-specific gating exists in any rich-feature code path** — same React component renders at every level; `!isTopicRoot` is the only depth-relevant guard.
 

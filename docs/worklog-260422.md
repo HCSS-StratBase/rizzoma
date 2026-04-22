@@ -63,6 +63,33 @@ Screenshots + README at `screenshots/260422-deeper-features-at-depth/`.
 
 **No depth-specific gating in any rich-feature code path.** Same `RizzomaBlip` React component handles every level. `!isTopicRoot` is the only depth-relevant guard in the codebase (controls collab seeding). Hryhorii can fully edit deeply-nested blips with every editor capability.
 
+## Late evening: depth-10 reply chain test (commits `0ec7c005`, then exhaustive D10 click-test)
+
+User asked: "test at depth 10". Built D1→...→D10 chain via API. Discovered Rizzoma's "subblip drill-down" pattern: full topic view doesn't render the entire chain inline (smart UX), but every blip is **deep-linkable** at any depth via `/#/topic/:waveId/:blipPathSuffix` and gets the full editor when focused.
+
+**First-pass claim was overreach** — claimed "100% verified" after only testing reach + plain-text edit + save. User correctly pushed back: "100% verified with ALL functionality?!?!?". Went back and exhaustively click-tested every editor path AT D10:
+
+| Feature at DEPTH-10 | Result |
+|---|---|
+| Bold (Ctrl+B) | ✅ `<strong>BD</strong>` |
+| Italic (Ctrl+I) | ✅ `<em>it</em>` |
+| Emoji picker | ✅ 🤩 |
+| @mention popup + pill | ✅ `<span class="mention" data-id="1">@John Doe</span>` |
+| #tag | ✅ `#d10` |
+| ~task | ✅ `~Test` |
+| Code block (` ``` ` shortcut) | ✅ Full CodeBlockLowlight with 30-language selector |
+| Gadget palette + YouTube embed | ✅ `<iframe src="youtube.com/embed/oHg5SJYRHA0">` |
+| Image upload via 🖼️ | ✅ file on VPS disk at `/app/data/uploads/tiny-blue-d10-...png` |
+| gear → Delete blip | ✅ CouchDB doc `deleted: True, rev: 32-` |
+
+10/10 features work at D10 same as at D3. **No depth-related limit anywhere.** Screenshots + README at `screenshots/260422-depth10-test/`.
+
+## Process improvement (this session)
+
+User caught me TWO times today on the same class of mistake (overclaiming verification + missing required Tana tags). Saved both as feedback memories:
+- `feedback_tana_project_tags.md` — every Rizzoma Tana entry needs `#Rizzoma` + `#Rizzoma_modernization` on top of `#discussion`/`#task`. SYSTEM_INSTRUCTIONS.md doesn't inline these IDs, which is what made the mistake repeatable. Now codified in CLAUDE.md (commit `6c870d13`).
+- Lesson on overclaiming verification: don't say "100% verified" if any path is by-inference. Click-test if the user's standard requires empirical proof.
+
 ## Commits today
 
 | SHA | Description |
@@ -72,6 +99,10 @@ Screenshots + README at `screenshots/260422-deeper-features-at-depth/`.
 | `954f8968` | test: Playwright E2E verification for ALL Hryhorii-reported issues |
 | `b109cc98` | test: deep-editing verification at DEPTH-3 (edit, emoji, delete) |
 | `48d5608a` | test: every rich-feature works at DEPTH-3 (mention/tag/task/code/gadget/image) |
+| `0a81292a` | docs: refresh after depth-feature audit (worklog-260422 + headers) |
+| `6c870d13` | docs: codify Tana project-tag requirement in CLAUDE.md |
+| `0ec7c005` | test: depth-10 reply chain — every level reachable + editable |
+| (TBD) | test: every rich-feature works at D10 too (exhaustive click-test) |
 
 ## VPS state
 
