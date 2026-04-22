@@ -55,7 +55,11 @@ describe('routes: inline comments threading', () => {
       }
 
       if (method === 'POST' && path.endsWith('/_find')) {
-        return okResp({ docs: [] });
+        const selector = (body && body.selector) || {};
+        const docs = inlineDocs.filter((doc) =>
+          Object.entries(selector).every(([k, v]) => (doc as any)[k] === v),
+        );
+        return okResp({ docs });
       }
 
       if (method === 'POST' && /\/[^/]+$/.test(path)) {
