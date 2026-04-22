@@ -151,3 +151,40 @@ After the cleanup-batch deployment, knocked off the entire backlog:
 ## VPS state
 
 `138.201.62.161:8200` rebuilt 2026-04-21 23:53 UTC from commit `c4844c73`. The 4 test-only commits since then are screenshots + READMEs only — no code changes. VPS doesn't need a re-deploy.
+
+## Late-night session: VPS production-build path now green
+
+Switched VPS from dev container to production target on `:8201` (alongside dev on `:8200`). Three Dockerfile bugs unmasked by the production install path, fixed in sequence:
+
+| Commit | Bug | Fix |
+|---|---|---|
+| `aa63d4c5` | Production CMD path was `dist/server/app.js` but tsc preserves `src/` hierarchy → output at `dist/server/server/app.js` | Update CMD path |
+| `b0ed1a15` | `parse5` was a transitive dev-only dep via vite/jsdom, but `sectionAttribution.ts` imports it at runtime → `Cannot find package 'parse5'` after `npm install --omit=dev` | `npm install --save parse5@8` |
+| `b6f8793d` + `40cfb0e2` | `USER node` couldn't write `/app/logs` (winston) or `/app/data/uploads` (uploads route) → `EACCES` crash before listen | Pre-create dirs + chown to node:node before USER directive |
+
+Verification:
+- `curl http://localhost:8201/api/health → HTTP 200 {status:ok, couchdb.ok 2ms}`
+- All OAuth env (Google/Facebook/Microsoft) + SMTP + new SESSION_SECRET present in container
+- Dev container on :8200 unaffected (same SESSION_SECRET hash so existing sessions transfer if we cut over)
+
+HTTPS still blocked on Hetzner Cloud firewall (port 80 inbound times out → Let's Encrypt webroot challenge can't complete). Out of scope for tonight.
+
+### CI gates tightened (#147)
+
+`build` job's `npm install` was `continue-on-error: true`, so an install failure silently skipped typecheck + vitest while ci-gate marked the run green (skipped jobs treated as passes). Hardened (`87c5e988`):
+
+- Install is hard-fail (no more continue-on-error).
+- Typecheck + vitest are unconditional gates in the build job.
+- ci-gate aggregator only allows "skipped" for downstream jobs (browser-smokes, perf-budgets, health-checks); `build` itself MUST be "success".
+
+Verified locally: `tsc --noEmit` 0 errors, vitest 186/193 (7 skipped, 0 failed, up from 183 at the start of the day).
+
+## Late-night commits
+
+| SHA | Description |
+|---|---|
+| `aa63d4c5` | fix: Dockerfile production CMD path was wrong |
+| `b0ed1a15` | fix: add parse5 as direct dep |
+| `b6f8793d` | fix: Dockerfile production needs /app/logs writable |
+| `40cfb0e2` | fix: also need /app/data/uploads writable |
+| `87c5e988` | ci: tighten typecheck + vitest as hard gates (#147) |

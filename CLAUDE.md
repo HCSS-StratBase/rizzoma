@@ -4,6 +4,20 @@
 
 This file is a lightweight status guide for the active branch. Older "phase" timelines, demo-mode flows, and auto-commit scripts are historical only—use real authentication and the current branch backlog below.
 
+## Credentials — ALWAYS check `.env` first
+
+Before asking the user for OAuth/SMTP/API credentials, **read `/mnt/c/Rizzoma/.env`**. It contains:
+- `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET`
+- `FACEBOOK_APP_ID` + `FACEBOOK_APP_SECRET`
+- `MICROSOFT_CLIENT_ID` + `MICROSOFT_CLIENT_SECRET` + `MICROSOFT_TENANT`
+- `SMTP_*` (Gmail SMTP for notifications)
+- `SSH_PASS`
+- `CLIENT_URL` + `APP_BASE_URL` defaults
+
+The file is `.gitignore`d (so secrets don't leak), but it lives on local disk and is the source of truth for all third-party credentials. SYSTEM_INSTRUCTIONS.md inlines war_datasets / Zotero / Tana MCP creds, but NOT these — so searching SYSTEM_INSTRUCTIONS alone will incorrectly conclude they're missing.
+
+When deploying these to the VPS, copy the relevant env vars into `docker-compose.yml`'s `environment:` block on the VPS (the VPS doesn't have access to the local `.env`).
+
 ## Tana posting — REQUIRED tags for Rizzoma entries
 
 Every Tana entry posted from this project MUST include BOTH the type tag AND the project tags. Repeat-mistake on 3 sessions; do not make a fourth.
@@ -115,6 +129,28 @@ regression.
   `FEAT_ALL=0` explicitly.
 
 ## Recently Completed Highlights
+- **VPS production-build path now green (2026-04-22)**: `app-prod`
+  service is healthy on `:8201` alongside dev `:8200`. Three Dockerfile
+  bugs found + fixed in sequence: (a) `aa63d4c5` — production CMD path
+  was `dist/server/app.js` but tsc preserves `src/` hierarchy so
+  output is at `dist/server/server/app.js`; (b) `b0ed1a15` — `parse5`
+  was a transitive dev-only dep via vite/jsdom but `sectionAttribution`
+  imports it at runtime, so production install (`--omit=dev`) was
+  missing it; (c) `b6f8793d`/`40cfb0e2` — `USER node` couldn't write
+  to `/app/logs` (winston) or `/app/data/uploads` (uploads route),
+  pre-create + chown both at the production stage. Verified
+  `curl :8201/api/health → 200`, OAuth env (Google/Facebook/Microsoft)
+  + SMTP + new SESSION_SECRET (`b2DPa6...m-59`) all present in container.
+  HTTPS still blocked on Hetzner inbound port 80 (Let's Encrypt webroot
+  challenge times out — needs Hetzner Cloud firewall opened, separate
+  task).
+- **CI gates tightened (2026-04-22, #147)**: `build` job's
+  `npm install` was `continue-on-error: true`, so an install failure
+  silently skipped typecheck + vitest while ci-gate marked the run
+  green. Hardened: install is now hard-fail, typecheck + vitest are
+  unconditional gates, and ci-gate only allows "skipped" for downstream
+  jobs (browser-smokes, perf-budgets, health-checks). Verified locally:
+  tsc 0 errors, vitest 186/193 (7 skipped, 0 failed). Commit `87c5e988`.
 - **BUG #43 — gear-menu "Delete blip" 404 (2026-04-21)**: Reported by
   Hryhorii against the live VPS. Root cause: `linksRouter` was mounted
   at `/api` in `app.ts`; its `DELETE /:from/:to` route expanded to
