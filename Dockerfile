@@ -33,6 +33,10 @@ RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit
 
 COPY --from=builder /app/dist ./dist
 
+# winston FileTransport mkdirs /app/logs at startup; USER node can't write to
+# /app (owned by root from COPY), so pre-create the dir and chown it.
+RUN mkdir -p /app/logs && chown -R node:node /app/logs
+
 USER node
 EXPOSE 8788
 
