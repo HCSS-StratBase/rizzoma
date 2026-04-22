@@ -1,4 +1,12 @@
+import { describe, it, expect, vi } from 'vitest';
 import express from 'express';
+
+// Stub CouchDB module so the /api/health handler reports a healthy backend
+// without needing a real CouchDB instance running locally.
+vi.mock('../server/lib/couch.js', () => ({
+  couchDbInfo: vi.fn().mockResolvedValue({ version: '3.3.3-test' }),
+}));
+
 import healthRouter from '../server/routes/health';
 
 describe('routes: /api/health', () => {
@@ -16,4 +24,3 @@ describe('routes: /api/health', () => {
     expect(body).toMatchObject({ status: 'ok' });
   });
 });
-

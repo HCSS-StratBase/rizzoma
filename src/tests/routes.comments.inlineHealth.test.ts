@@ -6,6 +6,7 @@ import { FEATURES } from '@shared/featureFlags';
 
 vi.mock('../server/lib/couch.js', () => ({
   view: vi.fn().mockResolvedValue({ rows: [] }),
+  find: vi.fn().mockResolvedValue({ docs: [] }),
   insertDoc: vi.fn(),
   getDoc: vi.fn(),
   updateDoc: vi.fn(),
