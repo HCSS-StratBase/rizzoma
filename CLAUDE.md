@@ -18,6 +18,26 @@ The file is `.gitignore`d (so secrets don't leak), but it lives on local disk an
 
 When deploying these to the VPS, copy the relevant env vars into `docker-compose.yml`'s `environment:` block on the VPS (the VPS doesn't have access to the local `.env`).
 
+## Hetzner — where to look BEFORE doing anything firewall/SSH/console-related
+
+The Rizzoma VPS at `138.201.62.161` is a **bare-metal dedicated server** (Hetzner Robot, server `#2480874`, FSN1-DC8) — NOT a Cloud instance. There is no Hetzner Cloud firewall in front of it; firewall lives on the host (iptables / UFW) or in Robot's "Host Firewall" feature for dedicated servers. Cloud-API tokens (64-char hex) are irrelevant here.
+
+**Authoritative reference docs in GDrive — read FIRST when anything Hetzner-related comes up:**
+
+| File | What it has |
+|---|---|
+| `/mnt/g/My Drive/RuBase/Transparent battlefield/feature-extraction/HETZNER_SSH_SAGA.md` | **Most important.** Full 2026-04-01 SSH-lockout post-mortem. Contains the working Robot webservice password, full Robot API recipes (rescue mode + hardware reset + firewall endpoint), the fail2ban-with-`iptables-allports` red herring, the ControlMaster mux-socket gotcha, and the lessons learned. |
+| `/mnt/g/My Drive/RuBase/Projects overview/fix_hetzner_firewall.py` | Selenium script automating Hetzner web Console login. Has the web Console credentials inlined. |
+| `/mnt/g/My Drive/RuBase/Apps/ruw-analyze - refactor - 250209 - Copy/HETZNER_DEPLOYMENT_STATUS.md` | Older deployment status from a different app on the same server. War_datasets PostgreSQL creds. |
+
+**Verified-working credentials (2026-04-23):**
+
+- **Robot webservice** (`https://robot-ws.your-server.de`, also Robot panel login): user `#ws+MMV3d9rH`, password `5Js4m@rMKuEAWG7`. Test: `curl -u '#ws+MMV3d9rH:5Js4m@rMKuEAWG7' https://robot-ws.your-server.de/server` → `HTTP 200`. **`HETZNER_ROBOT_PASS=d6_96!_udYW!-uWw4BrLr2q` in `/mnt/c/Rizzoma/.env` is WRONG** — that value is a stale root SSH password, not the Robot password.
+- **Hetzner web Console** (`https://accounts.hetzner.com/login`): `sdspieg@gmail.com` / `S#$k5dZ*JEbb7GJ`.
+- **Root SSH password** (current, after the 2026-04-01 rescue-mode reset): `StratBase2026!`. Older values `r6XPuJKbnm4k5G` and `d6_96!_udYW!-uWw4BrLr2q` are both stale. SSH **key auth** is preferred and is what the Rizzoma deploy flow uses.
+
+Never claim "Hetzner Cloud firewall is blocking X" without first verifying whether you actually mean a dedicated-server firewall (managed via Robot, not Cloud Console). For this server, you don't.
+
 ## Tana posting — REQUIRED tags for Rizzoma entries
 
 Every Tana entry posted from this project MUST include BOTH the type tag AND the project tags. Repeat-mistake on 3 sessions; do not make a fourth.
