@@ -246,18 +246,26 @@ async function runSmoke(browserName) {
     }
     await overflowToggle.click().catch(() => {});
 
-    const editor = page.locator('.ProseMirror').first();
+    // Scope the editor selector to the BLIP under test. As of commit
+    // 198656c5 (2026-04-14, "feat: topic auto-enters edit mode"),
+    // authenticated users see the topic-root in edit mode on load.
+    // That mounts a second `.ProseMirror` for the topic editor,
+    // so `.ProseMirror.first()` would match the topic editor (rendered
+    // higher in the DOM) rather than the blip editor we just opened.
+    // Typing into the topic editor leaves the blip editor untouched
+    // and breaks the Done -> read-mode handoff.
+    const editor = page.locator(`[data-blip-id="${blipId}"] .ProseMirror`).first();
     await editor.waitFor({ timeout: 5000 });
     await editor.click({ position: { x: 20, y: 20 }, force: true });
     await page.keyboard.type('Playwright toolbar smoke test. ');
-    await page.locator('[data-testid="blip-menu-bold"]').click();
+    await page.locator(`[data-blip-id="${blipId}"] [data-testid="blip-menu-bold"]`).first().click();
     await page.keyboard.type('Bold text');
-    await page.locator('[data-testid="blip-menu-bold"]').click();
+    await page.locator(`[data-blip-id="${blipId}"] [data-testid="blip-menu-bold"]`).first().click();
 
     log(browserName, 'Submitting edit to return to read mode');
-    const doneButton = page.locator('[data-testid="blip-menu-done"]').first();
+    const doneButton = page.locator(`[data-blip-id="${blipId}"] [data-testid="blip-menu-done"]`).first();
     await doneButton.click();
-    await ensureSelector(page, '[data-testid="blip-menu-read-surface"]', 'read-only menu restored', browserName, { timeout: 10000 });
+    await ensureSelector(page, `[data-blip-id="${blipId}"] [data-testid="blip-menu-read-surface"]`, 'read-only menu restored', browserName, { timeout: 10000 });
 
     log(browserName, 'Checking read-only gear overflow');
     const gearToggle = page.locator('[data-testid="blip-menu-gear-toggle"]').first();
