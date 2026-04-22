@@ -1,8 +1,12 @@
 # Claude Session Context (last refreshed 2026-04-22)
 
-**Status at refresh**: BUG #43 fix (`c4844c73`) deployed to VPS 2026-04-21 23:53 UTC, verified live. Issues #42 + #43 both closed on GitHub. VPS container picks up `c4844c73` — all of #40, #41, #42, #43 plus `FEAT_ALL=1` are active. VPS_DEPLOYMENT.md refreshed with the actual deployment path (`/data/large-projects/stephan/rizzoma`), container env, and upgrade procedure.
+**Status at refresh**: master @ `48d5608a` (4 commits past the BUG #43 fix `c4844c73`, all test-only — screenshots + READMEs, no code changes). VPS container at `c4844c73` from 2026-04-21 23:53 UTC, no re-deploy needed.
 
-No new bugs reported since yesterday. Outstanding items tracked in `docs/VPS_DEPLOYMENT.md` action-items section: SESSION_SECRET rotation, OAuth wiring, deploy script, HTTPS/nginx.
+**Today's work (2026-04-22)**: comprehensive depth-feature audit on the live VPS. Every Hryhorii-reported symptom verified end-to-end via Playwright (`screenshots/260421-bug43-delete-blip/`, `260421-bug40-subblip-nesting/`, `260421-plus-marker-persistence/`). Then drilled into editing at DEPTH-3 (`screenshots/260422-deep-editing-verification/` — bold/italic/emoji/Done/Delete/cascade) and finally every remaining rich feature at DEPTH-3 (`screenshots/260422-deeper-features-at-depth/` — @mention popup/`#tag`/`~task`/code block/gadget palette/YouTube embed/image upload). **No depth-specific gating exists in any rich-feature code path** — same React component renders at every level; `!isTopicRoot` is the only depth-relevant guard.
+
+Side findings (non-depth, worth fixing): (1) gadget palette is too greedy and inserts into both topic-root AND active deep blip simultaneously; (2) Vite dev-server doesn't proxy `/uploads/*` to Express so uploaded image files land on disk but don't display via direct fetch (production builds work); (3) topic-root toolbar's own emoji/insert buttons hit topic root, not the active deep editor — D3's own toolbar is fully isolated and works correctly.
+
+Issues #42 + #43 closed on GitHub. No new bugs reported. Outstanding items tracked in `docs/VPS_DEPLOYMENT.md` action-items: SESSION_SECRET rotation, OAuth wiring, deploy script, HTTPS/nginx.
 
 
 
