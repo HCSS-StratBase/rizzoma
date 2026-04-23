@@ -38,6 +38,26 @@ The Rizzoma VPS at `138.201.62.161` is a **bare-metal dedicated server** (Hetzne
 
 Never claim "Hetzner Cloud firewall is blocking X" without first verifying whether you actually mean a dedicated-server firewall (managed via Robot, not Cloud Console). For this server, you don't.
 
+## BLB structure — fractal bullets required everywhere (Rizzoma, local md, Tana)
+
+When posting or documenting in BLB-shape (the standard for this project's Rizzoma topics, structured local md docs, AND Tana posts), the **fractal rule is non-negotiable**: every blip's body must itself be a bulleted list of further atomic labels, recursively, all the way down. Flat `<div>` paragraphs are NOT BLB — they kill the fractal because the `[+]` subblip marker semantically anchors to a list item that becomes its Label.
+
+**Read `docs/BLB_LOGIC_AND_PHILOSOPHY.md` (sections 1–18) before any BLB-shaped writeup. Then run this 5-row pre-commit checklist at every level, in every destination, BEFORE saying done:**
+
+| # | Check | Concrete test |
+|---|---|---|
+| 1 | Bullet structure exists | Rizzoma: dump `editor.innerHTML` before Done — any `<div>` body block = FAIL. md: ≥2 consecutive non-list lines = FAIL. Tana: every "fact" is a child node, not crammed into one node's body. |
+| 2 | Labels are atomic | First-line text is 2–5 words, one thought, scannable as a TOC entry. No parens, em-dashes, commas joining ideas. Read it out loud: TOC entry or sentence? Sentence = FAIL. |
+| 3 | No prose body anywhere | If a line would have a period in the middle, it's at least two bullets. |
+| 4 | Detail goes deeper, not wider | Any bullet with ≥2 sub-thoughts gets its own `[+]` subblip with bulleted children. |
+| 5 | Parent renders as clean TOC | Collapse all → only labels-with-`[+]` visible, no inline detail = pass. |
+
+**Rizzoma editor mechanic for BLB-correct subblips:** when you land in a freshly-Ctrl+Enter'd subblip, the editor starts as `<div><br></div>`. The FIRST keystrokes must be the bullet-list toggle — **toolbar `≡` button (most reliable; Ctrl+Shift+8 also works)**. Only THEN type each item; Enter for new bullet. For items needing detail, cursor at end → Ctrl+Enter to recurse → toggle `≡` again → bullets, etc. Verify with `editor.innerHTML` showing `<ul><li>...</li></ul>` not `<div>...</div>` before clicking Done.
+
+**Worked-example failure (2026-04-23, do not repeat):** posted 5 sibling bullets under the Hetzner blip in the HTU licenses/creds/passwords topic. Labels were prose ("Robot webservice (rescue / reboot / firewall API)" instead of "Robot webservice"). Bodies were `<div><span>URL: …</span></div><div><span>Email: …</span></div>` instead of `<ul><li>URL [+]</li><li>Email [+]</li></ul>`. The fix was delete + redo with proper fractal bullets. Full root-cause in `~/.claude/projects/-mnt-c-Rizzoma/memory/feedback_blb_fractal_bullets_required.md`.
+
+**Scripting BLB-correct content into legacy rizzoma.com via Playwright** is a separate operational concern — selectors, Playwright pitfalls (`btn.click()` vs `page.locator().click()`, `keyboard.type` vs `insertText` for `#@~$*<>`), Done-vs-Edit disambiguation, autosave timing, etc. — fully documented at [`docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md`](docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md). Read that BEFORE attempting any headless Rizzoma edit; the philosophy doc [`docs/BLB_LOGIC_AND_PHILOSOPHY.md`](docs/BLB_LOGIC_AND_PHILOSOPHY.md) §19 has the pre-commit checklist that ties them together.
+
 ## Tana posting — REQUIRED tags for Rizzoma entries
 
 Every Tana entry posted from this project MUST include BOTH the type tag AND the project tags. Repeat-mistake on 3 sessions; do not make a fourth.

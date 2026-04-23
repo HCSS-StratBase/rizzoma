@@ -86,14 +86,32 @@ Both replies and inline comments are **complete blip documents** with:
 *   Their own toolbar when expanded
 *   Recursive/fractal structure - blips within blips within blips
 
-### A Blip is a Blank Sheet
-When you create a reply or inline comment, you get a **blank rich text container**. The user decides what to put in it:
-*   A bulleted list (common for structured content)
-*   Plain unbulleted text (quick comment)
-*   Bold heading, links, images
-*   Any combination
+### A Blip is a Blank Sheet — but the structural default is BULLETS
 
-The collapsed label shows the **first line of whatever content** the user wrote - not necessarily bulleted.
+When you create a reply or inline comment, you get a **blank rich text container**. The user decides the *formatting style* (bold, italics, links, images, headings, colour). What the user does **NOT** get to choose freely is the *structural primitive* — that is fixed:
+
+> **Bullets are the structural primitive of BLB. The default for any body that might carry ≥2 thoughts is `<ul><li>` — a bulleted list of further atomic Labels, recursively.** Plain unbulleted text is a *terminal* choice for genuinely-leaf content (e.g. a single one-line clarification with no possibility of drill-down). Choosing it deliberately terminates the fractal at that node.
+
+Why bullets are non-negotiable:
+*   The `[+]` subblip marker can only anchor to a list item that becomes its Label. A flat `<div>` paragraph has no anchor. Without bullets the fractal terminates — there is no further drill-down possible from that body.
+*   The fractal IS the bullet. §1.21 ("Top-level blips are structured, and their children are structured recursively") is only true if every level has bullets to anchor recursion against.
+*   Compare: a Rizzoma blip whose body is `<ul><li>URL</li><li>Email</li><li>Password [+]</li></ul>` can grow indefinitely (Password could itself have a [+] subblip with 3 more bullets). A blip whose body is `<div>URL: foo</div><div>Email: bar</div>` is structurally a dead end.
+
+What the user **does** get to choose:
+*   Formatting style of each label (bold, italics, link, colour)
+*   Whether a given bullet has a `[+]` subblip (i.e. whether it has further children) or not
+*   Inline elements within a label: `@mention`, `~task`, `#tag`, `[+]` markers
+
+The collapsed label shows the **first line** of the content — which, for BLB-correct content, is the first `<li>`'s text.
+
+### When "plain unbulleted text" IS appropriate
+
+Only for terminal leaves where you've explicitly decided: this thought has no further structure to drill into. Examples:
+*   A one-line clarification: "This is the same account as the one above."
+*   A single quoted excerpt with no further commentary needed.
+*   An image with a one-line caption.
+
+If the body has ≥2 sentences, ≥2 thoughts, or any "and / also / which / because / plus" joining ideas — **the body is bullets, not paragraph.** No exceptions.
 
 ### Visual Example
 ```
@@ -1448,6 +1466,26 @@ All 24 screenshots are in `snapshots/blb-study/` with `260206-HHMM-description.p
 | `260206-1922-gadget-dropdown.png` | All 11 gadget types in palette |
 | `260206-1926-yesno-voted.png` | Yes\|No\|Maybe gadget after voting |
 | `260206-1928-insert-reply-button-inline-blip.png` | Insert Reply button splits text mid-word |
+
+---
+
+## 19. Pre-Commit BLB Checklist (added 2026-04-23)
+
+Before saying "done" on any BLB-shaped writeup — Rizzoma topic blips, structured local md docs, or Tana node trees — run this 5-row checklist at every level. The checklist exists because §3's "user decides" framing lets a careless writer ship structurally-broken BLB; this section is the binding constraint.
+
+| # | Check | Concrete test |
+|---|---|---|
+| 1 | **Bullet structure exists** | Rizzoma: dump `editor.innerHTML` before clicking Done — any `<div>` body block (instead of `<li>`) = FAIL. Local md: ≥2 consecutive non-list lines in a "navigable info" section = FAIL. Tana: every fact is a child node, not crammed into one node's body field. |
+| 2 | **Labels are atomic** | First-line text is 2–5 words, one thought, scannable as a TOC entry. No parentheses, em-dashes, or commas joining ideas. Read the label out loud — does it sound like a TOC entry, or a sentence? Sentence = FAIL. |
+| 3 | **No prose body anywhere** | If a line in a body would have a period in the middle, it's at least two bullets. Convert. |
+| 4 | **Detail goes deeper, not wider** | Any bullet with ≥2 sub-thoughts gets its own `[+]` subblip with bulleted children. Don't let a body grow horizontally with semicolons; recurse. |
+| 5 | **Parent renders as clean TOC** | Collapse all → only labels-with-`[+]` visible, no inline detail = pass. If you see prose in collapsed view, restructure. |
+
+**Worked-example failure (2026-04-23, codified this section):** posted 5 sibling bullets under the Hetzner blip in the *HTU licenses/creds/passwords* topic. Labels were prose ("Robot webservice (rescue / reboot / firewall API)" — 8 words and a parenthetical instead of "Robot webservice"). Bodies were `<div><span>URL: …</span></div><div><span>Email: …</span></div>` instead of `<ul><li>URL [+]</li><li>Email [+]</li></ul>`. The bodies looked superficially fine when typed but persisted as flat divs, killing the fractal at depth 2. The fix was delete + redo with proper bulleted bodies. This checklist would have caught it on row 1 (Bullet structure exists) before save.
+
+**Operational mechanics for scripting this in the legacy rizzoma.com editor via Playwright are documented separately in [`RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md`](RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md)** — six rules learned the hard way (real `page.locator(...).click()` for toolbar buttons, `keyboard.insertText()` for `#@~` text, etc.).
+
+**Cross-reference:** the user-instruction-side framing of this rule lives in `/mnt/c/Rizzoma/CLAUDE.md` (project-local, load-on-every-Rizzoma-session) and `/mnt/g/My Drive/SYSTEM_INSTRUCTIONS.md` (system-wide, synced to all three CLI configs). The auto-memory entry that triggers it on every Rizzoma session is `~/.claude/projects/-mnt-c-Rizzoma/memory/feedback_blb_fractal_bullets_required.md`.
 
 ---
 
