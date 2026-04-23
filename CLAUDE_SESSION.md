@@ -1,9 +1,18 @@
-# Claude Session Context (2026-02-10)
+# Claude Session Context (2026-04-24)
 
 **Read this file first when resuming work on this project.**
 
 ## Current Branch
 `feature/rizzoma-core-features` (main branch is `master`)
+
+## Latest Work: Production Perf Baseline (2026-04-24)
+
+- `perf-harness.mjs` now supports `RIZZOMA_PERF_RENDER=lite|full` instead of hard-coding lite mode, and metrics record `renderProfile` plus `perfMode`.
+- `scripts/perf-budget.mjs` now supports `PERF_SNAPSHOT_DIR`, checks stage-local duration by default, and only checks absolute page TTF when `PERF_BUDGET_CHECK_TTF=1`.
+- Public-prod full-render 100-blip baseline passed against `https://138-201-62-161.nip.io`: landing-labels stage 1193.7ms, expanded-root stage 524.5ms, FCP 740ms, memory 33-36MB, labels 100/100. Artifacts: `screenshots/260424-prod-perf-baseline/`.
+- `test-toolbar-inline-smoke.mjs` now scopes toolbar/edit/gear selectors to the created blip’s `data-blip-id`; public-prod Chromium smoke passed with artifact `screenshots/260424-prod-toolbar-scoped/1776982255595-chromium-final.png`.
+- `src/tests/server.health.test.ts` mocks CouchDB and covers both OK/degraded health responses; `npm run test:health` passed without local Docker.
+- Residual visual debt: public-prod screenshots show broken external avatar placeholders in this WSL/browser environment. Next: full-render 500/1000-blip baselines, compare lite vs full, and decide whether avatar fallback/proxying belongs in the modernization backlog.
 
 ## Latest Work: Four-Item Sweep (2026-02-10)
 

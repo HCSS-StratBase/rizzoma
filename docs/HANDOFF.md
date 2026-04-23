@@ -1,10 +1,10 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-02-04 (BLB child unread highlight removed; BLB snapshots refreshed)
+Last Updated: 2026-04-24 (production-target full-render perf baseline added; health tests made deterministic)
 
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.
-- The "Current State" section below reflects `feature/rizzoma-core-features` as of 2026-02-03; revalidate after further changes.
+- The "Current State" section below reflects `feature/rizzoma-core-features` as of 2026-04-24; revalidate after further changes.
 
 ### Drift warnings (actively curating)
 - Some onboarding/status docs (`README*.md`, `README_MODERNIZATION.md`, `MODERNIZATION_STRATEGY.md`, `PARALLEL_DEVELOPMENT_PLAN.md`) still talk about demo-mode shortcuts, “all core features green,” or aggressive auto-merge flows that predate the unread/perf backlog. Treat them as historical until we rewrite them with the current perf harness + CI gating expectations.
@@ -19,13 +19,17 @@ Branch context guardrails:
 - Remaining historical docs still promote `npm run start:all` or demo-mode flows; use the branch-specific guidance in `docs/RESTART.md` + `docs/HANDOFF.md` instead.
 - Operational scripts (`scripts/deploy-updates.sh`, `scripts/create-bundle.sh`) still reference demo-mode URLs; treat those references as historical and update if the scripts are used again.
 - Landing view parity: topic landing page must match `screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-main.png` — only root labels visible, no children/body/editor until user clicks “+”. Perf harness landing metric should measure this collapsed state; expansion metrics can be separate.
+- April production work that landed on `master` is not automatically on this active branch. Verify branch-native code and tests before assuming a `master` fix is present here.
 
 PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (feature/rizzoma-core-features @ 2026-02-04)
+Current State (feature/rizzoma-core-features @ 2026-04-24)
 - FEAT_ALL required: start both server (:8000) and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
+- Tests last run (2026-04-24): public-prod full-render perf baseline passed at `https://138-201-62-161.nip.io` with 100 seeded blips (`RIZZOMA_PERF_RENDER=full`, artifacts in `screenshots/260424-prod-perf-baseline/`): landing-labels stage 1193.7ms, expanded-root stage 524.5ms, FCP 740ms, memory 33-36MB, labels 100/100. `PERF_SNAPSHOT_DIR=screenshots/260424-prod-perf-baseline PERF_BUDGET_EXPECTED_BLIPS=100 PERF_BUDGET_MIN_RATIO=1 node scripts/perf-budget.mjs` passed on stage-local budgets. Optional absolute-TTF diagnostic still flags expanded-root at 3522.9ms vs 3000ms. `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_E2E_BROWSERS=chromium RIZZOMA_SNAPSHOT_DIR=screenshots/260424-prod-toolbar-scoped npm run test:toolbar-inline` passed. `npm run test:health` passed (10 tests) after mocking CouchDB in `server.health.test.ts`; `npm test -- --run src/tests/client.BlipMenu.test.tsx` passed (18 tests); `git diff --check` passed.
+- Perf tooling: `perf-harness.mjs` now supports `RIZZOMA_PERF_RENDER=lite|full` and records `renderProfile`/`perfMode` in metrics. `scripts/perf-budget.mjs` supports `PERF_SNAPSHOT_DIR`, checks stage-local duration by default, and only checks absolute page TTF when `PERF_BUDGET_CHECK_TTF=1`.
+- Visual residual from 2026-04-24 public-prod screenshots: external avatar images render as broken placeholders in this environment; track separately from perf harness changes.
 - Tests last run (2026-02-04): `node test-blb-snapshots.mjs` pass with snapshots under `snapshots/blb/1770165748162-*`. Earlier 2026-02-03 runs: Playwright `npm run test:toolbar-inline` pass (assertions active; snapshots under `snapshots/toolbar-inline/1770080797945-*-final.png`). Playwright `npm run test:follow-green` pass (desktop+mobile) with snapshots under `snapshots/follow-the-green/1770081675832-*` and `snapshots/follow-the-green/1770081713734-*`. Earlier 2026-02-03 runs: `npm run test:health` pass; `npm test -- --run src/tests/client.BlipMenu.test.tsx` pass; perf harness 1000 blips pass with metrics under `snapshots/perf/metrics-1770076098998-*.json` and renders under `snapshots/perf/render-1770076098998-*.png`. Prior runs: `npm test -- --run src/tests/routes.topics.follow.test.ts` pass (2026-02-02). Historical BLB snapshot runs remain below; re-run before merges.
 - BLB inline `[+]` markers now navigate into subblip documents; Ctrl+Enter inserts marker and navigates into the new subblip (topic + blip editors).
 - Topic meta-blip now renders via `RizzomaBlip` in normal mode (topic root renderMode) while keeping the topic toolbar + editor override; root-level blips still render as standard `RizzomaBlip` instances inside the unified container.
@@ -43,7 +47,7 @@ Open PRs
 
 Next Work
 - Branch focus (current batch): keep changes small/flagged; land perf/resilience sweeps and adapter/health/backup work in slices.
-  - Perf/resilience sweeps: address 1k-blip perf harness failure (TTF + render count), add budgets/docs, and schedule runs.
+  - Perf/resilience sweeps: rerun production-target full-render baselines at 500/1000 blips, compare against lite mode, and investigate absolute-TTF drift plus broken external avatar placeholders.
   - Keep Playwright smokes/browser artifacts green; monitor follow-green socket delivery and toolbar parity as code changes land.
   - Health checks + CI gating: `/api/health` + inline comments/upload health tests pass locally; ensure CI coverage and alerting remain intact.
   - Backups: automate bundle + GDrive copy after merges and document cadence.

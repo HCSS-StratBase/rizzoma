@@ -1,0 +1,37 @@
+{
+  "timestamp": "1776982200094-landing-labels",
+  "waveId": "a06a92ca929702627f3fe6b93a009de6",
+  "expectedBlips": 100,
+  "actualBlips": 100,
+  "labelsVisible": 100,
+  "blipsRendered": 101,
+  "renderProfile": "full",
+  "perfMode": "full",
+  "renderMode": "landing-labels",
+  "windowed": {
+    "target": 100,
+    "elapsedMs": 2556.1,
+    "count": 100,
+    "timedOut": false
+  },
+  "performance": {
+    "timeToFirstRender": 2562.1,
+    "stageDurationMs": 1193.7,
+    "firstContentfulPaint": 740,
+    "domComplete": 565.8,
+    "loadComplete": 565.8,
+    "memoryUsage": {
+      "used": 33,
+      "total": 58
+    },
+    "appMetrics": {}
+  },
+  "url": "https://138-201-62-161.nip.io#/topic/a06a92ca929702627f3fe6b93a009de6?layout=rizzoma&perf=full&perfRender=full&perfLimit=100",
+  "screenshot": "screenshots/260424-prod-perf-baseline/render-1776982200094-landing-labels.png",
+  "startedAt": 1776982212144,
+  "benchmarks": {
+    "firstRenderTarget": 3000,
+    "memoryTarget": 100,
+    "passed": true
+  }
+}

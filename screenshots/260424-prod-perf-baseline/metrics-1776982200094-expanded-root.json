@@ -1,0 +1,37 @@
+{
+  "timestamp": "1776982200094-expanded-root",
+  "waveId": "a06a92ca929702627f3fe6b93a009de6",
+  "expectedBlips": 100,
+  "actualBlips": 101,
+  "labelsVisible": 100,
+  "blipsRendered": 101,
+  "renderProfile": "full",
+  "perfMode": "full",
+  "renderMode": "expanded-root",
+  "windowed": {
+    "target": 100,
+    "elapsedMs": 3012.5,
+    "count": 101,
+    "timedOut": false
+  },
+  "performance": {
+    "timeToFirstRender": 3522.9,
+    "stageDurationMs": 524.5,
+    "firstContentfulPaint": 740,
+    "domComplete": 565.8,
+    "loadComplete": 565.8,
+    "memoryUsage": {
+      "used": 36,
+      "total": 58
+    },
+    "appMetrics": {}
+  },
+  "url": "https://138-201-62-161.nip.io#/topic/a06a92ca929702627f3fe6b93a009de6?layout=rizzoma&perf=full&perfRender=full&perfLimit=100",
+  "screenshot": "screenshots/260424-prod-perf-baseline/render-1776982200094-expanded-root.png",
+  "startedAt": 1776982213801,
+  "benchmarks": {
+    "firstRenderTarget": 3000,
+    "memoryTarget": 100,
+    "passed": true
+  }
+}

@@ -204,37 +204,38 @@ async function runSmoke(browserName) {
     const cleanPath = topicPath.replace(/^\//, '');
     await page.goto(`${cleanBase}/${cleanPath}${encodeURIComponent(waveId)}`, { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    const targetBlip = page.locator(`[data-blip-id="${blipId}"]`).first();
     await ensureSelector(page, `[data-blip-id="${blipId}"]`, 'root blip', browserName, { timeout: 15000 });
-    const targetExpand = page.locator(`[data-blip-id="${blipId}"] .blip-collapsed-row`).first();
+    const targetExpand = targetBlip.locator('.blip-collapsed-row').first();
     if (await targetExpand.count()) {
       await targetExpand.click();
     }
-    const readSurface = page.locator('[data-testid="blip-menu-read-surface"]');
+    const readSurface = targetBlip.locator('[data-testid="blip-menu-read-surface"]');
     if (!(await readSurface.count())) {
       log(browserName, 'Read toolbar not found on this page; capturing and skipping assertions');
       await captureSnapshot(page, browserName, 'no-read-toolbar');
       await browser.close();
       return;
     }
-    await ensureSelector(page, '[data-testid="blip-menu-collapse"]', 'read toolbar collapse', browserName, { timeout: 5000 });
-    await ensureSelector(page, '[data-testid="blip-menu-expand"]', 'read toolbar expand', browserName, { timeout: 5000 });
-    await ensureSelector(page, '[data-testid="blip-menu-read-surface"]', 'read-only inline toolbar', browserName, { timeout: 15000 });
+    await targetBlip.locator('[data-testid="blip-menu-collapse"]').waitFor({ timeout: 5000 });
+    await targetBlip.locator('[data-testid="blip-menu-expand"]').waitFor({ timeout: 5000 });
+    await readSurface.waitFor({ timeout: 15000 });
 
-    const editButton = page.locator('[data-testid="blip-menu-edit"]').first();
+    const editButton = targetBlip.locator('[data-testid="blip-menu-edit"]').first();
     await editButton.waitFor({ timeout: 10000 });
     log(browserName, 'Switching to edit mode');
     await editButton.click();
 
-    await ensureSelector(page, '[data-testid="blip-menu-edit-surface"]', 'edit-mode toolbar surface', browserName, { timeout: 10000 });
+    await targetBlip.locator('[data-testid="blip-menu-edit-surface"]').waitFor({ timeout: 10000 });
 
     for (const id of toolbarButtonIds) {
-      await ensureSelector(page, `[data-testid="${id}"]`, id, browserName, { timeout: 5000 });
+      await targetBlip.locator(`[data-testid="${id}"]`).first().waitFor({ timeout: 5000 });
     }
 
     log(browserName, 'Verifying edit overflow actions');
-    const overflowToggle = page.locator('[data-testid="blip-menu-overflow-toggle"]').first();
+    const overflowToggle = targetBlip.locator('[data-testid="blip-menu-overflow-toggle"]').first();
     await overflowToggle.click();
-    const overflowPanel = page.locator('.menu-dropdown-panel').first();
+    const overflowPanel = targetBlip.locator('.menu-dropdown-panel').first();
     await overflowPanel.waitFor({ timeout: 3000 });
     const expectedOverflowItems = ['Send', 'Copy comment', 'Playback history', 'Paste at cursor', 'Paste as reply', 'Copy direct link'];
     for (const label of expectedOverflowItems) {
@@ -246,23 +247,23 @@ async function runSmoke(browserName) {
     }
     await overflowToggle.click().catch(() => {});
 
-    const editor = page.locator('.ProseMirror').first();
+    const editor = targetBlip.locator('.ProseMirror').first();
     await editor.waitFor({ timeout: 5000 });
     await editor.click({ position: { x: 20, y: 20 }, force: true });
     await page.keyboard.type('Playwright toolbar smoke test. ');
-    await page.locator('[data-testid="blip-menu-bold"]').click();
+    await targetBlip.locator('[data-testid="blip-menu-bold"]').click();
     await page.keyboard.type('Bold text');
-    await page.locator('[data-testid="blip-menu-bold"]').click();
+    await targetBlip.locator('[data-testid="blip-menu-bold"]').click();
 
     log(browserName, 'Submitting edit to return to read mode');
-    const doneButton = page.locator('[data-testid="blip-menu-done"]').first();
+    const doneButton = targetBlip.locator('[data-testid="blip-menu-done"]').first();
     await doneButton.click();
-    await ensureSelector(page, '[data-testid="blip-menu-read-surface"]', 'read-only menu restored', browserName, { timeout: 10000 });
+    await readSurface.waitFor({ timeout: 10000 });
 
     log(browserName, 'Checking read-only gear overflow');
-    const gearToggle = page.locator('[data-testid="blip-menu-gear-toggle"]').first();
+    const gearToggle = targetBlip.locator('[data-testid="blip-menu-gear-toggle"]').first();
     await gearToggle.click();
-    const gearPanel = page.locator('.menu-dropdown-panel').first();
+    const gearPanel = targetBlip.locator('.menu-dropdown-panel').first();
     await gearPanel.waitFor({ timeout: 3000 });
     const readOverflowItems = ['Copy comment', 'Playback history', 'Paste as reply', 'Copy direct link'];
     for (const label of readOverflowItems) {

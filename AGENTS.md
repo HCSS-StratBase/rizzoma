@@ -71,7 +71,7 @@ codex exec '
     - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`). Ensure `http://localhost:3000/` is reachable before Playwright.
 
   Priority focus (current backlog):
-  1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile; lite-mode perf harness now passes (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB). Next: improve full-render perf beyond `perfRender=lite`.
+  1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile. `perf-harness.mjs` now supports `RIZZOMA_PERF_RENDER=lite|full`; public-prod full-render 100-blip baseline passed on 2026-04-24 (stage duration 1193.7ms landing / 524.5ms expanded, memory 33-36MB, artifacts in `screenshots/260424-prod-perf-baseline/`). Next: rerun at 500/1000 blips, compare full vs lite, and investigate optional absolute-TTF drift plus broken external avatar placeholders.
   2) BLB parity: inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity (toolbar only for expanded blips), unread green markers, and update BLB snapshots as needed. Latest set: `snapshots/blb/1770165748162-*` (2026-02-04).
   3) Toolbar parity: `test:toolbar-inline` now asserts the read toolbar (expanded via collapsed rows). Keep the read toolbar present and smokes green.
   4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green.
@@ -80,7 +80,7 @@ codex exec '
 
   Testing/CI hygiene:
   - Keep npm run test:toolbar-inline and npm run test:follow-green green; snapshots live under snapshots/<feature>/ and are uploaded as Actions artifacts.
-  - Update TESTING_STATUS.md and RIZZOMA_FEATURES_STATUS.md after targeted runs; call out gaps.
+  - Update TESTING_STATUS.md and RIZZOMA_FEATURES_STATUS.md after targeted runs; call out gaps. For custom perf artifact folders, run `PERF_SNAPSHOT_DIR=<dir> node scripts/perf-budget.mjs`.
   - If you need fresh screenshots locally without rerunning Playwright, run: npm run snapshots:pull
 
   Stop after this batch, refresh RESTORE_POINT.md to mark completions and the new checkpoint timestamp, and rewrite this Codex exec block (plus the mirror in docs/RESTART.md if it changed) with the next batch starting steps before exiting to bash.'

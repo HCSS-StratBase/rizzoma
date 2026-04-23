@@ -1,6 +1,10 @@
 # Rizzoma Feature Testing Status
 
 ## 🟢 Current Status
+- **Production-target perf baseline (2026-04-24, public prod, full render, 100 blips)**: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_PERF_BLIPS=100 RIZZOMA_PERF_RENDER=full RIZZOMA_SNAPSHOT_DIR=screenshots/260424-prod-perf-baseline npm run perf:harness` pass. Artifacts: `screenshots/260424-prod-perf-baseline/metrics-1776982200094-*.json` and `render-1776982200094-*.png`. Landing-labels stage 1193.7ms, FCP 740ms, memory 33MB, labels 100/100. Expanded-root stage 524.5ms, FCP 740ms, memory 36MB, blips 101/100. `PERF_SNAPSHOT_DIR=screenshots/260424-prod-perf-baseline PERF_BUDGET_EXPECTED_BLIPS=100 PERF_BUDGET_MIN_RATIO=1 node scripts/perf-budget.mjs` pass on stage-local budgets; optional `PERF_BUDGET_CHECK_TTF=1` still flags expanded-root absolute TTF at 3522.9ms.
+- **Browser smoke (2026-04-24, public prod)**: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_E2E_BROWSERS=chromium RIZZOMA_SNAPSHOT_DIR=screenshots/260424-prod-toolbar-scoped npm run test:toolbar-inline` pass. The smoke now scopes toolbar/edit/gear assertions to the created blip’s `data-blip-id` instead of the first matching toolbar on the page.
+- **Health checks (2026-04-24)**: `npm run test:health` pass (3 files, 10 tests). `server.health.test.ts` now mocks `couchDbInfo` and covers both `200 ok` and `503 degraded`, so local unit tests no longer require Docker/CouchDB availability.
+- **BlipMenu focused run (2026-04-24)**: `npm test -- --run src/tests/client.BlipMenu.test.tsx` pass (18 tests).
 - **Full Vitest run (2026-02-10)**: 44 test files passed, 146 tests passed, 3 skipped, **0 failures**. All 9 pre-existing failures fixed (permission-model mismatches, BlipMenu selector drift, feature flags missing in test env, inline comment visibility default, timeout tuning).
 - **Health checks (2026-02-03)**: `npm run test:health` pass (server health, inline comments health, upload edge cases).
 - **Perf harness (2026-02-03, 1000 blips)**: `RIZZOMA_PERF_BLIPS=1000 npm run perf:harness` pass; metrics under `snapshots/perf/metrics-1770076098998-*.json` and renders under `snapshots/perf/render-1770076098998-*.png` (stage durations ~1.40s landing / ~0.54s expanded, windowed 200 ~2.45s / ~2.72s; TTF ~2.45s landing / ~3.23s expanded).
@@ -20,6 +24,7 @@
 - **Browser smokes `test:follow-green` (2026-01-17)**: Desktop profile passes. Auto-navigation feature now works correctly.
 - Browser smokes (`npm run test:toolbar-inline`, `npm run test:follow-green`) are CI-required and upload snapshots even when the build fails. Keep them green.
 - `TESTING_STATUS.md` is a log, not a guarantee—always rerun targeted suites before merges.
+- Visual residual from 2026-04-24 public-prod screenshots: external avatar images appear as broken placeholders in this WSL/browser environment; track separately from the perf harness change.
 
 ## Recent fixes (2026-01-18)
 - **Mobile Modernization (PWA)**: Implemented complete mobile infrastructure with zero new dependencies:

@@ -9,7 +9,16 @@ const blipTarget = Number(process.env.RIZZOMA_PERF_BLIPS || 5000);
 const ownerEmail = process.env.RIZZOMA_E2E_USER_A || `perf-owner+${Date.now()}@example.com`;
 const password = process.env.RIZZOMA_E2E_PASSWORD || 'PerfHarness!1';
 const perfLimit = blipTarget;
-const perfQuery = `?layout=rizzoma&perf=full&perfRender=lite&perfLimit=${perfLimit}`;
+const requestedRenderProfile = (process.env.RIZZOMA_PERF_RENDER || 'lite').toLowerCase();
+const renderProfile = requestedRenderProfile === 'full' ? 'full' : 'lite';
+const perfMode = process.env.RIZZOMA_PERF_MODE || 'full';
+const perfQueryParams = new URLSearchParams({
+  layout: 'rizzoma',
+  perf: perfMode,
+  perfRender: renderProfile,
+  perfLimit: String(perfLimit),
+});
+const perfQuery = `?${perfQueryParams.toString()}`;
 const perfHeaders = { 'x-rizzoma-perf': '1' };
 const snapshotDir = process.env.RIZZOMA_SNAPSHOT_DIR || path.resolve('snapshots', 'perf');
 const timestamp = Date.now();
@@ -291,6 +300,8 @@ async function captureMetrics(waveId, creds) {
       actualBlips: stage.name === 'landing-labels' ? perfData.labelCount : perfData.blipCount,
       labelsVisible: perfData.labelCount,
       blipsRendered: perfData.blipCount,
+      renderProfile,
+      perfMode,
       renderMode: stage.name,
       windowed: windowed
         ? {
