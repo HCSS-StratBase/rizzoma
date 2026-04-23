@@ -21,6 +21,8 @@ Each rule is a thing I got wrong on 2026-04-23 trying to add 5 BLB-correct sibli
 5. **Ctrl+Enter URL doesn't update synchronously.** The subblip IS created and the editor IS in edit mode, but `page.url()` keeps returning the parent URL for several seconds. Detect the new subblip via DOM (`.blip-container.active.edit-mode` with a fresh `<div><br></div>` editor), not URL polling.
 6. **JS-set selection works AFTER real Playwright click establishes focus.** The pattern: `page.locator(...).click()` to focus the editor (real events fire), then `page.evaluate(() => { sel.removeAllRanges(); sel.addRange(range); })` to position the cursor precisely. Just `page.evaluate` for both leaves the editor un-focused as far as Rizzoma's input handlers are concerned.
 
+7. **`Ctrl+Enter` sometimes refuses to fire even after a real click + `End`.** Symptom: page URL doesn't change; no new subblip appears in DOM. The reliable workaround is to **type a real character + Backspace immediately before `Ctrl+Enter`**: `await page.keyboard.type('x'); await page.waitForTimeout(150); await page.keyboard.press('Backspace'); await page.waitForTimeout(150); await page.keyboard.press('Control+Enter')`. The `type('x')` triggers Rizzoma's full input-event chain (the editor commits to a "user is typing in this li" state); Backspace cleanly removes the character; the subsequent Ctrl+Enter then fires the inline-blip-creation handler reliably. Without this trick, the same Ctrl+Enter that worked on bullets 1-3 of a recursion can silently refuse on bullet 4. Discovered 2026-04-23 during the depth-3 recursion of fail2ban's "Bad settings" bullet — that bullet refused Ctrl+Enter through `End` + Ctrl+Enter, through `type(' ')` + Backspace + Ctrl+Enter (space-then-backspace was insufficient), AND through dispatched `KeyboardEvent('keydown', {ctrlKey: true, key: 'Enter'})`. Only `type('x')` + Backspace + Ctrl+Enter unblocked it.
+
 ---
 
 ## Verified-working selectors (legacy rizzoma.com, 2026-04-23)
@@ -157,6 +159,9 @@ To recurse into a deeper level (a body bullet that itself needs a [+] subblip wi
 | URL polling after Ctrl+Enter to detect navigation into new subblip | URL doesn't update synchronously; polling timed out even though the new subblip WAS created and active. Detect via DOM (`.blip-container.active.edit-mode` with a fresh empty editor) instead. |
 | Calling Done + Hide + immediate `page.goto(parent)` | Tripped `beforeunload` mid-autosave. Most-recently-typed content was lost. Wait ≥3.5s between Hide and navigation. |
 | Selecting all + Delete via `page.evaluate` with selection ranges, no real click on the editor first | Selection was technically set but Rizzoma's keydown handler didn't see the editor as the focused element. Real `page.locator(editor-or-button).click()` first, THEN evaluate-set selection works. |
+| `await page.keyboard.press('End'); await page.keyboard.press('Control+Enter')` after a JS-set selection | Sometimes works, sometimes silently no-ops (URL doesn't change). The flaky case happens often enough during depth-3 recursion that you need the type-x-backspace workaround (see Rule 7). |
+| `await page.keyboard.type(' '); await page.keyboard.press('Backspace'); await page.keyboard.press('Control+Enter')` (space variant) | INSUFFICIENT to unblock the flaky Ctrl+Enter. Use a real letter (`x`) instead of a space. Discovered the hard way 2026-04-23 on fail2ban's "Bad settings". |
+| Dispatched `new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, ... })` via `page.evaluate` | Did NOT trigger Rizzoma's Ctrl+Enter handler. Rizzoma listens for the trusted-input event chain, not synthetic events. Use `type('x') + Backspace + press('Control+Enter')` instead. |
 
 ---
 
