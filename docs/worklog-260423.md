@@ -115,7 +115,48 @@ In rough priority order:
 3. **Hetzner Robot webservice** — currently 401, needs activation in the Robot panel. Would give an alternative firewall-management path.
 4. **Production-target performance baseline** — once HTTPS is up, run `npm run perf:harness` against `:8201` (prod target with `FEAT_ALL=1` baked into the build, vs. dev which evaluates flags at runtime) and capture a baseline so future regressions are catchable.
 
-## Honest residual: container outbound to the public internet is broken (pre-existing)
+## OAuth end-to-end works (FOLLOW-UP — initially called residual)
+
+After HTTPS landed, the Google OAuth flow got all the way through Google's consent screen and back to our `/api/auth/google/callback`, but the server-side code-exchange POST to `https://oauth2.googleapis.com/token` was timing out. Symptom: `[auth] Google OAuth error: TypeError: fetch failed [cause]: AggregateError [ETIMEDOUT]`. Container couldn't reach public IPv4. Initially documented as "pre-existing infrastructure issue" — that was wrong.
+
+**Actual root cause** — uncovered via `tcpdump -nni any host 1.1.1.1` while triggering an outbound from inside the container:
+
+```
+veth116ef4c P   IP 172.18.0.5.39995 > 1.1.1.1.443: Flags [S]   ← container SYN
+br-...     In  IP 172.18.0.5.39995 > 1.1.1.1.443: Flags [S]   ← bridge ingress
+enp0s31f6  Out IP 138.201.62.161.39995 > 1.1.1.1.443: Flags [S]  ← MASQUERADE'd egress
+(no SYN-ACK ever returns)
+```
+
+Three TCP retransmits, all egress fine, no return packet. Cloudflare WAS receiving our SYN; the SYN-ACK was being dropped on the way back. Hetzner Robot host firewall is whitelist-mode and the **`established` rule that I had stripped earlier in the session was what was allowing return traffic** to ephemeral source ports.
+
+**The fix** (Hetzner firewall API has a hard limit of 10 input rules — found out after `INVALID_INPUT` errors on attempts to add an 11th): consolidated the existing `apps` rule (`8000-9999`) into `apps-and-ephemeral` (`8000-65535`) — covers the original app port range AND the Linux ephemeral source-port range (32768-60999) where MASQUERADE'd return traffic lands. New 10-rule firewall config:
+
+| Rule | Port |
+|---|---|
+| SSH | 22 |
+| http | 80 |
+| https | 443 |
+| 3443 | 3443 |
+| 8443 | 8443 |
+| pg-main | 5432-5434 |
+| pg-vector | 5439 |
+| pg-extra | 6543 |
+| **apps-and-ephemeral** | **8000-65535** |
+| 58888-tcp | 58888 |
+
+After the firewall propagated to active (~40s):
+- `docker exec rizzoma-app sh -c "nc -zvw5 142.251.127.95 443"` → `open` ✅
+- Clicked "Sign in with Google" in Playwright → URL became `https://138-201-62-161.nip.io/?layout=rizzoma` ✅
+- `GET /api/auth/me` → `{id: cbcce3861..., email: sdspieg@gmail.com, name: "Stephan De Spiegeleire", avatar: <Google avatar URL>}` ✅
+
+**Task #143 (Wire Google OAuth) closed.**
+
+This also unblocks any other container-outbound feature: SMTP via Gmail, S3 uploads, any external HTTP fetch from the server. None had been tested before (deployment was email/password sign-in only).
+
+## Honest residual that turned out to be a fix waiting to happen — kept here for the audit trail
+
+The "container outbound is broken" finding I documented before fixing it: I initially thought this was a pre-existing host-networking issue separate from tonight's firewall work. Verified via tcpdump that **the SYN was actually leaving the host** — meaning MASQUERADE worked and the issue was purely return-traffic. That was the diagnostic that pointed at "missing whitelist rule for ephemeral return ports", which is the missing-`established`-rule consequence in disguise. Lesson: when a Hetzner Robot whitelist firewall is in play and outbound TCP appears broken, FIRST tcpdump to confirm SYN egresses, THEN check whether ephemeral return ports are covered by some rule.
 
 Discovered while testing the Google OAuth callback after HTTPS landed. The flow gets all the way through Google (you added the callback URI in Console — confirmed by the absence of `redirect_uri_mismatch` in the redirect log), Google sends the auth `code` back to `/api/auth/google/callback`, our server tries to POST to `https://oauth2.googleapis.com/token` to exchange the code for tokens, and the POST times out:
 
