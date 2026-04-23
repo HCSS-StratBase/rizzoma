@@ -114,3 +114,43 @@ In rough priority order:
 2. **PR #44** — Hryhorii's "fix: mount nested inline blips immediately" commit captured into a branch + PR for his review (he pushed it directly on the VPS during a debug session; preserved without losing his work).
 3. **Hetzner Robot webservice** — currently 401, needs activation in the Robot panel. Would give an alternative firewall-management path.
 4. **Production-target performance baseline** — once HTTPS is up, run `npm run perf:harness` against `:8201` (prod target with `FEAT_ALL=1` baked into the build, vs. dev which evaluates flags at runtime) and capture a baseline so future regressions are catchable.
+
+## Honest residual: container outbound to the public internet is broken (pre-existing)
+
+Discovered while testing the Google OAuth callback after HTTPS landed. The flow gets all the way through Google (you added the callback URI in Console — confirmed by the absence of `redirect_uri_mismatch` in the redirect log), Google sends the auth `code` back to `/api/auth/google/callback`, our server tries to POST to `https://oauth2.googleapis.com/token` to exchange the code for tokens, and the POST times out:
+
+```
+[auth] Google OAuth error: TypeError: fetch failed
+  [cause]: AggregateError [ETIMEDOUT]
+```
+
+Root cause is NOT today's Hetzner firewall work. Verified by testing outbound from MULTIPLE containers:
+
+```
+docker exec rizzoma-app sh -c "nc -zvw3 1.1.1.1 443"        → Operation timed out
+docker exec rizzoma-redis sh -c "nc -zvw3 1.1.1.1 443"      → Operation timed out
+docker exec rizzoma-app sh -c "nc -zvw3 142.251.127.95 443" → Operation timed out
+```
+
+But the same test from the host:
+```
+curl --max-time 10 https://oauth2.googleapis.com  → HTTP 404 (i.e. CONNECTS fine)
+```
+
+Three things ruled out:
+1. Hetzner Robot host firewall — OUTPUT chain is "Allow all", verified via `GET /firewall/<ip>`.
+2. Node.js IPv6 preference — set `NODE_OPTIONS=--dns-result-order=ipv4first`; outbound TCP IPv4 still times out at the kernel level (`nc -zvw3 142.251.127.95 443` → Operation timed out, no Node involved).
+3. Docker NAT MASQUERADE — confirmed present for both `172.17.0.0/16` (docker0) and `172.18.0.0/16` (rizzoma_rizzoma-network bridge), but the 172.18 rule has only 9 packets in counters, suggesting most outbound from rizzoma containers is being dropped before MASQUERADE can apply.
+
+Likely candidates for the actual cause:
+- iptables FORWARD chain has been customized somewhere that drops return packets for the rizzoma bridge despite the DOCKER-FORWARD ACCEPT rule
+- `nf_conntrack` table is full or misconfigured
+- `rp_filter` / reverse-path filtering is dropping legit return traffic with a routing-table mismatch
+
+This needs a separate sysadmin pass — it's been broken since before today and any container-to-internet feature (OAuth, SMTP, S3 uploads if used, image fetching from external URLs) would have hit the same wall. Since the prior dev usage was email/password sign-in only (no OAuth, no SMTP test), nobody noticed.
+
+**Workarounds for unblocking OAuth specifically without fixing host networking:**
+- Run a host-level HTTP-proxy (squid / tinyproxy) on the host that the container can hit via `172.18.0.1:<port>`, configure Node's `fetch` to use it via `HTTPS_PROXY=http://172.18.0.1:<port>`. The host can reach Google; the container can reach the host on the bridge gateway IP (verified — `ping 172.18.0.1` from container works). This is a 5-minute fix if needed.
+- Or: switch the rizzoma-app + rizzoma-redis containers to `network_mode: host` so they share the host's network stack directly. Loses container network isolation but is a one-line docker-compose change.
+
+Neither workaround is right for permanent ops; the underlying host networking should be fixed properly. But either would unblock OAuth tonight if you want it.
