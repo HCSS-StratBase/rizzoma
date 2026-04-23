@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-04-23T22:51:58.701Z",
+  "generatedAt": "2026-04-23T23:14:40.653Z",
   "baseUrl": "https://138-201-62-161.nip.io",
   "branch": "feature/rizzoma-core-features",
-  "commit": "c988f6da",
+  "commit": "02f36d81",
   "outputDir": "/mnt/c/Rizzoma/screenshots/260424-003739-feature-sweep",
   "documentedRows": [
     {
@@ -3415,11 +3415,21 @@
       ],
       "assertion": "Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.",
       "dynamicStep": null
+    },
+    {
+      "id": "toast-notification-component-visible",
+      "label": "toast notification component visible",
+      "file": "screenshots/260424-003739-feature-sweep/040-toast-notification-component-visible.png",
+      "featureRefs": [
+        "User Interface: Toast notifications"
+      ],
+      "assertion": "Toast component renders a visible status notification when the app emits a toast event.",
+      "dynamicStep": "after-toast-event"
     }
   ],
   "assertions": [
     "Parsed 161 screenshot-valid rows and 69 dynamic candidates from RIZZOMA_FEATURES_STATUS.md.",
-    "Captured 39 fresh screenshots in /mnt/c/Rizzoma/screenshots/260424-003739-feature-sweep."
+    "Captured 40 fresh screenshots in /mnt/c/Rizzoma/screenshots/260424-003739-feature-sweep."
   ],
   "residuals": [
     "Mobile deep-link topic route remained on Loading; captured authenticated mobile navigation instead of topic body."

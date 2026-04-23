@@ -439,6 +439,23 @@ async function captureRightPanel(page) {
   await capture(page, 'right panel expanded mode selected', ['User Interface: expanded display mode'], 'Expanded display mode toggle activates.', { dynamicStep: 'after-expanded-click' });
 }
 
+async function captureToastState(page) {
+  await closeOpenModal(page);
+  await closeTransientEditorOverlays(page);
+  await page.evaluate(() => {
+    window.dispatchEvent(new CustomEvent('toast', {
+      detail: { message: 'Toast evidence', type: 'info' },
+    }));
+  });
+  await page.waitForTimeout(400);
+  if (await page.locator('[data-testid="toast"], .toast, [role="status"], [aria-live="polite"]').count()) {
+    await capture(page, 'toast notification component visible', ['User Interface: Toast notifications'], 'Toast component renders a visible status notification when the app emits a toast event.', { dynamicStep: 'after-toast-event' });
+  } else {
+    manifest.residuals.push('Toast/status notification was not visible after dispatching the app toast event.');
+  }
+  await closeTransientEditorOverlays(page);
+}
+
 async function captureMobile(baseContext, fixture) {
   const mobileContext = await baseContext.browser().newContext({ ...devices['Pixel 5'] });
   const mobile = await mobileContext.newPage();
@@ -497,6 +514,7 @@ async function main() {
   await captureBlbDynamics(page, fixture);
   await captureRightPanel(page);
   await captureMobile(context, fixture);
+  await captureToastState(page);
 
   await browser.close();
 

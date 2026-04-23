@@ -34,7 +34,7 @@
   - Residual gap: public-prod screenshots show broken external avatar placeholders in this WSL/browser environment.
 
 ## Next
-- Add row-level `covered_by` mapping for all 161 screenshot-valid rows in the visual sweep manifest.
+- Add genuine two-client live cursor/typing screenshots to close the last two visual coverage gaps.
 - Fix/retest mobile topic deep-link loading if it remains reproducible outside the sweep.
 - Rerun production-target full-render perf at 500 and 1000 blips.
 - Compare `RIZZOMA_PERF_RENDER=full` vs `lite` with identical seed sizes.
@@ -46,7 +46,7 @@
   - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_SWEEP_STAMP=260424-003739 npm run visual:sweep`
   - Result: pass.
   - Artifacts: `screenshots/260424-003739-feature-sweep/`.
-  - Manifest: parsed 196 documented rows, 161 screenshot-valid rows, and 69 dynamic candidates; captured 39 primary screenshots.
+  - Manifest: parsed 196 documented rows, 161 screenshot-valid rows, and 69 dynamic candidates; captured 40 primary screenshots after the later toast-evidence refresh.
 - Ran dynamic follow-green supplement into the same timestamped folder:
   - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_E2E_PROFILES=desktop,mobile RIZZOMA_SNAPSHOT_DIR=screenshots/260424-003739-feature-sweep/follow-green npm run test:follow-green`
   - Result: pass.
@@ -56,3 +56,18 @@
   - Residual: generic mobile deep-link topic route can remain on `Loading...`; follow-green mobile screenshot covers mobile topic content for this sweep.
   - Residual: public-prod avatar images still show broken placeholders in this environment.
 - Removed failed supplemental `blb/` artifacts after `test-blb-snapshots.mjs` timed out on inline expansion; not counted as evidence.
+
+## Visual Coverage Matrix
+- Added `scripts/visual-feature-coverage.mjs` and `npm run visual:coverage`.
+- Regenerated the public-prod sweep:
+  - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_SWEEP_STAMP=260424-003739 npm run visual:sweep`
+  - Result: pass.
+  - Artifacts: `screenshots/260424-003739-feature-sweep/` now has 40 primary screenshots, including `040-toast-notification-component-visible.png`.
+- Ran row-level coverage:
+  - Command: `RIZZOMA_SWEEP_DIR=screenshots/260424-003739-feature-sweep npm run visual:coverage`
+  - Result: pass.
+  - Matrix: `coverage.md` / `coverage.json` classify all 161 screenshot-valid rows: 93 static screenshot-covered, 8 dynamic screenshot-covered, 58 non-screenshot/test-artifact, 2 screenshot gaps, 0 needs-review.
+- Visual review:
+  - Accepted refreshed toast component screenshot and representative BLB/navigation/mobile artifacts.
+  - Residual: live cursors and typing indicators still need a two-client dynamic screenshot with remote state visible.
+  - Residual: generic mobile deep-link topic route can still remain on `Loading...`; follow-green mobile screenshot remains current mobile topic-content evidence.

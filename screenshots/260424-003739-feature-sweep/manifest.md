@@ -1,13 +1,13 @@
 # Rizzoma Visual Feature Sweep
 
-- Generated: 2026-04-23T22:51:58.701Z
+- Generated: 2026-04-23T23:14:40.653Z
 - Base URL: https://138-201-62-161.nip.io
 - Branch: feature/rizzoma-core-features
-- Commit: c988f6da
+- Commit: 02f36d81
 - Documented rows parsed: 196
 - Screenshot-valid rows: 161
 - Dynamic candidate rows: 69
-- Captures: 39
+- Captures: 40
 
 ## Captures
 
@@ -167,6 +167,10 @@
   - File: screenshots/260424-003739-feature-sweep/039-mobile-authenticated-topic-navigation.png
   - Assertion: Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.
   - Feature refs: Mobile & PWA: responsive layout; Mobile & PWA: mobile navigation
+- toast notification component visible
+  - File: screenshots/260424-003739-feature-sweep/040-toast-notification-component-visible.png
+  - Assertion: Toast component renders a visible status notification when the app emits a toast event.
+  - Feature refs: User Interface: Toast notifications
 
 ## Residuals
 
