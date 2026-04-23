@@ -26,6 +26,66 @@ A second Tana entry will be posted on the 2026-04-23 day node summarizing this m
 - `138.201.62.161:8201` (prod) — up since 2026-04-22 late-night, `curl /api/health → 200 {couchdb.ok 2ms}`
 - HTTPS — still blocked on Hetzner Cloud firewall denying inbound port 80 (Let's Encrypt webroot challenge times out)
 
+## Late-evening: BLB doc-ecosystem hardening + Hetzner subtree on rizzoma.com to depth 3
+
+Triggered by user feedback after I added 5 sibling bullets under the [HTU licenses/creds/passwords / Hetzner blip](https://rizzoma.com/topic/d328493e8943bf079795b999e22b4f6e/0_b_cc4d_cihsa/) on legacy rizzoma.com with prose-shaped labels and flat `<div>` bodies — both BLB violations.
+
+### Doc additions
+
+| File | Change |
+|---|---|
+| [`docs/BLB_LOGIC_AND_PHILOSOPHY.md`](BLB_LOGIC_AND_PHILOSOPHY.md) | §3 'A Blip is a Blank Sheet' tightened — bullets are the structural primitive, "plain unbulleted text" is a TERMINAL choice only. New §19 'Pre-Commit BLB Checklist' (5 rows: bullet structure exists / labels are atomic / no prose body / detail goes deeper-not-wider / parent renders as clean TOC). §19 row 4 sharpened with concrete trigger-words: commas joining sibling items, slashes joining options, `and / also / plus / which / because`, colons-followed-by-list. |
+| [`docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md`](RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md) | New file. Seven rules for headlessly scripting the 2013-vintage Wave-derived editor at rizzoma.com via Playwright. Verified-working selectors. Reference flow (Step 1 Edit through Step 11 wait-after-Hide). "Things that did not work" table. |
+| `CLAUDE.md` (project) | New "BLB structure" block with the §19 checklist + pointer to the Playwright doc. Hetzner reference table converted to GDrive cloud URLs. Long Playwright section collapsed to a one-paragraph pointer. |
+| `/mnt/g/My Drive/SYSTEM_INSTRUCTIONS.md` | New top-level **"Hyperlink convention"** rule: always use markdown `[text](URL)`, never raw paths; for GDrive files use the cloud URL (find via gworkspace MCP `search_drive_files`), NEVER `/mnt/g/...` which only resolves on this WSL machine. New "BLB structure" section with the §19 checklist. New paragraph pointing at the seven Playwright rules. Synced to `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`. |
+| `~/.claude/projects/-mnt-c-Rizzoma/memory/feedback_blb_fractal_bullets_required.md` | New `feedback`-type memory; indexed in MEMORY.md so it loads on every Rizzoma session. Captures the worked-example failure + the 5-row checklist + per-destination operational notes + the seven Playwright rules. |
+| `~/.claude/projects/-mnt-c-Rizzoma/memory/reference_hetzner_creds_and_docs.md` | Hyperlinks retrofitted (GDrive cloud URLs for the saga doc + companion files). |
+
+### Hetzner subtree on rizzoma.com — to depth-3 fractal
+
+Five sibling labels added under the Hetzner blip (siblings to the existing `Server Auction #2480874` and `Backups`), every label atomic, every body a proper `<ul><li>`. Then 5 borderline depth-2 bullets that concatenated sibling items with commas/slashes (the §19 row 4 violation pattern) recursed to depth 3 with their own [+] subblips:
+
+| Depth-1 label | Depth-2 bullet count | Depth-3 recursions (sub-bullet count → URL) |
+|---|---|---|
+| Robot webservice | 5 | Endpoints (4 → `cp4cu`) |
+| Web Console | 5 | Use cases (3 → `cp4cv`) |
+| Topology | 7 | Firewall is host-side (3 → `cp4d0`) |
+| fail2ban | 5 | Bad settings (2 → `cp4d2`), Sane settings (3 → `cp4d1`) |
+| Saga doc | 5 | (none — every body bullet was already atomic) |
+
+Total navigable `[+]` markers in the Hetzner subtree: 12+. Verified via DOM that every one has `class="blip-thread folded"` (collapsed by default per BLB §6). Screenshots: [`hetzner-blip-fractal-correct.png`](../screenshots/260423-hetzner-blb-additions/hetzner-blip-fractal-correct.png) (depth-2 state), [`hetzner-blip-depth3-fractal.png`](../screenshots/260423-hetzner-blb-additions/hetzner-blip-depth3-fractal.png) (final depth-3 state).
+
+### Playwright Rule 7 discovered the hard way
+
+While recursing fail2ban's "Bad settings" bullet to depth 3, `Ctrl+Enter` silently refused to fire even after a real `page.locator(...).click()` + `End`. Tried in sequence, all insufficient: real-click + End + Ctrl+Enter; type a space + Backspace + Ctrl+Enter; dispatched synthetic `KeyboardEvent('keydown', {key:'Enter', ctrlKey:true})` via `page.evaluate`. Only working sequence:
+
+```js
+await page.keyboard.type('x');              // a real letter, not a space
+await page.waitForTimeout(150);
+await page.keyboard.press('Backspace');
+await page.waitForTimeout(150);
+await page.keyboard.press('Control+Enter');
+```
+
+The `type('x')` triggers Rizzoma's full input-event chain (the editor commits to "user is typing in this li" state); Backspace cleanly removes the placeholder; the subsequent Ctrl+Enter fires the inline-blip-creation handler reliably. Codified as Rule 7 in [`docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md`](RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md) + 3 new "things that did not work" entries.
+
+### Late-evening commits
+
+| SHA | Description |
+|---|---|
+| `7cfff90b` | docs(BLB): codify fractal-bullets rule + Playwright editor mechanics — §3 tightening + §19 checklist + new RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md |
+| `cb3dd4bc` | docs: convert all cross-refs to proper hyperlinks (GDrive cloud URLs, NOT WSL paths) |
+| `60d84a67` | docs(playwright): add Rule 7 — `type('x')+Backspace` before Ctrl+Enter |
+
+### Tana late-evening
+
+Three additional entries posted on the 2026-04-23 day node (one per phase):
+- `A4-4s_9XS-8L` — "BLB structure rule + Playwright mechanics for scripting legacy rizzoma.com — codified in 4 places after a worked-example failure on the HTU Hetzner blip"
+- `Mce5zKbX_Qij` — "Doc-ecosystem hardening — hyperlink convention codified + BLB §19 row 4 sharpened with concrete trigger-words + Hetzner-blip rebuild on rizzoma.com complete"
+- `WA7ZrCmvyT7E` — "Hetzner blip on rizzoma.com fully fractally BLB-correct to depth 3 + new Playwright rule 7 codified"
+
+All four required tags applied (`#discussion + #Rizzoma + #Rizzoma_modernization + #Claude`) + Created by SDS / Generated by Claude on each.
+
 ## What's next
 
 In rough priority order:
