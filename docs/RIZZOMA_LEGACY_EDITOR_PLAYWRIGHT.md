@@ -3,10 +3,10 @@
 **Audience:** Claude Code / Codex / Gemini agents driving `https://rizzoma.com` (the 2013-vintage Wave-derived production platform, NOT this repository's modernized fork) headlessly to add or edit BLB-shaped content.
 
 **Companion docs (READ THESE FIRST):**
-- **[`BLB_LOGIC_AND_PHILOSOPHY.md`](BLB_LOGIC_AND_PHILOSOPHY.md)** — the philosophical + structural spec for BLB. Sections 1–18 plus the §19 pre-commit checklist (added 2026-04-23). This document is the *operational mechanics* for satisfying that spec via headless browser automation. Read the philosophy first; then come here for the buttons-and-selectors.
-- **[`VPS_DEPLOYMENT.md`](VPS_DEPLOYMENT.md)** — for the *modernized* Rizzoma fork on the HCSS VPS. Different editor stack (TipTap vs CKEditor); these mechanics do not apply there.
+- **[BLB_LOGIC_AND_PHILOSOPHY.md](https://github.com/HCSS-StratBase/rizzoma/blob/master/docs/BLB_LOGIC_AND_PHILOSOPHY.md)** — the philosophical + structural spec for BLB. Sections 1–18 plus the §19 pre-commit checklist (added 2026-04-23). This document is the *operational mechanics* for satisfying that spec via headless browser automation. Read the philosophy first; then come here for the buttons-and-selectors. (Repo-relative, since you're reading this inside the same repo: [BLB_LOGIC_AND_PHILOSOPHY.md](BLB_LOGIC_AND_PHILOSOPHY.md))
+- **[VPS_DEPLOYMENT.md](https://github.com/HCSS-StratBase/rizzoma/blob/master/docs/VPS_DEPLOYMENT.md)** — for the *modernized* Rizzoma fork on the HCSS VPS. Different editor stack (TipTap vs CKEditor); these mechanics do not apply there. (Repo-relative: [VPS_DEPLOYMENT.md](VPS_DEPLOYMENT.md))
 
-**Project-instruction cross-reference:** `/mnt/c/Rizzoma/CLAUDE.md` "BLB structure" block summarizes this for every Rizzoma session; `/mnt/g/My Drive/SYSTEM_INSTRUCTIONS.md` summarizes it system-wide for all three CLI tools (Claude / Codex / Gemini). Auto-memory: `~/.claude/projects/-mnt-c-Rizzoma/memory/feedback_blb_fractal_bullets_required.md`.
+**Project-instruction cross-reference:** [CLAUDE.md](https://github.com/HCSS-StratBase/rizzoma/blob/master/CLAUDE.md) "BLB structure" block summarizes this for every Rizzoma session; [SYSTEM_INSTRUCTIONS.md](https://drive.google.com/file/d/1e8x0pcGcQynD4t7kDaKPi2fvpXKXYO8U/view?usp=drivesdk) summarizes it system-wide for all three CLI tools (Claude / Codex / Gemini). Auto-memory (local-only, no public URL): `~/.claude/projects/-mnt-c-Rizzoma/memory/feedback_blb_fractal_bullets_required.md`.
 
 ---
 

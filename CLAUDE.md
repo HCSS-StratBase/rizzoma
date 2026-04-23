@@ -22,13 +22,13 @@ When deploying these to the VPS, copy the relevant env vars into `docker-compose
 
 The Rizzoma VPS at `138.201.62.161` is a **bare-metal dedicated server** (Hetzner Robot, server `#2480874`, FSN1-DC8) — NOT a Cloud instance. There is no Hetzner Cloud firewall in front of it; firewall lives on the host (iptables / UFW) or in Robot's "Host Firewall" feature for dedicated servers. Cloud-API tokens (64-char hex) are irrelevant here.
 
-**Authoritative reference docs in GDrive — read FIRST when anything Hetzner-related comes up:**
+**Authoritative reference docs in GDrive — read FIRST when anything Hetzner-related comes up. Use the cloud URL, NOT the local `/mnt/g` path (the `/mnt/g` path only works on this WSL machine):**
 
 | File | What it has |
 |---|---|
-| `/mnt/g/My Drive/RuBase/Transparent battlefield/feature-extraction/HETZNER_SSH_SAGA.md` | **Most important.** Full 2026-04-01 SSH-lockout post-mortem. Contains the working Robot webservice password, full Robot API recipes (rescue mode + hardware reset + firewall endpoint), the fail2ban-with-`iptables-allports` red herring, the ControlMaster mux-socket gotcha, and the lessons learned. |
-| `/mnt/g/My Drive/RuBase/Projects overview/fix_hetzner_firewall.py` | Selenium script automating Hetzner web Console login. Has the web Console credentials inlined. |
-| `/mnt/g/My Drive/RuBase/Apps/ruw-analyze - refactor - 250209 - Copy/HETZNER_DEPLOYMENT_STATUS.md` | Older deployment status from a different app on the same server. War_datasets PostgreSQL creds. |
+| [HETZNER_SSH_SAGA.md](https://drive.google.com/file/d/10OIjlF0oE8s9Xa-jr5-WHhdqPHXGhtEJ/view?usp=drivesdk) | **Most important.** Full 2026-04-01 SSH-lockout post-mortem. Contains the working Robot webservice password, full Robot API recipes (rescue mode + hardware reset + firewall endpoint), the fail2ban-with-`iptables-allports` red herring, the ControlMaster mux-socket gotcha, and the lessons learned. (Local: `/mnt/g/My Drive/RuBase/Transparent battlefield/feature-extraction/HETZNER_SSH_SAGA.md`.) |
+| [fix_hetzner_firewall.py](https://drive.google.com/file/d/1pFqwMtALKV44RGvKmh1XTDIbmjUCPeJo/view?usp=drivesdk) | Selenium script automating Hetzner web Console login. Has the web Console credentials inlined. (Local: `/mnt/g/My Drive/RuBase/Projects overview/fix_hetzner_firewall.py`.) |
+| [HETZNER_DEPLOYMENT_STATUS.md](https://drive.google.com/file/d/1OKkFUdpbT_09nPP3cQhk-g830uRHGpMj/view?usp=drivesdk) | Older deployment status from a different app on the same server. War_datasets PostgreSQL creds. (Local: `/mnt/g/My Drive/RuBase/Apps/ruw-analyze - refactor - 250209 - Copy/HETZNER_DEPLOYMENT_STATUS.md`.) |
 
 **Verified-working credentials (2026-04-23):**
 
@@ -56,7 +56,7 @@ When posting or documenting in BLB-shape (the standard for this project's Rizzom
 
 **Worked-example failure (2026-04-23, do not repeat):** posted 5 sibling bullets under the Hetzner blip in the HTU licenses/creds/passwords topic. Labels were prose ("Robot webservice (rescue / reboot / firewall API)" instead of "Robot webservice"). Bodies were `<div><span>URL: …</span></div><div><span>Email: …</span></div>` instead of `<ul><li>URL [+]</li><li>Email [+]</li></ul>`. The fix was delete + redo with proper fractal bullets. Full root-cause in `~/.claude/projects/-mnt-c-Rizzoma/memory/feedback_blb_fractal_bullets_required.md`.
 
-**Scripting BLB-correct content into legacy rizzoma.com via Playwright** is a separate operational concern — selectors, Playwright pitfalls (`btn.click()` vs `page.locator().click()`, `keyboard.type` vs `insertText` for `#@~$*<>`), Done-vs-Edit disambiguation, autosave timing, etc. — fully documented at [`docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md`](docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md). Read that BEFORE attempting any headless Rizzoma edit; the philosophy doc [`docs/BLB_LOGIC_AND_PHILOSOPHY.md`](docs/BLB_LOGIC_AND_PHILOSOPHY.md) §19 has the pre-commit checklist that ties them together.
+**Scripting BLB-correct content into legacy rizzoma.com via Playwright** is a separate operational concern — selectors, Playwright pitfalls (`btn.click()` vs `page.locator().click()`, `keyboard.type` vs `insertText` for `#@~$*<>`), Done-vs-Edit disambiguation, autosave timing, etc. — fully documented in [docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md](docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md) (or on GitHub: [RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md](https://github.com/HCSS-StratBase/rizzoma/blob/master/docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md)). Read that BEFORE attempting any headless Rizzoma edit; the philosophy doc [docs/BLB_LOGIC_AND_PHILOSOPHY.md](docs/BLB_LOGIC_AND_PHILOSOPHY.md) (or on GitHub: [BLB_LOGIC_AND_PHILOSOPHY.md](https://github.com/HCSS-StratBase/rizzoma/blob/master/docs/BLB_LOGIC_AND_PHILOSOPHY.md)) §19 has the pre-commit checklist that ties them together.
 
 ## Tana posting — REQUIRED tags for Rizzoma entries
 
