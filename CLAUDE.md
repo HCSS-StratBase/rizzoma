@@ -169,6 +169,26 @@ regression.
   `FEAT_ALL=0` explicitly.
 
 ## Recently Completed Highlights
+- **HTTPS + Google OAuth end-to-end on the VPS (2026-04-23)**: Live at
+  [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) with valid Let's Encrypt cert
+  (auto-renewing through 2026-07-22). Required two passes on the Hetzner
+  **Robot** host firewall (NOT Cloud — this server is bare-metal Robot,
+  per the [saga doc](https://drive.google.com/file/d/10OIjlF0oE8s9Xa-jr5-WHhdqPHXGhtEJ/view?usp=drivesdk)):
+  (1) opened port 80 to unblock the Let's Encrypt webroot challenge
+  (commit `b183177e`); (2) consolidated the existing `apps` rule
+  (8000-9999) into `apps-and-ephemeral` (8000-65535) to allow return
+  traffic from MASQUERADE'd container outbound (commit `b46d094e`).
+  Without (2), the server's POST to `oauth2.googleapis.com/token`
+  was timing out — diagnosed via `tcpdump -nni any host 1.1.1.1`
+  showing SYN egressed fine but no SYN-ACK ever returned (Hetzner
+  whitelist firewall was dropping return packets to ephemeral source
+  ports). Updated docker-compose env to use the HTTPS URL. Verified
+  Playwright sign-in lands as `sdspieg@gmail.com` "Stephan De
+  Spiegeleire" with Google avatar; `GET /api/auth/me` returns the
+  user. Tasks #140 + #143 both closed in the same session that
+  opened them. Same fix unblocks SMTP / S3 / any container-outbound
+  feature. Operational details in [`docs/VPS_DEPLOYMENT.md`](docs/VPS_DEPLOYMENT.md)
+  + [`docs/worklog-260423.md`](docs/worklog-260423.md).
 - **VPS production-build path now green (2026-04-22)**: `app-prod`
   service is healthy on `:8201` alongside dev `:8200`. Three Dockerfile
   bugs found + fixed in sequence: (a) `aa63d4c5` — production CMD path
