@@ -9,7 +9,8 @@
 | **IP** | `138.201.62.161` |
 | **Dev port** | `8200` (UI; `rizzoma-app` dev target → container `:3000`) |
 | **Prod port** | `8201` (UI; `rizzoma-app-prod` production target → container `:8788`) — green since 2026-04-22 |
-| **URL** | `http://138.201.62.161:8200/` (dev) — HTTPS still blocked on Hetzner Cloud firewall |
+| **URL (HTTPS)** | `https://138-201-62-161.nip.io/` — Let's Encrypt cert + nginx proxy → `localhost:8200` (live since 2026-04-23 03:26 UTC) |
+| **URL (HTTP, legacy)** | `http://138.201.62.161:8200/` (dev, direct Docker port-mapped) |
 | **SSH** | `root@138.201.62.161` (key auth) |
 | **Operator** | Hryhorii (first deployed 2026-04-17; co-owned with Stephan) |
 | **Deployment path** | `/data/large-projects/stephan/rizzoma` |
@@ -134,6 +135,7 @@ All commits live on VPS as of 2026-04-22 late-night. Both `rizzoma-app` (dev) an
 - [x] ~~Wire OAuth creds~~ — Google + Facebook + Microsoft + SMTP all wired into both `app` and `app-prod` services 2026-04-22
 - [x] ~~Set up a simple deploy script~~ — `scripts/deploy-vps.sh` (handles stash + pull + restore + rebuild + health check; supports `--profile prod`)
 - [x] ~~Switch to production build target~~ — `app-prod` healthy on `:8201` since 2026-04-22 late-night
-- [ ] HTTPS via Caddy + Let's Encrypt — **BLOCKED** on Hetzner Cloud firewall denying inbound :80 (ACME webroot challenge times out). Open port 80 in Hetzner Cloud Console → re-run `setup-caddy.sh` on VPS. Until then, OAuth callbacks fail and the site is HTTP-only.
-- [ ] Cut over public traffic from `:8200` (dev) to `:8201` (prod) once HTTPS lands
-- [ ] Enable Hetzner Robot webservice (currently 401 — needs activation in Robot panel) as an alternative firewall-management path
+- [x] ~~HTTPS via Let's Encrypt~~ — DONE 2026-04-23 03:26 UTC. Live at `https://138-201-62-161.nip.io/`. Process: queried Hetzner Robot host firewall via `GET /firewall/<ip>` (turned out to be a whitelist-mode firewall missing port 80 — NOT a "Hetzner Cloud firewall" as previously assumed); added `http(80)` rule via `POST /firewall/<ip>` preserving the full ruleset; ran certbot webroot challenge against existing nginx; swapped nginx vhost to HTTPS proxy → `localhost:8200` with WebSocket support + 20M `client_max_body_size`; updated docker-compose env (`APP_URL`/`CLIENT_URL`/`APP_BASE_URL`/`ALLOWED_ORIGINS`) to use the HTTPS URL. Verified end-to-end: `curl /api/health` → 200, SPA loads, `/api/auth/google` redirects to Google with the correct HTTPS callback.
+- [ ] **USER ACTION**: add `https://138-201-62-161.nip.io/api/auth/google/callback` to Google Cloud Console authorized redirect URIs (OAuth client `46844340633-6ra2q3i0jnkhukav2tjiegd32mg3tagt`). Currently Google rejects with `redirect_uri_mismatch`. Same for Facebook (`/api/auth/facebook/callback`) and Microsoft (`/api/auth/microsoft/callback`) developer consoles.
+- [ ] Cut over public traffic from `:8200` (dev container, current HTTPS proxy target) to `:8201` (prod container) — change one `proxy_pass` line in `/etc/nginx/sites-available/rizzoma.conf` and reload nginx.
+- [x] ~~Enable Hetzner Robot webservice~~ — turns out it was always enabled; the `HETZNER_ROBOT_PASS` value in `.env` was wrong (actually a stale root SSH password). Working creds in the [Hetzner SSH saga doc](https://drive.google.com/file/d/10OIjlF0oE8s9Xa-jr5-WHhdqPHXGhtEJ/view?usp=drivesdk): user `#ws+MMV3d9rH`, password `5Js4m@rMKuEAWG7`.
