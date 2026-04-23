@@ -34,6 +34,25 @@
   - Residual gap: public-prod screenshots show broken external avatar placeholders in this WSL/browser environment.
 
 ## Next
+- Add row-level `covered_by` mapping for all 161 screenshot-valid rows in the visual sweep manifest.
+- Fix/retest mobile topic deep-link loading if it remains reproducible outside the sweep.
 - Rerun production-target full-render perf at 500 and 1000 blips.
 - Compare `RIZZOMA_PERF_RENDER=full` vs `lite` with identical seed sizes.
 - Decide whether avatar fallback/proxying belongs in the modernization backlog.
+
+## Visual Feature Sweep
+- Added `scripts/visual-feature-sweep.mjs` and `npm run visual:sweep`.
+- Ran public-prod sweep:
+  - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_SWEEP_STAMP=260424-003739 npm run visual:sweep`
+  - Result: pass.
+  - Artifacts: `screenshots/260424-003739-feature-sweep/`.
+  - Manifest: parsed 196 documented rows, 161 screenshot-valid rows, and 69 dynamic candidates; captured 39 primary screenshots.
+- Ran dynamic follow-green supplement into the same timestamped folder:
+  - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_E2E_PROFILES=desktop,mobile RIZZOMA_SNAPSHOT_DIR=screenshots/260424-003739-feature-sweep/follow-green npm run test:follow-green`
+  - Result: pass.
+  - Artifacts: desktop/mobile PNGs plus owner/observer console logs under `screenshots/260424-003739-feature-sweep/follow-green/`.
+- Visual review:
+  - Accepted sign-in/sign-up, nav/search tabs, create/invite/share/export/playback modals, toolbar/read/edit/overflow states, emoji/mention/task/tag/gadget states, inline comments, BLB inline before/after, fold/unfold, right-panel toggles, mobile topic list, and follow-green mobile topic content.
+  - Residual: generic mobile deep-link topic route can remain on `Loading...`; follow-green mobile screenshot covers mobile topic content for this sweep.
+  - Residual: public-prod avatar images still show broken placeholders in this environment.
+- Removed failed supplemental `blb/` artifacts after `test-blb-snapshots.mjs` timed out on inline expansion; not counted as evidence.

@@ -3,7 +3,7 @@
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
 - `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-04-24; refresh if more changes land.
-- Re-read checkpoint: 2026-04-24 00:12 CEST — production-target full-render perf baseline captured against public prod, perf budget tooling refreshed, toolbar smoke selectors scoped to the created blip, and health tests made deterministic without local Docker. Older drift warnings below remain relevant.
+- Re-read checkpoint: 2026-04-24 00:55 CEST — fresh visual feature sweep captured against public prod in `screenshots/260424-003739-feature-sweep/`, with `npm run visual:sweep` added and docs updated. Older perf/tooling drift warnings below remain relevant.
 
 Quick start for the next batch (copy/paste):
 ```
@@ -25,16 +25,17 @@ codex exec '
     - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`). Ensure `http://localhost:3000/` is reachable before Playwright.
 
   Priority focus:
-  1) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile. `perf-harness.mjs` now supports `RIZZOMA_PERF_RENDER=lite|full`; public-prod full-render 100-blip baseline passed on 2026-04-24 (stage duration 1193.7ms landing / 524.5ms expanded, memory 33-36MB, artifacts in `screenshots/260424-prod-perf-baseline/`). Next: rerun at 500/1000 blips, compare full vs lite, and investigate optional absolute-TTF drift plus broken external avatar placeholders.
-  2) BLB parity: enforce single-container topic pane (title as first line of the meta-blip body), inline [+] marker click behavior/styling (snapshot harness clicks the marker directly), per-blip toolbar parity (toolbar only for expanded blips), unread green markers, and update BLB snapshots. Latest set: `snapshots/blb/1770165748162-*` (2026-02-04).
-  3) Toolbar parity: `test:toolbar-inline` now asserts the read toolbar (expanded via collapsed rows). Keep the read toolbar present and smokes green.
-  4) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
-  5) Automate bundles/backups (bundle + GDrive copy) and document cadence (`scripts/backup-bundle.sh`).
-  6) Finish CoffeeScript/legacy cleanup and dependency upgrades; decide legacy static assets (note: `.coffee` files remain only in `original-rizzoma-src/` reference tree).
+  1) Visual sweep hardening: latest full sweep is `screenshots/260424-003739-feature-sweep/` (39 primary screenshots, follow-green desktop/mobile supplements, 196 documented rows parsed / 161 screenshot-valid / 69 dynamic candidates). Next: add a row-level `covered_by` matrix for all screenshot-valid rows and fix/retest the mobile topic deep-link `Loading...` residual.
+  2) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile. `perf-harness.mjs` now supports `RIZZOMA_PERF_RENDER=lite|full`; public-prod full-render 100-blip baseline passed on 2026-04-24 (stage duration 1193.7ms landing / 524.5ms expanded, memory 33-36MB, artifacts in `screenshots/260424-prod-perf-baseline/`). Next: rerun at 500/1000 blips, compare full vs lite, and investigate optional absolute-TTF drift plus broken external avatar placeholders.
+  3) BLB parity: enforce single-container topic pane (title as first line of the meta-blip body), inline [+] marker click behavior/styling, per-blip toolbar parity, unread green markers, and update BLB snapshots. Note: `test-blb-snapshots.mjs` timed out on inline expansion during the 2026-04-24 supplemental attempt; the primary visual sweep captured BLB before/after evidence.
+  4) Toolbar parity: `test:toolbar-inline` now asserts the read toolbar (expanded via collapsed rows). Keep the read toolbar present and smokes green.
+  5) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
+  6) Automate bundles/backups (bundle + GDrive copy) and document cadence (`scripts/backup-bundle.sh`).
+  7) Finish CoffeeScript/legacy cleanup and dependency upgrades; decide legacy static assets (note: `.coffee` files remain only in `original-rizzoma-src/` reference tree).
 
   Testing/CI hygiene:
   - Keep npm run test:toolbar-inline and npm run test:follow-green green; snapshots live under snapshots/<feature>/ and are uploaded as Actions artifacts.
-  - Update TESTING_STATUS.md and RIZZOMA_FEATURES_STATUS.md after targeted runs; call out gaps. For custom perf artifact folders, run `PERF_SNAPSHOT_DIR=<dir> node scripts/perf-budget.mjs`.
+  - Update TESTING_STATUS.md and RIZZOMA_FEATURES_STATUS.md after targeted runs; call out gaps. For visual sweeps use `RIZZOMA_SWEEP_STAMP=<YYMMDD-HHMMSS> npm run visual:sweep`; for custom perf artifact folders, run `PERF_SNAPSHOT_DIR=<dir> node scripts/perf-budget.mjs`.
   - If you need fresh screenshots without rerunning Playwright locally, run: npm run snapshots:pull
 
   Stop after this batch, refresh RESTORE_POINT.md to mark completions and the new checkpoint timestamp, and rewrite the Codex exec block in AGENTS.md (plus this mirror snippet if it changed) with the next batch's starting steps before exiting to bash.'
@@ -97,6 +98,7 @@ codex exec '
 - Build: `npm run build`
 - Perf harness (optional large-wave sanity): `npm run perf:harness` (seeds a 5k-blip wave and captures render metrics/screenshots under `snapshots/perf/`); set `RIZZOMA_PERF_RENDER=full` for production-like full rendering or leave default `lite` for the lean regression profile.
   - Recent runs: public-prod 100-blip full-render PASS (2026-04-24; stage 1193.7ms landing / 524.5ms expanded, memory 33-36MB, artifacts in `screenshots/260424-prod-perf-baseline/`); 1000-blip PASS (2026-02-02) with `perfRender=lite` + `perfLimit=1000` + `x-rizzoma-perf=1` (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB, 1000/1000 rendered; windowed 200 ~2.6–2.9s). Check budgets via `PERF_SNAPSHOT_DIR=<dir> node scripts/perf-budget.mjs`.
+- Visual sweep: `npm run visual:sweep` captures the broad feature screenshot set and writes a manifest; latest public-prod folder is `screenshots/260424-003739-feature-sweep/`.
 
 8) PR Workflow (CLI)
 - Create PR: `gh pr create -R HCSS-StratBase/rizzoma -B master -H <branch> -t "Title" -F <body.md>`

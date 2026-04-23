@@ -1,6 +1,7 @@
 # Rizzoma Feature Testing Status
 
 ## 🟢 Current Status
+- **Visual feature sweep (2026-04-24, public prod)**: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_SWEEP_STAMP=260424-003739 npm run visual:sweep` pass. Artifacts: `screenshots/260424-003739-feature-sweep/` with 39 primary screenshots plus manifest, parsing 196 documented rows / 161 screenshot-valid rows / 69 dynamic candidates from `RIZZOMA_FEATURES_STATUS.md`. Supplemental dynamic run: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_E2E_PROFILES=desktop,mobile RIZZOMA_SNAPSHOT_DIR=screenshots/260424-003739-feature-sweep/follow-green npm run test:follow-green` pass, adding desktop/mobile follow-green screenshots and console logs in the same folder. See `docs/VISUAL_SCREENSHOT_SWEEP.md`.
 - **Production-target perf baseline (2026-04-24, public prod, full render, 100 blips)**: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_PERF_BLIPS=100 RIZZOMA_PERF_RENDER=full RIZZOMA_SNAPSHOT_DIR=screenshots/260424-prod-perf-baseline npm run perf:harness` pass. Artifacts: `screenshots/260424-prod-perf-baseline/metrics-1776982200094-*.json` and `render-1776982200094-*.png`. Landing-labels stage 1193.7ms, FCP 740ms, memory 33MB, labels 100/100. Expanded-root stage 524.5ms, FCP 740ms, memory 36MB, blips 101/100. `PERF_SNAPSHOT_DIR=screenshots/260424-prod-perf-baseline PERF_BUDGET_EXPECTED_BLIPS=100 PERF_BUDGET_MIN_RATIO=1 node scripts/perf-budget.mjs` pass on stage-local budgets; optional `PERF_BUDGET_CHECK_TTF=1` still flags expanded-root absolute TTF at 3522.9ms.
 - **Browser smoke (2026-04-24, public prod)**: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_E2E_BROWSERS=chromium RIZZOMA_SNAPSHOT_DIR=screenshots/260424-prod-toolbar-scoped npm run test:toolbar-inline` pass. The smoke now scopes toolbar/edit/gear assertions to the created blip’s `data-blip-id` instead of the first matching toolbar on the page.
 - **Health checks (2026-04-24)**: `npm run test:health` pass (3 files, 10 tests). `server.health.test.ts` now mocks `couchDbInfo` and covers both `200 ok` and `503 degraded`, so local unit tests no longer require Docker/CouchDB availability.
@@ -25,6 +26,7 @@
 - Browser smokes (`npm run test:toolbar-inline`, `npm run test:follow-green`) are CI-required and upload snapshots even when the build fails. Keep them green.
 - `TESTING_STATUS.md` is a log, not a guarantee—always rerun targeted suites before merges.
 - Visual residual from 2026-04-24 public-prod screenshots: external avatar images appear as broken placeholders in this WSL/browser environment; track separately from the perf harness change.
+- Visual residual from the 2026-04-24 full sweep: generic mobile topic deep-links can remain on `Loading...`; mobile topic content is still evidenced by the follow-green mobile dynamic screenshot in `screenshots/260424-003739-feature-sweep/follow-green/`.
 
 ## Recent fixes (2026-01-18)
 - **Mobile Modernization (PWA)**: Implemented complete mobile infrastructure with zero new dependencies:
@@ -78,4 +80,5 @@
 - CI gating for `/api/health`, inline comments health checks, and upload probes is now in place via the `health-checks` job (`npm run test:health`).
 - CI gating for perf budgets is now in place via the `perf-budgets` job. Currently warn-only; set `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to block on failures.
 - Mobile viewport validation is now CI-gated via `browser-smokes` job with `RIZZOMA_E2E_PROFILES=mobile`; check `follow-the-green-mobile/` snapshots for visual verification.
+- Full visual sweeps are now runnable via `npm run visual:sweep`; use a new datetime-stamped `screenshots/<stamp>-feature-sweep/` folder for each full refresh and document residuals in the generated manifest.
 - Legacy CoffeeScript/asset cleanup and dependency upgrades need coverage once refactored.

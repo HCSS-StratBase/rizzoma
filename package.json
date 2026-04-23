@@ -39,6 +39,7 @@
     "test:health": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts src/tests/server.health.test.ts src/tests/routes.comments.inlineHealth.test.ts src/tests/routes.uploads.edgecases.test.ts",
     "perf:harness": "node perf-harness.mjs",
     "perf:budget": "node scripts/perf-budget.mjs",
+    "visual:sweep": "node scripts/visual-feature-sweep.mjs",
     "snapshots:pull": "bash scripts/fetch-latest-snapshots.sh",
     "lint:branch-context": "node scripts/check-branch-state.cjs"
   },
