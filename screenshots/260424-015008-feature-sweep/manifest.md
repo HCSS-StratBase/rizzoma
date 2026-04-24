@@ -8,6 +8,7 @@
 - Screenshot-valid rows: 161
 - Dynamic candidate rows: 69
 - Captures: 42
+- Build-quality verdict: [BUILD_QUALITY_VERDICT.md](BUILD_QUALITY_VERDICT.md)
 
 ## Captures
 

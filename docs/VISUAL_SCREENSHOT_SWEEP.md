@@ -4,9 +4,10 @@
 
 - Scope: fresh public-production sweep against `https://138-201-62-161.nip.io` for documented functionality where screenshots are the right artifact.
 - Branch/checkpoint: `feature/rizzoma-core-features`, regenerated on 2026-04-24 01:50 CEST.
-- Primary artifacts: [manifest.md](../screenshots/260424-015008-feature-sweep/manifest.md), [manifest.json](../screenshots/260424-015008-feature-sweep/manifest.json), [coverage.md](../screenshots/260424-015008-feature-sweep/coverage.md), and [coverage.json](../screenshots/260424-015008-feature-sweep/coverage.json).
+- Primary artifacts: [BUILD_QUALITY_VERDICT.md](../screenshots/260424-015008-feature-sweep/BUILD_QUALITY_VERDICT.md), [manifest.md](../screenshots/260424-015008-feature-sweep/manifest.md), [manifest.json](../screenshots/260424-015008-feature-sweep/manifest.json), [coverage.md](../screenshots/260424-015008-feature-sweep/coverage.md), and [coverage.json](../screenshots/260424-015008-feature-sweep/coverage.json).
 - Primary coverage: 196 documented comparison rows parsed from `RIZZOMA_FEATURES_STATUS.md`; 161 rows classified as screenshot-valid; 69 rows classified as dynamic candidates; 42 fresh primary screenshots captured.
 - Coverage matrix: 101 rows are static screenshot-covered, 2 rows are dynamic screenshot-covered, 58 rows are non-screenshot/test-artifact rows, 0 rows remain screenshot gaps, and 0 rows need review.
+- Build-quality verdict: `BUILD_QUALITY_VERDICT.md` adds a green/orange/red visual checklist for every one of the 161 functionality rows: 97 green, 64 orange, and 0 red. Orange rows are either non-screenshot-test rows or screenshot-visible features with caveats such as avatar fallbacks, static gesture limits, or mobile polish.
 - Dynamic evidence now includes [mobile topic content](../screenshots/260424-015008-feature-sweep/040-mobile-topic-content-view.png) and [two-client realtime cursor/typing](../screenshots/260424-015008-feature-sweep/042-real-time-cursor-and-typing-indicator-visible.png).
 - Automation: `npm run visual:sweep` runs [scripts/visual-feature-sweep.mjs](../scripts/visual-feature-sweep.mjs); `npm run visual:coverage` runs [scripts/visual-feature-coverage.mjs](../scripts/visual-feature-coverage.mjs) against `RIZZOMA_SWEEP_DIR` or the default sweep folder.
 
