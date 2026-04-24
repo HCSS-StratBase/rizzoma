@@ -23,8 +23,8 @@ Status: Milestone B+ (IN PROGRESS). Feature‑flagged; safe to keep merged.
   - Overflow ("Other"/gear) menu surfaces Copy Comment, Paste as Reply, and Paste at Cursor actions powered by a per-blip clipboard store (`clipboardStore.ts`) so legacy workflows continue to work without relying on the OS clipboard.
   - Collapse-by-default toggle (read + edit states) writes to CouchDB (`collapse-default:<userId>:<blipId>`) with a resilient localStorage fallback so blips reopen consistently across tabs/devices.
   - Inline comments surface fetches/persists annotations via `/api/blip/:blipId/comments` + `/api/comments` endpoints, falling back to optimistic local state when writes fail.
-  - View-mode selections now trigger a floating inline comment composer (also backed by `/api/comments`) so annotations retain `{ start, end, text }` metadata instead of creating reply fallbacks.
-  - See `INLINE_COMMENTS_VS_REPLIES.md` for a deeper dive into the inline comment data model, persistence helpers, and Vitest/API coverage.
+  - View-mode selections now trigger a floating selection-annotation composer (also backed by `/api/comments`) so annotations retain `{ start, end, text }` metadata instead of creating reply fallbacks.
+  - See `INLINE_COMMENTS_VS_REPLIES.md` for the selected-text annotation model and its stale terminology warning. BLB inline comments are cursor-position child blips, described below.
   - Attachment/image buttons now rely on `createUploadTask` so uploads surface inline preview/progress/cancel/retry/dismiss UI (`upload-status` card) and respect the hardened `/api/uploads` pipeline (MIME sniffing + optional ClamAV + filesystem/S3/MinIO storage via `UPLOADS_STORAGE`, `UPLOADS_S3_*`, `CLAMAV_HOST`/`CLAMAV_PORT`).
 - Presence UI: `PresenceIndicator.tsx` renders shared avatars/count badges (WaveView header + inline Editor panes) with loading/error/empty states sourced from `usePresence`, so realtime presence payloads stay visible and resilient without needing to inspect tooltips/text logs.
 - Recovery UI: `RebuildPanel.tsx` (mounted in `WaveView`) surfaces a dev/admin snapshot recovery surface backed by `/api/editor/:waveId/rebuild`. It scopes to the current blip (when selected), queues rebuild jobs, polls `GET /rebuild` for status/logs, shows applied update counts, and exposes retry/error toasts so long-running rebuilds are observable without hammering the API.
@@ -94,6 +94,8 @@ There are **TWO ways** to create child blips in Rizzoma:
 | **Ctrl+Enter** | Create INLINE COMMENT | **YES** (new blip at cursor position) |
 
 Current state: Ctrl+Enter inserts an inline marker and navigates into the new subblip (anchorPosition tracked); inline expansion is no longer used. Validate via BLB snapshots and the toolbar-inline Playwright smoke.
+
+Mobile state: in edit mode, the blip `≡` bottom sheet exposes `Insert inline comment`; it uses the current cursor position and inserts the same `[+]` child-blip marker as Ctrl+Enter.
 
 - Server routes: `src/server/routes/editor.ts`
   - `GET /api/editor/:waveId/snapshot` → `{ snapshotB64, nextSeq }` (supports `?blipId=`)

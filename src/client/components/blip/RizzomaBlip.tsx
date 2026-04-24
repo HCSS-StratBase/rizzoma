@@ -663,6 +663,7 @@ export function RizzomaBlip({
         // This makes the marker PART of the content (like original Rizzoma)
         const editor = inlineEditorRef.current;
         if (editor) {
+          editor.chain().focus().setTextSelection(anchorPosition).run();
           (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
           // The content is auto-saved, so the [+] marker will persist
         }
@@ -869,6 +870,13 @@ export function RizzomaBlip({
       inlineEditor.setEditable(false);
     }
   }, [autoSaveBlip, editedContent, inlineEditor]);
+
+  const handleCreateInlineChildAtCursor = useCallback(() => {
+    const editor = inlineEditorRef.current || inlineEditor;
+    if (!editor || !blip.permissions.canComment) return;
+    const { from } = editor.state.selection;
+    stableCreateInlineChildBlip(from);
+  }, [blip.permissions.canComment, inlineEditor, stableCreateInlineChildBlip]);
 
   // handleSaveEdit now just finishes editing - auto-save handles the actual saving
   const handleSaveEdit = useCallback(async () => {
@@ -1110,7 +1118,7 @@ export function RizzomaBlip({
     }
   };
 
-  // Handle text selection for inline comments
+  // Handle selected-text annotations. BLB inline comments are cursor-position child blips.
   useEffect(() => {
     if (!FEATURES.INLINE_COMMENTS || isEditing) {
       setShowInlineCommentBtn(false);
@@ -1159,7 +1167,7 @@ export function RizzomaBlip({
         setIsInlineCommentFormVisible(false);
         setInlineCommentDraft('');
         if (!readOnlySelectionWarned.current) {
-          toast('Sign in to add inline comments', 'error');
+          toast('Sign in to add annotations', 'error');
           readOnlySelectionWarned.current = true;
         }
         return;
@@ -1603,9 +1611,9 @@ export function RizzomaBlip({
         }),
       });
       if (!response.ok) {
-        throw new Error(typeof response.data === 'string' ? response.data : 'Failed to create inline comment');
+        throw new Error(typeof response.data === 'string' ? response.data : 'Failed to create selection annotation');
       }
-      toast('Inline comment added');
+      toast('Selection annotation added');
       setIsInlineCommentFormVisible(false);
       setInlineCommentDraft('');
       setShowInlineCommentBtn(false);
@@ -1614,8 +1622,8 @@ export function RizzomaBlip({
       setIsExpanded(true);
       clearBrowserSelection();
     } catch (error) {
-      console.error('Error creating inline comment:', error);
-      toast('Failed to save inline comment', 'error');
+      console.error('Error creating selection annotation:', error);
+      toast('Failed to save selection annotation', 'error');
     } finally {
       setIsSavingInlineComment(false);
     }
@@ -1954,6 +1962,7 @@ export function RizzomaBlip({
               onCopyComment={handleCopyComment}
               onPasteAsReply={blip.permissions.canComment ? handlePasteAsReplyFromClipboard : undefined}
               onPasteAtCursor={isEditing ? handlePasteAtCursorFromClipboard : undefined}
+              onCreateInlineChild={isEditing && blip.permissions.canComment ? handleCreateInlineChildAtCursor : undefined}
               clipboardAvailable={clipboardAvailable}
               onShowHistory={() => setShowHistoryModal(true)}
               onInsertAttachment={isEditing ? handleAttachmentUpload : undefined}
@@ -2228,7 +2237,7 @@ export function RizzomaBlip({
         </>
       )}
       
-      {/* Inline Comment Button */}
+      {/* Selection annotation button (separate from BLB cursor-based inline comments) */}
       {FEATURES.INLINE_COMMENTS && showInlineCommentBtn && blip.permissions.canComment && !isEditing && selectionCoords && !isInlineCommentFormVisible && (
         <button
           className="inline-comment-btn"
@@ -2239,10 +2248,10 @@ export function RizzomaBlip({
             transform: 'translateX(-50%)'
           }}
           onClick={handleInlineCommentButton}
-          title="Add inline comment"
+          title="Annotate selected text"
           type="button"
         >
-          💬 Comment
+          💬 Annotate
         </button>
       )}
 
@@ -2258,7 +2267,7 @@ export function RizzomaBlip({
         >
           <div className="inline-comment-form-header">
             <span>
-              Comment on: "
+              Annotate: "
               {selectedRangeData.text.length > 40
                 ? `${selectedRangeData.text.substring(0, 40)}…`
                 : selectedRangeData.text}
@@ -2272,7 +2281,7 @@ export function RizzomaBlip({
             className="inline-comment-form-textarea"
             value={inlineCommentDraft}
             onChange={(e) => setInlineCommentDraft(e.target.value)}
-            placeholder="Add your comment..."
+            placeholder="Add your annotation..."
             rows={3}
           />
           <div className="inline-comment-form-actions">
@@ -2283,7 +2292,7 @@ export function RizzomaBlip({
               onClick={handleSubmitInlineComment}
               disabled={isSavingInlineComment || !inlineCommentDraft.trim()}
             >
-              {isSavingInlineComment ? 'Saving...' : 'Add comment'}
+              {isSavingInlineComment ? 'Saving...' : 'Add annotation'}
             </button>
           </div>
         </div>

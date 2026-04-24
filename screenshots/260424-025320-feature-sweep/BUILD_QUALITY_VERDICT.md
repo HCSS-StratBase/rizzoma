@@ -2,7 +2,7 @@
 
 - Sweep folder: `screenshots/260424-025320-feature-sweep/`
 - Branch: `feature/rizzoma-core-features`
-- Working-tree checkpoint: generated from the rebuilt public-production app on 2026-04-24 02:53 CEST, refreshed with implementation/runtime evidence on 2026-04-24 03:28 CEST, then closed with physical Pixel 9 Pro XL Chrome evidence on 2026-04-24 22:00 CEST.
+- Working-tree checkpoint: generated from the rebuilt public-production app on 2026-04-24 02:53 CEST, refreshed with implementation/runtime evidence on 2026-04-24 03:28 CEST, closed with physical Pixel 9 Pro XL Chrome evidence on 2026-04-24 22:00 CEST, then corrected with cursor-based BLB inline-comment evidence on 2026-04-24 23:15 CEST.
 - Evidence scope: visual/public-prod sweep plus full Vitest/typecheck evidence plus real-device Android Chrome evidence for the current branch via ADB reverse.
 
 ## Overall Verdict
@@ -13,6 +13,7 @@
 - Bottom line: the active branch is documented as green across the current 161-row matrix: full unit/API/client tests pass (`48` files, `174` passed, `3` skipped), typecheck passes, the screenshot sweep has no red rows, and `VF-108` now has physical Pixel 9 Pro XL Chrome evidence in `../260424-real-device-pixel9proxl/`.
 - Real-device correction: the authenticated Pixel pass exposed a cramped mobile blip toolbar. This was fixed by making mobile blip menus flow above content and by compacting the mobile read toolbar; final phone evidence is `../260424-real-device-pixel9proxl/015-cdp-android-toolbar-compact-final.png` with measured `overlaps: false`.
 - Boundary: the first physical-phone hit against `https://138-201-62-161.nip.io` showed a stale public deployment without the current X/Twitter auth button. The green verdict is for `feature/rizzoma-core-features` as validated locally through ADB reverse; redeploy and re-smoke the public VPS before claiming the live site includes every latest branch change. iPhone Safari remains an untested cross-browser risk, not an orange row in this branch matrix.
+- Terminology correction: the selected-text range system is now documented as selection annotations. BLB inline comments are cursor-position child blips; current physical Android evidence is in `../260424-real-device-pixel9proxl/parent-blip-cursor-inline-marker-created.png` and `../260424-real-device-pixel9proxl/nested-subblip-cursor-inline-marker-created.png`.
 
 ## Legend
 
@@ -29,7 +30,7 @@
 | Rich Text Editor | 16 | 16 | 0 | 0 | Visually healthy in this sweep. |
 | Real-time Collaboration | 6 | 6 | 0 | 0 | Green with Yjs/doc-cache/provider tests plus dynamic cursor screenshots. |
 | Unread Tracking (Follow-the-Green) | 9 | 9 | 0 | 0 | Green with read-state API, next/unread navigation, and UI tests. |
-| Inline Comments System | 6 | 6 | 0 | 0 | Green with anchoring, CRUD/threading, visibility, shortcuts, and popover tests. |
+| Selection Annotation System | 6 | 6 | 0 | 0 | Green with anchoring, CRUD/threading, visibility, shortcuts, and popover tests. |
 | File Uploads & Storage | 7 | 7 | 0 | 0 | Green with upload edge-case tests covering auth, limits/security, virus failures, local/S3 storage, and client progress/cancel/retry code paths. |
 | Search & Recovery | 5 | 5 | 0 | 0 | Green with editor search and rebuild/materialization tests. |
 | Blip Operations (Gear Menu) | 9 | 9 | 0 | 0 | Visually healthy in this sweep. |
@@ -118,13 +119,13 @@
 | VF-050 | "Follow the Green" CTA button | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [003-nav-topics-tab-and-searchable-topic-list.png](003-nav-topics-tab-and-searchable-topic-list.png) | Visible in the sweep; screenshot evidence exists. |
 | VF-051 | Keyboard navigation (j/k/g/G) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [003-nav-topics-tab-and-searchable-topic-list.png](003-nav-topics-tab-and-searchable-topic-list.png) | Visible in the sweep; screenshot evidence exists. |
 
-### Inline Comments System
+### Selection Annotation System
 
 | ID | Functionality | Green | Orange | Red | Evidence | Visual verdict |
 |---|---|---|---|---|---|---|
-| VF-052 | Comment structure (range anchoring, text snapshot) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.inlineCommentAnchoring.test.ts`<br>`src/tests/routes.comments.inline.test.ts` | Anchoring and text snapshot behavior pass. |
-| VF-053 | Comment CRUD APIs | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.comments.test.ts`<br>`src/tests/routes.comments.inline.test.ts` | Comment create/read/resolve paths pass. |
-| VF-054 | Comment threading (rootId + parentId) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.comments.inline.test.ts` | Inline threading test passes. |
+| VF-052 | Annotation structure (range anchoring, text snapshot) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.inlineCommentAnchoring.test.ts`<br>`src/tests/routes.comments.inline.test.ts` | Anchoring and text snapshot behavior pass. |
+| VF-053 | Annotation CRUD APIs | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.comments.test.ts`<br>`src/tests/routes.comments.inline.test.ts` | Annotation create/read/resolve paths pass. |
+| VF-054 | Annotation threading (rootId + parentId) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.comments.inline.test.ts` | Threading test passes. |
 | VF-055 | Resolve / unresolve | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [029-inline-comments-nav-state.png](029-inline-comments-nav-state.png) | Visible in the sweep; screenshot evidence exists. |
 | VF-056 | Visibility preference per-blip (server + localStorage) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.inlineCommentsVisibilityStorage.test.ts` | Per-blip visibility storage behavior passes. |
 | VF-057 | Keyboard shortcuts (Ctrl+Shift+Up/Down) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.inlineCommentsVisibilityShortcuts.test.ts` | Inline comment keyboard navigation shortcut test passes. |

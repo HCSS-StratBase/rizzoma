@@ -157,3 +157,38 @@
 - Boundary:
   - The first phone hit against `https://138-201-62-161.nip.io` showed a stale public deployment without the latest X/Twitter auth button, so redeploy + public-phone smoke remain next.
   - iPhone Safari remains an untested cross-browser risk.
+
+## Mobile Selection Annotation Verification
+- Terminology correction: this section verifies selected-text annotations only; it is not proof of BLB inline comments.
+- BLB inline comments are cursor-position child blips created at the insertion point. See the next section for the corrected cursor-based verification.
+- Verified the phone-width selected-text annotation path after the user asked whether the floating comment action really appears.
+- Added and ran a focused Playwright verifier at `tmp/verify-mobile-inline-comment.mjs` against both local current branch and the public HTTPS instance:
+  - `node tmp/verify-mobile-inline-comment.mjs` passed against `http://localhost:3000`.
+  - `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_OUT_DIR=screenshots/260424-mobile-inline-comment-verify-public node tmp/verify-mobile-inline-comment.mjs` passed against production.
+- Evidence:
+  - Local: `screenshots/260424-mobile-inline-comment-verify/parent-blip-button-visible.png` and `screenshots/260424-mobile-inline-comment-verify/nested-subblip-button-visible.png`.
+  - Public: `screenshots/260424-mobile-inline-comment-verify-public/parent-blip-button-visible.png` and `screenshots/260424-mobile-inline-comment-verify-public/nested-subblip-button-visible.png`.
+  - Physical phone: `screenshots/260424-real-device-pixel9proxl/parent-blip-physical-inline-comment-button.png` and `screenshots/260424-real-device-pixel9proxl/nested-subblip-physical-inline-comment-button.png`.
+- Result:
+  - Selecting text in a parent blip and a nested subblip at Pixel 5 viewport shows the floating annotation button and opens the selection-annotation form.
+  - Follow-up physical-device run on the connected Pixel 9 Pro XL through ADB + Chrome DevTools also passed against `http://127.0.0.1:3000` with Chrome Android `147.0.7727.102`.
+  - Corrected user-facing wording from `+ Comment` to `💬 Comment`; this was later renamed to `💬 Annotate` so it no longer collides with BLB inline comments.
+- Boundary:
+  - The verifier programmatically creates the browser text selection on the physical phone; it proves the app behavior after selection exists, not the ergonomics of manually dragging Android selection handles.
+
+## Cursor-Based BLB Inline Comment Correction
+- Corrected the mobile/editor UI model after the user flagged the conceptual error: a BLB inline comment is not selection-based. It is a child blip anchored at the current cursor position inside the parent blip/subblip.
+- Implementation:
+  - `RizzomaBlip.tsx` now creates an inline child from `editor.state.selection.from`, restores that cursor position before marker insertion, and keeps the existing `anchorPosition` child-blip model.
+  - `BlipMenu.tsx` and `BottomSheetMenu.tsx` now expose `Insert inline comment` in edit mode, including the phone bottom sheet reached from the mobile `≡` menu.
+  - The selected-text floating button is now labelled `💬 Annotate`, because it creates a selection annotation rather than a BLB inline comment.
+- Real-device evidence from the connected Pixel 9 Pro XL:
+  - `screenshots/260424-real-device-pixel9proxl/parent-blip-mobile-sheet-inline-action.png` shows the mobile bottom sheet action.
+  - `screenshots/260424-real-device-pixel9proxl/parent-blip-cursor-inline-marker-created.png` shows the `[+]` marker inserted at the parent-blip cursor position.
+  - `screenshots/260424-real-device-pixel9proxl/nested-subblip-cursor-inline-marker-created.png` shows the `[+]` marker inserted at the nested-subblip cursor position.
+- Verification:
+  - `npm run test -- --run src/tests/client.BlipMenu.test.tsx` passed: 20 tests.
+  - `npm run typecheck` passed.
+  - `node tmp/verify-physical-phone-cursor-inline-comment.mjs` passed against physical Chrome Android `147.0.7727.102`, with both parent blip and nested subblip returning marker text `+`.
+- Boundary:
+  - The physical-phone verifier places the cursor programmatically through Chrome DevTools, then uses the actual phone-width bottom-sheet UI to trigger `Insert inline comment`.

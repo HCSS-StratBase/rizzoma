@@ -201,7 +201,7 @@ describe('client: inline comment popover interactions', () => {
     expect(popover?.classList.contains('pinned')).toBe(true);
   });
 
-  it('shows a read-only banner when the user cannot add inline comments', async () => {
+  it('shows a read-only banner when the user cannot add selection annotations', async () => {
     await act(async () => root.unmount());
     editor.destroy();
     host.remove();
@@ -222,7 +222,7 @@ describe('client: inline comment popover interactions', () => {
     expect(banner?.textContent).toContain('read-only');
   });
 
-  it('surfaces a retry banner when inline comments fail to load and recovers after retry', async () => {
+  it('surfaces a retry banner when selection annotations fail to load and recovers after retry', async () => {
     const headers = { get: () => null };
     let requestCount = 0;
     fetchMock.mockImplementation(async (path: RequestInfo, init?: RequestInit) => {
@@ -325,7 +325,7 @@ describe('client: inline comment popover interactions', () => {
     const errorCall = statusSpy.mock.calls.find(
       ([status]) => Boolean(status.loadError)
     );
-    expect(errorCall?.[0].loadError).toContain('Inline comments are temporarily unavailable');
+    expect(errorCall?.[0].loadError).toContain('Selection annotations are temporarily unavailable');
 
     const retryButton = container.querySelector('[data-testid="inline-comments-retry"]');
     expect(retryButton).toBeTruthy();
@@ -340,7 +340,7 @@ describe('client: inline comment popover interactions', () => {
     expect(finalCall?.isFetching).toBe(false);
   });
 
-  it('shows a loading banner while inline comments are fetching', async () => {
+  it('shows a loading banner while selection annotations are fetching', async () => {
     const headers = { get: () => null };
     let resolveFetch: (() => void) | null = null;
     fetchMock.mockImplementation(async (path: RequestInfo, init?: RequestInit) => {
@@ -379,7 +379,7 @@ describe('client: inline comment popover interactions', () => {
 
     const loadingBanner = container.querySelector('[data-testid="inline-comments-loading"]');
     expect(loadingBanner).toBeTruthy();
-    expect(loadingBanner?.textContent).toContain('Loading inline comments');
+    expect(loadingBanner?.textContent).toContain('Loading selection annotations');
 
     await act(async () => {
       resolveFetch?.();

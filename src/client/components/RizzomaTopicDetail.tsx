@@ -678,6 +678,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             // This makes the marker PART of the content (like original Rizzoma)
             const editor = topicEditorRef.current;
             if (editor) {
+              editor.chain().focus().setTextSelection(anchorPosition).run();
               (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
             }
 

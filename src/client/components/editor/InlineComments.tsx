@@ -55,7 +55,7 @@ export function InlineComments({
   const [navigationCursor, setNavigationCursor] = useState<string | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const readOnlyBannerMessage = !canComment && !loadError
-    ? 'Inline comments are read-only for this blip.'
+    ? 'Selection annotations are read-only for this blip.'
     : null;
 
   const groupedComments = useMemo(() => {
@@ -232,8 +232,8 @@ export function InlineComments({
           if (!cancelled) {
             const isAuthError = response.status === 401 || response.status === 403;
             const message = isAuthError
-              ? 'Sign in to view inline comments'
-              : 'Inline comments are temporarily unavailable';
+              ? 'Sign in to view selection annotations'
+              : 'Selection annotations are temporarily unavailable';
             setComments([]);
             setLoadError(message);
             setLoadErrorType(isAuthError ? 'auth' : 'network');
@@ -254,9 +254,9 @@ export function InlineComments({
         }
       } catch (error) {
         if (!cancelled) {
-          console.error('Failed to load inline comments:', error);
+          console.error('Failed to load selection annotations:', error);
           setComments([]);
-          setLoadError('Inline comments are temporarily unavailable');
+          setLoadError('Selection annotations are temporarily unavailable');
           setLoadErrorType('network');
         }
       } finally {
@@ -402,8 +402,8 @@ export function InlineComments({
           );
         }
       } catch (error) {
-        console.error('Failed to save inline comment:', error);
-        toast('Failed to save inline comment', 'error');
+        console.error('Failed to save selection annotation:', error);
+        toast('Failed to save selection annotation', 'error');
         setComments((prev) => prev.filter((comment) => comment.id !== optimisticId));
       }
     };
@@ -516,7 +516,7 @@ export function InlineComments({
       }
     } catch (error) {
       console.error('Failed to save inline reply:', error);
-      toast('Failed to save inline comment', 'error');
+      toast('Failed to save selection annotation', 'error');
       setComments((prev) => prev.filter((c) => c.id !== optimisticId));
       setReplyDrafts((prev) => ({ ...prev, [comment.id]: draft }));
     } finally {
@@ -707,17 +707,17 @@ export function InlineComments({
           role="status"
           data-testid="inline-comments-loading"
         >
-          Loading inline comments…
+          Loading selection annotations…
         </div>
       )}
 
       <div
         className="inline-comment-nav"
-        aria-label="Inline comment navigation"
+        aria-label="Selection annotation navigation"
         data-testid="inline-comment-nav"
       >
         <div className="inline-comment-nav-header">
-          <span>Inline comments</span>
+          <span>Selection annotations</span>
           <span className="inline-comment-nav-shortcuts">Alt+↑ / Alt+↓</span>
         </div>
         {readOnlyBannerMessage && (
@@ -777,12 +777,12 @@ export function InlineComments({
             );
           })}
           {filteredRangeKeys.length === 0 && (
-            <li className="inline-comment-nav-empty">No inline comments yet</li>
+            <li className="inline-comment-nav-empty">No selection annotations yet</li>
           )}
         </ul>
       </div>
 
-      {/* Comment button for selected text */}
+      {/* Annotation button for selected text */}
       {selectedRange && !showCommentForm && !interactionDisabled && (
         <button
           className="add-comment-button"
@@ -793,23 +793,23 @@ export function InlineComments({
             top: '0',
             right: '-40px',
           }}
-          title="Add comment to selection"
+          title="Annotate selection"
         >
           💬
         </button>
       )}
 
-      {/* Comment form */}
+      {/* Annotation form */}
       {showCommentForm && selectedRange && (
         <div className="inline-comment-form" data-testid="inline-comments-form">
           <div className="comment-form-header">
-            <span>Comment on: "{selectedRange.text.substring(0, 30)}..."</span>
+            <span>Annotate: "{selectedRange.text.substring(0, 30)}..."</span>
             <button onClick={() => setShowCommentForm(false)}>✕</button>
           </div>
           <textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Add your comment..."
+            placeholder="Add your annotation..."
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.ctrlKey) {
@@ -825,7 +825,7 @@ export function InlineComments({
               disabled={!commentText.trim() || interactionDisabled}
               className="primary"
             >
-              Add Comment
+              Add annotation
             </button>
           </div>
         </div>
@@ -875,7 +875,7 @@ export function InlineComments({
           </div>
           {(loadError || !canComment) && (
             <div className="inline-comments-banner" role="status">
-              {loadError ?? 'Inline comments are read-only for this blip.'}
+              {loadError ?? 'Selection annotations are read-only for this blip.'}
             </div>
           )}
           {activeGroup.comments.map((comment) => renderCommentThread(comment))}

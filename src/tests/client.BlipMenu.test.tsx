@@ -3,6 +3,7 @@ import { act } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { createRoot, Root } from 'react-dom/client';
 import { BlipMenu } from '../client/components/blip/BlipMenu';
+import { createBlipMenuItems } from '../client/components/mobile/BottomSheetMenu';
 
 type Listener = () => void;
 
@@ -96,6 +97,7 @@ describe('client: BlipMenu toolbar', () => {
     onCopyComment: vi.fn(),
     onPasteAsReply: vi.fn(),
     onPasteAtCursor: vi.fn(),
+    onCreateInlineChild: vi.fn(),
     isDeleting: false,
     isUploading: false,
     uploadProgress: null as number | null,
@@ -155,6 +157,17 @@ describe('client: BlipMenu toolbar', () => {
       'clearNodes',
       'unsetAllMarks',
     ]);
+  });
+
+  it('creates a cursor-position inline comment from the edit toolbar', () => {
+    const inlineCommentBtn = container.querySelector('[data-testid="blip-menu-insert-inline-comment"]');
+    expect(inlineCommentBtn).toBeTruthy();
+
+    act(() => {
+      inlineCommentBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(baseProps.onCreateInlineChild).toHaveBeenCalled();
   });
 
   it('reflects active marks and toggles undo/redo disabled state', () => {
@@ -284,12 +297,12 @@ describe('client: BlipMenu toolbar', () => {
     expect(pasteReply?.getAttribute('title')).toContain('read-only');
   });
 
-  it('shows API failure notices when inline comments report an error', () => {
+  it('shows API failure notices when selection annotations report an error', () => {
     act(() => root.unmount());
     container.remove();
     baseProps = {
       ...createBaseProps(),
-      inlineCommentsNotice: 'Inline comments are temporarily unavailable',
+      inlineCommentsNotice: 'Selection annotations are temporarily unavailable',
     } as any;
     ({ container, root } = renderMenu(
       <BlipMenu
@@ -304,12 +317,12 @@ describe('client: BlipMenu toolbar', () => {
     expect(banner?.textContent).toContain('temporarily unavailable');
   });
 
-  it('renders inline comment notices while editing', () => {
+  it('renders selection annotation notices while editing', () => {
     act(() => root.unmount());
     container.remove();
     baseProps = {
       ...createBaseProps(),
-      inlineCommentsNotice: 'Inline comments are temporarily unavailable',
+      inlineCommentsNotice: 'Selection annotations are temporarily unavailable',
     } as any;
     ({ container, root } = renderMenu(
       <BlipMenu
@@ -447,6 +460,27 @@ describe('client: BlipMenu toolbar', () => {
     expect(baseProps.onCopyComment).toHaveBeenCalled();
     expect(baseProps.onPasteAsReply).toHaveBeenCalled();
     expect(baseProps.onPasteAtCursor).toHaveBeenCalled();
+  });
+
+  it('exposes cursor-position inline comment creation in the mobile edit sheet items', () => {
+    const onCreateInlineChild = vi.fn();
+    const items = createBlipMenuItems({
+      canEdit: true,
+      canComment: true,
+      isEditing: true,
+      areCommentsVisible: true,
+      collapseByDefault: false,
+      clipboardAvailable: false,
+      isUploading: false,
+      isSending: false,
+      isDeleting: false,
+      onFinishEdit: vi.fn(),
+      onCreateInlineChild,
+    });
+
+    const item = items.find((entry) => 'id' in entry && entry.id === 'insert-inline-comment');
+    expect(item && 'label' in item ? item.label : '').toBe('Insert inline comment');
+    expect(item && 'disabled' in item ? item.disabled : true).toBe(false);
   });
 
   it('disables paste actions when clipboard is empty', () => {

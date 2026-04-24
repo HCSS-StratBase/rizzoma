@@ -5,12 +5,12 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 
 ## ✅ Implemented Features
 
-### Track A: Inline Comments System
-- **Text selection tracking** - Select any text to add a comment
-- **Comment anchoring** - Comments attached to specific text ranges
-- **Comment sidebar** - View and manage all comments
+### Track A: Selection Annotation System
+- **Text selection tracking** - Select any text to add a selection annotation
+- **Annotation anchoring** - Annotations attached to specific text ranges
+- **Annotation sidebar** - View and manage all selected-text annotations
 - **Resolve/unresolve** - Mark comments as resolved
-- **Visibility preference** - Per-blip inline comment visibility persisted server-side with localStorage fallback and keyboard shortcuts (Ctrl+Shift+Up/Down)
+- **Visibility preference** - Per-blip selection-annotation visibility persisted server-side with localStorage fallback and keyboard shortcuts (Ctrl+Shift+Up/Down)
 - **API endpoints** - Full backend support for comments
 - **Files created:**
   - `InlineComments.tsx/css` - UI components
@@ -243,13 +243,13 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | "Follow the Green" CTA button | Done | — | — |
 | Keyboard navigation (j/k/g/G) | Done | — | — |
 
-### 6. Inline Comments System
+### 6. Selection Annotation System
 
 | Functionality | Status | Original Rizzoma | New Rizzoma |
 |---|---|---|---|
-| Comment structure (range anchoring, text snapshot) | Done | — | — |
-| Comment CRUD APIs | Done | — | — |
-| Comment threading (rootId + parentId) | Done | — | — |
+| Annotation structure (range anchoring, text snapshot) | Done | — | — |
+| Annotation CRUD APIs | Done | — | — |
+| Annotation threading (rootId + parentId) | Done | — | — |
 | Resolve / unresolve | Done | — | — |
 | Visibility preference per-blip (server + localStorage) | Done | — | — |
 | Keyboard shortcuts (Ctrl+Shift+Up/Down) | Done | — | — |
@@ -538,9 +538,10 @@ With `FEAT_ALL=1` + real auth enabled:
 1. **Rich Editing** - Full formatting toolbar on all blips.
 2. **@mentions** - Type @ to mention users.
 3. **Tasks** - Create task lists with checkboxes.
-4. **Comments** - Select text and add inline comments.
-5. **Follow Green** - Navigate through unread changes in WaveView and the Rizzoma layout; some multi-session/large-wave edge cases still rely on manual testing.
-6. **Live Collaboration** - See other users' cursors.
-7. **Real-time Updates** - Core realtime flows are active; perf/CI hardening is still in progress.
+4. **BLB inline comments** - Place the cursor in edit mode and use Ctrl+Enter or `Insert inline comment` to create a `[+]` child blip at that position.
+5. **Selection annotations** - Select text and add range annotations without confusing them with BLB inline comments.
+6. **Follow Green** - Navigate through unread changes in WaveView and the Rizzoma layout; some multi-session/large-wave edge cases still rely on manual testing.
+7. **Live Collaboration** - See other users' cursors.
+8. **Real-time Updates** - Core realtime flows are active; perf/CI hardening is still in progress.
 
 Most of the core Rizzoma experience is available; see **Still pending** for remaining gaps.

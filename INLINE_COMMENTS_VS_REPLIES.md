@@ -1,4 +1,12 @@
-# Understanding Rizzoma: Inline Comments vs Replies
+# STALE TERMINOLOGY WARNING
+
+This document originally used "inline comments" for selected-text annotations. That is not the BLB/Rizzoma meaning.
+
+For BLB/Rizzoma parity, an inline comment is a cursor-position child blip created inside a parent blip at the insertion point, rendered as an inline `[+]` marker and stored with `anchorPosition`. See `docs/BLB_LOGIC_AND_PHILOSOPHY.md` and `docs/EDITOR_TOOLBAR_PARITY.md`.
+
+The selected-text range system described below is still useful, but should be treated as **selection annotations**, not BLB inline comments.
+
+# Understanding Rizzoma: Selection Annotations vs Replies
 
 ## 1. REPLIES (What we have now)
 - Appear UNDERNEATH the blip as separate blips
@@ -20,7 +28,7 @@
     Another reply to the main blip
   ```
 
-## 2. INLINE COMMENTS (What we need)
+## 2. SELECTION ANNOTATIONS (Selected-text range system)
 - Attached to SPECIFIC TEXT within a blip
 - Highlighted/underlined text shows there's a comment
 - Comments appear in margin/sidebar or as popups
@@ -34,13 +42,13 @@
   ```
 
 ## Key Differences:
-1. **Location**: Inline comments are ON the text, replies are BELOW the blip
-2. **Scope**: Inline comments refer to specific text selections, replies refer to the whole blip
-3. **Display**: Inline comments show as annotations on text, replies show as separate blips
-4. **Interaction**: Click highlighted text to see inline comment, click Reply button to add reply
+1. **Location**: Selection annotations are ON the selected text, replies are BELOW the blip
+2. **Scope**: Selection annotations refer to specific text selections, replies refer to the whole blip
+3. **Display**: Selection annotations show as annotations on text, replies show as separate blips
+4. **Interaction**: Click highlighted text to see a selection annotation, click Reply button to add reply
 
-## Current Implementation Issues:
-- The "Add inline comment" button creates a regular reply with quoted text
+## Historical Implementation Issues:
+- The old selected-text "Add inline comment" button created a regular reply with quoted text
 - No visual indication of which text has comments
 - Comments don't stay attached to the selected text
 - Missing the annotation/highlight system
@@ -52,7 +60,7 @@
 4. Keep inline comments separate from replies in the data model
 
 ## Current Progress
-- ✅ View-mode selections now open a floating inline comment composer (`RizzomaBlip.tsx`) that persists range `{ start, end, text }` via `/api/comments`, replacing the old reply fallback.
+- ✅ View-mode selections now open a floating selection-annotation composer (`RizzomaBlip.tsx`) that persists range `{ start, end, text }` via `/api/comments`, replacing the old reply fallback.
 - ✅ TipTap edit mode already renders inline decorations via `InlineComments.tsx`; highlights will appear wherever the editor mounts with `FEATURES.INLINE_COMMENTS`.
 - ✅ Hovering or clicking highlighted ranges now reveals a pinned inline comment popover with grouped threads, underline styling, and real-time resolve controls.
 - ✅ Inline comments are kept separate from replies with threaded inline replies, parent/root tracking, and resolve/reopen actions surfaced directly in the inline comments popover.

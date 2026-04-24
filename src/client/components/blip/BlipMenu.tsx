@@ -28,6 +28,7 @@ interface BlipMenuProps {
   onCopyComment?: () => void;
   onPasteAsReply?: () => void;
   onPasteAtCursor?: () => void;
+  onCreateInlineChild?: () => void;
   clipboardAvailable?: boolean;
   onShowHistory?: () => void;
   onInsertAttachment?: () => void;
@@ -69,6 +70,7 @@ export function BlipMenu({
   onCopyComment,
   onPasteAsReply,
   onPasteAtCursor,
+  onCreateInlineChild,
   clipboardAvailable = false,
   onShowHistory,
   onSend,
@@ -205,7 +207,7 @@ export function BlipMenu({
     }
     setShowBgPalette(false);
   };
-  const commentsReadOnlyMessage = 'Inline comments are read-only for this blip.';
+  const commentsReadOnlyMessage = 'Selection annotations are read-only for this blip.';
   const inlineCommentsBannerMessage = inlineCommentsNotice ?? (!canComment ? commentsReadOnlyMessage : null);
   const commentsBanner = inlineCommentsBannerMessage ? (
     <div
@@ -237,6 +239,7 @@ export function BlipMenu({
     onCopyComment,
     onPasteAsReply,
     onPasteAtCursor,
+    onCreateInlineChild,
     onShowHistory,
     onInsertAttachment,
     onInsertImage,
@@ -494,6 +497,15 @@ export function BlipMenu({
               data-testid="blip-menu-insert-image"
             >
               🖼️
+            </button>
+            <button
+              className="menu-btn"
+              title="Insert inline comment at cursor"
+              onClick={onCreateInlineChild}
+              disabled={!onCreateInlineChild || !canComment}
+              data-testid="blip-menu-insert-inline-comment"
+            >
+              💬+
             </button>
             {isUploading && (
               <span className="menu-upload-progress" aria-live="polite">

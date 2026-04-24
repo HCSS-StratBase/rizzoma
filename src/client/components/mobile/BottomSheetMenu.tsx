@@ -112,6 +112,7 @@ export function createBlipMenuItems(options: {
   onCopyComment?: () => void;
   onPasteAsReply?: () => void;
   onPasteAtCursor?: () => void;
+  onCreateInlineChild?: () => void;
   onShowHistory?: () => void;
   onInsertAttachment?: () => void;
   onInsertImage?: () => void;
@@ -138,6 +139,16 @@ export function createBlipMenuItems(options: {
         icon: '📤',
         disabled: options.isSending,
         onClick: options.onSend,
+      });
+    }
+
+    if (options.onCreateInlineChild) {
+      items.push({
+        id: 'insert-inline-comment',
+        label: 'Insert inline comment',
+        icon: '💬+',
+        disabled: !options.canComment,
+        onClick: options.onCreateInlineChild,
       });
     }
 
