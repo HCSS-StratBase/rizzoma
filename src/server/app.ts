@@ -84,16 +84,19 @@ app.use('/api/notifications', notificationsRouter);
 app.use('/api/mentions', mentionsRouter);
 app.use('/api/tasks', tasksRouter);
 
-// Placeholder root
-app.get('/', (_req, res) => {
-  res.type('text').send('Rizzoma modern server running');
-});
-
 // Static assets in production
+const staticDir = path.resolve(process.cwd(), 'dist', 'client');
 if (process.env['NODE_ENV'] === 'production') {
-  const staticDir = path.resolve(process.cwd(), 'dist', 'client');
   app.use(express.static(staticDir));
 }
+
+app.get('/', (_req, res) => {
+  if (process.env['NODE_ENV'] === 'production') {
+    res.sendFile(path.join(staticDir, 'index.html'));
+    return;
+  }
+  res.type('text').send('Rizzoma modern server running');
+});
 app.use('/uploads', express.static(uploadsPath, {
   fallthrough: false,
   maxAge: '1d',

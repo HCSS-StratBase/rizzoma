@@ -121,7 +121,7 @@ requires a rebuild.
 
 | Commit | Date | Bug | What |
 |---|---|---|---|
-| pending local | 2026-04-24 | visual coverage | Rebuilt `app-prod` with realtime cursor/typing fixes, production Vite feature-flag hardening, mobile topic-content capture support, and coverage validation that verifies screenshot files exist. Public prod health passed at `https://138-201-62-161.nip.io/api/health`; latest evidence folder is `screenshots/260424-015008-feature-sweep/` with 42 screenshots and 0 screenshot gaps. |
+| pending local | 2026-04-24 | visual coverage | Rebuilt `app-prod` with realtime cursor/typing fixes, production Vite feature-flag hardening, mobile topic-content capture support, local avatar fallbacks, compact mobile editor toolbar CSS, and coverage validation that verifies screenshot files exist. Public prod health passed at `https://138-201-62-161.nip.io/api/health`; latest evidence folder is `screenshots/260424-025320-feature-sweep/` with 42 screenshots, 0 screenshot gaps, and a 98 green / 63 orange / 0 red verdict. |
 | `b99fa4bf` | 2026-04-22 | docs | Refresh after late-night prod-build + CI gate work |
 | `907b1972` | 2026-04-23 | toolbar smoke | Scoped `Done` no longer re-enters edit mode; deployed to both `rizzoma-app-prod` and `rizzoma-app` on the VPS |
 | `87c5e988` | 2026-04-22 | #147 | CI typecheck + vitest hardened to true blocking gates |

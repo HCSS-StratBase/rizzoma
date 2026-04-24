@@ -214,6 +214,19 @@ async function apiRetry(page, method, apiPath, body, attempts = 4) {
   throw lastError;
 }
 
+async function focusEditorWithoutPointer(editor) {
+  await editor.evaluate((node) => {
+    const el = node;
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  });
+}
+
 async function createFixture(page) {
   const title = `Visual Sweep ${stamp}`;
   const wave = await api(page, 'POST', '/api/topics', {
@@ -378,7 +391,7 @@ async function captureBlipAndToolbarStates(page, fixture) {
   await page.keyboard.press('Escape').catch(() => {});
 
   const editor = main.locator('.ProseMirror').first();
-  await editor.click();
+  await focusEditorWithoutPointer(editor);
   await page.keyboard.type(' @');
   await capture(page, 'mention autocomplete active', ['Rich Text: mentions autocomplete', 'Inline Widgets: @mention pill'], 'Typing @ in edit mode opens or primes mention autocomplete state.', { dynamicStep: 'after-mention-trigger' });
   await page.keyboard.type(' ~');
@@ -418,7 +431,7 @@ async function enterMainBlipEdit(page, fixture) {
   await main.locator('[data-testid="blip-menu-edit-surface"]').first().waitFor({ timeout: 10000 });
   const editor = main.locator('.ProseMirror').first();
   await editor.waitFor({ timeout: 10000 });
-  await editor.click();
+  await focusEditorWithoutPointer(editor);
   return { main, editor };
 }
 
@@ -437,8 +450,8 @@ async function captureRealtimeCollaborationStates(baseContext, ownerPage, fixtur
     const ownerEdit = await enterMainBlipEdit(ownerPage, fixture);
     const observerEdit = await enterMainBlipEdit(observerPage, fixture);
 
-    await ownerEdit.editor.click();
-    await observerEdit.editor.click();
+    await focusEditorWithoutPointer(ownerEdit.editor);
+    await focusEditorWithoutPointer(observerEdit.editor);
     await observerPage.keyboard.type(' remote typing evidence', { delay: 45 });
 
     await ownerPage.locator('.collaboration-cursor, .typing-indicator').first().waitFor({ timeout: 8000 });

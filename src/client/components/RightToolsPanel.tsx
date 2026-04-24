@@ -39,22 +39,6 @@ interface RightToolsPanelProps {
   nextTopicAvailable?: boolean;
 }
 
-// Generate fallback avatar URL from email using Gravatar
-function getGravatarUrl(email?: string): string {
-  if (!email) return '';
-  // Simple hash for Gravatar - in production you'd use a proper MD5
-  const hash = email.trim().toLowerCase();
-  return `https://www.gravatar.com/avatar/${btoa(hash).slice(0, 32)}?d=identicon&s=80`;
-}
-
-// Get the best available avatar URL
-function getAvatarUrl(user?: { email?: string; avatar?: string } | null): string {
-  // Prefer OAuth provider avatar (Google, Facebook)
-  if (user?.avatar) return user.avatar;
-  // Fallback to Gravatar
-  return getGravatarUrl(user?.email);
-}
-
 // Get initials from name or email
 function getInitials(name?: string, email?: string): string {
   if (name) {
@@ -94,6 +78,11 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
   const [isEditMode, setIsEditMode] = useState(false);
   const [isBlipActiveEditable, setIsBlipActiveEditable] = useState(false);
   const [_isCursorInEditor, setIsCursorInEditor] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [user?.avatar]);
 
   // Listen for edit mode changes and blip active events from RizzomaBlip
   useEffect(() => {
@@ -262,18 +251,18 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
       {user && (
         <div className="user-avatar-section">
           <div className="user-avatar-large" title={user.email || user.name || 'User'}>
-            {(user.avatar || user.email) ? (
+            {user.avatar && !avatarFailed ? (
               <img
-                src={getAvatarUrl(user)}
+                src={user.avatar}
                 alt={user.name || user.email}
                 onError={(e) => {
-                  // Fallback to initials on error
+                  setAvatarFailed(true);
                   (e.target as HTMLImageElement).style.display = 'none';
                   (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
                 }}
               />
             ) : null}
-            <span className={`avatar-initials ${(user.avatar || user.email) ? 'hidden' : ''}`}>
+            <span className={`avatar-initials ${user.avatar && !avatarFailed ? 'hidden' : ''}`}>
               {getInitials(user.name, user.email)}
             </span>
           </div>

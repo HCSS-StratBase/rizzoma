@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { BlipMenu } from './BlipMenu';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
@@ -79,6 +79,59 @@ export function getGlobalActiveBlipId(): string | null {
   return globalActiveBlipId;
 }
 
+const getAvatarInitials = (name?: string, email?: string): string => {
+  const source = name?.trim() || email?.split('@')[0]?.trim() || 'U';
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  return source.slice(0, 2).toUpperCase();
+};
+
+function ContributorAvatar({
+  avatar,
+  name,
+  email,
+  role,
+  className = '',
+  style,
+}: {
+  avatar?: string;
+  name?: string;
+  email?: string;
+  role?: string;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  const [failed, setFailed] = useState(false);
+  const label = name || email || 'Contributor';
+  const classes = `blip-contributor-avatar ${role === 'owner' ? 'owner' : ''} ${className}`.trim();
+
+  if (avatar && !failed) {
+    return (
+      <img
+        className={classes}
+        style={style}
+        src={avatar}
+        alt={label}
+        title={label}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`${classes} fallback`}
+      style={style}
+      title={label}
+      aria-label={label}
+    >
+      {getAvatarInitials(name, email)}
+    </span>
+  );
+}
+
 // BlipContributorsStack - stacked avatars with owner on top, click to expand
 function BlipContributorsStack({
   contributors,
@@ -104,11 +157,10 @@ function BlipContributorsStack({
     // Fallback to single author avatar
     return (
       <div className="blip-contributors-stack">
-        <img
-          className="blip-contributor-avatar"
-          src={fallbackAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackAuthor || 'U')}&size=24&background=random`}
-          alt={fallbackAuthor || 'Unknown'}
-          title={fallbackAuthor || 'Author'}
+        <ContributorAvatar
+          avatar={fallbackAvatar}
+          name={fallbackAuthor}
+          className="fallback-author"
         />
       </div>
     );
@@ -124,16 +176,16 @@ function BlipContributorsStack({
       title={expanded ? 'Click to collapse' : 'Click to see all contributors'}
     >
       {toShow.map((contributor, idx) => (
-        <img
+        <ContributorAvatar
           key={`${contributor.id}-${idx}`}
-          className={`blip-contributor-avatar ${contributor.role === 'owner' ? 'owner' : ''}`}
+          avatar={contributor.avatar}
+          name={contributor.name || contributor.email?.split('@')[0]}
+          email={contributor.email}
+          role={contributor.role}
           style={!expanded ? {
             zIndex: toShow.length - idx,
             transform: `translate(${idx * 4}px, ${idx * 4}px)`,
           } : undefined}
-          src={contributor.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(contributor.name || contributor.email?.split('@')[0] || 'U')}&size=24&background=${contributor.role === 'owner' ? '4EA0F1' : 'random'}`}
-          alt={contributor.name || contributor.email || 'Contributor'}
-          title={contributor.email || contributor.name || 'Contributor'}
         />
       ))}
       {overflow > 0 && (

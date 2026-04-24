@@ -2,7 +2,7 @@
   "name": "rizzoma-modern",
   "version": "2.0.0",
   "description": "Rizzoma Collaboration Platform - Modernized",
-  "main": "dist/server/app.js",
+  "main": "dist/server/server/app.js",
   "type": "module",
   "engines": {
     "node": ">=20.0.0",
@@ -16,7 +16,7 @@
     "build": "npm run build:server && npm run build:client",
     "build:server": "node node_modules/typescript/bin/tsc -p tsconfig.server.json && node node_modules/tsc-alias/dist/index.js",
     "build:client": "node node_modules/vite/bin/vite.js build",
-    "start": "node dist/server/app.js",
+    "start": "node dist/server/server/app.js",
     "test": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts",
     "test:watch": "node node_modules/vitest/vitest.mjs --config vitest.config.ts",
     "test:e2e": "node node_modules/cypress/bin/cypress run",

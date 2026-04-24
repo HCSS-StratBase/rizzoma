@@ -31,14 +31,14 @@
   - `git diff --check` pass.
 - Visual review:
   - Perf screenshots and toolbar smoke screenshot are stable/readable.
-  - Residual gap: public-prod screenshots show broken external avatar placeholders in this WSL/browser environment.
+  - Superseded residual: later public-prod sweep `screenshots/260424-025320-feature-sweep/` fixed broken external avatar placeholders with local initials/provider-avatar fallbacks.
 
 ## Next
-- Continue from the `260424-015008` sweep as the current screenshot evidence set; the earlier `260424-003739` next items below are superseded by the realtime/mobile gap-closure pass.
-- Harden visible product quality: avatar fallbacks and crowded mobile editor toolbar.
+- Continue from the `260424-025320` sweep as the current screenshot evidence set; the earlier `260424-003739` and `260424-015008` next items below are superseded by the final orange-row pass.
+- Next hardening target: action-level evidence for non-screenshot/runtime/mobile rows, especially gestures, BottomSheet interaction, touch-target measurement, real devices, and backend/security/upload/email/offline behavior.
 - Rerun production-target full-render perf at 500 and 1000 blips.
 - Compare `RIZZOMA_PERF_RENDER=full` vs `lite` with identical seed sizes.
-- Decide whether avatar fallback/proxying belongs in the modernization backlog.
+- Continue mobile action-level verification: gestures, BottomSheet open/dismiss, touch-target measurement, and real-device checks.
 
 ## Visual Feature Sweep
 - Added `scripts/visual-feature-sweep.mjs` and `npm run visual:sweep`.
@@ -88,11 +88,11 @@
   - Command: `docker compose up -d --build app-prod`.
   - Result: public production and local-container `/api/health` checks passed.
 - Final public-prod sweep:
-  - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_SWEEP_STAMP=260424-015008 npm run visual:sweep`.
+  - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_SWEEP_STAMP=260424-025320 npm run visual:sweep`.
   - Result: pass with 42 screenshots and no manifest residuals.
-  - Evidence: `screenshots/260424-015008-feature-sweep/040-mobile-topic-content-view.png` and `screenshots/260424-015008-feature-sweep/042-real-time-cursor-and-typing-indicator-visible.png`.
+  - Evidence: `screenshots/260424-025320-feature-sweep/040-mobile-topic-content-view.png` and `screenshots/260424-025320-feature-sweep/042-real-time-cursor-and-typing-indicator-visible.png`.
 - Final coverage:
-  - Command: `RIZZOMA_SWEEP_DIR=screenshots/260424-015008-feature-sweep npm run visual:coverage`.
+  - Command: `RIZZOMA_SWEEP_DIR=screenshots/260424-025320-feature-sweep npm run visual:coverage`.
   - Result: 101 static screenshot-covered, 2 dynamic screenshot-covered, 58 non-screenshot/test-artifact, 0 screenshot gaps, 0 needs-review.
 - Verification:
   - `npm run typecheck` pass.
@@ -100,4 +100,14 @@
   - `npm run build` pass.
 - Honest quality boundary:
   - Screenshot coverage gaps are closed.
-  - Product polish remains: broken external avatar placeholders and crowded mobile toolbar layout are visible in the accepted screenshots.
+  - Product polish update: final `260424-025320` screenshots no longer show broken external avatar placeholders; mobile editor toolbar CSS is compacted, but gesture/BottomSheet/touch-target/device evidence remains outside static screenshots.
+
+## Orange Row Reduction
+- Removed third-party avatar fallback URLs from the active client (`ui-avatars` / Gravatar) and replaced them with local initials/provider-avatar fallbacks across the topic header, topic list, right tools panel, blip contributor stack, and mock presence component.
+- Compact phone-width editor toolbar CSS now uses a horizontal scroll strip with smaller controls and fixed mobile popovers.
+- Fixed production deploy blockers exposed by the public sweep: Docker server path, upload directory ownership, public root serving `dist/client/index.html`, app-prod port alignment with nginx, feature flags, and allowed origins.
+- Reran public production sweep and coverage:
+  - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_SWEEP_STAMP=260424-025320 npm run visual:sweep`.
+  - Command: `RIZZOMA_SWEEP_DIR=screenshots/260424-025320-feature-sweep npm run visual:coverage`.
+  - Verdict: `screenshots/260424-025320-feature-sweep/BUILD_QUALITY_VERDICT.md` now marks 98 green, 63 orange, 0 red.
+- Boundary: only VF-041 moved green in this batch; mobile gesture/BottomSheet/touch-target/real-device rows and backend/runtime/security/email/upload/offline rows stay orange until proven by action-level or non-screenshot tests.

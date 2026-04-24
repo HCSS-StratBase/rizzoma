@@ -3,7 +3,7 @@
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
 - `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-04-24; refresh if more changes land.
-- Re-read checkpoint: 2026-04-24 01:50 CEST — fresh visual feature sweep plus row-level coverage matrix captured against public prod in `screenshots/260424-015008-feature-sweep/`; the current matrix has 42 screenshots, zero screenshot gaps, mobile topic content, and two-client realtime cursor/typing evidence. Older perf/tooling drift warnings below remain relevant.
+- Re-read checkpoint: 2026-04-24 02:53 CEST — final public-prod visual feature sweep plus row-level verdict captured in `screenshots/260424-025320-feature-sweep/`; the current matrix has 42 screenshots, zero screenshot gaps, mobile topic content, two-client realtime cursor/typing evidence, and a 98 green / 63 orange / 0 red verdict. Older perf/tooling drift warnings below remain relevant.
 
 Quick start for the next batch (copy/paste):
 ```
@@ -25,8 +25,8 @@ codex exec '
     - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`). Ensure `http://localhost:3000/` is reachable before Playwright.
 
   Priority focus:
-  1) Visual sweep hardening: latest full sweep is `screenshots/260424-015008-feature-sweep/` (42 primary screenshots, 196 documented rows parsed / 161 screenshot-valid / 69 dynamic candidates, row-level coverage matrix with 101 static screenshot-covered / 2 dynamic screenshot-covered / 58 non-screenshot-test rows / 0 screenshot gaps). Next: product-quality hardening for broken avatar fallbacks and crowded mobile toolbar, plus test/log evidence for rows classified as non-screenshot artifacts.
-  2) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile. `perf-harness.mjs` now supports `RIZZOMA_PERF_RENDER=lite|full`; public-prod full-render 100-blip baseline passed on 2026-04-24 (stage duration 1193.7ms landing / 524.5ms expanded, memory 33-36MB, artifacts in `screenshots/260424-prod-perf-baseline/`). Next: rerun at 500/1000 blips, compare full vs lite, and investigate optional absolute-TTF drift plus broken external avatar placeholders.
+  1) Visual sweep hardening: latest full sweep is `screenshots/260424-025320-feature-sweep/` (42 primary screenshots, 196 documented rows parsed / 161 screenshot-valid / 69 dynamic candidates, row-level coverage matrix with 101 static screenshot-covered / 2 dynamic screenshot-covered / 58 non-screenshot-test rows / 0 screenshot gaps; verdict 98 green / 63 orange / 0 red). Next: action-level evidence for rows classified as non-screenshot artifacts, especially backend/runtime/security/email/upload/offline and mobile gesture/BottomSheet/touch-target/device checks.
+  2) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile. `perf-harness.mjs` now supports `RIZZOMA_PERF_RENDER=lite|full`; public-prod full-render 100-blip baseline passed on 2026-04-24 (stage duration 1193.7ms landing / 524.5ms expanded, memory 33-36MB, artifacts in `screenshots/260424-prod-perf-baseline/`). Next: rerun at 500/1000 blips, compare full vs lite, and investigate optional absolute-TTF drift.
   3) BLB parity: enforce single-container topic pane (title as first line of the meta-blip body), inline [+] marker click behavior/styling, per-blip toolbar parity, unread green markers, and update BLB snapshots. Note: `test-blb-snapshots.mjs` timed out on inline expansion during the 2026-04-24 supplemental attempt; the primary visual sweep captured BLB before/after evidence.
   4) Toolbar parity: `test:toolbar-inline` now asserts the read toolbar (expanded via collapsed rows). Keep the read toolbar present and smokes green.
   5) Keep health checks and CI gating for /api/health, inline comments, uploads wired (health-checks job runs npm run test:health); keep browser smokes green (toolbar-inline + follow-green desktop/mobile with FEAT_ALL=1).
@@ -98,7 +98,7 @@ codex exec '
 - Build: `npm run build`
 - Perf harness (optional large-wave sanity): `npm run perf:harness` (seeds a 5k-blip wave and captures render metrics/screenshots under `snapshots/perf/`); set `RIZZOMA_PERF_RENDER=full` for production-like full rendering or leave default `lite` for the lean regression profile.
   - Recent runs: public-prod 100-blip full-render PASS (2026-04-24; stage 1193.7ms landing / 524.5ms expanded, memory 33-36MB, artifacts in `screenshots/260424-prod-perf-baseline/`); 1000-blip PASS (2026-02-02) with `perfRender=lite` + `perfLimit=1000` + `x-rizzoma-perf=1` (stage duration ~1.5s landing / ~0.5s expanded, memory 23MB, 1000/1000 rendered; windowed 200 ~2.6–2.9s). Check budgets via `PERF_SNAPSHOT_DIR=<dir> node scripts/perf-budget.mjs`.
-- Visual sweep: `npm run visual:sweep` captures the broad feature screenshot set and writes a manifest; `npm run visual:coverage` writes row-level `coverage.md`/`coverage.json`; latest public-prod folder is `screenshots/260424-015008-feature-sweep/`.
+- Visual sweep: `npm run visual:sweep` captures the broad feature screenshot set and writes a manifest; `npm run visual:coverage` writes row-level `coverage.md`/`coverage.json`; latest public-prod folder is `screenshots/260424-025320-feature-sweep/`.
 
 8) PR Workflow (CLI)
 - Create PR: `gh pr create -R HCSS-StratBase/rizzoma -B master -H <branch> -t "Title" -F <body.md>`

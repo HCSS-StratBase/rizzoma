@@ -64,6 +64,33 @@ function getInitials(name?: string, email?: string): string {
 
 const SHOW_FOLLOW_BUTTON_DELAY = 500; // ms, same as original
 
+function TopicListAvatar({ topic }: { topic: Topic }) {
+  const [failed, setFailed] = useState(false);
+  const label = topic.authorName || topic.authorId;
+
+  if (topic.authorAvatar && !failed) {
+    return (
+      <img
+        className="last-editing avatar"
+        src={topic.authorAvatar}
+        alt={label}
+        title={label}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="last-editing avatar fallback"
+      title={label}
+      aria-label={label}
+    >
+      {getInitials(topic.authorName, topic.authorId)}
+    </div>
+  );
+}
+
 export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: RizzomaTopicsListProps) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -157,12 +184,6 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: 
     }
   }, []);
 
-  // Generate avatar URL
-  const getAvatarUrl = (authorId: string, authorAvatar?: string) => {
-    if (authorAvatar) return authorAvatar;
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(authorId)}&size=30&background=random&format=svg`;
-  };
-
   return (
     <div className="rizzoma-topics-list">
       <div className="topics-header">
@@ -232,13 +253,7 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: 
 
                   {/* Info section - avatar and date */}
                   <div className="info">
-                    <div
-                      className="last-editing avatar"
-                      style={{ backgroundImage: `url(${getAvatarUrl(topic.authorId, topic.authorAvatar)})` }}
-                      title={topic.authorName || topic.authorId}
-                    >
-                      {getInitials(topic.authorName, topic.authorId)}
-                    </div>
+                    <TopicListAvatar topic={topic} />
                     <div className="last-changed" title={new Date(topic.updatedAt).toLocaleString()}>
                       {formatSmartDate(topic.updatedAt)}
                     </div>

@@ -38,8 +38,12 @@ services:
       COUCHDB_DB: project_rizzoma
       REDIS_URL: redis://redis:6379
       SESSION_SECRET: change-me
+      ALLOWED_ORIGINS: https://138-201-62-161.nip.io
+      FEAT_ALL: "1"
+      EDITOR_ENABLE: "1"
+      BUSINESS_ACCOUNT: "1"
     ports:
-      - "8000:8000"
+      - "8201:8000"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8000/api/health"]
       interval: 30s

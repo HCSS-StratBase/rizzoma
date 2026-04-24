@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import type { CSSProperties } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 // DISABLED: Socket subscription was causing infinite loop
 // import { subscribeTopicDetail } from '../lib/socket';
@@ -82,6 +83,44 @@ type Participant = {
   invitedAt: number;
   acceptedAt?: number;
 };
+
+function getTopicAvatarInitials(name?: string, email?: string): string {
+  const source = name?.trim() || email?.split('@')[0]?.trim() || 'U';
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  return source.slice(0, 2).toUpperCase();
+}
+
+function TopicAvatar({
+  participant,
+  authorName,
+  small = false,
+  style,
+}: {
+  participant?: Participant;
+  authorName?: string;
+  small?: boolean;
+  style?: CSSProperties;
+}) {
+  const label = participant?.email || authorName || 'Author';
+  const initials = getTopicAvatarInitials(authorName, participant?.email);
+  const roleClass = participant?.role === 'owner' ? 'owner' : '';
+  const pendingClass = participant?.status === 'pending' ? 'pending' : '';
+  const className = `${small ? 'topic-avatar-small' : 'participant-avatar'} ${roleClass} ${pendingClass}`.trim();
+
+  return (
+    <span
+      className={`${className} fallback`}
+      style={style}
+      title={`${label}${participant?.role === 'owner' ? ' (owner)' : ''}${participant?.status === 'pending' ? ' (invited)' : ''}`}
+      aria-label={label}
+    >
+      {initials}
+    </span>
+  );
+}
 
 function extractTags(html: string): string[] {
   const plainText = html.replace(/<[^>]+>/g, ' ');
@@ -1074,12 +1113,9 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           {participants.length > 0 ? (
             <>
               {participants.slice(0, 5).map((p) => (
-                <img
+                <TopicAvatar
                   key={p.id}
-                  className={`participant-avatar ${p.role === 'owner' ? 'owner' : ''} ${p.status === 'pending' ? 'pending' : ''}`}
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(p.email.split('@')[0] || 'U')}&size=28&background=${p.role === 'owner' ? '4EA0F1' : 'random'}`}
-                  alt={p.email}
-                  title={`${p.email}${p.role === 'owner' ? ' (owner)' : ''}${p.status === 'pending' ? ' (invited)' : ''}`}
+                  participant={p}
                 />
               ))}
               {participants.length > 5 && (
@@ -1089,12 +1125,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               )}
             </>
           ) : (
-            <img
-              className="participant-avatar"
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(topic.authorName || 'U')}&size=28&background=random`}
-              alt={topic.authorName || 'Author'}
-              title={`Author: ${topic.authorName || 'Unknown'}`}
-            />
+            <TopicAvatar authorName={topic.authorName} />
           )}
         </div>
         <button
@@ -1312,22 +1343,15 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                 const allToShow = owner ? [owner, ...others] : participants.slice(0, 3);
                 if (allToShow.length === 0) {
                   return (
-                    <img
-                      className="topic-avatar-small"
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(topic.authorName || 'U')}&size=24&background=random`}
-                      alt={topic.authorName || 'Author'}
-                      title={topic.authorName || 'Author'}
-                    />
+                    <TopicAvatar authorName={topic.authorName} small />
                   );
                 }
                 return allToShow.map((p, idx) => (
-                  <img
+                  <TopicAvatar
                     key={p.id}
-                    className={`topic-avatar-small ${p.role === 'owner' ? 'owner' : ''}`}
+                    participant={p}
+                    small
                     style={{ zIndex: allToShow.length - idx, marginLeft: idx > 0 ? '-8px' : '0' }}
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(p.email.split('@')[0] || 'U')}&size=24&background=${p.role === 'owner' ? '4EA0F1' : 'random'}`}
-                    alt={p.email}
-                    title={`${p.email}${p.role === 'owner' ? ' (owner)' : ''}`}
                   />
                 ));
               })()}

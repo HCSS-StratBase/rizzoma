@@ -32,6 +32,7 @@ COPY package*.json ./
 RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
+RUN mkdir -p /app/data/uploads && chown -R node:node /app/data
 
 USER node
 EXPOSE 8000
@@ -39,4 +40,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD curl -fsS http://localhost:8000/api/health || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "dist/server/app.js"]
+CMD ["node", "dist/server/server/app.js"]
