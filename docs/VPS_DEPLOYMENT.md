@@ -1,6 +1,6 @@
 # VPS Deployment — Rizzoma on 138.201.62.161
 
-**Last updated**: 2026-04-23 23:55 CEST (toolbar-inline smoke repaired after prod cutover)
+**Last updated**: 2026-04-24 23:48 CEST (cursor-based BLB inline comments deployed and verified on public Pixel Chrome)
 
 ## Server details
 
@@ -8,7 +8,7 @@
 |---|---|
 | **IP** | `138.201.62.161` |
 | **Dev port** | `8200` (UI; `rizzoma-app` dev target → container `:3000`) |
-| **Prod port** | `8201` (UI; `rizzoma-app-prod` production target → container `:8788`) — green since 2026-04-22 |
+| **Prod port** | `8201` (UI; `rizzoma-app-prod` production target → container `:8000`) — green since 2026-04-22 |
 | **URL (HTTPS)** | `https://138-201-62-161.nip.io/` — Let's Encrypt cert + nginx proxy → `localhost:8201` (`rizzoma-app-prod`, cut over 2026-04-23 23:24 CEST) |
 | **URL (HTTP, legacy)** | `http://138.201.62.161:8200/` (dev, direct Docker port-mapped) |
 | **SSH** | `root@138.201.62.161` (key auth) |
@@ -18,17 +18,17 @@
 | **Persistent volumes** | `/data/volumes/stephan-rizzoma/{app,redis,couchdb,rabbitmq,sphinx,minio}` |
 | **Auth account** | `hp@rizzoma.com` / `stratbase2026` |
 | **Repo** | `HCSS-StratBase/rizzoma` on GitHub |
-| **Current documented source** | local `master`, refreshed 2026-04-23 22:55 CEST |
-| **Last verified VPS code baseline** | VPS working copy `40cfb0e2` plus VPS-local compose overrides and mirrored docs; public HTTPS now targets prod `:8201` |
+| **Current documented source** | `feature/rizzoma-core-features` at `69d6a8a9`, deployed 2026-04-24 23:40 CEST |
+| **Last verified VPS code baseline** | VPS working copy `69d6a8a9`; public HTTPS targets prod `:8201`; prior dirty VPS tree preserved as stash `pre-cursor-inline-deploy-20260424-234017` |
 
-## What's running (as of 2026-04-23)
+## What's running (as of 2026-04-24)
 
 Docker-Compose stack:
 
 | Container | Image | Port(s) | Notes |
 |---|---|---|---|
 | `rizzoma-app` | `rizzoma-app` (local build, **dev** target) | `8200:3000` | Vite + Express (`npm run dev`) |
-| `rizzoma-app-prod` | `rizzoma-app` (local build, **production** target) | `8201:8788` | `node dist/server/server/app.js`, USER `node`, healthy since 2026-04-22 late-night |
+| `rizzoma-app-prod` | `rizzoma-app` (local build, **production** target) | `8201:8000` | `node dist/server/server/app.js`, USER `node`, healthy since 2026-04-22 late-night |
 | `rizzoma-couchdb` | `couchdb:3` | `5984:5984` | |
 | `rizzoma-redis` | `redis:7-alpine` | `6379:6379` | Session store (Redis-backed via `connect-redis`) |
 | `rizzoma-rabbitmq` | `rabbitmq:3-management-alpine` | `5672:5672`, `15672:15672` | |
@@ -39,6 +39,24 @@ Docker-Compose stack:
 Sphinx is **not** running — it lives behind the `search` profile and is no longer a hard dependency (issue #42 fix, 2026-04-21).
 
 `app-prod` is now the public HTTPS target. It runs the production bundle (built with `FEAT_ALL=1` so feature flags ship enabled) and the `node` user can write `/app/logs` (winston) + `/app/data/uploads` (uploads route) — both pre-created + chowned in the Dockerfile production stage.
+
+## Public cursor-inline redeploy (2026-04-24 23:40 CEST)
+
+The active branch `feature/rizzoma-core-features` was deployed to the VPS at commit `69d6a8a9` (`fix: make mobile inline comments cursor-based`). The VPS working tree had a large unrelated dirty deployment state from earlier work, so it was preserved before the branch reset:
+
+```bash
+cd /data/large-projects/stephan/rizzoma
+git stash push -u -m "pre-cursor-inline-deploy-20260424-234017"
+git checkout -B feature/rizzoma-core-features origin/feature/rizzoma-core-features
+docker compose --profile prod up -d --build app-prod
+```
+
+Verified after rebuild:
+- `docker ps` shows `rizzoma-app-prod` healthy with `0.0.0.0:8201->8000/tcp`.
+- `docker exec rizzoma-app-prod sh -lc 'cat .git/HEAD'` resolves to `69d6a8a9`.
+- Public `/api/health` returns OK and CouchDB healthy.
+- Public root serves `main-CRFVko80.js` and `main-tAElMspz.css`.
+- Physical Pixel 9 Pro XL Chrome verified cursor-based BLB inline comments on the public URL; evidence lives in `screenshots/260424-real-device-pixel9proxl-public/`.
 
 ## Public prod cutover (2026-04-23 23:24 CEST)
 
@@ -121,7 +139,8 @@ requires a rebuild.
 
 | Commit | Date | Bug | What |
 |---|---|---|---|
-| pending local | 2026-04-24 | visual coverage | Rebuilt `app-prod` with realtime cursor/typing fixes, production Vite feature-flag hardening, mobile topic-content capture support, local avatar fallbacks, compact mobile editor toolbar CSS, and coverage validation that verifies screenshot files exist. Public prod health passed at `https://138-201-62-161.nip.io/api/health`; latest evidence folder is `screenshots/260424-025320-feature-sweep/` with 42 screenshots, 0 screenshot gaps, and a 98 green / 63 orange / 0 red verdict. |
+| `69d6a8a9` | 2026-04-24 | mobile BLB inline comments | Corrects BLB inline comments to cursor-position child blips, renames selected-text comments to selection annotations, deploys public prod bundle `main-CRFVko80.js`, and verifies parent + nested cursor insertion on physical Pixel 9 Pro XL Chrome against `https://138-201-62-161.nip.io`. |
+| `02f36d81..0ed5745e` | 2026-04-24 | visual coverage | Rebuilt `app-prod` with realtime cursor/typing fixes, production Vite feature-flag hardening, mobile topic-content capture support, local avatar fallbacks, compact mobile editor toolbar CSS, Redis/Twitter/mobile runtime closure, and coverage validation that verifies screenshot files exist. Public prod health passed at `https://138-201-62-161.nip.io/api/health`; latest evidence folder is `screenshots/260424-025320-feature-sweep/` with 42 screenshots, 0 screenshot gaps, and a 161 green / 0 orange / 0 red verdict. |
 | `b99fa4bf` | 2026-04-22 | docs | Refresh after late-night prod-build + CI gate work |
 | `907b1972` | 2026-04-23 | toolbar smoke | Scoped `Done` no longer re-enters edit mode; deployed to both `rizzoma-app-prod` and `rizzoma-app` on the VPS |
 | `87c5e988` | 2026-04-22 | #147 | CI typecheck + vitest hardened to true blocking gates |

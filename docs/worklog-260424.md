@@ -192,3 +192,21 @@
   - `node tmp/verify-physical-phone-cursor-inline-comment.mjs` passed against physical Chrome Android `147.0.7727.102`, with both parent blip and nested subblip returning marker text `+`.
 - Boundary:
   - The physical-phone verifier places the cursor programmatically through Chrome DevTools, then uses the actual phone-width bottom-sheet UI to trigger `Insert inline comment`.
+
+## Public VPS Cursor Inline Comment Deployment
+- Deployed the cursor-based BLB inline-comment correction to the public VPS:
+  - Local commit: `69d6a8a9` (`fix: make mobile inline comments cursor-based`).
+  - VPS working tree was dirty from prior local deployment state, so it was preserved as stash `pre-cursor-inline-deploy-20260424-234017`.
+  - VPS branch reset to `origin/feature/rizzoma-core-features` at `69d6a8a9`, then rebuilt with `docker compose --profile prod up -d --build app-prod`.
+- Public production verification:
+  - `https://138-201-62-161.nip.io/api/health` returned OK with CouchDB healthy.
+  - Public root served the rebuilt assets `main-CRFVko80.js` and `main-tAElMspz.css`.
+  - VPS container `rizzoma-app-prod` reports commit `69d6a8a9`, port mapping `8201->8000`, and healthy status.
+- Physical public-phone proof:
+  - Ran `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_OUT_DIR=screenshots/260424-real-device-pixel9proxl-public node tmp/verify-physical-phone-cursor-inline-comment.mjs`.
+  - Result passed on Pixel 9 Pro XL Chrome Android `147.0.7727.102`.
+  - Parent blip and nested subblip both returned `markerText: "+"`.
+  - Evidence folder: `screenshots/260424-real-device-pixel9proxl-public/`.
+- Boundary:
+  - iPhone Safari remains untested.
+  - The public check proves Android Chrome on the deployed public VPS; it does not prove every mobile browser.
