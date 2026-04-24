@@ -18,8 +18,8 @@
 | **Persistent volumes** | `/data/volumes/stephan-rizzoma/{app,redis,couchdb,rabbitmq,sphinx,minio}` |
 | **Auth account** | `hp@rizzoma.com` / `stratbase2026` |
 | **Repo** | `HCSS-StratBase/rizzoma` on GitHub |
-| **Current documented source** | `feature/rizzoma-core-features` at `69d6a8a9`, deployed 2026-04-24 23:40 CEST |
-| **Last verified VPS code baseline** | VPS working copy `69d6a8a9`; public HTTPS targets prod `:8201`; prior dirty VPS tree preserved as stash `pre-cursor-inline-deploy-20260424-234017` |
+| **Current documented source** | `feature/rizzoma-core-features` at `df139e18`, refreshed 2026-04-24 23:52 CEST |
+| **Last verified VPS code baseline** | Running prod image built from app-code commit `69d6a8a9`; VPS source checkout is `df139e18` (docs/evidence only); public HTTPS targets prod `:8201`; prior dirty VPS tree preserved as stash `pre-cursor-inline-deploy-20260424-234017` |
 
 ## What's running (as of 2026-04-24)
 
@@ -42,7 +42,7 @@ Sphinx is **not** running — it lives behind the `search` profile and is no lon
 
 ## Public cursor-inline redeploy (2026-04-24 23:40 CEST)
 
-The active branch `feature/rizzoma-core-features` was deployed to the VPS at commit `69d6a8a9` (`fix: make mobile inline comments cursor-based`). The VPS working tree had a large unrelated dirty deployment state from earlier work, so it was preserved before the branch reset:
+The active branch `feature/rizzoma-core-features` was deployed to the VPS at app-code commit `69d6a8a9` (`fix: make mobile inline comments cursor-based`). The VPS working tree had a large unrelated dirty deployment state from earlier work, so it was preserved before the branch reset:
 
 ```bash
 cd /data/large-projects/stephan/rizzoma
@@ -57,6 +57,7 @@ Verified after rebuild:
 - Public `/api/health` returns OK and CouchDB healthy.
 - Public root serves `main-CRFVko80.js` and `main-tAElMspz.css`.
 - Physical Pixel 9 Pro XL Chrome verified cursor-based BLB inline comments on the public URL; evidence lives in `screenshots/260424-real-device-pixel9proxl-public/`.
+- After documentation/evidence commit `df139e18` was pushed, the VPS source checkout was fast-forwarded to `df139e18` without rebuilding the already-verified app bundle.
 
 ## Public prod cutover (2026-04-23 23:24 CEST)
 
@@ -139,6 +140,7 @@ requires a rebuild.
 
 | Commit | Date | Bug | What |
 |---|---|---|---|
+| `df139e18` | 2026-04-24 | public phone evidence | Adds public Pixel 9 Pro XL cursor-inline screenshots and updates docs/Tana-facing handoff state. VPS source checkout is fast-forwarded here; no rebuild was needed because app code did not change after `69d6a8a9`. |
 | `69d6a8a9` | 2026-04-24 | mobile BLB inline comments | Corrects BLB inline comments to cursor-position child blips, renames selected-text comments to selection annotations, deploys public prod bundle `main-CRFVko80.js`, and verifies parent + nested cursor insertion on physical Pixel 9 Pro XL Chrome against `https://138-201-62-161.nip.io`. |
 | `02f36d81..0ed5745e` | 2026-04-24 | visual coverage | Rebuilt `app-prod` with realtime cursor/typing fixes, production Vite feature-flag hardening, mobile topic-content capture support, local avatar fallbacks, compact mobile editor toolbar CSS, Redis/Twitter/mobile runtime closure, and coverage validation that verifies screenshot files exist. Public prod health passed at `https://138-201-62-161.nip.io/api/health`; latest evidence folder is `screenshots/260424-025320-feature-sweep/` with 42 screenshots, 0 screenshot gaps, and a 161 green / 0 orange / 0 red verdict. |
 | `b99fa4bf` | 2026-04-22 | docs | Refresh after late-night prod-build + CI gate work |
