@@ -338,6 +338,19 @@
 
 /* Mobile: Compact toolbar with essential buttons */
 @media (max-width: 500px) {
+  .blip-container.expanded > .blip-menu-container {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    z-index: 3;
+    margin: 0 0 6px;
+  }
+
+  .nested-blip .blip-menu-container {
+    left: auto;
+  }
+
   .blip-menu {
     height: auto;
     min-height: 36px;
@@ -361,6 +374,12 @@
 
   .done-btn {
     padding: 6px 10px !important;
+  }
+
+  .read-only-menu {
+    width: 100%;
+    background: #f8fbff;
+    border-bottom: 1px solid #dbe8f4;
   }
 
   /* Hide less essential button groups on mobile, but keep overflow */
@@ -432,4 +451,39 @@
   .edit-btn {
     min-width: 60px;
   }
+}
+
+/* Real phones can report a wide CSS viewport in Chrome; key off mobile layout too. */
+.mobile-layout .blip-container.expanded > .blip-menu-container {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 3;
+  margin: 0 0 6px;
+}
+
+.mobile-layout .nested-blip .blip-menu-container {
+  left: auto !important;
+}
+
+.mobile-layout .read-only-menu {
+  width: 100%;
+  background: #f8fbff;
+  border-bottom: 1px solid #dbe8f4;
+}
+
+.blip-menu-container.mobile-blip-menu-container {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 3;
+  margin: 0 0 6px;
+}
+
+.mobile-blip-menu-container .read-only-menu {
+  width: 100%;
+  background: #f8fbff;
+  border-bottom: 1px solid #dbe8f4;
 }

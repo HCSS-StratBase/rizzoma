@@ -172,6 +172,23 @@ describe('client: mobile and PWA runtime coverage', () => {
     expect(serviceWorker).toContain("const API_PATHS = ['/api/', '/socket.io/']");
   });
 
+  it('keeps expanded blip toolbars in flow on small mobile screens', () => {
+    const menuCss = readFileSync(join(process.cwd(), 'src/client/components/blip/BlipMenu.css'), 'utf8');
+    const menuTsx = readFileSync(join(process.cwd(), 'src/client/components/blip/BlipMenu.tsx'), 'utf8');
+    const mobileRule = menuCss.match(/@media\s*\(max-width:\s*500px\)\s*\{[\s\S]*?\.blip-container\.expanded\s*>\s*\.blip-menu-container\s*\{([\s\S]*?)\n\s*\}/);
+    const mobileLayoutRule = menuCss.match(/\.mobile-layout\s+\.blip-container\.expanded\s*>\s*\.blip-menu-container\s*\{([\s\S]*?)\n\}/);
+    const mobileContainerRule = menuCss.match(/\.blip-menu-container\.mobile-blip-menu-container\s*\{([\s\S]*?)\n\}/);
+
+    expect(mobileRule?.[1]).toContain('position: relative');
+    expect(mobileRule?.[1]).toContain('top: auto');
+    expect(mobileRule?.[1]).toContain('left: auto');
+    expect(mobileRule?.[1]).toContain('right: auto');
+    expect(mobileLayoutRule?.[1]).toContain('position: relative !important');
+    expect(mobileLayoutRule?.[1]).toContain('left: auto !important');
+    expect(mobileContainerRule?.[1]).toContain('position: relative !important');
+    expect(menuTsx).toContain("isMobile ? ' mobile-blip-menu-container' : ''");
+  });
+
   it('detects horizontal swipe gestures for panel navigation', async () => {
     const onLeft = vi.fn();
     const onRight = vi.fn();

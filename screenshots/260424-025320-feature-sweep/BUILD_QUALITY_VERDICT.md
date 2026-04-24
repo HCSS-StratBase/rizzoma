@@ -2,15 +2,17 @@
 
 - Sweep folder: `screenshots/260424-025320-feature-sweep/`
 - Branch: `feature/rizzoma-core-features`
-- Working-tree checkpoint: generated from the rebuilt public-production app on 2026-04-24 02:53 CEST, then refreshed with implementation/runtime evidence on 2026-04-24 03:28 CEST.
-- Evidence scope: visual/public-prod sweep plus full Vitest/typecheck evidence. Real-device mobile validation remains the only row that cannot be closed from this workstation alone.
+- Working-tree checkpoint: generated from the rebuilt public-production app on 2026-04-24 02:53 CEST, refreshed with implementation/runtime evidence on 2026-04-24 03:28 CEST, then closed with physical Pixel 9 Pro XL Chrome evidence on 2026-04-24 22:00 CEST.
+- Evidence scope: visual/public-prod sweep plus full Vitest/typecheck evidence plus real-device Android Chrome evidence for the current branch via ADB reverse.
 
 ## Overall Verdict
 
-- 🟩 Green: 160 functionality rows have acceptable visual, API, unit, or runtime evidence.
-- 🟧 Orange: 1 functionality row remains partial because it explicitly requires physical real-device validation.
+- 🟩 Green: 161 functionality rows have acceptable visual, API, unit, runtime, or physical-device evidence.
+- 🟧 Orange: 0 functionality rows remain partial.
 - 🟥 Red: 0 functionality rows are visually blocked or missing required screenshot evidence.
-- Bottom line: the branch is effectively green under local CI/runtime verification: full unit/API/client tests pass (`48` files, `174` passed, `3` skipped), typecheck passes, and the screenshot sweep still has no red rows. The only remaining orange item is real-device mobile validation (`VF-108`), because emulator screenshots and jsdom gesture tests do not equal testing on a physical iPhone/Android device.
+- Bottom line: the active branch is documented as green across the current 161-row matrix: full unit/API/client tests pass (`48` files, `174` passed, `3` skipped), typecheck passes, the screenshot sweep has no red rows, and `VF-108` now has physical Pixel 9 Pro XL Chrome evidence in `../260424-real-device-pixel9proxl/`.
+- Real-device correction: the authenticated Pixel pass exposed a cramped mobile blip toolbar. This was fixed by making mobile blip menus flow above content and by compacting the mobile read toolbar; final phone evidence is `../260424-real-device-pixel9proxl/015-cdp-android-toolbar-compact-final.png` with measured `overlaps: false`.
+- Boundary: the first physical-phone hit against `https://138-201-62-161.nip.io` showed a stale public deployment without the current X/Twitter auth button. The green verdict is for `feature/rizzoma-core-features` as validated locally through ADB reverse; redeploy and re-smoke the public VPS before claiming the live site includes every latest branch change. iPhone Safari remains an untested cross-browser risk, not an orange row in this branch matrix.
 
 ## Legend
 
@@ -33,7 +35,7 @@
 | Blip Operations (Gear Menu) | 9 | 9 | 0 | 0 | Visually healthy in this sweep. |
 | History & Playback | 13 | 13 | 0 | 0 | Green with blip-history API tests and visual playback screenshots. |
 | Email Notifications | 6 | 6 | 0 | 0 | Green with notification routes and email-service/template code evidence in the passing suite. |
-| Mobile & PWA | 11 | 10 | 1 | 0 | Mostly green with breakpoint, PWA, service-worker, gesture, offline, View Transition, and BottomSheet runtime tests; real-device validation remains orange. |
+| Mobile & PWA | 11 | 11 | 0 | 0 | Green with breakpoint, PWA, service-worker, gesture, offline, View Transition, BottomSheet runtime tests, and physical Pixel 9 Pro XL Chrome evidence. |
 | User Interface Components | 23 | 23 | 0 | 0 | Visually healthy in this sweep. |
 | BLB (Bullet-Label-Blip) — Core Paradigm | 22 | 22 | 0 | 0 | Green with visual BLB screenshots plus inline toolbar, persistence, auth-gating, and marker behavior tests/code evidence. |
 | Inline Widgets & Styling | 8 | 8 | 0 | 0 | Visually healthy in this sweep. |
@@ -206,7 +208,7 @@
 | VF-105 | Offline mutation queue (auto-sync, max 3 retries) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.mobilePwa.test.tsx`<br>`src/client/lib/offlineQueue.ts` | Offline queue persistence and max-3 retry success path pass. |
 | VF-106 | BottomSheet mobile menu | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [039-mobile-authenticated-topic-navigation.png](039-mobile-authenticated-topic-navigation.png)<br>`src/tests/client.mobilePwa.test.tsx` | BottomSheet open/dismiss/Escape behavior passes. |
 | VF-107 | Touch targets (44px minimum) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [039-mobile-authenticated-topic-navigation.png](039-mobile-authenticated-topic-navigation.png)<br>`src/client/styles/breakpoints.css` | Mobile CSS defines 44px touch targets and targeted mobile runtime tests pass. |
-| VF-108 | Mobile layout (device validation on real devices) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Real-device validation is explicitly outside this screenshot sweep. |
+| VF-108 | Mobile layout (device validation on real devices) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [../260424-real-device-pixel9proxl/003-local-branch-after-wait.png](../260424-real-device-pixel9proxl/003-local-branch-after-wait.png)<br>[../260424-real-device-pixel9proxl/006-cdp-android-auth.png](../260424-real-device-pixel9proxl/006-cdp-android-auth.png)<br>[../260424-real-device-pixel9proxl/015-cdp-android-toolbar-compact-final.png](../260424-real-device-pixel9proxl/015-cdp-android-toolbar-compact-final.png) | Physical Pixel 9 Pro XL / Chrome rendered the current branch mobile auth layout and authenticated topic/blip layout through ADB reverse; final toolbar evidence measured no overlap. Production URL looked stale before redeploy; iPhone Safari remains untested. |
 
 ### User Interface Components
 

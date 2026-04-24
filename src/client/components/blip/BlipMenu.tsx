@@ -410,7 +410,7 @@ export function BlipMenu({
 
   if (isEditing) {
     return (
-      <div className="blip-menu-container">
+      <div className={`blip-menu-container${isMobile ? ' mobile-blip-menu-container' : ''}`}>
         <div className={`blip-menu edit-menu${isInlineChild ? ' inline-child-menu' : ''}`} data-testid="blip-menu-edit-surface">
           <div className="menu-group">
             <button
@@ -632,7 +632,7 @@ export function BlipMenu({
 
   // Read-only menu - Original Rizzoma style: Edit | hide/show comments | link | Hide | Delete | gear
   return (
-    <div className="blip-menu-container">
+    <div className={`blip-menu-container${isMobile ? ' mobile-blip-menu-container' : ''}`}>
       <div className={`blip-menu read-only-menu${isInlineChild ? ' inline-child-menu' : ''}`} data-testid="blip-menu-read-surface">
         {canEdit && (
           <div className="menu-group">
@@ -670,37 +670,41 @@ export function BlipMenu({
           )}
         </div>
 
-        <div className="menu-group">
-          <button
-            className="menu-btn"
-            onClick={onHideComments}
-            title="Hide comments (Ctrl+Shift+Up)"
-            disabled={!onHideComments || !areCommentsVisible}
-            data-testid="blip-menu-comments-hide"
-          >
-            ⤵
-          </button>
-          <button
-            className="menu-btn"
-            onClick={onShowComments}
-            title="Show comments (Ctrl+Shift+Down)"
-            disabled={!onShowComments || areCommentsVisible}
-            data-testid="blip-menu-comments-show"
-          >
-            ⤴
-          </button>
-        </div>
+        {!isMobile && (
+          <>
+            <div className="menu-group">
+              <button
+                className="menu-btn"
+                onClick={onHideComments}
+                title="Hide comments (Ctrl+Shift+Up)"
+                disabled={!onHideComments || !areCommentsVisible}
+                data-testid="blip-menu-comments-hide"
+              >
+                ⤵
+              </button>
+              <button
+                className="menu-btn"
+                onClick={onShowComments}
+                title="Show comments (Ctrl+Shift+Down)"
+                disabled={!onShowComments || areCommentsVisible}
+                data-testid="blip-menu-comments-show"
+              >
+                ⤴
+              </button>
+            </div>
 
-        <div className="menu-group">
-          <button
-            className="menu-btn"
-            onClick={onGetLink}
-            title="Get Direct Link"
-            data-testid="blip-menu-get-link"
-          >
-            🔗
-          </button>
-        </div>
+            <div className="menu-group">
+              <button
+                className="menu-btn"
+                onClick={onGetLink}
+                title="Get Direct Link"
+                data-testid="blip-menu-get-link"
+              >
+                🔗
+              </button>
+            </div>
+          </>
+        )}
 
         {/* Hide and Delete are in the overflow/gear menu to reduce clutter */}
         <div className="menu-group" ref={overflowRef}>

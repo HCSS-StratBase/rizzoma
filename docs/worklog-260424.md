@@ -129,3 +129,31 @@
   - `npm run typecheck` pass.
   - Targeted rerun `npm run test -- src/tests/server.session.test.ts src/tests/server.authOauth.test.ts src/tests/client.mobilePwa.test.tsx` pass: 3 files, 12 tests.
   - `npm run test` pass: 48 files, 174 passed, 3 skipped, 0 failures.
+
+## Physical Device Mobile Closure
+- Connected a physical Pixel 9 Pro XL over ADB wireless debugging and set the device to stay awake during testing:
+  - `adb shell svc power stayon true`
+  - `adb shell settings put global stay_on_while_plugged_in 7`
+  - `adb shell settings put system screen_off_timeout 2147483647`
+- Captured real-device current-branch evidence through `adb reverse tcp:3000 tcp:3000` and Chrome DevTools over ADB:
+  - Auth evidence: `screenshots/260424-real-device-pixel9proxl/003-local-branch-after-wait.png` and `006-cdp-android-auth.png`.
+  - Authenticated topic/blip evidence: `007-cdp-android-authenticated-home.png`, `008-cdp-android-topic-collapsed.png`, and `009-cdp-android-topic-expanded.png`.
+- Fixed the phone-exposed visual defect:
+  - The first authenticated expanded-blip screenshot showed the read toolbar overlapping blip content on Pixel Chrome.
+  - `BlipMenu.tsx` now marks mobile menu containers with `mobile-blip-menu-container`.
+  - `BlipMenu.css` now keeps mobile blip menus in normal flow and compacts the read toolbar on mobile by moving comment/link shortcuts to the bottom-sheet menu.
+  - `src/tests/client.mobilePwa.test.tsx` now asserts the mobile menu container and CSS in-flow rule.
+- Final accepted phone evidence:
+  - `screenshots/260424-real-device-pixel9proxl/015-cdp-android-toolbar-compact-final.png`.
+  - CDP metrics: `menuClass = blip-menu-container mobile-blip-menu-container`, `css = relative`, `overlaps = false`.
+- Updated verdict:
+  - `screenshots/260424-025320-feature-sweep/BUILD_QUALITY_VERDICT.md` now marks 161 green, 0 orange, 0 red.
+- Verification after the phone fix:
+  - `npm run typecheck` pass.
+  - `npm run lint:branch-context` pass.
+  - `git diff --check` pass.
+  - `npm run test -- --run src/tests/client.BlipMenu.test.tsx src/tests/client.mobilePwa.test.tsx` pass: 2 files, 26 tests.
+  - Full `npm run test` was attempted twice; both long parallel/single-worker runs were killed with exit `-1` after many suites had passed and without a final assertion summary. Isolated `src/tests/server.session.test.ts` passed after the first run's transient-looking Redis failure. Treat full-suite completion as a resource/runtime gap to rerun in CI or a clean shell, not as a newly accepted green proof for this toolbar patch.
+- Boundary:
+  - The first phone hit against `https://138-201-62-161.nip.io` showed a stale public deployment without the latest X/Twitter auth button, so redeploy + public-phone smoke remain next.
+  - iPhone Safari remains an untested cross-browser risk.
