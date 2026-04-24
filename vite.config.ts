@@ -2,21 +2,28 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-export default defineConfig({
-  plugins: [react()],
-  define: {
-    // Pass environment variables to the client
-    'import.meta.env.FEAT_ALL': JSON.stringify(process.env.FEAT_ALL || ''),
-    'import.meta.env.FEAT_INLINE_COMMENTS': JSON.stringify(process.env.FEAT_INLINE_COMMENTS || ''),
-    'import.meta.env.FEAT_RICH_TOOLBAR': JSON.stringify(process.env.FEAT_RICH_TOOLBAR || ''),
-    'import.meta.env.FEAT_MENTIONS': JSON.stringify(process.env.FEAT_MENTIONS || ''),
-    'import.meta.env.FEAT_TASK_LISTS': JSON.stringify(process.env.FEAT_TASK_LISTS || ''),
-    'import.meta.env.FEAT_FOLLOW_GREEN': JSON.stringify(process.env.FEAT_FOLLOW_GREEN || ''),
-    'import.meta.env.FEAT_VISUAL_DIFF': JSON.stringify(process.env.FEAT_VISUAL_DIFF || ''),
-    'import.meta.env.FEAT_LIVE_CURSORS': JSON.stringify(process.env.FEAT_LIVE_CURSORS || ''),
-    'import.meta.env.FEAT_TYPING_INDICATORS': JSON.stringify(process.env.FEAT_TYPING_INDICATORS || ''),
-    'import.meta.env.FEAT_REALTIME_COLLAB': JSON.stringify(process.env.FEAT_REALTIME_COLLAB || ''),
-  },
+export default defineConfig(({ command, mode }) => {
+  const featAll = process.env.FEAT_ALL || (command === 'build' || mode === 'production' ? '1' : '');
+
+  return {
+    plugins: [react()],
+    define: {
+      // Pass feature flags to the browser bundle. Production builds default to
+      // full parity unless explicitly overridden by the deploy environment.
+      'import.meta.env.FEAT_ALL': JSON.stringify(featAll),
+      'import.meta.env.FEAT_INLINE_COMMENTS': JSON.stringify(process.env.FEAT_INLINE_COMMENTS || ''),
+      'import.meta.env.FEAT_RICH_TOOLBAR': JSON.stringify(process.env.FEAT_RICH_TOOLBAR || ''),
+      'import.meta.env.FEAT_MENTIONS': JSON.stringify(process.env.FEAT_MENTIONS || ''),
+      'import.meta.env.FEAT_TASK_LISTS': JSON.stringify(process.env.FEAT_TASK_LISTS || ''),
+      'import.meta.env.FEAT_FOLLOW_GREEN': JSON.stringify(process.env.FEAT_FOLLOW_GREEN || ''),
+      'import.meta.env.FEAT_VISUAL_DIFF': JSON.stringify(process.env.FEAT_VISUAL_DIFF || ''),
+      'import.meta.env.FEAT_LIVE_CURSORS': JSON.stringify(process.env.FEAT_LIVE_CURSORS || ''),
+      'import.meta.env.FEAT_TYPING_INDICATORS': JSON.stringify(process.env.FEAT_TYPING_INDICATORS || ''),
+      'import.meta.env.FEAT_REALTIME_COLLAB': JSON.stringify(process.env.FEAT_REALTIME_COLLAB || ''),
+      'import.meta.env.FEAT_WAVE_PLAYBACK': JSON.stringify(process.env.FEAT_WAVE_PLAYBACK || ''),
+      'import.meta.env.FEAT_TASKS': JSON.stringify(process.env.FEAT_TASKS || ''),
+      'import.meta.env.BUSINESS_ACCOUNT': JSON.stringify(process.env.BUSINESS_ACCOUNT || ''),
+    },
   root: './src/client',
   publicDir: '../../public',
   build: {
@@ -27,7 +34,6 @@ export default defineConfig({
       input: {
         main: path.resolve(__dirname, 'src/client/index.html'),
         settings: path.resolve(__dirname, 'src/client/settings.html'),
-        testEditor: path.resolve(__dirname, 'src/client/test-editor.html'),
       },
     },
   },
@@ -53,4 +59,5 @@ export default defineConfig({
       },
     },
   },
+  };
 });

@@ -1,8 +1,10 @@
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 
 const sweepDir = process.env.RIZZOMA_SWEEP_DIR || process.argv[2] || path.resolve('screenshots', '260424-003739-feature-sweep');
 const manifestPath = path.join(sweepDir, 'manifest.json');
+let manifestCaptureFilesById = new Map();
 
 const nonScreenshotRules = [
   [/Authentication & Security/, /\b(SAML|Twitter|Session management|CSRF|Permission guards|Zod|Rate limiting)\b/i, 'Internal/auth backend behavior; verify with API/unit/security tests, not a screenshot.'],
@@ -27,6 +29,7 @@ const screenshotRules = [
   [/Rich Text Editor/, /mentions/i, ['024-mention-autocomplete-active.png'], 'Mention trigger/autocomplete state is captured.'],
   [/Rich Text Editor/, /Read mode toolbar/i, ['019-expanded-blip-read-toolbar.png'], 'Expanded read toolbar is captured.'],
   [/Rich Text Editor/, /(Gadget nodes|Gadget palette)/i, ['027-right-panel-gadget-palette-open.png'], 'Gadget palette and installed gadget tiles are captured.'],
+  [/Real-time Collaboration/, /(Live cursors|Typing indicators)/i, ['041-real-time-cursor-and-typing-indicator-visible.png'], 'Two authenticated editors produce remote cursor/typing UI in the owner editor.', 'dynamic_screenshot_covered'],
   [/Real-time Collaboration/, /Presence indicator/i, ['003-nav-topics-tab-and-searchable-topic-list.png'], 'Authenticated navigation chrome provides presence/avatar evidence; live cursor and typing states need separate multi-client captures.'],
   [/Unread Tracking/, /(Green left border|Wave list badge|Follow the Green|Next\/Prev|Keyboard)/i, ['follow-green/1776984446760-desktop-all-read.png', 'follow-green/1776984446760-mobile-all-read.png', '003-nav-topics-tab-and-searchable-topic-list.png'], 'Follow-green desktop/mobile dynamic captures cover unread navigation end state and green markers.'],
   [/Inline Comments System/, /(Resolve|unresolve|sidebar|filters|comment)/i, ['029-inline-comments-nav-state.png'], 'Inline comment UI/filter state is captured.'],
@@ -76,6 +79,22 @@ function evidencePaths(files) {
   return files.map((file) => `screenshots/${path.basename(sweepDir)}/${file}`);
 }
 
+function existingEvidenceFiles(files) {
+  const existing = [];
+  for (const file of files) {
+    if (fsSync.existsSync(path.join(sweepDir, file))) {
+      existing.push(file);
+      continue;
+    }
+    const id = path.basename(file).replace(/^\d+-/, '').replace(/\.png$/, '');
+    const manifestFile = manifestCaptureFilesById.get(id);
+    if (manifestFile && fsSync.existsSync(path.join(sweepDir, manifestFile))) {
+      existing.push(manifestFile);
+    }
+  }
+  return existing;
+}
+
 function classify(row) {
   for (const rule of nonScreenshotRules) {
     if (matches(rule, row)) {
@@ -88,9 +107,17 @@ function classify(row) {
   }
   for (const rule of screenshotRules) {
     if (matches(rule, row)) {
+      const files = existingEvidenceFiles(rule[2]);
+      if (files.length === 0) {
+        return {
+          status: 'screenshot_gap',
+          evidence: [],
+          note: `Configured screenshot evidence was not present in this sweep: ${rule[2].join(', ')}. ${rule[3]}`,
+        };
+      }
       return {
-        status: rule[2].some((file) => file.includes('/')) ? 'dynamic_screenshot_covered' : 'screenshot_covered',
-        evidence: evidencePaths(rule[2]),
+        status: rule[4] || (files.some((file) => file.includes('/')) ? 'dynamic_screenshot_covered' : 'screenshot_covered'),
+        evidence: evidencePaths(files),
         note: rule[3],
       };
     }
@@ -117,6 +144,9 @@ function mdEscape(text) {
 
 async function main() {
   const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+  manifestCaptureFilesById = new Map(
+    (manifest.captures || []).map((capture) => [capture.id, path.relative(sweepDir, capture.file)])
+  );
   const rows = manifest.visualRows.map((row, index) => ({
     id: `VF-${String(index + 1).padStart(3, '0')}`,
     ...row,

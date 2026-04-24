@@ -3,20 +3,26 @@
 ## 2026-04-24 Sweep
 
 - Scope: fresh public-production sweep against `https://138-201-62-161.nip.io` for documented functionality where screenshots are the right artifact.
-- Branch/checkpoint: `feature/rizzoma-core-features`, regenerated on 2026-04-24 01:15 CEST.
-- Primary artifacts: [manifest.md](../screenshots/260424-003739-feature-sweep/manifest.md), [manifest.json](../screenshots/260424-003739-feature-sweep/manifest.json), [coverage.md](../screenshots/260424-003739-feature-sweep/coverage.md), and [coverage.json](../screenshots/260424-003739-feature-sweep/coverage.json).
-- Primary coverage: 196 documented comparison rows parsed from `RIZZOMA_FEATURES_STATUS.md`; 161 rows classified as screenshot-valid; 69 rows classified as dynamic candidates; 40 fresh primary screenshots captured.
-- Coverage matrix: 93 rows are static screenshot-covered, 8 rows are dynamic screenshot-covered, 58 rows are non-screenshot/test-artifact rows, and 2 rows remain explicit screenshot gaps.
-- Dynamic supplements: [follow-green desktop](../screenshots/260424-003739-feature-sweep/follow-green/1776984446760-desktop-all-read.png), [follow-green mobile](../screenshots/260424-003739-feature-sweep/follow-green/1776984446760-mobile-all-read.png), plus owner/observer console logs in the same folder.
+- Branch/checkpoint: `feature/rizzoma-core-features`, regenerated on 2026-04-24 01:50 CEST.
+- Primary artifacts: [manifest.md](../screenshots/260424-015008-feature-sweep/manifest.md), [manifest.json](../screenshots/260424-015008-feature-sweep/manifest.json), [coverage.md](../screenshots/260424-015008-feature-sweep/coverage.md), and [coverage.json](../screenshots/260424-015008-feature-sweep/coverage.json).
+- Primary coverage: 196 documented comparison rows parsed from `RIZZOMA_FEATURES_STATUS.md`; 161 rows classified as screenshot-valid; 69 rows classified as dynamic candidates; 42 fresh primary screenshots captured.
+- Coverage matrix: 101 rows are static screenshot-covered, 2 rows are dynamic screenshot-covered, 58 rows are non-screenshot/test-artifact rows, 0 rows remain screenshot gaps, and 0 rows need review.
+- Dynamic evidence now includes [mobile topic content](../screenshots/260424-015008-feature-sweep/040-mobile-topic-content-view.png) and [two-client realtime cursor/typing](../screenshots/260424-015008-feature-sweep/042-real-time-cursor-and-typing-indicator-visible.png).
 - Automation: `npm run visual:sweep` runs [scripts/visual-feature-sweep.mjs](../scripts/visual-feature-sweep.mjs); `npm run visual:coverage` runs [scripts/visual-feature-coverage.mjs](../scripts/visual-feature-coverage.mjs) against `RIZZOMA_SWEEP_DIR` or the default sweep folder.
 
 ## Visual Review
 
-- Accepted: auth sign-in/sign-up forms, topic nav/search tabs, create/invite/share/export/playback modals, read/edit/overflow toolbars, emoji/mention/task/tag/gadget states, inline comments, BLB inline marker before/after, fold/unfold, right-panel toggles, toast component state, mobile topic list, and follow-green desktop/mobile topic states.
-- Residual: row-level coverage leaves only two screenshot gaps: live cursors and typing indicators, both requiring a genuine two-client dynamic capture with remote cursor/typing visible.
-- Residual: the generic mobile deep-link route sometimes remains on `Loading...`; the sweep records this honestly and uses the follow-green mobile topic screenshot as current mobile content evidence.
-- Residual: public-production screenshots still show broken external avatar placeholders in this WSL/browser path; track as visual polish separate from the screenshot-harness work.
-- Not counted as evidence: the older `test-blb-snapshots.mjs` supplemental run timed out on its inline expansion wait in this batch; the failed `blb/` artifact folder was removed, and the primary sweep's BLB before/after screenshots are the evidence.
+- Accepted: auth sign-in/sign-up forms, topic nav/search tabs, create/invite/share/export/playback modals, read/edit/overflow toolbars, emoji/mention/task/tag/gadget states, inline comments, BLB inline marker before/after, fold/unfold, right-panel toggles, toast component state, mobile topic list/content, and two-client realtime cursor/typing states.
+- Product-quality residual: public-production screenshots still show broken external avatar placeholders in this WSL/browser path; track as visual polish separate from the screenshot-coverage gate.
+- Product-quality residual: mobile topic content is now captured, but the toolbar is crowded at phone width and needs a dedicated mobile toolbar polish pass before calling the mobile UI product-quality.
+- Not counted as evidence: older `260424-003739`, `260424-013934`, `260424-014255`, and `260424-014450` sweep folders are retained as superseded diagnostic runs. Use `260424-015008` as the current evidence set.
+
+## Verification Semantics
+
+- `visual:sweep` passed means Playwright authenticated, created a fixture topic, drove the documented UI states, captured screenshots inside the repo, and wrote `manifest.json` without residuals.
+- `visual:coverage` passed means every screenshot-valid row from `RIZZOMA_FEATURES_STATUS.md` mapped to existing evidence in the current sweep folder or was explicitly classified as non-screenshot/test-artifact.
+- This does not mean every backend/security/email/upload behavior was exhaustively proven by screenshots; rows classified as `non_screenshot_artifact` still require route/unit/integration evidence.
+- This does not mean the app is fully polished or production-complete; the sweep is a coverage gate, not a final UX-quality gate.
 
 ## Next Sweep Rules
 

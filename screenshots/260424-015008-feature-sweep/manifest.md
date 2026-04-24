@@ -1,0 +1,181 @@
+# Rizzoma Visual Feature Sweep
+
+- Generated: 2026-04-23T23:50:13.227Z
+- Base URL: https://138-201-62-161.nip.io
+- Branch: feature/rizzoma-core-features
+- Commit: 03ebae20
+- Documented rows parsed: 196
+- Screenshot-valid rows: 161
+- Dynamic candidate rows: 69
+- Captures: 42
+
+## Captures
+
+- logged out sign in form
+  - File: screenshots/260424-015008-feature-sweep/001-logged-out-sign-in-form.png
+  - Assertion: Unauthenticated session shows OAuth and email sign-in entry points.
+  - Feature refs: Authentication: login modal; Authentication: email login; Authentication: OAuth buttons
+- logged out sign up form
+  - File: screenshots/260424-015008-feature-sweep/002-logged-out-sign-up-form.png
+  - Assertion: Sign-up link opens the registration form state.
+  - Feature refs: Authentication: registration entry; Authentication: signup form
+- nav topics tab and searchable topic list
+  - File: screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png
+  - Assertion: Topics tab is active and searchable topic cards are visible.
+  - Feature refs: User Interface: Navigation panel; User Interface: Topics list; Waves: wave list
+- topics search filter typed
+  - File: screenshots/260424-015008-feature-sweep/004-topics-search-filter-typed.png
+  - Assertion: Search input accepts text and filters visible topic list state.
+  - Feature refs: Search: topic search; User Interface: Topics list search
+- nav mentions tab
+  - File: screenshots/260424-015008-feature-sweep/005-nav-mentions-tab.png
+  - Assertion: Mentions navigation tab opens its dedicated panel.
+  - Feature refs: User Interface: Mentions tab
+- nav tasks tab
+  - File: screenshots/260424-015008-feature-sweep/006-nav-tasks-tab.png
+  - Assertion: Tasks navigation tab opens its dedicated panel.
+  - Feature refs: User Interface: Tasks tab
+- nav publics tab
+  - File: screenshots/260424-015008-feature-sweep/007-nav-publics-tab.png
+  - Assertion: Publics navigation tab opens its dedicated panel.
+  - Feature refs: User Interface: Publics tab
+- nav store tab
+  - File: screenshots/260424-015008-feature-sweep/008-nav-store-tab.png
+  - Assertion: Store navigation tab opens its dedicated panel.
+  - Feature refs: User Interface: Store tab
+- nav teams tab
+  - File: screenshots/260424-015008-feature-sweep/009-nav-teams-tab.png
+  - Assertion: Teams navigation tab opens its dedicated panel.
+  - Feature refs: User Interface: Teams tab
+- create topic modal open
+  - File: screenshots/260424-015008-feature-sweep/010-create-topic-modal-open.png
+  - Assertion: New topic action opens the create topic modal.
+  - Feature refs: Waves: create topic; User Interface: New topic modal
+- invite participants modal open
+  - File: screenshots/260424-015008-feature-sweep/011-invite-participants-modal-open.png
+  - Assertion: Invite button opens participant invitation modal.
+  - Feature refs: User Interface: Participants bar; Email: invite emails
+- invite participants modal filled email
+  - File: screenshots/260424-015008-feature-sweep/012-invite-participants-modal-filled-email.png
+  - Assertion: Invite modal accepts an email recipient before sending.
+  - Feature refs: Email: invite emails; Authentication: participant invite form
+- share settings modal open
+  - File: screenshots/260424-015008-feature-sweep/013-share-settings-modal-open.png
+  - Assertion: Share button opens share settings modal with privacy choices.
+  - Feature refs: User Interface: Share modal; Authentication: share permissions
+- share settings option selected
+  - File: screenshots/260424-015008-feature-sweep/014-share-settings-option-selected.png
+  - Assertion: Share settings modal exposes selectable access-state controls.
+  - Feature refs: User Interface: Share modal; Authentication: share permissions
+- topic gear dropdown open
+  - File: screenshots/260424-015008-feature-sweep/015-topic-gear-dropdown-open.png
+  - Assertion: Topic gear menu opens and exposes read/follow/export/embed/playback actions.
+  - Feature refs: Blip Operations: gear dropdown menu; User Interface: topic settings
+- export topic modal open
+  - File: screenshots/260424-015008-feature-sweep/016-export-topic-modal-open.png
+  - Assertion: Export topic action opens format-selection modal.
+  - Feature refs: History: export topic; User Interface: export modal
+- wave timeline playback modal open
+  - File: screenshots/260424-015008-feature-sweep/017-wave-timeline-playback-modal-open.png
+  - Assertion: Wave Timeline opens playback modal with controls/timeline.
+  - Feature refs: History & Playback: wave timeline; Blip Operations: playback history
+- topic landing collapsed blb toc
+  - File: screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png
+  - Assertion: Landing view shows label-only BLB rows and topic chrome.
+  - Feature refs: BLB: Collapsed TOC; Waves: topic view
+- expanded blip read toolbar
+  - File: screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png
+  - Assertion: Clicking a collapsed blip expands it and shows the read toolbar.
+  - Feature refs: BLB: section expanded; Rich Text: read mode toolbar
+- read gear menu open
+  - File: screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png
+  - Assertion: Read toolbar gear opens copy/comment/history/paste/link actions.
+  - Feature refs: Blip Operations: gear dropdown; Blip Operations: copy/paste/history/delete variants
+- edit toolbar full rich text controls
+  - File: screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png
+  - Assertion: Edit action switches the blip into full rich-text toolbar state.
+  - Feature refs: Rich Text: edit toolbar; Rich Text: formatting controls; File Uploads: upload buttons
+- edit overflow menu open
+  - File: screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png
+  - Assertion: Edit overflow exposes send, copy, playback, paste, link, and destructive actions.
+  - Feature refs: Blip Operations: edit overflow menu; Blip Operations: paste/copy variants
+- emoji picker open
+  - File: screenshots/260424-015008-feature-sweep/023-emoji-picker-open.png
+  - Assertion: Emoji toolbar control opens picker UI.
+  - Feature refs: Rich Text: emoji picker; Inline Widgets: emoji insertion
+- mention autocomplete active
+  - File: screenshots/260424-015008-feature-sweep/024-mention-autocomplete-active.png
+  - Assertion: Typing @ in edit mode opens or primes mention autocomplete state.
+  - Feature refs: Rich Text: mentions autocomplete; Inline Widgets: @mention pill
+- task trigger typed
+  - File: screenshots/260424-015008-feature-sweep/025-task-trigger-typed.png
+  - Assertion: Typing ~ in edit mode exercises task insertion trigger path.
+  - Feature refs: Rich Text: task trigger; Inline Widgets: task styling
+- tag trigger typed
+  - File: screenshots/260424-015008-feature-sweep/026-tag-trigger-typed.png
+  - Assertion: Typing # in edit mode exercises tag insertion trigger path.
+  - Feature refs: Rich Text: tag trigger; Inline Widgets: tag styling
+- right panel gadget palette open
+  - File: screenshots/260424-015008-feature-sweep/027-right-panel-gadget-palette-open.png
+  - Assertion: Right panel Gadgets button opens the gadget palette.
+  - Feature refs: Rich Text: gadget palette; Inline Widgets: gadget insert shortcuts
+- done returns to read toolbar
+  - File: screenshots/260424-015008-feature-sweep/028-done-returns-to-read-toolbar.png
+  - Assertion: Done exits edit mode and restores read toolbar.
+  - Feature refs: Rich Text: Done action; Blip Operations: edit persistence
+- inline comments nav state
+  - File: screenshots/260424-015008-feature-sweep/029-inline-comments-nav-state.png
+  - Assertion: Inline comments control surfaces the comment navigation/filter area when available.
+  - Feature refs: Inline Comments: sidebar/nav; Inline Comments: filters
+- per blip playback history modal
+  - File: screenshots/260424-015008-feature-sweep/030-per-blip-playback-history-modal.png
+  - Assertion: Playback history action opens per-blip timeline modal when history exists.
+  - Feature refs: History & Playback: per-blip playback; Blip Operations: playback history
+- inline marker before click
+  - File: screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png
+  - Assertion: Inline [+] marker is visible before expansion.
+  - Feature refs: BLB: inline plus marker before; BLB: marker styling
+- inline marker after click expanded
+  - File: screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png
+  - Assertion: Clicking inline marker expands the inline child at the marker position.
+  - Feature refs: BLB: inline expansion; BLB: portal rendering
+- fold all after hide replies
+  - File: screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png
+  - Assertion: Fold control collapses/hides reply bodies.
+  - Feature refs: BLB: fold all; BLB: hide replies
+- unfold all after show replies
+  - File: screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png
+  - Assertion: Unfold control restores reply visibility.
+  - Feature refs: BLB: unfold all; BLB: show replies
+- right panel text view selected
+  - File: screenshots/260424-015008-feature-sweep/035-right-panel-text-view-selected.png
+  - Assertion: Text view is selected in the right tools panel.
+  - Feature refs: User Interface: Text view toggle
+- right panel mind map selected
+  - File: screenshots/260424-015008-feature-sweep/036-right-panel-mind-map-selected.png
+  - Assertion: Mind map button can be selected in the right tools panel.
+  - Feature refs: User Interface: Mind map toggle
+- right panel short mode selected
+  - File: screenshots/260424-015008-feature-sweep/037-right-panel-short-mode-selected.png
+  - Assertion: Short display mode toggle activates.
+  - Feature refs: User Interface: short display mode
+- right panel expanded mode selected
+  - File: screenshots/260424-015008-feature-sweep/038-right-panel-expanded-mode-selected.png
+  - Assertion: Expanded display mode toggle activates.
+  - Feature refs: User Interface: expanded display mode
+- mobile authenticated topic navigation
+  - File: screenshots/260424-015008-feature-sweep/039-mobile-authenticated-topic-navigation.png
+  - Assertion: Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.
+  - Feature refs: Mobile & PWA: responsive layout; Mobile & PWA: mobile navigation
+- mobile topic content view
+  - File: screenshots/260424-015008-feature-sweep/040-mobile-topic-content-view.png
+  - Assertion: Mobile viewport renders topic content without horizontal overflow and uses mobile layout classes.
+  - Feature refs: Mobile & PWA: responsive layout; Mobile & PWA: mobile topic view
+- toast notification component visible
+  - File: screenshots/260424-015008-feature-sweep/041-toast-notification-component-visible.png
+  - Assertion: Toast component renders a visible status notification when the app emits a toast event.
+  - Feature refs: User Interface: Toast notifications
+- real time cursor and typing indicator visible
+  - File: screenshots/260424-015008-feature-sweep/042-real-time-cursor-and-typing-indicator-visible.png
+  - Assertion: A second authenticated editor produces remote cursor/typing UI in the owner editor.
+  - Feature refs: Real-time Collaboration: live cursors; Real-time Collaboration: typing indicators

@@ -152,7 +152,7 @@ describe('client: CollaborativeProvider', () => {
     provider.setUser({ id: 'u1', name: 'Alice', color: '#ff0000' });
 
     const localState = provider.awareness.getLocalState();
-    expect(localState?.user).toEqual({ id: 'u1', name: 'Alice', color: '#ff0000' });
+    expect(localState?.['user']).toEqual({ id: 'u1', name: 'Alice', color: '#ff0000' });
 
     provider.destroy();
   });

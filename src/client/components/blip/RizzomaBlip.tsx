@@ -5,6 +5,7 @@ import { BlipMenu } from './BlipMenu';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
 import { getEditorExtensions, defaultEditorProps } from '../editor/EditorConfig';
+import { TypingIndicator } from '../editor/CollaborativeCursors';
 import { toast } from '../Toast';
 import { copyBlipLink } from './copyBlipLink';
 import { InlineComments, InlineCommentsStatus } from '../editor/InlineComments';
@@ -70,6 +71,12 @@ export interface BlipData {
   parentBlipId?: string;
   contributors?: BlipContributor[];
   anchorPosition?: number; // BLB: If set, this blip is anchored inline at this position (not shown in list)
+}
+
+let globalActiveBlipId: string | null = null;
+
+export function getGlobalActiveBlipId(): string | null {
+  return globalActiveBlipId;
 }
 
 // BlipContributorsStack - stacked avatars with owner on top, click to expand
@@ -292,10 +299,15 @@ export function RizzomaBlip({
   // even before entering edit mode (enables auto-enter-edit on insert click)
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (isActive && blip.permissions.canEdit) {
+      globalActiveBlipId = blip.id;
+    } else if (globalActiveBlipId === blip.id) {
+      globalActiveBlipId = null;
+    }
     window.dispatchEvent(new CustomEvent(BLIP_ACTIVE_EVENT, {
       detail: { active: isActive && blip.permissions.canEdit },
     }));
-  }, [isActive, blip.permissions.canEdit]);
+  }, [isActive, blip.id, blip.permissions.canEdit]);
 
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
@@ -435,32 +447,39 @@ export function RizzomaBlip({
   // With synchronous provider creation (useCollaboration), collabActive is true from the
   // first render when all deps are ready. This ensures Collaboration extension is included
   // in the initial editor creation — no need for deps-based recreation.
-  const inlineEditor = useEditor({
-    extensions,
-    content: editedContent,
-    editable: isEditing,
-    editorProps: defaultEditorProps,
-    onUpdate: ({ editor, transaction }: { editor: Editor; transaction: any }) => {
-      // Skip auto-save during Y.Doc seeding (setContent triggers onUpdate)
-      if (seedingYdocRef.current) return;
+  const useEditorWithDeps = useEditor as unknown as (
+    options: Parameters<typeof useEditor>[0],
+    deps: unknown[]
+  ) => Editor | null;
+  const inlineEditor = useEditorWithDeps(
+    {
+      extensions,
+      content: editedContent,
+      editable: isEditing,
+      editorProps: defaultEditorProps,
+      onUpdate: ({ editor, transaction }: { editor: Editor; transaction: any }) => {
+        // Skip auto-save during Y.Doc seeding (setContent triggers onUpdate)
+        if (seedingYdocRef.current) return;
 
-      const html = editor.getHTML();
-      setEditedContent(html);
+        const html = editor.getHTML();
+        setEditedContent(html);
 
-      // When collab is active, only auto-save for local edits (not remote Y.Doc sync).
-      // Remote updates have transaction.origin set to the ySyncPlugin binding.
-      const isRemoteSync = transaction?.origin != null && typeof transaction.origin === 'object';
-      if (isRemoteSync) return;
+        // When collab is active, only auto-save for local edits (not remote Y.Doc sync).
+        // Remote updates have transaction.origin set to the ySyncPlugin binding.
+        const isRemoteSync = transaction?.origin != null && typeof transaction.origin === 'object';
+        if (isRemoteSync) return;
 
-      // Debounced auto-save (300ms delay)
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
-      }
-      autoSaveTimeoutRef.current = setTimeout(() => {
-        autoSaveBlip(html);
-      }, 300);
+        // Debounced auto-save (300ms delay)
+        if (autoSaveTimeoutRef.current) {
+          clearTimeout(autoSaveTimeoutRef.current);
+        }
+        autoSaveTimeoutRef.current = setTimeout(() => {
+          autoSaveBlip(html);
+        }, 300);
+      },
     },
-  });
+    [blip.id, collabActive, collabProvider]
+  );
 
   // Keep editor ref updated for use in callbacks
   inlineEditorRef.current = inlineEditor;
@@ -1952,6 +1971,9 @@ export function RizzomaBlip({
             {inlineEditor && (
               <div style={{ position: 'relative' }}>
                 <EditorContent editor={inlineEditor} />
+                {collabActive && collabProvider && (
+                  <TypingIndicator provider={collabProvider} />
+                )}
                 {FEATURES.INLINE_COMMENTS && !isInlineChild && areCommentsVisible && (
                   <InlineComments
                     editor={inlineEditor}

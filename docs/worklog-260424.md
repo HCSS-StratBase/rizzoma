@@ -34,8 +34,8 @@
   - Residual gap: public-prod screenshots show broken external avatar placeholders in this WSL/browser environment.
 
 ## Next
-- Add genuine two-client live cursor/typing screenshots to close the last two visual coverage gaps.
-- Fix/retest mobile topic deep-link loading if it remains reproducible outside the sweep.
+- Continue from the `260424-015008` sweep as the current screenshot evidence set; the earlier `260424-003739` next items below are superseded by the realtime/mobile gap-closure pass.
+- Harden visible product quality: avatar fallbacks and crowded mobile editor toolbar.
 - Rerun production-target full-render perf at 500 and 1000 blips.
 - Compare `RIZZOMA_PERF_RENDER=full` vs `lite` with identical seed sizes.
 - Decide whether avatar fallback/proxying belongs in the modernization backlog.
@@ -71,3 +71,33 @@
   - Accepted refreshed toast component screenshot and representative BLB/navigation/mobile artifacts.
   - Residual: live cursors and typing indicators still need a two-client dynamic screenshot with remote state visible.
   - Residual: generic mobile deep-link topic route can still remain on `Loading...`; follow-green mobile screenshot remains current mobile topic-content evidence.
+
+## Realtime And Mobile Visual Gap Closure
+- Implemented realtime awareness fixes:
+  - `CollaborativeCursors.tsx` now sets `cursor.isTyping` during local document changes and clears it after a short idle timeout.
+  - `TypingIndicator` now subscribes to awareness changes and updates visible remote typing state.
+  - `RizzomaBlip.tsx` now renders `TypingIndicator` next to the active editor and recreates the TipTap editor when collaboration extensions become active.
+- Hardened production build flags:
+  - `vite.config.ts` now passes `FEAT_WAVE_PLAYBACK`, `FEAT_TASKS`, and `BUSINESS_ACCOUNT` into the client bundle and defaults `FEAT_ALL=1` for production builds.
+  - Removed stale production build inputs and invalid self-preconnect that broke earlier build attempts.
+- Hardened the visual sweep:
+  - Added two-client realtime capture for live cursor + typing indicator.
+  - Fixed mobile topic URL/click handling so phone-width topic content is captured.
+  - Updated coverage generation to verify evidence files exist and resolve evidence by stable capture IDs instead of stale screenshot numbers.
+- Deployed to VPS:
+  - Command: `docker compose up -d --build app-prod`.
+  - Result: public production and local-container `/api/health` checks passed.
+- Final public-prod sweep:
+  - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_SWEEP_STAMP=260424-015008 npm run visual:sweep`.
+  - Result: pass with 42 screenshots and no manifest residuals.
+  - Evidence: `screenshots/260424-015008-feature-sweep/040-mobile-topic-content-view.png` and `screenshots/260424-015008-feature-sweep/042-real-time-cursor-and-typing-indicator-visible.png`.
+- Final coverage:
+  - Command: `RIZZOMA_SWEEP_DIR=screenshots/260424-015008-feature-sweep npm run visual:coverage`.
+  - Result: 101 static screenshot-covered, 2 dynamic screenshot-covered, 58 non-screenshot/test-artifact, 0 screenshot gaps, 0 needs-review.
+- Verification:
+  - `npm run typecheck` pass.
+  - `npm test -- --run src/tests/client.collaborativeProvider.test.ts` pass.
+  - `npm run build` pass.
+- Honest quality boundary:
+  - Screenshot coverage gaps are closed.
+  - Product polish remains: broken external avatar placeholders and crowded mobile toolbar layout are visible in the accepted screenshots.

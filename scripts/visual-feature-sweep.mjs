@@ -259,9 +259,9 @@ async function createFixture(page) {
 }
 
 async function openWave(page, waveId) {
-  await page.goto(`${baseUrl}#/topic/${encodeURIComponent(waveId)}?layout=rizzoma`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${baseUrl}/?layout=rizzoma#/topic/${encodeURIComponent(waveId)}`, { waitUntil: 'domcontentloaded' });
   await page.locator('.rizzoma-topic-detail').waitFor({ timeout: 30000 });
-  await page.locator('.blip-collapsed-row').first().waitFor({ timeout: 30000 });
+  await page.locator('.blip-collapsed-row, [data-blip-id]').first().waitFor({ timeout: 30000 });
 }
 
 async function clickText(page, text, options = {}) {
@@ -408,6 +408,56 @@ async function captureBlipAndToolbarStates(page, fixture) {
   await page.locator('.modal-overlay, .history-modal-overlay, .export-modal-overlay').first().waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
 }
 
+async function enterMainBlipEdit(page, fixture) {
+  const main = page.locator(`[data-blip-id="${fixture.mainBlipId}"]`).first();
+  await main.locator('.blip-collapsed-row').click({ timeout: 5000 }).catch(() => {});
+  if (!(await main.locator('[data-testid="blip-menu-edit-surface"]').first().count())) {
+    await main.locator('[data-testid="blip-menu-read-surface"]').first().waitFor({ timeout: 10000 });
+    await main.locator('[data-testid="blip-menu-edit"]').first().click();
+  }
+  await main.locator('[data-testid="blip-menu-edit-surface"]').first().waitFor({ timeout: 10000 });
+  const editor = main.locator('.ProseMirror').first();
+  await editor.waitFor({ timeout: 10000 });
+  await editor.click();
+  return { main, editor };
+}
+
+async function captureRealtimeCollaborationStates(baseContext, ownerPage, fixture) {
+  const observerContext = await baseContext.browser().newContext({ viewport: { width: 1400, height: 900 } });
+  const observerPage = await observerContext.newPage();
+  try {
+    await ensureAuth(observerPage, observerEmail, 'observer');
+    await api(ownerPage, 'POST', `/api/waves/${encodeURIComponent(fixture.waveId)}/participants`, {
+      emails: [observerEmail],
+      message: 'Visual sweep realtime collaboration fixture.',
+    }).catch(() => {});
+    await openWave(ownerPage, fixture.waveId);
+    await openWave(observerPage, fixture.waveId);
+
+    const ownerEdit = await enterMainBlipEdit(ownerPage, fixture);
+    const observerEdit = await enterMainBlipEdit(observerPage, fixture);
+
+    await ownerEdit.editor.click();
+    await observerEdit.editor.click();
+    await observerPage.keyboard.type(' remote typing evidence', { delay: 45 });
+
+    await ownerPage.locator('.collaboration-cursor, .typing-indicator').first().waitFor({ timeout: 8000 });
+    await capture(
+      ownerPage,
+      'real time cursor and typing indicator visible',
+      ['Real-time Collaboration: live cursors', 'Real-time Collaboration: typing indicators'],
+      'A second authenticated editor produces remote cursor/typing UI in the owner editor.',
+      { dynamicStep: 'after-second-client-typing' },
+    );
+
+    await ownerEdit.main.locator('[data-testid="blip-menu-done"]').click().catch(() => {});
+  } catch (error) {
+    manifest.residuals.push(`Realtime cursor/typing screenshot was not captured: ${error.message}`);
+  } finally {
+    await observerContext.close();
+  }
+}
+
 async function captureBlbDynamics(page, fixture) {
   await closeOpenModal(page);
   await closeTransientEditorOverlays(page);
@@ -464,13 +514,14 @@ async function captureMobile(baseContext, fixture) {
   await waitForAny(mobile, ['.rizzoma-layout', '.topic-card', '.mobile-topbar'], 20000).catch(() => {});
   await capture(mobile, 'mobile authenticated topic navigation', ['Mobile & PWA: responsive layout', 'Mobile & PWA: mobile navigation'], 'Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.');
 
-  const ownTopicCard = mobile.getByText(`Visual Sweep ${stamp}`, { exact: false }).first();
+  const ownTopicCard = mobile.locator('.search-result-item', { hasText: `Visual Sweep ${stamp}` }).first();
   if (await ownTopicCard.count()) {
     await ownTopicCard.click({ timeout: 5000 }).catch(() => {});
   } else {
-    await mobile.goto(`${baseUrl}#/topic/${encodeURIComponent(fixture.waveId)}?layout=rizzoma`, { waitUntil: 'domcontentloaded' });
+    await mobile.goto(`${baseUrl}/?layout=rizzoma#/topic/${encodeURIComponent(fixture.waveId)}`, { waitUntil: 'domcontentloaded' });
   }
-  await waitForAny(mobile, ['.rizzoma-topic-detail', '.blip-collapsed-row', '.topic-card', 'text=Visual Sweep'], 30000).catch(() => {});
+  await waitForAny(mobile, ['.mobile-view-content .rizzoma-topic-detail', '.mobile-header', '.blip-collapsed-row', 'text=Visual Sweep'], 45000).catch(() => {});
+  await mobile.locator('.mobile-view-content .rizzoma-loading, .mobile-view-content .loading').first().waitFor({ state: 'hidden', timeout: 15000 }).catch(() => {});
   const stillLoading = await mobile.locator('body').evaluate((body) => body.innerText.includes('Loading...') && !body.innerText.includes('Visual Sweep')).catch(() => true);
   if (stillLoading) {
     manifest.residuals.push('Mobile deep-link topic route remained on Loading; captured authenticated mobile navigation instead of topic body.');
@@ -515,6 +566,7 @@ async function main() {
   await captureRightPanel(page);
   await captureMobile(context, fixture);
   await captureToastState(page);
+  await captureRealtimeCollaborationStates(context, page, fixture);
 
   await browser.close();
 

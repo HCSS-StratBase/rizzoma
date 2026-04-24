@@ -16,7 +16,7 @@ Operational reality for this branch:
 - Use `npm run dev` (server :8000, client :3000); do not rely on historical `start:all` guidance.
 - Perf harness now supports `RIZZOMA_PERF_RENDER=lite|full`. The latest public-prod full-render baseline used 100 blips against `https://138-201-62-161.nip.io` and passed stage-local budgets; artifacts live in `screenshots/260424-prod-perf-baseline/`. Next scale targets are 500/1000 blips.
 - For perf artifacts outside the default `snapshots/perf/`, verify budgets with `PERF_SNAPSHOT_DIR=<artifact-dir> node scripts/perf-budget.mjs`.
-- Visual sweep artifacts are generated with `npm run visual:sweep` plus `npm run visual:coverage`; the latest public-prod matrix lives in `screenshots/260424-003739-feature-sweep/coverage.md` and leaves only live cursor/typing screenshots as explicit visual gaps.
+- Visual sweep artifacts are generated with `npm run visual:sweep` plus `npm run visual:coverage`; the latest public-prod matrix lives in `screenshots/260424-015008-feature-sweep/coverage.md` and has zero screenshot gaps across all 161 screenshot-valid rows. Remaining visual work is product polish, especially avatar fallbacks and mobile toolbar crowding.
 
 ## Prerequisites
 
