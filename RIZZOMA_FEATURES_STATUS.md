@@ -1,7 +1,7 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
 ## Summary
-Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests. Follow-the-Green now has deterministic Vitest coverage (CTA happy/degraded paths), a multi-user Playwright smoke (multi unread + forced mark-read failure + mobile viewport), and CI gating via the `browser-smokes` GitHub job (with snapshots/artifacts). Uploads run through MIME sniffing + optional ClamAV, optionally stream to S3/MinIO, and the client surfaces cancel/retry/preview UI. A perf harness (`npm run perf:harness`) seeds large waves and captures render screenshots/metrics; as of 2026-04-24 it supports `RIZZOMA_PERF_RENDER=lite|full`, records the profile in metrics, and has a public-prod 100-blip full-render baseline under `screenshots/260424-prod-perf-baseline/` (stage durations 1193.7ms landing / 524.5ms expanded, memory 33-36MB). A fresh visual/runtime verdict now lives under `screenshots/260424-025320-feature-sweep/`: 42 primary screenshots, `coverage.md` mapping all 161 screenshot-valid rows (101 static screenshot-covered, 2 dynamic screenshot-covered, 58 non-screenshot/test-artifact, 0 screenshot gaps), and `BUILD_QUALITY_VERDICT.md` rating the active branch 161 green / 0 orange / 0 red after Redis session, Twitter/X OAuth2 PKCE, mobile/PWA/offline runtime tests, and physical Pixel 9 Pro XL Chrome validation in `screenshots/260424-real-device-pixel9proxl/`. Health/inline-comments/uploads checks now run in CI via the `health-checks` job (`npm run test:health`), and `server.health.test.ts` covers both OK/degraded paths with a mocked CouchDB check so local runs do not depend on Docker. **BLB implementation fix (2026-01-19)**: Audited and fixed BLB (Bullet-Label-Blip) functionality in RizzomaTopicDetail - Fold button now properly wired with localStorage + server persistence, expand icons changed from +/- to □, duplicate toolbar buttons removed. See `docs/BLB_LOGIC_AND_PHILOSOPHY.md` for methodology. **Mobile modernization (2026-01-18)**: Implemented complete mobile PWA infrastructure with zero new dependencies - responsive breakpoints, MobileContext, BottomSheet component, PWA manifest/SW/icons, gesture hooks (swipe, pull-to-refresh), View Transitions API, offline mutation queue with retry logic, and mobile view switching in RizzomaLayout. **Recent closure fixes (2026-04-24)**: TipTap collaboration editors now recreate when collab extensions become active, typing awareness renders visibly, mobile topic content is captured directly, avatar fallbacks render locally without broken external placeholders, Twitter/X OAuth exists again via OAuth2 PKCE, sessions use Redis 5 by default, focused runtime tests cover mobile gesture/BottomSheet/PWA/offline behavior, Android Chrome physical-device validation closes the last matrix row, and the phone-exposed mobile toolbar overlap is fixed by in-flow compact mobile blip menus. The public VPS is now refreshed at commit `69d6a8a9`, serving `main-CRFVko80.js`, with physical Pixel 9 Pro XL Chrome proof for cursor-based BLB inline comments in `screenshots/260424-real-device-pixel9proxl-public/`. Boundary: iPhone Safari remains a separate validation risk.
+Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests. Follow-the-Green now has deterministic Vitest coverage (CTA happy/degraded paths), a multi-user Playwright smoke (multi unread + forced mark-read failure + mobile viewport), and CI gating via the `browser-smokes` GitHub job (with snapshots/artifacts). Uploads run through MIME sniffing + optional ClamAV, optionally stream to S3/MinIO, and the client surfaces cancel/retry/preview UI. A perf harness (`npm run perf:harness`) seeds large waves and captures render screenshots/metrics; as of 2026-04-24 it supports `RIZZOMA_PERF_RENDER=lite|full`, records the profile in metrics, and has a public-prod 100-blip full-render baseline under `screenshots/260424-0010-prod-perf-baseline/` (stage durations 1193.7ms landing / 524.5ms expanded, memory 33-36MB). A fresh visual/runtime verdict now lives under `screenshots/260424-025320-feature-sweep/`: 42 primary screenshots, `coverage.md` mapping all 161 screenshot-valid rows (101 static screenshot-covered, 2 dynamic screenshot-covered, 58 non-screenshot/test-artifact, 0 screenshot gaps), and `BUILD_QUALITY_VERDICT.md` rating the active branch 161 green / 0 orange / 0 red after Redis session, Twitter/X OAuth2 PKCE, mobile/PWA/offline runtime tests, and physical Pixel 9 Pro XL Chrome validation in `screenshots/260424-2319-real-device-pixel9proxl-local/`. Health/inline-comments/uploads checks now run in CI via the `health-checks` job (`npm run test:health`), and `server.health.test.ts` covers both OK/degraded paths with a mocked CouchDB check so local runs do not depend on Docker. **BLB implementation fix (2026-01-19)**: Audited and fixed BLB (Bullet-Label-Blip) functionality in RizzomaTopicDetail - Fold button now properly wired with localStorage + server persistence, expand icons changed from +/- to □, duplicate toolbar buttons removed. See `docs/BLB_LOGIC_AND_PHILOSOPHY.md` for methodology. **Mobile modernization (2026-01-18)**: Implemented complete mobile PWA infrastructure with zero new dependencies - responsive breakpoints, MobileContext, BottomSheet component, PWA manifest/SW/icons, gesture hooks (swipe, pull-to-refresh), View Transitions API, offline mutation queue with retry logic, and mobile view switching in RizzomaLayout. **Recent closure fixes (2026-04-24)**: TipTap collaboration editors now recreate when collab extensions become active, typing awareness renders visibly, mobile topic content is captured directly, avatar fallbacks render locally without broken external placeholders, Twitter/X OAuth exists again via OAuth2 PKCE, sessions use Redis 5 by default, focused runtime tests cover mobile gesture/BottomSheet/PWA/offline behavior, Android Chrome physical-device validation closes the last matrix row, and the phone-exposed mobile toolbar overlap is fixed by in-flow compact mobile blip menus. The public VPS is now refreshed at commit `69d6a8a9`, serving `main-CRFVko80.js`, with physical Pixel 9 Pro XL Chrome proof for cursor-based BLB inline comments in `screenshots/260424-2350-real-device-pixel9proxl-public/`. Boundary: iPhone Safari remains a separate validation risk.
 
 ## ✅ Implemented Features
 
@@ -211,11 +211,11 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Highlight (text background color) | Done (new) | None | `@tiptap/extension-highlight` |
 | Links (add/edit/remove) | Done | — | — |
 | Images (node extension) | Done | — | — |
-| @mentions autocomplete dropdown | Done | — | [new](screenshots/local-blb-study/260206-2220-mention-dropdown.png) |
+| @mentions autocomplete dropdown | Done | — | [new](screenshots/260206-2140-local-blb-study/260206-2220-mention-dropdown.png) |
 | Edit mode toolbar (blue #4EA0F1) | Done | [orig](screenshots/comparison-analysis/orig-10-edit-mode-toolbar.png) | [new](screenshots/side-by-side/blb-04-edit-mode-toolbar-new-260208.png) |
 | Read mode toolbar (minimal) | Done | [orig](screenshots/side-by-side/blb-06-readmode-full-old-260208.png) | [new](screenshots/blb-state2-read-toolbar_new-260208-1244.png) |
-| Gadget nodes (chart, poll, attachment, image) | Done | — | [new](screenshots/local-blb-study/260207-gadget-palette-open.png) |
-| Gadget palette (11 types in grid layout) | Done | — | [new](screenshots/local-blb-study/260207-gadget-palette-open.png) |
+| Gadget nodes (chart, poll, attachment, image) | Done | — | [new](screenshots/260206-2140-local-blb-study/260207-gadget-palette-open.png) |
+| Gadget palette (11 types in grid layout) | Done | — | [new](screenshots/260206-2140-local-blb-study/260207-gadget-palette-open.png) |
 | Toolbar icons: SVG sprites vs emoji characters | Gap | SVG sprites (monochrome white) | Emoji characters (🔗😀📎🖼️🎨❌) |
 
 ### 4. Real-time Collaboration
@@ -224,9 +224,9 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 |---|---|---|---|
 | Transport layer (Socket.IO v4) | Done | — | — |
 | CRDT engine (Yjs) | Done | — | — |
-| Live cursors (Yjs awareness, user colors) | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-presence.png) | [new](screenshots/260424-025320-feature-sweep/042-real-time-cursor-and-typing-indicator-visible.png) |
+| Live cursors (Yjs awareness, user colors) | Done | [orig](screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-presence.png) | [new](screenshots/260424-025320-feature-sweep/042-real-time-cursor-and-typing-indicator-visible.png) |
 | Typing indicators | Done | — | [new](screenshots/260424-025320-feature-sweep/042-real-time-cursor-and-typing-indicator-visible.png) |
-| Presence indicator (avatars, overflow counts) | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-presence.png) | — |
+| Presence indicator (avatars, overflow counts) | Done | [orig](screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-presence.png) | — |
 | Event broadcasting (blip:created/updated/deleted) | Done | — | — |
 
 ### 5. Unread Tracking (Follow-the-Green)
@@ -238,7 +238,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Mark batch read API | Done | — | — |
 | Unread count aggregation (batch query) | Done | — | — |
 | Next/Prev unread navigation (server-computed) | Done | — | — |
-| Green left border on unread blips | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-unread.png) | — |
+| Green left border on unread blips | Done | [orig](screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-unread.png) | — |
 | Wave list badge (unread/total count) | Done | — | — |
 | "Follow the Green" CTA button | Done | — | — |
 | Keyboard navigation (j/k/g/G) | Done | — | — |
@@ -270,7 +270,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 
 | Functionality | Status | Original Rizzoma | New Rizzoma |
 |---|---|---|---|
-| Full-text search (Mango regex, title + content) | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-search-overlay.png) | — |
+| Full-text search (Mango regex, title + content) | Done | [orig](screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-search-overlay.png) | — |
 | Snippet generation (150-char context + highlight) | Done (new) | None | `GET /api/editor/:waveId/snapshot` |
 | Yjs document rebuild | Done | — | — |
 | Wave materialization | Done | — | — |
@@ -333,14 +333,14 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Offline mutation queue (auto-sync, max 3 retries) | Done (new) | None | `offlineQueue.ts` |
 | BottomSheet mobile menu | Done (new) | None | `mobile/BottomSheet.tsx` |
 | Touch targets (44px minimum) | Done (new) | Inconsistent | CSS |
-| Mobile layout (device validation on real devices) | Done (Pixel 9 Pro XL / Chrome) | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-mobile.png) | `screenshots/260424-real-device-pixel9proxl/` |
+| Mobile layout (device validation on real devices) | Done (Pixel 9 Pro XL / Chrome) | [orig](screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-mobile.png) | `screenshots/260424-2319-real-device-pixel9proxl-local/` |
 
 ### 13. User Interface Components
 
 | Functionality | Status | Original Rizzoma | New Rizzoma |
 |---|---|---|---|
 | Three-panel layout (nav + topic + tools) | Done | [orig](screenshots/side-by-side/01-full-layout-old-260208-0048.png) | [new](screenshots/side-by-side/01-full-layout-new-260208-0048.png) |
-| Navigation panel (Topics, Mentions, Tasks, Public, Store, Teams) | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-nav-topics.png) | [new](screenshots/side-by-side/06-topics-list-new-260208-0054.png) |
+| Navigation panel (Topics, Mentions, Tasks, Public, Store, Teams) | Done | [orig](screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-nav-topics.png) | [new](screenshots/side-by-side/06-topics-list-new-260208-0054.png) |
 | Navigation panel icons (SVG sprites vs emojis) | Gap | Monochrome SVG sprites | Emojis (📄 @ ✓ 🌐 🛒 👥) |
 | Navigation badge count | Done | Dynamic from server | Dynamic (was hardcoded "11", fixed) |
 | Topics list | Done | [orig](screenshots/side-by-side/06-topics-list-old-260208-0054.png) | [new](screenshots/side-by-side/06-topics-list-new-260208-0054.png) |
@@ -351,8 +351,8 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Mentions tab: populated content | Gap | 50+ mentions with rich data | Empty ("No mentions yet") |
 | Tasks tab | Partial | [orig](screenshots/side-by-side/07-tasks-tab-old-260208-0055.png) | [new](screenshots/side-by-side/07-tasks-tab-new-260208-0055.png) |
 | Tasks tab: filter buttons | Not started | "All 68 \| No date 14 \| With date" | Missing |
-| Participants bar (invite + avatars) | Partial | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-invite-modal.png) | — |
-| Share modal | Done | [orig](screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-share-modal.png) | — |
+| Participants bar (invite + avatars) | Partial | [orig](screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-invite-modal.png) | — |
+| Share modal | Done | [orig](screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-share-modal.png) | — |
 | Right panel: user avatar | Gap | Real OAuth photo | Generated initials circle |
 | Right panel: Next button color | Gap | Green "Next ▶" | Red "Next ▶" |
 | Right panel: hide/show replies icons | Gap | Speech bubble SVG icons | ▲/▼ unicode arrows |

@@ -56,7 +56,7 @@ Verified after rebuild:
 - `docker exec rizzoma-app-prod sh -lc 'cat .git/HEAD'` resolves to `69d6a8a9`.
 - Public `/api/health` returns OK and CouchDB healthy.
 - Public root serves `main-CRFVko80.js` and `main-tAElMspz.css`.
-- Physical Pixel 9 Pro XL Chrome verified cursor-based BLB inline comments on the public URL; evidence lives in `screenshots/260424-real-device-pixel9proxl-public/`.
+- Physical Pixel 9 Pro XL Chrome verified cursor-based BLB inline comments on the public URL; evidence lives in `screenshots/260424-2350-real-device-pixel9proxl-public/`.
 - After documentation/evidence commits were pushed, the VPS source checkout was fast-forwarded without rebuilding the already-verified app bundle.
 
 ## Public prod cutover (2026-04-23 23:24 CEST)
@@ -74,7 +74,7 @@ Verified after recreation:
 - Public `https://138-201-62-161.nip.io/api/health` returns from prod.
 - `docker exec rizzoma-app-prod env` shows `CLIENT_URL=https://138-201-62-161.nip.io`, `APP_BASE_URL=https://138-201-62-161.nip.io`, `APP_URL=https://138-201-62-161.nip.io`, and `ALLOWED_ORIGINS` includes the HTTPS origin.
 - Google OAuth start redirects to Google with `redirect_uri=https%3A%2F%2F138-201-62-161.nip.io%2Fapi%2Fauth%2Fgoogle%2Fcallback`.
-- Public prod `test:follow-green` passes desktop and mobile; artifacts live under `screenshots/260423-prod-cutover/follow-green/`.
+- Public prod `test:follow-green` passes desktop and mobile; artifacts live under `screenshots/260423-2324-prod-cutover/follow-green/`.
 - Public prod `test:toolbar-inline` still fails after scoped `Done`, waiting for the read toolbar to reappear. Direct dev `http://138.201.62.161:8200` fails the same way, so this is not a cutover regression, but it is now the top browser-smoke bug.
 
 ## Container env (verified 2026-04-23 after HTTPS/OAuth work)

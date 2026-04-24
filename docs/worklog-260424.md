@@ -7,22 +7,22 @@
 - Updated perf metrics to record `renderProfile` and `perfMode`.
 - Updated `scripts/perf-budget.mjs` to support `PERF_SNAPSHOT_DIR`, check stage-local duration by default, and keep absolute page TTF as an opt-in diagnostic via `PERF_BUDGET_CHECK_TTF=1`.
 - Ran public-prod full-render baseline:
-  - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_PERF_BLIPS=100 RIZZOMA_PERF_RENDER=full RIZZOMA_SNAPSHOT_DIR=screenshots/260424-prod-perf-baseline npm run perf:harness`
+  - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_PERF_BLIPS=100 RIZZOMA_PERF_RENDER=full RIZZOMA_SNAPSHOT_DIR=screenshots/260424-0010-prod-perf-baseline npm run perf:harness`
   - Result: pass.
   - Landing-labels: stage 1193.7ms, FCP 740ms, memory 33MB, labels 100/100.
   - Expanded-root: stage 524.5ms, FCP 740ms, memory 36MB, blips 101/100.
-  - Artifacts: `screenshots/260424-prod-perf-baseline/metrics-1776982200094-*.json`, `screenshots/260424-prod-perf-baseline/render-1776982200094-*.png`.
+  - Artifacts: `screenshots/260424-0010-prod-perf-baseline/metrics-1776982200094-*.json`, `screenshots/260424-0010-prod-perf-baseline/render-1776982200094-*.png`.
 - Verified budgets:
-  - Command: `PERF_SNAPSHOT_DIR=screenshots/260424-prod-perf-baseline PERF_BUDGET_EXPECTED_BLIPS=100 PERF_BUDGET_MIN_RATIO=1 node scripts/perf-budget.mjs`
+  - Command: `PERF_SNAPSHOT_DIR=screenshots/260424-0010-prod-perf-baseline PERF_BUDGET_EXPECTED_BLIPS=100 PERF_BUDGET_MIN_RATIO=1 node scripts/perf-budget.mjs`
   - Result: pass.
   - Optional absolute-TTF diagnostic still flags expanded-root at 3522.9ms vs 3000ms.
 
 ## Smoke And Health
 - Scoped `test-toolbar-inline-smoke.mjs` selectors to the created blip’s `data-blip-id` to avoid topic-root/global toolbar collisions.
 - Ran public-prod Chromium toolbar smoke:
-  - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_E2E_BROWSERS=chromium RIZZOMA_SNAPSHOT_DIR=screenshots/260424-prod-toolbar-scoped npm run test:toolbar-inline`
+  - Command: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_E2E_BROWSERS=chromium RIZZOMA_SNAPSHOT_DIR=screenshots/260424-0010-prod-toolbar-scoped npm run test:toolbar-inline`
   - Result: pass.
-  - Artifact: `screenshots/260424-prod-toolbar-scoped/1776982255595-chromium-final.png`.
+  - Artifact: `screenshots/260424-0010-prod-toolbar-scoped/1776982255595-chromium-final.png`.
 - Made `src/tests/server.health.test.ts` deterministic by mocking CouchDB and covering both `200 ok` and `503 degraded`.
 - Verification:
   - `npm run test:health` pass: 3 files, 10 tests.
@@ -136,7 +136,7 @@
   - `adb shell settings put global stay_on_while_plugged_in 7`
   - `adb shell settings put system screen_off_timeout 2147483647`
 - Captured real-device current-branch evidence through `adb reverse tcp:3000 tcp:3000` and Chrome DevTools over ADB:
-  - Auth evidence: `screenshots/260424-real-device-pixel9proxl/003-local-branch-after-wait.png` and `006-cdp-android-auth.png`.
+  - Auth evidence: `screenshots/260424-2319-real-device-pixel9proxl-local/003-local-branch-after-wait.png` and `006-cdp-android-auth.png`.
   - Authenticated topic/blip evidence: `007-cdp-android-authenticated-home.png`, `008-cdp-android-topic-collapsed.png`, and `009-cdp-android-topic-expanded.png`.
 - Fixed the phone-exposed visual defect:
   - The first authenticated expanded-blip screenshot showed the read toolbar overlapping blip content on Pixel Chrome.
@@ -144,7 +144,7 @@
   - `BlipMenu.css` now keeps mobile blip menus in normal flow and compacts the read toolbar on mobile by moving comment/link shortcuts to the bottom-sheet menu.
   - `src/tests/client.mobilePwa.test.tsx` now asserts the mobile menu container and CSS in-flow rule.
 - Final accepted phone evidence:
-  - `screenshots/260424-real-device-pixel9proxl/015-cdp-android-toolbar-compact-final.png`.
+  - `screenshots/260424-2319-real-device-pixel9proxl-local/015-cdp-android-toolbar-compact-final.png`.
   - CDP metrics: `menuClass = blip-menu-container mobile-blip-menu-container`, `css = relative`, `overlaps = false`.
 - Updated verdict:
   - `screenshots/260424-025320-feature-sweep/BUILD_QUALITY_VERDICT.md` now marks 161 green, 0 orange, 0 red.
@@ -164,11 +164,11 @@
 - Verified the phone-width selected-text annotation path after the user asked whether the floating comment action really appears.
 - Added and ran a focused Playwright verifier at `tmp/verify-mobile-inline-comment.mjs` against both local current branch and the public HTTPS instance:
   - `node tmp/verify-mobile-inline-comment.mjs` passed against `http://localhost:3000`.
-  - `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_OUT_DIR=screenshots/260424-mobile-inline-comment-verify-public node tmp/verify-mobile-inline-comment.mjs` passed against production.
+  - `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_OUT_DIR=screenshots/260424-2256-public-mobile-selection-annotation-verify node tmp/verify-mobile-inline-comment.mjs` passed against production.
 - Evidence:
-  - Local: `screenshots/260424-mobile-inline-comment-verify/parent-blip-button-visible.png` and `screenshots/260424-mobile-inline-comment-verify/nested-subblip-button-visible.png`.
-  - Public: `screenshots/260424-mobile-inline-comment-verify-public/parent-blip-button-visible.png` and `screenshots/260424-mobile-inline-comment-verify-public/nested-subblip-button-visible.png`.
-  - Physical phone: `screenshots/260424-real-device-pixel9proxl/parent-blip-physical-inline-comment-button.png` and `screenshots/260424-real-device-pixel9proxl/nested-subblip-physical-inline-comment-button.png`.
+  - Local: `screenshots/260424-2256-mobile-selection-annotation-verify/parent-blip-button-visible.png` and `screenshots/260424-2256-mobile-selection-annotation-verify/nested-subblip-button-visible.png`.
+  - Public: `screenshots/260424-2256-public-mobile-selection-annotation-verify/parent-blip-button-visible.png` and `screenshots/260424-2256-public-mobile-selection-annotation-verify/nested-subblip-button-visible.png`.
+  - Physical phone: `screenshots/260424-2319-real-device-pixel9proxl-local/parent-blip-physical-inline-comment-button.png` and `screenshots/260424-2319-real-device-pixel9proxl-local/nested-subblip-physical-inline-comment-button.png`.
 - Result:
   - Selecting text in a parent blip and a nested subblip at Pixel 5 viewport shows the floating annotation button and opens the selection-annotation form.
   - Follow-up physical-device run on the connected Pixel 9 Pro XL through ADB + Chrome DevTools also passed against `http://127.0.0.1:3000` with Chrome Android `147.0.7727.102`.
@@ -183,9 +183,9 @@
   - `BlipMenu.tsx` and `BottomSheetMenu.tsx` now expose `Insert inline comment` in edit mode, including the phone bottom sheet reached from the mobile `≡` menu.
   - The selected-text floating button is now labelled `💬 Annotate`, because it creates a selection annotation rather than a BLB inline comment.
 - Real-device evidence from the connected Pixel 9 Pro XL:
-  - `screenshots/260424-real-device-pixel9proxl/parent-blip-mobile-sheet-inline-action.png` shows the mobile bottom sheet action.
-  - `screenshots/260424-real-device-pixel9proxl/parent-blip-cursor-inline-marker-created.png` shows the `[+]` marker inserted at the parent-blip cursor position.
-  - `screenshots/260424-real-device-pixel9proxl/nested-subblip-cursor-inline-marker-created.png` shows the `[+]` marker inserted at the nested-subblip cursor position.
+  - `screenshots/260424-2319-real-device-pixel9proxl-local/parent-blip-mobile-sheet-inline-action.png` shows the mobile bottom sheet action.
+  - `screenshots/260424-2319-real-device-pixel9proxl-local/parent-blip-cursor-inline-marker-created.png` shows the `[+]` marker inserted at the parent-blip cursor position.
+  - `screenshots/260424-2319-real-device-pixel9proxl-local/nested-subblip-cursor-inline-marker-created.png` shows the `[+]` marker inserted at the nested-subblip cursor position.
 - Verification:
   - `npm run test -- --run src/tests/client.BlipMenu.test.tsx` passed: 20 tests.
   - `npm run typecheck` passed.
@@ -203,10 +203,10 @@
   - Public root served the rebuilt assets `main-CRFVko80.js` and `main-tAElMspz.css`.
   - VPS container `rizzoma-app-prod` reports commit `69d6a8a9`, port mapping `8201->8000`, and healthy status.
 - Physical public-phone proof:
-  - Ran `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_OUT_DIR=screenshots/260424-real-device-pixel9proxl-public node tmp/verify-physical-phone-cursor-inline-comment.mjs`.
+  - Ran `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_OUT_DIR=screenshots/260424-2350-real-device-pixel9proxl-public node tmp/verify-physical-phone-cursor-inline-comment.mjs`.
   - Result passed on Pixel 9 Pro XL Chrome Android `147.0.7727.102`.
   - Parent blip and nested subblip both returned `markerText: "+"`.
-  - Evidence folder: `screenshots/260424-real-device-pixel9proxl-public/`.
+  - Evidence folder: `screenshots/260424-2350-real-device-pixel9proxl-public/`.
 - Boundary:
   - iPhone Safari remains untested.
   - The public check proves Android Chrome on the deployed public VPS; it does not prove every mobile browser.

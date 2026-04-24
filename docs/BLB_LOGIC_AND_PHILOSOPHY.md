@@ -442,9 +442,9 @@ The following screenshots from live Rizzoma (captured 2026-01-19) document the a
 ### Live Rizzoma Analysis Screenshots (Critical Reference!)
 | Screenshot | Shows |
 |------------|-------|
-| `screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-main.png` | Topic landing with single meta‑blip container (title is first line) |
-| `screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-blip-view.png` | Expanded blip in view mode with read‑only toolbar |
-| `screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-blip-edit.png` | Same blip in edit mode with full formatting toolbar + Hidden checkbox |
+| `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-main.png` | Topic landing with single meta‑blip container (title is first line) |
+| `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-blip-view.png` | Expanded blip in view mode with read‑only toolbar |
+| `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-blip-edit.png` | Same blip in edit mode with full formatting toolbar + Hidden checkbox |
 
 ### Visual Reference: Complete Topic Anatomy
 

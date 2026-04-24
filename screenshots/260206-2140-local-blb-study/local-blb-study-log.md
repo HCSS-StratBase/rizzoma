@@ -3,7 +3,7 @@
 **Date**: 2026-02-06
 **Purpose**: Recreate the BLB study topic from live rizzoma.com on localhost:3000, documenting all findings and failures.
 **Branch**: feature/rizzoma-core-features
-**Screenshots**: screenshots/local-blb-study/
+**Screenshots**: screenshots/260206-2140-local-blb-study/
 
 ## Environment
 - Server: localhost:8000 (backend), localhost:3000 (Vite frontend)
