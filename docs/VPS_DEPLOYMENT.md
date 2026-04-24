@@ -18,8 +18,8 @@
 | **Persistent volumes** | `/data/volumes/stephan-rizzoma/{app,redis,couchdb,rabbitmq,sphinx,minio}` |
 | **Auth account** | `hp@rizzoma.com` / `stratbase2026` |
 | **Repo** | `HCSS-StratBase/rizzoma` on GitHub |
-| **Current documented source** | `feature/rizzoma-core-features` at `df139e18`, refreshed 2026-04-24 23:52 CEST |
-| **Last verified VPS code baseline** | Running prod image built from app-code commit `69d6a8a9`; VPS source checkout is `df139e18` (docs/evidence only); public HTTPS targets prod `:8201`; prior dirty VPS tree preserved as stash `pre-cursor-inline-deploy-20260424-234017` |
+| **Current documented source** | `feature/rizzoma-core-features`, fast-forwarded to the latest docs/evidence checkpoint after the verified app-code deploy |
+| **Last verified VPS code baseline** | Running prod image built from app-code commit `69d6a8a9`; later VPS source checkouts are docs/evidence-only updates and do not require rebuild; public HTTPS targets prod `:8201`; prior dirty VPS tree preserved as stash `pre-cursor-inline-deploy-20260424-234017` |
 
 ## What's running (as of 2026-04-24)
 
@@ -57,7 +57,7 @@ Verified after rebuild:
 - Public `/api/health` returns OK and CouchDB healthy.
 - Public root serves `main-CRFVko80.js` and `main-tAElMspz.css`.
 - Physical Pixel 9 Pro XL Chrome verified cursor-based BLB inline comments on the public URL; evidence lives in `screenshots/260424-real-device-pixel9proxl-public/`.
-- After documentation/evidence commit `df139e18` was pushed, the VPS source checkout was fast-forwarded to `df139e18` without rebuilding the already-verified app bundle.
+- After documentation/evidence commits were pushed, the VPS source checkout was fast-forwarded without rebuilding the already-verified app bundle.
 
 ## Public prod cutover (2026-04-23 23:24 CEST)
 
