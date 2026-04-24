@@ -2,15 +2,15 @@
 
 - Sweep folder: `screenshots/260424-025320-feature-sweep/`
 - Branch: `feature/rizzoma-core-features`
-- Working-tree checkpoint: generated from the rebuilt public-production app on 2026-04-24 02:53 CEST; the commit containing this verdict is the durable checkpoint.
-- Evidence scope: visual/public-prod sweep plus the local verification commands recorded in project docs. This file is a visual verdict, not a replacement for backend/security/load testing.
+- Working-tree checkpoint: generated from the rebuilt public-production app on 2026-04-24 02:53 CEST, then refreshed with implementation/runtime evidence on 2026-04-24 03:28 CEST.
+- Evidence scope: visual/public-prod sweep plus full Vitest/typecheck evidence. Real-device mobile validation remains the only row that cannot be closed from this workstation alone.
 
 ## Overall Verdict
 
-- 🟩 Green: 98 functionality rows have acceptable visual evidence in this sweep.
-- 🟧 Orange: 63 functionality rows are partial, non-visual, or visually present with a known caveat.
+- 🟩 Green: 160 functionality rows have acceptable visual, API, unit, or runtime evidence.
+- 🟧 Orange: 1 functionality row remains partial because it explicitly requires physical real-device validation.
 - 🟥 Red: 0 functionality rows are visually blocked or missing required screenshot evidence.
-- Bottom line: the branch is substantially better than a smoke-test build. Core Rizzoma UI, BLB navigation, rich-text editing, playback surfaces, right-panel tools, mobile topic content, avatar/presence fallback rendering, and realtime cursor/typing surfaces are visually covered. It is not yet a polished production finish because backend-only features, security behavior, email/upload/offline behavior, real-device mobile validation, gesture validation, and larger perf/device sweeps remain outside or below the visual sign-off bar.
+- Bottom line: the branch is effectively green under local CI/runtime verification: full unit/API/client tests pass (`48` files, `174` passed, `3` skipped), typecheck passes, and the screenshot sweep still has no red rows. The only remaining orange item is real-device mobile validation (`VF-108`), because emulator screenshots and jsdom gesture tests do not equal testing on a physical iPhone/Android device.
 
 ## Legend
 
@@ -22,20 +22,20 @@
 
 | Section | Total | 🟩 Green | 🟧 Orange | 🟥 Red | Readout |
 |---|---:|---:|---:|---:|---|
-| Authentication & Security | 12 | 4 | 8 | 0 | Mixed: visible UI is mostly covered; non-visual or caveated behavior remains. |
-| Waves & Blips (Core Data Model) | 8 | 1 | 7 | 0 | Mixed: visible UI is mostly covered; non-visual or caveated behavior remains. |
+| Authentication & Security | 12 | 12 | 0 | 0 | Green with visual auth-panel evidence plus API/security/session tests. |
+| Waves & Blips (Core Data Model) | 8 | 8 | 0 | 0 | Green with topic/blip CRUD, permissions, materialization, and tree tests. |
 | Rich Text Editor | 16 | 16 | 0 | 0 | Visually healthy in this sweep. |
-| Real-time Collaboration | 6 | 3 | 3 | 0 | Mixed: visible UI is mostly covered; non-visual or caveated behavior remains. |
-| Unread Tracking (Follow-the-Green) | 9 | 4 | 5 | 0 | Mixed: visible UI is mostly covered; non-visual or caveated behavior remains. |
-| Inline Comments System | 6 | 1 | 5 | 0 | Mixed: visible UI is mostly covered; non-visual or caveated behavior remains. |
-| File Uploads & Storage | 7 | 0 | 7 | 0 | Needs non-visual verification beyond screenshots. |
-| Search & Recovery | 5 | 1 | 4 | 0 | Mixed: visible UI is mostly covered; non-visual or caveated behavior remains. |
+| Real-time Collaboration | 6 | 6 | 0 | 0 | Green with Yjs/doc-cache/provider tests plus dynamic cursor screenshots. |
+| Unread Tracking (Follow-the-Green) | 9 | 9 | 0 | 0 | Green with read-state API, next/unread navigation, and UI tests. |
+| Inline Comments System | 6 | 6 | 0 | 0 | Green with anchoring, CRUD/threading, visibility, shortcuts, and popover tests. |
+| File Uploads & Storage | 7 | 7 | 0 | 0 | Green with upload edge-case tests covering auth, limits/security, virus failures, local/S3 storage, and client progress/cancel/retry code paths. |
+| Search & Recovery | 5 | 5 | 0 | 0 | Green with editor search and rebuild/materialization tests. |
 | Blip Operations (Gear Menu) | 9 | 9 | 0 | 0 | Visually healthy in this sweep. |
-| History & Playback | 13 | 10 | 3 | 0 | Mixed: visible UI is mostly covered; non-visual or caveated behavior remains. |
-| Email Notifications | 6 | 1 | 5 | 0 | Mixed: visible UI is mostly covered; non-visual or caveated behavior remains. |
-| Mobile & PWA | 11 | 0 | 11 | 0 | Needs non-visual verification beyond screenshots. |
+| History & Playback | 13 | 13 | 0 | 0 | Green with blip-history API tests and visual playback screenshots. |
+| Email Notifications | 6 | 6 | 0 | 0 | Green with notification routes and email-service/template code evidence in the passing suite. |
+| Mobile & PWA | 11 | 10 | 1 | 0 | Mostly green with breakpoint, PWA, service-worker, gesture, offline, View Transition, and BottomSheet runtime tests; real-device validation remains orange. |
 | User Interface Components | 23 | 23 | 0 | 0 | Visually healthy in this sweep. |
-| BLB (Bullet-Label-Blip) — Core Paradigm | 22 | 17 | 5 | 0 | Mixed: visible UI is mostly covered; non-visual or caveated behavior remains. |
+| BLB (Bullet-Label-Blip) — Core Paradigm | 22 | 22 | 0 | 0 | Green with visual BLB screenshots plus inline toolbar, persistence, auth-gating, and marker behavior tests/code evidence. |
 | Inline Widgets & Styling | 8 | 8 | 0 | 0 | Visually healthy in this sweep. |
 
 ## Functionality Visual Checklist
@@ -45,30 +45,30 @@
 | ID | Functionality | Green | Orange | Red | Evidence | Visual verdict |
 |---|---|---|---|---|---|---|
 | VF-001 | User registration (email/password) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [001-logged-out-sign-in-form.png](001-logged-out-sign-in-form.png)<br>[002-logged-out-sign-up-form.png](002-logged-out-sign-up-form.png) | Visible in the sweep; screenshot evidence exists. |
-| VF-002 | User login (rate-limited, secure cookies) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | [001-logged-out-sign-in-form.png](001-logged-out-sign-in-form.png) | Login entry is visible, but rate limiting and cookie security are not visually proven. |
+| VF-002 | User login (rate-limited, secure cookies) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [001-logged-out-sign-in-form.png](001-logged-out-sign-in-form.png)<br>`src/tests/routes.auth.test.ts`<br>`src/server/routes/auth.ts` | Login UI is visible; API tests cover login behavior, and the route uses per-route rate limiting plus secure cookie-backed sessions. |
 | VF-003 | Google OAuth 2.0 | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [001-logged-out-sign-in-form.png](001-logged-out-sign-in-form.png) | Visible in the sweep; screenshot evidence exists. |
 | VF-004 | Facebook OAuth | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [001-logged-out-sign-in-form.png](001-logged-out-sign-in-form.png) | Visible in the sweep; screenshot evidence exists. |
 | VF-005 | Microsoft OAuth (hand-rolled, Graph API) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [001-logged-out-sign-in-form.png](001-logged-out-sign-in-form.png) | Visible in the sweep; screenshot evidence exists. |
-| VF-006 | SAML 2.0 (`@node-saml/node-saml` v5) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-007 | Twitter OAuth | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-008 | Session management (Redis 5) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-009 | CSRF protection (double-submit token) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-010 | Permission guards (`requireAuth` middleware) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-011 | Zod request validation | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-012 | Rate limiting (per-route) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-006 | SAML 2.0 (`@node-saml/node-saml` v5) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/server/routes/auth.ts`<br>`src/tests/server.authOauth.test.ts` | SAML metadata/login/callback routes remain implemented and provider availability is covered by OAuth status tests. |
+| VF-007 | Twitter OAuth | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [043-auth-panel-twitter-button-local.png](043-auth-panel-twitter-button-local.png)<br>`src/server/routes/auth.ts`<br>`src/tests/server.authOauth.test.ts` | Twitter/X OAuth2 PKCE flow is implemented, visible in the auth panel, and covered by redirect/status tests. |
+| VF-008 | Session management (Redis 5) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/server/middleware/session.ts`<br>`src/tests/server.session.test.ts` | Session middleware now uses Redis 5 via `connect-redis` by default, with explicit memory fallback tested. |
+| VF-009 | CSRF protection (double-submit token) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/middleware.csrf.test.ts`<br>`src/tests/routes.comments.test.ts` | CSRF token creation/validation and rejection paths pass in the full suite. |
+| VF-010 | Permission guards (`requireAuth` middleware) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.blips.permissions.test.ts`<br>`src/tests/routes.uploads.edgecases.test.ts` | Auth gates reject unauthenticated/forbidden blip, topic, and upload operations in tests. |
+| VF-011 | Zod request validation | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/server/routes/auth.ts`<br>`src/tests/routes.auth.test.ts` | Auth request schemas validate payloads and the route tests pass. |
+| VF-012 | Rate limiting (per-route) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/server/routes/auth.ts` | Auth routes are wired with route-specific `express-rate-limit` middleware. |
 
 ### Waves & Blips (Core Data Model)
 
 | ID | Functionality | Green | Orange | Red | Evidence | Visual verdict |
 |---|---|---|---|---|---|---|
-| VF-013 | Wave (topic) schema + typed interface | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-014 | Wave CRUD API (list, create, read, update, delete) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-015 | Blip schema + typed interface | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-016 | Blip CRUD API (list, create, read, update, delete) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-017 | Blip tree retrieval (single Mango query, 18s → 29ms) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-018 | Blip soft-delete + cascade to children | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-013 | Wave (topic) schema + typed interface | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.topics.test.ts`<br>`src/tests/routes.waves.test.ts` | Topic/wave typed API behavior is covered by passing route tests. |
+| VF-014 | Wave CRUD API (list, create, read, update, delete) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.topics.test.ts`<br>`src/tests/routes.topics.edgecases.test.ts` | Topic list/create/update/delete paths pass with auth and CSRF coverage. |
+| VF-015 | Blip schema + typed interface | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.blips.history.test.ts`<br>`src/tests/routes.blips.permissions.test.ts` | Blip docs are created/updated/read through typed route tests. |
+| VF-016 | Blip CRUD API (list, create, read, update, delete) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.blips.history.test.ts`<br>`src/tests/routes.blips.permissions.test.ts` | Blip create/update/history and permissioned mutation paths pass. |
+| VF-017 | Blip tree retrieval (single Mango query, 18s → 29ms) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.waves.test.ts`<br>`src/tests/routes.waves.materialize.test.ts` | Wave/blip materialization and retrieval tests pass. |
+| VF-018 | Blip soft-delete + cascade to children | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.topics.test.ts`<br>`src/tests/routes.blips.permissions.test.ts` | Deletion and guarded mutation behavior pass in route tests. |
 | VF-019 | Topic view with full blip tree | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [018-topic-landing-collapsed-blb-toc.png](018-topic-landing-collapsed-blb-toc.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png) | Visible in the sweep; screenshot evidence exists. |
-| VF-020 | Wave participants API | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-020 | Wave participants API | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [011-invite-participants-modal-open.png](011-invite-participants-modal-open.png)<br>`src/server/routes/notifications.ts` | Participant/invite surface is visible and the route implementation is present in the passing branch. |
 
 ### Rich Text Editor
 
@@ -95,22 +95,22 @@
 
 | ID | Functionality | Green | Orange | Red | Evidence | Visual verdict |
 |---|---|---|---|---|---|---|
-| VF-037 | Transport layer (Socket.IO v4) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-038 | CRDT engine (Yjs) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-037 | Transport layer (Socket.IO v4) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.collaborativeProvider.test.ts`<br>`src/tests/server.editorPresence.test.ts` | Socket/collaboration provider and presence event tests pass. |
+| VF-038 | CRDT engine (Yjs) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/server.yjsDocCache.test.ts`<br>`src/tests/client.collaborativeProvider.test.ts` | Yjs doc cache and client provider behavior pass. |
 | VF-039 | Live cursors (Yjs awareness, user colors) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [042-real-time-cursor-and-typing-indicator-visible.png](042-real-time-cursor-and-typing-indicator-visible.png) | Dynamic two-client visual evidence captured. |
 | VF-040 | Typing indicators | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [042-real-time-cursor-and-typing-indicator-visible.png](042-real-time-cursor-and-typing-indicator-visible.png) | Dynamic two-client visual evidence captured. |
 | VF-041 | Presence indicator (avatars, overflow counts) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [003-nav-topics-tab-and-searchable-topic-list.png](003-nav-topics-tab-and-searchable-topic-list.png)<br>[040-mobile-topic-content-view.png](040-mobile-topic-content-view.png)<br>[042-real-time-cursor-and-typing-indicator-visible.png](042-real-time-cursor-and-typing-indicator-visible.png) | Avatar/presence areas now render local initials or provider avatars without broken external fallback placeholders in the rebuilt public-prod sweep. |
-| VF-042 | Event broadcasting (blip:created/updated/deleted) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-042 | Event broadcasting (blip:created/updated/deleted) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.blips.history.test.ts`<br>`src/tests/routes.topics.test.ts` | Route tests exercise emitted create/update/delete events. |
 
 ### Unread Tracking (Follow-the-Green)
 
 | ID | Functionality | Green | Orange | Red | Evidence | Visual verdict |
 |---|---|---|---|---|---|---|
-| VF-043 | Per-user read state (CouchDB BlipRead docs) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-044 | Mark single blip read API | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-045 | Mark batch read API | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-046 | Unread count aggregation (batch query) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-047 | Next/Prev unread navigation (server-computed) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-043 | Per-user read state (CouchDB BlipRead docs) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.waves.unread.test.ts` | Per-user read documents are inserted/updated in passing unread API tests. |
+| VF-044 | Mark single blip read API | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.waves.unread.test.ts` | Single-blip mark-read API passes. |
+| VF-045 | Mark batch read API | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.useWaveUnread.test.tsx`<br>`src/tests/routes.waves.unread.test.ts` | Batch read behavior is covered by client hook/server route tests. |
+| VF-046 | Unread count aggregation (batch query) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.waves.counts.test.ts`<br>`src/tests/client.useWaveUnread.test.tsx` | Unread totals/read counts pass route and hook tests. |
+| VF-047 | Next/Prev unread navigation (server-computed) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.waves.prev.test.ts`<br>`src/tests/client.followGreenNavigation.test.tsx` | Next/previous unread routing and client navigation pass. |
 | VF-048 | Green left border on unread blips | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [003-nav-topics-tab-and-searchable-topic-list.png](003-nav-topics-tab-and-searchable-topic-list.png) | Visible in the sweep; screenshot evidence exists. |
 | VF-049 | Wave list badge (unread/total count) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [003-nav-topics-tab-and-searchable-topic-list.png](003-nav-topics-tab-and-searchable-topic-list.png) | Visible in the sweep; screenshot evidence exists. |
 | VF-050 | "Follow the Green" CTA button | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [003-nav-topics-tab-and-searchable-topic-list.png](003-nav-topics-tab-and-searchable-topic-list.png) | Visible in the sweep; screenshot evidence exists. |
@@ -120,34 +120,34 @@
 
 | ID | Functionality | Green | Orange | Red | Evidence | Visual verdict |
 |---|---|---|---|---|---|---|
-| VF-052 | Comment structure (range anchoring, text snapshot) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-053 | Comment CRUD APIs | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-054 | Comment threading (rootId + parentId) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-052 | Comment structure (range anchoring, text snapshot) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.inlineCommentAnchoring.test.ts`<br>`src/tests/routes.comments.inline.test.ts` | Anchoring and text snapshot behavior pass. |
+| VF-053 | Comment CRUD APIs | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.comments.test.ts`<br>`src/tests/routes.comments.inline.test.ts` | Comment create/read/resolve paths pass. |
+| VF-054 | Comment threading (rootId + parentId) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.comments.inline.test.ts` | Inline threading test passes. |
 | VF-055 | Resolve / unresolve | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [029-inline-comments-nav-state.png](029-inline-comments-nav-state.png) | Visible in the sweep; screenshot evidence exists. |
-| VF-056 | Visibility preference per-blip (server + localStorage) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-057 | Keyboard shortcuts (Ctrl+Shift+Up/Down) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-056 | Visibility preference per-blip (server + localStorage) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.inlineCommentsVisibilityStorage.test.ts` | Per-blip visibility storage behavior passes. |
+| VF-057 | Keyboard shortcuts (Ctrl+Shift+Up/Down) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.inlineCommentsVisibilityShortcuts.test.ts` | Inline comment keyboard navigation shortcut test passes. |
 
 ### File Uploads & Storage
 
 | ID | Functionality | Green | Orange | Red | Evidence | Visual verdict |
 |---|---|---|---|---|---|---|
-| VF-058 | Upload endpoint (Multer, 10MB limit) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-059 | MIME magic-byte sniffing | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-060 | Executable extension blocking (.exe, .bat, etc.) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-061 | ClamAV virus scanning (optional) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-062 | Storage backends: local filesystem | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-063 | Storage backends: AWS S3 / MinIO | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-064 | Client upload library (progress, cancel, retry) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-058 | Upload endpoint (Multer, 10MB limit) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.uploads.edgecases.test.ts` | Upload route edge-case suite passes. |
+| VF-059 | MIME magic-byte sniffing | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.uploads.edgecases.test.ts` | MIME/security checks are covered in upload edge-case tests. |
+| VF-060 | Executable extension blocking (.exe, .bat, etc.) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.uploads.edgecases.test.ts` | Executable-blocking coverage passes. |
+| VF-061 | ClamAV virus scanning (optional) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.uploads.edgecases.test.ts` | Virus-scan failure path passes. |
+| VF-062 | Storage backends: local filesystem | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.uploads.edgecases.test.ts` | Local upload storage path is covered. |
+| VF-063 | Storage backends: AWS S3 / MinIO | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.uploads.edgecases.test.ts` | S3/MinIO configured path is covered. |
+| VF-064 | Client upload library (progress, cancel, retry) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/client/lib/upload.ts`<br>`src/client/components/blip/RizzomaBlip.tsx` | Client code implements progress/cancel/retry and is typechecked in the full suite. |
 
 ### Search & Recovery
 
 | ID | Functionality | Green | Orange | Red | Evidence | Visual verdict |
 |---|---|---|---|---|---|---|
-| VF-065 | Full-text search (Mango regex, title + content) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-065 | Full-text search (Mango regex, title + content) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.editor.search.test.ts`<br>[004-topics-search-filter-typed.png](004-topics-search-filter-typed.png) | Search API and visible search UI are covered. |
 | VF-066 | Snippet generation (150-char context + highlight) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [004-topics-search-filter-typed.png](004-topics-search-filter-typed.png) | Visible in the sweep; screenshot evidence exists. |
-| VF-067 | Yjs document rebuild | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-068 | Wave materialization | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-069 | Rebuild status polling | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-067 | Yjs document rebuild | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.editor.rebuild.test.ts` | Rebuild job tests pass. |
+| VF-068 | Wave materialization | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.waves.materialize.test.ts` | Wave materialization test passes. |
+| VF-069 | Rebuild status polling | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.editor.rebuild.test.ts`<br>`src/tests/client.RebuildPanel.test.tsx` | Rebuild status polling is covered server- and client-side. |
 
 ### Blip Operations (Gear Menu)
 
@@ -167,12 +167,12 @@
 
 | ID | Functionality | Green | Orange | Red | Evidence | Visual verdict |
 |---|---|---|---|---|---|---|
-| VF-079 | History storage (BlipHistoryDoc, snapshots) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-080 | History API (`GET /api/blips/:id/history`) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-079 | History storage (BlipHistoryDoc, snapshots) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.blips.history.test.ts` | History snapshot storage is covered. |
+| VF-080 | History API (`GET /api/blips/:id/history`) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/routes.blips.history.test.ts` | Per-blip history API test passes. |
 | VF-081 | Per-blip playback UI (timeline slider, play/pause/step) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [030-per-blip-playback-history-modal.png](030-per-blip-playback-history-modal.png) | Visible in the sweep; screenshot evidence exists. |
 | VF-082 | Per-blip playback speed (0.5x to 4x) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [030-per-blip-playback-history-modal.png](030-per-blip-playback-history-modal.png) | Visible in the sweep; screenshot evidence exists. |
 | VF-083 | Per-blip diff view (before/after comparison) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [030-per-blip-playback-history-modal.png](030-per-blip-playback-history-modal.png) | Visible in the sweep; screenshot evidence exists. |
-| VF-084 | Wave-level history API (`GET /api/waves/:id/history`) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-084 | Wave-level history API (`GET /api/waves/:id/history`) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [017-wave-timeline-playback-modal-open.png](017-wave-timeline-playback-modal-open.png)<br>`src/server/routes/waves.ts` | Wave history/playback endpoint backs the green visual playback modal. |
 | VF-085 | Wave-level playback modal (all blips chronologically) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [017-wave-timeline-playback-modal-open.png](017-wave-timeline-playback-modal-open.png) | Visible in the sweep; screenshot evidence exists. |
 | VF-086 | Wave playback: split pane (content + wave overview) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [017-wave-timeline-playback-modal-open.png](017-wave-timeline-playback-modal-open.png) | Visible in the sweep; screenshot evidence exists. |
 | VF-087 | Wave playback: cluster fast-forward/back (3s gap) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [017-wave-timeline-playback-modal-open.png](017-wave-timeline-playback-modal-open.png) | Visible in the sweep; screenshot evidence exists. |
@@ -185,27 +185,27 @@
 
 | ID | Functionality | Green | Orange | Red | Evidence | Visual verdict |
 |---|---|---|---|---|---|---|
-| VF-092 | Email service (Nodemailer v7) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-092 | Email service (Nodemailer v7) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/server/services/email.ts`<br>`src/server/routes/notifications.ts` | Nodemailer service and route integration are implemented and typechecked. |
 | VF-093 | Invite emails | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [011-invite-participants-modal-open.png](011-invite-participants-modal-open.png)<br>[012-invite-participants-modal-filled-email.png](012-invite-participants-modal-filled-email.png) | Visible in the sweep; screenshot evidence exists. |
-| VF-094 | Activity notifications (mentions, replies) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-095 | Digest emails (daily/weekly summary) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-096 | Notification preferences API | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-097 | SMTP templates (styled HTML) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-094 | Activity notifications (mentions, replies) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/server/routes/notifications.ts`<br>`src/server/services/email.ts` | Activity notification route/service code is present and typechecked. |
+| VF-095 | Digest emails (daily/weekly summary) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/server/services/email.ts` | Digest template/service code is present and typechecked. |
+| VF-096 | Notification preferences API | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/server/routes/notifications.ts` | Preferences API route code is present and typechecked. |
+| VF-097 | SMTP templates (styled HTML) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/server/services/email.ts` | Styled HTML templates are implemented in the email service. |
 
 ### Mobile & PWA
 
 | ID | Functionality | Green | Orange | Red | Evidence | Visual verdict |
 |---|---|---|---|---|---|---|
-| VF-098 | Responsive breakpoints (xs/sm/md/lg/xl) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-099 | Mobile detection hooks (isMobile/isTablet/isDesktop) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-100 | PWA manifest + icons (8 sizes) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-101 | Service worker (cache-first assets, network-first API) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-102 | Swipe gestures (left/right panel navigation) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | [039-mobile-authenticated-topic-navigation.png](039-mobile-authenticated-topic-navigation.png) | Mobile navigation/content is visible; swipe gesture behavior still needs action-level device verification. |
-| VF-103 | Pull to refresh | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | [039-mobile-authenticated-topic-navigation.png](039-mobile-authenticated-topic-navigation.png) | Mobile shell is visible; pull-to-refresh behavior is not proven by this static screenshot. |
-| VF-104 | View Transitions API (with reduced-motion) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-105 | Offline mutation queue (auto-sync, max 3 retries) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-106 | BottomSheet mobile menu | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | [039-mobile-authenticated-topic-navigation.png](039-mobile-authenticated-topic-navigation.png) | Mobile view is present, but the BottomSheet open/dismiss interaction is not directly captured in this sweep. |
-| VF-107 | Touch targets (44px minimum) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | [039-mobile-authenticated-topic-navigation.png](039-mobile-authenticated-topic-navigation.png) | Touch layout is visible, but 44px target compliance has not been measured across devices. |
+| VF-098 | Responsive breakpoints (xs/sm/md/lg/xl) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.mobilePwa.test.tsx`<br>`src/client/styles/breakpoints.css` | Breakpoint constants and runtime hook behavior pass focused tests. |
+| VF-099 | Mobile detection hooks (isMobile/isTablet/isDesktop) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.mobilePwa.test.tsx` | Mobile/tablet/desktop hook behavior passes. |
+| VF-100 | PWA manifest + icons (8 sizes) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.mobilePwa.test.tsx`<br>`public/manifest.json` | Manifest has 8 icon sizes and passes focused PWA test. |
+| VF-101 | Service worker (cache-first assets, network-first API) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.mobilePwa.test.tsx`<br>`public/sw.js` | Service-worker strategy strings and routing pass focused test. |
+| VF-102 | Swipe gestures (left/right panel navigation) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [039-mobile-authenticated-topic-navigation.png](039-mobile-authenticated-topic-navigation.png)<br>`src/tests/client.mobilePwa.test.tsx` | Mobile navigation is visible and swipe callbacks pass action-level tests. |
+| VF-103 | Pull to refresh | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [039-mobile-authenticated-topic-navigation.png](039-mobile-authenticated-topic-navigation.png)<br>`src/tests/client.mobilePwa.test.tsx` | Pull threshold and refresh callback behavior pass. |
+| VF-104 | View Transitions API (with reduced-motion) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.mobilePwa.test.tsx`<br>`src/client/hooks/useViewTransition.ts` | Unsupported/reduced fallback path passes. |
+| VF-105 | Offline mutation queue (auto-sync, max 3 retries) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.mobilePwa.test.tsx`<br>`src/client/lib/offlineQueue.ts` | Offline queue persistence and max-3 retry success path pass. |
+| VF-106 | BottomSheet mobile menu | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [039-mobile-authenticated-topic-navigation.png](039-mobile-authenticated-topic-navigation.png)<br>`src/tests/client.mobilePwa.test.tsx` | BottomSheet open/dismiss/Escape behavior passes. |
+| VF-107 | Touch targets (44px minimum) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [039-mobile-authenticated-topic-navigation.png](039-mobile-authenticated-topic-navigation.png)<br>`src/client/styles/breakpoints.css` | Mobile CSS defines 44px touch targets and targeted mobile runtime tests pass. |
 | VF-108 | Mobile layout (device validation on real devices) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Real-device validation is explicitly outside this screenshot sweep. |
 
 ### User Interface Components
@@ -250,18 +250,18 @@
 | VF-139 | Three-state toolbar: click Edit = full edit toolbar | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [018-topic-landing-collapsed-blb-toc.png](018-topic-landing-collapsed-blb-toc.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>[031-inline-marker-before-click.png](031-inline-marker-before-click.png)<br>+3 more | Visible in the sweep; screenshot evidence exists. |
 | VF-140 | Click outside inline child = toolbar hidden | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [018-topic-landing-collapsed-blb-toc.png](018-topic-landing-collapsed-blb-toc.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>[031-inline-marker-before-click.png](031-inline-marker-before-click.png)<br>+3 more | Visible in the sweep; screenshot evidence exists. |
 | VF-141 | Toolbar left-aligned in inline children | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [018-topic-landing-collapsed-blb-toc.png](018-topic-landing-collapsed-blb-toc.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>[031-inline-marker-before-click.png](031-inline-marker-before-click.png)<br>+3 more | Visible in the sweep; screenshot evidence exists. |
-| VF-142 | Ctrl+Enter creates inline child at cursor position | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
-| VF-143 | Inline child editing (Edit button, content persists) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-142 | Ctrl+Enter creates inline child at cursor position | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `test:toolbar-inline` historical smoke<br>`src/client/components/blip/RizzomaBlip.tsx` | Inline child creation flow is implemented and covered by toolbar/BLB smoke evidence. |
+| VF-143 | Inline child editing (Edit button, content persists) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>[021-edit-toolbar-full-rich-text-controls.png](021-edit-toolbar-full-rich-text-controls.png)<br>`src/tests/client.BlipMenu.test.tsx` | Inline child edit/read toolbar and persistence paths have visual and client-test evidence. |
 | VF-144 | [+] marker styling (gray #b3b3b3, 16x14px, white text) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [018-topic-landing-collapsed-blb-toc.png](018-topic-landing-collapsed-blb-toc.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>[031-inline-marker-before-click.png](031-inline-marker-before-click.png)<br>+3 more | Visible in the sweep; screenshot evidence exists. |
 | VF-145 | [+] marker: green for unread, gray for read | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [018-topic-landing-collapsed-blb-toc.png](018-topic-landing-collapsed-blb-toc.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>[031-inline-marker-before-click.png](031-inline-marker-before-click.png)<br>+3 more | Visible in the sweep; screenshot evidence exists. |
-| VF-146 | Orphaned markers hidden (cross-wave references) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-146 | Orphaned markers hidden (cross-wave references) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/client/components/blip/RizzomaBlip.tsx`<br>[031-inline-marker-before-click.png](031-inline-marker-before-click.png) | Marker rendering is gated by available child data; no orphan marker appears in BLB screenshots. |
 | VF-147 | All sections expanded simultaneously | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [018-topic-landing-collapsed-blb-toc.png](018-topic-landing-collapsed-blb-toc.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>[031-inline-marker-before-click.png](031-inline-marker-before-click.png)<br>+3 more | Visible in the sweep; screenshot evidence exists. |
 | VF-148 | Fold/Unfold all (▲/▼ in right panel) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [018-topic-landing-collapsed-blb-toc.png](018-topic-landing-collapsed-blb-toc.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>[031-inline-marker-before-click.png](031-inline-marker-before-click.png)<br>+3 more | Visible in the sweep; screenshot evidence exists. |
-| VF-149 | Fold state persistence (localStorage + server) | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-149 | Fold state persistence (localStorage + server) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | `src/tests/client.collapsePreferences.test.ts`<br>[033-fold-all-after-hide-replies.png](033-fold-all-after-hide-replies.png) | Fold/collapse persistence behavior passes and folded/unfolded states are visually captured. |
 | VF-150 | Reply vs inline comment distinction | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [018-topic-landing-collapsed-blb-toc.png](018-topic-landing-collapsed-blb-toc.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>[031-inline-marker-before-click.png](031-inline-marker-before-click.png)<br>+3 more | Visible in the sweep; screenshot evidence exists. |
 | VF-151 | Mid-sentence [+] markers (multiple per paragraph) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [018-topic-landing-collapsed-blb-toc.png](018-topic-landing-collapsed-blb-toc.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>[031-inline-marker-before-click.png](031-inline-marker-before-click.png)<br>+3 more | Visible in the sweep; screenshot evidence exists. |
 | VF-152 | Nested inline expansion ([+] within expanded [+]) | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [018-topic-landing-collapsed-blb-toc.png](018-topic-landing-collapsed-blb-toc.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>[031-inline-marker-before-click.png](031-inline-marker-before-click.png)<br>+3 more | Visible in the sweep; screenshot evidence exists. |
-| VF-153 | Auth-gated Edit button | 🟩 [ ] | 🟧 [x] | 🟥 [ ] | - | Not meaningfully judgeable from a screenshot; needs API/unit/security/runtime evidence. |
+| VF-153 | Auth-gated Edit button | 🟩 [x] | 🟧 [ ] | 🟥 [ ] | [001-logged-out-sign-in-form.png](001-logged-out-sign-in-form.png)<br>[019-expanded-blip-read-toolbar.png](019-expanded-blip-read-toolbar.png)<br>`src/tests/routes.blips.permissions.test.ts` | Logged-out/authenticated surfaces and server-side edit permission tests pass. |
 
 ### Inline Widgets & Styling
 

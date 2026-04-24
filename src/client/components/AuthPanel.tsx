@@ -4,7 +4,7 @@ import { toast } from './Toast';
 import './AuthPanel.css';
 
 type AuthUser = { id?: string; email?: string };
-type OAuthStatus = { google: boolean; facebook: boolean; microsoft: boolean; saml: boolean };
+type OAuthStatus = { google: boolean; facebook: boolean; microsoft: boolean; twitter: boolean; saml: boolean };
 
 export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void }): JSX.Element {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -13,7 +13,7 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const [oauthStatus, setOauthStatus] = useState<OAuthStatus>({ google: false, facebook: false, microsoft: false, saml: false });
+  const [oauthStatus, setOauthStatus] = useState<OAuthStatus>({ google: false, facebook: false, microsoft: false, twitter: false, saml: false });
 
   // Check OAuth availability
   useEffect(() => {
@@ -47,6 +47,10 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
 
   const handleMicrosoftSignIn = () => {
     window.location.href = '/api/auth/microsoft';
+  };
+
+  const handleTwitterSignIn = () => {
+    window.location.href = '/api/auth/twitter';
   };
 
   const handleSamlSignIn = () => {
@@ -112,6 +116,15 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
       >
         <span className="oauth-icon">M</span>
         Sign in with Microsoft
+      </button>
+      <button
+        className="oauth-btn twitter-auth-btn"
+        disabled={!oauthStatus.twitter}
+        title={oauthStatus.twitter ? 'Sign in with X/Twitter' : 'X/Twitter sign-in not configured'}
+        onClick={handleTwitterSignIn}
+      >
+        <span className="oauth-icon">X</span>
+        Sign in with X/Twitter
       </button>
       {oauthStatus.saml && (
         <button

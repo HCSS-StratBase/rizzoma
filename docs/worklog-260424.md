@@ -111,3 +111,21 @@
   - Command: `RIZZOMA_SWEEP_DIR=screenshots/260424-025320-feature-sweep npm run visual:coverage`.
   - Verdict: `screenshots/260424-025320-feature-sweep/BUILD_QUALITY_VERDICT.md` now marks 98 green, 63 orange, 0 red.
 - Boundary: only VF-041 moved green in this batch; mobile gesture/BottomSheet/touch-target/real-device rows and backend/runtime/security/email/upload/offline rows stay orange until proven by action-level or non-screenshot tests.
+
+## Orange Row Closure
+- Implemented missing auth/session functionality behind orange rows:
+  - `src/server/middleware/session.ts` now uses Redis 5 via `connect-redis` by default, with explicit `SESSION_STORE=memory` / `REDIS_URL=memory://` fallback.
+  - `src/server/routes/auth.ts` now includes Twitter/X OAuth2 PKCE (`/api/auth/twitter` + callback) and exposes `twitter` in `/api/auth/oauth-status`.
+  - `src/client/components/AuthPanel.tsx` renders the X/Twitter sign-in button based on provider status.
+- Added focused verification:
+  - `src/tests/server.session.test.ts` covers Redis/default and memory fallback session stores.
+  - `src/tests/server.authOauth.test.ts` covers OAuth provider status and Twitter/X PKCE redirect behavior.
+  - `src/tests/client.mobilePwa.test.tsx` covers responsive hooks, PWA manifest/service worker, swipe, pull-to-refresh, offline retry/persistence, View Transition fallback, and BottomSheet behavior.
+- Updated verdict:
+  - `screenshots/260424-025320-feature-sweep/BUILD_QUALITY_VERDICT.md` now marks 160 green, 1 orange, 0 red (99.4% green).
+  - Added Playwright UI artifact `screenshots/260424-025320-feature-sweep/043-auth-panel-twitter-button-local.png` for the new X/Twitter auth button and fixed the auth form styling after the first screenshot exposed crude unstyled inputs.
+  - Remaining orange: `VF-108` only, because physical iPhone Safari / Chrome Android validation has not been run on real devices.
+- Verification:
+  - `npm run typecheck` pass.
+  - Targeted rerun `npm run test -- src/tests/server.session.test.ts src/tests/server.authOauth.test.ts src/tests/client.mobilePwa.test.tsx` pass: 3 files, 12 tests.
+  - `npm run test` pass: 48 files, 174 passed, 3 skipped, 0 failures.

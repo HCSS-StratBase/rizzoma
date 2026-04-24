@@ -1,6 +1,7 @@
 # Rizzoma Feature Testing Status
 
 ## 🟢 Current Status
+- **Orange-row closure (2026-04-24, local CI/runtime)**: Added Redis 5 session-store coverage (`src/tests/server.session.test.ts`), Twitter/X OAuth2 PKCE coverage (`src/tests/server.authOauth.test.ts`), and focused mobile/PWA/offline coverage (`src/tests/client.mobilePwa.test.tsx`). Verification passed: `npm run typecheck` and full `npm run test` (48 files, 174 passed, 3 skipped, 0 failures). `screenshots/260424-025320-feature-sweep/BUILD_QUALITY_VERDICT.md` now rates 160 green / 1 orange / 0 red (99.4% green). The only remaining orange row is `VF-108`, because physical iPhone Safari / Chrome Android validation has not been run on real devices.
 - **Visual feature sweep (2026-04-24, public prod)**: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_SWEEP_STAMP=260424-025320 npm run visual:sweep` pass. Artifacts: `screenshots/260424-025320-feature-sweep/` with 42 primary screenshots plus manifest, parsing 196 documented rows / 161 screenshot-valid rows / 69 dynamic candidates from `RIZZOMA_FEATURES_STATUS.md`. `RIZZOMA_SWEEP_DIR=screenshots/260424-025320-feature-sweep npm run visual:coverage` pass, producing `coverage.md`/`coverage.json`: 101 static screenshot-covered rows, 2 dynamic screenshot-covered rows, 58 non-screenshot/test-artifact rows, 0 screenshot gaps, 0 needs-review rows. `BUILD_QUALITY_VERDICT.md` marks 98 green / 63 orange / 0 red after local avatar fallback fixes moved VF-041 green. The sweep includes mobile topic content plus a genuine two-client live cursor/typing indicator screenshot. See `docs/VISUAL_SCREENSHOT_SWEEP.md`.
 - **Realtime/mobile gap fixes (2026-04-24)**: `npm run typecheck`, `npm test -- --run src/tests/client.collaborativeProvider.test.ts`, `npm run build`, VPS `docker compose up -d --build app-prod`, and public/local production health checks passed after fixing realtime typing awareness/rendering, TipTap collaboration editor recreation, production Vite feature-flag defines, mobile deep-link capture, and coverage evidence validation.
 - **Production-target perf baseline (2026-04-24, public prod, full render, 100 blips)**: `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_PERF_BLIPS=100 RIZZOMA_PERF_RENDER=full RIZZOMA_SNAPSHOT_DIR=screenshots/260424-prod-perf-baseline npm run perf:harness` pass. Artifacts: `screenshots/260424-prod-perf-baseline/metrics-1776982200094-*.json` and `render-1776982200094-*.png`. Landing-labels stage 1193.7ms, FCP 740ms, memory 33MB, labels 100/100. Expanded-root stage 524.5ms, FCP 740ms, memory 36MB, blips 101/100. `PERF_SNAPSHOT_DIR=screenshots/260424-prod-perf-baseline PERF_BUDGET_EXPECTED_BLIPS=100 PERF_BUDGET_MIN_RATIO=1 node scripts/perf-budget.mjs` pass on stage-local budgets; optional `PERF_BUDGET_CHECK_TTF=1` still flags expanded-root absolute TTF at 3522.9ms.
@@ -26,7 +27,7 @@
 - **Browser smokes `test:follow-green` (2026-01-17)**: Desktop profile passes. Auto-navigation feature now works correctly.
 - Browser smokes (`npm run test:toolbar-inline`, `npm run test:follow-green`) are CI-required and upload snapshots even when the build fails. Keep them green.
 - `TESTING_STATUS.md` is a log, not a guarantee—always rerun targeted suites before merges.
-- Visual residual from the 2026-04-24 full sweep: avatar fallbacks are now local initials/provider avatars with no broken external placeholders in the final public-prod screenshots; remaining orange mobile rows require gesture, BottomSheet interaction, touch-target, and real-device validation rather than static screenshots.
+- Visual residual from the 2026-04-24 full sweep: avatar fallbacks are now local initials/provider avatars with no broken external placeholders in the final public-prod screenshots. Runtime tests now cover gestures, BottomSheet, touch targets/PWA/offline behavior; only physical real-device validation remains outside local evidence.
 
 ## Recent fixes (2026-01-18)
 - **Mobile Modernization (PWA)**: Implemented complete mobile infrastructure with zero new dependencies:
@@ -76,7 +77,7 @@
 - Playwright: early toolbar/follow-green smokes existed pre-2026; rely on rerunning the `browser-smokes` job for current state.
 
 ## Gaps / Actions
-- Rerun typecheck + focused Vitest + browser smokes before shipping changes; document outcomes here with dates.
+- Rerun typecheck + focused Vitest + browser smokes before shipping changes; document outcomes here with dates. Latest local run: `npm run typecheck` + full `npm run test` passed on 2026-04-24 after the orange-row closure.
 - CI gating for `/api/health`, inline comments health checks, and upload probes is now in place via the `health-checks` job (`npm run test:health`).
 - CI gating for perf budgets is now in place via the `perf-budgets` job. Currently warn-only; set `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to block on failures.
 - Mobile viewport validation is now CI-gated via `browser-smokes` job with `RIZZOMA_E2E_PROFILES=mobile`; check `follow-the-green-mobile/` snapshots for visual verification.

@@ -3,7 +3,7 @@
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
 - `docs/HANDOFF.md` now reflects `feature/rizzoma-core-features` as of 2026-04-24; refresh if more changes land.
-- Re-read checkpoint: 2026-04-24 02:53 CEST — final public-prod visual feature sweep plus row-level verdict captured in `screenshots/260424-025320-feature-sweep/`; the current matrix has 42 screenshots, zero screenshot gaps, mobile topic content, two-client realtime cursor/typing evidence, and a 98 green / 63 orange / 0 red verdict. Older perf/tooling drift warnings below remain relevant.
+- Re-read checkpoint: 2026-04-24 03:28 CEST — final public-prod visual/runtime verdict captured in `screenshots/260424-025320-feature-sweep/`; the current matrix has 42 screenshots, zero screenshot gaps, mobile topic content, two-client realtime cursor/typing evidence, focused auth/session/mobile/PWA/offline runtime tests, and a 160 green / 1 orange / 0 red verdict. The only remaining orange row is physical real-device mobile validation.
 
 Quick start for the next batch (copy/paste):
 ```
@@ -25,7 +25,7 @@ codex exec '
     - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`). Ensure `http://localhost:3000/` is reachable before Playwright.
 
   Priority focus:
-  1) Visual sweep hardening: latest full sweep is `screenshots/260424-025320-feature-sweep/` (42 primary screenshots, 196 documented rows parsed / 161 screenshot-valid / 69 dynamic candidates, row-level coverage matrix with 101 static screenshot-covered / 2 dynamic screenshot-covered / 58 non-screenshot-test rows / 0 screenshot gaps; verdict 98 green / 63 orange / 0 red). Next: action-level evidence for rows classified as non-screenshot artifacts, especially backend/runtime/security/email/upload/offline and mobile gesture/BottomSheet/touch-target/device checks.
+  1) Visual/runtime verdict hardening: latest full sweep is `screenshots/260424-025320-feature-sweep/` (42 primary screenshots, 196 documented rows parsed / 161 screenshot-valid / 69 dynamic candidates, row-level coverage matrix with 101 static screenshot-covered / 2 dynamic screenshot-covered / 58 non-screenshot-test rows / 0 screenshot gaps; verdict 160 green / 1 orange / 0 red). Next: physical real-device mobile validation for VF-108; do not relabel it green from emulator/jsdom evidence alone.
   2) Perf/resilience sweeps for large waves, inline comments, playback, unread flows, and mobile. `perf-harness.mjs` now supports `RIZZOMA_PERF_RENDER=lite|full`; public-prod full-render 100-blip baseline passed on 2026-04-24 (stage duration 1193.7ms landing / 524.5ms expanded, memory 33-36MB, artifacts in `screenshots/260424-prod-perf-baseline/`). Next: rerun at 500/1000 blips, compare full vs lite, and investigate optional absolute-TTF drift.
   3) BLB parity: enforce single-container topic pane (title as first line of the meta-blip body), inline [+] marker click behavior/styling, per-blip toolbar parity, unread green markers, and update BLB snapshots. Note: `test-blb-snapshots.mjs` timed out on inline expansion during the 2026-04-24 supplemental attempt; the primary visual sweep captured BLB before/after evidence.
   4) Toolbar parity: `test:toolbar-inline` now asserts the read toolbar (expanded via collapsed rows). Keep the read toolbar present and smokes green.

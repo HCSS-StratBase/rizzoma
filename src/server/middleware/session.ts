@@ -1,9 +1,13 @@
-import session from 'express-session';
+import session, { type Store } from 'express-session';
+import RedisStore from 'connect-redis';
+import { createClient } from 'redis';
 
 export function sessionMiddleware() {
-  // Use MemoryStore for development simplicity
-  // For production, consider connect-redis or similar
-  const store = new session.MemoryStore();
+  const redisUrl = process.env['REDIS_URL'];
+  const useMemoryStore = process.env['SESSION_STORE'] === 'memory' || redisUrl === 'memory://';
+  const store: Store = useMemoryStore
+    ? new session.MemoryStore()
+    : createRedisSessionStore(redisUrl || 'redis://localhost:6379');
 
   return session({
     store,
@@ -18,4 +22,15 @@ export function sessionMiddleware() {
     },
     name: 'rizzoma.sid',
   });
+}
+
+function createRedisSessionStore(url: string): Store {
+  const client = createClient({ url });
+  client.on('error', (error) => {
+    console.error('[session] Redis session store error:', error);
+  });
+  void client.connect().catch((error) => {
+    console.error('[session] Redis session store connection failed:', error);
+  });
+  return new RedisStore({ client, prefix: 'rizzoma:sess:' }) as unknown as Store;
 }

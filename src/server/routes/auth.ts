@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { createHash, randomBytes } from 'node:crypto';
 // Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable
 import { hash as bcryptHash, compare as bcryptCompare } from '../lib/bcrypt.js';
 import rateLimit from 'express-rate-limit';
@@ -112,6 +113,8 @@ const FACEBOOK_APP_SECRET = process.env['FACEBOOK_APP_SECRET'];
 const MICROSOFT_CLIENT_ID = process.env['MICROSOFT_CLIENT_ID'];
 const MICROSOFT_CLIENT_SECRET = process.env['MICROSOFT_CLIENT_SECRET'];
 const MICROSOFT_TENANT = process.env['MICROSOFT_TENANT'] || 'common'; // 'common' for personal+work accounts
+const TWITTER_CLIENT_ID = process.env['TWITTER_CLIENT_ID'];
+const TWITTER_CLIENT_SECRET = process.env['TWITTER_CLIENT_SECRET'];
 
 const getBaseUrl = (req: any): string => {
   return process.env['APP_URL'] || `${req.protocol}://${req.get('host')}`;
@@ -121,6 +124,9 @@ const getBaseUrl = (req: any): string => {
 const getClientUrl = (): string => {
   return process.env['CLIENT_URL'] || process.env['APP_URL'] || '';
 };
+
+const base64Url = (buffer: Buffer): string =>
+  buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 
 // Google OAuth
 router.get('/google', (req, res) => {
@@ -451,6 +457,123 @@ router.get('/microsoft/callback', async (req, res): Promise<void> => {
   }
 });
 
+// Twitter/X OAuth 2.0 with PKCE
+router.get('/twitter', (req, res) => {
+  if (!TWITTER_CLIENT_ID) {
+    res.status(501).json({ error: 'twitter_oauth_not_configured' });
+    return;
+  }
+  const state = base64Url(randomBytes(24));
+  const codeVerifier = base64Url(randomBytes(48));
+  const codeChallenge = base64Url(createHash('sha256').update(codeVerifier).digest());
+  req.session.twitterOAuthState = state;
+  req.session.twitterCodeVerifier = codeVerifier;
+
+  const baseUrl = getBaseUrl(req);
+  const redirectUri = `${baseUrl}/api/auth/twitter/callback`;
+  const authUrl = new URL('https://twitter.com/i/oauth2/authorize');
+  authUrl.searchParams.set('client_id', TWITTER_CLIENT_ID);
+  authUrl.searchParams.set('redirect_uri', redirectUri);
+  authUrl.searchParams.set('response_type', 'code');
+  authUrl.searchParams.set('scope', 'tweet.read users.read offline.access');
+  authUrl.searchParams.set('state', state);
+  authUrl.searchParams.set('code_challenge', codeChallenge);
+  authUrl.searchParams.set('code_challenge_method', 'S256');
+  res.redirect(authUrl.toString());
+});
+
+router.get('/twitter/callback', async (req, res): Promise<void> => {
+  if (!TWITTER_CLIENT_ID) {
+    res.status(501).json({ error: 'twitter_oauth_not_configured' });
+    return;
+  }
+  const code = req.query['code'] as string | undefined;
+  const state = req.query['state'] as string | undefined;
+  const expectedState = req.session.twitterOAuthState;
+  const codeVerifier = req.session.twitterCodeVerifier;
+  delete req.session.twitterOAuthState;
+  delete req.session.twitterCodeVerifier;
+
+  if (!code || !state || !expectedState || state !== expectedState || !codeVerifier) {
+    res.redirect('/?error=twitter_auth_failed');
+    return;
+  }
+
+  try {
+    const baseUrl = getBaseUrl(req);
+    const redirectUri = `${baseUrl}/api/auth/twitter/callback`;
+    const headers: Record<string, string> = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    if (TWITTER_CLIENT_SECRET) {
+      headers['Authorization'] = `Basic ${Buffer.from(`${TWITTER_CLIENT_ID}:${TWITTER_CLIENT_SECRET}`).toString('base64')}`;
+    }
+
+    const tokenResponse = await fetch('https://api.twitter.com/2/oauth2/token', {
+      method: 'POST',
+      headers,
+      body: new URLSearchParams({
+        code,
+        grant_type: 'authorization_code',
+        client_id: TWITTER_CLIENT_ID,
+        redirect_uri: redirectUri,
+        code_verifier: codeVerifier,
+      }),
+    });
+    const tokens = await tokenResponse.json() as { access_token?: string; error?: string };
+    if (!tokens.access_token) {
+      res.redirect('/?error=twitter_token_failed');
+      return;
+    }
+
+    const userResponse = await fetch('https://api.twitter.com/2/users/me?user.fields=profile_image_url', {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    });
+    const userData = await userResponse.json() as {
+      data?: { id?: string; username?: string; name?: string; profile_image_url?: string };
+    };
+    const twitterUser = userData.data;
+    if (!twitterUser?.id) {
+      res.redirect('/?error=twitter_no_user');
+      return;
+    }
+
+    const email = `twitter-${twitterUser.id}@twitter.local`;
+    let user = await findOne<User>({ type: 'user', email });
+    if (!user) {
+      const now = Date.now();
+      const doc: User = {
+        type: 'user',
+        email,
+        passwordHash: '',
+        name: twitterUser.name || twitterUser.username,
+        avatar: twitterUser.profile_image_url,
+        createdAt: now,
+        updatedAt: now,
+      };
+      const r = await insertDoc(doc);
+      user = { ...doc, _id: r.id };
+    } else if (twitterUser.profile_image_url && user.avatar !== twitterUser.profile_image_url) {
+      user.avatar = twitterUser.profile_image_url;
+      user.updatedAt = Date.now();
+      try {
+        await updateDoc(user as User & { _id: string; _rev?: string });
+      } catch (e) {
+        console.error('[auth] Failed to update Twitter user avatar:', e);
+      }
+    }
+
+    req.session.userId = user._id;
+    req.session.userEmail = user.email;
+    req.session.userName = user.name;
+    req.session.userAvatar = user.avatar;
+
+    const clientUrl = getClientUrl();
+    res.redirect(clientUrl ? `${clientUrl}/?layout=rizzoma` : '/?layout=rizzoma');
+  } catch (error) {
+    console.error('[auth] Twitter OAuth error:', error);
+    res.redirect('/?error=twitter_auth_error');
+  }
+});
+
 // SAML 2.0 Authentication
 // SP Metadata endpoint - IdP admins use this to configure the SP
 router.get('/saml/metadata', (req, res) => {
@@ -561,6 +684,7 @@ router.get('/oauth-status', (_req, res) => {
     google: !!GOOGLE_CLIENT_ID,
     facebook: !!FACEBOOK_APP_ID,
     microsoft: !!MICROSOFT_CLIENT_ID,
+    twitter: !!TWITTER_CLIENT_ID,
     saml: isSamlEnabled(),
   });
 });
