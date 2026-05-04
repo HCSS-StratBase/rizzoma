@@ -35,6 +35,7 @@ import { createUploadTask, type UploadResult, type UploadTask } from '../../lib/
 import { INSERT_EVENTS, EDIT_MODE_EVENT, EDITOR_FOCUS_EVENT, EDITOR_BLUR_EVENT, BLIP_ACTIVE_EVENT } from '../RightToolsPanel';
 import './RizzomaBlip.css';
 import { injectInlineMarkers } from './inlineMarkers';
+import { renderInlineHtml } from './InlineHtmlRenderer';
 import { useCollaboration } from '../editor/useCollaboration';
 import { yjsDocManager } from '../editor/YjsDocumentManager';
 import { useAuth } from '../../hooks/useAuth';
@@ -703,9 +704,16 @@ export function RizzomaBlip({
     });
   }, []);
 
-  const viewContentHtml = !isEditing && inlineChildren.length > 0
-    ? injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)
-    : (blip.content || '');
+  // Track F: when RIZZOMA_PARITY_RENDER is on, view-mode uses the React-based
+  // renderInlineHtml() walker — no portal anchors injected, no createPortal.
+  // The legacy injectInlineMarkers path stays in use for the non-parity branch
+  // and for edit mode (where TipTap NodeView still emits portal anchors).
+  const parityViewRender = FEATURES.RIZZOMA_PARITY_RENDER && !isEditing;
+  const viewContentHtml = parityViewRender
+    ? (blip.content || '')
+    : (!isEditing && inlineChildren.length > 0
+        ? injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)
+        : (blip.content || ''));
 
   // Portal containers for rendering expanded inline children at their marker positions
   const portalContainers = useRef<Map<string, HTMLElement>>(new Map());
@@ -2073,15 +2081,51 @@ export function RizzomaBlip({
               {/* Bullet point - original Rizzoma style */}
               {!isTopicRoot && <span className="blip-bullet">•</span>}
               <div className="blip-main-content">
-                <div
-                  ref={contentRef}
-                  className={`blip-text${contentClassName ? ` ${contentClassName}` : ''}`}
-                  dangerouslySetInnerHTML={{ __html: viewContentHtml }}
-                  data-testid="blip-view-content"
-                  onClick={handleViewContentClick}
-                  title={contentTitle}
-                  style={onContentClick ? { cursor: 'pointer' } : undefined}
-                />
+                {parityViewRender ? (
+                  <div
+                    ref={contentRef}
+                    className={`blip-text${contentClassName ? ` ${contentClassName}` : ''}`}
+                    data-testid="blip-view-content"
+                    onClick={handleViewContentClick}
+                    title={contentTitle}
+                    style={onContentClick ? { cursor: 'pointer' } : undefined}
+                  >
+                    {renderInlineHtml({
+                      html: blip.content || '',
+                      inlineChildren,
+                      expandedSet: localExpandedInline,
+                      renderInlineChild: (childId: string) => {
+                        const child = inlineChildren.find(c => c.id === childId);
+                        if (!child) return null;
+                        return (
+                          <RizzomaBlip
+                            blip={{ ...child, isCollapsed: false }}
+                            isRoot={false}
+                            isInlineChild={true}
+                            depth={depth + 1}
+                            onBlipUpdate={onBlipUpdate}
+                            onAddReply={onAddReply}
+                            onToggleCollapse={onToggleCollapse}
+                            onDeleteBlip={onDeleteBlip}
+                            onBlipRead={onBlipRead}
+                            onExpand={onExpand}
+                            expandedBlips={expandedBlips}
+                          />
+                        );
+                      },
+                    })}
+                  </div>
+                ) : (
+                  <div
+                    ref={contentRef}
+                    className={`blip-text${contentClassName ? ` ${contentClassName}` : ''}`}
+                    dangerouslySetInnerHTML={{ __html: viewContentHtml }}
+                    data-testid="blip-view-content"
+                    onClick={handleViewContentClick}
+                    title={contentTitle}
+                    style={onContentClick ? { cursor: 'pointer' } : undefined}
+                  />
+                )}
               </div>
               {/* Contributors avatars on right side - stacked with owner on top, expandable */}
               {!isTopicRoot && (
@@ -2109,7 +2153,11 @@ export function RizzomaBlip({
           so a freshly-Ctrl+Enter'd inline child opens directly under its marker
           without requiring the parent to exit edit mode first.
         */}
-        {inlineChildren
+        {/* Parity view-mode renders inline children via renderInlineHtml() above —
+            skip the portal pass for those to avoid double-render. Edit-mode and
+            non-parity view-mode still use the portal anchors emitted by either
+            BlipThreadNode (TipTap) or injectInlineMarkers respectively. */}
+        {!parityViewRender && inlineChildren
           .filter(child => localExpandedInline.has(child.id) && portalContainers.current.has(child.id))
           .map(child => createPortal(
             <div className="inline-child-expanded">
