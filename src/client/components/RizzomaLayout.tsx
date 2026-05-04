@@ -16,6 +16,7 @@ import { ensureWaveUnreadJoin } from '../lib/socket';
 import { useMobileContextSafe } from '../contexts/MobileContext';
 import { useSwipe } from '../hooks/useSwipe';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { FEATURES } from '@shared/featureFlags';
 
 interface RizzomaLayoutProps {
   isAuthed: boolean;
@@ -216,7 +217,7 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
   const mobileLayoutClass = isMobile ? `mobile-layout mobile-view-${mobileView}` : '';
 
   return (
-    <div className={`rizzoma-layout ${mobileLayoutClass}`}>
+    <div className={`rizzoma-layout ${mobileLayoutClass}${FEATURES.RIZZOMA_PARITY_RENDER ? ' rizzoma-parity' : ''}`}>
       {/* Mobile header - shown when viewing content on mobile */}
       {isMobile && mobileView === 'content' && (
         <div className="mobile-header">

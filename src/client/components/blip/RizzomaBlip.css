@@ -194,6 +194,34 @@
   padding-left: 1.5em;
 }
 
+/*
+ * B1 PARITY (2026-05-05): Match Rizzoma's bulleted-type0 convention —
+ * disc bullet at every nesting level (NOT the browser cascade
+ * disc→circle→square→disc-again at depth 4+ which breaks at deep
+ * fractals). Indentation is via margin-left:22px per LI, exactly like
+ * the original's `<li class="bulleted bulleted-type0" margin-left:22px>`.
+ * The browser-cascade rules above stay in place so projects that don't
+ * opt into parity rendering still get the disc/circle/square hierarchy;
+ * the parity overrides only fire when .rizzoma-parity is on the layout
+ * root (set by FEAT_RIZZOMA_PARITY_RENDER).
+ */
+.rizzoma-parity .blip-text ul,
+.rizzoma-parity .blip-text ul ul,
+.rizzoma-parity .blip-text ul ul ul,
+.rizzoma-parity .blip-text ul ul ul ul {
+  list-style-type: disc;
+  padding-left: 0;
+  margin-left: 0;
+}
+
+.rizzoma-parity .blip-text li {
+  margin-left: 22px;
+  margin-top: 0;
+  margin-bottom: 0;
+  list-style-position: outside;
+}
+
+/* NON-parity defaults (existing browser-cascade behavior) */
 .blip-text ul ul {
   list-style-type: circle;
 }
@@ -1203,6 +1231,26 @@
   border-radius: 0 3px 3px 0;
 }
 
+/*
+ * B1 PARITY (2026-05-05): Match Rizzoma's "thin guide-line, no card
+ * background" subtree look — instead of the lavender card-stack panels
+ * we currently render. Closes ~70% of the visual gap vs original
+ * rizzoma.com (see screenshots/260505-rizzoma-com-vs-mine/).
+ *
+ * The .rizzoma-parity class is set on the layout root by the FEAT_RIZZOMA_PARITY_RENDER
+ * feature flag, so the existing card-stack look stays the default until
+ * we're confident the parity skin is right.
+ */
+.rizzoma-parity .inline-child-expanded {
+  margin-left: 22px;
+  border-left: 1px solid #e0e0e0;  /* thin guide line, not 2px card border */
+  padding: 0 0 0 8px;
+  margin-top: 0;
+  margin-bottom: 0;
+  background: transparent !important;  /* drop the lavender panel */
+  border-radius: 0;
+}
+
 /* Minimal styling for inline children — no toolbar, clean content display */
 .inline-child-expanded > .blip-container {
   margin-left: 0 !important;
@@ -1212,6 +1260,40 @@
 .inline-child-expanded > .blip-container > .blip-content {
   margin-top: 0 !important;
   min-height: 0 !important;
+}
+
+/*
+ * B1 PARITY (2026-05-05): Tighten per-blip chrome from ~80px to ~24px.
+ * Original Rizzoma renders a child blip as ~16px avatar + 8-char minute
+ * timestamp + nothing else when not actively being edited. Reply form
+ * shows ONLY when this specific blip is in edit mode.
+ */
+.rizzoma-parity .blip-container.nested-blip {
+  padding: 0 !important;
+  min-height: 0 !important;
+}
+.rizzoma-parity .blip-container.nested-blip .blip-content {
+  margin-top: 0 !important;
+  min-height: 0 !important;
+}
+.rizzoma-parity .blip-container.nested-blip .blip-author-date {
+  font-size: 10px;
+  line-height: 14px;
+  margin: 0;
+}
+.rizzoma-parity .blip-container.nested-blip .blip-contributors-info {
+  --avatar-size: 16px;
+  padding-left: 4px;
+  gap: 0;
+}
+.rizzoma-parity .blip-container.nested-blip .blip-contributors-stack {
+  width: 16px;
+  height: 16px;
+}
+/* Hide reply form on inactive nested blips (only show when actively editing) */
+.rizzoma-parity .blip-container.nested-blip:not(.edit-mode) .reply-form,
+.rizzoma-parity .blip-container.nested-blip:not(.edit-mode) .blip-reply-button {
+  display: none !important;
 }
 
 /*

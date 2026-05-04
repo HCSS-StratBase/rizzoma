@@ -30,6 +30,11 @@ export const FEATURES = {
 
   // Navigation features
   TASKS: env['FEAT_TASKS'] === '1' || env['FEAT_ALL'] === '1' || env['BUSINESS_ACCOUNT'] === '1',
+
+  // Track F: Visual parity with original rizzoma.com (B1 reskin + B2 inline render)
+  // Off by default — opt in by setting FEAT_RIZZOMA_PARITY_RENDER=1.
+  // FEAT_ALL does NOT enable this yet (still iterating on visual fidelity).
+  RIZZOMA_PARITY_RENDER: env['FEAT_RIZZOMA_PARITY_RENDER'] === '1',
 } as const;
 
 // Helper to check if any feature is enabled
