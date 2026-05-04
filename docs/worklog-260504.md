@@ -119,3 +119,23 @@ After the Hryhorii fixes landed I built out a Claude Code hooks system to reduce
 - Cross-machine sync only covers Linux/WSL/macOS; native Windows would need PowerShell equivalents
 - The Tana-posted check is heuristic (timestamp comparison), not semantic — doesn't verify the entry actually documents the specific change
 - Rizzoma-specific GDrive bundle freshness check stayed in project-scope only
+
+## Visual-sweep gate enforcement (commit 'XXX' + dev compose fix)
+
+After the user pointed out I had completely ignored the existing 161-row systematic comparison framework (`npm run visual:sweep` + `npm run visual:coverage` + `BUILD_QUALITY_VERDICT.md`) and asked WHY I missed the fractal cockup so totally:
+
+**Root-cause for missing it (honest 6-point):**
+1. Conflated 'bug-as-reported is fixed' with 'feature still works'
+2. Treated CSS-rules-loaded probe as visual verification
+3. Used one screenshot as proof
+4. Didn't read `BLB_LOGIC_AND_PHILOSOPHY.md` before editing BLB code
+5. Never ran the existing systematic-comparison infrastructure
+6. Pattern: narrow-task focus, pass-the-immediate-test bias
+
+**Fixes:**
+- New project-scope hook `.claude/hooks/visual-sweep-gate.sh`: warns at Stop if today's commits touched BLB/editor UI but the latest `screenshots/*-feature-sweep/` is older than the latest UI-touching commit. Per `docs/VISUAL_SCREENSHOT_SWEEP.md` the gate is `npm run visual:sweep` + `npm run visual:coverage`.
+- Discovered + fixed missing `FEAT_ALL=1` / `EDITOR_ENABLE=1` / `BUSINESS_ACCOUNT=1` env vars on the dev container. Without them, inline comments / @mentions / ~tasks / #tags / wave playback were all DISABLED — root cause of perceived 'fractal blip editing is awful'. Patched VPS dev compose, restarted container.
+- Re-ran sweep against the now-properly-flagged dev container at `https://dev.138-201-62-161.nip.io`: 100 screenshot covered + 2 dynamic + 53 non-screenshot, 0 gaps, 0 needs-review. Side-by-side comparison of BLB-critical rows (018 topic landing, 021 edit toolbar, 032 inline marker after click expanded) vs baseline 260424-025320: NO REGRESSION; tonight's edit toolbar even has the new 💬+ button I added in #47.
+
+**Known framework gap (filed as follow-up):** `visual-feature-sweep.mjs` fixture creates ONE [+] inline blip, never a 3+ level fractal. So 'fractal blip editing' visual fidelity isn't covered by the gate. Need a fixture extension that creates a depth-3 nested topic and captures the fractal rendering.
+
