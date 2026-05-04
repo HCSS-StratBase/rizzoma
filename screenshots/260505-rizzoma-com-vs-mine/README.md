@@ -16,6 +16,20 @@ User logged me into rizzoma.com and pointed me at the [Try topic](https://rizzom
 | `07-rizzoma-com-depth3-with-content_old-260505.png` | depth-3 subblip created with 2 bulleted labels — THREE LEVELS OF NESTED EDIT-MODE TOOLBARS visible at once |
 | `08-rizzoma-com-after-done-view-mode-fractal_old-260505.png` | After Done attempts (some still in edit mode) |
 | `09-rizzoma-com-final-view-mode-fractal_old-260505.png` | Final view-mode rendering of the depth-3 fractal — ALL 3 LEVELS rendered in ~440px |
+| `10-rizzoma-com-depth4_old-260505.png` | Depth-4 inline subblip created with 2 leaf labels — 4 nested edit-mode toolbars in same frame |
+| `11-rizzoma-com-depth5_old-260505.png` | Depth-5 — same pattern, deeper indent (~25px per level) |
+| `12-rizzoma-com-depth6_old-260505.png` | Depth-6 — fractal still works, all 6 levels visible |
+| `13-rizzoma-com-depth7_old-260505.png` | Depth-7 |
+| `14-rizzoma-com-depth8_old-260505.png` | Depth-8 |
+| `15-rizzoma-com-depth9_old-260505.png` | Depth-9 |
+| `16-rizzoma-com-depth10_old-260505.png` | **Depth-10** edit-mode — 10 nested subblips rendered, depth-10 active editor at x≈555 (250px right of root) |
+| `17-rizzoma-com-final-view-mode-depth10_old-260505.png` | **Final view-mode rendering of the full depth-10 fractal** — all 10 levels expanded, clean view (no toolbars), each level with avatar+date+`[💬]` marker |
+
+## What this proves
+
+**The original Rizzoma handles arbitrary depth (≥10) without breaking** — every Ctrl+Enter at the deepest leaf creates one more inline subblip with its own complete edit toolbar, indented progressively, and the rendered tree continues to look coherent. The "card-stack" backgrounds I noted vs. mine are SUBTLY shaded boxes; at depth 10 they nest cleanly with thin grey borders. No structural breakage at any depth.
+
+**My implementation also reaches depth 10** (per `260505-blb-fractal-comparison/spine-expanded-depth10_new-260505.png`), but with the visual fidelity gaps documented earlier in this README. The depth-10 fractal renders correctly *structurally* in mine; the gaps are stylistic.
 
 ## How original rizzoma.com differs MASSIVELY from my "depth-10 fractal" implementation
 
