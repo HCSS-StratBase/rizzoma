@@ -675,6 +675,16 @@ export function RizzomaBlip({
         // Immediately expand the new child inline
         if (newBlipId) {
           toggleInlineChild(newBlipId);
+          // Auto-enter edit mode on the new child so the user can type immediately —
+          // without this it lands in view mode with empty content + no toolbar
+          // visible, so the user has no obvious way to start typing. Delay long
+          // enough for the new child's RizzomaBlip to mount + register its event
+          // listener (mount happens after toggleInlineChild + load(true) refresh).
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
+              detail: { blipId: newBlipId },
+            }));
+          }, 600);
         }
       } catch (error) {
         console.error('Error creating child blip:', error);
@@ -789,6 +799,32 @@ export function RizzomaBlip({
     window.addEventListener('rizzoma:activate-blip', handleActivate);
     return () => window.removeEventListener('rizzoma:activate-blip', handleActivate);
   }, [blip.id]);
+
+  // External edit-mode trigger — used by Ctrl+Enter handler so a freshly-created
+  // inline child immediately enters edit mode with cursor focus, instead of landing
+  // in view mode with empty content (in which state the user has no affordance to
+  // type — no toolbar visible, no body to click).
+  useEffect(() => {
+    const handle = (e: Event) => {
+      const { blipId: targetId } = (e as CustomEvent).detail || {};
+      if (targetId !== blip.id) return;
+      setIsActive(true);
+      if (blip.permissions.canEdit) {
+        setIsEditing(true);
+        // Defer cursor focus until inlineEditor mounts (next tick after isEditing flips on).
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const ed = inlineEditorRef.current;
+            if (ed) {
+              (ed.commands as any)['focus']('end');
+            }
+          });
+        });
+      }
+    };
+    window.addEventListener('rizzoma:enter-edit-blip', handle);
+    return () => window.removeEventListener('rizzoma:enter-edit-blip', handle);
+  }, [blip.id, blip.permissions.canEdit]);
 
   // Collapse-only for list children (from Follow-the-Green — collapse previous before jumping to next)
   useEffect(() => {

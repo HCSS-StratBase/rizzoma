@@ -720,6 +720,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                 detail: { threadId: newBlipId }
               }));
             }, 500); // Delay to allow data refresh to complete
+            // Then auto-enter edit mode on the new child so the user can type
+            // immediately — without this it lands in view mode with empty content
+            // and no obvious way to start typing.
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
+                detail: { blipId: newBlipId }
+              }));
+            }, 700);
           } else {
             toast('Subblip created');
             load(true); // Fallback: reload to show the new blip
