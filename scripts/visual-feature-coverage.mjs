@@ -58,6 +58,12 @@ const screenshotRules = [
   [/Inline Widgets/, /~task/i, ['025-task-trigger-typed.png'], 'Task trigger state is captured.'],
   [/Inline Widgets/, /#tag/i, ['026-tag-trigger-typed.png', '032-inline-marker-after-click-expanded.png'], 'Tag trigger and rendered tag text are captured.'],
   [/Inline Widgets/, /(Insert shortcuts|button styling|auto-enter|Toolbar decluttered|Gadget)/i, ['027-right-panel-gadget-palette-open.png', '020-read-gear-menu-open.png', '022-edit-overflow-menu-open.png'], 'Insert shortcuts, gadget palette, and decluttered overflow are captured.'],
+  // GH #49 — depth-N fractal fixture (default depth 10). Numbered ~035-037
+  // since they fire after captureBlbDynamics (031-034) and before the right
+  // panel / mobile / toast / realtime captures.
+  [/BLB/, /(Nested inline expansion|Deep fractal collapsed|fractal.*collapsed)/i, ['035-blb-fractal-collapsed-toc.png'], 'Depth-N fractal collapsed BLB-as-ToC is captured.', 'dynamic_screenshot_covered'],
+  [/BLB/, /(Deep fractal spine|fractal.*spine|fractal.*depth)/i, ['036-blb-fractal-spine-expanded-depth10.png'], 'Depth-10 fractal spine fully expanded through all levels is captured.', 'dynamic_screenshot_covered'],
+  [/BLB/, /(Deep fractal all|fractal.*all branches|portal flush)/i, ['037-blb-fractal-all-branches-expanded.png'], 'Depth-N fractal with all root branches expanded — visual parity check vs original Rizzoma deep BLB.', 'dynamic_screenshot_covered'],
 ];
 
 const knownScreenshotGaps = [
@@ -67,7 +73,7 @@ const knownScreenshotGaps = [
   [/Email Notifications/, /(Activity|Digest|SMTP)/i, 'Needs rendered email/template artifact if treated as visual.'],
   [/Mobile & PWA/, /(BottomSheet|Pull|Swipe)/i, 'Needs explicit mobile gesture/bottom-sheet screenshot if treated as visual.'],
   [/User Interface Components/, /(filter dropdown|populated content|filter buttons)/i, 'Needs the specific dropdown/populated/filter state captured.'],
-  [/BLB/, /(multiple per paragraph|Nested inline expansion)/i, 'Needs a deeper BLB fixture with multiple/nested inline markers.'],
+  [/BLB/, /multiple per paragraph/i, 'Needs a deeper BLB fixture with multiple inline markers in one paragraph.'],
   [/Inline Widgets/, /iframe rendering/i, 'Known feature gap; screenshot should show placeholder vs expected iframe once implemented.'],
 ];
 

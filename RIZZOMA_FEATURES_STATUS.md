@@ -387,7 +387,11 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Fold state persistence (localStorage + server) | Done | — | — |
 | Reply vs inline comment distinction | Done | — | — |
 | Mid-sentence [+] markers (multiple per paragraph) | Done | [orig](screenshots/comparison-analysis/orig-04-inline-expanded-mentions.png) | [new](screenshots/blb-inline-expanded-full_new-260208-0312.png) |
-| Nested inline expansion ([+] within expanded [+]) | Needs testing | — | — |
+| Nested inline expansion ([+] within expanded [+]) | Done | [orig](screenshots/260423-0249-hetzner-blb-additions/hetzner-blip-depth3-fractal.png) | [new](screenshots/260505-blb-fractal-comparison/spine-expanded-depth10_new-260505.png) |
+| Deep fractal collapsed (BLB-as-ToC, depth-10 fixture) | Done | [orig](screenshots/260423-0249-hetzner-blb-additions/hetzner-blip-depth3-fractal.png) | [new](screenshots/260505-blb-fractal-comparison/collapsed-toc_new-260505.png) |
+| Deep fractal spine expanded through full depth (depth-10 fixture) | Done | [orig](screenshots/260423-0249-hetzner-blb-additions/hetzner-blip-depth3-fractal.png) | [new](screenshots/260505-blb-fractal-comparison/spine-expanded-depth10_new-260505.png) |
+| Deep fractal all root branches expanded in parallel | Done | [orig](screenshots/260423-0249-hetzner-blb-additions/hetzner-blip-depth3-fractal.png) | [new](screenshots/260505-blb-fractal-comparison/all-branches-expanded_new-260505.png) |
+| Inline-child portal flush with parent indent (visual parity) | Done | [orig](screenshots/260423-0249-hetzner-blb-additions/hetzner-blip-depth3-fractal.png) | [new](screenshots/260505-blb-fractal-comparison/all-branches-expanded_new-260505.png) |
 | Auth-gated Edit button | Done | — | [new](screenshots/blb-auth-fixed-edit-visible_new-260208-0422.png) |
 
 ### 15. Inline Widgets & Styling

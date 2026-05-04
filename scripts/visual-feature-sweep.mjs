@@ -271,6 +271,90 @@ async function createFixture(page) {
   return { waveId, title, mainBlipId, childBlipId, inlineBlipId };
 }
 
+/**
+ * Build a depth-N fractal topic so the gate can verify nested-inline
+ * rendering at scale. Closes GH #49: previously the visual:sweep
+ * fixture created ONE [+] inline blip at depth 1, so fractal-specific
+ * BLB regressions could not be caught by the systematic gate.
+ *
+ * Default depth = 10 (override via RIZZOMA_FRACTAL_DEPTH env). Going
+ * deep matters because (a) BLB philosophy is "blips all the way down",
+ * (b) any depth-N+1 rendering bug surfaces with deeper fixtures, and
+ * (c) the original Rizzoma reference (hetzner-blip-depth3-fractal.png)
+ * shows real-world usage with many levels visible at once.
+ *
+ * Tree shape (uppercase = label text, [+x] = inline child blip):
+ *
+ *   TOPIC ROOT (3-bullet body)
+ *     • Spine [+spine]                ← depth-1 deep chain
+ *     • Sibling B                      ← depth-1 leaf (no [+])
+ *     • Sibling C                      ← depth-1 leaf (no [+])
+ *
+ *   spine has body with [+] to spine_2
+ *   spine_2 has body with [+] to spine_3
+ *   ...
+ *   spine_(N-1) has body with [+] to spine_N
+ *   spine_N is the deepest leaf
+ *
+ * The 2 sibling leaves at depth 1 give the screenshots a side-by-side
+ * "deep branch + shallow branches" frame for visual fidelity comparison.
+ */
+async function createFractalFixture(page) {
+  const depth = Math.max(2, Number(process.env.RIZZOMA_FRACTAL_DEPTH || 10));
+  const title = `BLB Fractal d${depth} ${stamp}`;
+  const wave = await api(page, 'POST', '/api/topics', {
+    title,
+    content: `<h1>${title}</h1><p>Depth-${depth} fractal fixture for the visual sweep gate (GH #49).</p>`,
+  });
+  const waveId = wave.id;
+
+  const newInline = async (parentId, anchorPosition, content) => {
+    const created = await api(page, 'POST', '/api/blips', {
+      waveId,
+      parentId,
+      anchorPosition,
+      content,
+    });
+    return created.id || created.blip?._id || created.blip?.id;
+  };
+
+  // Build the spine TOP-DOWN with correct parentId+anchorPosition at
+  // POST time (no reparenting — PUT /api/blips/:id requires content,
+  // there's no separate anchor-update endpoint). Each spine[k] is created
+  // with a placeholder body; body is patched after we know the child id.
+  const spineIds = new Array(depth + 1);
+  spineIds[1] = await newInline(null, 8, `<ul><li>Spine.1 (depth 1, will host marker for depth 2)</li></ul>`);
+  for (let k = 2; k <= depth; k += 1) {
+    spineIds[k] = await newInline(spineIds[k - 1], 8, `<ul><li>Spine.${k} (depth ${k}, will host marker for depth ${k + 1})</li></ul>`);
+  }
+
+  // Two depth-1 leaf siblings (B and C) for visual contrast on the same screen.
+  const sibB = await newInline(null, 0, '<ul><li>Sibling B.1</li><li>Sibling B.2</li></ul>');
+  const sibC = await newInline(null, 0, '<ul><li>Sibling C.1</li><li>Sibling C.2</li><li>Sibling C.3</li></ul>');
+
+  // Now PATCH each spine[k]'s body BOTTOM-UP to include the [+] marker
+  // pointing at spine[k+1]. spine[depth] stays a leaf (no further marker).
+  await apiRetry(page, 'PUT', `/api/blips/${encodeURIComponent(spineIds[depth])}`, {
+    content: `<ul><li>Spine.${depth} (deepest leaf)</li><li>Spine.${depth}.bottom-bullet</li></ul>`,
+  });
+  for (let k = depth - 1; k >= 1; k -= 1) {
+    const childMarker = `<span class="blip-thread-marker has-unread" data-blip-thread="${spineIds[k + 1]}">+</span>`;
+    const body = `<ul><li>Spine.${k}${childMarker}</li><li>Spine.${k}.b</li></ul>`;
+    await apiRetry(page, 'PUT', `/api/blips/${encodeURIComponent(spineIds[k])}`, { content: body });
+  }
+
+  // Patch topic root: 3-label body, only Spine has a [+].
+  const rootBody = `<h1>${title}</h1>` +
+    `<ul>` +
+      `<li>Spine<span class="blip-thread-marker has-unread" data-blip-thread="${spineIds[1]}">+</span></li>` +
+      `<li>Sibling B<span class="blip-thread-marker has-unread" data-blip-thread="${sibB}">+</span></li>` +
+      `<li>Sibling C<span class="blip-thread-marker has-unread" data-blip-thread="${sibC}">+</span></li>` +
+    `</ul>`;
+  await apiRetry(page, 'PATCH', `/api/topics/${encodeURIComponent(waveId)}`, { content: rootBody });
+
+  return { waveId, title, depth, spineIds, sibB, sibC };
+}
+
 async function openWave(page, waveId) {
   await page.goto(`${baseUrl}/?layout=rizzoma#/topic/${encodeURIComponent(waveId)}`, { waitUntil: 'domcontentloaded' });
   await page.locator('.rizzoma-topic-detail').waitFor({ timeout: 30000 });
@@ -491,6 +575,70 @@ async function captureBlbDynamics(page, fixture) {
   await capture(page, 'unfold all after show replies', ['BLB: unfold all', 'BLB: show replies'], 'Unfold control restores reply visibility.', { dynamicStep: 'after-unfold-click' });
 }
 
+/**
+ * Capture the 3 fractal states for the depth-3 fixture (GH #49).
+ * Naming intent: 043 = collapsed BLB-as-ToC; 044 = one branch fully
+ * expanded through depth 3; 045 = all top-level branches expanded.
+ *
+ * The screenshots become the visual evidence the gate needs to detect
+ * future regressions in nested-inline rendering, bullet hierarchy at
+ * depth, and inline-child portal layout flush-with-parent-indent.
+ */
+async function captureFractalStates(page, fractal) {
+  await openWave(page, fractal.waveId);
+  await closeOpenModal(page);
+  await closeTransientEditorOverlays(page);
+  await page.waitForTimeout(800);
+
+  // State A — collapsed BLB-as-ToC. Just landing on the topic.
+  await capture(
+    page,
+    'blb fractal collapsed toc',
+    ['BLB: Collapsed TOC', 'BLB: deep fractal collapsed', 'BLB: Nested inline expansion'],
+    `Depth-${fractal.depth} fractal topic in collapsed view: 3 root labels each with their own [+] marker, no children expanded.`,
+  );
+
+  // State B — spine fully expanded through all depth-N levels.
+  // Walk down spineIds[1..N] clicking each [+] in sequence.
+  const expandMarker = async (blipId) => {
+    const m = page.locator(`[data-blip-thread="${blipId}"]`).first();
+    if (await m.count()) {
+      await m.click({ force: true });
+      await page.waitForTimeout(700);
+    }
+  };
+  for (let k = 1; k <= fractal.depth; k += 1) {
+    if (k <= fractal.depth - 1) {
+      // Click [+] for spineIds[k+1] which lives in spineIds[k]'s body.
+      // For k=1 we click [+] for spineIds[2] which is in the topic root.
+      // Wait — actually the spine[1]'s [+] is in the topic root (already clicked
+      // when expanding spineIds[1]). spine[2]'s [+] is in spine[1]'s body (which
+      // is now expanded). And so on.
+      await expandMarker(fractal.spineIds[k]);
+    }
+  }
+  await capture(
+    page,
+    `blb fractal spine expanded depth${fractal.depth}`,
+    ['BLB: deep fractal spine expanded', 'BLB: Nested inline expansion', 'BLB: portal rendering'],
+    `Depth-${fractal.depth} fractal topic with the Spine branch expanded through all ${fractal.depth} levels.`,
+    { dynamicStep: 'after-deep-expand' },
+  );
+
+  // State C — all 3 root branches expanded (sibB and sibC are depth-1
+  // leaves, so their expansion just shows leaf bullets next to the
+  // deep spine — this captures the side-by-side contrast.
+  await expandMarker(fractal.sibB);
+  await expandMarker(fractal.sibC);
+  await capture(
+    page,
+    'blb fractal all branches expanded',
+    ['BLB: deep fractal all-branches', 'BLB: portal flush with parent indent', 'BLB: Nested inline expansion'],
+    `Depth-${fractal.depth} fractal topic with all 3 root branches expanded — visual parity check vs original Rizzoma deep BLB.`,
+    { dynamicStep: 'after-all-branches-expand' },
+  );
+}
+
 async function captureRightPanel(page) {
   await page.locator('.view-btn[title="Text view"]').click();
   await capture(page, 'right panel text view selected', ['User Interface: Text view toggle'], 'Text view is selected in the right tools panel.', { dynamicStep: 'after-text-view-click' });
@@ -568,6 +716,12 @@ async function main() {
   const page = await context.newPage();
   await ensureAuth(page, ownerEmail, 'owner');
   const fixture = await createFixture(page);
+  let fractal = null;
+  try {
+    fractal = await createFractalFixture(page);
+  } catch (error) {
+    manifest.residuals.push(`Fractal fixture creation failed: ${error.message}`);
+  }
   await openWave(page, fixture.waveId);
 
   await captureNavigationTabs(page);
@@ -576,6 +730,13 @@ async function main() {
   await openWave(page, fixture.waveId);
   await captureBlipAndToolbarStates(page, fixture);
   await captureBlbDynamics(page, fixture);
+  if (fractal) {
+    try {
+      await captureFractalStates(page, fractal);
+    } catch (error) {
+      manifest.residuals.push(`Fractal screenshots failed: ${error.message}`);
+    }
+  }
   await captureRightPanel(page);
   await captureMobile(context, fixture);
   await captureToastState(page);
