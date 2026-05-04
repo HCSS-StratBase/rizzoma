@@ -28,7 +28,7 @@ echo Leave Chrome open, return here, and press any key to export the session.
 pause
 
 echo Exporting storage state via CDP...
-"%PYTHON_EXE%" scripts\rizzoma_export_via_cdp.py --cdp-url "http://127.0.0.1:%CDP_PORT%" --out "%STATE_OUT%"
+"%PYTHON_EXE%" "%REPO_DIR%\scripts\rizzoma_export_via_cdp.py" --cdp-url "http://127.0.0.1:%CDP_PORT%" --out "%STATE_OUT%"
 
 echo Done. If URL/title in the output show you are authenticated, the session is saved at %STATE_OUT%.
 pause
