@@ -711,6 +711,13 @@ export function RizzomaBlip({
   const portalContainers = useRef<Map<string, HTMLElement>>(new Map());
   const [, setPortalTick] = useState(0);
 
+  // Stable string hash of inline child IDs — used as a dep below so the
+  // useLayoutEffect re-runs ONLY when the actual set of inline children
+  // changes, not on every render (the inlineChildren array is rebuilt
+  // each render, so depending on the array reference itself causes an
+  // infinite re-render loop via the setPortalTick state update).
+  const inlineChildIdsKey = inlineChildren.map(c => c.id).sort().join(',');
+
   useLayoutEffect(() => {
     // Scan from the outer blip container so we pick up portal anchors in
     // BOTH view mode (.inline-child-portal divs injected by injectInlineMarkers
@@ -720,18 +727,20 @@ export function RizzomaBlip({
     // without a render-path split.
     const root = blipContainerRef.current;
     if (!root) return;
+    const knownIds = new Set(inlineChildren.map(c => c.id));
     const map = new Map<string, HTMLElement>();
     root.querySelectorAll('.inline-child-portal[data-portal-child]').forEach(el => {
       const id = el.getAttribute('data-portal-child');
       // Only claim portal anchors whose child ID is one of THIS blip's own
       // inline children — avoids cross-blip pollution if anchors leak.
-      if (id && inlineChildren.some(c => c.id === id)) {
+      if (id && knownIds.has(id)) {
         map.set(id, el as HTMLElement);
       }
     });
     portalContainers.current = map;
     if (map.size > 0 || localExpandedInline.size > 0) setPortalTick(t => t + 1);
-  }, [viewContentHtml, !!contentOverride, isEditing, inlineChildren]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- inlineChildIdsKey is the stable representation of inlineChildren
+  }, [viewContentHtml, !!contentOverride, isEditing, inlineChildIdsKey]);
 
   // Listen for [+] marker clicks (both view mode and edit mode)
   // The custom event is dispatched by setupBlipThreadClickHandler
