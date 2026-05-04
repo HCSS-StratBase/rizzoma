@@ -13,11 +13,23 @@ services:
       - /app/node_modules
     environment:
       NODE_ENV: development
-      ALLOWED_ORIGINS: http://localhost:3000
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
       REDIS_URL: redis://redis:6379
       COUCHDB_URL: http://admin:password@couchdb:5984
       RABBITMQ_URL: amqp://rabbitmq:5672
       SESSION_SECRET: dev-secret-change-me
+      # APP_URL is the public address the browser uses to reach this app.
+      # MUST be set to your actual public URL when running OAuth — Vite's
+      # /api proxy uses changeOrigin:true which rewrites the Host header
+      # to localhost:8000, so without APP_URL the OAuth callback URL gets
+      # built as http://localhost:8000/... and Google redirects users to
+      # localhost (which doesn't exist on their machine) → ERR_CONNECTION_
+      # REFUSED. Override per-environment, e.g.:
+      #   APP_URL=http://138.201.62.161:8200 docker compose up
+      # The chosen URL must ALSO be on the OAuth provider's authorized
+      # redirect URI allow-list (Google Cloud Console etc.).
+      APP_URL: ${APP_URL:-}
+      CLIENT_URL: ${CLIENT_URL:-}
     depends_on:
       - redis
       - couchdb
