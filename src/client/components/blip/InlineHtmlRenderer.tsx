@@ -83,6 +83,14 @@ export interface InlineHtmlRenderOptions {
   html: string;
   inlineChildren: InlineChildLike[];
   expandedSet: Set<string>;
+  /**
+   * IDs of children that have ever been expanded this session — they stay mounted
+   * after collapse so React state (draft input, scroll, focus) is preserved on
+   * re-expand, matching original Rizzoma's CSS-only fold (blip_thread.coffee fold/unfold
+   * just toggles a `folded` class on the persistent BlipThread DOM node).
+   * If undefined, falls back to expandedSet (mount-on-expand, unmount-on-collapse).
+   */
+  everMountedSet?: Set<string>;
   renderInlineChild: (childId: string) => ReactNode;
 }
 
@@ -97,12 +105,15 @@ export interface InlineHtmlRenderOptions {
  * No portals. No useLayoutEffect DOM mutation. Single React-owned tree.
  */
 export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
-  const { html, inlineChildren, expandedSet, renderInlineChild } = opts;
+  const { html, inlineChildren, expandedSet, everMountedSet, renderInlineChild } = opts;
   if (!html) return null;
   if (typeof document === 'undefined') return null;
 
   const childById = new Map(inlineChildren.map(c => [c.id, c] as const));
   const knownIds = new Set(inlineChildren.map(c => c.id));
+  // Mount any child that's ever been expanded this session, OR is currently
+  // expanded. Never unmount — collapse is a CSS-only state change.
+  const mountedSet = everMountedSet ?? expandedSet;
 
   // Parse + insert markers for any anchored child without a pre-existing marker.
   const container = document.createElement('div');
@@ -149,12 +160,13 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
 
   const childrenAlreadyPlaced = new Set<string>();
 
-  const expandedMarkersInside = (el: Element): string[] => {
+  const mountedMarkersInside = (el: Element): string[] => {
     const ids: string[] = [];
     el.querySelectorAll('.blip-thread-marker[data-blip-thread]').forEach(marker => {
       const id = marker.getAttribute('data-blip-thread') || '';
       if (!id || !knownIds.has(id)) return;
-      if (!expandedSet.has(id)) return;
+      // Mount if currently expanded OR previously expanded (preserve subtree on fold).
+      if (!mountedSet.has(id)) return;
       if (childrenAlreadyPlaced.has(id)) return;
       ids.push(id);
     });
@@ -193,16 +205,22 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     // immediately AFTER. We do this by wrapping the li in a Fragment whose
     // children are [li, child1, child2, ...].
     const isBlockAnchor = tag === 'li' || tag === 'p';
-    const expandedHere = isBlockAnchor ? expandedMarkersInside(el) : [];
+    const expandedHere = isBlockAnchor ? mountedMarkersInside(el) : [];
 
     if (VOID_ELEMENTS.has(tag)) {
       const node = createElement(tag, props);
       if (expandedHere.length === 0) return node;
       const followups = expandedHere.map(id => {
         childrenAlreadyPlaced.add(id);
+        const isCollapsed = !expandedSet.has(id);
         return createElement(
           'div',
-          { key: `child-${id}`, className: 'inline-child-expanded', 'data-inline-child': id },
+          {
+            key: `child-${id}`,
+            className: `inline-child-expanded${isCollapsed ? ' inline-child-collapsed' : ''}`,
+            'data-inline-child': id,
+            'data-collapsed': isCollapsed ? 'true' : 'false',
+          },
           renderInlineChild(id),
         );
       });
@@ -222,9 +240,15 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
       // structure where blip-thread is a child of the LI.
       const followups = expandedHere.map(id => {
         childrenAlreadyPlaced.add(id);
+        const isCollapsed = !expandedSet.has(id);
         return createElement(
           'div',
-          { key: `child-${id}`, className: 'inline-child-expanded', 'data-inline-child': id },
+          {
+            key: `child-${id}`,
+            className: `inline-child-expanded${isCollapsed ? ' inline-child-collapsed' : ''}`,
+            'data-inline-child': id,
+            'data-collapsed': isCollapsed ? 'true' : 'false',
+          },
           renderInlineChild(id),
         );
       });
@@ -246,18 +270,24 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
 
   const topNodes = Array.from(container.childNodes).map(walkNode);
 
-  // Any expanded child that didn't find an in-line position (e.g., marker missing
+  // Any mounted child that didn't find an in-line position (e.g., marker missing
   // entirely, anchor outside the rendered HTML) — render at the end so it's still
   // visible rather than silently dropped.
   const orphanFollowups: ReactNode[] = [];
-  expandedSet.forEach(id => {
+  mountedSet.forEach(id => {
     if (!knownIds.has(id)) return;
     if (childrenAlreadyPlaced.has(id)) return;
     childrenAlreadyPlaced.add(id);
+    const isCollapsed = !expandedSet.has(id);
     orphanFollowups.push(
       createElement(
         'div',
-        { key: `orphan-child-${id}`, className: 'inline-child-expanded inline-child-orphan', 'data-inline-child': id },
+        {
+          key: `orphan-child-${id}`,
+          className: `inline-child-expanded inline-child-orphan${isCollapsed ? ' inline-child-collapsed' : ''}`,
+          'data-inline-child': id,
+          'data-collapsed': isCollapsed ? 'true' : 'false',
+        },
         renderInlineChild(id),
       ),
     );

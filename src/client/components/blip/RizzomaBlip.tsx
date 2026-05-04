@@ -691,6 +691,11 @@ export function RizzomaBlip({
   const listChildren = (blip.childBlips || []).filter((child) => child.anchorPosition === undefined || child.anchorPosition === null);
   // Track which inline children are expanded locally (for this blip's inline children)
   const [localExpandedInline, setLocalExpandedInline] = useState<Set<string>>(new Set());
+  // Track which inline children have ever been mounted this session — once mounted,
+  // they stay mounted across fold/unfold so React subtree state (draft input,
+  // scroll position, focus, in-progress reply) survives. Matches original Rizzoma
+  // (blip_thread.coffee fold/unfold = CSS-only class toggle on persistent DOM node).
+  const [everMountedInline, setEverMountedInline] = useState<Set<string>>(new Set());
 
   const toggleInlineChild = useCallback((childId: string) => {
     setLocalExpandedInline(prev => {
@@ -700,6 +705,13 @@ export function RizzomaBlip({
       } else {
         next.add(childId);
       }
+      return next;
+    });
+    // Lazy-mount on first expand; never remove from the mounted set.
+    setEverMountedInline(prev => {
+      if (prev.has(childId)) return prev;
+      const next = new Set(prev);
+      next.add(childId);
       return next;
     });
   }, []);
@@ -2094,6 +2106,7 @@ export function RizzomaBlip({
                       html: blip.content || '',
                       inlineChildren,
                       expandedSet: localExpandedInline,
+                      everMountedSet: everMountedInline,
                       renderInlineChild: (childId: string) => {
                         const child = inlineChildren.find(c => c.id === childId);
                         if (!child) return null;

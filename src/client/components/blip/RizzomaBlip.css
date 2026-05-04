@@ -1251,6 +1251,20 @@
   border-radius: 0;
 }
 
+/*
+ * B2 refinement (2026-05-05): preserve-subtree-on-fold.
+ * When a child has been expanded once, it stays mounted in the React tree even
+ * after the user collapses it again — so React state (draft input, scroll
+ * position, focus, in-progress reply) survives the fold. The hide is CSS-only,
+ * matching original Rizzoma's blip_thread.coffee where fold/unfold is just a
+ * `folded` class toggle on a persistent DOM node. The wrapper carries
+ * data-collapsed="true" / class .inline-child-collapsed when not in the
+ * expanded set; we hide the entire subtree without unmounting.
+ */
+.inline-child-expanded.inline-child-collapsed {
+  display: none !important;
+}
+
 /* Minimal styling for inline children — no toolbar, clean content display */
 .inline-child-expanded > .blip-container {
   margin-left: 0 !important;
