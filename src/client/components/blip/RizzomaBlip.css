@@ -155,6 +155,53 @@
   user-select: text;
 }
 
+/*
+ * View-mode list styling MUST mirror the edit-mode (.ProseMirror) rules
+ * because RizzomaApp.css has a global `* { padding: 0 }` reset. Without
+ * these, saved <ul>/<ol>/<li> render as flat unindented lines with no disc
+ * markers — the editor looks right while editing, then collapses to flat
+ * on save. Reported by Hryhorii 2026-05-04.
+ */
+.blip-text ul,
+.blip-text ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+  list-style-position: outside;
+}
+
+.blip-text ul {
+  list-style-type: disc;
+}
+
+.blip-text ol {
+  list-style-type: decimal;
+}
+
+.blip-text li {
+  margin: 0.25em 0;
+}
+
+.blip-text li p {
+  display: inline;
+  margin: 0;
+}
+
+.blip-text ul ul,
+.blip-text ol ol,
+.blip-text ul ol,
+.blip-text ol ul {
+  margin: 0.25em 0;
+  padding-left: 1.5em;
+}
+
+.blip-text ul ul {
+  list-style-type: circle;
+}
+
+.blip-text ul ul ul {
+  list-style-type: square;
+}
+
 /* Inline comment button */
 .inline-comment-btn {
   position: fixed;

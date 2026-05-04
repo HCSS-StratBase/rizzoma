@@ -22,7 +22,6 @@ services:
       - redis
       - couchdb
       - rabbitmq
-      - sphinx
     networks:
       - rizzoma-network
 
@@ -92,7 +91,13 @@ services:
     networks:
       - rizzoma-network
 
+  # Sphinx is vestigial from the pre-modernization CoffeeScript codebase.
+  # The current TypeScript app uses CouchDB Mango queries for search; keep
+  # it behind the "search" profile so a normal `docker compose up` does not
+  # try to build the missing Dockerfile.sphinx. Re-enable with:
+  #   docker compose --profile search up
   sphinx:
+    profiles: ["search"]
     build:
       context: .
       dockerfile: Dockerfile.sphinx
