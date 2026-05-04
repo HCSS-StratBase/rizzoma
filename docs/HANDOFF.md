@@ -1,6 +1,16 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-04-25 (screenshot artifacts normalized)
+Last Updated: 2026-05-04 (Hryhorii test feedback — 4 issues fixed + verified live)
+
+### Current state — what shipped tonight (2026-05-04)
+- **Bullet hierarchy survives save**: view-mode `.blip-text ul/ol/li/...` rules now mirror edit-mode `.ProseMirror` rules; global `* { padding: 0 }` reset no longer flattens saved bullets. Verified on `https://dev.138-201-62-161.nip.io` — real `<ul>` renders `padding-left: 22.5px` + disc/circle/square per nesting level. (#45, `cd9e626e`)
+- **`docker compose up` works**: sphinx (vestigial) gated behind `--profile search`; default 7 services (no sphinx), `--profile search` adds it. (#46, `cd9e626e`)
+- **Inline `[+]` opens from edit mode**: `BlipThreadNode` wraps `[+]` and a `.inline-child-portal` anchor in a `display: contents` host span; portal-rendering JSX moved out of view-mode-only branch; single render path matches original Rizzoma. Visually verified — see `screenshots/issue-47-fix-verified.png`. (#47, `f0d7658e` + `707a24f6`)
+- **OAuth callback URL no longer leaks `localhost`**: `APP_URL`/`CLIENT_URL`/`ALLOWED_ORIGINS` now env-passthrough in dev compose; new nginx vhost + LE cert at `dev.138-201-62-161.nip.io` → `:8200` (Google OAuth refuses bare-IP redirect URIs). End-to-end Sign-in-with-Google verified live. (#48, `02a57468`)
+
+VPS state: `nginx :443` for `138-201-62-161.nip.io` → `:8201` (prod), for `dev.138-201-62-161.nip.io` → `:8200` (dev, NEW). Hryhorii should retest against `https://dev.138-201-62-161.nip.io`. Full root-cause writeup in [`docs/worklog-260504.md`](worklog-260504.md).
+
+### Drift warnings (pre-2026-05-04)
 
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.

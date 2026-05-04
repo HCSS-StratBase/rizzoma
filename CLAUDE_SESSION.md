@@ -1,11 +1,29 @@
-# Claude Session Context (2026-04-24)
+# Claude Session Context (2026-05-04)
 
 **Read this file first when resuming work on this project.**
 
 ## Current Branch
 `feature/rizzoma-core-features` (main branch is `master`)
 
-## Latest Work: Production Perf Baseline (2026-04-24)
+## Latest Work: Hryhorii test feedback — 4 fixes verified live (2026-05-04)
+
+Hryhorii pulled `feature/rizzoma-core-features` and reported one docker error + two visual regressions. Investigating those uncovered an OAuth misconfiguration on top. All four fixed, GH-issued, closed, end-to-end verified on the VPS dev container:
+
+- **#45 — Bullet hierarchy collapsed flat on save**: global `* { padding: 0 }` reset stripped `<ul>` padding in view mode (rules existed only for edit mode `.ProseMirror`). Mirrored to `.blip-text ul/ol/li`. Verified: real `<ul>` on dev VPS now `padding-left: 22.5px` + disc/circle/square. (`cd9e626e`)
+- **#46 — `docker compose up` failed**: `Dockerfile.sphinx` missing (vestigial from CoffeeScript era; current TS app uses CouchDB Mango). Gated sphinx behind `--profile search`. Verified: 7 services in default, 8 with profile. (`cd9e626e`)
+- **#47 — Inline `[+]` not openable from edit mode**: original Rizzoma had a single render path (marker + portal anchor lived together); we'd split them across view-mode `injectInlineMarkers` and edit-mode `BlipThreadNode` (no portal). Unified by making `BlipThreadNode` wrap `[+]` and a sibling `.inline-child-portal` in `display: contents` host; portal-rendering JSX moved out of view-mode-only branch; `useLayoutEffect` scans from `blipContainerRef`. Caught + fixed an infinite re-render loop mid-test (unstable `inlineChildren` array dep → stable `inlineChildIdsKey` string hash). Visually verified — see `screenshots/issue-47-fix-verified.png`. (`f0d7658e` + `707a24f6`)
+- **#48 — OAuth callback URL leaked `localhost`**: Vite proxy `/api/*` → `localhost:8000` with `changeOrigin: true` rewrites `Host` header; Express `getBaseUrl` falls back to `req.get('host')` → `redirect_uri = http://localhost:8000/...`. Fix has 3 parts: (a) made `APP_URL`/`CLIENT_URL`/`ALLOWED_ORIGINS` env-passthrough in compose; (b) set up new nginx vhost + LE cert at `dev.138-201-62-161.nip.io` → `:8200` (Google OAuth refuses bare-IP redirects); (c) updated dev container env to use the new HTTPS URL. End-to-end Sign-in-with-Google verified live. (`02a57468`)
+
+### VPS state to remember
+- `nginx :443` for `138-201-62-161.nip.io` → `:8201` (prod container)
+- `nginx :443` for `dev.138-201-62-161.nip.io` → `:8200` (dev container, NEW)
+- Dev container env now: `APP_URL=https://dev.138-201-62-161.nip.io`, `CLIENT_URL=https://dev.138-201-62-161.nip.io`, expanded `ALLOWED_ORIGINS`
+- Cert at `/etc/letsencrypt/live/dev.138-201-62-161.nip.io/{fullchain,privkey}.pem` (expires 2026-08-02, auto-renews)
+- Hryhorii should pull and re-test against `https://dev.138-201-62-161.nip.io`
+
+Worklog with full root-cause analyses: [`docs/worklog-260504.md`](docs/worklog-260504.md).
+
+## Previous Work: Production Perf Baseline (2026-04-24)
 
 - `perf-harness.mjs` now supports `RIZZOMA_PERF_RENDER=lite|full` instead of hard-coding lite mode, and metrics record `renderProfile` plus `perfMode`.
 - `scripts/perf-budget.mjs` now supports `PERF_SNAPSHOT_DIR`, checks stage-local duration by default, and only checks absolute page TTF when `PERF_BUDGET_CHECK_TTF=1`.
