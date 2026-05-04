@@ -88,3 +88,34 @@ Google then redirects users to `localhost:8000` after login → user's browser h
 - `nginx :443` for `dev.138-201-62-161.nip.io` → `:8200` (dev container, NEW)
 - Dev container env: `APP_URL=https://dev.138-201-62-161.nip.io`, `CLIENT_URL=https://dev.138-201-62-161.nip.io`, `ALLOWED_ORIGINS=http://localhost:3000,http://138.201.62.161:8200,https://dev.138-201-62-161.nip.io`
 - Cert files at `/etc/letsencrypt/live/dev.138-201-62-161.nip.io/{fullchain,privkey}.pem`
+
+## Hooks subsystem (cross-cutting; commits d90a32a4 + 6a89f9b7 + non-git GDrive infra)
+
+After the Hryhorii fixes landed I built out a Claude Code hooks system to reduce the rate of repeat-mistakes the user keeps having to call out (post-work checklist forgetting, Tana posts, BLB structure violations, Hetzner firewall lockouts, etc).
+
+**Project-scope** (Rizzoma-only, in `.claude/hooks/`):
+- `post-work-checklist.sh` (Stop) — flags uncommitted/unpushed/no-worklog/no-Tana-marker
+- `tana-project-tags-check.sh` (PreToolUse `mcp__tana-local__tag`) — refuses Rizzoma Tana entries missing `#Rizzoma` + `#Rizzoma_modernization`
+- `tana-unicode-safety.sh` (PreToolUse `mcp__tana-local__import_tana_paste`) — denies literal `\uXXXX` content
+- `blb-required-reading-check.sh` (PreToolUse Edit/Write/Playwright) — reminds to Read `BLB_LOGIC_AND_PHILOSOPHY.md` before editing BLB-related code
+- `hetzner-firewall-safety.sh` (PreToolUse Bash) — gates POST to Hetzner Robot firewall
+- `screenshot-naming-check.sh` (PreToolUse Write/Edit/Bash) — enforces `<func>_<new|old>-YYMMDD-hhmm.png`
+- `unpushed-commits-warn.sh` (Stop) — standalone safety net
+- Plus `track-session-reads.sh` (PostToolUse Read) + `session-start-clear-reads.sh` (SessionStart) as plumbing for the BLB-reading check
+
+**User-scope** (project-agnostic, in `~/.claude/hooks/`, synced from `/mnt/g/My Drive/claude-hooks/` via the extended `sync-llm-instructions.sh`):
+- `post-work-checklist.sh` (Stop) — same as project-scope but with TWO trigger paths: (A) git-repo state, (B) PostToolUse-tracked edits inside a "managed tree"
+- `tana-unicode-safety.sh`, `hetzner-firewall-safety.sh`, `unpushed-commits-warn.sh` — same as project-scope but fire from any cwd
+- `track-managed-tree-edits.sh` (PostToolUse Edit/Write/MultiEdit/NotebookEdit) — appends timestamp+path to `~/.claude/state/managed-tree-edits.log` for any edit inside a configured managed tree
+- `track-tana-posts.sh` (PostToolUse `mcp__tana-local__import_tana_paste`) — appends timestamp to `~/.claude/state/tana-posts.log`
+- `session-start-clear-managed-tracking.sh` (SessionStart) — clears both logs
+
+**Managed-tree config**: `/mnt/g/My Drive/claude-hooks/_managed-trees.txt` (synced to `~/.claude/state/managed-tree-roots.txt` on first edit). Default: `/mnt/g/My Drive/{RuBase,StratBase,FutureBase}` + `/mnt/c/Rizzoma`. The Stop hook then enforces: any session that edited any file under those trees MUST have posted to Tana afterwards AND touched at least one .md file. Catches the case of editing GDrive content directly (no git commit, no traditional checkpoint) without documenting it.
+
+**Sync infra**: `~/.local/bin/sync-llm-instructions.sh` extended to copy `*.sh` from GDrive `claude-hooks/` to `~/.claude/hooks/` (chmod +x), and warn if local `~/.claude/settings.json` lacks the hooks block. New-machine setup: merge `_settings-snippet.json` into local `~/.claude/settings.json`.
+
+**Known limits** (honest):
+- Hooks added mid-session may not fire until session restart or `/hooks` UI reload (settings watcher caveat)
+- Cross-machine sync only covers Linux/WSL/macOS; native Windows would need PowerShell equivalents
+- The Tana-posted check is heuristic (timestamp comparison), not semantic — doesn't verify the entry actually documents the specific change
+- Rizzoma-specific GDrive bundle freshness check stayed in project-scope only
