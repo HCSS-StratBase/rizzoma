@@ -1,0 +1,49 @@
+<!--
+Saved 2026-05-05 from rizzoma.com Try topic
+URL: https://rizzoma.com/topic/8738c4e1a37aa1118ff3f6318b086734/0_b_ck1g_cp839/
+
+This is the rendered DOM of the active topic-root blip after we
+Ctrl+Enter'd through 10 levels (Spine → Subblip 1.A → Depth-2 child A
+→ Depth-3 leaf B → ... → Depth-10 leaf B). Compressed for clarity:
+this single tree contains 10 nested blip-thread spans, each of which
+contains another <ul class="js-editor editor"> with the next level's
+bullets.
+
+Use this as a structural reference when redesigning our render path
+to match Rizzoma's nested-LI approach (vs our current portal-based
+floating-card render).
+-->
+
+<!-- THE STRUCTURAL PATTERN, simplified to one repeating cell:
+
+<ul class="js-editor editor" contenteditable="false">       ← editor at level N
+  <li class="bulleted bulleted-type0" style="margin-left:22px">  ← bullet
+    <span>Label text</span>                                  ← label
+    <span class="blip-thread">                              ← INLINE CHILD slot
+      <div class="fold-button-container">                   ← [+]/[-] toggle
+        <span class="js-fold-button">[+]</span>
+      </div>
+      <div class="js-blips-container">
+        <span class="default-text blip-container">          ← child blip
+          <div class="js-blip-info-container">              ← compact avatar+date (~30px)
+            <span class="contributor avatar"></span>
+            <div class="edit-date">12:19 AM</div>
+          </div>
+          <div class="js-editor-container">
+            <ul class="js-editor editor">                   ← editor at level N+1 (RECURSIVE)
+              <li class="bulleted bulleted-type0" style="margin-left:22px">
+                <span>Label text</span>
+                <span class="blip-thread">...</span>        ← can recurse again
+              </li>
+            </ul>
+          </div>
+          <div class="js-bottom-blip-menu">                 ← only when editing this blip
+            <button class="js-finish-edit">Done</button>
+            <button class="js-blip-reply-button">Write a reply...</button>
+          </div>
+        </span>
+      </div>
+    </span>
+  </li>
+</ul>
+-->
