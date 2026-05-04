@@ -7,6 +7,11 @@
 # Local settings
 src/server/settings_local.coffee
 
+# Claude Code per-project hooks + state (personal — see .claude/hooks/)
+.claude/settings.local.json
+.claude/state/
+.claude/scheduled_tasks.lock
+
 # Other repositories
 .svn
 src/pulse_index.coffee
