@@ -26,13 +26,21 @@ if [ -n "$(git log --since=midnight --oneline 2>/dev/null)" ] && [ ! -f "$worklo
   failures+=("no \`$worklog\` for today's commits")
 fi
 
-# Tana posted (marker file matches HEAD)
+# Tana check — uses .claude/state/last-tana-post-commit as a marker, BUT only
+# trusts it if updated AFTER the latest commit's timestamp. This catches the
+# foot-gun where the marker is updated before the Tana entry covering the
+# current commit is actually posted. (See Tana entry follow-up #2 2026-05-04
+# for the meta-bug that triggered this guard.)
 head_sha=$(git rev-parse HEAD 2>/dev/null)
 last_tana=$(cat .claude/state/last-tana-post-commit 2>/dev/null || echo "")
-if [ -n "$head_sha" ] && [ "$head_sha" != "$last_tana" ]; then
-  # Only warn if there's been a commit today (else it's an idle session)
-  if [ -n "$(git log --since=midnight --oneline 2>/dev/null)" ]; then
+marker_mtime=$(stat -c %Y .claude/state/last-tana-post-commit 2>/dev/null || echo 0)
+head_time=$(git log -1 --format=%ct HEAD 2>/dev/null || echo 0)
+
+if [ -n "$head_sha" ] && [ -n "$(git log --since=midnight --oneline 2>/dev/null)" ]; then
+  if [ "$head_sha" != "$last_tana" ]; then
     failures+=("Tana entry not posted for HEAD ($head_sha — last posted: ${last_tana:-none})")
+  elif [ "$marker_mtime" -lt "$head_time" ]; then
+    failures+=("Tana marker matches HEAD but is OLDER than the commit (marker may have been updated before the actual Tana post — re-verify the Tana entry actually mentions $head_sha)")
   fi
 fi
 
@@ -42,7 +50,6 @@ if [ -d "$gdrive_dir" ] && [ -n "$(git log --since=midnight --oneline 2>/dev/nul
   newest_bundle=$(ls -t "$gdrive_dir"/rizzoma-*.bundle 2>/dev/null | head -1)
   if [ -n "$newest_bundle" ]; then
     bundle_mtime=$(stat -c %Y "$newest_bundle" 2>/dev/null || echo 0)
-    head_time=$(git log -1 --format=%ct HEAD 2>/dev/null || echo 0)
     if [ "$bundle_mtime" -lt "$head_time" ]; then
       failures+=("GDrive bundle is older than HEAD (run \`bash scripts/backup-bundle.sh\`)")
     fi
@@ -59,7 +66,7 @@ ctx="POST-WORK CHECKLIST GAPS (per ~/.claude/projects/-mnt-c-Rizzoma/memory/MEMO
 for f in "${failures[@]}"; do
   ctx+=$'\n- '"$f"
 done
-ctx+=$'\n\nDo NOT say done until: (a) commit pushed, (b) bundle on GDrive, (c) Tana entry posted to today day node with both #Rizzoma + #Rizzoma_modernization.'
+ctx+=$'\n\nDo NOT say done until: (a) commit pushed, (b) bundle on GDrive newer than HEAD, (c) Tana entry actually mentions HEAD (post first, THEN update marker).'
 
 # Use jq to safely emit JSON
 jq -nc --arg ctx "$ctx" '{
