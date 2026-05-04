@@ -1214,10 +1214,33 @@
   min-height: 0 !important;
 }
 
+/*
+ * Wrapper rendered by BlipThreadNode in the editor: holds the [+] marker
+ * AND a sibling .inline-child-portal anchor. `display: contents` makes the
+ * host vanish from layout so the marker stays inline at its insertion point
+ * (inside <p>/<li>) and the portal anchor lays out as a block-level sibling
+ * of the marker. The host is contenteditable=false so ProseMirror treats
+ * the whole atom as non-editable. Without `display: contents` the wrapper
+ * would create an inline-formatting-context box that breaks `[+]`'s
+ * position in the surrounding text. (Used 2026-05-04 to unify view-mode
+ * and edit-mode inline-child rendering — see issue #47.)
+ */
+.blip-thread-host {
+  display: contents;
+}
+
 /* Portal container for inline children rendered at marker positions */
 .inline-child-portal {
   display: block;
   list-style: none;
+}
+
+/* When the portal has no expanded child, suppress block-level whitespace
+   so the bare [+] marker doesn't introduce a phantom blank line. React
+   only renders into the portal when localExpandedInline contains the
+   child id — when collapsed, the .inline-child-portal stays empty. */
+.inline-child-portal:empty {
+  display: none;
 }
 
 /* Orphaned markers (referencing non-existent children) - hide completely */

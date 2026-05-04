@@ -712,15 +712,26 @@ export function RizzomaBlip({
   const [, setPortalTick] = useState(0);
 
   useLayoutEffect(() => {
-    if (!contentRef.current) return;
+    // Scan from the outer blip container so we pick up portal anchors in
+    // BOTH view mode (.inline-child-portal divs injected by injectInlineMarkers
+    // into .blip-text) AND edit mode (.inline-child-portal spans rendered
+    // by BlipThreadNode inside the TipTap editor's DOM). This is how the
+    // original Rizzoma kept inline-child rendering working in both modes
+    // without a render-path split.
+    const root = blipContainerRef.current;
+    if (!root) return;
     const map = new Map<string, HTMLElement>();
-    contentRef.current.querySelectorAll('.inline-child-portal').forEach(el => {
+    root.querySelectorAll('.inline-child-portal[data-portal-child]').forEach(el => {
       const id = el.getAttribute('data-portal-child');
-      if (id) map.set(id, el as HTMLElement);
+      // Only claim portal anchors whose child ID is one of THIS blip's own
+      // inline children — avoids cross-blip pollution if anchors leak.
+      if (id && inlineChildren.some(c => c.id === id)) {
+        map.set(id, el as HTMLElement);
+      }
     });
     portalContainers.current = map;
     if (map.size > 0 || localExpandedInline.size > 0) setPortalTick(t => t + 1);
-  }, [viewContentHtml, !!contentOverride]);
+  }, [viewContentHtml, !!contentOverride, isEditing, inlineChildren]);
 
   // Listen for [+] marker clicks (both view mode and edit mode)
   // The custom event is dispatched by setupBlipThreadClickHandler
@@ -2062,28 +2073,6 @@ export function RizzomaBlip({
                   title={contentTitle}
                   style={onContentClick ? { cursor: 'pointer' } : undefined}
                 />
-                {/* Expanded inline children rendered via portals at their marker positions */}
-                {inlineChildren
-                  .filter(child => localExpandedInline.has(child.id) && portalContainers.current.has(child.id))
-                  .map(child => createPortal(
-                    <div className="inline-child-expanded">
-                      <RizzomaBlip
-                        blip={{ ...child, isCollapsed: false }}
-                        isRoot={false}
-                        isInlineChild={true}
-                        depth={depth + 1}
-                        onBlipUpdate={onBlipUpdate}
-                        onAddReply={onAddReply}
-                        onToggleCollapse={onToggleCollapse}
-                        onDeleteBlip={onDeleteBlip}
-                        onBlipRead={onBlipRead}
-                        onExpand={onExpand}
-                        expandedBlips={expandedBlips}
-                      />
-                    </div>,
-                    portalContainers.current.get(child.id)!,
-                    `inline-${child.id}`
-                  ))}
               </div>
               {/* Contributors avatars on right side - stacked with owner on top, expandable */}
               {!isTopicRoot && (
@@ -2097,6 +2086,41 @@ export function RizzomaBlip({
             </div>
           </div>
         )}
+
+        {/*
+          Expanded inline children rendered via portals at their [+] marker positions.
+          UNIFIED render path — runs in BOTH view and edit mode (matching original
+          Rizzoma). The portal targets are .inline-child-portal anchors, which exist
+          in both modes:
+            - view mode: injected into the saved HTML by injectInlineMarkers() at
+              the end of the marker's containing <li> or <p>
+            - edit mode: rendered inside the .blip-thread-host wrapper by the
+              BlipThreadNode TipTap node, immediately after the [+] marker
+          createPortal teleports the React tree into whichever anchor is present,
+          so a freshly-Ctrl+Enter'd inline child opens directly under its marker
+          without requiring the parent to exit edit mode first.
+        */}
+        {inlineChildren
+          .filter(child => localExpandedInline.has(child.id) && portalContainers.current.has(child.id))
+          .map(child => createPortal(
+            <div className="inline-child-expanded">
+              <RizzomaBlip
+                blip={{ ...child, isCollapsed: false }}
+                isRoot={false}
+                isInlineChild={true}
+                depth={depth + 1}
+                onBlipUpdate={onBlipUpdate}
+                onAddReply={onAddReply}
+                onToggleCollapse={onToggleCollapse}
+                onDeleteBlip={onDeleteBlip}
+                onBlipRead={onBlipRead}
+                onExpand={onExpand}
+                expandedBlips={expandedBlips}
+              />
+            </div>,
+            portalContainers.current.get(child.id)!,
+            `inline-${child.id}`
+          ))}
 
         {contentFooter}
 

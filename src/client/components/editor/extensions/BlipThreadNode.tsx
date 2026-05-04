@@ -75,14 +75,33 @@ export const BlipThreadNode = Node.create({
     if (existingClass) {
       classes.push(String(existingClass));
     }
+    const threadId = HTMLAttributes['data-blip-thread'];
 
+    // Wrap the marker and a sibling portal anchor in a `display: contents`
+    // host so they layout as if they were direct siblings of the marker's
+    // surrounding text. The portal anchor lets RizzomaBlip render an
+    // expanded inline child blip directly via createPortal, in BOTH view
+    // mode AND edit mode (the original Rizzoma had a single render path —
+    // we now match that). The host is contenteditable=false so ProseMirror
+    // treats the whole atom as non-editable.
     return [
       'span',
-      {
-        ...HTMLAttributes,
-        class: classes.join(' '),
-      },
-      '+',
+      { class: 'blip-thread-host', contenteditable: 'false' },
+      [
+        'span',
+        {
+          ...HTMLAttributes,
+          class: classes.join(' '),
+        },
+        '+',
+      ],
+      [
+        'span',
+        {
+          class: 'inline-child-portal',
+          ...(threadId ? { 'data-portal-child': String(threadId) } : {}),
+        },
+      ],
     ];
   },
 
