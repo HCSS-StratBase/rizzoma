@@ -2219,11 +2219,24 @@ export function RizzomaBlip({
           so a freshly-Ctrl+Enter'd inline child opens directly under its marker
           without requiring the parent to exit edit mode first.
         */}
-        {/* Parity view-mode renders inline children via renderInlineHtml() above —
-            skip the portal pass for those to avoid double-render. Edit-mode and
-            non-parity view-mode still use the portal anchors emitted by either
-            BlipThreadNode (TipTap) or injectInlineMarkers respectively. */}
-        {!parityViewRender && inlineChildren
+        {/*
+          Inline-child render paths:
+          1. Parity view mode: renderInlineHtml() above places children inline
+             inside the <li> as React siblings. No portal.
+          2. Non-parity view mode: createPortal targets injectInlineMarkers'
+             .inline-child-portal anchors — those live OUTSIDE the marker's <p>
+             (appended to the closest <li>), so block-inside-paragraph isn't an
+             issue.
+          3. Edit mode: skip createPortal entirely — the portal target lives
+             INSIDE BlipThreadNode's marker host span which is INSIDE the
+             editor's <p>, and rendering a block-level child there breaks the
+             enclosing <li>'s layout (text after the marker becomes orphaned
+             non-list-item content). Instead, render expanded inline children
+             as a flat block stack BELOW the editor (via the editChildrenStack
+             block below). The marker stays in-editor as a position indicator;
+             the actual child content lives outside the editor's DOM tree.
+        */}
+        {!parityViewRender && !isEditing && !contentOverride && inlineChildren
           .filter(child => localExpandedInline.has(child.id) && portalContainers.current.has(child.id))
           .map(child => createPortal(
             <div className="inline-child-expanded">
@@ -2243,6 +2256,37 @@ export function RizzomaBlip({
             </div>,
             portalContainers.current.get(child.id)!,
             `inline-${child.id}`
+          ))}
+
+        {/* Edit-mode inline children: render OUTSIDE the editor as a flat stack
+            below it. Avoids the block-inside-<p>-inside-<li> layout breakage
+            that was orphaning post-marker text from its bullet (user-reported
+            "LI disappears when I click in the new blip"). Covers both:
+              - this RizzomaBlip's own edit mode (isEditing)
+              - topic-root edit mode where the editor is passed via contentOverride
+                from RizzomaTopicDetail (RizzomaBlip's own isEditing stays false). */}
+        {(isEditing || !!contentOverride) && inlineChildren
+          .filter(child => localExpandedInline.has(child.id))
+          .map(child => (
+            <div
+              key={`edit-inline-${child.id}`}
+              className="inline-child-expanded inline-child-edit-mode"
+              data-inline-child={child.id}
+            >
+              <RizzomaBlip
+                blip={{ ...child, isCollapsed: false }}
+                isRoot={false}
+                isInlineChild={true}
+                depth={depth + 1}
+                onBlipUpdate={onBlipUpdate}
+                onAddReply={onAddReply}
+                onToggleCollapse={onToggleCollapse}
+                onDeleteBlip={onDeleteBlip}
+                onBlipRead={onBlipRead}
+                onExpand={onExpand}
+                expandedBlips={expandedBlips}
+              />
+            </div>
           ))}
 
         {contentFooter}

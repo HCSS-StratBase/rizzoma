@@ -612,6 +612,31 @@
   margin-bottom: 0;
 }
 
+/*
+ * List styling for ANY TipTap editor in the app.
+ * The previous rules below only matched .blip-editor-container (nested blips),
+ * NOT the topic root (which lives in .topic-content-edit). The global
+ * `* { padding: 0 }` reset stripped browser-default UL padding everywhere,
+ * so the disc bullets fell outside the visible UL area in the topic root —
+ * the user saw "unbulleted" labels in topic-root edit mode.
+ *
+ * Catch every TipTap editor via .tiptap.ProseMirror so the topic root and
+ * any future editor placement gets bullets back without needing a wrapper-
+ * class-specific rule.
+ */
+.tiptap.ProseMirror ul,
+.tiptap.ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+  list-style-position: outside;
+}
+.tiptap.ProseMirror ul { list-style-type: disc; }
+.tiptap.ProseMirror ol { list-style-type: decimal; }
+.tiptap.ProseMirror ul ul { list-style-type: circle; padding-left: 1.5em; }
+.tiptap.ProseMirror ul ul ul { list-style-type: square; }
+.tiptap.ProseMirror li { margin: 0.25em 0; }
+.tiptap.ProseMirror li p { display: inline; margin: 0; }
+
 /* List styling in editor */
 .blip-editor-container .ProseMirror ul,
 .blip-editor-container .ProseMirror ol {

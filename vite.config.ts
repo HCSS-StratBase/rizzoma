@@ -23,6 +23,12 @@ export default defineConfig(({ command, mode }) => {
       'import.meta.env.FEAT_WAVE_PLAYBACK': JSON.stringify(process.env.FEAT_WAVE_PLAYBACK || ''),
       'import.meta.env.FEAT_TASKS': JSON.stringify(process.env.FEAT_TASKS || ''),
       'import.meta.env.BUSINESS_ACCOUNT': JSON.stringify(process.env.BUSINESS_ACCOUNT || ''),
+      // Track F: visual parity with original rizzoma.com (B1 reskin + B2 inline render).
+      // OFF by default — opt in via FEAT_RIZZOMA_PARITY_RENDER=1. Without this define,
+      // the client's import.meta.env.FEAT_RIZZOMA_PARITY_RENDER is undefined and the
+      // FEATURES.RIZZOMA_PARITY_RENDER flag stays false even when the server-side env
+      // is set — which is what was happening on the dev VPS through 2026-05-05.
+      'import.meta.env.FEAT_RIZZOMA_PARITY_RENDER': JSON.stringify(process.env.FEAT_RIZZOMA_PARITY_RENDER || ''),
     },
   root: './src/client',
   publicDir: '../../public',
