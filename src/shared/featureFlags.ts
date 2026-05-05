@@ -35,6 +35,14 @@ export const FEATURES = {
   // Off by default — opt in by setting FEAT_RIZZOMA_PARITY_RENDER=1.
   // FEAT_ALL does NOT enable this yet (still iterating on visual fidelity).
   RIZZOMA_PARITY_RENDER: env['FEAT_RIZZOMA_PARITY_RENDER'] === '1',
+
+  // Track G: Native fractal-render port (replace React/TipTap hybrid for the
+  // parent-of-blips render layer with a direct TS port of original Rizzoma's
+  // content-array + linear-walk model). See docs/NATIVE_RENDER_PORT_PLAN.md.
+  // Off by default; opt in via FEAT_RIZZOMA_NATIVE_RENDER=1. Phase-by-phase
+  // rollout — phases 1..4 leave both paths side-by-side; phase 5 deletes
+  // the React path. FEAT_ALL does NOT enable this.
+  RIZZOMA_NATIVE_RENDER: env['FEAT_RIZZOMA_NATIVE_RENDER'] === '1',
 } as const;
 
 // Helper to check if any feature is enabled

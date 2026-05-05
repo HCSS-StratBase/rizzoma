@@ -217,7 +217,7 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
   const mobileLayoutClass = isMobile ? `mobile-layout mobile-view-${mobileView}` : '';
 
   return (
-    <div className={`rizzoma-layout ${mobileLayoutClass}${FEATURES.RIZZOMA_PARITY_RENDER ? ' rizzoma-parity' : ''}`}>
+    <div className={`rizzoma-layout ${mobileLayoutClass}${FEATURES.RIZZOMA_PARITY_RENDER ? ' rizzoma-parity' : ''}${FEATURES.RIZZOMA_NATIVE_RENDER ? ' rizzoma-native' : ''}`}>
       {/* Mobile header - shown when viewing content on mobile */}
       {isMobile && mobileView === 'content' && (
         <div className="mobile-header">

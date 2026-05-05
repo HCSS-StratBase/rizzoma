@@ -29,6 +29,10 @@ export default defineConfig(({ command, mode }) => {
       // FEATURES.RIZZOMA_PARITY_RENDER flag stays false even when the server-side env
       // is set — which is what was happening on the dev VPS through 2026-05-05.
       'import.meta.env.FEAT_RIZZOMA_PARITY_RENDER': JSON.stringify(process.env.FEAT_RIZZOMA_PARITY_RENDER || ''),
+      // Track G: native fractal-render port. Same trap-avoidance comment as above —
+      // without this define, the client's flag stays undefined no matter what the
+      // server-side env says. See docs/NATIVE_RENDER_PORT_PLAN.md and GH #50–#56.
+      'import.meta.env.FEAT_RIZZOMA_NATIVE_RENDER': JSON.stringify(process.env.FEAT_RIZZOMA_NATIVE_RENDER || ''),
     },
   root: './src/client',
   publicDir: '../../public',
