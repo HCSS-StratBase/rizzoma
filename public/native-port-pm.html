@@ -151,7 +151,7 @@
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/NATIVE_RENDER_PORT_PLAN.md">Plan</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md">Why</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/issues/50">Epic #50</a>
-    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-05 20:12:20 UTC</span>
+    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-05 20:13:23 UTC</span>
     &nbsp;·&nbsp; <span id="refresh-status">auto-refresh ON</span>
   </p>
 </header>
@@ -162,7 +162,7 @@
     <div class="stat-card"><div class="stat-num">28%</div><div class="stat-lbl">Complete</div></div>
     <div class="stat-card"><div class="stat-num">4.1<span style="font-size:1rem;color:var(--lb)"> / 14.5</span></div><div class="stat-lbl">Workdays</div></div>
     <div class="stat-card"><div class="stat-num">1<span style="font-size:1rem;color:var(--lb)"> / 6</span></div><div class="stat-lbl">Phases done</div></div>
-    <div class="stat-card"><div class="stat-num">10</div><div class="stat-lbl">Commits on port branch</div></div>
+    <div class="stat-card"><div class="stat-num">11</div><div class="stat-lbl">Commits on port branch</div></div>
   </div>
   <div class="pbar-row">
     <div class="pbar-wrapper"><div class="pbar-fill" style="--target:28%"></div></div>
@@ -536,24 +536,29 @@
   <div class="recent-commits">
 
     <div class="commit-row">
+      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/57270c026a49939fda7dacac05a9ec85f5a14103" target="_blank" rel="noopener">57270c02</a></span>
+      <span class="commit-subject">PM: add IN PROGRESS deliverable state (◐ amber)</span>
+      <span class="commit-when">59 seconds ago</span>
+    </div>
+    <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/2b01bf311c5b6ade7bcba050b1d67fc7a53851e5" target="_blank" rel="noopener">2b01bf31</a></span>
       <span class="commit-subject">PM: add HTML dashboard with auto-refresh + native scroll</span>
-      <span class="commit-when">19 minutes ago</span>
+      <span class="commit-when">20 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/bbf116c9f9f6debebb1d06d88058fa95274446b0" target="_blank" rel="noopener">bbf116c9</a></span>
       <span class="commit-subject">pmr: --live now appends snapshots (preserves scrollback)</span>
-      <span class="commit-when">25 minutes ago</span>
+      <span class="commit-when">26 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/f5b17fd958c52f48253163330508f992aa995885" target="_blank" rel="noopener">f5b17fd9</a></span>
       <span class="commit-subject">pmr UX + Phase 2 (#53) start: BlipView + WaveView skeletons</span>
-      <span class="commit-when">28 minutes ago</span>
+      <span class="commit-when">29 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/1e0a60f1359660d9f03c0fd0885be824964c7607" target="_blank" rel="noopener">1e0a60f1</a></span>
       <span class="commit-subject">Phase 1 (#52): serializer + depth-10 spike test (terminal-only)</span>
-      <span class="commit-when">32 minutes ago</span>
+      <span class="commit-when">33 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/a99180d9229162d23aae4ba9b933a0fefefd066e" target="_blank" rel="noopener">a99180d9</a></span>
@@ -629,6 +634,18 @@
     const stampEl = document.getElementById('stamp');
     const statusEl = document.getElementById('refresh-status');
     const toggle = document.getElementById('refresh-toggle');
+
+    // Animate every pbar fill from 0 → its --target value on load.
+    // Without this, the CSS leaves them at translateX(-100%) (invisible).
+    function paintPbars() {
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.pbar-fill').forEach((el) => {
+          const target = el.style.getPropertyValue('--target') || '0%';
+          el.style.transform = 'translateX(calc(-100% + ' + target + '))';
+        });
+      });
+    }
+    paintPbars();
 
     // Auto-reload preserves scroll across navigations on most browsers via
     // history.scrollRestoration = 'auto' (default). We also save scroll to

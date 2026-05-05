@@ -444,6 +444,18 @@ ${recentCommits.length === 0 ? '<p style="color:var(--lb)">No commits ahead of m
     const statusEl = document.getElementById('refresh-status');
     const toggle = document.getElementById('refresh-toggle');
 
+    // Animate every pbar fill from 0 → its --target value on load.
+    // Without this, the CSS leaves them at translateX(-100%) (invisible).
+    function paintPbars() {
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.pbar-fill').forEach((el) => {
+          const target = el.style.getPropertyValue('--target') || '0%';
+          el.style.transform = 'translateX(calc(-100% + ' + target + '))';
+        });
+      });
+    }
+    paintPbars();
+
     // Auto-reload preserves scroll across navigations on most browsers via
     // history.scrollRestoration = 'auto' (default). We also save scroll to
     // sessionStorage as a belt + suspenders.
