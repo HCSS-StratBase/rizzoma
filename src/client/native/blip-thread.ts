@@ -70,8 +70,10 @@ export class BlipThread {
     this.foldButton.addEventListener('mousedown', (e) => e.stopPropagation());
     this.foldButton.addEventListener('keydown', (e) => e.stopPropagation());
 
-    // Default to folded (per original initFold(true)).
-    this.fold(false);
+    // Default to folded (per original initFold(true)). The class field
+    // initializer above already sets `folded = true`, so calling fold(false)
+    // would early-return without adding the FOLDED_CLASS — set it directly.
+    this.container.classList.add(FOLDED_CLASS);
 
     if (firstBlipNode) {
       this.appendBlipElement(firstBlipNode);
