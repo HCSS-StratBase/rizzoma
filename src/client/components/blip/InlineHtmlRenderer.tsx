@@ -206,12 +206,17 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     // children are [li, child1, child2, ...].
     const isBlockAnchor = tag === 'li' || tag === 'p';
     const expandedHere = isBlockAnchor ? mountedMarkersInside(el) : [];
+    // Mark THESE markers as placed BEFORE walking children so nested block
+    // anchors (e.g. a <p> inside an <li>) don't re-place the same child.
+    // Without this, the marker is found by both the LI walker and the inner P
+    // walker, producing two .inline-child-expanded divs for the same blip
+    // (user-visible: child rendered twice on click).
+    for (const id of expandedHere) childrenAlreadyPlaced.add(id);
 
     if (VOID_ELEMENTS.has(tag)) {
       const node = createElement(tag, props);
       if (expandedHere.length === 0) return node;
       const followups = expandedHere.map(id => {
-        childrenAlreadyPlaced.add(id);
         const isCollapsed = !expandedSet.has(id);
         return createElement(
           'div',
@@ -239,7 +244,6 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
       // it inherits the bullet's nesting context. This matches rizzoma.com's
       // structure where blip-thread is a child of the LI.
       const followups = expandedHere.map(id => {
-        childrenAlreadyPlaced.add(id);
         const isCollapsed = !expandedSet.has(id);
         return createElement(
           'div',
@@ -256,12 +260,22 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
       return createElement(tag, props, ...liChildren);
     }
 
-    // For <p>, place after the paragraph as siblings.
+    // For <p>, place after the paragraph as siblings — but only if the marker
+    // isn't going to be claimed by an ancestor LI later. We always anchor to the
+    // CLOSEST LI ancestor when one exists (matches rizzoma.com structure), so a
+    // <p>-anchored followup is rare — only fires when the marker's <p> isn't
+    // inside any <li>. The childrenAlreadyPlaced check above (added before
+    // walking children) ensures we don't double-place when both apply.
     const followups = expandedHere.map(id => {
-      childrenAlreadyPlaced.add(id);
+      const isCollapsed = !expandedSet.has(id);
       return createElement(
         'div',
-        { key: `child-${id}`, className: 'inline-child-expanded', 'data-inline-child': id },
+        {
+          key: `child-${id}`,
+          className: `inline-child-expanded${isCollapsed ? ' inline-child-collapsed' : ''}`,
+          'data-inline-child': id,
+          'data-collapsed': isCollapsed ? 'true' : 'false',
+        },
         renderInlineChild(id),
       );
     });
