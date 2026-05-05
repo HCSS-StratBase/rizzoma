@@ -28,10 +28,8 @@ from typing import Optional
 from rich.align import Align
 from rich.columns import Columns
 from rich.console import Console, Group
-from rich.layout import Layout
-from rich.live import Live
 from rich.panel import Panel
-from rich.progress_bar import ProgressBar
+from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
@@ -357,7 +355,7 @@ def build_layout(issue_states: dict[int, str], commits: list[dict]) -> Layout:
 def help_footer(live: bool = False) -> Text:
     t = Text()
     if live:
-        t.append("Live mode · ", style="dim")
+        t.append("Live append mode · scroll up for history · ", style="dim")
         t.append("Ctrl+C", style=f"bold {COL_GOLD}")
         t.append(" to exit", style="dim")
     else:
@@ -365,7 +363,7 @@ def help_footer(live: bool = False) -> Text:
         t.append("pmr", style=f"bold {COL_GOLD}")
         t.append(" to refresh · ", style="dim")
         t.append("pmr --live", style=COL_LB)
-        t.append(" for auto-refresh (loses scrollback)", style="dim")
+        t.append(" for auto-refresh (snapshots appended to scrollback)", style="dim")
     t.append(" · GH epic ", style="dim")
     t.append(f"#{ISSUE_NUMBERS[0]}", style=COL_GOLD)
     t.append(f" at github.com/{REPO}/issues/{ISSUE_NUMBERS[0]}", style="dim")
@@ -386,33 +384,36 @@ def render_once(console: Console) -> None:
 
 
 def render_live(console: Console, refresh: float) -> None:
-    last_fetch_at = 0.0
-    cache = {"issues": {}, "commits": []}
+    """Append-mode live refresh: each tick appends a full snapshot to terminal
+    scrollback (with a timestamped rule separator). User can scroll up freely
+    to see history; the latest snapshot is always at the bottom."""
+    import time
 
-    def _payload():
-        # Re-pull every loop; gh + git are local, ~200ms.
-        cache["issues"] = fetch_issue_states()
-        cache["commits"] = fetch_commits()
-        return Group(build_layout(cache["issues"], cache["commits"]),
-                     Text(""), help_footer(live=True))
-
-    with Live(_payload(), console=console, refresh_per_second=4,
-              screen=False, transient=False) as live:
-        try:
-            import time
-            while True:
-                time.sleep(refresh)
-                live.update(_payload())
-        except KeyboardInterrupt:
-            console.print(f"\n[dim]Exited at {datetime.now().strftime('%H:%M:%S')}[/dim]")
+    tick = 0
+    try:
+        while True:
+            tick += 1
+            stamp = datetime.now().strftime("%H:%M:%S")
+            issue_states = fetch_issue_states()
+            commits = fetch_commits()
+            console.print()
+            console.print(Rule(
+                f"[bold {COL_GOLD}]pmr snapshot #{tick}[/]  [dim]{stamp}  ·  next refresh in {refresh:.0f}s  ·  Ctrl+C to exit[/]",
+                style=COL_GOLD,
+            ))
+            console.print(build_layout(issue_states, commits))
+            console.print(help_footer(live=True))
+            time.sleep(refresh)
+    except KeyboardInterrupt:
+        console.print(f"\n[dim]Exited at {datetime.now().strftime('%H:%M:%S')} after {tick} snapshot(s)[/dim]")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Native fractal-render port — PM TUI")
     parser.add_argument("--live", action="store_true",
-                        help="Live-refresh mode (overwrites in-place; scrollback is lost)")
-    parser.add_argument("--refresh", type=float, default=5.0,
-                        help="Refresh interval in seconds for --live mode (default: 5)")
+                        help="Append a fresh snapshot every --refresh seconds (scrollback preserved)")
+    parser.add_argument("--refresh", type=float, default=60.0,
+                        help="Refresh interval in seconds for --live mode (default: 60)")
     args = parser.parse_args()
 
     # Use stderr-aware terminal width detection.
