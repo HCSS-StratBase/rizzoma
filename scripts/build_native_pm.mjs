@@ -58,7 +58,7 @@ const PHASES = [
       { done: true, label: '`serializer.ts` — ContentArray → HTML (round-trip inverse)', commit: '1e0a60f1' },
       { done: true, label: 'Depth-10 spike test (jsdom; 2047 blips, 2046 BlipThreads, depth=10)', commit: '1e0a60f1' },
       { done: true, label: 'Bug fix: BlipThread initial fold-class set in constructor', commit: '1e0a60f1' },
-      { wip: true, label: 'Round-trip parser tests on every dev-DB topic', commit: null },
+      { done: false, label: 'Round-trip parser tests on every dev-DB topic', commit: null },
     ],
   },
   {
@@ -67,7 +67,7 @@ const PHASES = [
     short: 'Per-blip view; mounts TipTap into DOM slot when isEditing; Ctrl+Enter inserts BLIP at array index',
     deliverables: [
       { done: true, label: '`blip-view.ts` — BlipView + WaveView skeletons (read-mode rendering)', commit: 'f5b17fd9' },
-      { wip: true, label: '`blip-editor-host.ts` — mount/unmount TipTap into BlipView slot', commit: null },
+      { done: false, label: '`blip-editor-host.ts` — mount/unmount TipTap into BlipView slot', commit: null },
       { done: false, label: '`wave-view.ts` — full port of `wave/view.coffee`', commit: null },
       { done: false, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: null },
       { done: false, label: '`RizzomaTopicDetail.tsx` side-by-side toggle (no demolition)', commit: null },
