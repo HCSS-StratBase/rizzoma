@@ -2224,23 +2224,26 @@ export function RizzomaBlip({
           without requiring the parent to exit edit mode first.
         */}
         {/*
-          Inline-child render paths:
+          Inline-child render paths (revised 2026-05-05 evening per user
+          "Ctrl+Enter should open inline AS IN THE ORIGINAL"):
+
           1. Parity view mode: renderInlineHtml() above places children inline
              inside the <li> as React siblings. No portal.
-          2. Non-parity view mode: createPortal targets injectInlineMarkers'
-             .inline-child-portal anchors — those live OUTSIDE the marker's <p>
-             (appended to the closest <li>), so block-inside-paragraph isn't an
-             issue.
-          3. Edit mode: skip createPortal entirely — the portal target lives
-             INSIDE BlipThreadNode's marker host span which is INSIDE the
-             editor's <p>, and rendering a block-level child there breaks the
-             enclosing <li>'s layout (text after the marker becomes orphaned
-             non-list-item content). Instead, render expanded inline children
-             as a flat block stack BELOW the editor (via the editChildrenStack
-             block below). The marker stays in-editor as a position indicator;
-             the actual child content lives outside the editor's DOM tree.
+          2. Edit mode (own editor OR contentOverride from TopicDetail) AND
+             non-parity view mode: createPortal teleports the React tree into
+             BlipThreadNode's .inline-child-portal anchor (in edit mode, that
+             anchor is INSIDE the marker host span at the cursor's structural
+             position — child appears AT cursor like original Rizzoma's
+             blip_thread.coffee + renderer.coffee:107-113).
+
+          The block-inside-paragraph layout consequence (text after the marker
+          on the same line continues on a new line below the rendered child)
+          is exactly how original Rizzoma renders too — accepted price for
+          true cursor-position inline rendering. NOT rendering below-the-editor
+          as a flat stack: that was a previous mitigation but the user
+          explicitly asked for "as in the original".
         */}
-        {!parityViewRender && !isEditing && !contentOverride && inlineChildren
+        {!parityViewRender && inlineChildren
           .filter(child => localExpandedInline.has(child.id) && portalContainers.current.has(child.id))
           .map(child => createPortal(
             <div className="inline-child-expanded">
@@ -2260,37 +2263,6 @@ export function RizzomaBlip({
             </div>,
             portalContainers.current.get(child.id)!,
             `inline-${child.id}`
-          ))}
-
-        {/* Edit-mode inline children: render OUTSIDE the editor as a flat stack
-            below it. Avoids the block-inside-<p>-inside-<li> layout breakage
-            that was orphaning post-marker text from its bullet (user-reported
-            "LI disappears when I click in the new blip"). Covers both:
-              - this RizzomaBlip's own edit mode (isEditing)
-              - topic-root edit mode where the editor is passed via contentOverride
-                from RizzomaTopicDetail (RizzomaBlip's own isEditing stays false). */}
-        {(isEditing || !!contentOverride) && inlineChildren
-          .filter(child => localExpandedInline.has(child.id))
-          .map(child => (
-            <div
-              key={`edit-inline-${child.id}`}
-              className="inline-child-expanded inline-child-edit-mode"
-              data-inline-child={child.id}
-            >
-              <RizzomaBlip
-                blip={{ ...child, isCollapsed: false }}
-                isRoot={false}
-                isInlineChild={true}
-                depth={depth + 1}
-                onBlipUpdate={onBlipUpdate}
-                onAddReply={onAddReply}
-                onToggleCollapse={onToggleCollapse}
-                onDeleteBlip={onDeleteBlip}
-                onBlipRead={onBlipRead}
-                onExpand={onExpand}
-                expandedBlips={expandedBlips}
-              />
-            </div>
           ))}
 
         {contentFooter}
