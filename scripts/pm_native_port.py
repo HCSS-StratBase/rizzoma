@@ -354,12 +354,18 @@ def build_layout(issue_states: dict[int, str], commits: list[dict]) -> Layout:
     return Group(overall, Text(""), *phase_cards, Text(""), bottom)
 
 
-def help_footer() -> Text:
+def help_footer(live: bool = False) -> Text:
     t = Text()
-    t.append("Press ", style="dim")
-    t.append("Ctrl+C", style=f"bold {COL_GOLD}")
-    t.append(" to exit · regen via ", style="dim")
-    t.append("python3 scripts/pm_native_port.py", style=COL_LB)
+    if live:
+        t.append("Live mode · ", style="dim")
+        t.append("Ctrl+C", style=f"bold {COL_GOLD}")
+        t.append(" to exit", style="dim")
+    else:
+        t.append("Re-run ", style="dim")
+        t.append("pmr", style=f"bold {COL_GOLD}")
+        t.append(" to refresh · ", style="dim")
+        t.append("pmr --live", style=COL_LB)
+        t.append(" for auto-refresh (loses scrollback)", style="dim")
     t.append(" · GH epic ", style="dim")
     t.append(f"#{ISSUE_NUMBERS[0]}", style=COL_GOLD)
     t.append(f" at github.com/{REPO}/issues/{ISSUE_NUMBERS[0]}", style="dim")
@@ -376,7 +382,7 @@ def render_once(console: Console) -> None:
     commits = fetch_commits()
     console.print(build_layout(issue_states, commits))
     console.print()
-    console.print(help_footer())
+    console.print(help_footer(live=False))
 
 
 def render_live(console: Console, refresh: float) -> None:
@@ -388,7 +394,7 @@ def render_live(console: Console, refresh: float) -> None:
         cache["issues"] = fetch_issue_states()
         cache["commits"] = fetch_commits()
         return Group(build_layout(cache["issues"], cache["commits"]),
-                     Text(""), help_footer())
+                     Text(""), help_footer(live=True))
 
     with Live(_payload(), console=console, refresh_per_second=4,
               screen=False, transient=False) as live:
@@ -402,11 +408,11 @@ def render_live(console: Console, refresh: float) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Native fractal-render port — live PM TUI")
-    parser.add_argument("--once", action="store_true",
-                        help="Render once and exit (no live refresh)")
+    parser = argparse.ArgumentParser(description="Native fractal-render port — PM TUI")
+    parser.add_argument("--live", action="store_true",
+                        help="Live-refresh mode (overwrites in-place; scrollback is lost)")
     parser.add_argument("--refresh", type=float, default=5.0,
-                        help="Refresh interval in seconds (default: 5)")
+                        help="Refresh interval in seconds for --live mode (default: 5)")
     args = parser.parse_args()
 
     # Use stderr-aware terminal width detection.
@@ -419,11 +425,13 @@ def main() -> int:
         console.print("[red]error:[/] git not on PATH; cannot read branch state")
         return 1
 
-    if args.once:
-        render_once(console)
+    if args.live:
+        render_live(console, args.refresh)
         return 0
 
-    render_live(console, args.refresh)
+    # Default: one-shot. Output stays in terminal scrollback so the user can
+    # scroll up/down freely. Re-run `pmr` to refresh.
+    render_once(console)
     return 0
 
 
