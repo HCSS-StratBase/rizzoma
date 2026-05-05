@@ -12,7 +12,7 @@
 import { describe, it, expect } from 'vitest';
 import { parseHtmlToContentArray } from '../parser';
 import { serializeContentArrayToHtml } from '../serializer';
-import { ContentArray, ModelType, type BlipEl, type LineEl, type TextEl } from '../types';
+import { ContentArray, ModelType } from '../types';
 
 /** Strip volatile fields so structural-equivalence comparison is meaningful. */
 const normalize = (arr: ContentArray): ContentArray =>

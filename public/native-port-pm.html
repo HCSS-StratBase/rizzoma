@@ -151,7 +151,7 @@
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/NATIVE_RENDER_PORT_PLAN.md">Plan</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md">Why</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/issues/50">Epic #50</a>
-    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-05 20:32:37 UTC</span>
+    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-05 20:40:19 UTC</span>
     &nbsp;·&nbsp; <span id="refresh-status">auto-refresh ON</span>
   </p>
 </header>
@@ -159,14 +159,14 @@
 <section>
   <h2>🎯 Overall</h2>
   <div class="grid-overall">
-    <div class="stat-card"><div class="stat-num">32%</div><div class="stat-lbl">Complete</div></div>
-    <div class="stat-card"><div class="stat-num">4.7<span style="font-size:1rem;color:var(--lb)"> / 14.5</span></div><div class="stat-lbl">Workdays</div></div>
+    <div class="stat-card"><div class="stat-num">40%</div><div class="stat-lbl">Complete</div></div>
+    <div class="stat-card"><div class="stat-num">5.8<span style="font-size:1rem;color:var(--lb)"> / 14.5</span></div><div class="stat-lbl">Workdays</div></div>
     <div class="stat-card"><div class="stat-num">1<span style="font-size:1rem;color:var(--lb)"> / 6</span></div><div class="stat-lbl">Phases done</div></div>
-    <div class="stat-card"><div class="stat-num">13</div><div class="stat-lbl">Commits on port branch</div></div>
+    <div class="stat-card"><div class="stat-num">14</div><div class="stat-lbl">Commits on port branch</div></div>
   </div>
   <div class="pbar-row">
-    <div class="pbar-wrapper"><div class="pbar-fill" style="--target:32%"></div></div>
-    <div class="pbar-pct">32%</div>
+    <div class="pbar-wrapper"><div class="pbar-fill" style="--target:40%"></div></div>
+    <div class="pbar-pct">40%</div>
   </div>
 </section>
 
@@ -224,13 +224,13 @@
     </div>
     <div class="phase-short">Direct TS port of share/parser.coffee + editor/renderer.coffee + blip/blip_thread.coffee</div>
     <div class="pbar-row">
-      <div class="pbar-wrapper"><div class="pbar-fill amber" style="--target:89%"></div></div>
-      <div class="pbar-pct">8/9 · 89%</div>
+      <div class="pbar-wrapper"><div class="pbar-fill amber" style="--target:94%"></div></div>
+      <div class="pbar-pct">8 + 1◐/9 · 94%</div>
     </div>
     <div class="phase-meta">
       <span>⏱️ 3 workdays estimated</span>
       <span>📋 9 deliverables</span>
-      
+      <span style="color:var(--amber)">◐ 1 in progress</span>
     </div>
     <ul class="deliv-list">
         <li class="deliv">
@@ -274,8 +274,8 @@
           <span class="deliv-commit"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/1e0a60f1" target="_blank" rel="noopener">1e0a60f1</a></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check "></span>
-          <span class="deliv-label ">Round-trip parser tests on every dev-DB topic</span>
+          <span class="deliv-check wip">◐</span>
+          <span class="deliv-label wip">Round-trip parser tests on every dev-DB topic (<code>scripts/native_roundtrip_devdb.mjs</code> ready; awaits reachable CouchDB)</span>
           <span class="deliv-commit"></span>
         </li>
     </ul>
@@ -290,8 +290,8 @@
     </div>
     <div class="phase-short">Per-blip view; mounts TipTap into DOM slot when isEditing; Ctrl+Enter inserts BLIP at array index</div>
     <div class="pbar-row">
-      <div class="pbar-wrapper"><div class="pbar-fill amber" style="--target:38%"></div></div>
-      <div class="pbar-pct">2 + 2◐/8 · 38%</div>
+      <div class="pbar-wrapper"><div class="pbar-fill amber" style="--target:63%"></div></div>
+      <div class="pbar-pct">4 + 2◐/8 · 63%</div>
     </div>
     <div class="phase-meta">
       <span>⏱️ 4 workdays estimated</span>
@@ -310,23 +310,23 @@
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check wip">◐</span>
-          <span class="deliv-label wip"><code>wave-view.ts</code> — full port of <code>wave/view.coffee</code></span>
+          <span class="deliv-check done">✓</span>
+          <span class="deliv-label done"><code>wave-view.ts</code> — full port of <code>wave/view.coffee</code> (registry + events + DOM helpers)</span>
+          <span class="deliv-commit"></span>
+        </li>
+        <li class="deliv">
+          <span class="deliv-check done">✓</span>
+          <span class="deliv-label done"><code>NativeWaveView.tsx</code> — thin React wrapper behind feature flag</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
           <span class="deliv-check wip">◐</span>
-          <span class="deliv-label wip"><code>NativeWaveView.tsx</code> — thin React wrapper behind feature flag</span>
+          <span class="deliv-label wip"><code>RizzomaTopicDetail.tsx</code> side-by-side toggle (no demolition)</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check "></span>
-          <span class="deliv-label "><code>RizzomaTopicDetail.tsx</code> side-by-side toggle (no demolition)</span>
-          <span class="deliv-commit"></span>
-        </li>
-        <li class="deliv">
-          <span class="deliv-check "></span>
-          <span class="deliv-label ">Ctrl+Enter handler — insert BLIP at cursor array-index</span>
+          <span class="deliv-check wip">◐</span>
+          <span class="deliv-label wip">Ctrl+Enter handler — insert BLIP at cursor array-index</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
@@ -536,39 +536,44 @@
   <div class="recent-commits">
 
     <div class="commit-row">
+      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/01a5acd032b5b3006e402ea9de78ce36cc435db0" target="_blank" rel="noopener">01a5acd0</a></span>
+      <span class="commit-subject">Phase 2 (#53): blip-editor-host.ts — TipTap mount/unmount + round-trip</span>
+      <span class="commit-when">8 minutes ago</span>
+    </div>
+    <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/0f575018eaefb778e46d4498be3c71a7ba69fed6" target="_blank" rel="noopener">0f575018</a></span>
       <span class="commit-subject">PM: revert two stale WIP markers (neither was actually being worked on)</span>
-      <span class="commit-when">6 minutes ago</span>
+      <span class="commit-when">14 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/ea4e210bf132f168c67e09d80d17ae54a98b3861" target="_blank" rel="noopener">ea4e210b</a></span>
       <span class="commit-subject">PM html: re-add pbar animation script (was dropped on rewrite)</span>
-      <span class="commit-when">19 minutes ago</span>
+      <span class="commit-when">27 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/57270c026a49939fda7dacac05a9ec85f5a14103" target="_blank" rel="noopener">57270c02</a></span>
       <span class="commit-subject">PM: add IN PROGRESS deliverable state (◐ amber)</span>
-      <span class="commit-when">20 minutes ago</span>
+      <span class="commit-when">28 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/2b01bf311c5b6ade7bcba050b1d67fc7a53851e5" target="_blank" rel="noopener">2b01bf31</a></span>
       <span class="commit-subject">PM: add HTML dashboard with auto-refresh + native scroll</span>
-      <span class="commit-when">39 minutes ago</span>
+      <span class="commit-when">47 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/bbf116c9f9f6debebb1d06d88058fa95274446b0" target="_blank" rel="noopener">bbf116c9</a></span>
       <span class="commit-subject">pmr: --live now appends snapshots (preserves scrollback)</span>
-      <span class="commit-when">45 minutes ago</span>
+      <span class="commit-when">53 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/f5b17fd958c52f48253163330508f992aa995885" target="_blank" rel="noopener">f5b17fd9</a></span>
       <span class="commit-subject">pmr UX + Phase 2 (#53) start: BlipView + WaveView skeletons</span>
-      <span class="commit-when">48 minutes ago</span>
+      <span class="commit-when">56 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/1e0a60f1359660d9f03c0fd0885be824964c7607" target="_blank" rel="noopener">1e0a60f1</a></span>
       <span class="commit-subject">Phase 1 (#52): serializer + depth-10 spike test (terminal-only)</span>
-      <span class="commit-when">52 minutes ago</span>
+      <span class="commit-when">60 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/a99180d9229162d23aae4ba9b933a0fefefd066e" target="_blank" rel="noopener">a99180d9</a></span>

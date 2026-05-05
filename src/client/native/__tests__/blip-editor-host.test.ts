@@ -29,6 +29,9 @@ class FakeTipTapAdapter implements BlipEditorAdapter {
     // Simulate what TipTap returns: the contenteditable's current HTML.
     return this.element.innerHTML;
   }
+  getCachedHtml(): string {
+    return this.html;
+  }
   setContent(html: string): void {
     this.html = html;
     this.element.innerHTML = html;

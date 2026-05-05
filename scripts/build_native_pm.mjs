@@ -58,7 +58,7 @@ const PHASES = [
       { done: true, label: '`serializer.ts` — ContentArray → HTML (round-trip inverse)', commit: '1e0a60f1' },
       { done: true, label: 'Depth-10 spike test (jsdom; 2047 blips, 2046 BlipThreads, depth=10)', commit: '1e0a60f1' },
       { done: true, label: 'Bug fix: BlipThread initial fold-class set in constructor', commit: '1e0a60f1' },
-      { done: false, label: 'Round-trip parser tests on every dev-DB topic', commit: null },
+      { wip: true, label: 'Round-trip parser tests on every dev-DB topic (`scripts/native_roundtrip_devdb.mjs` ready; awaits reachable CouchDB)', commit: null },
     ],
   },
   {
@@ -68,10 +68,10 @@ const PHASES = [
     deliverables: [
       { done: true, label: '`blip-view.ts` — BlipView + WaveView skeletons (read-mode rendering)', commit: 'f5b17fd9' },
       { done: true, label: '`blip-editor-host.ts` — mount/unmount TipTap into BlipView slot', commit: null },
-      { wip: true, label: '`wave-view.ts` — full port of `wave/view.coffee`', commit: null },
-      { wip: true, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: null },
-      { done: false, label: '`RizzomaTopicDetail.tsx` side-by-side toggle (no demolition)', commit: null },
-      { done: false, label: 'Ctrl+Enter handler — insert BLIP at cursor array-index', commit: null },
+      { done: true, label: '`wave-view.ts` — full port of `wave/view.coffee` (registry + events + DOM helpers)', commit: null },
+      { done: true, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: null },
+      { wip: true, label: '`RizzomaTopicDetail.tsx` side-by-side toggle (no demolition)', commit: null },
+      { wip: true, label: 'Ctrl+Enter handler — insert BLIP at cursor array-index', commit: null },
       { done: false, label: 'sanity sweep + state-survives-collapse pass on `?render=native`', commit: null },
       { done: false, label: 'Nested Ctrl+Enter renders new child INLINE at cursor (the `cc7caf4b` bug)', commit: null },
     ],
