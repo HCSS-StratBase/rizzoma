@@ -537,6 +537,18 @@ export function RizzomaBlip({
   // Keep editor ref updated for use in callbacks
   inlineEditorRef.current = inlineEditor;
 
+  // Reliably propagate isEditing → contenteditable. useEditor's setOptions()
+  // does NOT always update editable when the option changes after mount; the
+  // editable option is read at editor-creation time only. Calling setEditable()
+  // explicitly tells ProseMirror to update its contenteditable attribute.
+  // Without this, a freshly-mounted blip whose isEditing flips true after mount
+  // (e.g. the auto-edit on a new Ctrl+Enter child) renders with
+  // contenteditable="false" and the user cannot type.
+  useEffect(() => {
+    if (!inlineEditor || (inlineEditor as any).isDestroyed) return;
+    inlineEditor.setEditable(isEditing);
+  }, [inlineEditor, isEditing]);
+
   // Seed Y.Doc from blip HTML content after the server sync response arrives.
   // TipTap's Collaboration extension renders from Y.Doc fragment 'default' (ignoring the content prop).
   // The server always sends a blip:sync response — if it contains state, the Y.Doc is populated
