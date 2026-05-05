@@ -149,3 +149,53 @@ describe('BlipEditorHost lifecycle', () => {
     expect(() => host.save()).toThrow(/not mounted/);
   });
 });
+
+describe('BlipEditorHost.insertChildBlipAtCursor (Ctrl+Enter)', () => {
+  const cursor = '﻿'; // ZWNBSP, invisible — caller injects into HTML
+
+  it('inserts a BLIP after the LINE the cursor sits in', () => {
+    const view = new BlipView('p');
+    view.setContent(sampleContent());
+    const host = new BlipEditorHost(view, makeAdapter);
+    host.mount();
+    const editor = host.getEditor() as FakeTipTapAdapter;
+
+    // Cursor lands in the SECOND bullet ("Second").
+    editor.setContent(
+      '<ul class="bulleted-list bulleted-list-level0">' +
+        '<li class="bulleted bulleted-type0">First</li>' +
+        '<li class="bulleted bulleted-type0">Second' + cursor + '</li>' +
+      '</ul>'
+    );
+
+    const next = host.insertChildBlipAtCursor(cursor, 'newchild-1');
+    const types = next.map((e) => e.type);
+    // Expect: LINE, TEXT(First), LINE, TEXT(Second), BLIP
+    expect(types).toEqual(['line', 'text', 'line', 'text', 'blip']);
+    const blip = next.find((e) => e.type === 'blip') as any;
+    expect(blip.params.id).toBe('newchild-1');
+    // Cursor marker is stripped from the TEXT (trailing whitespace ok).
+    const secondText = next[3] as any;
+    expect(secondText.text.trim()).toBe('Second');
+    // View was updated with the new array.
+    expect(view.getContent()).toEqual(next);
+  });
+
+  it('writes view content even if cursor marker is missing (falls back to last LINE)', () => {
+    const view = new BlipView('q');
+    view.setContent(sampleContent());
+    const host = new BlipEditorHost(view, makeAdapter);
+    host.mount();
+    // No cursor marker injected; insertChildBlipAtCursor should still
+    // produce a BLIP element at the end of the last LINE.
+    const next = host.insertChildBlipAtCursor(cursor, 'fallback-1');
+    expect(next[next.length - 1].type).toBe('blip');
+    expect((next[next.length - 1] as any).params.id).toBe('fallback-1');
+  });
+
+  it('throws if not mounted', () => {
+    const view = new BlipView('r');
+    const host = new BlipEditorHost(view, makeAdapter);
+    expect(() => host.insertChildBlipAtCursor(cursor, 'x')).toThrow(/not mounted/);
+  });
+});

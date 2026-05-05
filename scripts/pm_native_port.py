@@ -49,8 +49,11 @@ class Deliverable:
     label: str
     done: bool = False
     commit: Optional[str] = None  # short hash; resolved to URL on render
-    wip: bool = False  # currently in progress (counts 0.5 toward pbar)
+    files: list[str] = field(default_factory=list)  # paths whose dirty state means WIP
     failed: bool = False  # FAILED — needs attention (red ✗)
+    # `wip` is now AUTO-DERIVED from git working-tree state at render time.
+    # See _is_wip() / WIP_FILES below. NEVER hand-set this to True.
+    wip: bool = False
 
 
 @dataclass
@@ -62,13 +65,15 @@ class Phase:
     days: float
     deliverables: list[Deliverable] = field(default_factory=list)
 
+    # The following properties take a `dirty` set so WIP is derived from
+    # current git state. Pass an empty set for a "static" view.
+
     @property
     def done_count(self) -> int:
         return sum(1 for d in self.deliverables if d.done)
 
-    @property
-    def wip_count(self) -> int:
-        return sum(1 for d in self.deliverables if d.wip)
+    def wip_count(self, dirty: set[str]) -> int:
+        return sum(1 for d in self.deliverables if not d.done and derive_wip(d, dirty))
 
     @property
     def failed_count(self) -> int:
@@ -78,18 +83,17 @@ class Phase:
     def total(self) -> int:
         return len(self.deliverables)
 
-    @property
-    def pct(self) -> float:
+    def pct(self, dirty: set[str]) -> float:
         if not self.total:
             return 0
-        weighted = self.done_count + 0.5 * self.wip_count
+        weighted = self.done_count + 0.5 * self.wip_count(dirty)
         return (weighted / self.total) * 100
 
-    @property
-    def status(self) -> str:
-        if self.pct == 100:
+    def status(self, dirty: set[str]) -> str:
+        pct = self.pct(dirty)
+        if pct == 100:
             return "done"
-        if self.pct == 0 and self.wip_count == 0:
+        if pct == 0 and self.wip_count(dirty) == 0:
             return "pending"
         return "progress"
 
@@ -114,17 +118,17 @@ PHASES: list[Phase] = [
               Deliverable("serializer.ts — ContentArray → HTML inverse + round-trip tests", True),
               Deliverable("Depth-10 spike test (jsdom; 2047 blips, 2046 BlipThreads, all folded)", True),
               Deliverable("Bug fix: BlipThread initial fold-class set in constructor", True),
-              Deliverable("Round-trip parser tests on every dev-DB topic (5/5 pass on VPS DB; 3 parser bugs caught + fixed)", True, commit="a3078b60"),
+              Deliverable("Round-trip parser tests on every dev-DB topic (5/5 pass on VPS DB; 3 parser bugs caught + fixed)", True, commit="a3078b60", files=["scripts/native_roundtrip_devdb.mjs"]),
           ]),
     Phase(2, 53, "BlipView lifecycle + TipTap edit-mode + Ctrl+Enter",
           "Per-blip view; mounts TipTap into DOM slot when isEditing; Ctrl+Enter inserts BLIP at array index",
           4, [
-              Deliverable("blip-view.ts — BlipView + WaveView skeletons (read-mode rendering)", True, commit="f5b17fd9"),
-              Deliverable("blip-editor-host.ts — mount/unmount TipTap into BlipView slot", True, commit="01a5acd0"),
-              Deliverable("wave-view.ts — full port of wave/view.coffee (registry + events + DOM helpers)", True, commit="bf7529d0"),
-              Deliverable("NativeWaveView.tsx — thin React wrapper behind feature flag", True, commit="bf7529d0"),
-              Deliverable("RizzomaTopicDetail.tsx side-by-side toggle (no demolition)", wip=True),
-              Deliverable("Ctrl+Enter handler — insert BLIP at cursor array-index", wip=True),
+              Deliverable("blip-view.ts — BlipView + WaveView skeletons (read-mode rendering)", True, commit="f5b17fd9", files=["src/client/native/blip-view.ts"]),
+              Deliverable("blip-editor-host.ts — mount/unmount TipTap into BlipView slot", True, commit="01a5acd0", files=["src/client/native/blip-editor-host.ts"]),
+              Deliverable("wave-view.ts — full port of wave/view.coffee (registry + events + DOM helpers)", True, commit="bf7529d0", files=["src/client/native/wave-view.ts"]),
+              Deliverable("NativeWaveView.tsx — thin React wrapper behind feature flag", True, commit="bf7529d0", files=["src/client/components/native/NativeWaveView.tsx"]),
+              Deliverable("RizzomaTopicDetail.tsx side-by-side toggle (no demolition)", files=["src/client/components/RizzomaTopicDetail.tsx"]),
+              Deliverable("Ctrl+Enter handler — insert BLIP at cursor array-index", files=["src/client/native/blip-editor-host.ts"]),
               Deliverable("sanity sweep + state-survives-collapse pass on ?render=native"),
               Deliverable("Nested Ctrl+Enter renders new child INLINE at cursor (the cc7caf4b bug)"),
           ]),
@@ -215,6 +219,41 @@ def fetch_commits() -> list[dict]:
     return rows
 
 
+def fetch_dirty_files() -> set[str]:
+    """Files currently modified or staged-but-uncommitted in the working tree.
+    A deliverable is WIP iff at least one of its `files` shows up here.
+    Honest: when nothing is being worked on, returns empty set → no WIPs."""
+    out = sh(["git", "status", "--porcelain"])
+    if not out:
+        return set()
+    dirty = set()
+    for line in out.splitlines():
+        # Format: "XY path" where XY is two-char status and path is everything after.
+        # Renames look like "R  old -> new" — handle both names.
+        if len(line) < 4:
+            continue
+        path = line[3:].strip()
+        if " -> " in path:
+            # Rename: take both sides.
+            parts = path.split(" -> ")
+            dirty.add(parts[0].strip().strip('"'))
+            dirty.add(parts[1].strip().strip('"'))
+        else:
+            dirty.add(path.strip('"'))
+    return dirty
+
+
+def derive_wip(deliverable: "Deliverable", dirty: set[str]) -> bool:
+    """A deliverable is WIP iff any of its `files` are in the dirty set.
+    Hand-set `wip=True` is ALSO honored as a manual override but the rule
+    above is the primary signal."""
+    if deliverable.wip:
+        return True  # manual override (use sparingly; prefer auto-derived)
+    if not deliverable.files:
+        return False
+    return any(f in dirty for f in deliverable.files)
+
+
 # ──────────────────────────────────────────────────────────────────────
 # Rich rendering
 # ──────────────────────────────────────────────────────────────────────
@@ -276,22 +315,26 @@ def render_overall(total_done_days: float, total_days: float, phases_done: int,
                  border_style=COL_GOLD, padding=(1, 2))
 
 
-def render_phase(p: Phase, gh_state: str) -> Panel:
+def render_phase(p: Phase, gh_state: str, dirty: set[str]) -> Panel:
+    status = p.status(dirty)
+    pct = p.pct(dirty)
+    wip_count = p.wip_count(dirty)
+
     title = Text()
     title.append(f"PHASE {p.n} ", style=f"bold {COL_GOLD}")
     title.append(f"#{p.issue}", style=f"bold {COL_GOLD} underline")
     title.append(f" · GH {gh_state}", style="dim")
     title.append("   ")
-    title.append(status_pill(p.status))
+    title.append(status_pill(status))
 
     header = Text()
     header.append(f"{p.title}\n", style="bold white")
     header.append(p.short + "\n", style=COL_LB)
     header.append("\n")
-    header.append(render_pbar(p.pct, 50, p.status))
+    header.append(render_pbar(pct, 50, status))
     counts = f"   {p.done_count}/{p.total}"
-    if p.wip_count:
-        counts += f" (+{p.wip_count}◐)"
+    if wip_count:
+        counts += f" (+{wip_count}◐)"
     counts += f" · ⏱  {p.days}d"
     header.append(counts, style="dim")
 
@@ -300,13 +343,14 @@ def render_phase(p: Phase, gh_state: str) -> Panel:
     table.add_column("label", overflow="fold")
     table.add_column("commit", width=11, no_wrap=True, justify="right")
     for d in p.deliverables:
+        is_wip = derive_wip(d, dirty) and not d.done
         if d.failed:
             check = Text("✗", style=f"bold {COL_RED}")
             label = Text(d.label + "  [FAILED]", style=f"bold {COL_RED}")
         elif d.done:
             check = Text("✓", style=f"bold {COL_GREEN}")
             label = Text(d.label, style="white")
-        elif d.wip:
+        elif is_wip:
             check = Text("◐", style=f"bold {COL_AMBER}")
             label = Text(d.label + "  [IN PROGRESS]", style=f"bold {COL_AMBER}")
         else:
@@ -317,7 +361,7 @@ def render_phase(p: Phase, gh_state: str) -> Panel:
         table.add_row(check, label, commit_txt)
 
     return Panel(Group(header, Text(""), table), title=title,
-                 border_style=status_color(p.status), padding=(0, 1))
+                 border_style=status_color(status), padding=(0, 1))
 
 
 def render_commits(commits: list[dict]) -> Panel:
@@ -357,17 +401,18 @@ def render_calendar() -> Panel:
                  border_style=COL_LB, padding=(0, 1))
 
 
-def build_layout(issue_states: dict[int, str], commits: list[dict]) -> Layout:
+def build_layout(issue_states: dict[int, str], commits: list[dict]) -> Group:
+    dirty = fetch_dirty_files()
     total_days = sum(p.days for p in PHASES)
-    completed_days = sum(p.days * p.pct / 100 for p in PHASES)
+    completed_days = sum(p.days * p.pct(dirty) / 100 for p in PHASES)
     overall_pct = (completed_days / total_days) * 100 if total_days else 0
-    phases_done = sum(1 for p in PHASES if p.status == "done")
+    phases_done = sum(1 for p in PHASES if p.status(dirty) == "done")
 
     overall = render_overall(completed_days, total_days, phases_done,
                              len(commits), overall_pct)
 
     # Phase cards stacked vertically — full-width is more legible than squeezed 2-col.
-    phase_cards = [render_phase(p, issue_states.get(p.issue, "?")) for p in PHASES]
+    phase_cards = [render_phase(p, issue_states.get(p.issue, "?"), dirty) for p in PHASES]
 
     bottom = Columns([render_commits(commits), render_calendar()],
                      expand=True, equal=True)

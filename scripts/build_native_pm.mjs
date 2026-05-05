@@ -58,7 +58,7 @@ const PHASES = [
       { done: true, label: '`serializer.ts` — ContentArray → HTML (round-trip inverse)', commit: '1e0a60f1' },
       { done: true, label: 'Depth-10 spike test (jsdom; 2047 blips, 2046 BlipThreads, depth=10)', commit: '1e0a60f1' },
       { done: true, label: 'Bug fix: BlipThread initial fold-class set in constructor', commit: '1e0a60f1' },
-      { done: true, label: 'Round-trip parser tests on every dev-DB topic (5/5 pass on VPS DB; 3 parser bugs caught + fixed)', commit: 'a3078b60' },
+      { done: true, label: 'Round-trip parser tests on every dev-DB topic (5/5 pass on VPS DB; 3 parser bugs caught + fixed)', commit: 'a3078b60', files: ['scripts/native_roundtrip_devdb.mjs'] },
     ],
   },
   {
@@ -66,12 +66,12 @@ const PHASES = [
     title: 'BlipView lifecycle + TipTap edit-mode + Ctrl+Enter',
     short: 'Per-blip view; mounts TipTap into DOM slot when isEditing; Ctrl+Enter inserts BLIP at array index',
     deliverables: [
-      { done: true, label: '`blip-view.ts` — BlipView + WaveView skeletons (read-mode rendering)', commit: 'f5b17fd9' },
-      { done: true, label: '`blip-editor-host.ts` — mount/unmount TipTap into BlipView slot', commit: '01a5acd0' },
-      { done: true, label: '`wave-view.ts` — full port of `wave/view.coffee` (registry + events + DOM helpers)', commit: 'bf7529d0' },
-      { done: true, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: 'bf7529d0' },
-      { wip: true, label: '`RizzomaTopicDetail.tsx` side-by-side toggle (no demolition)', commit: null },
-      { wip: true, label: 'Ctrl+Enter handler — insert BLIP at cursor array-index', commit: null },
+      { done: true, label: '`blip-view.ts` — BlipView + WaveView skeletons (read-mode rendering)', commit: 'f5b17fd9', files: ['src/client/native/blip-view.ts'] },
+      { done: true, label: '`blip-editor-host.ts` — mount/unmount TipTap into BlipView slot', commit: '01a5acd0', files: ['src/client/native/blip-editor-host.ts'] },
+      { done: true, label: '`wave-view.ts` — full port of `wave/view.coffee` (registry + events + DOM helpers)', commit: 'bf7529d0', files: ['src/client/native/wave-view.ts'] },
+      { done: true, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: 'bf7529d0', files: ['src/client/components/native/NativeWaveView.tsx'] },
+      { done: false, label: '`RizzomaTopicDetail.tsx` side-by-side toggle (no demolition)', commit: null, files: ['src/client/components/RizzomaTopicDetail.tsx'] },
+      { done: false, label: 'Ctrl+Enter handler — insert BLIP at cursor array-index', commit: null, files: ['src/client/native/blip-editor-host.ts'] },
       { done: false, label: 'sanity sweep + state-survives-collapse pass on `?render=native`', commit: null },
       { done: false, label: 'Nested Ctrl+Enter renders new child INLINE at cursor (the `cc7caf4b` bug)', commit: null },
     ],
@@ -145,12 +145,40 @@ try {
   });
 } catch {}
 
+// ─── Auto-derive WIP from git working-tree state ─────────────────────
+// A deliverable is WIP iff one of its `files` paths is modified or staged
+// in `git status --porcelain`. Honest: when nothing is being worked on,
+// no WIP markers show; when I edit a file the deliverable flips to ◐
+// instantly; on commit it flips to ○ or ✓.
+const dirtyFiles = new Set();
+try {
+  const out = sh(`git status --porcelain`);
+  for (const line of out.split('\n')) {
+    if (line.length < 4) continue;
+    let path = line.slice(3).trim();
+    if (path.includes(' -> ')) {
+      const [oldP, newP] = path.split(' -> ');
+      dirtyFiles.add(oldP.trim().replace(/^"|"$/g, ''));
+      dirtyFiles.add(newP.trim().replace(/^"|"$/g, ''));
+    } else {
+      dirtyFiles.add(path.replace(/^"|"$/g, ''));
+    }
+  }
+} catch {}
+
+const isWip = (d) => {
+  if (d.done) return false;
+  if (d.wip === true) return true; // manual override (use sparingly)
+  if (!Array.isArray(d.files)) return false;
+  return d.files.some((f) => dirtyFiles.has(f));
+};
+
 // ─── Per-phase progress + overall ───
 // Done deliverables count as 1.0; WIP count as 0.5 toward the bar fill.
 for (const p of PHASES) {
   const total = p.deliverables.length;
   const done = p.deliverables.filter((d) => d.done).length;
-  const wip  = p.deliverables.filter((d) => d.wip).length;
+  const wip  = p.deliverables.filter(isWip).length;
   const weighted = done + wip * 0.5;
   p.pct = Math.round((weighted / total) * 100);
   p.done = done;
@@ -368,8 +396,9 @@ ${PHASES.map((p) => {
   const fillCls = p.status === 'done' ? 'green' : (p.status === 'progress' ? 'amber' : 'gray');
   const issueState = issueStates[p.issue]?.state || '?';
   const delivLis = p.deliverables.map((d) => {
-    const stateCls = d.failed ? 'failed' : (d.done ? 'done' : (d.wip ? 'wip' : ''));
-    const checkChar = d.failed ? '✗' : (d.done ? '✓' : (d.wip ? '◐' : ''));
+    const wip = isWip(d);
+    const stateCls = d.failed ? 'failed' : (d.done ? 'done' : (wip ? 'wip' : ''));
+    const checkChar = d.failed ? '✗' : (d.done ? '✓' : (wip ? '◐' : ''));
     return `
         <li class="deliv">
           <span class="deliv-check ${stateCls}">${checkChar}</span>

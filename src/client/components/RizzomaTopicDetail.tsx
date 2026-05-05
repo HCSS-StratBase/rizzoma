@@ -19,6 +19,9 @@ import { EDIT_MODE_EVENT, INSERT_EVENTS } from './RightToolsPanel';
 import { useCollaboration } from './editor/useCollaboration';
 import { yjsDocManager } from './editor/YjsDocumentManager';
 import { FEATURES } from '@shared/featureFlags';
+import { NativeWaveView } from './native/NativeWaveView';
+import { parseHtmlToContentArray } from '@client/native/parser';
+import type { ContentArray } from '@client/native/types';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -1061,6 +1064,42 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
   if (!topic) {
     return <div className="rizzoma-topic-detail loading">Loading...</div>;
+  }
+
+  // ========================================
+  // Native fractal-render path (Phase 2 of the port).
+  // Triggered by URL `?render=native` AND the FEAT_RIZZOMA_NATIVE_RENDER
+  // feature flag. Renders the new ContentArray + renderer + BlipThread
+  // chain via a thin React wrapper. The existing React/TipTap path below
+  // is unaffected — both coexist behind the flag (no demolition).
+  // ========================================
+  const useNativeRender = (() => {
+    if (!FEATURES.RIZZOMA_NATIVE_RENDER) return false;
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('render') === 'native';
+  })();
+
+  if (useNativeRender) {
+    const allBlips: Array<{ id: string; content: string }> = [
+      { id: topic.id, content: topic.content || `<h1>${topic.title || 'Untitled'}</h1>` },
+      ...blips.map((b) => ({ id: b.id, content: b.content || '' })),
+    ];
+    const contentMap = new Map<string, ContentArray>(
+      allBlips.map((b) => [b.id, parseHtmlToContentArray(b.content)])
+    );
+    const lookup = (id: string): ContentArray | null => contentMap.get(id) ?? null;
+
+    return (
+      <div className="rizzoma-topic-detail rizzoma-native-mode">
+        <div className="topic-collab-toolbar">
+          <span style={{ fontSize: 12, color: '#9ca3af', padding: '4px 8px' }}>
+            ⚡ Native render mode (FEAT_RIZZOMA_NATIVE_RENDER + ?render=native).{' '}
+            <a href={window.location.pathname}>Back to React render</a>
+          </span>
+        </div>
+        <NativeWaveView rootBlipId={topic.id} contentByBlipId={lookup} />
+      </div>
+    );
   }
 
   const tags = extractTags(topic.content || '');
