@@ -41,8 +41,14 @@
 .rizzoma-native-mode .blip-text ul ul ul { list-style: square outside; }
 .rizzoma-native-mode .blip-text li { margin: 0.15em 0; }
 
-/* BlipThread — inline [+] anchor + collapsible thread. */
+/* BlipThread — inline [+] anchor + collapsible thread.
+ * Force the inner divs to inline-block so they don't promote to block
+ * (which would stack the markers vertically inside the parent <p>). */
 .rizzoma-native-mode .blip-thread { display: inline; }
+.rizzoma-native-mode .blip-thread .fold-button-container {
+  display: inline-block;
+  vertical-align: middle;
+}
 
 .rizzoma-native-mode .blip-thread .js-fold-button {
   display: inline-block;
