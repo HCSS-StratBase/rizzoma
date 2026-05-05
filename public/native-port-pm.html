@@ -98,8 +98,26 @@
     margin-top: 2px;
   }
   .deliv-check.done { background: rgba(76,175,131,0.2); border-color: var(--green); color: var(--green); }
+  .deliv-check.wip {
+    background: rgba(224,168,0,0.2); border-color: var(--amber); color: var(--amber);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(224,168,0,0.55); }
+    50%      { box-shadow: 0 0 0 4px rgba(224,168,0,0); }
+  }
   .deliv-label { color: var(--wh); }
   .deliv-label.done { color: var(--lb); }
+  .deliv-label.wip {
+    color: var(--amber); font-weight: 600;
+  }
+  .deliv-label.wip::after {
+    content: " — IN PROGRESS";
+    font-size: 0.7rem; font-weight: 700; color: var(--amber);
+    background: rgba(224,168,0,0.12);
+    padding: 1px 6px; border-radius: 99px; margin-left: 6px;
+    vertical-align: middle;
+  }
   .deliv-commit a { font-family: ui-monospace, monospace; font-size: 0.78rem; color: var(--gold); padding: 2px 6px; background: rgba(219,173,80,0.1); border-radius: 4px; }
   .recent-commits, .calendar { background: var(--bg-card); border-radius: 12px; padding: 20px 22px; margin-bottom: 24px; border: 1px solid var(--border); }
   .commit-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 0.85rem; }
@@ -133,7 +151,7 @@
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/NATIVE_RENDER_PORT_PLAN.md">Plan</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md">Why</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/issues/50">Epic #50</a>
-    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-05 19:53:13 UTC</span>
+    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-05 20:12:20 UTC</span>
     &nbsp;·&nbsp; <span id="refresh-status">auto-refresh ON</span>
   </p>
 </header>
@@ -141,14 +159,14 @@
 <section>
   <h2>🎯 Overall</h2>
   <div class="grid-overall">
-    <div class="stat-card"><div class="stat-num">25%</div><div class="stat-lbl">Complete</div></div>
-    <div class="stat-card"><div class="stat-num">3.7<span style="font-size:1rem;color:var(--lb)"> / 14.5</span></div><div class="stat-lbl">Workdays</div></div>
+    <div class="stat-card"><div class="stat-num">28%</div><div class="stat-lbl">Complete</div></div>
+    <div class="stat-card"><div class="stat-num">4.1<span style="font-size:1rem;color:var(--lb)"> / 14.5</span></div><div class="stat-lbl">Workdays</div></div>
     <div class="stat-card"><div class="stat-num">1<span style="font-size:1rem;color:var(--lb)"> / 6</span></div><div class="stat-lbl">Phases done</div></div>
-    <div class="stat-card"><div class="stat-num">9</div><div class="stat-lbl">Commits on port branch</div></div>
+    <div class="stat-card"><div class="stat-num">10</div><div class="stat-lbl">Commits on port branch</div></div>
   </div>
   <div class="pbar-row">
-    <div class="pbar-wrapper"><div class="pbar-fill" style="--target:25%"></div></div>
-    <div class="pbar-pct">25%</div>
+    <div class="pbar-wrapper"><div class="pbar-fill" style="--target:28%"></div></div>
+    <div class="pbar-pct">28%</div>
   </div>
 </section>
 
@@ -171,6 +189,7 @@
     <div class="phase-meta">
       <span>⏱️ 0.5 workdays estimated</span>
       <span>📋 4 deliverables</span>
+      
     </div>
     <ul class="deliv-list">
         <li class="deliv">
@@ -205,12 +224,13 @@
     </div>
     <div class="phase-short">Direct TS port of share/parser.coffee + editor/renderer.coffee + blip/blip_thread.coffee</div>
     <div class="pbar-row">
-      <div class="pbar-wrapper"><div class="pbar-fill amber" style="--target:89%"></div></div>
-      <div class="pbar-pct">8/9 · 89%</div>
+      <div class="pbar-wrapper"><div class="pbar-fill amber" style="--target:94%"></div></div>
+      <div class="pbar-pct">8 + 1◐/9 · 94%</div>
     </div>
     <div class="phase-meta">
       <span>⏱️ 3 workdays estimated</span>
       <span>📋 9 deliverables</span>
+      <span style="color:var(--amber)">◐ 1 in progress</span>
     </div>
     <ul class="deliv-list">
         <li class="deliv">
@@ -254,8 +274,8 @@
           <span class="deliv-commit"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/1e0a60f1" target="_blank" rel="noopener">1e0a60f1</a></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Round-trip parser tests on every dev-DB topic</span>
+          <span class="deliv-check wip">◐</span>
+          <span class="deliv-label wip">Round-trip parser tests on every dev-DB topic</span>
           <span class="deliv-commit"></span>
         </li>
     </ul>
@@ -270,12 +290,13 @@
     </div>
     <div class="phase-short">Per-blip view; mounts TipTap into DOM slot when isEditing; Ctrl+Enter inserts BLIP at array index</div>
     <div class="pbar-row">
-      <div class="pbar-wrapper"><div class="pbar-fill amber" style="--target:13%"></div></div>
-      <div class="pbar-pct">1/8 · 13%</div>
+      <div class="pbar-wrapper"><div class="pbar-fill amber" style="--target:19%"></div></div>
+      <div class="pbar-pct">1 + 1◐/8 · 19%</div>
     </div>
     <div class="phase-meta">
       <span>⏱️ 4 workdays estimated</span>
       <span>📋 8 deliverables</span>
+      <span style="color:var(--amber)">◐ 1 in progress</span>
     </div>
     <ul class="deliv-list">
         <li class="deliv">
@@ -284,38 +305,38 @@
           <span class="deliv-commit"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/f5b17fd9" target="_blank" rel="noopener">f5b17fd9</a></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label"><code>blip-editor-host.ts</code> — mount/unmount TipTap into BlipView slot</span>
+          <span class="deliv-check wip">◐</span>
+          <span class="deliv-label wip"><code>blip-editor-host.ts</code> — mount/unmount TipTap into BlipView slot</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label"><code>wave-view.ts</code> — full port of <code>wave/view.coffee</code></span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label "><code>wave-view.ts</code> — full port of <code>wave/view.coffee</code></span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label"><code>NativeWaveView.tsx</code> — thin React wrapper behind feature flag</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label "><code>NativeWaveView.tsx</code> — thin React wrapper behind feature flag</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label"><code>RizzomaTopicDetail.tsx</code> side-by-side toggle (no demolition)</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label "><code>RizzomaTopicDetail.tsx</code> side-by-side toggle (no demolition)</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Ctrl+Enter handler — insert BLIP at cursor array-index</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Ctrl+Enter handler — insert BLIP at cursor array-index</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">sanity sweep + state-survives-collapse pass on <code>?render=native</code></span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">sanity sweep + state-survives-collapse pass on <code>?render=native</code></span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Nested Ctrl+Enter renders new child INLINE at cursor (the <code>cc7caf4b</code> bug)</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Nested Ctrl+Enter renders new child INLINE at cursor (the <code>cc7caf4b</code> bug)</span>
           <span class="deliv-commit"></span>
         </li>
     </ul>
@@ -336,36 +357,37 @@
     <div class="phase-meta">
       <span>⏱️ 3 workdays estimated</span>
       <span>📋 6 deliverables</span>
+      
     </div>
     <ul class="deliv-list">
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label"><code>yjs-binding.ts</code> — Y.Array&lt;Y.Map&gt; binding for ContentArray</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label "><code>yjs-binding.ts</code> — Y.Array&lt;Y.Map&gt; binding for ContentArray</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Per-blip TipTap keeps existing Y.XmlFragment + Collaboration extension</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Per-blip TipTap keeps existing Y.XmlFragment + Collaboration extension</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Awareness (presence + cursor color) per-blip editor</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Awareness (presence + cursor color) per-blip editor</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Vitest Y.js convergence test (two Y.Doc instances through op sequences)</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Vitest Y.js convergence test (two Y.Doc instances through op sequences)</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Two-tab cross-sync within 1 second</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Two-tab cross-sync within 1 second</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Real-time cursor visible in editing blip</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Real-time cursor visible in editing blip</span>
           <span class="deliv-commit"></span>
         </li>
     </ul>
@@ -386,46 +408,47 @@
     <div class="phase-meta">
       <span>⏱️ 2 workdays estimated</span>
       <span>📋 8 deliverables</span>
+      
     </div>
     <ul class="deliv-list">
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Wave-level playback (<code>WavePlaybackModal.tsx</code>) wired into native render</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Wave-level playback (<code>WavePlaybackModal.tsx</code>) wired into native render</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Per-blip history modal button in BlipView gear menu</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Per-blip history modal button in BlipView gear menu</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Mentions / hashtags / tasks (per-blip TipTap extensions)</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Mentions / hashtags / tasks (per-blip TipTap extensions)</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Inline comments anchor migration</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Inline comments anchor migration</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Code blocks / gadgets (per-blip extensions)</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Code blocks / gadgets (per-blip extensions)</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Follow-the-Green / unread state</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Follow-the-Green / unread state</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Mobile gestures (swipe, pull-to-refresh)</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Mobile gestures (swipe, pull-to-refresh)</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Visual feature sweep (161-row matrix) green</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Visual feature sweep (161-row matrix) green</span>
           <span class="deliv-commit"></span>
         </li>
     </ul>
@@ -446,61 +469,62 @@
     <div class="phase-meta">
       <span>⏱️ 2 workdays estimated</span>
       <span>📋 11 deliverables</span>
+      
     </div>
     <ul class="deliv-list">
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Set <code>FEAT_RIZZOMA_NATIVE_RENDER=1</code> on dev VPS</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Set <code>FEAT_RIZZOMA_NATIVE_RENDER=1</code> on dev VPS</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Full sanity sweep + state-survives-collapse + visual-feature-sweep all green</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Full sanity sweep + state-survives-collapse + visual-feature-sweep all green</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Side-by-side comparison with rizzoma.com depth-10 reference</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Side-by-side comparison with rizzoma.com depth-10 reference</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">24-hour soak window — zero blocking bugs reported</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">24-hour soak window — zero blocking bugs reported</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Delete <code>RizzomaBlip.tsx</code> (~2,200 LOC)</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Delete <code>RizzomaBlip.tsx</code> (~2,200 LOC)</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Delete <code>InlineHtmlRenderer.tsx</code> (~280 LOC)</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Delete <code>InlineHtmlRenderer.tsx</code> (~280 LOC)</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Delete <code>inlineMarkers.ts</code> (~125 LOC)</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Delete <code>inlineMarkers.ts</code> (~125 LOC)</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Delete <code>BlipThreadNode.tsx</code> (~150 LOC)</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Delete <code>BlipThreadNode.tsx</code> (~150 LOC)</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Trim <code>RizzomaTopicDetail.tsx</code> (~600 LOC)</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Trim <code>RizzomaTopicDetail.tsx</code> (~600 LOC)</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Drop both feature flags; native is the only path</span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Drop both feature flags; native is the only path</span>
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check"></span>
-          <span class="deliv-label">Update <code>CLAUDE.md</code> BLB section + create <code>docs/NATIVE_RENDER_ARCHITECTURE.md</code></span>
+          <span class="deliv-check "></span>
+          <span class="deliv-label ">Update <code>CLAUDE.md</code> BLB section + create <code>docs/NATIVE_RENDER_ARCHITECTURE.md</code></span>
           <span class="deliv-commit"></span>
         </li>
     </ul>
@@ -512,19 +536,24 @@
   <div class="recent-commits">
 
     <div class="commit-row">
+      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/2b01bf311c5b6ade7bcba050b1d67fc7a53851e5" target="_blank" rel="noopener">2b01bf31</a></span>
+      <span class="commit-subject">PM: add HTML dashboard with auto-refresh + native scroll</span>
+      <span class="commit-when">19 minutes ago</span>
+    </div>
+    <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/bbf116c9f9f6debebb1d06d88058fa95274446b0" target="_blank" rel="noopener">bbf116c9</a></span>
       <span class="commit-subject">pmr: --live now appends snapshots (preserves scrollback)</span>
-      <span class="commit-when">6 minutes ago</span>
+      <span class="commit-when">25 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/f5b17fd958c52f48253163330508f992aa995885" target="_blank" rel="noopener">f5b17fd9</a></span>
       <span class="commit-subject">pmr UX + Phase 2 (#53) start: BlipView + WaveView skeletons</span>
-      <span class="commit-when">9 minutes ago</span>
+      <span class="commit-when">28 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/1e0a60f1359660d9f03c0fd0885be824964c7607" target="_blank" rel="noopener">1e0a60f1</a></span>
       <span class="commit-subject">Phase 1 (#52): serializer + depth-10 spike test (terminal-only)</span>
-      <span class="commit-when">13 minutes ago</span>
+      <span class="commit-when">32 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/a99180d9229162d23aae4ba9b933a0fefefd066e" target="_blank" rel="noopener">a99180d9</a></span>
@@ -544,12 +573,12 @@
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/b06d4d3000424c6db656ac683127122d97424724" target="_blank" rel="noopener">b06d4d30</a></span>
       <span class="commit-subject">Phase 1 (#52): vitest tests for native parser — 8/8 green</span>
-      <span class="commit-when">2 hours ago</span>
+      <span class="commit-when">3 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/f37bbc1f9e4c0c0ddfb2a7f5323d4634a77e4cd0" target="_blank" rel="noopener">f37bbc1f</a></span>
       <span class="commit-subject">Phase 1 (#52) start: types + parser + renderer + BlipThread (TS port of original)</span>
-      <span class="commit-when">2 hours ago</span>
+      <span class="commit-when">3 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/92fbf09f04125a0523c91eac342e2ea5f1f66e0f" target="_blank" rel="noopener">92fbf09f</a></span>

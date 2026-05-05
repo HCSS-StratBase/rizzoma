@@ -49,6 +49,7 @@ class Deliverable:
     label: str
     done: bool = False
     commit: Optional[str] = None  # short hash; resolved to URL on render
+    wip: bool = False  # currently in progress (counts 0.5 toward pbar)
 
 
 @dataclass
@@ -65,18 +66,25 @@ class Phase:
         return sum(1 for d in self.deliverables if d.done)
 
     @property
+    def wip_count(self) -> int:
+        return sum(1 for d in self.deliverables if d.wip)
+
+    @property
     def total(self) -> int:
         return len(self.deliverables)
 
     @property
     def pct(self) -> float:
-        return (self.done_count / self.total) * 100 if self.total else 0
+        if not self.total:
+            return 0
+        weighted = self.done_count + 0.5 * self.wip_count
+        return (weighted / self.total) * 100
 
     @property
     def status(self) -> str:
         if self.pct == 100:
             return "done"
-        if self.pct == 0:
+        if self.pct == 0 and self.wip_count == 0:
             return "pending"
         return "progress"
 
@@ -101,13 +109,13 @@ PHASES: list[Phase] = [
               Deliverable("serializer.ts — ContentArray → HTML inverse + round-trip tests", True),
               Deliverable("Depth-10 spike test (jsdom; 2047 blips, 2046 BlipThreads, all folded)", True),
               Deliverable("Bug fix: BlipThread initial fold-class set in constructor", True),
-              Deliverable("Round-trip parser tests on every dev-DB topic"),
+              Deliverable("Round-trip parser tests on every dev-DB topic", wip=True),
           ]),
     Phase(2, 53, "BlipView lifecycle + TipTap edit-mode + Ctrl+Enter",
           "Per-blip view; mounts TipTap into DOM slot when isEditing; Ctrl+Enter inserts BLIP at array index",
           4, [
-              Deliverable("blip-view.ts (~600 LOC) — port of blip/view.coffee"),
-              Deliverable("blip-editor-host.ts — mount/unmount TipTap into BlipView slot"),
+              Deliverable("blip-view.ts — BlipView + WaveView skeletons (read-mode rendering)", True, commit="f5b17fd9"),
+              Deliverable("blip-editor-host.ts — mount/unmount TipTap into BlipView slot", wip=True),
               Deliverable("wave-view.ts — port of wave/view.coffee"),
               Deliverable("NativeWaveView.tsx — thin React wrapper behind feature flag"),
               Deliverable("RizzomaTopicDetail.tsx side-by-side toggle (no demolition)"),
@@ -276,7 +284,11 @@ def render_phase(p: Phase, gh_state: str) -> Panel:
     header.append(p.short + "\n", style=COL_LB)
     header.append("\n")
     header.append(render_pbar(p.pct, 50, p.status))
-    header.append(f"   {p.done_count}/{p.total} · ⏱  {p.days}d", style="dim")
+    counts = f"   {p.done_count}/{p.total}"
+    if p.wip_count:
+        counts += f" (+{p.wip_count}◐)"
+    counts += f" · ⏱  {p.days}d"
+    header.append(counts, style="dim")
 
     table = Table(box=None, show_header=False, padding=(0, 1), pad_edge=False, expand=True)
     table.add_column("check", width=3, no_wrap=True)
@@ -286,6 +298,9 @@ def render_phase(p: Phase, gh_state: str) -> Panel:
         if d.done:
             check = Text("✓", style=f"bold {COL_GREEN}")
             label = Text(d.label, style="white")
+        elif d.wip:
+            check = Text("◐", style=f"bold {COL_AMBER}")
+            label = Text(d.label + "  [IN PROGRESS]", style=f"bold {COL_AMBER}")
         else:
             check = Text("○", style=COL_GRAY)
             label = Text(d.label, style=COL_LB)

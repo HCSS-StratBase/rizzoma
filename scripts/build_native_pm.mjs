@@ -58,7 +58,7 @@ const PHASES = [
       { done: true, label: '`serializer.ts` — ContentArray → HTML (round-trip inverse)', commit: '1e0a60f1' },
       { done: true, label: 'Depth-10 spike test (jsdom; 2047 blips, 2046 BlipThreads, depth=10)', commit: '1e0a60f1' },
       { done: true, label: 'Bug fix: BlipThread initial fold-class set in constructor', commit: '1e0a60f1' },
-      { done: false, label: 'Round-trip parser tests on every dev-DB topic', commit: null },
+      { wip: true, label: 'Round-trip parser tests on every dev-DB topic', commit: null },
     ],
   },
   {
@@ -67,7 +67,7 @@ const PHASES = [
     short: 'Per-blip view; mounts TipTap into DOM slot when isEditing; Ctrl+Enter inserts BLIP at array index',
     deliverables: [
       { done: true, label: '`blip-view.ts` — BlipView + WaveView skeletons (read-mode rendering)', commit: 'f5b17fd9' },
-      { done: false, label: '`blip-editor-host.ts` — mount/unmount TipTap into BlipView slot', commit: null },
+      { wip: true, label: '`blip-editor-host.ts` — mount/unmount TipTap into BlipView slot', commit: null },
       { done: false, label: '`wave-view.ts` — full port of `wave/view.coffee`', commit: null },
       { done: false, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: null },
       { done: false, label: '`RizzomaTopicDetail.tsx` side-by-side toggle (no demolition)', commit: null },
@@ -146,13 +146,17 @@ try {
 } catch {}
 
 // ─── Per-phase progress + overall ───
+// Done deliverables count as 1.0; WIP count as 0.5 toward the bar fill.
 for (const p of PHASES) {
   const total = p.deliverables.length;
   const done = p.deliverables.filter((d) => d.done).length;
-  p.pct = Math.round((done / total) * 100);
+  const wip  = p.deliverables.filter((d) => d.wip).length;
+  const weighted = done + wip * 0.5;
+  p.pct = Math.round((weighted / total) * 100);
   p.done = done;
+  p.wip = wip;
   p.total = total;
-  p.status = p.pct === 100 ? 'done' : (p.pct === 0 ? 'pending' : 'progress');
+  p.status = p.pct === 100 ? 'done' : (p.pct === 0 && wip === 0 ? 'pending' : 'progress');
 }
 const totalDays = PHASES.reduce((a, p) => a + p.days, 0);
 const completedDays = PHASES.reduce((a, p) => a + (p.days * p.pct) / 100, 0);
@@ -270,8 +274,26 @@ const html = `<!doctype html>
     margin-top: 2px;
   }
   .deliv-check.done { background: rgba(76,175,131,0.2); border-color: var(--green); color: var(--green); }
+  .deliv-check.wip {
+    background: rgba(224,168,0,0.2); border-color: var(--amber); color: var(--amber);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(224,168,0,0.55); }
+    50%      { box-shadow: 0 0 0 4px rgba(224,168,0,0); }
+  }
   .deliv-label { color: var(--wh); }
   .deliv-label.done { color: var(--lb); }
+  .deliv-label.wip {
+    color: var(--amber); font-weight: 600;
+  }
+  .deliv-label.wip::after {
+    content: " — IN PROGRESS";
+    font-size: 0.7rem; font-weight: 700; color: var(--amber);
+    background: rgba(224,168,0,0.12);
+    padding: 1px 6px; border-radius: 99px; margin-left: 6px;
+    vertical-align: middle;
+  }
   .deliv-commit a { font-family: ui-monospace, monospace; font-size: 0.78rem; color: var(--gold); padding: 2px 6px; background: rgba(219,173,80,0.1); border-radius: 4px; }
   .recent-commits, .calendar { background: var(--bg-card); border-radius: 12px; padding: 20px 22px; margin-bottom: 24px; border: 1px solid var(--border); }
   .commit-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 0.85rem; }
@@ -331,12 +353,16 @@ ${PHASES.map((p) => {
   const pillTxt = p.status === 'done' ? '✓ DONE' : (p.status === 'progress' ? '◐ IN PROGRESS' : '○ PENDING');
   const fillCls = p.status === 'done' ? 'green' : (p.status === 'progress' ? 'amber' : 'gray');
   const issueState = issueStates[p.issue]?.state || '?';
-  const delivLis = p.deliverables.map((d) => `
+  const delivLis = p.deliverables.map((d) => {
+    const stateCls = d.done ? 'done' : (d.wip ? 'wip' : '');
+    const checkChar = d.done ? '✓' : (d.wip ? '◐' : '');
+    return `
         <li class="deliv">
-          <span class="deliv-check${d.done ? ' done' : ''}">${d.done ? '✓' : ''}</span>
-          <span class="deliv-label${d.done ? ' done' : ''}">${renderInlineMd(d.label)}</span>
+          <span class="deliv-check ${stateCls}">${checkChar}</span>
+          <span class="deliv-label ${stateCls}">${renderInlineMd(d.label)}</span>
           <span class="deliv-commit">${d.commit ? `<a href="https://github.com/${REPO}/commit/${d.commit}" target="_blank" rel="noopener">${d.commit.slice(0, 8)}</a>` : ''}</span>
-        </li>`).join('');
+        </li>`;
+  }).join('');
   return `
   <article class="phase-card">
     <div class="phase-header">
@@ -349,11 +375,12 @@ ${PHASES.map((p) => {
     <div class="phase-short">${escapeHtml(p.short)}</div>
     <div class="pbar-row">
       <div class="pbar-wrapper"><div class="pbar-fill ${fillCls}" style="--target:${p.pct}%"></div></div>
-      <div class="pbar-pct">${p.done}/${p.total} · ${p.pct}%</div>
+      <div class="pbar-pct">${p.done}${p.wip ? ` + ${p.wip}◐` : ''}/${p.total} · ${p.pct}%</div>
     </div>
     <div class="phase-meta">
       <span>⏱️ ${p.days} workday${p.days !== 1 ? 's' : ''} estimated</span>
       <span>📋 ${p.total} deliverables</span>
+      ${p.wip ? `<span style="color:var(--amber)">◐ ${p.wip} in progress</span>` : ''}
     </div>
     <ul class="deliv-list">${delivLis}
     </ul>
