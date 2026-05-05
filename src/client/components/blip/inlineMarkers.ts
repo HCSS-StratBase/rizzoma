@@ -82,16 +82,22 @@ export function injectInlineMarkers(html: string, inlineChildren: InlineMarkerSo
     }
   });
 
-  // Inject new markers for children that don't have one yet
-  if (inlineChildren.length > 0) {
-    inlineChildren.forEach((child) => {
-      const anchor = child.anchorPosition;
-      if (typeof anchor !== 'number' || !Number.isFinite(anchor)) return;
-      if (hasMarkerFor(container, child.id)) return;
-      const isExpanded = expandedSet?.has(child.id) ?? false;
-      insertMarkerAtOffset(container, anchor, child.id, child.isRead === false, isExpanded);
-    });
-  }
+  // Marker insertion based on numeric anchorPosition is intentionally REMOVED
+  // (260505). The marker's PRESENCE in the parent's saved HTML is now the
+  // canonical anchor — matches original Rizzoma's structural model. The
+  // numeric anchorPosition field is retained as a presence-vs-absence
+  // discriminator (typeof === 'number' → inline child, else → list child) but
+  // its value is no longer used to position a fallback marker. Children
+  // without a marker in the saved HTML get rendered via createPortal at the
+  // BlipThreadNode portal anchor (in edit mode) or via renderInlineHtml's
+  // orphan-followups loop (in parity view mode); they do NOT get auto-injected
+  // at a guessed text offset, since that drifted whenever the user edited
+  // the parent's text before the marker.
+  // Sentinel reference kept so unused-arg lint stays happy without
+  // changing the public API:
+  void inlineChildren;
+  void hasMarkerFor;
+  void insertMarkerAtOffset;
 
   // Remove stale portal containers, then add fresh ones for expanded markers
   container.querySelectorAll('.inline-child-portal').forEach(el => el.remove());

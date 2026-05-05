@@ -145,32 +145,23 @@ export const BlipKeyboardShortcuts = Extension.create({
       },
 
       // Ctrl/Cmd+Enter: Create a NEW inline child blip document at cursor position.
-      // We pass a TEXT-CONTENT character offset (NOT the ProseMirror document
-      // position) as anchorPosition, because the renderer (renderInlineHtml /
-      // injectInlineMarkers) interprets anchorPosition as a character index into
-      // the parent's plain text. ProseMirror's selection.from counts node tokens
-      // (each <p>, <li>, <ul> open/close = 1 unit) which is a different scale —
-      // sending it raw causes the inline marker to land at the wrong location
-      // when the parent has nested formatting.
       //
-      // Original Rizzoma did NOT have this problem because it positioned blip-
-      // thread elements STRUCTURALLY (sandwiched between LINE elements in a
-      // flat content array — see editor/renderer.coffee:107-113); there was no
-      // numeric offset to drift. Our hybrid model (marker span IN the HTML +
-      // numeric anchorPosition field) needs the offset to be in the same scale
-      // as what the renderer reads.
+      // The anchorPosition value is now a SENTINEL (always 0) — its only role
+      // is to satisfy the inline-vs-list discriminator (typeof === 'number'
+      // → inline child). Position is owned STRUCTURALLY by the marker span
+      // that the create-handler inserts into the parent's editor via
+      // insertBlipThread, matching original Rizzoma's blip-thread model
+      // (editor/renderer.coffee:107-113 — blip-thread elements live in the
+      // parent's content array; there was no separate numeric offset).
+      //
+      // The renderer (renderInlineHtml / inlineMarkers) no longer reads the
+      // anchorPosition value; it walks the saved HTML for marker spans and
+      // renders children at their structural location. So we don't need to
+      // compute a text offset here anymore.
       'Mod-Enter': () => {
-        const editor = this.editor;
-        const { from } = editor.state.selection;
-        // Convert PM doc position → text-content character offset.
-        // textBetween extracts plain text between two doc positions; .length is
-        // the character count, which is what the renderer expects.
-        const anchorPosition = editor.state.doc.textBetween(0, from).length;
-
         if (opts.onCreateInlineChildBlip) {
-          opts.onCreateInlineChildBlip(anchorPosition);
+          opts.onCreateInlineChildBlip(0);
         }
-
         return true;
       },
 

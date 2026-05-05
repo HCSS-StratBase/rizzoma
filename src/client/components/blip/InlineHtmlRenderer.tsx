@@ -115,42 +115,18 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
   // expanded. Never unmount — collapse is a CSS-only state change.
   const mountedSet = everMountedSet ?? expandedSet;
 
-  // Parse + insert markers for any anchored child without a pre-existing marker.
+  // Parse the parent's saved HTML. We do NOT inject new markers based on a
+  // numeric anchorPosition field anymore — the marker's PRESENCE in the saved
+  // HTML is the canonical anchor (matching original Rizzoma's structural
+  // model in editor/renderer.coffee:107-113 where blip-thread elements live
+  // in the parent's content array, no separate offset).
+  //
+  // If a child is in inlineChildren but has no marker in the parent's saved
+  // HTML, it'll render via the orphan-followups loop at the bottom of this
+  // function — visible but at the end of the parent rather than at a guessed
+  // text-offset that would drift after parent edits.
   const container = document.createElement('div');
   container.innerHTML = html;
-  inlineChildren.forEach(child => {
-    const anchor = child.anchorPosition;
-    if (typeof anchor !== 'number' || !Number.isFinite(anchor)) return;
-    if (container.querySelector(`[data-blip-thread="${CSS.escape(child.id)}"]`)) return;
-    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-    let node: Node | null = walker.nextNode();
-    let pos = 0;
-    const safe = Math.max(0, anchor);
-    while (node) {
-      const text = node.nodeValue || '';
-      const next = pos + text.length;
-      if (safe <= next) {
-        const idx = Math.max(0, safe - pos);
-        const beforeText = text.slice(0, idx);
-        const afterText = text.slice(idx);
-        const beforeNode = document.createTextNode(beforeText);
-        const afterNode = document.createTextNode(afterText);
-        const marker = document.createElement('span');
-        marker.className = 'blip-thread-marker';
-        marker.setAttribute('data-blip-thread', child.id);
-        marker.textContent = '+';
-        const parent = node.parentNode;
-        if (!parent) break;
-        parent.insertBefore(beforeNode, node);
-        parent.insertBefore(marker, node);
-        parent.insertBefore(afterNode, node);
-        parent.removeChild(node);
-        break;
-      }
-      pos = next;
-      node = walker.nextNode();
-    }
-  });
 
   // Track which markers are expanded and need a child placed after their block parent.
   // We walk the DOM and emit React nodes. When a block parent (li/p) finishes, if any
