@@ -660,7 +660,9 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       await ensureCsrf();
       const requestBody = {
         waveId: id,
-        content: '<p></p>', // Minimal placeholder content (server requires non-empty)
+        // BLB: new blips default to a bulleted list (every blip body is BLB-shaped).
+        // Matches original Rizzoma where Ctrl+Enter created a bulleted thread.
+        content: '<ul><li><p></p></li></ul>',
         parentId: null, // This is a child of the topic/wave itself (root-level blip)
         anchorPosition: anchorPosition, // The cursor position where this inline comment is anchored
       };

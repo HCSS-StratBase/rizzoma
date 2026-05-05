@@ -623,19 +623,36 @@
  * Catch every TipTap editor via .tiptap.ProseMirror so the topic root and
  * any future editor placement gets bullets back without needing a wrapper-
  * class-specific rule.
+ *
+ * The .rizzoma-parity-prefixed variants exist to OUT-SPECIFY the
+ * .rizzoma-parity .blip-text ul rule below (which strips padding for
+ * view-mode bullet positioning). When an inner blip enters edit mode, its
+ * UL lives DEEP inside an outer parent's .blip-text — without the parity-
+ * prefixed editor rule, the outer parent's .rizzoma-parity .blip-text ul
+ * (specificity 0,2,1) wins over .tiptap.ProseMirror ul (also 0,2,1, but
+ * declared earlier) and zeroes padding → bullets fall outside the editor.
+ * The 0,3,1 parity-prefixed rule below wins for parity-active sessions.
  */
 .tiptap.ProseMirror ul,
-.tiptap.ProseMirror ol {
-  padding-left: 1.5em;
+.tiptap.ProseMirror ol,
+.rizzoma-parity .tiptap.ProseMirror ul,
+.rizzoma-parity .tiptap.ProseMirror ol {
+  padding-left: 1.5em !important;
   margin: 0.5em 0;
   list-style-position: outside;
 }
-.tiptap.ProseMirror ul { list-style-type: disc; }
-.tiptap.ProseMirror ol { list-style-type: decimal; }
-.tiptap.ProseMirror ul ul { list-style-type: circle; padding-left: 1.5em; }
-.tiptap.ProseMirror ul ul ul { list-style-type: square; }
-.tiptap.ProseMirror li { margin: 0.25em 0; }
-.tiptap.ProseMirror li p { display: inline; margin: 0; }
+.tiptap.ProseMirror ul,
+.rizzoma-parity .tiptap.ProseMirror ul { list-style-type: disc; }
+.tiptap.ProseMirror ol,
+.rizzoma-parity .tiptap.ProseMirror ol { list-style-type: decimal; }
+.tiptap.ProseMirror ul ul,
+.rizzoma-parity .tiptap.ProseMirror ul ul { list-style-type: circle; padding-left: 1.5em !important; }
+.tiptap.ProseMirror ul ul ul,
+.rizzoma-parity .tiptap.ProseMirror ul ul ul { list-style-type: square; }
+.tiptap.ProseMirror li,
+.rizzoma-parity .tiptap.ProseMirror li { margin: 0.25em 0; }
+.tiptap.ProseMirror li p,
+.rizzoma-parity .tiptap.ProseMirror li p { display: inline; margin: 0; }
 
 /* List styling in editor */
 .blip-editor-container .ProseMirror ul,

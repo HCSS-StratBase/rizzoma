@@ -658,7 +658,11 @@ export function RizzomaBlip({
           body: JSON.stringify({
             waveId,
             parentId: blip.id,
-            content: '<p></p>', // Empty content for new child blip
+            // BLB philosophy: every blip body is a bulleted list (Bullet-Label-Blip).
+            // Start with <ul><li></li></ul> so the new child has a bullet ready
+            // for the user's first label, matching original Rizzoma's behavior
+            // where Ctrl+Enter created a new bulleted thread, not a paragraph.
+            content: '<ul><li><p></p></li></ul>',
             anchorPosition, // Store the position where the [+] marker was created
           }),
         });
