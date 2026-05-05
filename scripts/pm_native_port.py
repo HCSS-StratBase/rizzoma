@@ -115,9 +115,9 @@ PHASES: list[Phase] = [
           "Per-blip view; mounts TipTap into DOM slot when isEditing; Ctrl+Enter inserts BLIP at array index",
           4, [
               Deliverable("blip-view.ts — BlipView + WaveView skeletons (read-mode rendering)", True, commit="f5b17fd9"),
-              Deliverable("blip-editor-host.ts — mount/unmount TipTap into BlipView slot"),
-              Deliverable("wave-view.ts — port of wave/view.coffee"),
-              Deliverable("NativeWaveView.tsx — thin React wrapper behind feature flag"),
+              Deliverable("blip-editor-host.ts — mount/unmount TipTap into BlipView slot", True),
+              Deliverable("wave-view.ts — port of wave/view.coffee", wip=True),
+              Deliverable("NativeWaveView.tsx — thin React wrapper behind feature flag", wip=True),
               Deliverable("RizzomaTopicDetail.tsx side-by-side toggle (no demolition)"),
               Deliverable("Ctrl+Enter handler — insert BLIP at cursor array-index"),
               Deliverable("sanity sweep + state-survives-collapse pass on ?render=native"),

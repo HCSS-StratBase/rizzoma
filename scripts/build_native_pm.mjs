@@ -67,9 +67,9 @@ const PHASES = [
     short: 'Per-blip view; mounts TipTap into DOM slot when isEditing; Ctrl+Enter inserts BLIP at array index',
     deliverables: [
       { done: true, label: '`blip-view.ts` — BlipView + WaveView skeletons (read-mode rendering)', commit: 'f5b17fd9' },
-      { done: false, label: '`blip-editor-host.ts` — mount/unmount TipTap into BlipView slot', commit: null },
-      { done: false, label: '`wave-view.ts` — full port of `wave/view.coffee`', commit: null },
-      { done: false, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: null },
+      { done: true, label: '`blip-editor-host.ts` — mount/unmount TipTap into BlipView slot', commit: null },
+      { wip: true, label: '`wave-view.ts` — full port of `wave/view.coffee`', commit: null },
+      { wip: true, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: null },
       { done: false, label: '`RizzomaTopicDetail.tsx` side-by-side toggle (no demolition)', commit: null },
       { done: false, label: 'Ctrl+Enter handler — insert BLIP at cursor array-index', commit: null },
       { done: false, label: 'sanity sweep + state-survives-collapse pass on `?render=native`', commit: null },
