@@ -672,11 +672,16 @@ export function RizzomaBlip({
 
         console.log('[RizzomaBlip] Created child blip via Ctrl+Enter:', newBlipId);
 
-        // BLB: Insert [+] marker at cursor position in the parent content
-        // This makes the marker PART of the content (like original Rizzoma)
+        // BLB: Insert [+] marker at cursor position in the parent content.
+        // This makes the marker PART of the content (like original Rizzoma's
+        // structural blip-thread anchoring — see blip_thread.coffee).
+        // We do NOT setTextSelection(anchorPosition) here: anchorPosition is now
+        // a TEXT-character offset (not a PM doc position), so it would land the
+        // cursor at the wrong place. The cursor is still at its original PM
+        // position from when Ctrl+Enter fired (async POST doesn't move it), so
+        // insertBlipThread inserts at the structurally-correct location.
         const editor = inlineEditorRef.current;
         if (editor) {
-          editor.chain().focus().setTextSelection(anchorPosition).run();
           (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
           // The content is auto-saved, so the [+] marker will persist
         }

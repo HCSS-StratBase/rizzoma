@@ -674,11 +674,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           const newBlipId = newBlip.id || newBlip._id;
 
           if (newBlipId) {
-            // BLB: Insert [+] marker at cursor position in the topic content
-            // This makes the marker PART of the content (like original Rizzoma)
+            // BLB: Insert [+] marker at cursor position in the topic content.
+            // No setTextSelection: anchorPosition is now a TEXT-character offset
+            // (not a PM doc position). The cursor is still at the original
+            // selection from the Ctrl+Enter keypress, which is the correct
+            // structural anchor — matches original Rizzoma's blip-thread
+            // positioning model (renderer.coffee:107-113).
             const editor = topicEditorRef.current;
             if (editor) {
-              editor.chain().focus().setTextSelection(anchorPosition).run();
               (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
             }
 

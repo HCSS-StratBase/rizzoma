@@ -144,26 +144,32 @@ export const BlipKeyboardShortcuts = Extension.create({
         return true;
       },
 
-      // Ctrl/Cmd+Enter: Create a NEW inline child blip document at cursor position
-      // This creates a SEPARATE blip document anchored at the current cursor position.
-      // The anchor position allows the child blip to be rendered inline in the parent.
+      // Ctrl/Cmd+Enter: Create a NEW inline child blip document at cursor position.
+      // We pass a TEXT-CONTENT character offset (NOT the ProseMirror document
+      // position) as anchorPosition, because the renderer (renderInlineHtml /
+      // injectInlineMarkers) interprets anchorPosition as a character index into
+      // the parent's plain text. ProseMirror's selection.from counts node tokens
+      // (each <p>, <li>, <ul> open/close = 1 unit) which is a different scale —
+      // sending it raw causes the inline marker to land at the wrong location
+      // when the parent has nested formatting.
+      //
+      // Original Rizzoma did NOT have this problem because it positioned blip-
+      // thread elements STRUCTURALLY (sandwiched between LINE elements in a
+      // flat content array — see editor/renderer.coffee:107-113); there was no
+      // numeric offset to drift. Our hybrid model (marker span IN the HTML +
+      // numeric anchorPosition field) needs the offset to be in the same scale
+      // as what the renderer reads.
       'Mod-Enter': () => {
         const editor = this.editor;
         const { from } = editor.state.selection;
+        // Convert PM doc position → text-content character offset.
+        // textBetween extracts plain text between two doc positions; .length is
+        // the character count, which is what the renderer expects.
+        const anchorPosition = editor.state.doc.textBetween(0, from).length;
 
-        // Get the cursor position (character offset from start of document)
-        // This will be used as the anchor position for the inline child blip
-        const anchorPosition = from;
-
-        // Call the callback to create the inline child blip
         if (opts.onCreateInlineChildBlip) {
           opts.onCreateInlineChildBlip(anchorPosition);
         }
-
-        // NOTE: We now create a SEPARATE blip document, not a nested bullet.
-        // The child blip is stored with an anchorPosition field that indicates
-        // where in the parent content it should be rendered inline.
-        // This is different from reply blips (no anchor) which appear at the bottom.
 
         return true;
       },
