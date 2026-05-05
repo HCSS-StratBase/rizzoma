@@ -1,32 +1,32 @@
 #!/usr/bin/env node
 /**
- * Round-trip parser/serializer test against every topic in a CouchDB.
+ * Round-trip parser/serializer test against every blip in a CouchDB.
  *
- * For each topic in the topics DB, fetch the root blip's HTML content,
- * round-trip it (parse → serialize → parse) and compare normalized
- * ContentArrays. Reports any divergence as a row in the failure table.
+ * The original Rizzoma stored each blip's content as a ContentArray-like
+ * structure with field names like `{t, params: {__TYPE, L_BULLETED, …}}`.
+ * The modernized port (this codebase) uses the same conceptual model but
+ * with TS-friendly field names (`{type, text, params: {bulleted, …}}`).
+ *
+ * This script:
+ *   1. Pulls every doc from the DB with `type === "blip"`
+ *   2. Adapts the legacy on-disk shape → our ContentArray model
+ *   3. Serializes via `serializeContentArrayToHtml()` → HTML
+ *   4. Re-parses via `parseHtmlToContentArray()` → ContentArray
+ *   5. Compares normalized first/second arrays
  *
  * Usage:
- *   COUCH_URL=http://user:pw@host:5984 \
+ *   COUCH_URL=http://127.0.0.1:5984 COUCH_AUTH=admin:password DB=project_rizzoma \
  *     node scripts/native_roundtrip_devdb.mjs
  *
- *   COUCH_URL=http://couch:5984 COUCH_AUTH=admin:secret \
- *     node scripts/native_roundtrip_devdb.mjs
- *
- *   # Limit to N topics (smoke test)
+ *   # Limit to N blips (smoke test)
  *   COUCH_URL=... node scripts/native_roundtrip_devdb.mjs --limit 25
  *
- * Exit 0 if all topics round-trip cleanly; non-zero on first divergence
- * batch (prints all failures before exiting).
- *
- * Loads `src/client/native/parser.ts` and `serializer.ts` via tsx, so
- * jsdom is required for the parser's DOMParser API. Auto-installs jsdom
- * into the global if missing.
+ * Exit 0 if all blips round-trip cleanly; non-zero on any divergence
+ * (prints all failures before exiting).
  */
 
 import { argv, env, exit } from 'node:process';
 import { JSDOM } from 'jsdom';
-import { register } from 'node:module';
 
 // Bootstrap jsdom-like globals for the parser (which uses DOMParser).
 const { window } = new JSDOM('<!doctype html><html><body></body></html>', {
@@ -39,9 +39,8 @@ globalThis.Node = window.Node;
 globalThis.Element = window.Element;
 globalThis.HTMLElement = window.HTMLElement;
 
-// Register tsx so the .ts imports below resolve.
-register('tsx/esm', import.meta.url);
-
+// Note: launch via `node --import tsx scripts/native_roundtrip_devdb.mjs`
+// so tsx can transpile the .ts imports. Pure node can't import .ts files.
 const { parseHtmlToContentArray } = await import('../src/client/native/parser.ts');
 const { serializeContentArrayToHtml } = await import('../src/client/native/serializer.ts');
 
@@ -90,54 +89,85 @@ try {
 }
 console.log(`✓ CouchDB ${info.version} reachable\n`);
 
-// Try common DB names. Original Rizzoma uses `topics`, `blips`, `waves`.
-const dbNames = ['topics', 'topic', 'rizzoma_topics'];
-let topicsDb = null;
-for (const name of dbNames) {
-  try {
-    await fetchJson('/' + name);
-    topicsDb = name;
-    break;
-  } catch {}
-}
-if (!topicsDb) {
-  console.error('error: no topics DB found (tried:', dbNames.join(', '), ')');
+const dbName = env.DB || 'project_rizzoma';
+try {
+  await fetchJson('/' + dbName);
+} catch (err) {
+  console.error(`error: DB '${dbName}' not reachable:`, err.message);
   exit(2);
 }
-console.log(`▶ Using DB: ${topicsDb}`);
+console.log(`▶ Using DB: ${dbName}`);
 
-// Enumerate topics.
-const all = await fetchJson(`/${topicsDb}/_all_docs?include_docs=true`);
-const docs = all.rows.map((r) => r.doc).filter((d) => d && !d._id.startsWith('_design/'));
-console.log(`▶ Found ${docs.length} topics in ${topicsDb}`);
+// Enumerate all docs, filter to blips.
+const all = await fetchJson(`/${dbName}/_all_docs?include_docs=true`);
+const blips = all.rows
+  .map((r) => r.doc)
+  .filter((d) => d && d.type === 'blip' && Array.isArray(d.content));
+console.log(`▶ Found ${blips.length} blips in ${dbName}`);
 
-const subset = docs.slice(0, limit);
-console.log(`▶ Round-tripping ${subset.length} topic(s)\n`);
+const subset = blips.slice(0, limit);
+console.log(`▶ Round-tripping ${subset.length} blip(s)\n`);
+
+// ─── Legacy → modern adapter ──────────────────────────────────────────
+// Original Rizzoma's ContentArray uses {t, params: {__TYPE, L_BULLETED, ...}}.
+// Modern code uses {type, text, params: {bulleted, ...}}.
+const LEGACY_TYPE = { LINE: 'line', TEXT: 'text', BLIP: 'blip', ATTACHMENT: 'attachment' };
+
+const adaptElement = (el) => {
+  const legacyType = el.params?.__TYPE;
+  const type = LEGACY_TYPE[legacyType];
+  if (!type) return null; // unknown type; skip
+  const params = {};
+  if (typeof el.params.L_BULLETED === 'number') params.bulleted = el.params.L_BULLETED;
+  if (typeof el.params.L_NUMBERED === 'number') params.numbered = el.params.L_NUMBERED;
+  if (typeof el.params.L_HEADING === 'number') params.heading = el.params.L_HEADING;
+  if (el.params.T_BOLD) params.bold = true;
+  if (el.params.T_ITALIC) params.italic = true;
+  if (el.params.T_UNDERLINED) params.underlined = true;
+  if (el.params.T_STRUCK_THROUGH) params.struckthrough = true;
+  if (el.params.T_URL) params.url = el.params.T_URL;
+  if (el.params.__ID) params.id = el.params.__ID;
+  if (el.params.__THREAD_ID) params.threadId = el.params.__THREAD_ID;
+  return { type, text: el.t ?? ' ', params };
+};
+
+const adaptContent = (legacyArr) =>
+  legacyArr.map(adaptElement).filter((x) => x !== null);
 
 // ─── Round-trip ───
 let pass = 0;
 const failures = [];
 
-for (const topic of subset) {
-  const html = topic.htmlContent || topic.html || topic.content;
-  if (!html) {
-    failures.push({ id: topic._id, reason: 'no html field on doc' });
+for (const blip of subset) {
+  let modern;
+  try {
+    modern = adaptContent(blip.content);
+  } catch (err) {
+    failures.push({ id: blip._id, reason: 'adapter: ' + err.message });
     continue;
   }
   try {
-    const first = parseHtmlToContentArray(html);
-    const re = serializeContentArrayToHtml(first);
-    const second = parseHtmlToContentArray(re);
-    if (deepEqual(normalize(first), normalize(second))) {
+    const html = serializeContentArrayToHtml(modern);
+    const reparsed = parseHtmlToContentArray(html);
+    if (deepEqual(normalize(modern), normalize(reparsed))) {
       pass++;
     } else {
-      failures.push({
-        id: topic._id,
-        reason: `ContentArray length: first=${first.length}, second=${second.length}`,
-      });
+      const m = normalize(modern);
+      const r = normalize(reparsed);
+      let diffIdx = -1;
+      for (let i = 0; i < Math.max(m.length, r.length); i++) {
+        if (JSON.stringify(m[i]) !== JSON.stringify(r[i])) {
+          diffIdx = i;
+          break;
+        }
+      }
+      const detail = diffIdx >= 0
+        ? `diff @${diffIdx}: modern=${JSON.stringify(m[diffIdx])} reparsed=${JSON.stringify(r[diffIdx])}`
+        : `length: modern=${m.length}, reparsed=${r.length}`;
+      failures.push({ id: blip._id, reason: detail });
     }
   } catch (err) {
-    failures.push({ id: topic._id, reason: err.message });
+    failures.push({ id: blip._id, reason: err.message });
   }
 }
 
@@ -145,9 +175,10 @@ for (const topic of subset) {
 console.log(`✓ ${pass}/${subset.length} round-tripped cleanly`);
 if (failures.length) {
   console.log(`✗ ${failures.length} failures:`);
-  for (const f of failures) {
+  for (const f of failures.slice(0, 30)) {
     console.log(`  - ${f.id}: ${f.reason}`);
   }
+  if (failures.length > 30) console.log(`  …and ${failures.length - 30} more`);
   exit(1);
 }
 exit(0);

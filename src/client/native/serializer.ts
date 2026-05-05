@@ -113,7 +113,10 @@ const groupByLine = (content: ContentArray): LineGroup[] => {
 const serializeInline = (el: ContentElement): string => {
   if (isText(el)) return serializeTextElement(el);
   if (isBlip(el)) {
-    return `<span class="blip-thread-marker" data-blip-thread="${escapeAttr(el.params.id)}">+</span>`;
+    const threadAttr = el.params.threadId
+      ? ` data-thread-id="${escapeAttr(el.params.threadId)}"`
+      : '';
+    return `<span class="blip-thread-marker" data-blip-thread="${escapeAttr(el.params.id)}"${threadAttr}>+</span>`;
   }
   if (isAttachment(el)) {
     return `<img src="${escapeAttr(el.params.url)}" alt="" />`;

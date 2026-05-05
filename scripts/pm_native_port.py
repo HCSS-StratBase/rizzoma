@@ -50,6 +50,7 @@ class Deliverable:
     done: bool = False
     commit: Optional[str] = None  # short hash; resolved to URL on render
     wip: bool = False  # currently in progress (counts 0.5 toward pbar)
+    failed: bool = False  # FAILED — needs attention (red ✗)
 
 
 @dataclass
@@ -68,6 +69,10 @@ class Phase:
     @property
     def wip_count(self) -> int:
         return sum(1 for d in self.deliverables if d.wip)
+
+    @property
+    def failed_count(self) -> int:
+        return sum(1 for d in self.deliverables if d.failed)
 
     @property
     def total(self) -> int:
@@ -109,7 +114,7 @@ PHASES: list[Phase] = [
               Deliverable("serializer.ts — ContentArray → HTML inverse + round-trip tests", True),
               Deliverable("Depth-10 spike test (jsdom; 2047 blips, 2046 BlipThreads, all folded)", True),
               Deliverable("Bug fix: BlipThread initial fold-class set in constructor", True),
-              Deliverable("Round-trip parser tests on every dev-DB topic (script ready; awaits CouchDB)", wip=True),
+              Deliverable("Round-trip parser tests on every dev-DB topic (5/5 pass on VPS DB; 3 parser bugs caught + fixed)", True),
           ]),
     Phase(2, 53, "BlipView lifecycle + TipTap edit-mode + Ctrl+Enter",
           "Per-blip view; mounts TipTap into DOM slot when isEditing; Ctrl+Enter inserts BLIP at array index",
@@ -295,7 +300,10 @@ def render_phase(p: Phase, gh_state: str) -> Panel:
     table.add_column("label", overflow="fold")
     table.add_column("commit", width=11, no_wrap=True, justify="right")
     for d in p.deliverables:
-        if d.done:
+        if d.failed:
+            check = Text("✗", style=f"bold {COL_RED}")
+            label = Text(d.label + "  [FAILED]", style=f"bold {COL_RED}")
+        elif d.done:
             check = Text("✓", style=f"bold {COL_GREEN}")
             label = Text(d.label, style="white")
         elif d.wip:

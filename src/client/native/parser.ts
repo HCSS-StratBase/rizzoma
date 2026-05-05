@@ -169,7 +169,10 @@ const walk = (node: Node, s: ParseState): void => {
   // BlipThread marker span → BLIP element
   if (isMarkerSpan(el)) {
     const id = el.getAttribute('data-blip-thread');
-    if (id) pushBlip(s, id);
+    if (id) {
+      const threadId = el.getAttribute('data-thread-id') || undefined;
+      pushBlip(s, id, threadId);
+    }
     return;
   }
 
@@ -181,13 +184,19 @@ const walk = (node: Node, s: ParseState): void => {
   }
 
   const block = isBlockElement(el);
-  // List context: bump nesting on UL / OL.
+  // List context: bump nesting on UL / OL. If the element carries a
+  // `bulleted-list-levelN` / `numbered-list-levelN` class (the serializer
+  // always emits these), trust that level over the DOM nesting depth —
+  // sibling lists at distinct levels then round-trip correctly.
   let listLevelChange: { kind: 'bulleted' | 'numbered'; prev: number | undefined } | null = null;
   if (block && (el.tagName === 'UL' || el.tagName === 'OL')) {
     const kind = el.tagName === 'UL' ? 'bulleted' : 'numbered';
     const prev = s.lineParams[kind];
     listLevelChange = { kind, prev };
-    s.lineParams[kind] = (prev ?? -1) + 1;
+    const classMatch = (el.getAttribute('class') || '')
+      .match(new RegExp(`${kind}-list-level(\\d+)`));
+    const explicitLevel = classMatch ? parseInt(classMatch[1], 10) : null;
+    s.lineParams[kind] = explicitLevel !== null ? explicitLevel : (prev ?? -1) + 1;
   }
 
   // Heading
@@ -197,13 +206,14 @@ const walk = (node: Node, s: ParseState): void => {
     s.lineParams.heading = parseInt(el.tagName[1], 10);
   }
 
-  // <li> and <h1..h6> emit a LINE BEFORE their content (carries the current
-  // list/heading params). Headings need an explicit pushLine even at start of
-  // input because their LINE element carries the heading param.
-  if (el.tagName === 'LI' || /^H[1-6]$/.test(el.tagName)) {
+  // Block elements emit a LINE BEFORE their content. <li>, <h1..h6>, and
+  // <p> need an explicit pushLine even at start of input because that LINE
+  // carries the line-level params (list level / heading) and forms the
+  // structural boundary between paragraphs. Other block tags (DIV, SECTION,
+  // …) defer to a pending-block-break that materializes only when needed.
+  if (el.tagName === 'LI' || /^H[1-6]$/.test(el.tagName) || el.tagName === 'P') {
     pushLine(s);
   } else if (block) {
-    // Other block elements: emit a LINE before children if needed.
     if (s.ops.length > 0 && !s.lastWasLine) {
       s.pendingBlockBreak = true;
     }

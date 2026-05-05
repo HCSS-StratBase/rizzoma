@@ -58,7 +58,7 @@ const PHASES = [
       { done: true, label: '`serializer.ts` — ContentArray → HTML (round-trip inverse)', commit: '1e0a60f1' },
       { done: true, label: 'Depth-10 spike test (jsdom; 2047 blips, 2046 BlipThreads, depth=10)', commit: '1e0a60f1' },
       { done: true, label: 'Bug fix: BlipThread initial fold-class set in constructor', commit: '1e0a60f1' },
-      { wip: true, label: 'Round-trip parser tests on every dev-DB topic (`scripts/native_roundtrip_devdb.mjs` ready; awaits reachable CouchDB)', commit: null },
+      { done: true, label: 'Round-trip parser tests on every dev-DB topic (5/5 pass on VPS DB; 3 parser bugs caught + fixed)', commit: null },
     ],
   },
   {
@@ -278,19 +278,33 @@ const html = `<!doctype html>
     background: rgba(224,168,0,0.2); border-color: var(--amber); color: var(--amber);
     animation: pulse 1.6s ease-in-out infinite;
   }
+  .deliv-check.failed {
+    background: rgba(217,107,107,0.25); border-color: var(--red); color: var(--red);
+    animation: pulse-red 1.6s ease-in-out infinite;
+  }
   @keyframes pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(224,168,0,0.55); }
     50%      { box-shadow: 0 0 0 4px rgba(224,168,0,0); }
   }
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(217,107,107,0.55); }
+    50%      { box-shadow: 0 0 0 4px rgba(217,107,107,0); }
+  }
   .deliv-label { color: var(--wh); }
   .deliv-label.done { color: var(--lb); }
-  .deliv-label.wip {
-    color: var(--amber); font-weight: 600;
-  }
+  .deliv-label.wip { color: var(--amber); font-weight: 600; }
   .deliv-label.wip::after {
     content: " — IN PROGRESS";
     font-size: 0.7rem; font-weight: 700; color: var(--amber);
     background: rgba(224,168,0,0.12);
+    padding: 1px 6px; border-radius: 99px; margin-left: 6px;
+    vertical-align: middle;
+  }
+  .deliv-label.failed { color: var(--red); font-weight: 600; }
+  .deliv-label.failed::after {
+    content: " — FAILED";
+    font-size: 0.7rem; font-weight: 800; color: var(--red);
+    background: rgba(217,107,107,0.12);
     padding: 1px 6px; border-radius: 99px; margin-left: 6px;
     vertical-align: middle;
   }
@@ -354,8 +368,8 @@ ${PHASES.map((p) => {
   const fillCls = p.status === 'done' ? 'green' : (p.status === 'progress' ? 'amber' : 'gray');
   const issueState = issueStates[p.issue]?.state || '?';
   const delivLis = p.deliverables.map((d) => {
-    const stateCls = d.done ? 'done' : (d.wip ? 'wip' : '');
-    const checkChar = d.done ? '✓' : (d.wip ? '◐' : '');
+    const stateCls = d.failed ? 'failed' : (d.done ? 'done' : (d.wip ? 'wip' : ''));
+    const checkChar = d.failed ? '✗' : (d.done ? '✓' : (d.wip ? '◐' : ''));
     return `
         <li class="deliv">
           <span class="deliv-check ${stateCls}">${checkChar}</span>
