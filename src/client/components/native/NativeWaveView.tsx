@@ -20,6 +20,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { WaveView } from '@client/native/wave-view';
 import type { ContentArray } from '@client/native/types';
 import { FEATURES } from '@shared/featureFlags';
+import './NativeWaveView.css';
 
 export interface NativeWaveViewProps {
   /** The blipId to set as the wave's root (the topic-level blip). */

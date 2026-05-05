@@ -1,0 +1,97 @@
+/**
+ * Native fractal-render — minimum viable CSS for the new render path.
+ *
+ * Mirrors the structural rules from the original Rizzoma:
+ *   - BlipThread renders a fold-button + a js-blips-container as siblings
+ *   - `.folded` class on the span hides the children via display:none
+ *     (subtree is NEVER destroyed — fold/unfold is CSS-only)
+ *   - bulleted lists use disc/circle/square at increasing nesting depths
+ *
+ * This file is the first taste; deeper polish (animations, hover, mobile)
+ * comes later. The goal of this version is to make the structural
+ * correctness VISIBLE to users.
+ */
+
+.rizzoma-native-mode {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.45;
+  padding: 16px 32px;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.rizzoma-native-mode h1 { font-size: 1.5em; margin: 0.6em 0; }
+
+.rizzoma-native-mode .wave-view { display: block; }
+
+/* Per-blip container + content. */
+.rizzoma-native-mode .blip-container { display: block; }
+.rizzoma-native-mode .blip-text p { margin: 0.4em 0; }
+
+/* Bulleted lists — match the legacy markup the renderer emits. */
+.rizzoma-native-mode .blip-text ul,
+.rizzoma-native-mode .blip-text ol {
+  margin: 0.2em 0;
+  padding-left: 22.5px;
+}
+.rizzoma-native-mode .blip-text ul { list-style: disc outside; }
+.rizzoma-native-mode .blip-text ul ul { list-style: circle outside; }
+.rizzoma-native-mode .blip-text ul ul ul { list-style: square outside; }
+.rizzoma-native-mode .blip-text li { margin: 0.15em 0; }
+
+/* BlipThread — inline [+] anchor + collapsible thread. */
+.rizzoma-native-mode .blip-thread { display: inline; }
+
+.rizzoma-native-mode .blip-thread .js-fold-button {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background: #b3b3b3;
+  border-radius: 3px;
+  color: #fff;
+  text-align: center;
+  line-height: 18px;
+  font-weight: bold;
+  font-size: 12px;
+  margin: 0 4px;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Hide the placeholder <img> elements in the fold-button template
+ * (their src points at /s/img/* which don't exist in the React bundle).
+ * We use a CSS pseudo-element to render the +/- glyph instead. */
+.rizzoma-native-mode .blip-thread .js-fold-button > div { display: none; }
+.rizzoma-native-mode .blip-thread .js-fold-button::before {
+  content: "−";
+}
+.rizzoma-native-mode .blip-thread.folded .js-fold-button::before {
+  content: "+";
+}
+
+/* The CSS-class fold mechanism — subtree is hidden but never destroyed. */
+.rizzoma-native-mode .blip-thread.folded .js-blips-container {
+  display: none;
+}
+
+.rizzoma-native-mode .js-blips-container {
+  display: block;
+  margin-left: 22px;
+  padding-left: 8px;
+  border-left: 2px solid #e5e7eb;
+}
+
+/* Banner explaining the user is on the native render path. */
+.rizzoma-native-mode > .topic-collab-toolbar {
+  background: #fef3c7;
+  border-bottom: 1px solid #fbbf24;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.rizzoma-native-mode > .topic-collab-toolbar a {
+  color: #1e40af;
+  text-decoration: underline;
+}

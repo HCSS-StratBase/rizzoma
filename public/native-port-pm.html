@@ -180,7 +180,7 @@
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/NATIVE_RENDER_PORT_PLAN.md">Plan</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md">Why</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/issues/50">Epic #50</a>
-    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-05 23:38:00 UTC</span>
+    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-05 23:58:20 UTC</span>
     &nbsp;·&nbsp; <span id="refresh-status">auto-refresh ON</span>
   </p>
 </header>
@@ -191,7 +191,7 @@
     <div class="stat-card"><div class="stat-num">46%</div><div class="stat-lbl">Complete</div></div>
     <div class="stat-card"><div class="stat-num">6.7<span style="font-size:1rem;color:var(--lb)"> / 14.5</span></div><div class="stat-lbl">Workdays</div></div>
     <div class="stat-card"><div class="stat-num">2<span style="font-size:1rem;color:var(--lb)"> / 6</span></div><div class="stat-lbl">Phases done</div></div>
-    <div class="stat-card"><div class="stat-num">19</div><div class="stat-lbl">Commits on port branch</div></div>
+    <div class="stat-card"><div class="stat-num">20</div><div class="stat-lbl">Commits on port branch</div></div>
   </div>
   <div class="pbar-row">
     <div class="pbar-wrapper"><div class="pbar-fill" style="--target:46%"></div></div>
@@ -205,14 +205,14 @@
   <div class="live-activity">
     <div class="live-row">
       <span class="lbl" style="color:var(--green)">PROCS</span>
-      <span>23 active</span>
+      <span>24 active</span>
     </div>
     <div class="live-row"><span></span><span class="live-detail">pid 2260: npm exec @executeautomation/playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 2399: sh -c playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 2401: node /home/stephan/.nvm/versions/node/v20.19.0/bin/playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 3185: npm exec @executeautomation/playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 3330: sh -c playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 3331: node /home/stephan/.nvm/versions/node/v20.19.0/bin/playwright-mcp-server</span></div>
     <div class="live-row">
       <span class="lbl" style="color:var(--amber)">EDITED</span>
       <span>2 file(s) in last 120s</span>
     </div>
-    <div class="live-row"><span></span><span class="live-detail">scripts/build_native_pm.mjs <span style="opacity:0.6">(55s ago)</span></span></div><div class="live-row"><span></span><span class="live-detail">scripts/pm_native_port.py <span style="opacity:0.6">(61s ago)</span></span></div>
+    <div class="live-row"><span></span><span class="live-detail">src/client/components/native/NativeWaveView.tsx <span style="opacity:0.6">(60s ago)</span></span></div><div class="live-row"><span></span><span class="live-detail">src/client/components/native/NativeWaveView.css <span style="opacity:0.6">(67s ago)</span></span></div>
   </div>
 </section>
 
@@ -381,8 +381,8 @@
           <span class="deliv-commit"></span>
         </li>
         <li class="deliv">
-          <span class="deliv-check "></span>
-          <span class="deliv-label ">Nested Ctrl+Enter renders new child INLINE at cursor (the <code>cc7caf4b</code> bug)</span>
+          <span class="deliv-check wip">◐</span>
+          <span class="deliv-label wip">Nested Ctrl+Enter renders new child INLINE at cursor (the <code>cc7caf4b</code> bug)</span>
           <span class="deliv-commit"></span>
         </li>
     </ul>
@@ -582,24 +582,29 @@
   <div class="recent-commits">
 
     <div class="commit-row">
+      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/9965f33829414cccc15c5454d23d4edddd60a18c" target="_blank" rel="noopener">9965f338</a></span>
+      <span class="commit-subject">PM: add Live Activity panel + native sanity sweep (FAILED, deploy pending)</span>
+      <span class="commit-when">20 minutes ago</span>
+    </div>
+    <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/ac6a18d99797bea5d7ecb22073ab0713d46049db" target="_blank" rel="noopener">ac6a18d9</a></span>
       <span class="commit-subject">PM: mark RizzomaTopicDetail toggle + Ctrl+Enter handler done</span>
-      <span class="commit-when">12 minutes ago</span>
+      <span class="commit-when">33 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/0a3df9b1abe47a60b3e792f7809f8a6874898901" target="_blank" rel="noopener">0a3df9b1</a></span>
       <span class="commit-subject">Phase 2 (#53): Ctrl+Enter handler + RizzomaTopicDetail toggle + auto-WIP</span>
-      <span class="commit-when">13 minutes ago</span>
+      <span class="commit-when">33 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/b0b92d6578306e8148c2925658c0661e564b16ab" target="_blank" rel="noopener">b0b92d65</a></span>
       <span class="commit-subject">PM: backfill commit hashes on 4 deliverables that I forgot to attach</span>
-      <span class="commit-when">64 minutes ago</span>
+      <span class="commit-when">84 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/a3078b60d6d2356ae372bf083d89dbef1816b353" target="_blank" rel="noopener">a3078b60</a></span>
       <span class="commit-subject">Phase 1 (#52) DONE: round-trip on every dev-DB blip + 3 parser/serializer bugs caught</span>
-      <span class="commit-when">2 hours ago</span>
+      <span class="commit-when">3 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/bf7529d0a0cf457b5cfef559250a58508119b52c" target="_blank" rel="noopener">bf7529d0</a></span>
@@ -614,17 +619,17 @@
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/0f575018eaefb778e46d4498be3c71a7ba69fed6" target="_blank" rel="noopener">0f575018</a></span>
       <span class="commit-subject">PM: revert two stale WIP markers (neither was actually being worked on)</span>
-      <span class="commit-when">3 hours ago</span>
+      <span class="commit-when">4 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/ea4e210bf132f168c67e09d80d17ae54a98b3861" target="_blank" rel="noopener">ea4e210b</a></span>
       <span class="commit-subject">PM html: re-add pbar animation script (was dropped on rewrite)</span>
-      <span class="commit-when">3 hours ago</span>
+      <span class="commit-when">4 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/57270c026a49939fda7dacac05a9ec85f5a14103" target="_blank" rel="noopener">57270c02</a></span>
       <span class="commit-subject">PM: add IN PROGRESS deliverable state (◐ amber)</span>
-      <span class="commit-when">3 hours ago</span>
+      <span class="commit-when">4 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/2b01bf311c5b6ade7bcba050b1d67fc7a53851e5" target="_blank" rel="noopener">2b01bf31</a></span>
@@ -649,12 +654,12 @@
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/a99180d9229162d23aae4ba9b933a0fefefd066e" target="_blank" rel="noopener">a99180d9</a></span>
       <span class="commit-subject">docs: TUI PM dashboard — Rich-based, runs in any WSL terminal</span>
-      <span class="commit-when">5 hours ago</span>
+      <span class="commit-when">6 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/4c873543b0cd810ed9b02a899fe44e7260945035" target="_blank" rel="noopener">4c873543</a></span>
       <span class="commit-subject">docs: live PM dashboard — interactive HTML w/ pbars + colored pills</span>
-      <span class="commit-when">5 hours ago</span>
+      <span class="commit-when">6 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/663bdc3dca074a8e385d29bb717b14fd282da088" target="_blank" rel="noopener">663bdc3d</a></span>
@@ -674,7 +679,7 @@
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/92fbf09f04125a0523c91eac342e2ea5f1f66e0f" target="_blank" rel="noopener">92fbf09f</a></span>
       <span class="commit-subject">Phase 0 (#51): wire FEAT_RIZZOMA_NATIVE_RENDER through Vite + layout className</span>
-      <span class="commit-when">6 hours ago</span>
+      <span class="commit-when">7 hours ago</span>
     </div>
   </div>
 </section>
