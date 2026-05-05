@@ -197,8 +197,10 @@ const walk = (node: Node, s: ParseState): void => {
     s.lineParams.heading = parseInt(el.tagName[1], 10);
   }
 
-  // <li> emits a LINE BEFORE its content (carries current list params).
-  if (el.tagName === 'LI') {
+  // <li> and <h1..h6> emit a LINE BEFORE their content (carries the current
+  // list/heading params). Headings need an explicit pushLine even at start of
+  // input because their LINE element carries the heading param.
+  if (el.tagName === 'LI' || /^H[1-6]$/.test(el.tagName)) {
     pushLine(s);
   } else if (block) {
     // Other block elements: emit a LINE before children if needed.
