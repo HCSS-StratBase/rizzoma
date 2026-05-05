@@ -58,7 +58,7 @@ const PHASES = [
       { done: true, label: '`serializer.ts` — ContentArray → HTML (round-trip inverse)', commit: '1e0a60f1' },
       { done: true, label: 'Depth-10 spike test (jsdom; 2047 blips, 2046 BlipThreads, depth=10)', commit: '1e0a60f1' },
       { done: true, label: 'Bug fix: BlipThread initial fold-class set in constructor', commit: '1e0a60f1' },
-      { done: true, label: 'Round-trip parser tests on every dev-DB topic (5/5 pass on VPS DB; 3 parser bugs caught + fixed)', commit: null },
+      { done: true, label: 'Round-trip parser tests on every dev-DB topic (5/5 pass on VPS DB; 3 parser bugs caught + fixed)', commit: 'a3078b60' },
     ],
   },
   {
@@ -67,9 +67,9 @@ const PHASES = [
     short: 'Per-blip view; mounts TipTap into DOM slot when isEditing; Ctrl+Enter inserts BLIP at array index',
     deliverables: [
       { done: true, label: '`blip-view.ts` — BlipView + WaveView skeletons (read-mode rendering)', commit: 'f5b17fd9' },
-      { done: true, label: '`blip-editor-host.ts` — mount/unmount TipTap into BlipView slot', commit: null },
-      { done: true, label: '`wave-view.ts` — full port of `wave/view.coffee` (registry + events + DOM helpers)', commit: null },
-      { done: true, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: null },
+      { done: true, label: '`blip-editor-host.ts` — mount/unmount TipTap into BlipView slot', commit: '01a5acd0' },
+      { done: true, label: '`wave-view.ts` — full port of `wave/view.coffee` (registry + events + DOM helpers)', commit: 'bf7529d0' },
+      { done: true, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: 'bf7529d0' },
       { wip: true, label: '`RizzomaTopicDetail.tsx` side-by-side toggle (no demolition)', commit: null },
       { wip: true, label: 'Ctrl+Enter handler — insert BLIP at cursor array-index', commit: null },
       { done: false, label: 'sanity sweep + state-survives-collapse pass on `?render=native`', commit: null },
