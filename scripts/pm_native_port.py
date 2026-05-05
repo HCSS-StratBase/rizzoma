@@ -129,8 +129,8 @@ PHASES: list[Phase] = [
               Deliverable("NativeWaveView.tsx — thin React wrapper behind feature flag", True, commit="bf7529d0", files=["src/client/components/native/NativeWaveView.tsx"]),
               Deliverable("RizzomaTopicDetail.tsx side-by-side toggle (?render=native URL flag)", True, commit="0a3df9b1", files=["src/client/components/RizzomaTopicDetail.tsx"]),
               Deliverable("Ctrl+Enter handler — insertChildBlipAtCursor at array-index", True, commit="0a3df9b1", files=["src/client/native/blip-editor-host.ts"]),
-              Deliverable("sanity sweep + state-survives-collapse pass on ?render=native"),
-              Deliverable("Nested Ctrl+Enter renders new child INLINE at cursor (the cc7caf4b bug)"),
+              Deliverable("sanity sweep + state-survives-collapse pass on ?render=native (script runs; VPS deploy pending — 0/4 vs unflagged build)", failed=True, files=["scripts/native_render_sanity_sweep.mjs"]),
+              Deliverable("Nested Ctrl+Enter renders new child INLINE at cursor (the cc7caf4b bug)", files=["src/client/native/blip-editor-host.ts", "src/client/components/native/NativeWaveView.tsx"]),
           ]),
     Phase(3, 54, "Y.js collab + cross-tab sync + live cursors",
           "Y.Array<Y.Map> over ContentArray; per-blip TipTap keeps Y.XmlFragment",
@@ -217,6 +217,57 @@ def fetch_commits() -> list[dict]:
         if len(parts) == 3:
             rows.append({"hash": parts[0], "subject": parts[1], "when": parts[2]})
     return rows
+
+
+def fetch_recent_files(seconds: int = 120) -> list[tuple[str, int]]:
+    """Files in the project tree modified within the last `seconds`.
+    Returns [(path, age_in_seconds), ...] sorted by most-recent first.
+    Excludes node_modules, .git, dist, .vite, screenshots."""
+    import os
+    import time
+    now = int(time.time())
+    excluded = {'node_modules', '.git', 'dist', '.vite', 'screenshots',
+                'public', '__pycache__', '.next', 'tmp', 'coverage'}
+    results = []
+    for dirpath, dirnames, filenames in os.walk('.', followlinks=False):
+        dirnames[:] = [d for d in dirnames if d not in excluded and not d.startswith('.')]
+        for fn in filenames:
+            if fn.startswith('.'):
+                continue
+            full = os.path.join(dirpath, fn)
+            try:
+                mtime = int(os.stat(full).st_mtime)
+            except OSError:
+                continue
+            age = now - mtime
+            if age <= seconds:
+                rel = os.path.relpath(full, '.')
+                results.append((rel, age))
+    results.sort(key=lambda x: x[1])
+    return results
+
+
+def fetch_active_processes() -> list[dict]:
+    """Detect long-running dev/test processes related to this project.
+    Returns [{pid, cmd}] for vitest, playwright, vite, tsc --watch, etc."""
+    out = sh(["ps", "-eo", "pid,command", "--no-headers"])
+    if not out:
+        return []
+    procs = []
+    keywords = ['vitest', 'playwright', 'vite', 'tsc --watch', 'tsx --watch',
+                'native_roundtrip_devdb', 'native_render_sanity_sweep',
+                'rizzoma_sanity_sweep', 'npm run dev', 'npm test', 'npx vitest']
+    for line in out.splitlines():
+        parts = line.strip().split(None, 1)
+        if len(parts) != 2:
+            continue
+        pid_str, cmd = parts
+        if any(k in cmd for k in keywords):
+            # Filter out the `ps` itself + grep procs
+            if 'ps -eo' in cmd or 'grep' in cmd:
+                continue
+            procs.append({'pid': pid_str, 'cmd': cmd[:100]})
+    return procs
 
 
 def fetch_dirty_files() -> set[str]:
@@ -315,6 +366,46 @@ def render_overall(total_done_days: float, total_days: float, phases_done: int,
                  border_style=COL_GOLD, padding=(1, 2))
 
 
+def render_live_activity() -> Panel:
+    """Top-of-PM live activity strip. Shows currently-running processes
+    + files edited within the last 2 minutes. If both are empty: red
+    IDLE banner so the user knows nothing is happening."""
+    procs = fetch_active_processes()
+    recent = fetch_recent_files(seconds=120)
+
+    if not procs and not recent:
+        big = Text(" ⚠  IDLE — no processes running, no files edited in 2 min ",
+                   style=f"bold white on {COL_RED}")
+        return Panel(Align.center(big),
+                     title=f"[bold {COL_RED}]● LIVE ACTIVITY[/]",
+                     border_style=COL_RED, padding=(0, 1))
+
+    rows = Table(box=None, show_header=False, padding=(0, 1), pad_edge=False, expand=True)
+    rows.add_column("kind", width=10, no_wrap=True)
+    rows.add_column("detail", overflow="fold")
+
+    if procs:
+        rows.add_row(Text("PROCS", style=f"bold {COL_GREEN}"),
+                     Text(f"{len(procs)} active", style="white"))
+        for p in procs[:5]:
+            rows.add_row(Text(""), Text(f"  pid {p['pid']}: {p['cmd']}", style=COL_LB))
+    else:
+        rows.add_row(Text("PROCS", style=COL_GRAY), Text("(none)", style=COL_GRAY))
+
+    if recent:
+        rows.add_row(Text("EDITED", style=f"bold {COL_AMBER}"),
+                     Text(f"{len(recent)} file(s) in last 2 min", style="white"))
+        for path, age in recent[:6]:
+            label = f"  {path} ({age}s ago)"
+            rows.add_row(Text(""), Text(label, style=COL_LB))
+    else:
+        rows.add_row(Text("EDITED", style=COL_GRAY), Text("(none in last 2 min)", style=COL_GRAY))
+
+    border = COL_GREEN if procs else COL_AMBER
+    return Panel(rows, title=f"[bold {border}]● LIVE ACTIVITY[/]",
+                 border_style=border, padding=(0, 1))
+
+
 def render_phase(p: Phase, gh_state: str, dirty: set[str]) -> Panel:
     status = p.status(dirty)
     pct = p.pct(dirty)
@@ -410,6 +501,7 @@ def build_layout(issue_states: dict[int, str], commits: list[dict]) -> Group:
 
     overall = render_overall(completed_days, total_days, phases_done,
                              len(commits), overall_pct)
+    live = render_live_activity()
 
     # Phase cards stacked vertically — full-width is more legible than squeezed 2-col.
     phase_cards = [render_phase(p, issue_states.get(p.issue, "?"), dirty) for p in PHASES]
@@ -417,7 +509,7 @@ def build_layout(issue_states: dict[int, str], commits: list[dict]) -> Group:
     bottom = Columns([render_commits(commits), render_calendar()],
                      expand=True, equal=True)
 
-    return Group(overall, Text(""), *phase_cards, Text(""), bottom)
+    return Group(overall, Text(""), live, Text(""), *phase_cards, Text(""), bottom)
 
 
 def help_footer(live: bool = False) -> Text:

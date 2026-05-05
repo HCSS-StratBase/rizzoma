@@ -72,8 +72,8 @@ const PHASES = [
       { done: true, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: 'bf7529d0', files: ['src/client/components/native/NativeWaveView.tsx'] },
       { done: true, label: '`RizzomaTopicDetail.tsx` side-by-side toggle (`?render=native` URL flag)', commit: '0a3df9b1', files: ['src/client/components/RizzomaTopicDetail.tsx'] },
       { done: true, label: 'Ctrl+Enter handler — `insertChildBlipAtCursor` at array-index', commit: '0a3df9b1', files: ['src/client/native/blip-editor-host.ts'] },
-      { done: false, label: 'sanity sweep + state-survives-collapse pass on `?render=native`', commit: null },
-      { done: false, label: 'Nested Ctrl+Enter renders new child INLINE at cursor (the `cc7caf4b` bug)', commit: null },
+      { failed: true, label: 'sanity sweep + state-survives-collapse pass on `?render=native` (script runs; VPS deploy pending — 0/4 against unflagged build)', commit: null, files: ['scripts/native_render_sanity_sweep.mjs'] },
+      { done: false, label: 'Nested Ctrl+Enter renders new child INLINE at cursor (the `cc7caf4b` bug)', commit: null, files: ['src/client/native/blip-editor-host.ts', 'src/client/components/native/NativeWaveView.tsx'] },
     ],
   },
   {
@@ -172,6 +172,67 @@ const isWip = (d) => {
   if (!Array.isArray(d.files)) return false;
   return d.files.some((f) => dirtyFiles.has(f));
 };
+
+// ─── Live Activity: recent edits + running processes ────────────────────
+import { readdirSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
+
+const RECENT_WINDOW_S = 120;
+const PROC_KEYWORDS = [
+  'vitest', 'playwright', 'vite', 'tsc --watch', 'tsx --watch',
+  'native_roundtrip_devdb', 'native_render_sanity_sweep',
+  'rizzoma_sanity_sweep', 'npm run dev', 'npm test', 'npx vitest',
+];
+const EXCLUDED_DIRS = new Set([
+  'node_modules', '.git', 'dist', '.vite', 'screenshots',
+  'public', '__pycache__', '.next', 'tmp', 'coverage',
+]);
+
+const listRecentlyEditedFiles = (root, windowSec) => {
+  const cutoff = Date.now() / 1000 - windowSec;
+  const out = [];
+  const walk = (dir) => {
+    let entries;
+    try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const ent of entries) {
+      if (ent.name.startsWith('.')) continue;
+      if (EXCLUDED_DIRS.has(ent.name)) continue;
+      const full = join(dir, ent.name);
+      if (ent.isDirectory()) {
+        walk(full);
+      } else if (ent.isFile()) {
+        try {
+          const m = statSync(full).mtimeMs / 1000;
+          if (m >= cutoff) {
+            out.push({ path: relative(process.cwd(), full), age: Math.round(Date.now() / 1000 - m) });
+          }
+        } catch {}
+      }
+    }
+  };
+  walk(root);
+  out.sort((a, b) => a.age - b.age);
+  return out;
+};
+
+const listActiveProcesses = () => {
+  let out;
+  try { out = sh(`ps -eo pid,command --no-headers`); } catch { return []; }
+  const procs = [];
+  for (const line of out.split('\n')) {
+    const m = line.trim().match(/^(\d+)\s+(.*)$/);
+    if (!m) continue;
+    const cmd = m[2];
+    if (cmd.includes('grep ') || cmd.startsWith('ps ')) continue;
+    if (PROC_KEYWORDS.some((k) => cmd.includes(k))) {
+      procs.push({ pid: m[1], cmd: cmd.length > 100 ? cmd.slice(0, 100) + '…' : cmd });
+    }
+  }
+  return procs;
+};
+
+const recentFiles = listRecentlyEditedFiles('.', RECENT_WINDOW_S);
+const activeProcs = listActiveProcesses();
 
 // ─── Per-phase progress + overall ───
 // Done deliverables count as 1.0; WIP count as 0.5 toward the bar fill.
@@ -337,6 +398,21 @@ const html = `<!doctype html>
     vertical-align: middle;
   }
   .deliv-commit a { font-family: ui-monospace, monospace; font-size: 0.78rem; color: var(--gold); padding: 2px 6px; background: rgba(219,173,80,0.1); border-radius: 4px; }
+  .live-activity {
+    background: var(--bg-card); border-radius: 12px; padding: 16px 20px;
+    margin: 16px 0 24px;
+    border-left: 4px solid var(--green);
+  }
+  .live-activity.idle { border-left-color: var(--red); background: rgba(217,107,107,0.08); }
+  .live-activity.idle-banner {
+    text-align: center; font-weight: 700; font-size: 1rem;
+    padding: 20px; color: var(--red);
+  }
+  .live-activity h3 { color: var(--green); font-size: 0.85rem; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 10px; }
+  .live-activity.idle h3 { color: var(--red); }
+  .live-row { display: grid; grid-template-columns: 80px 1fr; gap: 10px; padding: 4px 0; font-size: 0.85rem; }
+  .live-row .lbl { font-weight: 700; font-size: 0.72rem; color: var(--lb); text-transform: uppercase; letter-spacing: 0.5px; }
+  .live-detail { color: var(--lb); font-family: ui-monospace, monospace; font-size: 0.78rem; padding: 1px 0; }
   .recent-commits, .calendar { background: var(--bg-card); border-radius: 12px; padding: 20px 22px; margin-bottom: 24px; border: 1px solid var(--border); }
   .commit-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 0.85rem; }
   .commit-row:first-child { border-top: none; padding-top: 4px; }
@@ -386,6 +462,26 @@ const html = `<!doctype html>
     <div class="pbar-wrapper"><div class="pbar-fill" style="--target:${overallPct}%"></div></div>
     <div class="pbar-pct">${overallPct}%</div>
   </div>
+</section>
+
+<section>
+  <h2>● Live activity</h2>
+  ${activeProcs.length === 0 && recentFiles.length === 0 ? `
+  <div class="live-activity idle">
+    <div class="idle-banner">⚠ IDLE — no active processes, no files edited in ${RECENT_WINDOW_S}s</div>
+  </div>` : `
+  <div class="live-activity${activeProcs.length === 0 ? ' idle' : ''}">
+    <div class="live-row">
+      <span class="lbl" style="color:${activeProcs.length ? 'var(--green)' : 'var(--gray)'}">PROCS</span>
+      <span>${activeProcs.length} active${activeProcs.length === 0 ? ' (no dev/test process running)' : ''}</span>
+    </div>
+    ${activeProcs.slice(0, 6).map((p) => `<div class="live-row"><span></span><span class="live-detail">pid ${escapeHtml(p.pid)}: ${escapeHtml(p.cmd)}</span></div>`).join('')}
+    <div class="live-row">
+      <span class="lbl" style="color:${recentFiles.length ? 'var(--amber)' : 'var(--gray)'}">EDITED</span>
+      <span>${recentFiles.length} file(s) in last ${RECENT_WINDOW_S}s${recentFiles.length === 0 ? ' (no recent edits)' : ''}</span>
+    </div>
+    ${recentFiles.slice(0, 8).map((f) => `<div class="live-row"><span></span><span class="live-detail">${escapeHtml(f.path)} <span style="opacity:0.6">(${f.age}s ago)</span></span></div>`).join('')}
+  </div>`}
 </section>
 
 <section>
