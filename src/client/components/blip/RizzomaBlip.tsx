@@ -777,17 +777,23 @@ export function RizzomaBlip({
     // original Rizzoma kept inline-child rendering working in both modes
     // without a render-path split.
     const root = blipContainerRef.current;
-    if (!root) return;
+    if (!root) {
+      console.log('[Portal] no blipContainerRef, blip.id=', blip.id);
+      return;
+    }
     const knownIds = new Set(inlineChildren.map(c => c.id));
     const map = new Map<string, HTMLElement>();
+    const anchorIds: string[] = [];
     root.querySelectorAll('.inline-child-portal[data-portal-child]').forEach(el => {
       const id = el.getAttribute('data-portal-child');
-      // Only claim portal anchors whose child ID is one of THIS blip's own
-      // inline children — avoids cross-blip pollution if anchors leak.
+      anchorIds.push(id || '');
       if (id && knownIds.has(id)) {
         map.set(id, el as HTMLElement);
       }
     });
+    console.log('[Portal] effect ran for blip.id=', blip.id,
+      'anchorIds=', anchorIds, 'knownIds=', Array.from(knownIds),
+      'mapSize=', map.size, 'localExpanded=', Array.from(localExpandedInline));
     portalContainers.current = map;
     if (map.size > 0 || localExpandedInline.size > 0) setPortalTick(t => t + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- inlineChildIdsKey is the stable representation of inlineChildren
