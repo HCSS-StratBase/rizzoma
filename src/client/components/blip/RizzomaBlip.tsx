@@ -2269,7 +2269,19 @@ export function RizzomaBlip({
           as a flat stack: that was a previous mitigation but the user
           explicitly asked for "as in the original".
         */}
-        {!parityViewRender && inlineChildren
+        {/* Portal path runs whenever TipTap markers are present:
+              - isEditing (this blip is being edited inline), OR
+              - contentOverride (the topic root's TipTap editor injected from
+                RizzomaTopicDetail), OR
+              - non-parity view mode (legacy injectInlineMarkers path).
+            Previously the gate was `!parityViewRender` only, which evaluated
+            to FALSE when the topic was in edit mode via contentOverride
+            (because parityViewRender = RIZZOMA_PARITY_RENDER && !isEditing,
+            and isEditing here is the BLIP's own edit state, not the topic's
+            override-edit state) — so Ctrl+Enter created the marker but the
+            new child blip never rendered into the portal anchor. The gate
+            now positively requires TipTap-marker rendering OR non-parity. */}
+        {(isEditing || !!contentOverride || !parityViewRender) && inlineChildren
           .filter(child => localExpandedInline.has(child.id) && portalContainers.current.has(child.id))
           .map(child => createPortal(
             <div className="inline-child-expanded">
