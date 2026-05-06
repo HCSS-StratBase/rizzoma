@@ -22,7 +22,7 @@
  * now exports BlipView only. Importers should switch to `from './wave-view'`.
  */
 
-import { BlipView } from './blip-view';
+import { BlipView, type HistoryOpenHandler } from './blip-view';
 import { ContentArray } from './types';
 
 export type WaveViewEvent =
@@ -38,6 +38,9 @@ export interface WaveViewOptions {
   contentByBlipId: (id: string) => ContentArray | null;
   /** Optional CSS class added to the root container (default: 'wave-view'). */
   rootClassName?: string;
+  /** Optional handler called when a blip's gear "history" button is clicked.
+   *  Wired uniformly to every BlipView this WaveView creates. */
+  onOpenHistory?: HistoryOpenHandler;
 }
 
 export class WaveView {
@@ -47,9 +50,11 @@ export class WaveView {
   private rootBlipId: string | null = null;
   private listeners = new Map<WaveViewEvent, Set<WaveViewListener>>();
   private destroyed = false;
+  private readonly onOpenHistory: HistoryOpenHandler | null;
 
   constructor(opts: WaveViewOptions) {
     this.contentLookup = opts.contentByBlipId;
+    this.onOpenHistory = opts.onOpenHistory || null;
     this.rootContainer = document.createElement('div');
     this.rootContainer.className = opts.rootClassName || 'wave-view';
   }
@@ -81,6 +86,7 @@ export class WaveView {
     if (view) return view;
     view = new BlipView(blipId);
     view.setChildResolver((childId) => this.resolveChild(childId));
+    if (this.onOpenHistory) view.setHistoryHandler(this.onOpenHistory);
     this.views.set(blipId, view);
     const content = this.contentLookup(blipId);
     if (content) view.setContent(content);

@@ -27,6 +27,9 @@ export interface BlipViewListener {
 
 export type BlipViewEvent = 'rendered' | 'destroyed';
 
+/** Optional callback for opening the per-blip history modal. */
+export type HistoryOpenHandler = (blipId: string) => void;
+
 export class BlipView {
   private readonly blipId: string;
   private readonly container: HTMLElement;
@@ -35,6 +38,8 @@ export class BlipView {
   private destroyed = false;
   private resolver: ((id: string) => HTMLElement | null) | null = null;
   private listeners: Map<BlipViewEvent, Set<BlipViewListener>> = new Map();
+  private gearButton: HTMLButtonElement | null = null;
+  private onOpenHistory: HistoryOpenHandler | null = null;
 
   constructor(blipId: string) {
     this.blipId = blipId;
@@ -45,6 +50,37 @@ export class BlipView {
     this.inner = document.createElement('div');
     this.inner.className = 'blip-text';
     this.container.appendChild(this.inner);
+
+    // Gear menu (history button + room for share/permissions later).
+    // Kept hidden by default via CSS; revealed on container hover or when
+    // BlipView is "active". The native render owns this DOM directly —
+    // no React, no portal — so it survives fold/unfold without remount.
+    const gear = document.createElement('div');
+    gear.className = 'blip-gear-menu';
+    gear.contentEditable = 'false';
+    const historyBtn = document.createElement('button');
+    historyBtn.type = 'button';
+    historyBtn.className = 'blip-gear-history';
+    historyBtn.title = 'View blip history';
+    historyBtn.textContent = '⏱';
+    historyBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.onOpenHistory) this.onOpenHistory(this.blipId);
+    });
+    gear.appendChild(historyBtn);
+    this.container.appendChild(gear);
+    this.gearButton = historyBtn;
+  }
+
+  /** Wire the history modal opener. */
+  setHistoryHandler(handler: HistoryOpenHandler | null): void {
+    this.onOpenHistory = handler;
+  }
+
+  /** Expose the gear button for tests / event wiring. */
+  getGearButton(): HTMLButtonElement | null {
+    return this.gearButton;
   }
 
   getId(): string {

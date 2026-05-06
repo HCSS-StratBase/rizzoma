@@ -114,3 +114,31 @@
   background: #f3f4f6;
   border-color: #9ca3af;
 }
+
+/* Per-blip gear menu (history button etc). Hidden by default; revealed
+ * on container hover. Native DOM, survives fold/unfold without remount. */
+.rizzoma-native-mode .blip-container { position: relative; }
+.rizzoma-native-mode .blip-gear-menu {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: none;
+  gap: 4px;
+}
+.rizzoma-native-mode .blip-container:hover > .blip-gear-menu {
+  display: flex;
+}
+.rizzoma-native-mode .blip-gear-history {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #1f2937;
+  line-height: 1.2;
+}
+.rizzoma-native-mode .blip-gear-history:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
