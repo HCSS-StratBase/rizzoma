@@ -690,22 +690,34 @@ export function RizzomaBlip({
           // The content is auto-saved, so the [+] marker will persist
         }
 
-        // BLB: Expand the new child blip inline (no navigation!)
-        // Refresh topic data so the new child appears in inlineChildren
-        window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
-        // Immediately expand the new child inline
+        // BLB: Expand the new child blip inline + navigate into edit mode.
+        //
+        // Bug B (2026-05-07): nested Ctrl+Enter (depth 2+) didn't mount the
+        // new child's editor — toggleInlineChild() ran synchronously LOCALLY
+        // before the parent's refresh-topics chain populated `inlineChildren`,
+        // so the renderer's filter (inlineChildren.find(c => c.id === ...))
+        // returned undefined and the portal block skipped rendering.
+        //
+        // Fix: dispatch refresh-topics, AWAIT the refresh by polling for the
+        // new blip in window state (best-effort), then dispatch the same
+        // 'rizzoma:toggle-inline-blip' event with parentId that
+        // RizzomaTopicDetail's create handler uses. The toggle listener at
+        // RizzomaBlip.tsx:798 claims via parentId === blip.id and expands.
         if (newBlipId) {
-          toggleInlineChild(newBlipId);
-          // Auto-enter edit mode on the new child so the user can type immediately —
-          // without this it lands in view mode with empty content + no toolbar
-          // visible, so the user has no obvious way to start typing. Delay long
-          // enough for the new child's RizzomaBlip to mount + register its event
-          // listener (mount happens after toggleInlineChild + load(true) refresh).
-          setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+          // Wait for refresh + state propagation (matches the topic-level
+          // handler's await-load-then-dispatch pattern).
+          await new Promise((r) => setTimeout(r, 600));
+          window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+            detail: { threadId: newBlipId, parentId: blip.id },
+          }));
+          // Two RAFs so the new RizzomaBlip mounts + registers its
+          // enter-edit-blip listener before we dispatch.
+          requestAnimationFrame(() => requestAnimationFrame(() => {
             window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
               detail: { blipId: newBlipId },
             }));
-          }, 600);
+          }));
         }
       } catch (error) {
         console.error('Error creating child blip:', error);

@@ -22,7 +22,7 @@
  */
 
 import { execSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, statSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 const REPO = 'HCSS-StratBase/rizzoma';
@@ -188,7 +188,6 @@ const isWip = (d) => {
 };
 
 // ─── Live Activity: recent edits + running processes ────────────────────
-import { readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const RECENT_WINDOW_S = 120;
@@ -248,6 +247,98 @@ const listActiveProcesses = () => {
 const recentFiles = listRecentlyEditedFiles('.', RECENT_WINDOW_S);
 const activeProcs = listActiveProcesses();
 
+// ─── Parse the 161-row feature matrix from RIZZOMA_FEATURES_STATUS.md ───
+// Group features by section so the PM can show category-by-category coverage.
+let featureMatrix = { sections: [], totalRows: 0 };
+try {
+  const md = readFileSync('RIZZOMA_FEATURES_STATUS.md', 'utf8');
+  const lines = md.split('\n');
+  let currentSection = null;
+  for (const ln of lines) {
+    const sectionMatch = ln.match(/^(#{2,4})\s+(.+?)\s*$/);
+    if (sectionMatch) {
+      const depth = sectionMatch[1].length;
+      const raw = sectionMatch[2];
+      const name = raw.replace(/[✅⚠️❌🚧]/g, '').trim();
+      // Skip generic top-level umbrella headers and the Summary section.
+      if (!name) { currentSection = null; continue; }
+      if (/^Summary$/i.test(name)) { currentSection = null; continue; }
+      if (depth === 2 && /^Implemented Features$|^Partial Features$|^Missing Features$|^Notes$/i.test(name)) {
+        currentSection = null; continue;
+      }
+      currentSection = { name, items: [] };
+      featureMatrix.sections.push(currentSection);
+      continue;
+    }
+    if (!currentSection) continue;
+    const itemMatch = ln.match(/^[-*]\s+\*\*([^*]+?)\*\*\s*[—-]?\s*(.*)$/);
+    if (itemMatch) {
+      const name = itemMatch[1].trim();
+      // Skip "Files created" and similar pseudo-rows.
+      if (/^Files? created$|^Files?$/i.test(name)) continue;
+      currentSection.items.push({
+        name,
+        description: (itemMatch[2] || '').trim(),
+      });
+      featureMatrix.totalRows++;
+    }
+  }
+} catch {}
+
+// ─── Sweep status: read most recent visual-feature-sweep manifest.json ───
+// Show pass/fail counts + delta from the previous sweep so the PM has an
+// always-on "where does the gated sweep stand" panel.
+let sweepStatus = null;
+try {
+  const sweepDirs = readdirSync('screenshots', { withFileTypes: true })
+    .filter((d) => d.isDirectory() && /feature-sweep|GATED-sweep/.test(d.name))
+    .map((d) => 'screenshots/' + d.name)
+    .map((p) => {
+      try {
+        const manifestStat = statSync(p + '/manifest.json');
+        return { dir: p, mtimeMs: manifestStat.mtimeMs };
+      } catch { return null; }
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+  if (sweepDirs.length > 0) {
+    const readSweep = (sweepDir) => {
+      try {
+        const m = JSON.parse(readFileSync(sweepDir + '/manifest.json', 'utf8'));
+        const checked = (m.captures || []).filter((c) => c.gatePass !== null && c.gatePass !== undefined);
+        const passed = checked.filter((c) => c.gatePass === true);
+        const failed = checked.filter((c) => c.gatePass === false);
+        const noGate = (m.captures || []).filter((c) => c.gatePass === null || c.gatePass === undefined);
+        return {
+          dir: sweepDir,
+          generatedAt: m.generatedAt,
+          captures: m.captures?.length || 0,
+          checked: checked.length,
+          passed: passed.length,
+          failed: failed.length,
+          noGate: noGate.length,
+          failures: failed.map((f) => ({ label: f.label, detail: f.gateDetail || '' })),
+        };
+      } catch { return null; }
+    };
+
+    const latest = readSweep(sweepDirs[0].dir);
+    const prev = sweepDirs[1] ? readSweep(sweepDirs[1].dir) : null;
+    sweepStatus = {
+      latest,
+      prev,
+      delta: prev && latest ? {
+        passed: latest.passed - prev.passed,
+        failed: latest.failed - prev.failed,
+        checked: latest.checked - prev.checked,
+        captures: latest.captures - prev.captures,
+        noGate: latest.noGate - prev.noGate,
+      } : null,
+    };
+  }
+} catch {}
+
 // ─── Per-phase progress + overall ───
 // Done deliverables count as 1.0; WIP count as 0.5 toward the bar fill.
 for (const p of PHASES) {
@@ -275,6 +366,131 @@ const escapeHtml = (s) =>
 
 const renderInlineMd = (s) =>
   escapeHtml(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+
+// ─── Match features to sweep captures by featureRefs ───
+// Each capture in the manifest carries a list of feature refs like
+// "Authentication: login modal". A feature is "covered" if some capture's
+// featureRefs string-contains its section + name.
+const captureByFeatureSection = new Map();
+const captureByFeatureName = new Map();
+if (sweepStatus && sweepStatus.latest) {
+  try {
+    const m = JSON.parse(readFileSync(sweepStatus.latest.dir + '/manifest.json', 'utf8'));
+    for (const cap of (m.captures || [])) {
+      for (const ref of (cap.featureRefs || [])) {
+        const refStr = String(ref);
+        const colonIdx = refStr.indexOf(':');
+        if (colonIdx < 0) continue;
+        const sec = refStr.slice(0, colonIdx).trim();
+        const nm = refStr.slice(colonIdx + 1).trim();
+        const sKey = sec.toLowerCase();
+        const nKey = (sec + '::' + nm).toLowerCase();
+        if (!captureByFeatureSection.has(sKey)) captureByFeatureSection.set(sKey, []);
+        captureByFeatureSection.get(sKey).push(cap);
+        if (!captureByFeatureName.has(nKey)) captureByFeatureName.set(nKey, []);
+        captureByFeatureName.get(nKey).push(cap);
+      }
+    }
+  } catch {}
+}
+
+const featureStatusForItem = (sectionName, item) => {
+  // Try section+name match; fall back to section-only.
+  const nKey = (sectionName + '::' + item.name).toLowerCase();
+  const captures = captureByFeatureName.get(nKey)
+    || captureByFeatureSection.get(sectionName.toLowerCase()) || [];
+  if (captures.length === 0) return { status: 'uncovered', captures: [] };
+  // If any capture for this item has a gate FAIL → fail. Else if any have gate PASS → pass.
+  // Else (all no-gate) → covered-no-gate.
+  const fails = captures.filter((c) => c.gatePass === false);
+  const passes = captures.filter((c) => c.gatePass === true);
+  if (fails.length > 0) return { status: 'fail', captures };
+  if (passes.length > 0) return { status: 'pass', captures };
+  return { status: 'covered-no-gate', captures };
+};
+
+const featureMatrixHtml = (() => {
+  if (!featureMatrix.sections.length) return '';
+  const blocks = [];
+  for (const section of featureMatrix.sections) {
+    const itemsHtml = section.items.map((item) => {
+      const fs = featureStatusForItem(section.name, item);
+      const badge = fs.status === 'pass' ? '<span style="color:var(--green);font-weight:700">✓</span>'
+                  : fs.status === 'fail' ? '<span style="color:var(--red);font-weight:700">✗</span>'
+                  : fs.status === 'covered-no-gate' ? '<span style="color:var(--amber);font-weight:700">·</span>'
+                  : '<span style="color:var(--gray)">○</span>';
+      return '<li class="deliv">' +
+        '<span class="deliv-check ' + (fs.status === 'pass' ? 'done' : fs.status === 'fail' ? 'failed' : '') + '">' + badge + '</span>' +
+        '<span class="deliv-label">' + escapeHtml(item.name) + ' <span style="color:var(--lb);font-weight:400">— ' + escapeHtml(item.description.slice(0, 120)) + '</span></span>' +
+      '</li>';
+    }).join('');
+    const totalIn = section.items.length;
+    const passIn = section.items.filter((it) => featureStatusForItem(section.name, it).status === 'pass').length;
+    const failIn = section.items.filter((it) => featureStatusForItem(section.name, it).status === 'fail').length;
+    const noGateIn = section.items.filter((it) => featureStatusForItem(section.name, it).status === 'covered-no-gate').length;
+    const uncoveredIn = totalIn - passIn - failIn - noGateIn;
+    blocks.push(
+      '<article class="phase-card">' +
+        '<div class="phase-header">' +
+          '<div><div class="phase-num">CATEGORY · ' + totalIn + ' features</div>' +
+          '<h3 class="phase-title">' + escapeHtml(section.name) + '</h3></div>' +
+          '<span style="font-size:0.85rem">' +
+            '<span style="color:var(--green)">✓ ' + passIn + '</span> · ' +
+            '<span style="color:var(--red)">✗ ' + failIn + '</span> · ' +
+            '<span style="color:var(--amber)">· ' + noGateIn + '</span> · ' +
+            '<span style="color:var(--gray)">○ ' + uncoveredIn + '</span>' +
+          '</span>' +
+        '</div>' +
+        '<ul class="deliv-list">' + itemsHtml + '</ul>' +
+      '</article>'
+    );
+  }
+  return blocks.join('');
+})();
+
+// ─── Pre-compute sweep panel HTML to avoid nested template literals ───
+const arrow = (n) => n > 0 ? '<span style="color:var(--green)">+' + n + '</span>'
+                          : (n < 0 ? '<span style="color:var(--red)">' + n + '</span>'
+                                   : '<span style="opacity:0.6">±0</span>');
+let sweepHtml = '<div class="live-activity idle"><div class="idle-banner">⚠ No sweep manifest found in screenshots/. Run <code>node scripts/visual-feature-sweep.mjs</code> to populate.</div></div>';
+if (sweepStatus && sweepStatus.latest) {
+  const s = sweepStatus.latest;
+  const d = sweepStatus.delta;
+  const passPct = s.checked > 0 ? Math.round((s.passed / s.checked) * 100) : 0;
+  const fillCls = passPct === 100 ? 'green' : (passPct >= 70 ? 'amber' : 'gray');
+  const idleCls = s.failed > 0 ? ' idle' : '';
+  const headColor = (s.passed === s.checked && s.failed === 0) ? 'var(--green)' : 'var(--amber)';
+  const failsBlock = s.failures.length > 0
+    ? s.failures.slice(0, 8).map((f) =>
+        '<div class="live-row"><span class="lbl" style="color:var(--red)">FAIL</span>' +
+        '<span class="live-detail">' + escapeHtml(f.label) + ' — ' + escapeHtml(f.detail.slice(0, 100)) + '</span></div>'
+      ).join('')
+    : '';
+  const deltaBlock = d
+    ? '<div class="live-row"><span class="lbl" style="color:var(--lb)">Δ</span>' +
+      '<span class="live-detail">passed ' + arrow(d.passed) + ' · failed ' + arrow(d.failed) +
+      ' · checked ' + arrow(d.checked) + ' · captures ' + arrow(d.captures) + '</span></div>'
+    : '';
+  const sinceText = d ? '(' + arrow(d.passed) + ' since previous)' : '(first sweep)';
+  sweepHtml = ''
+    + '<div class="live-activity' + idleCls + '">'
+    + '<div class="live-row">'
+    +   '<span class="lbl" style="color:' + headColor + '">SWEEP</span>'
+    +   '<span><strong>' + s.passed + ' / ' + s.checked + ' programmatic gates PASS</strong> '
+    +     sinceText + ' · ' + s.failed + ' FAIL · ' + s.noGate + ' no-gate · ' + s.captures + ' captures total</span>'
+    + '</div>'
+    + '<div class="pbar-row">'
+    +   '<div class="pbar-wrapper"><div class="pbar-fill ' + fillCls + '" style="--target:' + passPct + '%"></div></div>'
+    +   '<div class="pbar-pct">' + passPct + '%</div>'
+    + '</div>'
+    + '<div class="live-row">'
+    +   '<span class="lbl" style="color:var(--lb)">DIR</span>'
+    +   '<span class="live-detail">' + escapeHtml(s.dir) + ' · ' + escapeHtml(new Date(s.generatedAt).toLocaleString()) + '</span>'
+    + '</div>'
+    + failsBlock
+    + deltaBlock
+    + '</div>';
+}
 
 // ─── HTML body ───
 const html = `<!doctype html>
@@ -496,6 +712,57 @@ const html = `<!doctype html>
     </div>
     ${recentFiles.slice(0, 8).map((f) => `<div class="live-row"><span></span><span class="live-detail">${escapeHtml(f.path)} <span style="opacity:0.6">(${f.age}s ago)</span></span></div>`).join('')}
   </div>`}
+</section>
+
+<section>
+  <h2>🛡 Visual sweep gate status</h2>
+  ${sweepHtml}
+</section>
+
+<section>
+  <h2>🐛 Active bug tracker</h2>
+  <article class="phase-card" style="border-left:4px solid var(--red)">
+    <div class="phase-header">
+      <div>
+        <div class="phase-num">BUG A · Ctrl+Enter latency regression</div>
+        <h3 class="phase-title">First Ctrl+Enter takes 1434ms (orig: ~instant)</h3>
+      </div>
+      <span class="pill pill-progress">◐ INVESTIGATING</span>
+    </div>
+    <div class="phase-short">In Try-depth10-comparison topic: 1st Ctrl+Enter measured at 1434ms latency before new editor mounts and focus transfers. Original Rizzoma was sub-100ms perceived.</div>
+    <ul class="deliv-list">
+      <li class="deliv"><span class="deliv-check wip">◐</span><span class="deliv-label">Profile network/lifecycle hot path during Ctrl+Enter</span></li>
+      <li class="deliv"><span class="deliv-check"></span><span class="deliv-label">Identify whether latency is server round-trip, refresh-topics fanout, or editor mount</span></li>
+      <li class="deliv"><span class="deliv-check"></span><span class="deliv-label">Optimistic local mount before server confirmation</span></li>
+    </ul>
+  </article>
+  <article class="phase-card" style="border-left:4px solid var(--red)">
+    <div class="phase-header">
+      <div>
+        <div class="phase-num">BUG B · Nested Ctrl+Enter broken at depth ≥2</div>
+        <h3 class="phase-title">Second Ctrl+Enter doesn't mount new editor</h3>
+      </div>
+      <span class="pill pill-progress">◐ FIX PATCHED</span>
+    </div>
+    <div class="phase-short">In a freshly-created inline child, Ctrl+Enter doesn't create another nested blip. Editor count stays the same; subsequent typing goes back to the parent editor.</div>
+    <ul class="deliv-list">
+      <li class="deliv"><span class="deliv-check done">✓</span><span class="deliv-label">Root cause: <code>RizzomaBlip.tsx</code> was using local <code>toggleInlineChild</code> instead of the global event used at topic level</span></li>
+      <li class="deliv"><span class="deliv-check done">✓</span><span class="deliv-label">Patch: dispatch <code>rizzoma:toggle-inline-blip</code> + <code>rizzoma:enter-edit-blip</code> with <code>parentId</code> after refresh + 600ms wait</span></li>
+      <li class="deliv"><span class="deliv-check wip">◐</span><span class="deliv-label">Commit + deploy + retest with depth-10 fractal sweep</span></li>
+    </ul>
+  </article>
+</section>
+
+<section>
+  <h2>📊 Full feature coverage matrix · ${featureMatrix.totalRows} features across ${featureMatrix.sections.length} categories</h2>
+  <div style="font-size:0.9rem;color:var(--lb);margin-bottom:0.75rem">
+    Status legend:
+    <span style="color:var(--green);font-weight:700">✓</span> sweep gate PASSES ·
+    <span style="color:var(--red);font-weight:700">✗</span> sweep gate FAILS ·
+    <span style="color:var(--amber);font-weight:700">·</span> capture exists but no programmatic gate ·
+    <span style="color:var(--gray)">○</span> uncovered (no sweep capture references this feature)
+  </div>
+  ${featureMatrixHtml}
 </section>
 
 <section>
