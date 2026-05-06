@@ -1082,8 +1082,11 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const useNativeRender = (() => {
     if (!FEATURES.RIZZOMA_NATIVE_RENDER) return false;
     if (typeof window === 'undefined') return false;
-    // Opt-out: ?render=react routes to the legacy React/TipTap path.
-    return new URLSearchParams(window.location.search).get('render') !== 'react';
+    // Opt-IN ONLY via `?render=native` — the native path is still read-only
+    // (no Edit button, no per-blip toolbars, no Write-a-reply input).
+    // Default stays on the React/TipTap path until Phases 2-4 finish wiring
+    // edit/collab into the native render.
+    return new URLSearchParams(window.location.search).get('render') === 'native';
   })();
 
   if (useNativeRender) {
