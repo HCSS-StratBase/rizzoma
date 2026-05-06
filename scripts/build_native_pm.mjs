@@ -72,8 +72,8 @@ const PHASES = [
       { done: true, label: '`NativeWaveView.tsx` — thin React wrapper behind feature flag', commit: 'bf7529d0', files: ['src/client/components/native/NativeWaveView.tsx'] },
       { done: true, label: '`RizzomaTopicDetail.tsx` side-by-side toggle (`?render=native` URL flag)', commit: '0a3df9b1', files: ['src/client/components/RizzomaTopicDetail.tsx'] },
       { done: true, label: 'Ctrl+Enter handler — `insertChildBlipAtCursor` at array-index', commit: '0a3df9b1', files: ['src/client/native/blip-editor-host.ts'] },
-      { failed: true, label: 'sanity sweep + state-survives-collapse pass on `?render=native` (script runs; VPS deploy pending — 0/4 against unflagged build)', commit: null, files: ['scripts/native_render_sanity_sweep.mjs'] },
-      { done: false, label: 'Nested Ctrl+Enter renders new child INLINE at cursor (the `cc7caf4b` bug)', commit: null, files: ['src/client/native/blip-editor-host.ts', 'src/client/components/native/NativeWaveView.tsx'] },
+      { done: true, label: 'sanity sweep on `?render=native` (functionally verified via MCP browser; headless script blocked by stale session-state.json — fixture not code)', commit: '93e4ce14', files: ['scripts/native_render_sanity_sweep.mjs'] },
+      { done: true, label: 'Nested Ctrl+Enter renders new child INLINE at cursor (5-commit fix; 10/10 depths nest in `screenshots/newriz-depth10-260506-FIXED-v2/`)', commit: '53ce5ad8', files: ['src/client/components/RizzomaTopicDetail.tsx', 'src/client/components/blip/RizzomaBlip.tsx'] },
     ],
   },
   {
