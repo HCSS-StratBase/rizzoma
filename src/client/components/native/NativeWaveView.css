@@ -142,3 +142,24 @@
   background: #f3f4f6;
   border-color: #9ca3af;
 }
+
+/* Follow-the-Green: blip-container with data-unread="1" gets a green
+ * left border marker. Original Rizzoma uses a similar bar to show
+ * "this thread has new content". */
+.rizzoma-native-mode .blip-container[data-unread="1"] > .blip-text {
+  border-left: 3px solid #4caf50;
+  padding-left: 8px;
+}
+.rizzoma-native-mode .blip-container[data-unread="1"] {
+  position: relative;
+}
+.rizzoma-native-mode .blip-container[data-unread="1"]::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #4caf50;
+  border-radius: 2px;
+}

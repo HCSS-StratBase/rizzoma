@@ -105,4 +105,42 @@ describe('WaveView', () => {
     wv.destroy();
     expect(() => wv.getOrCreateView('x')).toThrow(/destroyed/);
   });
+
+  it('setUnreadSet marks containers + nextUnreadAfter / markRead', () => {
+    const data: Record<string, ContentArray> = {
+      r: [
+        { type: ModelType.LINE, text: ' ', params: {} },
+        { type: ModelType.TEXT, text: 'parent', params: {} },
+        { type: ModelType.BLIP, text: ' ', params: { id: 'a' } },
+        { type: ModelType.BLIP, text: ' ', params: { id: 'b' } },
+        { type: ModelType.BLIP, text: ' ', params: { id: 'c' } },
+      ],
+      a: makeContent('A'), b: makeContent('B'), c: makeContent('C'),
+    };
+    const wv = new WaveView({ contentByBlipId: buildLookup(data) });
+    wv.setRoot('r');
+    // Materialize children so they exist in the registry
+    wv.getOrCreateView('a');
+    wv.getOrCreateView('b');
+    wv.getOrCreateView('c');
+
+    wv.setUnreadSet(new Set(['a', 'c']));
+    expect(wv.getView('a')!.getContainer().getAttribute('data-unread')).toBe('1');
+    expect(wv.getView('b')!.getContainer().getAttribute('data-unread')).toBeNull();
+    expect(wv.getView('c')!.getContainer().getAttribute('data-unread')).toBe('1');
+
+    // Follow-the-Green: from null → first unread in DOM order
+    expect(wv.nextUnreadAfter(null)).toBe('a');
+    // From 'a' → next unread is 'c'
+    expect(wv.nextUnreadAfter('a')).toBe('c');
+    // From 'c' → wraps to 'a'
+    expect(wv.nextUnreadAfter('c')).toBe('a');
+
+    // markRead clears
+    wv.markRead('a');
+    expect(wv.getView('a')!.getContainer().getAttribute('data-unread')).toBeNull();
+    expect(wv.nextUnreadAfter(null)).toBe('c');
+    expect(wv.getUnreadSet().has('a')).toBe(false);
+    expect(wv.getUnreadSet().has('c')).toBe(true);
+  });
 });

@@ -29,6 +29,7 @@ export type WaveViewEvent =
   | 'blip-added'
   | 'blip-removed'
   | 'root-set'
+  | 'unread-changed'
   | 'destroyed';
 
 export type WaveViewListener = (payload?: unknown) => void;
@@ -51,6 +52,10 @@ export class WaveView {
   private listeners = new Map<WaveViewEvent, Set<WaveViewListener>>();
   private destroyed = false;
   private readonly onOpenHistory: HistoryOpenHandler | null;
+  /** Set of unread blip ids; updated via setUnreadSet() and reflected on
+   *  each BlipView's container as `data-unread="1"` for CSS-driven green
+   *  marker (Follow-the-Green semantics). */
+  private unreadSet: Set<string> = new Set();
 
   constructor(opts: WaveViewOptions) {
     this.contentLookup = opts.contentByBlipId;
@@ -87,11 +92,68 @@ export class WaveView {
     view = new BlipView(blipId);
     view.setChildResolver((childId) => this.resolveChild(childId));
     if (this.onOpenHistory) view.setHistoryHandler(this.onOpenHistory);
+    if (this.unreadSet.has(blipId)) view.getContainer().setAttribute('data-unread', '1');
     this.views.set(blipId, view);
     const content = this.contentLookup(blipId);
     if (content) view.setContent(content);
     this.emit('blip-added', view);
     return view;
+  }
+
+  /** Replace the unread set + sync each BlipView's container attribute.
+   *  CSS rule `.blip-container[data-unread="1"]` paints the green marker.
+   *  Follow-the-Green navigation jumps to the next unread BlipView's
+   *  container — this method is the source of truth. */
+  setUnreadSet(unread: Set<string>): void {
+    if (this.destroyed) return;
+    this.unreadSet = new Set(unread);
+    this.views.forEach((view, id) => {
+      const c = view.getContainer();
+      if (this.unreadSet.has(id)) {
+        c.setAttribute('data-unread', '1');
+      } else {
+        c.removeAttribute('data-unread');
+      }
+    });
+    this.emit('unread-changed', this.unreadSet);
+  }
+
+  /** Find the next-in-DOM-order unread BlipView, starting from `afterBlipId`.
+   *  Used by Follow-the-Green to advance through unread items. */
+  nextUnreadAfter(afterBlipId: string | null): string | null {
+    if (this.destroyed) return null;
+    const orderedContainers = Array.from(
+      this.rootContainer.querySelectorAll<HTMLElement>('.blip-container[data-blip-id]')
+    );
+    const ids = orderedContainers.map(c => c.getAttribute('data-blip-id') as string);
+    let startIdx = 0;
+    if (afterBlipId) {
+      const idx = ids.indexOf(afterBlipId);
+      if (idx >= 0) startIdx = idx + 1;
+    }
+    for (let i = startIdx; i < ids.length; i++) {
+      if (this.unreadSet.has(ids[i])) return ids[i];
+    }
+    // Wrap around
+    for (let i = 0; i < startIdx; i++) {
+      if (this.unreadSet.has(ids[i])) return ids[i];
+    }
+    return null;
+  }
+
+  /** Mark a blip as read (removes from unread set + clears the data-unread attr). */
+  markRead(blipId: string): void {
+    if (this.destroyed) return;
+    if (!this.unreadSet.has(blipId)) return;
+    this.unreadSet.delete(blipId);
+    const view = this.views.get(blipId);
+    if (view) view.getContainer().removeAttribute('data-unread');
+    this.emit('unread-changed', this.unreadSet);
+  }
+
+  /** Snapshot the current unread set. */
+  getUnreadSet(): ReadonlySet<string> {
+    return this.unreadSet;
   }
 
   /** Remove a BlipView from the registry and tear it down. */

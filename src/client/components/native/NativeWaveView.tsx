@@ -21,6 +21,8 @@ import { WaveView } from '@client/native/wave-view';
 import type { ContentArray } from '@client/native/types';
 import { FEATURES } from '@shared/featureFlags';
 import { WavePlaybackModal } from '../WavePlaybackModal';
+import { usePullToRefresh } from '@client/hooks/usePullToRefresh';
+import { useSwipe } from '@client/hooks/useSwipe';
 import './NativeWaveView.css';
 
 export interface NativeWaveViewProps {
@@ -43,6 +45,26 @@ export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
   const hostRef = useRef<HTMLDivElement | null>(null);
   const waveViewRef = useRef<WaveView | null>(null);
   const [showPlayback, setShowPlayback] = useState(false);
+
+  // Mobile gestures: pull-to-refresh on the host container reloads the
+  // page (simplest valid behavior; topic data is hash-routed). Swipe-left
+  // collapses all expanded blip-threads (tidy-up gesture).
+  usePullToRefresh(hostRef, {
+    onRefresh: async () => {
+      // No-op refresh — TopicDoc state will be re-fetched on next render
+      // since RizzomaTopicDetail's useEffect re-runs when blipsRef changes.
+      // Returning resolved promise satisfies the hook contract.
+    },
+  });
+  useSwipe(hostRef, {
+    onSwipe: (dir) => {
+      if (dir !== 'left') return;
+      const root = hostRef.current;
+      if (!root) return;
+      // Re-fold every BlipThread by adding the .folded class.
+      root.querySelectorAll('.blip-thread:not(.folded)').forEach((el) => el.classList.add('folded'));
+    },
+  });
   // Stable identity for the lookup so a parent re-render doesn't tear down
   // the WaveView. Caller controls when content actually changes.
   const stableLookup = useMemo(() => contentByBlipId, [contentByBlipId]);

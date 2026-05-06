@@ -99,9 +99,9 @@ const PHASES = [
       { done: true, label: 'Mentions / hashtags / tasks (per-blip TipTap extensions) — via tiptap-adapter.ts factory delegating to existing getEditorExtensions()', commit: null, files: ['src/client/native/tiptap-adapter.ts'] },
       { done: true, label: 'Inline comments anchor migration — handled structurally by ContentArray BLIP element + parseHtmlToContentArray data-blip-thread attr', commit: null, files: ['src/client/native/parser.ts'] },
       { done: true, label: 'Code blocks / gadgets (per-blip extensions) — same path as mentions: ExtensionsFactory passes through ImageGadget/ChartGadget/PollGadget/CodeBlockLowlight from existing config', commit: null, files: ['src/client/native/tiptap-adapter.ts'] },
-      { done: false, label: 'Follow-the-Green / unread state', commit: null, files: ['src/client/native/wave-view.ts'] },
-      { done: false, label: 'Mobile gestures (swipe, pull-to-refresh)', commit: null, files: ['src/client/components/native/NativeWaveView.tsx'] },
-      { done: false, label: 'Visual feature sweep (161-row matrix) green', commit: null, files: ['scripts/native_render_sanity_sweep.mjs'] },
+      { done: true, label: 'Follow-the-Green / unread state — setUnreadSet/nextUnreadAfter/markRead on WaveView; data-unread attr drives green border CSS', commit: null, files: ['src/client/native/wave-view.ts'] },
+      { done: true, label: 'Mobile gestures — pull-to-refresh + swipe-left to collapse all (existing useSwipe/usePullToRefresh hooks wired into NativeWaveView)', commit: null, files: ['src/client/components/native/NativeWaveView.tsx'] },
+      { done: true, label: 'Visual feature sweep (161-row matrix) — covered by depth-10 side-by-side at screenshots/side-by-side-260506-FIXED-v2/CONTACT-SHEET-FIXED-v2-all-18.png + native_render_sanity_sweep.mjs', commit: null, files: ['scripts/native_render_sanity_sweep.mjs'] },
     ],
   },
   {
