@@ -816,7 +816,12 @@ export function RizzomaBlip({
       if (!threadId) return;
       const claimByParent = parentId && parentId === blip.id;
       const claimByMatch = !parentId && inlineChildren.some(c => c.id === threadId);
+      console.log('[Toggle] blip.id=', blip.id, 'event:', { threadId, parentId },
+        'claimByParent=', claimByParent, 'claimByMatch=', claimByMatch,
+        'inlineChildrenCount=', inlineChildren.length,
+        'inlineChildIds=', inlineChildren.map(c => c.id));
       if (claimByParent || claimByMatch) {
+        console.log('[Toggle] CLAIMED — calling toggleInlineChild');
         toggleInlineChild(threadId);
       }
     };
