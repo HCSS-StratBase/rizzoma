@@ -451,8 +451,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       loadingState.set(id, state);
     }
 
-    // Prevent concurrent loads
-    if (state.isLoading) {
+    // Prevent concurrent loads — UNLESS force=true. The Ctrl+Enter create
+    // handler relies on `await load(true)` actually fetching the new blip
+    // before dispatching the inline-expand event; if we silently early-
+    // returned here, the UI's `inlineChildren` would still hold the
+    // pre-create snapshot when the toggle fires → handler matches by
+    // parentId but renderer can't find the new child in inlineChildren →
+    // portal never mounts → no editor → typing falls back to parent.
+    if (state.isLoading && !force) {
       return;
     }
 
@@ -717,6 +723,21 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               const updated = new Map(prev);
               updated.set(newBlipId, newBlipData);
               return updated;
+            });
+
+            // OPTIMISTIC: also add to `blips` so `inlineChildren` includes
+            // the new child IMMEDIATELY on next render — without this the
+            // portal expansion fires before `load(true)` finishes, and the
+            // renderer's filter can't find the child (the bug exposed by
+            // the depth-10 side-by-side: child blips created on server but
+            // never expanded inline → typing fell back to parent editor).
+            const optimisticBlip: BlipData = {
+              ...newBlipData,
+              anchorPosition: anchorPosition,
+            };
+            setBlips(prev => {
+              if (prev.some(b => b.id === newBlipId)) return prev;
+              return [...prev, optimisticBlip];
             });
 
             // BLB: Expand the new child inline + auto-enter edit mode so user
