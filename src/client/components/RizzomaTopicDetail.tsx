@@ -817,6 +817,19 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     return () => window.removeEventListener('rizzoma:refresh-topics', handleRefresh);
   }, [load]);
 
+  // Bug A perf fix (2026-05-07): expose an awaitable reload so child blips
+  // can do `await window.__rizzomaTopicReload()` instead of dispatching
+  // refresh-topics + sleeping 600ms blindly. Saves ~350ms on Ctrl+Enter at
+  // depth 1 (load completes in 90-250ms vs 600ms timer).
+  useEffect(() => {
+    (window as unknown as { __rizzomaTopicReload?: () => Promise<void> }).__rizzomaTopicReload =
+      () => load(true);
+    return () => {
+      const w = window as unknown as { __rizzomaTopicReload?: () => Promise<void> };
+      if (w.__rizzomaTopicReload) delete w.__rizzomaTopicReload;
+    };
+  }, [load]);
+
   // BLB: Update inline marker unread state
   useEffect(() => {
     if (typeof window === 'undefined') return;

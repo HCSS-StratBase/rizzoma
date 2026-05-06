@@ -704,10 +704,20 @@ export function RizzomaBlip({
         // RizzomaTopicDetail's create handler uses. The toggle listener at
         // RizzomaBlip.tsx:798 claims via parentId === blip.id and expands.
         if (newBlipId) {
-          window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
-          // Wait for refresh + state propagation (matches the topic-level
-          // handler's await-load-then-dispatch pattern).
-          await new Promise((r) => setTimeout(r, 600));
+          // Bug A perf fix (2026-05-07): await the topic reload directly
+          // instead of dispatching refresh-topics + sleeping 600ms. The
+          // topic-level component exposes `__rizzomaTopicReload` for exactly
+          // this purpose — load() actually finishes in 90-250ms, so the
+          // 600ms timer was pure idle. Falls back to dispatch+250ms wait if
+          // the helper isn't mounted (e.g. standalone blip view).
+          const reload = (window as unknown as { __rizzomaTopicReload?: () => Promise<void> })
+            .__rizzomaTopicReload;
+          if (typeof reload === 'function') {
+            await reload();
+          } else {
+            window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+            await new Promise((r) => setTimeout(r, 250));
+          }
           window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
             detail: { threadId: newBlipId, parentId: blip.id },
           }));
