@@ -94,11 +94,11 @@ const PHASES = [
     title: 'Auxiliary feature wiring',
     short: 'Playback, history, mentions, comments, follow-the-green, etc. — most are 0–2hr wiring',
     deliverables: [
-      { done: false, label: 'Wave-level playback (`WavePlaybackModal.tsx`) wired into native render', commit: null },
+      { done: true, label: 'Wave-level playback (`WavePlaybackModal`) wired into native render — toolbar btn opens modal', commit: 'bace6df1', files: ['src/client/components/native/NativeWaveView.tsx'] },
       { done: true, label: 'Per-blip history modal button in BlipView gear menu — gear ⏱ btn + WaveView wire-through', commit: null, files: ['src/client/native/blip-view.ts', 'src/client/native/wave-view.ts'] },
-      { done: false, label: 'Mentions / hashtags / tasks (per-blip TipTap extensions)', commit: null, files: ['src/client/native/blip-editor-host.ts'] },
-      { done: false, label: 'Inline comments anchor migration', commit: null, files: ['src/client/native/parser.ts'] },
-      { done: false, label: 'Code blocks / gadgets (per-blip extensions)', commit: null, files: ['src/client/native/blip-editor-host.ts'] },
+      { done: true, label: 'Mentions / hashtags / tasks (per-blip TipTap extensions) — via tiptap-adapter.ts factory delegating to existing getEditorExtensions()', commit: null, files: ['src/client/native/tiptap-adapter.ts'] },
+      { done: true, label: 'Inline comments anchor migration — handled structurally by ContentArray BLIP element + parseHtmlToContentArray data-blip-thread attr', commit: null, files: ['src/client/native/parser.ts'] },
+      { done: true, label: 'Code blocks / gadgets (per-blip extensions) — same path as mentions: ExtensionsFactory passes through ImageGadget/ChartGadget/PollGadget/CodeBlockLowlight from existing config', commit: null, files: ['src/client/native/tiptap-adapter.ts'] },
       { done: false, label: 'Follow-the-Green / unread state', commit: null, files: ['src/client/native/wave-view.ts'] },
       { done: false, label: 'Mobile gestures (swipe, pull-to-refresh)', commit: null, files: ['src/client/components/native/NativeWaveView.tsx'] },
       { done: false, label: 'Visual feature sweep (161-row matrix) green', commit: null, files: ['scripts/native_render_sanity_sweep.mjs'] },
@@ -166,11 +166,25 @@ try {
   }
 } catch {}
 
+// Files modified in the last RECENT_MTIME_S seconds (recent enough to count
+// as "actively being worked on" even if just committed).
+const RECENT_MTIME_S = 300; // 5 minutes
+const recentlyTouchedFiles = new Set();
+try {
+  const cutoffMs = Date.now() - RECENT_MTIME_S * 1000;
+  const out = sh(`find . -type f -newermt @${Math.floor(cutoffMs / 1000)} -not -path "./node_modules/*" -not -path "./.git/*" -not -path "./dist/*" -not -path "./.vite/*" 2>/dev/null | head -200`);
+  for (const line of out.split('\n')) {
+    if (!line) continue;
+    recentlyTouchedFiles.add(line.replace(/^\.\//, ''));
+  }
+} catch {}
+
 const isWip = (d) => {
   if (d.done) return false;
   if (d.wip === true) return true; // manual override (use sparingly)
   if (!Array.isArray(d.files)) return false;
-  return d.files.some((f) => dirtyFiles.has(f));
+  // WIP if EITHER currently dirty in git OR touched recently (last 5 min).
+  return d.files.some((f) => dirtyFiles.has(f) || recentlyTouchedFiles.has(f));
 };
 
 // ─── Live Activity: recent edits + running processes ────────────────────

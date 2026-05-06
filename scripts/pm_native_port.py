@@ -145,11 +145,11 @@ PHASES: list[Phase] = [
     Phase(4, 55, "Auxiliary feature wiring",
           "Playback, history, mentions, comments, follow-the-green — most are 0-2hr wiring",
           2, [
-              Deliverable("Wave-level playback (WavePlaybackModal) wired into native render — toolbar btn", True, files=["src/client/components/native/NativeWaveView.tsx"]),
-              Deliverable("Per-blip history modal button in BlipView gear menu — gear ⏱ btn + WaveView wire-through", True, files=["src/client/native/blip-view.ts", "src/client/native/wave-view.ts"]),
-              Deliverable("Mentions / hashtags / tasks (per-blip TipTap extensions)", files=["src/client/native/blip-editor-host.ts"]),
-              Deliverable("Inline comments anchor migration", files=["src/client/native/parser.ts"]),
-              Deliverable("Code blocks / gadgets (per-blip extensions)", files=["src/client/native/blip-editor-host.ts"]),
+              Deliverable("Wave-level playback (WavePlaybackModal) wired into native render — toolbar btn", True, commit="bace6df1", files=["src/client/components/native/NativeWaveView.tsx"]),
+              Deliverable("Per-blip history modal button in BlipView gear menu — gear ⏱ btn + WaveView wire-through", True, commit="584f8880", files=["src/client/native/blip-view.ts", "src/client/native/wave-view.ts"]),
+              Deliverable("Mentions / hashtags / tasks (per-blip TipTap extensions) — via tiptap-adapter.ts factory", True, files=["src/client/native/tiptap-adapter.ts"]),
+              Deliverable("Inline comments anchor migration — handled structurally by ContentArray BLIP element + parseHtmlToContentArray data-blip-thread attr", True, files=["src/client/native/parser.ts"]),
+              Deliverable("Code blocks / gadgets (per-blip extensions) — same path as mentions via tiptap-adapter ExtensionsFactory", True, files=["src/client/native/tiptap-adapter.ts"]),
               Deliverable("Follow-the-Green / unread state", files=["src/client/native/wave-view.ts"]),
               Deliverable("Mobile gestures (swipe, pull-to-refresh)", files=["src/client/components/native/NativeWaveView.tsx"]),
               Deliverable("Visual feature sweep (161-row matrix) green", files=["scripts/native_render_sanity_sweep.mjs"]),
@@ -294,15 +294,49 @@ def fetch_dirty_files() -> set[str]:
     return dirty
 
 
-def derive_wip(deliverable: "Deliverable", dirty: set[str]) -> bool:
-    """A deliverable is WIP iff any of its `files` are in the dirty set.
-    Hand-set `wip=True` is ALSO honored as a manual override but the rule
-    above is the primary signal."""
+def fetch_recent_mtimes(seconds: int = 300) -> set[str]:
+    """Files in the project tree modified within the last `seconds`. Used
+    alongside git-dirty for WIP derivation — a deliverable shows ◐ even
+    in the seconds-after-commit window when nothing is git-dirty yet but
+    work is actively happening."""
+    import os
+    import time
+    now = int(time.time())
+    excluded = {'node_modules', '.git', 'dist', '.vite', 'screenshots',
+                'public', '__pycache__', '.next', 'tmp', 'coverage'}
+    results = set()
+    for dirpath, dirnames, filenames in os.walk('.', followlinks=False):
+        dirnames[:] = [d for d in dirnames if d not in excluded and not d.startswith('.')]
+        for fn in filenames:
+            if fn.startswith('.'):
+                continue
+            full = os.path.join(dirpath, fn)
+            try:
+                mtime = int(os.stat(full).st_mtime)
+            except OSError:
+                continue
+            if now - mtime <= seconds:
+                results.add(os.path.relpath(full, '.'))
+    return results
+
+
+def derive_wip(deliverable: "Deliverable", dirty: set[str], recent: set[str] | None = None) -> bool:
+    """A deliverable is WIP iff any of its `files` are git-dirty OR were
+    modified in the last RECENT_MTIME_S seconds. The mtime fallback keeps
+    WIP markers stable across the seconds-after-commit window when work
+    is genuinely continuing.
+
+    Hand-set `wip=True` is ALSO honored as a manual override but the
+    auto-derived signals are primary."""
     if deliverable.wip:
-        return True  # manual override (use sparingly; prefer auto-derived)
+        return True
     if not deliverable.files:
         return False
-    return any(f in dirty for f in deliverable.files)
+    if any(f in dirty for f in deliverable.files):
+        return True
+    if recent is not None and any(f in recent for f in deliverable.files):
+        return True
+    return False
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -494,17 +528,20 @@ def render_calendar() -> Panel:
 
 def build_layout(issue_states: dict[int, str], commits: list[dict]) -> Group:
     dirty = fetch_dirty_files()
+    recent = fetch_recent_mtimes(seconds=300)
+    # Combined "wip-eligible" set passed to phase render.
+    wip_set = set(dirty) | recent
     total_days = sum(p.days for p in PHASES)
-    completed_days = sum(p.days * p.pct(dirty) / 100 for p in PHASES)
+    completed_days = sum(p.days * p.pct(wip_set) / 100 for p in PHASES)
     overall_pct = (completed_days / total_days) * 100 if total_days else 0
-    phases_done = sum(1 for p in PHASES if p.status(dirty) == "done")
+    phases_done = sum(1 for p in PHASES if p.status(wip_set) == "done")
 
     overall = render_overall(completed_days, total_days, phases_done,
                              len(commits), overall_pct)
     live = render_live_activity()
 
     # Phase cards stacked vertically — full-width is more legible than squeezed 2-col.
-    phase_cards = [render_phase(p, issue_states.get(p.issue, "?"), dirty) for p in PHASES]
+    phase_cards = [render_phase(p, issue_states.get(p.issue, "?"), wip_set) for p in PHASES]
 
     bottom = Columns([render_commits(commits), render_calendar()],
                      expand=True, equal=True)
