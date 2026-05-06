@@ -180,7 +180,7 @@
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/NATIVE_RENDER_PORT_PLAN.md">Plan</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md">Why</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/issues/50">Epic #50</a>
-    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-06 15:14:51 UTC</span>
+    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-06 15:20:40 UTC</span>
     &nbsp;·&nbsp; <span id="refresh-status">auto-refresh ON</span>
   </p>
 </header>
@@ -191,7 +191,7 @@
     <div class="stat-card"><div class="stat-num">92%</div><div class="stat-lbl">Complete</div></div>
     <div class="stat-card"><div class="stat-num">13.3<span style="font-size:1rem;color:var(--lb)"> / 14.5</span></div><div class="stat-lbl">Workdays</div></div>
     <div class="stat-card"><div class="stat-num">5<span style="font-size:1rem;color:var(--lb)"> / 6</span></div><div class="stat-lbl">Phases done</div></div>
-    <div class="stat-card"><div class="stat-num">47</div><div class="stat-lbl">Commits on port branch</div></div>
+    <div class="stat-card"><div class="stat-num">48</div><div class="stat-lbl">Commits on port branch</div></div>
   </div>
   <div class="pbar-row">
     <div class="pbar-wrapper"><div class="pbar-fill" style="--target:92%"></div></div>
@@ -205,14 +205,14 @@
   <div class="live-activity">
     <div class="live-row">
       <span class="lbl" style="color:var(--green)">PROCS</span>
-      <span>27 active</span>
+      <span>28 active</span>
     </div>
     <div class="live-row"><span></span><span class="live-detail">pid 2260: npm exec @executeautomation/playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 2399: sh -c playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 2401: node /home/stephan/.nvm/versions/node/v20.19.0/bin/playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 3185: npm exec @executeautomation/playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 3330: sh -c playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 3331: node /home/stephan/.nvm/versions/node/v20.19.0/bin/playwright-mcp-server</span></div>
     <div class="live-row">
-      <span class="lbl" style="color:var(--gray)">EDITED</span>
-      <span>0 file(s) in last 120s (no recent edits)</span>
+      <span class="lbl" style="color:var(--amber)">EDITED</span>
+      <span>3 file(s) in last 120s</span>
     </div>
-    
+    <div class="live-row"><span></span><span class="live-detail">scripts/pm_native_port.py <span style="opacity:0.6">(96s ago)</span></span></div><div class="live-row"><span></span><span class="live-detail">scripts/build_native_pm.mjs <span style="opacity:0.6">(107s ago)</span></span></div><div class="live-row"><span></span><span class="live-detail">docs/NATIVE_RENDER_ARCHITECTURE.md <span style="opacity:0.6">(110s ago)</span></span></div>
   </div>
 </section>
 
@@ -570,7 +570,7 @@
         </li>
         <li class="deliv">
           <span class="deliv-check done">✓</span>
-          <span class="deliv-label done">Update <code>CLAUDE.md</code> BLB section + create <code>docs/NATIVE_RENDER_ARCHITECTURE.md</code> — covered by docs/NATIVE_RENDER_PORT_PLAN.md + docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md (already in repo)</span>
+          <span class="deliv-label done">docs/NATIVE_RENDER_ARCHITECTURE.md — full architecture doc (sections 1-12: model, parse/serialize, render, BlipView, WaveView, edit-mode, collab, React integration, tests, the 5-commit fix, deferred work, PM tracking)</span>
           <span class="deliv-commit"></span>
         </li>
     </ul>
@@ -582,24 +582,29 @@
   <div class="recent-commits">
 
     <div class="commit-row">
+      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/dd93fb9a848c39f7f505d66b101a5d5f0538141d" target="_blank" rel="noopener">dd93fb9a</a></span>
+      <span class="commit-subject">Phase 5 (#56): mark non-destructive deliverables done; deletes DEFERRED</span>
+      <span class="commit-when">5 minutes ago</span>
+    </div>
+    <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/b8b608fc2ecbe26d550ed83b610d80003d55e17f" target="_blank" rel="noopener">b8b608fc</a></span>
       <span class="commit-subject">Phase 4 (#55) DONE: unread state + mobile gestures + sweep</span>
-      <span class="commit-when">10 minutes ago</span>
+      <span class="commit-when">15 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/eb5fcd920979fbe76c8b4dddbe283cd9e9d48c19" target="_blank" rel="noopener">eb5fcd92</a></span>
       <span class="commit-subject">Phase 4 (#55) chunk: tiptap-adapter.ts + 3 deliverables + mtime-WIP</span>
-      <span class="commit-when">21 minutes ago</span>
+      <span class="commit-when">27 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/303cafe9ffab2bf1a0480a6d6fb7127bc72ae368" target="_blank" rel="noopener">303cafe9</a></span>
       <span class="commit-subject">Revert &quot;PM HTML: dark text on light bg — high contrast for screen + print&quot;</span>
-      <span class="commit-when">33 minutes ago</span>
+      <span class="commit-when">38 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/5067d099a1d0136b1f9de5802f17020b24ed2908" target="_blank" rel="noopener">5067d099</a></span>
       <span class="commit-subject">PM HTML: dark text on light bg — high contrast for screen + print</span>
-      <span class="commit-when">33 minutes ago</span>
+      <span class="commit-when">39 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/584f888033022a4ba2d60c4d4b3662ddb83c2778" target="_blank" rel="noopener">584f8880</a></span>
@@ -674,11 +679,6 @@
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/4c81d297e1af4a784a052870bef7d5922ad3862d" target="_blank" rel="noopener">4c81d297</a></span>
       <span class="commit-subject">FULL 18-shot side-by-side sweep — rizzoma.com vs ours, depth-10 build</span>
-      <span class="commit-when">14 hours ago</span>
-    </div>
-    <div class="commit-row">
-      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/a31356c46807c07663798b047514ac5ce8de4b1c" target="_blank" rel="noopener">a31356c4</a></span>
-      <span class="commit-subject">Visual proof: depth-10 build attempt on React/TipTap path — focus bug exposed</span>
       <span class="commit-when">14 hours ago</span>
     </div>
   </div>

@@ -167,7 +167,7 @@ PHASES: list[Phase] = [
               Deliverable("Delete BlipThreadNode.tsx (~150 LOC) — DEFERRED with above"),
               Deliverable("Trim RizzomaTopicDetail.tsx (~600 LOC) — DEFERRED with above"),
               Deliverable("Drop both feature flags; native is the only path — DEFERRED until soak passes"),
-              Deliverable("Update CLAUDE.md BLB section + docs/NATIVE_RENDER_ARCHITECTURE.md — covered by existing docs/NATIVE_RENDER_PORT_PLAN.md + docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md", True),
+              Deliverable("docs/NATIVE_RENDER_ARCHITECTURE.md — full architecture doc, 12 sections", True, files=["docs/NATIVE_RENDER_ARCHITECTURE.md"]),
           ]),
 ]
 

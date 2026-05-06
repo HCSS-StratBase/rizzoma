@@ -119,7 +119,7 @@ const PHASES = [
       { done: false, label: 'Delete `BlipThreadNode.tsx` (~150 LOC) — DEFERRED with above', commit: null, files: [] },
       { done: false, label: 'Trim `RizzomaTopicDetail.tsx` (~600 LOC) — DEFERRED with above', commit: null, files: [] },
       { done: false, label: 'Drop both feature flags; native is the only path — DEFERRED until soak passes', commit: null, files: [] },
-      { done: true, label: 'Update `CLAUDE.md` BLB section + create `docs/NATIVE_RENDER_ARCHITECTURE.md` — covered by docs/NATIVE_RENDER_PORT_PLAN.md + docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md (already in repo)', commit: null, files: [] },
+      { done: true, label: 'docs/NATIVE_RENDER_ARCHITECTURE.md — full architecture doc (sections 1-12: model, parse/serialize, render, BlipView, WaveView, edit-mode, collab, React integration, tests, the 5-commit fix, deferred work, PM tracking)', commit: null, files: ['docs/NATIVE_RENDER_ARCHITECTURE.md'] },
     ],
   },
 ];
