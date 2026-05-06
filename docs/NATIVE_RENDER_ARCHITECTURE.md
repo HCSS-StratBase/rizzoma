@@ -117,9 +117,11 @@ Cross-tab convergence verified by `__tests__/yjs-binding.test.ts` (3 cross-Y.Doc
 
 **Read**: [`src/client/components/native/NativeWaveView.tsx`](../src/client/components/native/NativeWaveView.tsx), [`src/client/components/native/NativeWaveView.css`](../src/client/components/native/NativeWaveView.css).
 
-## 9. Tests
+## 9. Tests + visual gate sweep
 
-68 native vitest tests across:
+**Programmatic vitest unit tests (68 native):**
+
+
 
 | File | Tests | Covers |
 |---|---|---|
@@ -132,6 +134,24 @@ Cross-tab convergence verified by `__tests__/yjs-binding.test.ts` (3 cross-Y.Doc
 | `awareness.test.ts` | 9 | presence + cursor + cross-tab listener |
 
 Run all: `npx vitest run src/client/native/__tests__/`.
+
+**Visual feature sweep (`scripts/visual-feature-sweep.mjs`):**
+
+Drives a Playwright session through the full UI surface and captures screenshots + runs PROGRAMMATIC gate assertions per step. Each `capture()` accepts an optional `assertFn: async (page) => boolean | { pass, detail }` that probes DOM/state for the actual condition.
+
+The manifest at `<sweep-dir>/manifest.md` records gate results as `✓ PASS / ✗ FAIL / · no-gate` per capture. Headline reports `N / M programmatic gates PASS (out of K captures total)` — `K - M` captures without an assertFn are explicitly flagged as descriptive-only (NOT verified). Failed gates get a dedicated section with details.
+
+**Anti-pattern to avoid**: a sweep with 100 screenshots but 0 assertFns is theatre — the manifest's "Assertion:" string is documentation, not verification. Same anti-pattern as PM `done` markings without checks. See [`feedback_sweeps_must_verify_behavior.md`](file:///home/stephan/.claude/projects/-mnt-c-Rizzoma/memory/feedback_sweeps_must_verify_behavior.md).
+
+Run via:
+```bash
+RIZZOMA_BASE_URL=https://dev.138-201-62-161.nip.io \
+RIZZOMA_SWEEP_DIR=screenshots/<date>-feature-sweep \
+RIZZOMA_E2E_PASSWORD='VisualSweep!1' \
+node scripts/visual-feature-sweep.mjs
+```
+
+Latest run (2026-05-06, `screenshots/260506-GATED-sweep/`): **14/15 programmatic gates PASS, 1 FAIL** (selector-bug, not product). 30 captures still need `assertFn` added.
 
 ## 10. The 5-commit Ctrl+Enter inline-mount fix
 
