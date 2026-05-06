@@ -1,6 +1,18 @@
 # Native fractal-render — architecture
 
-> **Status (2026-05-06)**: Phases 0-4 done, Phase 5 5/11 done + 1 WIP + 6 deferred. The native render path is opt-in via `?render=native` URL flag and the `FEAT_RIZZOMA_NATIVE_RENDER=1` env var. Default path is still React/TipTap.
+> **Status (2026-05-06)**: Phases 0-4 done, Phase 5 6/11 done + 1 WIP + 5 deferred. The native render path is opt-in via `?render=native` URL flag and the `FEAT_RIZZOMA_NATIVE_RENDER=1` env var. Default path is still the React-portal+TipTap path.
+
+> **Important — what "native render" does NOT replace:**
+>
+> - **TipTap stays.** Per-blip edit mode mounts a real TipTap Editor with ALL existing extensions (mentions, hashtags, tasks, code-block-lowlight, image/chart/poll gadgets, BlipKeyboardShortcuts, Collaboration). The native path uses TipTap for editing — see `tiptap-adapter.ts`.
+> - **React stays for the outer app shell.** `RizzomaTopicDetail`, `RizzomaLayout`, navigation, modals, the WavePlaybackModal — all still React. `NativeWaveView.tsx` is a thin React wrapper that hosts the native DOM tree.
+> - **Y.js + Collaboration extension stay.** Per-blip body uses `Y.XmlFragment` (TipTap's native collab type) under `TopicDoc.blipFragment(id)`.
+>
+> What "native render" DOES replace:
+> - Per-blip `React.createPortal` teleporting child blips into anchor slots
+> - Per-blip React component (`RizzomaBlip.tsx` ~2,200 LOC) managing fold/expand state via React
+> - Mixed view-mode/edit-mode rendering split (some via `dangerouslySetInnerHTML`, some via `createPortal`, some via React subtrees)
+> - The "card-stack" visual style that the portal pattern produced (gap #2 in yesterday's analysis)
 
 This doc is for anyone reading the `src/client/native/` tree for the first time. It explains what the port does, how the pieces fit, and which file to read for which question.
 
