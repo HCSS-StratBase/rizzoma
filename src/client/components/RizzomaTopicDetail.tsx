@@ -719,23 +719,35 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               return updated;
             });
 
-            // BLB: Expand the new child inline (no navigation!)
-            // Refresh data so the new blip appears in childBlips
-            load(true);
-            // Toggle inline expansion in the RizzomaBlip
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
-                detail: { threadId: newBlipId }
-              }));
-            }, 500); // Delay to allow data refresh to complete
-            // Then auto-enter edit mode on the new child so the user can type
-            // immediately — without this it lands in view mode with empty content
-            // and no obvious way to start typing.
-            setTimeout(() => {
+            // BLB: Expand the new child inline + auto-enter edit mode so user
+            // can type immediately. Order matters and timing is tricky:
+            //
+            //   1. AWAIT load(true) so the parent's `inlineChildren` state
+            //      contains the new blip BEFORE we dispatch the toggle event.
+            //      Without this await, the toggle handler at
+            //      RizzomaBlip.tsx:803 silently dropped the event because
+            //      `inlineChildren.find(c => c.id === threadId)` returned
+            //      undefined → child stayed collapsed → no inline editor
+            //      mounted → keystrokes went back to the parent's editor.
+            //      That was the root cause of the "Ctrl+Enter doesn't open
+            //      child editor" bug visible in the depth-10 side-by-side.
+            //   2. Dispatch toggle (immediate) — handler can now find the
+            //      blip in `inlineChildren` and expand it.
+            //   3. RAF + dispatch enter-edit — the inline editor needs one
+            //      paint cycle to mount before we can focus it.
+            try {
+              await load(true);
+            } catch {
+              // load() rarely fails; if it does the toggle below is a no-op
+            }
+            window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+              detail: { threadId: newBlipId, parentId: id }
+            }));
+            requestAnimationFrame(() => requestAnimationFrame(() => {
               window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
                 detail: { blipId: newBlipId }
               }));
-            }, 700);
+            }));
           } else {
             toast('Subblip created');
             load(true); // Fallback: reload to show the new blip

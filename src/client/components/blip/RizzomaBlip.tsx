@@ -794,20 +794,35 @@ export function RizzomaBlip({
   }, [viewContentHtml, !!contentOverride, isEditing, inlineChildIdsKey]);
 
   // Listen for [+] marker clicks (both view mode and edit mode)
-  // The custom event is dispatched by setupBlipThreadClickHandler
+  // The custom event is dispatched by setupBlipThreadClickHandler AND by
+  // the Ctrl+Enter create-handler in RizzomaTopicDetail.
+  //
+  // Two paths to claim the event:
+  //   1. parentId match — the dispatcher knows which blip owns the new
+  //      child (e.g. the topic's create-handler knows the new child is
+  //      under the topic root). This is the AUTHORITATIVE signal.
+  //   2. inlineChildren match — fallback for legacy [+]-click dispatches
+  //      that don't carry parentId.
+  //
+  // The parentId path was added to fix a race where Ctrl+Enter created a
+  // new child blip but `load(true)` hadn't yet refreshed `inlineChildren`,
+  // so the find() returned undefined and the event was silently dropped
+  // → child never expanded → no inline editor mounted → user's next
+  // keystrokes went back to the parent's editor (visible in the depth-10
+  // side-by-side as 'S0cS1a' run-on text instead of nested children).
   useEffect(() => {
     const handleToggleInline = (e: Event) => {
-      const { threadId } = (e as CustomEvent).detail || {};
+      const { threadId, parentId } = (e as CustomEvent).detail || {};
       if (!threadId) return;
-      // Check if this threadId matches one of our inline children
-      const match = inlineChildren.find(child => child.id === threadId);
-      if (match) {
+      const claimByParent = parentId && parentId === blip.id;
+      const claimByMatch = !parentId && inlineChildren.some(c => c.id === threadId);
+      if (claimByParent || claimByMatch) {
         toggleInlineChild(threadId);
       }
     };
     window.addEventListener('rizzoma:toggle-inline-blip', handleToggleInline);
     return () => window.removeEventListener('rizzoma:toggle-inline-blip', handleToggleInline);
-  }, [inlineChildren, toggleInlineChild]);
+  }, [blip.id, inlineChildren, toggleInlineChild]);
 
   // Listen for activation-only events (from Follow-the-Green) — activates blip without triggering mark-read
   useEffect(() => {
