@@ -90,14 +90,5 @@
   border-left: 2px solid #e5e7eb;
 }
 
-/* Banner explaining the user is on the native render path. */
-.rizzoma-native-mode > .topic-collab-toolbar {
-  background: #fef3c7;
-  border-bottom: 1px solid #fbbf24;
-  padding: 6px 12px;
-  font-size: 12px;
-}
-.rizzoma-native-mode > .topic-collab-toolbar a {
-  color: #1e40af;
-  text-decoration: underline;
-}
+/* No banner — native render is now the default; users can opt out
+ * for one session via `?render=react`. */

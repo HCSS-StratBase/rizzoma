@@ -1068,15 +1068,22 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
   // ========================================
   // Native fractal-render path (Phase 2 of the port).
-  // Triggered by URL `?render=native` AND the FEAT_RIZZOMA_NATIVE_RENDER
-  // feature flag. Renders the new ContentArray + renderer + BlipThread
-  // chain via a thin React wrapper. The existing React/TipTap path below
-  // is unaffected — both coexist behind the flag (no demolition).
+  //
+  // ON when FEATURES.RIZZOMA_NATIVE_RENDER is enabled (default on this
+  // VPS via FEAT_RIZZOMA_NATIVE_RENDER=1 in docker-compose). Opt OUT
+  // for one session via `?render=react` URL flag (kept for A/B
+  // comparison until the React/TipTap path is fully decommissioned in
+  // Phase 5).
+  //
+  // Renders the new ContentArray + renderer + BlipThread chain via a
+  // thin React wrapper — structurally identical to original Rizzoma's
+  // blip_thread.coffee, never uses React.createPortal.
   // ========================================
   const useNativeRender = (() => {
     if (!FEATURES.RIZZOMA_NATIVE_RENDER) return false;
     if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).get('render') === 'native';
+    // Opt-out: ?render=react routes to the legacy React/TipTap path.
+    return new URLSearchParams(window.location.search).get('render') !== 'react';
   })();
 
   if (useNativeRender) {
@@ -1091,12 +1098,6 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
     return (
       <div className="rizzoma-topic-detail rizzoma-native-mode">
-        <div className="topic-collab-toolbar">
-          <span style={{ fontSize: 12, color: '#9ca3af', padding: '4px 8px' }}>
-            ⚡ Native render mode (FEAT_RIZZOMA_NATIVE_RENDER + ?render=native).{' '}
-            <a href={window.location.pathname}>Back to React render</a>
-          </span>
-        </div>
         <NativeWaveView rootBlipId={topic.id} contentByBlipId={lookup} />
       </div>
     );
