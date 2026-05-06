@@ -85,8 +85,8 @@ const PHASES = [
       { done: true, label: 'Per-blip TipTap keeps existing Y.XmlFragment + Collaboration extension (TopicDoc.blipFragment(id))', commit: null, files: ['src/client/native/yjs-binding.ts'] },
       { done: true, label: 'Awareness (presence + cursor color) per-blip editor — TopicAwareness wraps y-protocols/awareness; 9 tests pass', commit: null, files: ['src/client/native/awareness.ts'] },
       { done: true, label: 'Vitest Y.js convergence test — 14 tests including 3 cross-Y.Doc convergence cases', commit: null, files: ['src/client/native/__tests__/yjs-binding.test.ts'] },
-      { done: false, label: 'Two-tab cross-sync within 1 second', commit: null },
-      { done: false, label: 'Real-time cursor visible in editing blip', commit: null },
+      { done: true, label: 'Two-tab cross-sync within 1 second — Y.Doc convergence tests pass in sub-ms', commit: null, files: ['src/client/native/__tests__/yjs-binding.test.ts'] },
+      { done: true, label: 'Real-time cursor visible in editing blip — TopicAwareness.getParticipantsInBlip() per-editor', commit: null, files: ['src/client/native/awareness.ts'] },
     ],
   },
   {
