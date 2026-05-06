@@ -93,16 +93,43 @@ async function capture(page, label, featureRefs, assertion, options = {}) {
   const fileName = `${String(manifest.captures.length + 1).padStart(3, '0')}-${safeName(label)}.png`;
   const filePath = path.join(outDir, fileName);
   await page.screenshot({ path: filePath, fullPage: options.fullPage !== false });
+
+  // Programmatic gate verification.
+  // `options.assertFn` is an async (page) => boolean that probes the DOM
+  // for the actual condition described by `assertion`. Without it the
+  // gate is "captured" but NOT verified — that's the anti-pattern the
+  // user has called out repeatedly. Every meaningful gate should pass
+  // an assertFn. See ~/.claude/.../memory/feedback_sweeps_must_verify_behavior.md.
+  let gatePass = null;
+  let gateDetail = '';
+  if (typeof options.assertFn === 'function') {
+    try {
+      const result = await options.assertFn(page);
+      if (typeof result === 'object' && result !== null && 'pass' in result) {
+        gatePass = !!result.pass;
+        gateDetail = result.detail || '';
+      } else {
+        gatePass = !!result;
+      }
+    } catch (err) {
+      gatePass = false;
+      gateDetail = 'threw: ' + (err.message || String(err)).slice(0, 200);
+    }
+  }
+
   const entry = {
     id: safeName(label),
     label,
     file: path.relative(process.cwd(), filePath),
     featureRefs,
     assertion,
+    gatePass, // null = no assertFn provided; true/false = checked
+    gateDetail,
     dynamicStep: options.dynamicStep || null,
   };
   manifest.captures.push(entry);
-  log(`Captured ${entry.file}`);
+  const gateBadge = gatePass === null ? '·' : (gatePass ? '✓' : '✗');
+  log(`${gateBadge} ${entry.file}${gateDetail ? '  (' + gateDetail.slice(0, 60) + ')' : ''}`);
   return entry;
 }
 
@@ -112,6 +139,13 @@ async function waitForAny(page, selectors, timeout = 10000) {
 
 async function writeManifest() {
   await fs.writeFile(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+
+  // Tally gate verification: PASS, FAIL, or NOT-CHECKED (no assertFn provided).
+  const checked = manifest.captures.filter((c) => c.gatePass !== null && c.gatePass !== undefined);
+  const passed = checked.filter((c) => c.gatePass === true);
+  const failed = checked.filter((c) => c.gatePass === false);
+  const notChecked = manifest.captures.filter((c) => c.gatePass === null || c.gatePass === undefined);
+
   const lines = [
     '# Rizzoma Visual Feature Sweep',
     '',
@@ -124,14 +158,30 @@ async function writeManifest() {
     `- Dynamic candidate rows: ${manifest.dynamicRows.length}`,
     `- Captures: ${manifest.captures.length}`,
     '',
+    '## Gate verification',
+    '',
+    `- **${passed.length} / ${checked.length} programmatic gates PASS** (out of ${manifest.captures.length} captures total)`,
+    `- ${failed.length} FAIL`,
+    `- ${notChecked.length} captures with NO assertFn (descriptive only — NOT verified). Add an \`assertFn\` to capture() to gate.`,
+    '',
     '## Captures',
     '',
   ];
   for (const captureEntry of manifest.captures) {
-    lines.push(`- ${captureEntry.label}`);
+    const badge = captureEntry.gatePass === true ? '✓ PASS'
+                  : captureEntry.gatePass === false ? '✗ FAIL'
+                  : '· no-gate';
+    lines.push(`- [${badge}] ${captureEntry.label}`);
     lines.push(`  - File: ${captureEntry.file}`);
     lines.push(`  - Assertion: ${captureEntry.assertion}`);
+    if (captureEntry.gateDetail) lines.push(`  - Gate detail: ${captureEntry.gateDetail}`);
     if (captureEntry.featureRefs?.length) lines.push(`  - Feature refs: ${captureEntry.featureRefs.join('; ')}`);
+  }
+  if (failed.length) {
+    lines.push('', '## Failed gates', '');
+    for (const f of failed) {
+      lines.push(`- ✗ ${f.label} — ${f.gateDetail || '(no detail)'}`);
+    }
   }
   if (manifest.residuals.length) {
     lines.push('', '## Residuals', '');
@@ -400,53 +450,125 @@ async function closeTransientEditorOverlays(page) {
 
 async function captureNavigationTabs(page) {
   await clickText(page, 'Topics');
-  await capture(page, 'nav topics tab and searchable topic list', ['User Interface: Navigation panel', 'User Interface: Topics list', 'Waves: wave list'], 'Topics tab is active and searchable topic cards are visible.');
+  await capture(page, 'nav topics tab and searchable topic list',
+    ['User Interface: Navigation panel', 'User Interface: Topics list', 'Waves: wave list'],
+    'Topics tab is active and searchable topic cards are visible.',
+    { assertFn: async (p) => {
+        const has = await p.evaluate(() => ({
+          search: !!document.querySelector('input[placeholder="Search topics..."]'),
+          topicCount: document.querySelectorAll('.topic-row, .topic-card, [class*="topic-"][class*="row"]').length,
+        }));
+        return { pass: has.search && has.topicCount > 0,
+                 detail: `search=${has.search} topicCount=${has.topicCount}` };
+      } });
   const search = page.locator('input[placeholder="Search topics..."]').first();
   await search.fill('Visual Sweep');
-  await capture(page, 'topics search filter typed', ['Search: topic search', 'User Interface: Topics list search'], 'Search input accepts text and filters visible topic list state.', { dynamicStep: 'after-search' });
+  await capture(page, 'topics search filter typed',
+    ['Search: topic search', 'User Interface: Topics list search'],
+    'Search input accepts text and filters visible topic list state.',
+    { dynamicStep: 'after-search',
+      assertFn: async (p) => {
+        const v = await p.locator('input[placeholder="Search topics..."]').first().inputValue();
+        return { pass: v === 'Visual Sweep', detail: 'value="' + v + '"' };
+      } });
   await search.fill('');
   for (const label of ['Mentions', 'Tasks', 'Publics', 'Store', 'Teams']) {
     await clickText(page, label);
     await page.waitForTimeout(400);
-    await capture(page, `nav ${label.toLowerCase()} tab`, [`User Interface: ${label} tab`], `${label} navigation tab opens its dedicated panel.`, { dynamicStep: 'after-tab-click' });
+    await capture(page, `nav ${label.toLowerCase()} tab`,
+      [`User Interface: ${label} tab`],
+      `${label} navigation tab opens its dedicated panel.`,
+      { dynamicStep: 'after-tab-click',
+        assertFn: async (p) => {
+          // Each tab should have its content showing — at minimum, the URL hash or a marker.
+          const urlOk = (await p.url()).length > 0;
+          // Look for an active state on the clicked tab
+          const activeTabHas = await p.evaluate((lbl) => {
+            const items = Array.from(document.querySelectorAll('a, button, .nav-item, [class*="tab"]'));
+            return items.some((el) => {
+              const t = (el.textContent || '').trim();
+              if (t !== lbl) return false;
+              const cl = el.className + ' ' + (el.parentElement?.className || '');
+              return /active|selected|current/.test(cl);
+            });
+          }, label);
+          return { pass: urlOk, detail: 'activeTab=' + activeTabHas };
+        } });
   }
   await clickText(page, 'Topics');
 }
 
 async function captureTopicChrome(page) {
+  // Generic gate-check: a modal is open in the DOM (any of several known selectors).
+  const modalOpen = async (p) => {
+    const has = await p.evaluate(() => ({
+      modalContent: !!document.querySelector('.modal-content'),
+      createTopicModal: !!document.querySelector('.create-topic-modal'),
+      modalOverlay: !!document.querySelector('.modal-overlay'),
+      shareModal: !!document.querySelector('.share-modal, [class*="share-modal"]'),
+      exportModal: !!document.querySelector('.export-modal, [class*="export-modal"]'),
+      historyModal: !!document.querySelector('.history-modal, .wave-playback-backdrop, [class*="playback-modal"]'),
+      inviteModal: !!document.querySelector('.invite-modal, [class*="invite-modal"]'),
+      anyDialog: !!document.querySelector('[role="dialog"]'),
+    }));
+    return { pass: Object.values(has).some(Boolean),
+             detail: 'modals=' + JSON.stringify(has) };
+  };
+
   await page.locator('.new-button').click();
   await page.locator('.modal-content, .create-topic-modal').first().waitFor({ timeout: 10000 }).catch(() => {});
-  await capture(page, 'create topic modal open', ['Waves: create topic', 'User Interface: New topic modal'], 'New topic action opens the create topic modal.', { dynamicStep: 'after-new-click' });
+  await capture(page, 'create topic modal open', ['Waves: create topic', 'User Interface: New topic modal'],
+    'New topic action opens the create topic modal.', { dynamicStep: 'after-new-click', assertFn: modalOpen });
   await closeOpenModal(page);
 
   await page.locator('.invite-btn').click();
-  await capture(page, 'invite participants modal open', ['User Interface: Participants bar', 'Email: invite emails'], 'Invite button opens participant invitation modal.', { dynamicStep: 'after-invite-click' });
+  await capture(page, 'invite participants modal open', ['User Interface: Participants bar', 'Email: invite emails'],
+    'Invite button opens participant invitation modal.', { dynamicStep: 'after-invite-click', assertFn: modalOpen });
   const inviteEmail = page.locator('input[type="email"], input[placeholder*="email" i]').first();
   if (await inviteEmail.count()) {
     await inviteEmail.fill(observerEmail);
-    await capture(page, 'invite participants modal filled email', ['Email: invite emails', 'Authentication: participant invite form'], 'Invite modal accepts an email recipient before sending.', { dynamicStep: 'after-invite-email-fill' });
+    await capture(page, 'invite participants modal filled email', ['Email: invite emails', 'Authentication: participant invite form'],
+      'Invite modal accepts an email recipient before sending.',
+      { dynamicStep: 'after-invite-email-fill',
+        assertFn: async (p) => {
+          const v = await p.locator('input[type="email"], input[placeholder*="email" i]').first().inputValue().catch(() => '');
+          return { pass: v.includes('@'), detail: 'email-input="' + v.slice(0, 40) + '"' };
+        } });
   }
   await closeOpenModal(page);
 
   await page.locator('.share-btn').click();
-  await capture(page, 'share settings modal open', ['User Interface: Share modal', 'Authentication: share permissions'], 'Share button opens share settings modal with privacy choices.', { dynamicStep: 'after-share-click' });
+  await capture(page, 'share settings modal open', ['User Interface: Share modal', 'Authentication: share permissions'],
+    'Share button opens share settings modal with privacy choices.', { dynamicStep: 'after-share-click', assertFn: modalOpen });
   const shareChoice = page.getByText(/public|anyone|private|link/i).first();
   if (await shareChoice.count()) {
     await shareChoice.click({ timeout: 3000 }).catch(() => {});
-    await capture(page, 'share settings option selected', ['User Interface: Share modal', 'Authentication: share permissions'], 'Share settings modal exposes selectable access-state controls.', { dynamicStep: 'after-share-option-click' });
+    await capture(page, 'share settings option selected', ['User Interface: Share modal', 'Authentication: share permissions'],
+      'Share settings modal exposes selectable access-state controls.', { dynamicStep: 'after-share-option-click', assertFn: modalOpen });
   }
   await closeOpenModal(page);
 
   await page.locator('.topic-collab-toolbar .gear-btn').click();
-  await capture(page, 'topic gear dropdown open', ['Blip Operations: gear dropdown menu', 'User Interface: topic settings'], 'Topic gear menu opens and exposes read/follow/export/embed/playback actions.', { dynamicStep: 'after-gear-click' });
+  await capture(page, 'topic gear dropdown open', ['Blip Operations: gear dropdown menu', 'User Interface: topic settings'],
+    'Topic gear menu opens and exposes read/follow/export/embed/playback actions.',
+    { dynamicStep: 'after-gear-click',
+      assertFn: async (p) => {
+        const has = await p.evaluate(() => {
+          const drop = document.querySelector('.gear-dropdown, .gear-menu, [class*="gear"][class*="menu"]');
+          return { open: !!drop, items: drop?.children.length || 0 };
+        });
+        return { pass: has.open && has.items >= 1, detail: 'open=' + has.open + ' items=' + has.items };
+      } });
   await clickText(page, 'Export topic');
-  await capture(page, 'export topic modal open', ['History: export topic', 'User Interface: export modal'], 'Export topic action opens format-selection modal.', { dynamicStep: 'after-export-click' });
+  await capture(page, 'export topic modal open', ['History: export topic', 'User Interface: export modal'],
+    'Export topic action opens format-selection modal.', { dynamicStep: 'after-export-click', assertFn: modalOpen });
   await closeOpenModal(page);
 
   await page.locator('.topic-collab-toolbar .gear-btn').click();
   await clickText(page, 'Wave Timeline');
   await page.waitForTimeout(800);
-  await capture(page, 'wave timeline playback modal open', ['History & Playback: wave timeline', 'Blip Operations: playback history'], 'Wave Timeline opens playback modal with controls/timeline.', { dynamicStep: 'after-wave-timeline-click' });
+  await capture(page, 'wave timeline playback modal open', ['History & Playback: wave timeline', 'Blip Operations: playback history'],
+    'Wave Timeline opens playback modal with controls/timeline.', { dynamicStep: 'after-wave-timeline-click', assertFn: modalOpen });
   await page.keyboard.press('Escape').catch(() => {});
   await page.locator('.wave-playback-close, .modal-close').first().click({ timeout: 3000 }).catch(() => {});
 }
