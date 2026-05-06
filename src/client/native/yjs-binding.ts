@@ -69,7 +69,7 @@ export const yMapToElement = (ymap: Y.Map<unknown>): ContentElement => {
 
 /** Replace the contents of `yarr` with the elements of `arr`, atomically. */
 export const seedYArrayFromContent = (yarr: Y.Array<Y.Map<unknown>>, arr: ContentArray, doc?: Y.Doc): void => {
-  const tx = (txn?: Y.Transaction) => {
+  const tx = () => {
     if (yarr.length > 0) yarr.delete(0, yarr.length);
     yarr.insert(0, arr.map(elementToYMap));
   };

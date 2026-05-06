@@ -145,7 +145,7 @@ PHASES: list[Phase] = [
     Phase(4, 55, "Auxiliary feature wiring",
           "Playback, history, mentions, comments, follow-the-green — most are 0-2hr wiring",
           2, [
-              Deliverable("Wave-level playback (WavePlaybackModal) wired into native render"),
+              Deliverable("Wave-level playback (WavePlaybackModal) wired into native render — toolbar btn", True, files=["src/client/components/native/NativeWaveView.tsx"]),
               Deliverable("Per-blip history modal button in BlipView gear menu"),
               Deliverable("Mentions / hashtags / tasks (per-blip TipTap extensions)"),
               Deliverable("Inline comments anchor migration"),

@@ -10,13 +10,10 @@ import {
   TopicDoc,
   elementToYMap,
   yMapToElement,
-  yArrayToContentArray,
-  seedYArrayFromContent,
   insertBlipMarker,
   insertText,
   insertLine,
   removeAt,
-  observeContent,
 } from '../yjs-binding';
 import { ContentArray, ModelType } from '../types';
 

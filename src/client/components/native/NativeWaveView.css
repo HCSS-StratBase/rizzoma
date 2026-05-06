@@ -92,3 +92,25 @@
 
 /* No banner — native render is now the default; users can opt out
  * for one session via `?render=react`. */
+
+/* Native toolbar (wave-level controls — playback for now; share/gear later). */
+.rizzoma-native-mode .rizzoma-native-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+.rizzoma-native-mode .rizzoma-native-toolbar-btn {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #1f2937;
+}
+.rizzoma-native-mode .rizzoma-native-toolbar-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}

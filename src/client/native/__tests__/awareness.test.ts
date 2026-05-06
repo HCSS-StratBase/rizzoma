@@ -4,7 +4,6 @@
  * Phase 3 (#54). No jsdom needed — pure CRDT + Awareness.
  */
 import { describe, expect, it, vi } from 'vitest';
-import * as Y from 'yjs';
 import { applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { TopicAwareness, colorForUserId, type ParticipantState } from '../awareness';
 import { TopicDoc } from '../yjs-binding';

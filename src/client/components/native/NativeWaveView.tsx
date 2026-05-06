@@ -16,10 +16,11 @@
  * Those wire up in subsequent phases via WaveView's event listeners.
  */
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { WaveView } from '@client/native/wave-view';
 import type { ContentArray } from '@client/native/types';
 import { FEATURES } from '@shared/featureFlags';
+import { WavePlaybackModal } from '../WavePlaybackModal';
 import './NativeWaveView.css';
 
 export interface NativeWaveViewProps {
@@ -41,6 +42,7 @@ export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
 }) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const waveViewRef = useRef<WaveView | null>(null);
+  const [showPlayback, setShowPlayback] = useState(false);
   // Stable identity for the lookup so a parent re-render doesn't tear down
   // the WaveView. Caller controls when content actually changes.
   const stableLookup = useMemo(() => contentByBlipId, [contentByBlipId]);
@@ -73,7 +75,29 @@ export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
     return null;
   }
 
-  return <div ref={hostRef} className={className ?? 'rizzoma-native-wave-host'} />;
+  return (
+    <>
+      <div className="rizzoma-native-toolbar">
+        <button
+          className="rizzoma-native-toolbar-btn"
+          type="button"
+          onClick={() => setShowPlayback(true)}
+          title="Wave-level playback (timeline)"
+        >
+          ▷ Playback
+        </button>
+      </div>
+      <div ref={hostRef} className={className ?? 'rizzoma-native-wave-host'} />
+      {showPlayback && (
+        <WavePlaybackModal
+          waveId={rootBlipId}
+          topicTitle="Wave playback"
+          blips={[]}
+          onClose={() => setShowPlayback(false)}
+        />
+      )}
+    </>
+  );
 };
 
 export default NativeWaveView;
