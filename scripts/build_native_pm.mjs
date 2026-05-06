@@ -81,10 +81,10 @@ const PHASES = [
     title: 'Y.js collab + cross-tab sync + live cursors',
     short: '`Y.Array<Y.Map>` over ContentArray; per-blip TipTap keeps Y.XmlFragment',
     deliverables: [
-      { done: false, label: '`yjs-binding.ts` — Y.Array<Y.Map> binding for ContentArray', commit: null },
-      { done: false, label: 'Per-blip TipTap keeps existing Y.XmlFragment + Collaboration extension', commit: null },
+      { done: true, label: '`yjs-binding.ts` — Y.Array<Y.Map> binding for ContentArray + per-blip Y.XmlFragment helper', commit: null, files: ['src/client/native/yjs-binding.ts'] },
+      { done: true, label: 'Per-blip TipTap keeps existing Y.XmlFragment + Collaboration extension (TopicDoc.blipFragment(id))', commit: null, files: ['src/client/native/yjs-binding.ts'] },
       { done: false, label: 'Awareness (presence + cursor color) per-blip editor', commit: null },
-      { done: false, label: 'Vitest Y.js convergence test (two Y.Doc instances through op sequences)', commit: null },
+      { done: true, label: 'Vitest Y.js convergence test — 14 tests including 3 cross-Y.Doc convergence cases', commit: null, files: ['src/client/native/__tests__/yjs-binding.test.ts'] },
       { done: false, label: 'Two-tab cross-sync within 1 second', commit: null },
       { done: false, label: 'Real-time cursor visible in editing blip', commit: null },
     ],
