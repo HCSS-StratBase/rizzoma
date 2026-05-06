@@ -271,17 +271,17 @@ const html = `<!doctype html>
 <title>Native Render Port — PM</title>
 <style>
   :root {
-    --bg: #0a1428;
-    --bg-card: #11203c;
-    --bg-elev: #182a4a;
-    --gold: #dbad50;
-    --green: #4caf83;
-    --amber: #e0a800;
-    --red: #d96b6b;
-    --gray: #6e7a93;
-    --wh: #e8edf3;
-    --lb: #a0acc0;
-    --border: rgba(255,255,255,.08);
+    --bg: #f7f9fc;
+    --bg-card: #ffffff;
+    --bg-elev: #f0f4f9;
+    --gold: #b8851f;
+    --green: #1f7a48;
+    --amber: #b87800;
+    --red: #b73838;
+    --gray: #6b7280;
+    --wh: #0f172a;
+    --lb: #1f2937;
+    --border: rgba(15,23,42,.12);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -379,8 +379,8 @@ const html = `<!doctype html>
     0%, 100% { box-shadow: 0 0 0 0 rgba(217,107,107,0.55); }
     50%      { box-shadow: 0 0 0 4px rgba(217,107,107,0); }
   }
-  .deliv-label { color: var(--wh); }
-  .deliv-label.done { color: var(--lb); }
+  .deliv-label { color: #0f172a; font-weight: 500; }
+  .deliv-label.done { color: #374151; }
   .deliv-label.wip { color: var(--amber); font-weight: 600; }
   .deliv-label.wip::after {
     content: " — IN PROGRESS";
@@ -417,7 +417,14 @@ const html = `<!doctype html>
   .commit-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 0.85rem; }
   .commit-row:first-child { border-top: none; padding-top: 4px; }
   .commit-hash a { font-family: ui-monospace, monospace; color: var(--gold); }
-  .commit-when { color: var(--lb); font-size: 0.78rem; white-space: nowrap; }
+  .commit-when { color: #475569; font-size: 0.78rem; white-space: nowrap; }
+  .meta { color: #475569 !important; }
+  .phase-short { color: #4b5563 !important; }
+  .live-detail { color: #475569 !important; }
+  .stat-lbl { color: #4b5563 !important; }
+  .footer { color: #4b5563 !important; }
+  .stamp { background: rgba(31,122,72,0.12) !important; color: #1f7a48 !important; }
+  .pbar-wrapper { background: rgba(15,23,42,.08) !important; }
   .calendar { overflow-x: auto; }
   .cal-grid { display: grid; grid-template-columns: 60px repeat(5, 1fr); gap: 8px; min-width: 700px; font-size: 0.85rem; }
   .cal-week { color: var(--lb); font-weight: 600; align-self: center; }
