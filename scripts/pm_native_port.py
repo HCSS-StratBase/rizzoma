@@ -137,7 +137,7 @@ PHASES: list[Phase] = [
           3, [
               Deliverable("yjs-binding.ts — Y.Array<Y.Map> binding for ContentArray + 14 vitest convergence tests", True, files=["src/client/native/yjs-binding.ts"]),
               Deliverable("Per-blip TipTap keeps existing Y.XmlFragment + Collaboration"),
-              Deliverable("Awareness (presence + cursor color) per-blip editor"),
+              Deliverable("Awareness (presence + cursor color) per-blip editor — TopicAwareness + 9 tests pass", True, files=["src/client/native/awareness.ts"]),
               Deliverable("Vitest Y.js convergence test (two Y.Doc through op sequences) — 3/3 cross-doc pass", True, files=["src/client/native/__tests__/yjs-binding.test.ts"]),
               Deliverable("Two-tab cross-sync within 1 second"),
               Deliverable("Real-time cursor visible in editing blip"),
