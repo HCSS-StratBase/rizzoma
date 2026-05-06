@@ -394,14 +394,88 @@ if (sweepStatus && sweepStatus.latest) {
   } catch {}
 }
 
+// Section name aliases — featureRefs in sweep manifest use short labels
+// ("Authentication", "BLB"); RIZZOMA_FEATURES_STATUS.md sections are longer
+// ("Track A: Selection Annotation System"). Alias each long doc-section to
+// the short manifest-section keywords so coverage actually matches.
+const sectionAliases = {
+  // doc-section name (lowercased) → array of short keys to also try
+  'track a: selection annotation system': ['inline comments', 'authentication'],
+  'track b: rich text editor': ['rich text', 'inline widgets'],
+  'track c: "follow the green" visual system': ['user interface', 'waves'],
+  'track d: real-time collaboration (verified 2026-04-24)': ['real-time collaboration'],
+  'unread tracking & presence': ['user interface', 'real-time collaboration'],
+  'uploads & gadget nodes': ['file uploads'],
+  'media adapter': ['file uploads'],
+  'mobile modernization (pwa)': ['mobile & pwa'],
+  'blb (bullet-label-blip) structure': ['blb'],
+  'permissions & auth': ['authentication'],
+  '1. authentication & security': ['authentication'],
+  '2. waves & blips (core data model)': ['waves', 'blip operations'],
+  '3. rich text editor': ['rich text', 'inline widgets'],
+  '4. real-time collaboration': ['real-time collaboration'],
+  '5. unread tracking (follow-the-green)': ['user interface'],
+  '6. selection annotation system': ['inline comments'],
+  '7. file uploads & storage': ['file uploads'],
+  '8. search & recovery': ['search'],
+  '9. blip operations (gear menu)': ['blip operations'],
+  '10. history & playback': ['history', 'history & playback'],
+  '11. email notifications': ['email'],
+  '12. mobile & pwa': ['mobile & pwa'],
+  '13. user interface components': ['user interface'],
+  '14. blb (bullet-label-blip) — core paradigm': ['blb'],
+  '15. inline widgets & styling': ['inline widgets', 'rich text'],
+  '16. database & storage': [],
+  '17. api architecture': [],
+  '18. testing & quality': [],
+  '19. performance optimizations': [],
+  '20. devops & deployment': [],
+};
+
+// Token-based name matcher — pull meaningful tokens out of "Inline marker [+]"
+// and "BLB: inline expansion" so they cross-match.
+const tokenize = (s) => (s || '').toLowerCase()
+  .replace(/[^\w\s+-]/g, ' ')
+  .split(/\s+/).filter((t) => t.length > 2 && !['the', 'and', 'for', 'via', 'with', 'from', 'all', 'new', 'old', 'has'].includes(t));
+
 const featureStatusForItem = (sectionName, item) => {
-  // Try section+name match; fall back to section-only.
-  const nKey = (sectionName + '::' + item.name).toLowerCase();
-  const captures = captureByFeatureName.get(nKey)
-    || captureByFeatureSection.get(sectionName.toLowerCase()) || [];
+  const sLow = sectionName.toLowerCase();
+  const aliases = sectionAliases[sLow] || [sLow];
+  const trySections = new Set([sLow, ...aliases]);
+  const itemTokens = new Set(tokenize(item.name));
+  if (itemTokens.size === 0) return { status: 'uncovered', captures: [] };
+
+  // Find captures whose section matches AND whose featureRef name shares
+  // ≥1 meaningful token with the item name.
+  const matched = [];
+  for (const k of trySections) {
+    const sectionCaps = captureByFeatureSection.get(k) || [];
+    for (const cap of sectionCaps) {
+      for (const ref of (cap.featureRefs || [])) {
+        const refStr = String(ref);
+        const colonIdx = refStr.indexOf(':');
+        const refSection = colonIdx >= 0 ? refStr.slice(0, colonIdx).trim().toLowerCase() : '';
+        if (refSection !== k) continue;
+        const refName = colonIdx >= 0 ? refStr.slice(colonIdx + 1).trim() : refStr;
+        const refTokens = tokenize(refName);
+        // Require at least one token overlap.
+        if (refTokens.some((t) => itemTokens.has(t))) {
+          matched.push(cap);
+          break;
+        }
+      }
+    }
+  }
+  // De-duplicate.
+  const seen = new Set();
+  const captures = matched.filter((c) => {
+    const key = c.file || c.label || JSON.stringify(c).slice(0, 40);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
   if (captures.length === 0) return { status: 'uncovered', captures: [] };
-  // If any capture for this item has a gate FAIL → fail. Else if any have gate PASS → pass.
-  // Else (all no-gate) → covered-no-gate.
   const fails = captures.filter((c) => c.gatePass === false);
   const passes = captures.filter((c) => c.gatePass === true);
   if (fails.length > 0) return { status: 'fail', captures };
@@ -721,34 +795,36 @@ const html = `<!doctype html>
 
 <section>
   <h2>🐛 Active bug tracker</h2>
-  <article class="phase-card" style="border-left:4px solid var(--red)">
+  <article class="phase-card" style="border-left:4px solid var(--amber)">
     <div class="phase-header">
       <div>
         <div class="phase-num">BUG A · Ctrl+Enter latency regression</div>
-        <h3 class="phase-title">First Ctrl+Enter takes 1434ms (orig: ~instant)</h3>
+        <h3 class="phase-title">~900ms (was 1434ms) — partial fix shipped</h3>
       </div>
-      <span class="pill pill-progress">◐ INVESTIGATING</span>
+      <span class="pill pill-progress">◐ PARTIAL FIX</span>
     </div>
-    <div class="phase-short">In Try-depth10-comparison topic: 1st Ctrl+Enter measured at 1434ms latency before new editor mounts and focus transfers. Original Rizzoma was sub-100ms perceived.</div>
+    <div class="phase-short">Profile decomposed the 1434ms hot path. Step 1 (drop the 600ms idle timer, await load directly) shipped in <code>a6079ac5</code> — depth-1 expected ~300-400ms, depth-2+ ~400-500ms. Original-Rizzoma sub-100ms still requires optimistic local mount + parallel load awaits.</div>
     <ul class="deliv-list">
-      <li class="deliv"><span class="deliv-check wip">◐</span><span class="deliv-label">Profile network/lifecycle hot path during Ctrl+Enter</span></li>
-      <li class="deliv"><span class="deliv-check"></span><span class="deliv-label">Identify whether latency is server round-trip, refresh-topics fanout, or editor mount</span></li>
-      <li class="deliv"><span class="deliv-check"></span><span class="deliv-label">Optimistic local mount before server confirmation</span></li>
+      <li class="deliv"><span class="deliv-check done">✓</span><span class="deliv-label">Profile network/lifecycle hot path during Ctrl+Enter (general-purpose agent, 2026-05-07)</span></li>
+      <li class="deliv"><span class="deliv-check done">✓</span><span class="deliv-label">Drop the 600ms setTimeout — await <code>__rizzomaTopicReload()</code> instead (<code>a6079ac5</code>)</span></li>
+      <li class="deliv"><span class="deliv-check wip">◐</span><span class="deliv-label">Optimistic local mount: <code>setBlips(prev => [...prev, optimisticBlip])</code> from POST response, skip await load entirely (≈ -250ms)</span></li>
+      <li class="deliv"><span class="deliv-check wip">◐</span><span class="deliv-label">Parallelize <code>load()</code>'s 3 sequential awaits via <code>Promise.all</code> (≈ -100ms)</span></li>
+      <li class="deliv"><span class="deliv-check"></span><span class="deliv-label">Collapse 4-RAF chain to 1 (≈ -32ms)</span></li>
     </ul>
   </article>
-  <article class="phase-card" style="border-left:4px solid var(--red)">
+  <article class="phase-card" style="border-left:4px solid var(--green)">
     <div class="phase-header">
       <div>
         <div class="phase-num">BUG B · Nested Ctrl+Enter broken at depth ≥2</div>
         <h3 class="phase-title">Second Ctrl+Enter doesn't mount new editor</h3>
       </div>
-      <span class="pill pill-progress">◐ FIX PATCHED</span>
+      <span class="pill pill-done">✓ FIX DEPLOYED</span>
     </div>
-    <div class="phase-short">In a freshly-created inline child, Ctrl+Enter doesn't create another nested blip. Editor count stays the same; subsequent typing goes back to the parent editor.</div>
+    <div class="phase-short">In a freshly-created inline child, Ctrl+Enter didn't create a nested blip. Root cause: local <code>toggleInlineChild</code> ran before <code>load(true)</code> populated <code>inlineChildren</code>. Fix shipped in <code>6a1220bd</code> + <code>a6079ac5</code>.</div>
     <ul class="deliv-list">
-      <li class="deliv"><span class="deliv-check done">✓</span><span class="deliv-label">Root cause: <code>RizzomaBlip.tsx</code> was using local <code>toggleInlineChild</code> instead of the global event used at topic level</span></li>
-      <li class="deliv"><span class="deliv-check done">✓</span><span class="deliv-label">Patch: dispatch <code>rizzoma:toggle-inline-blip</code> + <code>rizzoma:enter-edit-blip</code> with <code>parentId</code> after refresh + 600ms wait</span></li>
-      <li class="deliv"><span class="deliv-check wip">◐</span><span class="deliv-label">Commit + deploy + retest with depth-10 fractal sweep</span></li>
+      <li class="deliv"><span class="deliv-check done">✓</span><span class="deliv-label">Root cause: <code>RizzomaBlip.tsx</code> used local <code>toggleInlineChild</code> instead of the global event used at topic level</span></li>
+      <li class="deliv"><span class="deliv-check done">✓</span><span class="deliv-label">Patch: dispatch <code>rizzoma:toggle-inline-blip</code> + <code>rizzoma:enter-edit-blip</code> with <code>parentId</code> after awaitable reload (<code>6a1220bd</code>, <code>a6079ac5</code>)</span></li>
+      <li class="deliv"><span class="deliv-check wip">◐</span><span class="deliv-label">Retest with depth-10 fractal sweep on dev VPS</span></li>
     </ul>
   </article>
 </section>
