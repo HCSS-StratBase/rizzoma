@@ -756,18 +756,16 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             //      blip in `inlineChildren` and expand it.
             //   3. RAF + dispatch enter-edit — the inline editor needs one
             //      paint cycle to mount before we can focus it.
-            console.log('[CtrlEnter] before load(true), newBlipId=', newBlipId, 'topicId=', id);
             try {
               await load(true);
-            } catch (err) {
-              console.log('[CtrlEnter] load(true) threw:', err);
+            } catch {
+              // load() rarely fails; if it does the optimistic state above
+              // still lets the toggle render.
             }
-            console.log('[CtrlEnter] after load(true), dispatching toggle');
             window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
               detail: { threadId: newBlipId, parentId: id }
             }));
             requestAnimationFrame(() => requestAnimationFrame(() => {
-              console.log('[CtrlEnter] dispatching enter-edit-blip');
               window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
                 detail: { blipId: newBlipId }
               }));
