@@ -6,17 +6,17 @@
 <title>Native Render Port — PM</title>
 <style>
   :root {
-    --bg: #f7f9fc;
-    --bg-card: #ffffff;
-    --bg-elev: #f0f4f9;
-    --gold: #b8851f;
-    --green: #1f7a48;
-    --amber: #b87800;
-    --red: #b73838;
-    --gray: #6b7280;
-    --wh: #0f172a;
-    --lb: #1f2937;
-    --border: rgba(15,23,42,.12);
+    --bg: #0a1428;
+    --bg-card: #11203c;
+    --bg-elev: #182a4a;
+    --gold: #dbad50;
+    --green: #4caf83;
+    --amber: #e0a800;
+    --red: #d96b6b;
+    --gray: #6e7a93;
+    --wh: #e8edf3;
+    --lb: #a0acc0;
+    --border: rgba(255,255,255,.08);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -114,8 +114,8 @@
     0%, 100% { box-shadow: 0 0 0 0 rgba(217,107,107,0.55); }
     50%      { box-shadow: 0 0 0 4px rgba(217,107,107,0); }
   }
-  .deliv-label { color: #0f172a; font-weight: 500; }
-  .deliv-label.done { color: #374151; }
+  .deliv-label { color: var(--wh); }
+  .deliv-label.done { color: var(--lb); }
   .deliv-label.wip { color: var(--amber); font-weight: 600; }
   .deliv-label.wip::after {
     content: " — IN PROGRESS";
@@ -152,14 +152,7 @@
   .commit-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 0.85rem; }
   .commit-row:first-child { border-top: none; padding-top: 4px; }
   .commit-hash a { font-family: ui-monospace, monospace; color: var(--gold); }
-  .commit-when { color: #475569; font-size: 0.78rem; white-space: nowrap; }
-  .meta { color: #475569 !important; }
-  .phase-short { color: #4b5563 !important; }
-  .live-detail { color: #475569 !important; }
-  .stat-lbl { color: #4b5563 !important; }
-  .footer { color: #4b5563 !important; }
-  .stamp { background: rgba(31,122,72,0.12) !important; color: #1f7a48 !important; }
-  .pbar-wrapper { background: rgba(15,23,42,.08) !important; }
+  .commit-when { color: var(--lb); font-size: 0.78rem; white-space: nowrap; }
   .calendar { overflow-x: auto; }
   .cal-grid { display: grid; grid-template-columns: 60px repeat(5, 1fr); gap: 8px; min-width: 700px; font-size: 0.85rem; }
   .cal-week { color: var(--lb); font-weight: 600; align-self: center; }
@@ -187,7 +180,7 @@
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/NATIVE_RENDER_PORT_PLAN.md">Plan</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md">Why</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/issues/50">Epic #50</a>
-    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-06 14:40:50 UTC</span>
+    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-06 14:41:49 UTC</span>
     &nbsp;·&nbsp; <span id="refresh-status">auto-refresh ON</span>
   </p>
 </header>
@@ -198,7 +191,7 @@
     <div class="stat-card"><div class="stat-num">74%</div><div class="stat-lbl">Complete</div></div>
     <div class="stat-card"><div class="stat-num">10.8<span style="font-size:1rem;color:var(--lb)"> / 14.5</span></div><div class="stat-lbl">Workdays</div></div>
     <div class="stat-card"><div class="stat-num">4<span style="font-size:1rem;color:var(--lb)"> / 6</span></div><div class="stat-lbl">Phases done</div></div>
-    <div class="stat-card"><div class="stat-num">43</div><div class="stat-lbl">Commits on port branch</div></div>
+    <div class="stat-card"><div class="stat-num">45</div><div class="stat-lbl">Commits on port branch</div></div>
   </div>
   <div class="pbar-row">
     <div class="pbar-wrapper"><div class="pbar-fill" style="--target:74%"></div></div>
@@ -219,7 +212,7 @@
       <span class="lbl" style="color:var(--amber)">EDITED</span>
       <span>1 file(s) in last 120s</span>
     </div>
-    <div class="live-row"><span></span><span class="live-detail">scripts/build_native_pm.mjs <span style="opacity:0.6">(52s ago)</span></span></div>
+    <div class="live-row"><span></span><span class="live-detail">scripts/build_native_pm.mjs <span style="opacity:0.6">(34s ago)</span></span></div>
   </div>
 </section>
 
@@ -589,6 +582,16 @@
   <div class="recent-commits">
 
     <div class="commit-row">
+      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/5b79b103de92b2421c60f5837c88063876cd3267" target="_blank" rel="noopener">5b79b103</a></span>
+      <span class="commit-subject">Revert &quot;PM HTML: dark text on light bg — high contrast for screen + print&quot;</span>
+      <span class="commit-when">5 seconds ago</span>
+    </div>
+    <div class="commit-row">
+      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/5067d099a1d0136b1f9de5802f17020b24ed2908" target="_blank" rel="noopener">5067d099</a></span>
+      <span class="commit-subject">PM HTML: dark text on light bg — high contrast for screen + print</span>
+      <span class="commit-when">29 seconds ago</span>
+    </div>
+    <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/584f888033022a4ba2d60c4d4b3662ddb83c2778" target="_blank" rel="noopener">584f8880</a></span>
       <span class="commit-subject">Phase 4 (#55): per-blip gear menu w/ history button</span>
       <span class="commit-when">2 hours ago</span>
@@ -656,7 +659,7 @@
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/1cf7772b464616b1ab7a6e82da99fce70cac34b6" target="_blank" rel="noopener">1cf7772b</a></span>
       <span class="commit-subject">fix(BLB): Ctrl+Enter now actually opens the new child blip&#39;s editor</span>
-      <span class="commit-when">3 hours ago</span>
+      <span class="commit-when">4 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/4c81d297e1af4a784a052870bef7d5922ad3862d" target="_blank" rel="noopener">4c81d297</a></span>
@@ -676,16 +679,6 @@
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/2b3357f3a6fd4a6b01f1011a9404b5e883f36b5e" target="_blank" rel="noopener">2b3357f3</a></span>
       <span class="commit-subject">Screenshot: native render as default, bare URL, no flag, no banner</span>
-      <span class="commit-when">14 hours ago</span>
-    </div>
-    <div class="commit-row">
-      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/8ba279e3b3ab0839adf58c63e79ee51e5fb60581" target="_blank" rel="noopener">8ba279e3</a></span>
-      <span class="commit-subject">Phase 2 (#53): native render is now the DEFAULT path</span>
-      <span class="commit-when">14 hours ago</span>
-    </div>
-    <div class="commit-row">
-      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/3a1734dace310be3c4049ac800cb30c2fad671b7" target="_blank" rel="noopener">3a1734da</a></span>
-      <span class="commit-subject">Per-step expand screenshots — native fractal render proven visually</span>
       <span class="commit-when">14 hours ago</span>
     </div>
   </div>
