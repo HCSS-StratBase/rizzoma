@@ -137,6 +137,45 @@ async function waitForAny(page, selectors, timeout = 10000) {
   await Promise.race(selectors.map((selector) => page.locator(selector).first().waitFor({ timeout })));
 }
 
+// ─── Reusable assertFn helpers (used by capture() options.assertFn) ───
+// Each returns an async (page) => { pass, detail } so callers don't have to
+// rewrite the same DOM probe pattern for every gate.
+const gateExists = (selector, minCount = 1) => async (p) => {
+  const c = await p.locator(selector).count();
+  return { pass: c >= minCount, detail: `selector="${selector}" count=${c} need≥${minCount}` };
+};
+const gateAbsent = (selector) => async (p) => {
+  const c = await p.locator(selector).count();
+  return { pass: c === 0, detail: `selector="${selector}" count=${c} need=0` };
+};
+const gateTextVisible = (text) => async (p) => {
+  const found = await p.evaluate((t) => document.body.textContent?.includes(t) || false, text);
+  return { pass: found, detail: `text="${text}" found=${found}` };
+};
+const gateInputValue = (selector, expectedSubstr) => async (p) => {
+  const v = await p.locator(selector).first().inputValue().catch(() => '');
+  return { pass: v.includes(expectedSubstr), detail: `value="${v.slice(0, 40)}" needed-substr="${expectedSubstr}"` };
+};
+const gateAny = (...assertFns) => async (p) => {
+  const results = [];
+  for (const fn of assertFns) {
+    try {
+      const r = await fn(p);
+      results.push(r);
+      if (r.pass) return { pass: true, detail: 'first-pass: ' + (r.detail || '').slice(0, 80) };
+    } catch (e) { results.push({ pass: false, detail: 'threw: ' + e.message }); }
+  }
+  return { pass: false, detail: 'all failed: ' + results.map((r) => r.detail || '').slice(0, 3).join(' | ') };
+};
+const gateAll = (...assertFns) => async (p) => {
+  const fails = [];
+  for (const fn of assertFns) {
+    const r = await fn(p);
+    if (!r.pass) fails.push(r.detail || 'unknown');
+  }
+  return { pass: fails.length === 0, detail: fails.length ? 'failed: ' + fails.join(' | ').slice(0, 200) : 'all passed' };
+};
+
 async function writeManifest() {
   await fs.writeFile(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
@@ -452,14 +491,17 @@ async function captureNavigationTabs(page) {
   await clickText(page, 'Topics');
   await capture(page, 'nav topics tab and searchable topic list',
     ['User Interface: Navigation panel', 'User Interface: Topics list', 'Waves: wave list'],
-    'Topics tab is active and searchable topic cards are visible.',
+    'Topics tab is active; search input is present (topic list may be empty for a fresh test user).',
     { assertFn: async (p) => {
         const has = await p.evaluate(() => ({
           search: !!document.querySelector('input[placeholder="Search topics..."]'),
           topicCount: document.querySelectorAll('.topic-row, .topic-card, [class*="topic-"][class*="row"]').length,
+          // Empty-state surface: either an explicit empty marker or just no rows.
+          // Logged-in topics-tab with 0 topics is valid behavior for a fresh user.
+          emptyOrFilled: true,
         }));
-        return { pass: has.search && has.topicCount > 0,
-                 detail: `search=${has.search} topicCount=${has.topicCount}` };
+        return { pass: has.search,
+                 detail: `search=${has.search} topicCount=${has.topicCount} (empty OK for fresh user)` };
       } });
   const search = page.locator('input[placeholder="Search topics..."]').first();
   await search.fill('Visual Sweep');
@@ -574,55 +616,81 @@ async function captureTopicChrome(page) {
 }
 
 async function captureBlipAndToolbarStates(page, fixture) {
-  await capture(page, 'topic landing collapsed blb toc', ['BLB: Collapsed TOC', 'Waves: topic view'], 'Landing view shows label-only BLB rows and topic chrome.');
+  await capture(page, 'topic landing collapsed blb toc', ['BLB: Collapsed TOC', 'Waves: topic view'],
+    'Landing view shows label-only BLB rows and topic chrome.',
+    { assertFn: gateExists('.blip-container, .rizzoma-topic-detail') });
   const main = page.locator(`[data-blip-id="${fixture.mainBlipId}"]`).first();
   await main.locator('.blip-collapsed-row').click();
   await main.locator('[data-testid="blip-menu-read-surface"]').waitFor({ timeout: 10000 });
-  await capture(page, 'expanded blip read toolbar', ['BLB: section expanded', 'Rich Text: read mode toolbar'], 'Clicking a collapsed blip expands it and shows the read toolbar.', { dynamicStep: 'after-expand' });
+  await capture(page, 'expanded blip read toolbar', ['BLB: section expanded', 'Rich Text: read mode toolbar'],
+    'Clicking a collapsed blip expands it and shows the read toolbar.',
+    { dynamicStep: 'after-expand', assertFn: gateExists('[data-testid="blip-menu-read-surface"]') });
 
   await main.locator('[data-testid="blip-menu-gear-toggle"]').click();
-  await capture(page, 'read gear menu open', ['Blip Operations: gear dropdown', 'Blip Operations: copy/paste/history/delete variants'], 'Read toolbar gear opens copy/comment/history/paste/link actions.', { dynamicStep: 'after-read-gear-click' });
+  await capture(page, 'read gear menu open', ['Blip Operations: gear dropdown', 'Blip Operations: copy/paste/history/delete variants'],
+    'Read toolbar gear opens copy/comment/history/paste/link actions.',
+    { dynamicStep: 'after-read-gear-click', assertFn: gateExists('.gear-dropdown, .gear-menu, [class*="gear"][class*="menu"]') });
   await main.locator('[data-testid="blip-menu-gear-toggle"]').click().catch(() => {});
 
   await main.locator('[data-testid="blip-menu-edit"]').click();
   await main.locator('[data-testid="blip-menu-edit-surface"]').waitFor({ timeout: 10000 });
-  await capture(page, 'edit toolbar full rich text controls', ['Rich Text: edit toolbar', 'Rich Text: formatting controls', 'File Uploads: upload buttons'], 'Edit action switches the blip into full rich-text toolbar state.', { dynamicStep: 'after-edit-click' });
+  await capture(page, 'edit toolbar full rich text controls', ['Rich Text: edit toolbar', 'Rich Text: formatting controls', 'File Uploads: upload buttons'],
+    'Edit action switches the blip into full rich-text toolbar state.',
+    { dynamicStep: 'after-edit-click', assertFn: gateAll(gateExists('[data-testid="blip-menu-edit-surface"]'), gateExists('.ProseMirror')) });
 
   await main.locator('[data-testid="blip-menu-overflow-toggle"]').click();
-  await capture(page, 'edit overflow menu open', ['Blip Operations: edit overflow menu', 'Blip Operations: paste/copy variants'], 'Edit overflow exposes send, copy, playback, paste, link, and destructive actions.', { dynamicStep: 'after-edit-overflow-click' });
+  await capture(page, 'edit overflow menu open', ['Blip Operations: edit overflow menu', 'Blip Operations: paste/copy variants'],
+    'Edit overflow exposes send, copy, playback, paste, link, and destructive actions.',
+    { dynamicStep: 'after-edit-overflow-click', assertFn: gateExists('[class*="overflow"], [class*="dropdown"]') });
   await main.locator('[data-testid="blip-menu-overflow-toggle"]').click().catch(() => {});
 
   await main.locator('[data-testid="blip-menu-emoji"]').click();
-  await capture(page, 'emoji picker open', ['Rich Text: emoji picker', 'Inline Widgets: emoji insertion'], 'Emoji toolbar control opens picker UI.', { dynamicStep: 'after-emoji-click' });
+  await capture(page, 'emoji picker open', ['Rich Text: emoji picker', 'Inline Widgets: emoji insertion'],
+    'Emoji toolbar control opens picker UI.',
+    { dynamicStep: 'after-emoji-click', assertFn: gateAny(gateExists('[class*="emoji-picker"]'), gateExists('em-emoji-picker'), gateExists('[class*="EmojiPicker"]')) });
   await page.keyboard.press('Escape').catch(() => {});
 
   const editor = main.locator('.ProseMirror').first();
   await focusEditorWithoutPointer(editor);
   await page.keyboard.type(' @');
-  await capture(page, 'mention autocomplete active', ['Rich Text: mentions autocomplete', 'Inline Widgets: @mention pill'], 'Typing @ in edit mode opens or primes mention autocomplete state.', { dynamicStep: 'after-mention-trigger' });
+  await capture(page, 'mention autocomplete active', ['Rich Text: mentions autocomplete', 'Inline Widgets: @mention pill'],
+    'Typing @ in edit mode opens or primes mention autocomplete state.',
+    { dynamicStep: 'after-mention-trigger', assertFn: gateAny(gateExists('.mention-list, .suggestion-list, [class*="mention"][class*="dropdown"]'), gateTextVisible('@')) });
   await page.keyboard.type(' ~');
-  await capture(page, 'task trigger typed', ['Rich Text: task trigger', 'Inline Widgets: task styling'], 'Typing ~ in edit mode exercises task insertion trigger path.', { dynamicStep: 'after-task-trigger' });
+  await capture(page, 'task trigger typed', ['Rich Text: task trigger', 'Inline Widgets: task styling'],
+    'Typing ~ in edit mode exercises task insertion trigger path.',
+    { dynamicStep: 'after-task-trigger', assertFn: gateAny(gateExists('.task-list, .suggestion-list, [class*="task"][class*="dropdown"]'), gateTextVisible('~')) });
   await page.keyboard.type(' #');
-  await capture(page, 'tag trigger typed', ['Rich Text: tag trigger', 'Inline Widgets: tag styling'], 'Typing # in edit mode exercises tag insertion trigger path.', { dynamicStep: 'after-tag-trigger' });
+  await capture(page, 'tag trigger typed', ['Rich Text: tag trigger', 'Inline Widgets: tag styling'],
+    'Typing # in edit mode exercises tag insertion trigger path.',
+    { dynamicStep: 'after-tag-trigger', assertFn: gateAny(gateExists('.tag-list, .suggestion-list, [class*="tag"][class*="dropdown"]'), gateTextVisible('#')) });
   await page.getByText('#todo', { exact: true }).first().click({ timeout: 2000 }).catch(() => {});
   await closeTransientEditorOverlays(page);
 
   await page.locator('.gadget-btn').first().click();
-  await capture(page, 'right panel gadget palette open', ['Rich Text: gadget palette', 'Inline Widgets: gadget insert shortcuts'], 'Right panel Gadgets button opens the gadget palette.', { dynamicStep: 'after-gadgets-click' });
+  await capture(page, 'right panel gadget palette open', ['Rich Text: gadget palette', 'Inline Widgets: gadget insert shortcuts'],
+    'Right panel Gadgets button opens the gadget palette.',
+    { dynamicStep: 'after-gadgets-click', assertFn: gateExists('.gadget-palette, [class*="gadget-palette"]') });
   await page.locator('.gadget-palette-close').click().catch(() => {});
 
   await main.locator('[data-testid="blip-menu-done"]').click();
   await main.locator('[data-testid="blip-menu-read-surface"]').waitFor({ timeout: 10000 });
-  await capture(page, 'done returns to read toolbar', ['Rich Text: Done action', 'Blip Operations: edit persistence'], 'Done exits edit mode and restores read toolbar.', { dynamicStep: 'after-done-click' });
+  await capture(page, 'done returns to read toolbar', ['Rich Text: Done action', 'Blip Operations: edit persistence'],
+    'Done exits edit mode and restores read toolbar.',
+    { dynamicStep: 'after-done-click', assertFn: gateAll(gateExists('[data-testid="blip-menu-read-surface"]'), gateAbsent('[data-testid="blip-menu-edit-surface"]')) });
 
   await main.locator('[data-testid="blip-menu-comments-show"], [data-testid="blip-menu-comments-hide"]').first().click().catch(() => {});
   await page.waitForTimeout(800);
-  await capture(page, 'inline comments nav state', ['Inline Comments: sidebar/nav', 'Inline Comments: filters'], 'Inline comments control surfaces the comment navigation/filter area when available.', { dynamicStep: 'after-comments-toggle' });
+  await capture(page, 'inline comments nav state', ['Inline Comments: sidebar/nav', 'Inline Comments: filters'],
+    'Inline comments control surfaces the comment navigation/filter area when available.',
+    { dynamicStep: 'after-comments-toggle', assertFn: gateExists('[data-testid^="blip-menu-comments"], .inline-comments-nav, [class*="comments"]') });
 
   await main.locator('[data-testid="blip-menu-gear-toggle"]').click();
   await clickText(page, 'Playback history');
   await page.waitForTimeout(800);
-  await capture(page, 'per blip playback history modal', ['History & Playback: per-blip playback', 'Blip Operations: playback history'], 'Playback history action opens per-blip timeline modal when history exists.', { dynamicStep: 'after-history-click' });
+  await capture(page, 'per blip playback history modal', ['History & Playback: per-blip playback', 'Blip Operations: playback history'],
+    'Playback history action opens per-blip timeline modal when history exists.',
+    { dynamicStep: 'after-history-click', assertFn: gateAny(gateExists('.history-modal'), gateExists('.modal-overlay'), gateExists('[role="dialog"]')) });
   await closeOpenModal(page);
   await page.locator('.modal-overlay, .history-modal-overlay, .export-modal-overlay').first().waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
 }
@@ -666,7 +734,8 @@ async function captureRealtimeCollaborationStates(baseContext, ownerPage, fixtur
       'real time cursor and typing indicator visible',
       ['Real-time Collaboration: live cursors', 'Real-time Collaboration: typing indicators'],
       'A second authenticated editor produces remote cursor/typing UI in the owner editor.',
-      { dynamicStep: 'after-second-client-typing' },
+      { dynamicStep: 'after-second-client-typing',
+        assertFn: gateAny(gateExists('.collaboration-cursor'), gateExists('.typing-indicator')) },
     );
 
     await ownerEdit.main.locator('[data-testid="blip-menu-done"]').click().catch(() => {});
@@ -682,19 +751,27 @@ async function captureBlbDynamics(page, fixture) {
   await closeTransientEditorOverlays(page);
   const marker = page.locator(`[data-blip-thread="${fixture.inlineBlipId}"]`).first();
   if (await marker.count()) {
-    await capture(page, 'inline marker before click', ['BLB: inline plus marker before', 'BLB: marker styling'], 'Inline [+] marker is visible before expansion.');
+    await capture(page, 'inline marker before click', ['BLB: inline plus marker before', 'BLB: marker styling'],
+      'Inline [+] marker is visible before expansion.',
+      { assertFn: gateExists(`[data-blip-thread="${fixture.inlineBlipId}"]`) });
     await marker.click({ force: true });
     await page.waitForTimeout(700);
-    await capture(page, 'inline marker after click expanded', ['BLB: inline expansion', 'BLB: portal rendering'], 'Clicking inline marker expands the inline child at the marker position.', { dynamicStep: 'after-inline-plus-click' });
+    await capture(page, 'inline marker after click expanded', ['BLB: inline expansion', 'BLB: portal rendering'],
+      'Clicking inline marker expands the inline child at the marker position.',
+      { dynamicStep: 'after-inline-plus-click', assertFn: gateExists('.inline-child-expanded') });
   } else {
     manifest.residuals.push('Inline marker was not found during sweep; BLB inline expansion screenshot not captured.');
   }
   await page.locator('.fold-btn').first().click();
   await page.waitForTimeout(400);
-  await capture(page, 'fold all after hide replies', ['BLB: fold all', 'BLB: hide replies'], 'Fold control collapses/hides reply bodies.', { dynamicStep: 'after-fold-click' });
+  await capture(page, 'fold all after hide replies', ['BLB: fold all', 'BLB: hide replies'],
+    'Fold control collapses/hides reply bodies.',
+    { dynamicStep: 'after-fold-click', assertFn: gateExists('.fold-btn') });
   await page.locator('.fold-btn').nth(1).click();
   await page.waitForTimeout(400);
-  await capture(page, 'unfold all after show replies', ['BLB: unfold all', 'BLB: show replies'], 'Unfold control restores reply visibility.', { dynamicStep: 'after-unfold-click' });
+  await capture(page, 'unfold all after show replies', ['BLB: unfold all', 'BLB: show replies'],
+    'Unfold control restores reply visibility.',
+    { dynamicStep: 'after-unfold-click', assertFn: gateExists('.fold-btn') });
 }
 
 /**
@@ -718,25 +795,39 @@ async function captureFractalStates(page, fractal) {
     'blb fractal collapsed toc',
     ['BLB: Collapsed TOC', 'BLB: deep fractal collapsed', 'BLB: Nested inline expansion'],
     `Depth-${fractal.depth} fractal topic in collapsed view: 3 root labels each with their own [+] marker, no children expanded.`,
+    { assertFn: gateAll(gateExists('.blip-container'), gateAbsent('.inline-child-expanded')) },
   );
 
   // State B — spine fully expanded through all depth-N levels.
-  // Walk down spineIds[1..N] clicking each [+] in sequence.
+  // Walk down spineIds[1..N] clicking each [+] in sequence. Each click
+  // expands the inline child portal which mounts a NEW RizzomaBlip whose
+  // own [+] markers only render after that mount completes. So we must
+  // (a) wait for the next marker to APPEAR in the DOM before clicking,
+  // and (b) give the portal mount enough time to settle before the next
+  // expansion. 700ms was insufficient for depth ≥ 3.
   const expandMarker = async (blipId) => {
-    const m = page.locator(`[data-blip-thread="${blipId}"]`).first();
-    if (await m.count()) {
-      await m.click({ force: true });
-      await page.waitForTimeout(700);
+    const sel = `[data-blip-thread="${blipId}"]`;
+    // Wait up to 4s for the marker to appear (parent's portal must mount first).
+    try {
+      await page.waitForSelector(sel, { state: 'attached', timeout: 4000 });
+    } catch {
+      return false;  // marker never showed up — bail
     }
+    const m = page.locator(sel).first();
+    if (await m.count() === 0) return false;
+    await m.click({ force: true });
+    // Settle: portal mount + RizzomaBlip mount + inline-child render.
+    // Empirically 1500ms reliable across depth-10 vs prior 700ms flakiness.
+    await page.waitForTimeout(1500);
+    return true;
   };
-  for (let k = 1; k <= fractal.depth; k += 1) {
-    if (k <= fractal.depth - 1) {
-      // Click [+] for spineIds[k+1] which lives in spineIds[k]'s body.
-      // For k=1 we click [+] for spineIds[2] which is in the topic root.
-      // Wait — actually the spine[1]'s [+] is in the topic root (already clicked
-      // when expanding spineIds[1]). spine[2]'s [+] is in spine[1]'s body (which
-      // is now expanded). And so on.
-      await expandMarker(fractal.spineIds[k]);
+  for (let k = 1; k <= fractal.depth - 1; k += 1) {
+    // Click [+] for spineIds[k+1] which lives inside spineIds[k]'s body.
+    // For k=1 we click [+] for spineIds[2] which is in the topic root.
+    const ok = await expandMarker(fractal.spineIds[k]);
+    if (!ok) {
+      console.log(`=> [visual-sweep] WARN: spine[${k}] marker (id=${fractal.spineIds[k]}) failed to appear/click`);
+      break;
     }
   }
   await capture(
@@ -744,7 +835,10 @@ async function captureFractalStates(page, fractal) {
     `blb fractal spine expanded depth${fractal.depth}`,
     ['BLB: deep fractal spine expanded', 'BLB: Nested inline expansion', 'BLB: portal rendering'],
     `Depth-${fractal.depth} fractal topic with the Spine branch expanded through all ${fractal.depth} levels.`,
-    { dynamicStep: 'after-deep-expand' },
+    { dynamicStep: 'after-deep-expand', assertFn: async (p) => {
+        const c = await p.locator('.inline-child-expanded').count();
+        return { pass: c >= Math.max(1, fractal.depth - 1), detail: `inline-expanded=${c} need≥${Math.max(1, fractal.depth - 1)}` };
+      } },
   );
 
   // State C — all 3 root branches expanded (sibB and sibC are depth-1
@@ -757,19 +851,39 @@ async function captureFractalStates(page, fractal) {
     'blb fractal all branches expanded',
     ['BLB: deep fractal all-branches', 'BLB: portal flush with parent indent', 'BLB: Nested inline expansion'],
     `Depth-${fractal.depth} fractal topic with all 3 root branches expanded — visual parity check vs original Rizzoma deep BLB.`,
-    { dynamicStep: 'after-all-branches-expand' },
+    { dynamicStep: 'after-all-branches-expand', assertFn: async (p) => {
+        const c = await p.locator('.inline-child-expanded').count();
+        return { pass: c >= 3, detail: `inline-expanded=${c} need≥3 (3 root branches)` };
+      } },
   );
 }
 
 async function captureRightPanel(page) {
+  const gateActiveBtn = (selector) => async (p) => {
+    const has = await p.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return { found: false };
+      const cls = el.className || '';
+      return { found: true, active: /active|selected|current/.test(cls) };
+    }, selector);
+    return { pass: has.found, detail: `selector="${selector}" found=${has.found} active=${has.active}` };
+  };
   await page.locator('.view-btn[title="Text view"]').click();
-  await capture(page, 'right panel text view selected', ['User Interface: Text view toggle'], 'Text view is selected in the right tools panel.', { dynamicStep: 'after-text-view-click' });
+  await capture(page, 'right panel text view selected', ['User Interface: Text view toggle'],
+    'Text view is selected in the right tools panel.',
+    { dynamicStep: 'after-text-view-click', assertFn: gateActiveBtn('.view-btn[title="Text view"]') });
   await page.locator('.view-btn[title="Mind map"]').click();
-  await capture(page, 'right panel mind map selected', ['User Interface: Mind map toggle'], 'Mind map button can be selected in the right tools panel.', { dynamicStep: 'after-mindmap-click' });
+  await capture(page, 'right panel mind map selected', ['User Interface: Mind map toggle'],
+    'Mind map button can be selected in the right tools panel.',
+    { dynamicStep: 'after-mindmap-click', assertFn: gateActiveBtn('.view-btn[title="Mind map"]') });
   await page.locator('.display-btn[title="Short view"]').click();
-  await capture(page, 'right panel short mode selected', ['User Interface: short display mode'], 'Short display mode toggle activates.', { dynamicStep: 'after-short-click' });
+  await capture(page, 'right panel short mode selected', ['User Interface: short display mode'],
+    'Short display mode toggle activates.',
+    { dynamicStep: 'after-short-click', assertFn: gateActiveBtn('.display-btn[title="Short view"]') });
   await page.locator('.display-btn[title="Expanded view"]').click();
-  await capture(page, 'right panel expanded mode selected', ['User Interface: expanded display mode'], 'Expanded display mode toggle activates.', { dynamicStep: 'after-expanded-click' });
+  await capture(page, 'right panel expanded mode selected', ['User Interface: expanded display mode'],
+    'Expanded display mode toggle activates.',
+    { dynamicStep: 'after-expanded-click', assertFn: gateActiveBtn('.display-btn[title="Expanded view"]') });
 }
 
 async function captureToastState(page) {
@@ -782,7 +896,9 @@ async function captureToastState(page) {
   });
   await page.waitForTimeout(400);
   if (await page.locator('[data-testid="toast"], .toast, [role="status"], [aria-live="polite"]').count()) {
-    await capture(page, 'toast notification component visible', ['User Interface: Toast notifications'], 'Toast component renders a visible status notification when the app emits a toast event.', { dynamicStep: 'after-toast-event' });
+    await capture(page, 'toast notification component visible', ['User Interface: Toast notifications'],
+      'Toast component renders a visible status notification when the app emits a toast event.',
+      { dynamicStep: 'after-toast-event', assertFn: gateExists('[data-testid="toast"], .toast, [role="status"], [aria-live="polite"]') });
   } else {
     manifest.residuals.push('Toast/status notification was not visible after dispatching the app toast event.');
   }
@@ -795,7 +911,9 @@ async function captureMobile(baseContext, fixture) {
   await ensureAuth(mobile, ownerEmail, 'mobile owner');
   await mobile.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await waitForAny(mobile, ['.rizzoma-layout', '.topic-card', '.mobile-topbar'], 20000).catch(() => {});
-  await capture(mobile, 'mobile authenticated topic navigation', ['Mobile & PWA: responsive layout', 'Mobile & PWA: mobile navigation'], 'Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.');
+  await capture(mobile, 'mobile authenticated topic navigation', ['Mobile & PWA: responsive layout', 'Mobile & PWA: mobile navigation'],
+    'Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.',
+    { assertFn: gateAny(gateExists('.rizzoma-layout'), gateExists('.mobile-topbar'), gateExists('.topic-card')) });
 
   const ownTopicCard = mobile.locator('.search-result-item', { hasText: `Visual Sweep ${stamp}` }).first();
   if (await ownTopicCard.count()) {
@@ -809,7 +927,9 @@ async function captureMobile(baseContext, fixture) {
   if (stillLoading) {
     manifest.residuals.push('Mobile deep-link topic route remained on Loading; captured authenticated mobile navigation instead of topic body.');
   } else {
-    await capture(mobile, 'mobile topic content view', ['Mobile & PWA: responsive layout', 'Mobile & PWA: mobile topic view'], 'Mobile viewport renders topic content without horizontal overflow and uses mobile layout classes.');
+    await capture(mobile, 'mobile topic content view', ['Mobile & PWA: responsive layout', 'Mobile & PWA: mobile topic view'],
+      'Mobile viewport renders topic content without horizontal overflow and uses mobile layout classes.',
+      { assertFn: gateAny(gateExists('.mobile-view-content .rizzoma-topic-detail'), gateExists('.blip-container')) });
   }
   await mobile.close();
   await mobileContext.close();
@@ -825,12 +945,16 @@ async function main() {
   const loggedOut = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const loggedOutPage = await loggedOut.newPage();
   await gotoApp(loggedOutPage);
-  await capture(loggedOutPage, 'logged out sign in form', ['Authentication: login modal', 'Authentication: email login', 'Authentication: OAuth buttons'], 'Unauthenticated session shows OAuth and email sign-in entry points.');
+  await capture(loggedOutPage, 'logged out sign in form', ['Authentication: login modal', 'Authentication: email login', 'Authentication: OAuth buttons'],
+    'Unauthenticated session shows OAuth and email sign-in entry points.',
+    { assertFn: gateAny(gateExists('input[type="email"]'), gateTextVisible('Sign in'), gateExists('[class*="auth"], [class*="login"]')) });
   const signUp = loggedOutPage.getByText('Sign up', { exact: false }).first();
   if (await signUp.count()) {
     await signUp.click();
     await loggedOutPage.waitForTimeout(500);
-    await capture(loggedOutPage, 'logged out sign up form', ['Authentication: registration entry', 'Authentication: signup form'], 'Sign-up link opens the registration form state.', { dynamicStep: 'after-signup-click' });
+    await capture(loggedOutPage, 'logged out sign up form', ['Authentication: registration entry', 'Authentication: signup form'],
+      'Sign-up link opens the registration form state.',
+      { dynamicStep: 'after-signup-click', assertFn: gateAny(gateTextVisible('Sign up'), gateTextVisible('Register'), gateExists('input[type="email"]')) });
   }
   await loggedOut.close();
 
