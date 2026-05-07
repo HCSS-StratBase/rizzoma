@@ -821,12 +821,27 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   // can do `await window.__rizzomaTopicReload()` instead of dispatching
   // refresh-topics + sleeping 600ms blindly. Saves ~350ms on Ctrl+Enter at
   // depth 1 (load completes in 90-250ms vs 600ms timer).
+  //
+  // Bug A optimistic-mount (2026-05-07 follow-up): also expose
+  // __rizzomaTopicAddBlip so child Ctrl+Enter handlers can inject the
+  // freshly-POSTed blip directly into the blips list without waiting for
+  // the reload round-trip. The reload still runs in the background to
+  // reconcile any server-side fields the optimistic blip didn't include.
   useEffect(() => {
-    (window as unknown as { __rizzomaTopicReload?: () => Promise<void> }).__rizzomaTopicReload =
-      () => load(true);
+    const w = window as unknown as {
+      __rizzomaTopicReload?: () => Promise<void>;
+      __rizzomaTopicAddBlip?: (blip: BlipData) => void;
+    };
+    w.__rizzomaTopicReload = () => load(true);
+    w.__rizzomaTopicAddBlip = (blip: BlipData) => {
+      setBlips((prev) => {
+        if (prev.some((b) => b.id === blip.id)) return prev;
+        return [...prev, blip];
+      });
+    };
     return () => {
-      const w = window as unknown as { __rizzomaTopicReload?: () => Promise<void> };
       if (w.__rizzomaTopicReload) delete w.__rizzomaTopicReload;
+      if (w.__rizzomaTopicAddBlip) delete w.__rizzomaTopicAddBlip;
     };
   }, [load]);
 

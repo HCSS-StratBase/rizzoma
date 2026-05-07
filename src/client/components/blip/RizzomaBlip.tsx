@@ -704,19 +704,34 @@ export function RizzomaBlip({
         // RizzomaTopicDetail's create handler uses. The toggle listener at
         // RizzomaBlip.tsx:798 claims via parentId === blip.id and expands.
         if (newBlipId) {
-          // Bug A perf fix (2026-05-07): await the topic reload directly
-          // instead of dispatching refresh-topics + sleeping 600ms. The
-          // topic-level component exposes `__rizzomaTopicReload` for exactly
-          // this purpose — load() actually finishes in 90-250ms, so the
-          // 600ms timer was pure idle. Falls back to dispatch+250ms wait if
-          // the helper isn't mounted (e.g. standalone blip view).
-          const reload = (window as unknown as { __rizzomaTopicReload?: () => Promise<void> })
-            .__rizzomaTopicReload;
-          if (typeof reload === 'function') {
-            await reload();
+          // Bug A optimistic local mount (2026-05-07 follow-up): the POST
+          // response already returned the full blip shape. Inject it
+          // directly into the topic's blips list via the exposed helper —
+          // skip the 90-250ms reload round-trip entirely. The reload still
+          // runs in the background as reconciliation but doesn't gate
+          // anything visible.
+          //
+          // Net latency: from ~430ms (post-fix) to ~150ms (just the
+          // POST round-trip + 2 RAFs). Closer to original-Rizzoma feel.
+          const w = window as unknown as {
+            __rizzomaTopicAddBlip?: (b: BlipData) => void;
+            __rizzomaTopicReload?: () => Promise<void>;
+          };
+          if (typeof w.__rizzomaTopicAddBlip === 'function') {
+            w.__rizzomaTopicAddBlip(newBlip as BlipData);
+            // Background reconcile — fire-and-forget, no await.
+            if (typeof w.__rizzomaTopicReload === 'function') {
+              w.__rizzomaTopicReload().catch(() => {});
+            }
           } else {
-            window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
-            await new Promise((r) => setTimeout(r, 250));
+            // Fallback path for environments without the topic-level helper
+            // (standalone blip view, tests). Same as the previous fix.
+            if (typeof w.__rizzomaTopicReload === 'function') {
+              await w.__rizzomaTopicReload();
+            } else {
+              window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+              await new Promise((r) => setTimeout(r, 250));
+            }
           }
           window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
             detail: { threadId: newBlipId, parentId: blip.id },

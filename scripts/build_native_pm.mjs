@@ -528,42 +528,58 @@ const featureStatusForItem = (sectionName, item) => {
   const itemTokens = new Set(tokenize(item.name));
   if (itemTokens.size === 0) return { status: 'uncovered', captures: [] };
 
-  // Find captures whose section matches AND whose featureRef name shares
-  // ≥1 meaningful token with the item name.
-  const matched = [];
+  // Score every (capture, ref) pair by Jaccard token overlap with the item
+  // name. Only the BEST-matching capture (highest score) decides PASS/FAIL —
+  // this prevents one FAIL capture from spilling onto every section-mate via
+  // shared low-confidence tokens. Lower-scored captures count as "covered"
+  // evidence but don't change the gate verdict.
+  let bestCap = null;
+  let bestScore = 0;
+  const allMatched = [];
+  const seenCap = new Set();
   for (const k of trySections) {
     const sectionCaps = captureByFeatureSection.get(k) || [];
     for (const cap of sectionCaps) {
+      let capBest = 0;
       for (const ref of (cap.featureRefs || [])) {
         const refStr = String(ref);
         const colonIdx = refStr.indexOf(':');
         const refSection = colonIdx >= 0 ? refStr.slice(0, colonIdx).trim().toLowerCase() : '';
         if (refSection !== k) continue;
         const refName = colonIdx >= 0 ? refStr.slice(colonIdx + 1).trim() : refStr;
-        const refTokens = tokenize(refName);
-        // Require at least one token overlap.
-        if (refTokens.some((t) => itemTokens.has(t))) {
-          matched.push(cap);
-          break;
+        const refTokens = new Set(tokenize(refName));
+        if (refTokens.size === 0) continue;
+        // Jaccard: |intersection| / |union|. Range 0..1. 0 means no overlap.
+        let inter = 0;
+        for (const t of refTokens) if (itemTokens.has(t)) inter++;
+        if (inter === 0) continue;
+        const union = refTokens.size + itemTokens.size - inter;
+        const j = inter / union;
+        if (j > capBest) capBest = j;
+      }
+      if (capBest > 0) {
+        const key = cap.file || cap.label || JSON.stringify(cap).slice(0, 40);
+        if (!seenCap.has(key)) {
+          seenCap.add(key);
+          allMatched.push(cap);
         }
+        if (capBest > bestScore) { bestScore = capBest; bestCap = cap; }
       }
     }
   }
-  // De-duplicate.
-  const seen = new Set();
-  const captures = matched.filter((c) => {
-    const key = c.file || c.label || JSON.stringify(c).slice(0, 40);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 
-  if (captures.length === 0) return { status: 'uncovered', captures: [] };
-  const fails = captures.filter((c) => c.gatePass === false);
-  const passes = captures.filter((c) => c.gatePass === true);
-  if (fails.length > 0) return { status: 'fail', captures };
-  if (passes.length > 0) return { status: 'pass', captures };
-  return { status: 'covered-no-gate', captures };
+  if (allMatched.length === 0) return { status: 'uncovered', captures: [] };
+  // STRONG match required for PASS/FAIL claim: Jaccard ≥ 0.5 OR exact-name
+  // (the item name lowercased equals the refName lowercased — which yields
+  // Jaccard 1.0 anyway). Below 0.5 → keep covered status only, no claim.
+  const STRONG_MATCH = 0.5;
+  if (bestCap && bestScore >= STRONG_MATCH) {
+    if (bestCap.gatePass === false) return { status: 'fail', captures: [bestCap, ...allMatched.filter((c) => c !== bestCap)] };
+    if (bestCap.gatePass === true) return { status: 'pass', captures: [bestCap, ...allMatched.filter((c) => c !== bestCap)] };
+  }
+  // Loose token overlap only — feature is "in the neighborhood" of these
+  // captures but no specific gate verdict applies.
+  return { status: 'covered-no-gate', captures: allMatched };
 };
 
 // Per-category statuses + grand totals (single pass — featureStatusForItem
