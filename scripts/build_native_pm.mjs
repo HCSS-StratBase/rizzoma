@@ -483,44 +483,87 @@ const featureStatusForItem = (sectionName, item) => {
   return { status: 'covered-no-gate', captures };
 };
 
-const featureMatrixHtml = (() => {
-  if (!featureMatrix.sections.length) return '';
-  const blocks = [];
-  for (const section of featureMatrix.sections) {
-    const itemsHtml = section.items.map((item) => {
-      const fs = featureStatusForItem(section.name, item);
-      const badge = fs.status === 'pass' ? '<span style="color:var(--green);font-weight:700">✓</span>'
-                  : fs.status === 'fail' ? '<span style="color:var(--red);font-weight:700">✗</span>'
-                  : fs.status === 'covered-no-gate' ? '<span style="color:var(--amber);font-weight:700">·</span>'
-                  : '<span style="color:var(--gray)">○</span>';
-      return '<li class="deliv">' +
-        '<span class="deliv-check ' + (fs.status === 'pass' ? 'done' : fs.status === 'fail' ? 'failed' : '') + '">' + badge + '</span>' +
-        '<span class="deliv-label">' + escapeHtml(item.name) + ' <span style="color:var(--lb);font-weight:400">— ' + escapeHtml(item.description.slice(0, 120)) + '</span></span>' +
-      '</li>';
-    }).join('');
-    const totalIn = section.items.length;
-    const passIn = section.items.filter((it) => featureStatusForItem(section.name, it).status === 'pass').length;
-    const failIn = section.items.filter((it) => featureStatusForItem(section.name, it).status === 'fail').length;
-    const noGateIn = section.items.filter((it) => featureStatusForItem(section.name, it).status === 'covered-no-gate').length;
-    const uncoveredIn = totalIn - passIn - failIn - noGateIn;
-    blocks.push(
-      '<article class="phase-card">' +
-        '<div class="phase-header">' +
-          '<div><div class="phase-num">CATEGORY · ' + totalIn + ' features</div>' +
-          '<h3 class="phase-title">' + escapeHtml(section.name) + '</h3></div>' +
-          '<span style="font-size:0.85rem">' +
-            '<span style="color:var(--green)">✓ ' + passIn + '</span> · ' +
-            '<span style="color:var(--red)">✗ ' + failIn + '</span> · ' +
-            '<span style="color:var(--amber)">· ' + noGateIn + '</span> · ' +
-            '<span style="color:var(--gray)">○ ' + uncoveredIn + '</span>' +
-          '</span>' +
-        '</div>' +
-        '<ul class="deliv-list">' + itemsHtml + '</ul>' +
-      '</article>'
-    );
-  }
-  return blocks.join('');
+// Per-category statuses + grand totals (single pass — featureStatusForItem
+// is pure, but call it once and cache).
+const sectionStats = featureMatrix.sections.map((section) => {
+  const items = section.items.map((item) => ({ item, fs: featureStatusForItem(section.name, item) }));
+  const total = items.length;
+  const pass = items.filter((x) => x.fs.status === 'pass').length;
+  const fail = items.filter((x) => x.fs.status === 'fail').length;
+  const noGate = items.filter((x) => x.fs.status === 'covered-no-gate').length;
+  const uncov = total - pass - fail - noGate;
+  // Coverage % = (pass + noGate * 0.5) / total — half-credit for capture-no-gate.
+  // Sort priority: descending by (pass+nogate) ratio, then by (-fail) penalty.
+  const score = total === 0 ? -1 : (pass + noGate * 0.5 - fail * 0.25) / total;
+  return { section, items, total, pass, fail, noGate, uncov, score };
+}).filter((s) => s.total > 0);
+
+// Grand totals
+const G = sectionStats.reduce((acc, s) => {
+  acc.pass += s.pass; acc.fail += s.fail; acc.noGate += s.noGate; acc.uncov += s.uncov; acc.total += s.total;
+  return acc;
+}, { pass: 0, fail: 0, noGate: 0, uncov: 0, total: 0 });
+const coveragePct = G.total === 0 ? 0 : Math.round((G.pass + G.noGate * 0.5) / G.total * 100);
+
+// Sort sections: highest score first (best coverage at top)
+sectionStats.sort((a, b) => b.score - a.score);
+
+// Render the OVERALL stacked bar at the top
+const overallBar = (() => {
+  const seg = (n, color) => n === 0 ? '' :
+    `<span style="display:inline-block;height:14px;background:${color};width:${(n / G.total * 100).toFixed(2)}%" title="${n} features"></span>`;
+  return `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem">
+      <strong style="font-size:1.05rem">Overall coverage</strong>
+      <span style="font-size:1.25rem;font-weight:800;color:${coveragePct >= 50 ? 'var(--green)' : coveragePct >= 25 ? 'var(--amber)' : 'var(--red)'}">${coveragePct}%</span>
+    </div>
+    <div style="display:flex;width:100%;background:rgba(255,255,255,0.04);border-radius:4px;overflow:hidden;margin-bottom:0.6rem">
+      ${seg(G.pass, 'var(--green)')}${seg(G.noGate, 'var(--amber)')}${seg(G.fail, 'var(--red)')}${seg(G.uncov, 'rgba(255,255,255,0.08)')}
+    </div>
+    <div style="display:flex;gap:1.25rem;font-size:0.85rem;color:var(--lb);flex-wrap:wrap">
+      <span><span style="color:var(--green);font-weight:700">●</span> ${G.pass} verified PASS</span>
+      <span><span style="color:var(--red);font-weight:700">●</span> ${G.fail} verified FAIL</span>
+      <span><span style="color:var(--amber);font-weight:700">●</span> ${G.noGate} captured (no gate)</span>
+      <span><span style="color:var(--gray)">●</span> ${G.uncov} not yet covered</span>
+      <span style="margin-left:auto"><strong>${G.total}</strong> features in ${sectionStats.length} categories</strong></span>
+    </div>
+  </div>`;
 })();
+
+// Each category renders as a compact horizontal strip:
+//   [title ........................] [▮▮▮▮▮▮▮▮ squares ▮▮▮▮▮▮▮] [counts]  (clickable → expand item details)
+const featureMatrixHtml = overallBar + sectionStats.map((s, idx) => {
+  const squares = s.items.map((x) => {
+    const color = x.fs.status === 'pass' ? 'var(--green)'
+                : x.fs.status === 'fail' ? 'var(--red)'
+                : x.fs.status === 'covered-no-gate' ? 'var(--amber)'
+                : 'rgba(255,255,255,0.10)';
+    const sym = x.fs.status === 'pass' ? '✓' : x.fs.status === 'fail' ? '✗' : x.fs.status === 'covered-no-gate' ? '·' : '○';
+    const tip = `${x.item.name} · ${x.fs.status.toUpperCase()}${x.fs.captures && x.fs.captures.length ? ' · ' + x.fs.captures.length + ' capture(s)' : ''}`;
+    return `<span class="cov-cell cov-${x.fs.status}" title="${escapeHtml(tip)}" style="background:${color}"></span>`;
+  }).join('');
+  const pct = s.total === 0 ? 0 : Math.round((s.pass + s.noGate * 0.5) / s.total * 100);
+  const detailItems = s.items.map((x) => {
+    const sym = x.fs.status === 'pass' ? '✓' : x.fs.status === 'fail' ? '✗' : x.fs.status === 'covered-no-gate' ? '·' : '○';
+    const cls = x.fs.status === 'pass' ? 'done' : x.fs.status === 'fail' ? 'failed' : '';
+    return `<li class="deliv"><span class="deliv-check ${cls}">${sym}</span><span class="deliv-label">${escapeHtml(x.item.name)} <span style="color:var(--lb);font-weight:400">— ${escapeHtml(x.item.description.slice(0, 120))}</span></span></li>`;
+  }).join('');
+  const headerColor = pct >= 75 ? 'var(--green)' : pct >= 33 ? 'var(--amber)' : pct === 0 ? 'var(--gray)' : 'var(--red)';
+  return `<details class="cov-cat" ${s.fail > 0 ? 'open' : ''}>
+    <summary class="cov-summary">
+      <span class="cov-cat-title">${escapeHtml(s.section.name)}</span>
+      <span class="cov-strip">${squares}</span>
+      <span class="cov-counts">
+        ${s.pass > 0 ? `<span style="color:var(--green);font-weight:700">${s.pass}✓</span>` : ''}
+        ${s.fail > 0 ? `<span style="color:var(--red);font-weight:700">${s.fail}✗</span>` : ''}
+        ${s.noGate > 0 ? `<span style="color:var(--amber);font-weight:700">${s.noGate}·</span>` : ''}
+        ${s.uncov > 0 ? `<span style="color:var(--gray)">${s.uncov}○</span>` : ''}
+      </span>
+      <span class="cov-pct" style="color:${headerColor}">${pct}%</span>
+    </summary>
+    <ul class="deliv-list cov-detail">${detailItems}</ul>
+  </details>`;
+}).join('');
 
 // ─── Pre-compute sweep panel HTML to avoid nested template literals ───
 const arrow = (n) => n > 0 ? '<span style="color:var(--green)">+' + n + '</span>'
@@ -639,6 +682,45 @@ const html = `<!doctype html>
     transition: border-color 0.2s;
   }
   .phase-card:hover { border-color: rgba(219,173,80,0.35); }
+
+  /* Compact coverage strips for the feature matrix */
+  .cov-cat {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+    margin-bottom: 6px; transition: border-color 0.2s;
+    overflow: hidden;
+  }
+  .cov-cat:hover { border-color: rgba(219,173,80,0.30); }
+  .cov-cat[open] { border-color: rgba(219,173,80,0.45); }
+  .cov-summary {
+    display: grid;
+    grid-template-columns: minmax(180px, 22%) 1fr minmax(120px, auto) 56px;
+    align-items: center; gap: 14px;
+    padding: 10px 14px;
+    cursor: pointer; user-select: none;
+    list-style: none;
+  }
+  .cov-summary::-webkit-details-marker { display: none; }
+  .cov-summary::marker { display: none; content: ''; }
+  .cov-cat-title { font-weight: 600; font-size: 0.95rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cov-strip { display: flex; gap: 2px; align-items: center; flex-wrap: nowrap; min-width: 0; }
+  .cov-cell {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.2);
+    flex-shrink: 0;
+    transition: transform 0.1s;
+  }
+  .cov-cell:hover { transform: scale(1.4); border-color: var(--gold); z-index: 2; position: relative; }
+  .cov-cell.cov-uncovered { border-color: rgba(255,255,255,0.18); }
+  .cov-counts { display: flex; gap: 8px; font-size: 0.85rem; font-variant-numeric: tabular-nums; justify-content: flex-end; }
+  .cov-pct { font-weight: 800; font-size: 1rem; text-align: right; font-variant-numeric: tabular-nums; }
+  .cov-detail { padding: 6px 14px 14px 14px; border-top: 1px solid var(--border); margin-top: 4px; }
+  .cov-cat[open] .cov-summary { border-bottom: 1px dashed var(--border); }
+  @media (max-width: 800px) {
+    .cov-summary { grid-template-columns: 1fr auto; }
+    .cov-strip { grid-column: 1 / -1; }
+  }
   .phase-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
   .phase-num { color: var(--gold); font-weight: 800; font-size: 0.85rem; letter-spacing: 0.5px; }
   .phase-title { font-size: 1.15rem; font-weight: 700; }
@@ -830,13 +912,13 @@ const html = `<!doctype html>
 </section>
 
 <section>
-  <h2>📊 Full feature coverage matrix · ${featureMatrix.totalRows} features across ${featureMatrix.sections.length} categories</h2>
-  <div style="font-size:0.9rem;color:var(--lb);margin-bottom:0.75rem">
-    Status legend:
-    <span style="color:var(--green);font-weight:700">✓</span> sweep gate PASSES ·
-    <span style="color:var(--red);font-weight:700">✗</span> sweep gate FAILS ·
-    <span style="color:var(--amber);font-weight:700">·</span> capture exists but no programmatic gate ·
-    <span style="color:var(--gray)">○</span> uncovered (no sweep capture references this feature)
+  <h2>📊 Feature coverage</h2>
+  <div style="font-size:0.85rem;color:var(--lb);margin-bottom:0.75rem">
+    Each row is a category. Each square is a feature — hover for name + status, click row to expand details. Categories sorted by coverage (best first).
+    <span style="margin-left:1rem"><span style="display:inline-block;width:10px;height:10px;background:var(--green);border-radius:2px;vertical-align:middle"></span> PASS</span>
+    <span style="margin-left:0.6rem"><span style="display:inline-block;width:10px;height:10px;background:var(--red);border-radius:2px;vertical-align:middle"></span> FAIL</span>
+    <span style="margin-left:0.6rem"><span style="display:inline-block;width:10px;height:10px;background:var(--amber);border-radius:2px;vertical-align:middle"></span> captured (no gate)</span>
+    <span style="margin-left:0.6rem"><span style="display:inline-block;width:10px;height:10px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);border-radius:2px;vertical-align:middle"></span> uncovered</span>
   </div>
   ${featureMatrixHtml}
 </section>
