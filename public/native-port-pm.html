@@ -206,6 +206,30 @@
   }
   .refresh-toggle.on { color: var(--green); border-color: rgba(76,175,131,0.4); }
   @media (max-width: 720px) { .grid-overall { grid-template-columns: 1fr 1fr; } }
+
+  /* Tabs */
+  .tab-nav {
+    display: flex; gap: 4px; margin: 0 0 1.5rem 0;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg); z-index: 10;
+    padding-top: 0.5rem;
+  }
+  .tab-btn {
+    background: transparent; border: none; color: var(--lb);
+    padding: 12px 20px; cursor: pointer; font-size: 0.95rem; font-weight: 600;
+    border-bottom: 3px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    border-radius: 6px 6px 0 0;
+  }
+  .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .tab-btn.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    background: rgba(219,173,80,0.06);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  /* Hide footer-only sticky behaviour so it sits naturally */
 </style>
 </head>
 <body>
@@ -219,10 +243,18 @@
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/NATIVE_RENDER_PORT_PLAN.md">Plan</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md">Why</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/issues/50">Epic #50</a>
-    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-07 00:02:44 UTC</span>
+    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-07 00:22:00 UTC</span>
     &nbsp;·&nbsp; <span id="refresh-status">auto-refresh ON</span>
   </p>
 </header>
+
+<nav class="tab-nav">
+  <button class="tab-btn" data-tab="live">● Live activity</button>
+  <button class="tab-btn" data-tab="phases">🚀 Dev Phases</button>
+  <button class="tab-btn" data-tab="sweep">🛡 Feature sweep</button>
+</nav>
+
+<div class="tab-panel" data-tab="phases">
 
 <section>
   <h2>🎯 Overall</h2>
@@ -230,13 +262,17 @@
     <div class="stat-card"><div class="stat-num">92%</div><div class="stat-lbl">Complete</div></div>
     <div class="stat-card"><div class="stat-num">13.3<span style="font-size:1rem;color:var(--lb)"> / 14.5</span></div><div class="stat-lbl">Workdays</div></div>
     <div class="stat-card"><div class="stat-num">5<span style="font-size:1rem;color:var(--lb)"> / 6</span></div><div class="stat-lbl">Phases done</div></div>
-    <div class="stat-card"><div class="stat-num">58</div><div class="stat-lbl">Commits on port branch</div></div>
+    <div class="stat-card"><div class="stat-num">59</div><div class="stat-lbl">Commits on port branch</div></div>
   </div>
   <div class="pbar-row">
     <div class="pbar-wrapper"><div class="pbar-fill" style="--target:92%"></div></div>
     <div class="pbar-pct">92%</div>
   </div>
 </section>
+
+</div><!-- /tab-phases (Overall) -->
+
+<div class="tab-panel" data-tab="live">
 
 <section>
   <h2>● Live activity</h2>
@@ -251,9 +287,13 @@
       <span class="lbl" style="color:var(--amber)">EDITED</span>
       <span>1 file(s) in last 120s</span>
     </div>
-    <div class="live-row"><span></span><span class="live-detail">scripts/build_native_pm.mjs <span style="opacity:0.6">(57s ago)</span></span></div>
+    <div class="live-row"><span></span><span class="live-detail">scripts/build_native_pm.mjs <span style="opacity:0.6">(59s ago)</span></span></div>
   </div>
 </section>
+
+</div><!-- /tab-live -->
+
+<div class="tab-panel" data-tab="sweep">
 
 <section>
   <h2>🛡 Visual sweep gate status</h2>
@@ -452,6 +492,10 @@
     <ul class="deliv-list cov-detail"><li class="deliv"><span class="deliv-check ">○</span><span class="deliv-label">Change tracking (experimental) <span style="color:var(--lb);font-weight:400">— Local hook to track unread changes per user in developer/test views.</span></span></li><li class="deliv"><span class="deliv-check ">○</span><span class="deliv-label">Green indicators <span style="color:var(--lb);font-weight:400">— Visual highlighting of new or unread content.</span></span></li><li class="deliv"><span class="deliv-check failed">✗</span><span class="deliv-label">Navigation helper <span style="color:var(--lb);font-weight:400">— &quot;Follow the Green&quot; button with unread count.</span></span></li><li class="deliv"><span class="deliv-check ">○</span><span class="deliv-label">Collapse-before-jump <span style="color:var(--lb);font-weight:400">— Previous expanded blip auto-collapses when navigating to next unread (no view clutter).</span></span></li><li class="deliv"><span class="deliv-check failed">✗</span><span class="deliv-label">Next Topic navigation <span style="color:var(--lb);font-weight:400">— Blue &quot;Next Topic ▶▶&quot; button appears when current topic fully read; jumps to next topic with unread.</span></span></li><li class="deliv"><span class="deliv-check ">○</span><span class="deliv-label">Inline expansion <span style="color:var(--lb);font-weight:400">— Next button expands collapsed inline children ([+] markers) via `rizzoma:toggle-inline-blip` event.</span></span></li><li class="deliv"><span class="deliv-check ">○</span><span class="deliv-label">Time indicators <span style="color:var(--lb);font-weight:400">— Shows when content changed.</span></span></li><li class="deliv"><span class="deliv-check ">○</span><span class="deliv-label">Persistent tracking <span style="color:var(--lb);font-weight:400">— Saves read state to localStorage or per-wave unread docs.</span></span></li><li class="deliv"><span class="deliv-check ">○</span><span class="deliv-label">Files created: <span style="color:var(--lb);font-weight:400">— </span></span></li></ul>
   </details>
 </section>
+
+</div><!-- /tab-sweep -->
+
+<div class="tab-panel" data-tab="phases">
 
 <section>
   <h2>📋 Phases</h2>
@@ -819,19 +863,24 @@
   <div class="recent-commits">
 
     <div class="commit-row">
+      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/f882051211cfd4b3ea889e39d4d09e1504936132" target="_blank" rel="noopener">f8820512</a></span>
+      <span class="commit-subject">pm(visual): redesign feature coverage as compact category strips + overall bar</span>
+      <span class="commit-when">18 minutes ago</span>
+    </div>
+    <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/9d7b7b6716cfc0d037209a3399b584e765c7a7a3" target="_blank" rel="noopener">9d7b7b67</a></span>
       <span class="commit-subject">fix(pm): feature-matrix coverage matcher — items now show real PASS/FAIL badges</span>
-      <span class="commit-when">4 minutes ago</span>
+      <span class="commit-when">23 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/d1db628be8fded66dbfd12f1c6b903318d217058" target="_blank" rel="noopener">d1db628b</a></span>
       <span class="commit-subject">sweep(260507): full visual feature sweep against dev VPS — 43/45 gates PASS</span>
-      <span class="commit-when">44 minutes ago</span>
+      <span class="commit-when">63 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/5f02c5cd1bb3b1cd5b8d717ae93cba297a66755c" target="_blank" rel="noopener">5f02c5cd</a></span>
       <span class="commit-subject">verify(blip): Bug A &amp; B PASS on live VPS dev container — 430ms / 318ms</span>
-      <span class="commit-when">56 minutes ago</span>
+      <span class="commit-when">75 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/a6079ac5c3d9aca8fb9ba453eb4999ea2c5ee54a" target="_blank" rel="noopener">a6079ac5</a></span>
@@ -846,22 +895,22 @@
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/f40b2a7bc88c8c0be722012ced18fdd3e0a9a915" target="_blank" rel="noopener">f40b2a7b</a></span>
       <span class="commit-subject">docs: NATIVE_RENDER_ARCHITECTURE — section 9 expanded with visual-feature-sweep + gate semantics</span>
-      <span class="commit-when">2 hours ago</span>
+      <span class="commit-when">3 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/d4638019831ad4e176925f3901c8c18b61d02ee8" target="_blank" rel="noopener">d4638019</a></span>
       <span class="commit-subject">visual-feature-sweep: PROGRAMMATIC gate verification (was descriptive-only)</span>
-      <span class="commit-when">2 hours ago</span>
+      <span class="commit-when">3 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/24344afdc547e84ad3c85a9ef7d2e5aa75102fbd" target="_blank" rel="noopener">24344afd</a></span>
       <span class="commit-subject">FULL VISUAL SWEEP (round 3): 10/10 depths nest, 9/10 gates pass, d2 timing-flake</span>
-      <span class="commit-when">5 hours ago</span>
+      <span class="commit-when">6 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/032886bdda22ab8e997cf9fac30239fded92b3d9" target="_blank" rel="noopener">032886bd</a></span>
       <span class="commit-subject">docs: clarify NATIVE_RENDER_ARCHITECTURE — TipTap + React stay; only the per-blip portal pattern replaced</span>
-      <span class="commit-when">8 hours ago</span>
+      <span class="commit-when">9 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/be04dba7d8e10905b0d430d797a1e8f899c5937e" target="_blank" rel="noopener">be04dba7</a></span>
@@ -886,12 +935,12 @@
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/303cafe9ffab2bf1a0480a6d6fb7127bc72ae368" target="_blank" rel="noopener">303cafe9</a></span>
       <span class="commit-subject">Revert &quot;PM HTML: dark text on light bg — high contrast for screen + print&quot;</span>
-      <span class="commit-when">9 hours ago</span>
+      <span class="commit-when">10 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/5067d099a1d0136b1f9de5802f17020b24ed2908" target="_blank" rel="noopener">5067d099</a></span>
       <span class="commit-subject">PM HTML: dark text on light bg — high contrast for screen + print</span>
-      <span class="commit-when">9 hours ago</span>
+      <span class="commit-when">10 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/584f888033022a4ba2d60c4d4b3662ddb83c2778" target="_blank" rel="noopener">584f8880</a></span>
@@ -911,11 +960,6 @@
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/ed33e131dde1bfb88935274a97ca745a4bf11c2f" target="_blank" rel="noopener">ed33e131</a></span>
       <span class="commit-subject">Phase 3 (#54): TopicAwareness — presence + cursor sharing</span>
-      <span class="commit-when">12 hours ago</span>
-    </div>
-    <div class="commit-row">
-      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/142d18f0a33660e87a757a075cedd027f3d3c4d4" target="_blank" rel="noopener">142d18f0</a></span>
-      <span class="commit-subject">Phase 3 (#54) start: yjs-binding.ts — ContentArray ↔ Y.Array&lt;Y.Map&gt; + TopicDoc</span>
       <span class="commit-when">12 hours ago</span>
     </div>
   </div>
@@ -949,6 +993,8 @@
 
 <button id="refresh-toggle" class="refresh-toggle on" type="button" title="Toggle auto-refresh">⟳ auto: on (30s)</button>
 
+</div><!-- /tab-phases (Phases + commits + calendar) -->
+
 <footer class="footer">
   Generated by <code>scripts/build_native_pm.mjs</code> · Re-runs every 30s; click ⟳ to pause.
   <br>
@@ -962,6 +1008,33 @@
     const stampEl = document.getElementById('stamp');
     const statusEl = document.getElementById('refresh-status');
     const toggle = document.getElementById('refresh-toggle');
+
+    // ─── Tab switching ───
+    // 3 tabs: live, phases, sweep. Each can have N panels (data-tab="X").
+    // Active tab persisted in localStorage. Clicking a tab also updates the
+    // URL hash so it survives refresh + can be deep-linked.
+    function activateTab(name) {
+      const valid = ['live', 'phases', 'sweep'];
+      if (!valid.includes(name)) name = 'phases';
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.tab === name);
+      });
+      document.querySelectorAll('.tab-panel').forEach((panel) => {
+        panel.classList.toggle('active', panel.dataset.tab === name);
+      });
+      try { localStorage.setItem('pmr-active-tab', name); } catch (e) {}
+      if (location.hash !== '#' + name) {
+        history.replaceState(null, '', '#' + name);
+      }
+    }
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+    });
+    // Initial activation: hash > localStorage > default 'phases'
+    const initialTab = (location.hash || '').slice(1)
+      || localStorage.getItem('pmr-active-tab')
+      || 'phases';
+    activateTab(initialTab);
 
     // Animate every pbar fill from 0 → its --target value on load.
     // Without this, the CSS leaves them at translateX(-100%) (invisible).
