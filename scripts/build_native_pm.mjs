@@ -551,38 +551,76 @@ const overallBar = (() => {
   </div>`;
 })();
 
-// Each category renders as a compact horizontal strip:
-//   [title ........................] [▮▮▮▮▮▮▮▮ squares ▮▮▮▮▮▮▮] [counts]  (clickable → expand item details)
-const featureMatrixHtml = overallBar + sectionStats.map((s, idx) => {
-  const squares = s.items.map((x) => {
-    const color = x.fs.status === 'pass' ? 'var(--green)'
-                : x.fs.status === 'fail' ? 'var(--red)'
-                : x.fs.status === 'covered-no-gate' ? 'var(--amber)'
-                : 'rgba(255,255,255,0.10)';
-    const sym = x.fs.status === 'pass' ? '✓' : x.fs.status === 'fail' ? '✗' : x.fs.status === 'covered-no-gate' ? '·' : '○';
-    const tip = `${x.item.name} · ${x.fs.status.toUpperCase()}${x.fs.captures && x.fs.captures.length ? ' · ' + x.fs.captures.length + ' capture(s)' : ''}`;
-    return `<span class="cov-cell cov-${x.fs.status}" title="${escapeHtml(tip)}" style="background:${color}"></span>`;
-  }).join('');
-  const pct = s.total === 0 ? 0 : Math.round((s.pass + s.noGate * 0.5) / s.total * 100);
-  const detailItems = s.items.map((x) => {
-    const sym = x.fs.status === 'pass' ? '✓' : x.fs.status === 'fail' ? '✗' : x.fs.status === 'covered-no-gate' ? '·' : '○';
-    const cls = x.fs.status === 'pass' ? 'done' : x.fs.status === 'fail' ? 'failed' : '';
-    return `<li class="deliv"><span class="deliv-check ${cls}">${sym}</span><span class="deliv-label">${escapeHtml(x.item.name)} <span style="color:var(--lb);font-weight:400">— ${escapeHtml(x.item.description.slice(0, 120))}</span></span></li>`;
-  }).join('');
-  const headerColor = pct >= 75 ? 'var(--green)' : pct >= 33 ? 'var(--amber)' : pct === 0 ? 'var(--gray)' : 'var(--red)';
-  return `<details class="cov-cat" ${s.fail > 0 ? 'open' : ''}>
-    <summary class="cov-summary">
-      <span class="cov-cat-title">${escapeHtml(s.section.name)}</span>
-      <span class="cov-strip">${squares}</span>
-      <span class="cov-counts">
-        ${s.pass > 0 ? `<span style="color:var(--green);font-weight:700">${s.pass}✓</span>` : ''}
-        ${s.fail > 0 ? `<span style="color:var(--red);font-weight:700">${s.fail}✗</span>` : ''}
-        ${s.noGate > 0 ? `<span style="color:var(--amber);font-weight:700">${s.noGate}·</span>` : ''}
-        ${s.uncov > 0 ? `<span style="color:var(--gray)">${s.uncov}○</span>` : ''}
-      </span>
-      <span class="cov-pct" style="color:${headerColor}">${pct}%</span>
+// Fractal accordion: Category → Feature → Capture(s).
+// L1 = category row (chevron + name + colored chip counts + % bar)
+// L2 = feature row inside an open category (chevron + name + status badge + capture count)
+// L3 = capture details inside an open feature (file thumbnail + gate detail + assertion text)
+const renderCaptureDetail = (cap) => {
+  const fileRel = cap.file || '';
+  const fileName = fileRel.split('/').pop() || fileRel;
+  const passLabel = cap.gatePass === true ? '<span style="color:var(--green);font-weight:700">PASS</span>'
+                  : cap.gatePass === false ? '<span style="color:var(--red);font-weight:700">FAIL</span>'
+                  : '<span style="color:var(--amber);font-weight:700">no gate</span>';
+  return `<div class="cap-detail">
+    <div class="cap-thumb">${fileRel ? `<a href="${escapeHtml(fileRel)}" target="_blank" rel="noopener"><img src="${escapeHtml(fileRel)}" alt="${escapeHtml(fileName)}" loading="lazy"/></a>` : '<div class="cap-thumb-empty">no screenshot</div>'}</div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>${escapeHtml(cap.label || fileName)}</strong> · ${passLabel}</div>
+      ${cap.assertion ? `<div class="cap-assertion">${escapeHtml(cap.assertion)}</div>` : ''}
+      ${cap.gateDetail ? `<div class="cap-gate"><code>${escapeHtml(cap.gateDetail)}</code></div>` : ''}
+      ${cap.featureRefs && cap.featureRefs.length ? `<div class="cap-refs">${cap.featureRefs.map((r) => `<span class="cap-ref-tag">${escapeHtml(r)}</span>`).join('')}</div>` : ''}
+    </div>
+  </div>`;
+};
+
+const renderFeature = (x) => {
+  const sym = x.fs.status === 'pass' ? '✓' : x.fs.status === 'fail' ? '✗' : x.fs.status === 'covered-no-gate' ? '·' : '○';
+  const color = x.fs.status === 'pass' ? 'var(--green)'
+              : x.fs.status === 'fail' ? 'var(--red)'
+              : x.fs.status === 'covered-no-gate' ? 'var(--amber)'
+              : 'var(--gray)';
+  const captures = x.fs.captures || [];
+  const hasCaptures = captures.length > 0;
+  // Auto-open features that FAIL (so the user sees them without a click).
+  const open = x.fs.status === 'fail' ? 'open' : '';
+  return `<details class="fc-feat" ${open}>
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:${color};border-color:${color}">${sym}</span>
+      <span class="fc-feat-name">${escapeHtml(x.item.name)}</span>
+      <span class="fc-feat-meta">${hasCaptures ? captures.length + ' capture' + (captures.length === 1 ? '' : 's') : '<span style="color:var(--gray)">no capture</span>'}</span>
     </summary>
-    <ul class="deliv-list cov-detail">${detailItems}</ul>
+    <div class="fc-feat-body">
+      ${x.item.description ? `<div class="fc-feat-desc">${escapeHtml(x.item.description)}</div>` : ''}
+      ${hasCaptures ? captures.map(renderCaptureDetail).join('') : '<div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>'}
+    </div>
+  </details>`;
+};
+
+const featureMatrixHtml = overallBar + sectionStats.map((s) => {
+  const pct = s.total === 0 ? 0 : Math.round((s.pass + s.noGate * 0.5) / s.total * 100);
+  const headerColor = pct >= 75 ? 'var(--green)' : pct >= 33 ? 'var(--amber)' : pct === 0 ? 'var(--gray)' : 'var(--red)';
+  // Sort features within category: failures first, then no-gate, then passes, then uncovered.
+  const order = { fail: 0, 'covered-no-gate': 1, pass: 2, uncovered: 3 };
+  const sortedItems = [...s.items].sort((a, b) => (order[a.fs.status] ?? 9) - (order[b.fs.status] ?? 9));
+  const featuresHtml = sortedItems.map(renderFeature).join('');
+  // Category-level mini stacked bar (visual at-a-glance for the segment proportions).
+  const seg = (n, c) => n === 0 ? '' : `<span style="display:inline-block;height:6px;background:${c};width:${(n / s.total * 100).toFixed(2)}%"></span>`;
+  const miniBar = `<span class="fc-mini-bar">${seg(s.pass, 'var(--green)')}${seg(s.noGate, 'var(--amber)')}${seg(s.fail, 'var(--red)')}${seg(s.uncov, 'rgba(255,255,255,0.10)')}</span>`;
+  return `<details class="fc-cat" ${s.fail > 0 ? 'open' : ''}>
+    <summary class="fc-cat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-cat-title">${escapeHtml(s.section.name)}</span>
+      <span class="fc-cat-count">${s.total}</span>
+      ${miniBar}
+      <span class="fc-cat-counts">
+        ${s.pass > 0 ? `<span class="fc-chip fc-chip-pass">${s.pass}✓</span>` : ''}
+        ${s.fail > 0 ? `<span class="fc-chip fc-chip-fail">${s.fail}✗</span>` : ''}
+        ${s.noGate > 0 ? `<span class="fc-chip fc-chip-amber">${s.noGate}·</span>` : ''}
+        ${s.uncov > 0 ? `<span class="fc-chip fc-chip-uncov">${s.uncov}○</span>` : ''}
+      </span>
+      <span class="fc-cat-pct" style="color:${headerColor}">${pct}%</span>
+    </summary>
+    <div class="fc-cat-body">${featuresHtml}</div>
   </details>`;
 }).join('');
 
@@ -703,6 +741,101 @@ const html = `<!doctype html>
     transition: border-color 0.2s;
   }
   .phase-card:hover { border-color: rgba(219,173,80,0.35); }
+
+  /* Fractal accordion: Category → Feature → Capture */
+  .fc-cat, .fc-feat {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+    margin-bottom: 6px; overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .fc-cat:hover, .fc-feat:hover { border-color: rgba(219,173,80,0.30); }
+  .fc-cat[open] { border-color: rgba(219,173,80,0.50); }
+  .fc-feat { background: rgba(255,255,255,0.02); margin-bottom: 4px; }
+  .fc-feat[open] { background: rgba(219,173,80,0.04); }
+
+  .fc-cat-summary, .fc-feat-summary {
+    cursor: pointer; user-select: none;
+    list-style: none;
+    padding: 12px 16px;
+    display: grid; align-items: center; gap: 12px;
+  }
+  .fc-cat-summary { grid-template-columns: 18px minmax(150px, 28%) 36px minmax(100px, 1fr) auto 56px; }
+  .fc-feat-summary { grid-template-columns: 16px 28px 1fr auto; padding: 9px 14px; font-size: 0.92rem; }
+  .fc-cat-summary::-webkit-details-marker, .fc-feat-summary::-webkit-details-marker { display: none; }
+  .fc-cat-summary::marker, .fc-feat-summary::marker { display: none; content: ''; }
+
+  .fc-chev {
+    display: inline-block; transition: transform 0.18s ease-out;
+    font-size: 0.75rem; color: var(--lb); width: 14px; text-align: center;
+  }
+  details[open] > summary > .fc-chev { transform: rotate(90deg); color: var(--gold); }
+
+  .fc-cat-title { font-weight: 700; font-size: 1rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fc-cat-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 22px; min-width: 28px; padding: 0 8px;
+    background: rgba(255,255,255,0.05); border-radius: 11px;
+    font-size: 0.78rem; font-weight: 700; color: var(--lb);
+  }
+  .fc-mini-bar {
+    display: flex; height: 6px; width: 100%; max-width: 180px;
+    background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden;
+  }
+  .fc-cat-counts { display: flex; gap: 4px; justify-content: flex-end; flex-wrap: nowrap; }
+  .fc-chip {
+    display: inline-flex; align-items: center; height: 20px; padding: 0 7px;
+    border-radius: 10px; font-size: 0.74rem; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .fc-chip-pass { background: rgba(76,175,131,0.18); color: var(--green); }
+  .fc-chip-fail { background: rgba(217,107,107,0.20); color: var(--red); animation: pulse 2s ease-in-out infinite; }
+  .fc-chip-amber { background: rgba(224,168,0,0.18); color: var(--amber); }
+  .fc-chip-uncov { background: rgba(255,255,255,0.04); color: var(--gray); }
+  .fc-cat-pct { font-weight: 800; font-size: 1rem; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .fc-cat-body { padding: 6px 14px 14px 30px; border-top: 1px dashed rgba(219,173,80,0.18); }
+
+  .fc-feat-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 4px;
+    border: 1.5px solid; font-weight: 800; font-size: 0.85rem;
+  }
+  .fc-feat-name { color: var(--text); }
+  .fc-feat-meta { font-size: 0.78rem; color: var(--lb); }
+  .fc-feat-body {
+    padding: 8px 14px 14px 14px; border-top: 1px dashed var(--border);
+    background: rgba(0,0,0,0.10);
+  }
+  .fc-feat-desc { font-size: 0.85rem; color: var(--lb); margin-bottom: 8px; line-height: 1.5; }
+  .fc-feat-empty { font-size: 0.82rem; color: var(--gray); font-style: italic; padding: 6px; }
+
+  /* Capture detail = thumbnail + meta side-by-side */
+  .cap-detail {
+    display: grid; grid-template-columns: 200px 1fr; gap: 14px;
+    margin-top: 8px; padding: 10px;
+    background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 6px;
+  }
+  .cap-thumb img {
+    width: 100%; max-width: 200px; max-height: 130px;
+    object-fit: cover; object-position: top left;
+    border-radius: 4px; border: 1px solid var(--border);
+    transition: transform 0.15s, max-height 0.2s;
+  }
+  .cap-thumb img:hover { transform: scale(1.04); border-color: var(--gold); }
+  .cap-thumb-empty { width: 200px; height: 100px; background: rgba(255,255,255,0.04); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--gray); }
+  .cap-meta { font-size: 0.85rem; }
+  .cap-label { margin-bottom: 6px; }
+  .cap-assertion { color: var(--lb); margin-bottom: 6px; line-height: 1.4; }
+  .cap-gate code { font-size: 0.78rem; padding: 2px 6px; background: rgba(0,0,0,0.30); border-radius: 3px; color: var(--gold); }
+  .cap-refs { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .cap-ref-tag { font-size: 0.72rem; padding: 2px 7px; background: rgba(120,188,255,0.10); color: rgb(120,188,255); border-radius: 9px; }
+
+  @media (max-width: 800px) {
+    .fc-cat-summary { grid-template-columns: 18px 1fr auto; }
+    .fc-mini-bar, .fc-cat-count, .fc-cat-counts { display: none; }
+    .cap-detail { grid-template-columns: 1fr; }
+    .cap-thumb img { max-width: 100%; }
+  }
 
   /* Compact coverage strips for the feature matrix */
   .cov-cat {
@@ -884,7 +1017,7 @@ const html = `<!doctype html>
 <nav class="tab-nav">
   <button class="tab-btn" data-tab="live">● Live activity</button>
   <button class="tab-btn" data-tab="phases">🚀 Dev Phases</button>
-  <button class="tab-btn" data-tab="sweep">🛡 Feature sweep</button>
+  <button class="tab-btn" data-tab="sweep">🛡 Feature Sweep</button>
 </nav>
 
 <div class="tab-panel" data-tab="phases">
