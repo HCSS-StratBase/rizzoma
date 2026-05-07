@@ -306,6 +306,51 @@ try {
   }
 } catch {}
 
+// ─── Merge lettered/freeform sections into their numbered counterparts ───
+// RIZZOMA_FEATURES_STATUS.md uses two parallel taxonomies: "Track A: …",
+// "Mobile Modernization (PWA)", "BLB (…) Structure" at the top, AND
+// "1. Authentication & Security", "2. Waves & Blips", … at the bottom.
+// They cover the SAME features. Merge so each numbered category absorbs the
+// matching lettered/freeform one.
+const LETTERED_TO_NUMBERED = {
+  'track a: selection annotation system': '6. Selection Annotation System',
+  'track b: rich text editor': '3. Rich Text Editor',
+  'track c: "follow the green" visual system': '5. Unread Tracking (Follow-the-Green)',
+  'track d: real-time collaboration (verified 2026-04-24)': '4. Real-time Collaboration',
+  'unread tracking & presence': '5. Unread Tracking (Follow-the-Green)',
+  'uploads & gadget nodes': '7. File Uploads & Storage',
+  'media adapter': '7. File Uploads & Storage',
+  'mobile modernization (pwa)': '12. Mobile & PWA',
+  'blb (bullet-label-blip) structure': '14. BLB (Bullet-Label-Blip) — Core Paradigm',
+  'permissions & auth': '1. Authentication & Security',
+  'still pending': '20. DevOps & Deployment',
+};
+
+(() => {
+  const byName = new Map();
+  for (const sec of featureMatrix.sections) byName.set(sec.name, sec);
+  const removed = new Set();
+
+  for (const sec of featureMatrix.sections) {
+    const target = LETTERED_TO_NUMBERED[sec.name.toLowerCase()];
+    if (!target) continue;
+    const targetSec = byName.get(target);
+    if (!targetSec || targetSec === sec) continue;
+    // Append items, deduping by lowercased name to avoid identical rows.
+    const existingNames = new Set(targetSec.items.map((i) => i.name.toLowerCase()));
+    for (const item of sec.items) {
+      if (existingNames.has(item.name.toLowerCase())) continue;
+      targetSec.items.push(item);
+      existingNames.add(item.name.toLowerCase());
+    }
+    removed.add(sec);
+  }
+
+  // Drop merged sections + numbered prefix is fine to keep (it sorts naturally).
+  featureMatrix.sections = featureMatrix.sections.filter((s) => !removed.has(s));
+  featureMatrix.totalRows = featureMatrix.sections.reduce((n, s) => n + s.items.length, 0);
+})();
+
 // ─── Sweep status: read most recent visual-feature-sweep manifest.json ───
 // Show pass/fail counts + delta from the previous sweep so the PM has an
 // always-on "where does the gated sweep stand" panel.
@@ -526,8 +571,18 @@ const G = sectionStats.reduce((acc, s) => {
 }, { pass: 0, fail: 0, noGate: 0, uncov: 0, total: 0 });
 const coveragePct = G.total === 0 ? 0 : Math.round((G.pass + G.noGate * 0.5) / G.total * 100);
 
-// Sort sections: highest score first (best coverage at top)
-sectionStats.sort((a, b) => b.score - a.score);
+// Sort sections: highest FAIL % first (broken stuff floats to top so user
+// sees regressions immediately). Tie-break by absolute fail count, then by
+// uncovered count so still-broken-and-untested categories rank above
+// already-PASS categories.
+sectionStats.sort((a, b) => {
+  const aFailPct = a.total === 0 ? 0 : a.fail / a.total;
+  const bFailPct = b.total === 0 ? 0 : b.fail / b.total;
+  if (bFailPct !== aFailPct) return bFailPct - aFailPct;
+  if (b.fail !== a.fail) return b.fail - a.fail;
+  if (b.uncov !== a.uncov) return b.uncov - a.uncov;
+  return b.score - a.score;
+});
 
 // Render the OVERALL stacked bar at the top
 const overallBar = (() => {
@@ -582,7 +637,7 @@ const renderFeature = (x) => {
   const hasCaptures = captures.length > 0;
   // Auto-open features that FAIL (so the user sees them without a click).
   const open = x.fs.status === 'fail' ? 'open' : '';
-  return `<details class="fc-feat" ${open}>
+  return `<details class="fc-feat">
     <summary class="fc-feat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-feat-badge" style="color:${color};border-color:${color}">${sym}</span>
@@ -606,7 +661,7 @@ const featureMatrixHtml = overallBar + sectionStats.map((s) => {
   // Category-level mini stacked bar (visual at-a-glance for the segment proportions).
   const seg = (n, c) => n === 0 ? '' : `<span style="display:inline-block;height:6px;background:${c};width:${(n / s.total * 100).toFixed(2)}%"></span>`;
   const miniBar = `<span class="fc-mini-bar">${seg(s.pass, 'var(--green)')}${seg(s.noGate, 'var(--amber)')}${seg(s.fail, 'var(--red)')}${seg(s.uncov, 'rgba(255,255,255,0.10)')}</span>`;
-  return `<details class="fc-cat" ${s.fail > 0 ? 'open' : ''}>
+  return `<details class="fc-cat">
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-cat-title">${escapeHtml(s.section.name)}</span>
