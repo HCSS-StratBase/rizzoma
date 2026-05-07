@@ -671,11 +671,8 @@ export function RizzomaBlip({
           throw new Error('Failed to create child blip');
         }
 
-        const newBlipResp = await response.json();
-        // POST /api/blips returns { id, rev, blip: { ...full blip data with permissions } }
-        // The id at the top level is the doc id; the actual blip data lives in `.blip`.
-        const newBlipId = newBlipResp.id || newBlipResp.blip?.id || newBlipResp.blip?._id;
-        const newBlip = newBlipResp.blip ? { ...newBlipResp.blip, id: newBlipId } : newBlipResp;
+        const newBlip = await response.json();
+        const newBlipId = newBlip.id || newBlip._id;
 
         console.log('[RizzomaBlip] Created child blip via Ctrl+Enter:', newBlipId);
 
