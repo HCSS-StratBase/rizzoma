@@ -281,6 +281,27 @@ try {
         description: (itemMatch[2] || '').trim(),
       });
       featureMatrix.totalRows++;
+      continue;
+    }
+    // Comprehensive Feature Comparison table rows:
+    // | Functionality | Status | Original | Modern |
+    // Each row's parts[0] is a feature name; parts[1]/[2]/[3] carry metadata.
+    if (ln.startsWith('|') && !ln.includes('Functionality') && !ln.includes('---')) {
+      const parts = ln.slice(1, -1).split('|').map((p) => p.trim());
+      if (parts.length >= 4 && parts[0] && !parts[0].startsWith('-')) {
+        const name = parts[0].replace(/\*\*/g, '').trim();
+        const status = parts[1].replace(/\*\*/g, '').trim();
+        const original = parts[2].slice(0, 60);
+        const modern = parts[3].slice(0, 60);
+        if (name) {
+          currentSection.items.push({
+            name,
+            description: `${status} · orig: ${original}${original.length === 60 ? '…' : ''} · now: ${modern}${modern.length === 60 ? '…' : ''}`,
+            tableStatus: status,
+          });
+          featureMatrix.totalRows++;
+        }
+      }
     }
   }
 } catch {}
