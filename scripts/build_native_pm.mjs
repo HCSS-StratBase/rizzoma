@@ -504,8 +504,25 @@ const tokenize = (s) => (s || '').toLowerCase()
   .replace(/[^\w\s+-]/g, ' ')
   .split(/\s+/).filter((t) => t.length > 2 && !['the', 'and', 'for', 'via', 'with', 'from', 'all', 'new', 'old', 'has'].includes(t));
 
+// Sections that are not visually testable (backend / infra / deploy-only).
+// Items in these get classified 'na-nonvisual' and excluded from coverage %.
+const nonVisualSections = new Set([
+  '16. database & storage',
+  '17. api architecture',
+  '18. testing & quality',
+  '19. performance optimizations',
+  '20. devops & deployment',
+]);
+
+// Per-feature backend keywords — even within a visual section, things like
+// "CSRF protection", "Rate limiting", "Zod validation" have no visible UI.
+const nonVisualKeywords = /\b(redis|csrf|zod|rate limit(?:ing)?|middleware|requireauth|migration|index(?:ing)?|ssl|tls|cors|helmet|cookie|session storage|backend|api endpoint|http \d|status code|validation|schema|database|s3|minio|clamav|virus scan|nginx|docker|deploy|build|webpack|vite|esbuild|eslint|prettier|playwright|vitest|jest|test suite|ci|cd|gh actions|coverage|systemd)\b/i;
+
 const featureStatusForItem = (sectionName, item) => {
   const sLow = sectionName.toLowerCase();
+  if (nonVisualSections.has(sLow) || nonVisualKeywords.test(item.name)) {
+    return { status: 'na-nonvisual', captures: [] };
+  }
   const aliases = sectionAliases[sLow] || [sLow];
   const trySections = new Set([sLow, ...aliases]);
   const itemTokens = new Set(tokenize(item.name));
@@ -557,19 +574,22 @@ const sectionStats = featureMatrix.sections.map((section) => {
   const pass = items.filter((x) => x.fs.status === 'pass').length;
   const fail = items.filter((x) => x.fs.status === 'fail').length;
   const noGate = items.filter((x) => x.fs.status === 'covered-no-gate').length;
-  const uncov = total - pass - fail - noGate;
-  // Coverage % = (pass + noGate * 0.5) / total — half-credit for capture-no-gate.
-  // Sort priority: descending by (pass+nogate) ratio, then by (-fail) penalty.
-  const score = total === 0 ? -1 : (pass + noGate * 0.5 - fail * 0.25) / total;
-  return { section, items, total, pass, fail, noGate, uncov, score };
+  const naNon = items.filter((x) => x.fs.status === 'na-nonvisual').length;
+  const visual = total - naNon;  // denominator for coverage %
+  const uncov = visual - pass - fail - noGate;
+  // Coverage % over VISUAL features only.
+  const score = visual === 0 ? -1 : (pass + noGate * 0.5 - fail * 0.25) / visual;
+  return { section, items, total, visual, pass, fail, noGate, naNon, uncov, score };
 }).filter((s) => s.total > 0);
 
-// Grand totals
+// Grand totals — coverage % computed over visually-testable subset only.
 const G = sectionStats.reduce((acc, s) => {
-  acc.pass += s.pass; acc.fail += s.fail; acc.noGate += s.noGate; acc.uncov += s.uncov; acc.total += s.total;
+  acc.pass += s.pass; acc.fail += s.fail; acc.noGate += s.noGate;
+  acc.uncov += s.uncov; acc.naNon += s.naNon;
+  acc.total += s.total; acc.visual += s.visual;
   return acc;
-}, { pass: 0, fail: 0, noGate: 0, uncov: 0, total: 0 });
-const coveragePct = G.total === 0 ? 0 : Math.round((G.pass + G.noGate * 0.5) / G.total * 100);
+}, { pass: 0, fail: 0, noGate: 0, uncov: 0, naNon: 0, total: 0, visual: 0 });
+const coveragePct = G.visual === 0 ? 0 : Math.round((G.pass + G.noGate * 0.5) / G.visual * 100);
 
 // Sort sections: highest FAIL % first (broken stuff floats to top so user
 // sees regressions immediately). Tie-break by absolute fail count, then by
@@ -586,22 +606,24 @@ sectionStats.sort((a, b) => {
 
 // Render the OVERALL stacked bar at the top
 const overallBar = (() => {
-  const seg = (n, color) => n === 0 ? '' :
-    `<span style="display:inline-block;height:14px;background:${color};width:${(n / G.total * 100).toFixed(2)}%" title="${n} features"></span>`;
+  const seg = (n, color, denom) => n === 0 ? '' :
+    `<span style="display:inline-block;height:14px;background:${color};width:${(n / denom * 100).toFixed(2)}%" title="${n} features"></span>`;
   return `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem">
-      <strong style="font-size:1.05rem">Overall coverage</strong>
+      <strong style="font-size:1.05rem">Visual coverage</strong>
+      <span style="font-size:0.85rem;color:var(--lb)">over <strong>${G.visual}</strong> visually-testable feature${G.visual === 1 ? '' : 's'}</span>
       <span style="font-size:1.25rem;font-weight:800;color:${coveragePct >= 50 ? 'var(--green)' : coveragePct >= 25 ? 'var(--amber)' : 'var(--red)'}">${coveragePct}%</span>
     </div>
     <div style="display:flex;width:100%;background:rgba(255,255,255,0.04);border-radius:4px;overflow:hidden;margin-bottom:0.6rem">
-      ${seg(G.pass, 'var(--green)')}${seg(G.noGate, 'var(--amber)')}${seg(G.fail, 'var(--red)')}${seg(G.uncov, 'rgba(255,255,255,0.08)')}
+      ${seg(G.pass, 'var(--green)', G.visual)}${seg(G.noGate, 'var(--amber)', G.visual)}${seg(G.fail, 'var(--red)', G.visual)}${seg(G.uncov, 'rgba(255,255,255,0.08)', G.visual)}
     </div>
     <div style="display:flex;gap:1.25rem;font-size:0.85rem;color:var(--lb);flex-wrap:wrap">
       <span><span style="color:var(--green);font-weight:700">●</span> ${G.pass} verified PASS</span>
       <span><span style="color:var(--red);font-weight:700">●</span> ${G.fail} verified FAIL</span>
       <span><span style="color:var(--amber);font-weight:700">●</span> ${G.noGate} captured (no gate)</span>
-      <span><span style="color:var(--gray)">●</span> ${G.uncov} not yet covered</span>
-      <span style="margin-left:auto"><strong>${G.total}</strong> features in ${sectionStats.length} categories</strong></span>
+      <span><span style="color:var(--gray)">●</span> ${G.uncov} not yet covered (visual)</span>
+      ${G.naNon > 0 ? `<span><span style="color:#7080a0;font-weight:700">●</span> ${G.naNon} N/A — backend / infra (excluded)</span>` : ''}
+      <span style="margin-left:auto"><strong>${G.total}</strong> total features in ${sectionStats.length} categories</span>
     </div>
   </div>`;
 })();
@@ -628,10 +650,11 @@ const renderCaptureDetail = (cap) => {
 };
 
 const renderFeature = (x) => {
-  const sym = x.fs.status === 'pass' ? '✓' : x.fs.status === 'fail' ? '✗' : x.fs.status === 'covered-no-gate' ? '·' : '○';
+  const sym = x.fs.status === 'pass' ? '✓' : x.fs.status === 'fail' ? '✗' : x.fs.status === 'covered-no-gate' ? '·' : x.fs.status === 'na-nonvisual' ? '∅' : '○';
   const color = x.fs.status === 'pass' ? 'var(--green)'
               : x.fs.status === 'fail' ? 'var(--red)'
               : x.fs.status === 'covered-no-gate' ? 'var(--amber)'
+              : x.fs.status === 'na-nonvisual' ? '#7080a0'
               : 'var(--gray)';
   const captures = x.fs.captures || [];
   const hasCaptures = captures.length > 0;
@@ -655,23 +678,27 @@ const featureMatrixHtml = overallBar + sectionStats.map((s) => {
   const pct = s.total === 0 ? 0 : Math.round((s.pass + s.noGate * 0.5) / s.total * 100);
   const headerColor = pct >= 75 ? 'var(--green)' : pct >= 33 ? 'var(--amber)' : pct === 0 ? 'var(--gray)' : 'var(--red)';
   // Sort features within category: failures first, then no-gate, then passes, then uncovered.
-  const order = { fail: 0, 'covered-no-gate': 1, pass: 2, uncovered: 3 };
+  const order = { fail: 0, 'covered-no-gate': 1, pass: 2, uncovered: 3, 'na-nonvisual': 4 };
   const sortedItems = [...s.items].sort((a, b) => (order[a.fs.status] ?? 9) - (order[b.fs.status] ?? 9));
   const featuresHtml = sortedItems.map(renderFeature).join('');
   // Category-level mini stacked bar (visual at-a-glance for the segment proportions).
-  const seg = (n, c) => n === 0 ? '' : `<span style="display:inline-block;height:6px;background:${c};width:${(n / s.total * 100).toFixed(2)}%"></span>`;
-  const miniBar = `<span class="fc-mini-bar">${seg(s.pass, 'var(--green)')}${seg(s.noGate, 'var(--amber)')}${seg(s.fail, 'var(--red)')}${seg(s.uncov, 'rgba(255,255,255,0.10)')}</span>`;
+  // Mini bar: only over visually-testable subset; N/A shown as separate
+  // hatched segment on the right to keep total width = total but visually
+  // distinguish "we shouldn't be testing this" from "we haven't tested this".
+  const seg = (n, c, denom) => n === 0 ? '' : `<span style="display:inline-block;height:6px;background:${c};width:${(n / denom * 100).toFixed(2)}%"></span>`;
+  const miniBar = `<span class="fc-mini-bar">${seg(s.pass, 'var(--green)', s.total)}${seg(s.noGate, 'var(--amber)', s.total)}${seg(s.fail, 'var(--red)', s.total)}${seg(s.uncov, 'rgba(255,255,255,0.10)', s.total)}${seg(s.naNon, 'repeating-linear-gradient(45deg,#3a4660,#3a4660 3px,#2a3344 3px,#2a3344 6px)', s.total)}</span>`;
   return `<details class="fc-cat">
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-cat-title">${escapeHtml(s.section.name)}</span>
-      <span class="fc-cat-count">${s.total}</span>
+      <span class="fc-cat-count" title="${s.visual} visually-testable / ${s.total} total">${s.visual}<span style="color:var(--gray);opacity:0.6">/${s.total}</span></span>
       ${miniBar}
       <span class="fc-cat-counts">
         ${s.pass > 0 ? `<span class="fc-chip fc-chip-pass">${s.pass}✓</span>` : ''}
         ${s.fail > 0 ? `<span class="fc-chip fc-chip-fail">${s.fail}✗</span>` : ''}
         ${s.noGate > 0 ? `<span class="fc-chip fc-chip-amber">${s.noGate}·</span>` : ''}
         ${s.uncov > 0 ? `<span class="fc-chip fc-chip-uncov">${s.uncov}○</span>` : ''}
+        ${s.naNon > 0 ? `<span class="fc-chip fc-chip-na" title="Non-visual: backend / infra / deploy. Excluded from coverage %.">${s.naNon}∅</span>` : ''}
       </span>
       <span class="fc-cat-pct" style="color:${headerColor}">${pct}%</span>
     </summary>
@@ -846,6 +873,7 @@ const html = `<!doctype html>
   .fc-chip-fail { background: rgba(217,107,107,0.20); color: var(--red); animation: pulse 2s ease-in-out infinite; }
   .fc-chip-amber { background: rgba(224,168,0,0.18); color: var(--amber); }
   .fc-chip-uncov { background: rgba(255,255,255,0.04); color: var(--gray); }
+  .fc-chip-na { background: rgba(112,128,160,0.10); color: #7080a0; cursor: help; }
   .fc-cat-pct { font-weight: 800; font-size: 1rem; text-align: right; font-variant-numeric: tabular-nums; }
 
   .fc-cat-body { padding: 6px 14px 14px 30px; border-top: 1px dashed rgba(219,173,80,0.18); }

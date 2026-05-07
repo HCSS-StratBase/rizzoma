@@ -120,6 +120,7 @@
   .fc-chip-fail { background: rgba(217,107,107,0.20); color: var(--red); animation: pulse 2s ease-in-out infinite; }
   .fc-chip-amber { background: rgba(224,168,0,0.18); color: var(--amber); }
   .fc-chip-uncov { background: rgba(255,255,255,0.04); color: var(--gray); }
+  .fc-chip-na { background: rgba(112,128,160,0.10); color: #7080a0; cursor: help; }
   .fc-cat-pct { font-weight: 800; font-size: 1rem; text-align: right; font-variant-numeric: tabular-nums; }
 
   .fc-cat-body { padding: 6px 14px 14px 30px; border-top: 1px dashed rgba(219,173,80,0.18); }
@@ -338,7 +339,7 @@
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/NATIVE_RENDER_PORT_PLAN.md">Plan</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md">Why</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/issues/50">Epic #50</a>
-    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-07 01:02:19 UTC</span>
+    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-07 02:09:46 UTC</span>
     &nbsp;·&nbsp; <span id="refresh-status">auto-refresh ON</span>
   </p>
 </header>
@@ -357,7 +358,7 @@
     <div class="stat-card"><div class="stat-num">92%</div><div class="stat-lbl">Complete</div></div>
     <div class="stat-card"><div class="stat-num">13.3<span style="font-size:1rem;color:var(--lb)"> / 14.5</span></div><div class="stat-lbl">Workdays</div></div>
     <div class="stat-card"><div class="stat-num">5<span style="font-size:1rem;color:var(--lb)"> / 6</span></div><div class="stat-lbl">Phases done</div></div>
-    <div class="stat-card"><div class="stat-num">62</div><div class="stat-lbl">Commits on port branch</div></div>
+    <div class="stat-card"><div class="stat-num">63</div><div class="stat-lbl">Commits on port branch</div></div>
   </div>
   <div class="pbar-row">
     <div class="pbar-wrapper"><div class="pbar-fill" style="--target:92%"></div></div>
@@ -382,7 +383,7 @@
       <span class="lbl" style="color:var(--amber)">EDITED</span>
       <span>1 file(s) in last 120s</span>
     </div>
-    <div class="live-row"><span></span><span class="live-detail">scripts/build_native_pm.mjs <span style="opacity:0.6">(70s ago)</span></span></div>
+    <div class="live-row"><span></span><span class="live-detail">scripts/build_native_pm.mjs <span style="opacity:0.6">(65s ago)</span></span></div>
   </div>
 </section>
 
@@ -442,28 +443,31 @@
   </div>
   <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem">
-      <strong style="font-size:1.05rem">Overall coverage</strong>
-      <span style="font-size:1.25rem;font-weight:800;color:var(--amber)">28%</span>
+      <strong style="font-size:1.05rem">Visual coverage</strong>
+      <span style="font-size:0.85rem;color:var(--lb)">over <strong>225</strong> visually-testable features</span>
+      <span style="font-size:1.25rem;font-weight:800;color:var(--amber)">35%</span>
     </div>
     <div style="display:flex;width:100%;background:rgba(255,255,255,0.04);border-radius:4px;overflow:hidden;margin-bottom:0.6rem">
-      <span style="display:inline-block;height:14px;background:var(--green);width:28.37%" title="80 features"></span><span style="display:inline-block;height:14px;background:var(--red);width:13.48%" title="38 features"></span><span style="display:inline-block;height:14px;background:rgba(255,255,255,0.08);width:58.16%" title="164 features"></span>
+      <span style="display:inline-block;height:14px;background:var(--green);width:35.11%" title="79 features"></span><span style="display:inline-block;height:14px;background:var(--red);width:16.44%" title="37 features"></span><span style="display:inline-block;height:14px;background:rgba(255,255,255,0.08);width:48.44%" title="109 features"></span>
     </div>
     <div style="display:flex;gap:1.25rem;font-size:0.85rem;color:var(--lb);flex-wrap:wrap">
-      <span><span style="color:var(--green);font-weight:700">●</span> 80 verified PASS</span>
-      <span><span style="color:var(--red);font-weight:700">●</span> 38 verified FAIL</span>
+      <span><span style="color:var(--green);font-weight:700">●</span> 79 verified PASS</span>
+      <span><span style="color:var(--red);font-weight:700">●</span> 37 verified FAIL</span>
       <span><span style="color:var(--amber);font-weight:700">●</span> 0 captured (no gate)</span>
-      <span><span style="color:var(--gray)">●</span> 164 not yet covered</span>
-      <span style="margin-left:auto"><strong>282</strong> features in 20 categories</strong></span>
+      <span><span style="color:var(--gray)">●</span> 109 not yet covered (visual)</span>
+      <span><span style="color:#7080a0;font-weight:700">●</span> 57 N/A — backend / infra (excluded)</span>
+      <span style="margin-left:auto"><strong>282</strong> total features in 20 categories</span>
     </div>
   </div><details class="fc-cat">
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-cat-title">13. User Interface Components</span>
-      <span class="fc-cat-count">23</span>
+      <span class="fc-cat-count" title="23 visually-testable / 23 total">23<span style="color:var(--gray);opacity:0.6">/23</span></span>
       <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:43.48%"></span><span style="display:inline-block;height:6px;background:var(--red);width:56.52%"></span></span>
       <span class="fc-cat-counts">
         <span class="fc-chip fc-chip-pass">10✓</span>
         <span class="fc-chip fc-chip-fail">13✗</span>
+        
         
         
       </span>
@@ -1214,213 +1218,15 @@
   </details><details class="fc-cat">
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
-      <span class="fc-cat-title">2. Waves &amp; Blips (Core Data Model)</span>
-      <span class="fc-cat-count">8</span>
-      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:12.50%"></span><span style="display:inline-block;height:6px;background:var(--red);width:50.00%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:37.50%"></span></span>
-      <span class="fc-cat-counts">
-        <span class="fc-chip fc-chip-pass">1✓</span>
-        <span class="fc-chip fc-chip-fail">4✗</span>
-        
-        <span class="fc-chip fc-chip-uncov">3○</span>
-      </span>
-      <span class="fc-cat-pct" style="color:var(--red)">13%</span>
-    </summary>
-    <div class="fc-cat-body"><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--red);border-color:var(--red)">✗</span>
-      <span class="fc-feat-name">Wave (topic) schema + typed interface</span>
-      <span class="fc-feat-meta">3 captures</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" alt="003-nav-topics-tab-and-searchable-topic-list.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>nav topics tab and searchable topic list</strong> · <span style="color:var(--red);font-weight:700">FAIL</span></div>
-      <div class="cap-assertion">Topics tab is active and searchable topic cards are visible.</div>
-      <div class="cap-gate"><code>search=true topicCount=0</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">User Interface: Navigation panel</span><span class="cap-ref-tag">User Interface: Topics list</span><span class="cap-ref-tag">Waves: wave list</span></div>
-    </div>
-  </div><div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" alt="010-create-topic-modal-open.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>create topic modal open</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">New topic action opens the create topic modal.</div>
-      <div class="cap-gate"><code>modals={&quot;modalContent&quot;:true,&quot;createTopicModal&quot;:false,&quot;modalOverlay&quot;:true,&quot;shareModal&quot;:false,&quot;exportModal&quot;:false,&quot;historyModal&quot;:false,&quot;inviteModal&quot;:false,&quot;anyDialog&quot;:false}</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Waves: create topic</span><span class="cap-ref-tag">User Interface: New topic modal</span></div>
-    </div>
-  </div><div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/018-topic-landing-collapsed-blb-toc.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/018-topic-landing-collapsed-blb-toc.png" alt="018-topic-landing-collapsed-blb-toc.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>topic landing collapsed blb toc</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Landing view shows label-only BLB rows and topic chrome.</div>
-      <div class="cap-gate"><code>selector=&quot;.blip-container, .rizzoma-topic-detail&quot; count=3 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">BLB: Collapsed TOC</span><span class="cap-ref-tag">Waves: topic view</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--red);border-color:var(--red)">✗</span>
-      <span class="fc-feat-name">Wave CRUD API (list, create, read, update, delete)</span>
-      <span class="fc-feat-meta">3 captures</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" alt="003-nav-topics-tab-and-searchable-topic-list.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>nav topics tab and searchable topic list</strong> · <span style="color:var(--red);font-weight:700">FAIL</span></div>
-      <div class="cap-assertion">Topics tab is active and searchable topic cards are visible.</div>
-      <div class="cap-gate"><code>search=true topicCount=0</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">User Interface: Navigation panel</span><span class="cap-ref-tag">User Interface: Topics list</span><span class="cap-ref-tag">Waves: wave list</span></div>
-    </div>
-  </div><div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" alt="010-create-topic-modal-open.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>create topic modal open</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">New topic action opens the create topic modal.</div>
-      <div class="cap-gate"><code>modals={&quot;modalContent&quot;:true,&quot;createTopicModal&quot;:false,&quot;modalOverlay&quot;:true,&quot;shareModal&quot;:false,&quot;exportModal&quot;:false,&quot;historyModal&quot;:false,&quot;inviteModal&quot;:false,&quot;anyDialog&quot;:false}</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Waves: create topic</span><span class="cap-ref-tag">User Interface: New topic modal</span></div>
-    </div>
-  </div><div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/020-read-gear-menu-open.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/020-read-gear-menu-open.png" alt="020-read-gear-menu-open.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>read gear menu open</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Read toolbar gear opens copy/comment/history/paste/link actions.</div>
-      <div class="cap-gate"><code>selector=&quot;.gear-dropdown, .gear-menu, [class*=&quot;gear&quot;][class*=&quot;menu&quot;]&quot; count=3 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Blip Operations: gear dropdown</span><span class="cap-ref-tag">Blip Operations: copy/paste/history/delete variants</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--red);border-color:var(--red)">✗</span>
-      <span class="fc-feat-name">Blip CRUD API (list, create, read, update, delete)</span>
-      <span class="fc-feat-meta">3 captures</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" alt="003-nav-topics-tab-and-searchable-topic-list.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>nav topics tab and searchable topic list</strong> · <span style="color:var(--red);font-weight:700">FAIL</span></div>
-      <div class="cap-assertion">Topics tab is active and searchable topic cards are visible.</div>
-      <div class="cap-gate"><code>search=true topicCount=0</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">User Interface: Navigation panel</span><span class="cap-ref-tag">User Interface: Topics list</span><span class="cap-ref-tag">Waves: wave list</span></div>
-    </div>
-  </div><div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" alt="010-create-topic-modal-open.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>create topic modal open</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">New topic action opens the create topic modal.</div>
-      <div class="cap-gate"><code>modals={&quot;modalContent&quot;:true,&quot;createTopicModal&quot;:false,&quot;modalOverlay&quot;:true,&quot;shareModal&quot;:false,&quot;exportModal&quot;:false,&quot;historyModal&quot;:false,&quot;inviteModal&quot;:false,&quot;anyDialog&quot;:false}</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Waves: create topic</span><span class="cap-ref-tag">User Interface: New topic modal</span></div>
-    </div>
-  </div><div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/020-read-gear-menu-open.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/020-read-gear-menu-open.png" alt="020-read-gear-menu-open.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>read gear menu open</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Read toolbar gear opens copy/comment/history/paste/link actions.</div>
-      <div class="cap-gate"><code>selector=&quot;.gear-dropdown, .gear-menu, [class*=&quot;gear&quot;][class*=&quot;menu&quot;]&quot; count=3 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Blip Operations: gear dropdown</span><span class="cap-ref-tag">Blip Operations: copy/paste/history/delete variants</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--red);border-color:var(--red)">✗</span>
-      <span class="fc-feat-name">Wave participants API</span>
-      <span class="fc-feat-meta">1 capture</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" alt="003-nav-topics-tab-and-searchable-topic-list.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>nav topics tab and searchable topic list</strong> · <span style="color:var(--red);font-weight:700">FAIL</span></div>
-      <div class="cap-assertion">Topics tab is active and searchable topic cards are visible.</div>
-      <div class="cap-gate"><code>search=true topicCount=0</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">User Interface: Navigation panel</span><span class="cap-ref-tag">User Interface: Topics list</span><span class="cap-ref-tag">Waves: wave list</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
-      <span class="fc-feat-name">Topic view with full blip tree</span>
-      <span class="fc-feat-meta">2 captures</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: [orig](screenshots/comparison-analysis/orig-03-topic-view.pn… · now: [new](screenshots/side-by-side/05-full-topic-new-260208-0053…</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" alt="010-create-topic-modal-open.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>create topic modal open</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">New topic action opens the create topic modal.</div>
-      <div class="cap-gate"><code>modals={&quot;modalContent&quot;:true,&quot;createTopicModal&quot;:false,&quot;modalOverlay&quot;:true,&quot;shareModal&quot;:false,&quot;exportModal&quot;:false,&quot;historyModal&quot;:false,&quot;inviteModal&quot;:false,&quot;anyDialog&quot;:false}</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Waves: create topic</span><span class="cap-ref-tag">User Interface: New topic modal</span></div>
-    </div>
-  </div><div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/018-topic-landing-collapsed-blb-toc.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/018-topic-landing-collapsed-blb-toc.png" alt="018-topic-landing-collapsed-blb-toc.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>topic landing collapsed blb toc</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Landing view shows label-only BLB rows and topic chrome.</div>
-      <div class="cap-gate"><code>selector=&quot;.blip-container, .rizzoma-topic-detail&quot; count=3 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">BLB: Collapsed TOC</span><span class="cap-ref-tag">Waves: topic view</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Blip schema + typed interface</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Blip tree retrieval (single Mango query, 18s → 29ms)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Blip soft-delete + cascade to children</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details></div>
-  </details><details class="fc-cat">
-    <summary class="fc-cat-summary">
-      <span class="fc-chev">▸</span>
       <span class="fc-cat-title">14. BLB (Bullet-Label-Blip) — Core Paradigm</span>
-      <span class="fc-cat-count">39</span>
+      <span class="fc-cat-count" title="39 visually-testable / 39 total">39<span style="color:var(--gray);opacity:0.6">/39</span></span>
       <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:20.51%"></span><span style="display:inline-block;height:6px;background:var(--red);width:38.46%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:41.03%"></span></span>
       <span class="fc-cat-counts">
         <span class="fc-chip fc-chip-pass">8✓</span>
         <span class="fc-chip fc-chip-fail">15✗</span>
         
         <span class="fc-chip fc-chip-uncov">16○</span>
+        
       </span>
       <span class="fc-cat-pct" style="color:var(--red)">21%</span>
     </summary>
@@ -2441,14 +2247,191 @@
   </details><details class="fc-cat">
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
+      <span class="fc-cat-title">2. Waves &amp; Blips (Core Data Model)</span>
+      <span class="fc-cat-count" title="6 visually-testable / 8 total">6<span style="color:var(--gray);opacity:0.6">/8</span></span>
+      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:12.50%"></span><span style="display:inline-block;height:6px;background:var(--red);width:37.50%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:25.00%"></span><span style="display:inline-block;height:6px;background:repeating-linear-gradient(45deg,#3a4660,#3a4660 3px,#2a3344 3px,#2a3344 6px);width:25.00%"></span></span>
+      <span class="fc-cat-counts">
+        <span class="fc-chip fc-chip-pass">1✓</span>
+        <span class="fc-chip fc-chip-fail">3✗</span>
+        
+        <span class="fc-chip fc-chip-uncov">2○</span>
+        <span class="fc-chip fc-chip-na" title="Non-visual: backend / infra / deploy. Excluded from coverage %.">2∅</span>
+      </span>
+      <span class="fc-cat-pct" style="color:var(--red)">13%</span>
+    </summary>
+    <div class="fc-cat-body"><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--red);border-color:var(--red)">✗</span>
+      <span class="fc-feat-name">Wave CRUD API (list, create, read, update, delete)</span>
+      <span class="fc-feat-meta">3 captures</span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" alt="003-nav-topics-tab-and-searchable-topic-list.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>nav topics tab and searchable topic list</strong> · <span style="color:var(--red);font-weight:700">FAIL</span></div>
+      <div class="cap-assertion">Topics tab is active and searchable topic cards are visible.</div>
+      <div class="cap-gate"><code>search=true topicCount=0</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">User Interface: Navigation panel</span><span class="cap-ref-tag">User Interface: Topics list</span><span class="cap-ref-tag">Waves: wave list</span></div>
+    </div>
+  </div><div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" alt="010-create-topic-modal-open.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>create topic modal open</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">New topic action opens the create topic modal.</div>
+      <div class="cap-gate"><code>modals={&quot;modalContent&quot;:true,&quot;createTopicModal&quot;:false,&quot;modalOverlay&quot;:true,&quot;shareModal&quot;:false,&quot;exportModal&quot;:false,&quot;historyModal&quot;:false,&quot;inviteModal&quot;:false,&quot;anyDialog&quot;:false}</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Waves: create topic</span><span class="cap-ref-tag">User Interface: New topic modal</span></div>
+    </div>
+  </div><div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/020-read-gear-menu-open.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/020-read-gear-menu-open.png" alt="020-read-gear-menu-open.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>read gear menu open</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">Read toolbar gear opens copy/comment/history/paste/link actions.</div>
+      <div class="cap-gate"><code>selector=&quot;.gear-dropdown, .gear-menu, [class*=&quot;gear&quot;][class*=&quot;menu&quot;]&quot; count=3 need≥1</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Blip Operations: gear dropdown</span><span class="cap-ref-tag">Blip Operations: copy/paste/history/delete variants</span></div>
+    </div>
+  </div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--red);border-color:var(--red)">✗</span>
+      <span class="fc-feat-name">Blip CRUD API (list, create, read, update, delete)</span>
+      <span class="fc-feat-meta">3 captures</span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" alt="003-nav-topics-tab-and-searchable-topic-list.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>nav topics tab and searchable topic list</strong> · <span style="color:var(--red);font-weight:700">FAIL</span></div>
+      <div class="cap-assertion">Topics tab is active and searchable topic cards are visible.</div>
+      <div class="cap-gate"><code>search=true topicCount=0</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">User Interface: Navigation panel</span><span class="cap-ref-tag">User Interface: Topics list</span><span class="cap-ref-tag">Waves: wave list</span></div>
+    </div>
+  </div><div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" alt="010-create-topic-modal-open.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>create topic modal open</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">New topic action opens the create topic modal.</div>
+      <div class="cap-gate"><code>modals={&quot;modalContent&quot;:true,&quot;createTopicModal&quot;:false,&quot;modalOverlay&quot;:true,&quot;shareModal&quot;:false,&quot;exportModal&quot;:false,&quot;historyModal&quot;:false,&quot;inviteModal&quot;:false,&quot;anyDialog&quot;:false}</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Waves: create topic</span><span class="cap-ref-tag">User Interface: New topic modal</span></div>
+    </div>
+  </div><div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/020-read-gear-menu-open.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/020-read-gear-menu-open.png" alt="020-read-gear-menu-open.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>read gear menu open</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">Read toolbar gear opens copy/comment/history/paste/link actions.</div>
+      <div class="cap-gate"><code>selector=&quot;.gear-dropdown, .gear-menu, [class*=&quot;gear&quot;][class*=&quot;menu&quot;]&quot; count=3 need≥1</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Blip Operations: gear dropdown</span><span class="cap-ref-tag">Blip Operations: copy/paste/history/delete variants</span></div>
+    </div>
+  </div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--red);border-color:var(--red)">✗</span>
+      <span class="fc-feat-name">Wave participants API</span>
+      <span class="fc-feat-meta">1 capture</span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png" alt="003-nav-topics-tab-and-searchable-topic-list.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>nav topics tab and searchable topic list</strong> · <span style="color:var(--red);font-weight:700">FAIL</span></div>
+      <div class="cap-assertion">Topics tab is active and searchable topic cards are visible.</div>
+      <div class="cap-gate"><code>search=true topicCount=0</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">User Interface: Navigation panel</span><span class="cap-ref-tag">User Interface: Topics list</span><span class="cap-ref-tag">Waves: wave list</span></div>
+    </div>
+  </div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
+      <span class="fc-feat-name">Topic view with full blip tree</span>
+      <span class="fc-feat-meta">2 captures</span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: [orig](screenshots/comparison-analysis/orig-03-topic-view.pn… · now: [new](screenshots/side-by-side/05-full-topic-new-260208-0053…</div>
+      <div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/010-create-topic-modal-open.png" alt="010-create-topic-modal-open.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>create topic modal open</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">New topic action opens the create topic modal.</div>
+      <div class="cap-gate"><code>modals={&quot;modalContent&quot;:true,&quot;createTopicModal&quot;:false,&quot;modalOverlay&quot;:true,&quot;shareModal&quot;:false,&quot;exportModal&quot;:false,&quot;historyModal&quot;:false,&quot;inviteModal&quot;:false,&quot;anyDialog&quot;:false}</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Waves: create topic</span><span class="cap-ref-tag">User Interface: New topic modal</span></div>
+    </div>
+  </div><div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/018-topic-landing-collapsed-blb-toc.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/018-topic-landing-collapsed-blb-toc.png" alt="018-topic-landing-collapsed-blb-toc.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>topic landing collapsed blb toc</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">Landing view shows label-only BLB rows and topic chrome.</div>
+      <div class="cap-gate"><code>selector=&quot;.blip-container, .rizzoma-topic-detail&quot; count=3 need≥1</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">BLB: Collapsed TOC</span><span class="cap-ref-tag">Waves: topic view</span></div>
+    </div>
+  </div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
+      <span class="fc-feat-name">Blip tree retrieval (single Mango query, 18s → 29ms)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
+      <span class="fc-feat-name">Blip soft-delete + cascade to children</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Wave (topic) schema + typed interface</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Blip schema + typed interface</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details></div>
+  </details><details class="fc-cat">
+    <summary class="fc-cat-summary">
+      <span class="fc-chev">▸</span>
       <span class="fc-cat-title">5. Unread Tracking (Follow-the-Green)</span>
-      <span class="fc-cat-count">25</span>
+      <span class="fc-cat-count" title="25 visually-testable / 25 total">25<span style="color:var(--gray);opacity:0.6">/25</span></span>
       <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--red);width:24.00%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:76.00%"></span></span>
       <span class="fc-cat-counts">
         
         <span class="fc-chip fc-chip-fail">6✗</span>
         
         <span class="fc-chip fc-chip-uncov">19○</span>
+        
       </span>
       <span class="fc-cat-pct" style="color:var(--gray)">0%</span>
     </summary>
@@ -2811,282 +2794,15 @@
   </details><details class="fc-cat">
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
-      <span class="fc-cat-title">20. DevOps &amp; Deployment</span>
-      <span class="fc-cat-count">23</span>
-      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:100.00%"></span></span>
-      <span class="fc-cat-counts">
-        
-        
-        
-        <span class="fc-chip fc-chip-uncov">23○</span>
-      </span>
-      <span class="fc-cat-pct" style="color:var(--gray)">0%</span>
-    </summary>
-    <div class="fc-cat-body"><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Docker Compose (CouchDB, Redis, optional ClamAV)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Dockerfile (production image)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">CI/CD: unit tests (GitHub Actions)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">CI/CD: E2E Playwright</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">CI/CD: health checks job</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">CI/CD: perf budgets job</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Feature flags (`FEAT_ALL`, `EDITOR_ENABLE`, per-feature)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Backup scripts (bundle)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Backup automation (GDrive cadence)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Not started · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">getUserMedia adapter (modern constraints, permissions)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Legacy assets disposition (jQuery-era static)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Not started · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Perf/resilience sweeps</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: large waves/blips stress testing, inline comments under load, realtime updates at scale; run `npm run perf:harness` regularly, document thresholds/limits, add alerts/budgets.</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Full-render scale-up</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: 100-blip public-prod full-render baseline now passes; rerun at 500/1000 blips, compare against lite mode, and investigate optional absolute-TTF drift.</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Visual sweep hardening</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: `npm run visual:sweep` and `npm run visual:coverage` now produce a broad fresh feature sweep plus a row-level coverage matrix for all 161 screenshot-valid rows. The current branch verdict is 161 green / 0 orange / 0 red after physical Android-device evidence.</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Mobile device validation</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: PWA infrastructure, runtime tests, physical Pixel 9 Pro XL / Chrome validation, and public-VPS Pixel Chrome cursor-inline smoke are complete for the branch. iPhone Safari is still a separate risk.</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Legacy reference disposition</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: All active code is TypeScript (zero CoffeeScript in `src/`). The `original-rizzoma-src/` and `original-rizzoma/` directories contain legacy reference code — decide whether to keep, archive, or remove.</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Gadget iframe rendering</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: Gadget palette (11 types) works, but selected gadgets render as URL prompts/placeholders, not interactive iframes (YouTube, Yes/No/Maybe poll, etc.).</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">~~Playback timeline~~</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: DONE — `WavePlaybackModal.tsx` provides wave-level playback with split pane, color-coded timeline dots, date jump, per-blip diff, cluster fast-forward, and keyboard shortcuts. Per-blip playback also available via `BlipHistoryModal.tsx`.</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Gear menu copy/paste variants</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: Core gear actions work (reply, edit, delete, duplicate, cut/paste, copy link, history). The original&#39;s &quot;copy reply&quot; / &quot;paste cursor&quot; variants are not yet reimplemented.</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Visual polish</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: Nav panel icons (emojis → SVG sprites), toolbar icons (emojis → SVG), date format (&quot;Feb 7&quot; → &quot;7 Feb&quot;), unread bar color (green → blue), Next button color (red → green).</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Backup automation</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: Bundle script exists (`scripts/backup.sh`), but automated GDrive cadence and CI alerting for failures are not set up.</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Mentions tab content</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: Tab exists but shows &quot;No mentions yet&quot; — needs mention indexing from blip content.</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Tasks tab filters</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">: Tab shows tasks but lacks the &quot;All 68 | No date 14 | With date&quot; filter buttons.</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details></div>
-  </details><details class="fc-cat">
-    <summary class="fc-cat-summary">
-      <span class="fc-chev">▸</span>
       <span class="fc-cat-title">4. Real-time Collaboration</span>
-      <span class="fc-cat-count">18</span>
+      <span class="fc-cat-count" title="18 visually-testable / 18 total">18<span style="color:var(--gray);opacity:0.6">/18</span></span>
       <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:16.67%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:83.33%"></span></span>
       <span class="fc-cat-counts">
         <span class="fc-chip fc-chip-pass">3✓</span>
         
         
         <span class="fc-chip fc-chip-uncov">15○</span>
+        
       </span>
       <span class="fc-cat-pct" style="color:var(--red)">17%</span>
     </summary>
@@ -3317,15 +3033,16 @@
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-cat-title">12. Mobile &amp; PWA</span>
-      <span class="fc-cat-count">23</span>
-      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:43.48%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:56.52%"></span></span>
+      <span class="fc-cat-count" title="22 visually-testable / 23 total">22<span style="color:var(--gray);opacity:0.6">/23</span></span>
+      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:39.13%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:56.52%"></span><span style="display:inline-block;height:6px;background:repeating-linear-gradient(45deg,#3a4660,#3a4660 3px,#2a3344 3px,#2a3344 6px);width:4.35%"></span></span>
       <span class="fc-cat-counts">
-        <span class="fc-chip fc-chip-pass">10✓</span>
+        <span class="fc-chip fc-chip-pass">9✓</span>
         
         
         <span class="fc-chip fc-chip-uncov">13○</span>
+        <span class="fc-chip fc-chip-na" title="Non-visual: backend / infra / deploy. Excluded from coverage %.">1∅</span>
       </span>
-      <span class="fc-cat-pct" style="color:var(--amber)">43%</span>
+      <span class="fc-cat-pct" style="color:var(--amber)">39%</span>
     </summary>
     <div class="fc-cat-body"><details class="fc-feat">
     <summary class="fc-feat-summary">
@@ -3428,33 +3145,6 @@
     </summary>
     <div class="fc-feat-body">
       <div class="fc-feat-desc">Done (new) · orig: None · now: `mobile/BottomSheet.tsx`</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/042-mobile-authenticated-topic-navigation.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/042-mobile-authenticated-topic-navigation.png" alt="042-mobile-authenticated-topic-navigation.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>mobile authenticated topic navigation</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.</div>
-      <div class="cap-gate"><code>first-pass: selector=&quot;.rizzoma-layout&quot; count=1 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Mobile &amp; PWA: responsive layout</span><span class="cap-ref-tag">Mobile &amp; PWA: mobile navigation</span></div>
-    </div>
-  </div><div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/043-mobile-topic-content-view.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/043-mobile-topic-content-view.png" alt="043-mobile-topic-content-view.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>mobile topic content view</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Mobile viewport renders topic content without horizontal overflow and uses mobile layout classes.</div>
-      <div class="cap-gate"><code>first-pass: selector=&quot;.mobile-view-content .rizzoma-topic-detail&quot; count=1 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Mobile &amp; PWA: responsive layout</span><span class="cap-ref-tag">Mobile &amp; PWA: mobile topic view</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
-      <span class="fc-feat-name">Mobile layout (device validation on real devices)</span>
-      <span class="fc-feat-meta">2 captures</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done (Pixel 9 Pro XL / Chrome) · orig: [orig](screenshots/260224-2343-rizzoma-live-reference/featur… · now: `screenshots/260424-2319-real-device-pixel9proxl-local/`</div>
       <div class="cap-detail">
     <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/042-mobile-authenticated-topic-navigation.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/042-mobile-authenticated-topic-navigation.png" alt="042-mobile-authenticated-topic-navigation.png" loading="lazy"/></a></div>
     <div class="cap-meta">
@@ -3716,18 +3406,30 @@
       <div class="fc-feat-desc">`src/tests/client.mobilePwa.test.tsx` covers breakpoints, mobile/tablet/desktop hooks, manifest icons, service-worker strategies, left/right swipe callbacks, pull-to-refresh threshold, View Transition fallback, offline queue persistence/max-3 retry, and BottomSheet open/dismiss/Escape behavior.</div>
       <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
     </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Mobile layout (device validation on real devices)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done (Pixel 9 Pro XL / Chrome) · orig: [orig](screenshots/260224-2343-rizzoma-live-reference/featur… · now: `screenshots/260424-2319-real-device-pixel9proxl-local/`</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
   </details></div>
   </details><details class="fc-cat">
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-cat-title">6. Selection Annotation System</span>
-      <span class="fc-cat-count">13</span>
+      <span class="fc-cat-count" title="13 visually-testable / 13 total">13<span style="color:var(--gray);opacity:0.6">/13</span></span>
       <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:7.69%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:92.31%"></span></span>
       <span class="fc-cat-counts">
         <span class="fc-chip fc-chip-pass">1✓</span>
         
         
         <span class="fc-chip fc-chip-uncov">12○</span>
+        
       </span>
       <span class="fc-cat-pct" style="color:var(--red)">8%</span>
     </summary>
@@ -3887,13 +3589,14 @@
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-cat-title">3. Rich Text Editor</span>
-      <span class="fc-cat-count">22</span>
+      <span class="fc-cat-count" title="22 visually-testable / 22 total">22<span style="color:var(--gray);opacity:0.6">/22</span></span>
       <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:50.00%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:50.00%"></span></span>
       <span class="fc-cat-counts">
         <span class="fc-chip fc-chip-pass">11✓</span>
         
         
         <span class="fc-chip fc-chip-uncov">11○</span>
+        
       </span>
       <span class="fc-cat-pct" style="color:var(--amber)">50%</span>
     </summary>
@@ -4272,13 +3975,14 @@
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-cat-title">7. File Uploads &amp; Storage</span>
-      <span class="fc-cat-count">11</span>
-      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:18.18%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:81.82%"></span></span>
+      <span class="fc-cat-count" title="9 visually-testable / 11 total">9<span style="color:var(--gray);opacity:0.6">/11</span></span>
+      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:18.18%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:63.64%"></span><span style="display:inline-block;height:6px;background:repeating-linear-gradient(45deg,#3a4660,#3a4660 3px,#2a3344 3px,#2a3344 6px);width:18.18%"></span></span>
       <span class="fc-cat-counts">
         <span class="fc-chip fc-chip-pass">2✓</span>
         
         
-        <span class="fc-chip fc-chip-uncov">9○</span>
+        <span class="fc-chip fc-chip-uncov">7○</span>
+        <span class="fc-chip fc-chip-na" title="Non-visual: backend / infra / deploy. Excluded from coverage %.">2∅</span>
       </span>
       <span class="fc-cat-pct" style="color:var(--red)">18%</span>
     </summary>
@@ -4346,33 +4050,11 @@
     <summary class="fc-feat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">ClamAV virus scanning (optional)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done (new) · orig: None · now: Optional Docker service</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
       <span class="fc-feat-name">Storage backends: local filesystem</span>
       <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
     </summary>
     <div class="fc-feat-body">
       <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Storage backends: AWS S3 / MinIO</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done (new) · orig: None · now: Configurable</div>
       <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
     </div>
   </details><details class="fc-feat">
@@ -4419,531 +4101,26 @@
       <div class="fc-feat-desc">`src/static/js/getUserMediaAdapter.js` now normalizes constraints (including simple strings), prefers modern `mediaDevices.getUserMedia`, detects display media support, exposes permission status helpers and device enumeration, and retains legacy fallbacks. Covered by `src/tests/client.getUserMediaAdapter.test.ts`.</div>
       <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
     </div>
-  </details></div>
-  </details><details class="fc-cat">
-    <summary class="fc-cat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-cat-title">19. Performance Optimizations</span>
-      <span class="fc-cat-count">8</span>
-      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:100.00%"></span></span>
-      <span class="fc-cat-counts">
-        
-        
-        
-        <span class="fc-chip fc-chip-uncov">8○</span>
-      </span>
-      <span class="fc-cat-pct" style="color:var(--gray)">0%</span>
-    </summary>
-    <div class="fc-cat-body"><details class="fc-feat">
+  </details><details class="fc-feat">
     <summary class="fc-feat-summary">
       <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Blips-by-wave query (18,000ms → 29ms, 600x)</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">ClamAV virus scanning (optional)</span>
       <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
     </summary>
     <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-desc">Done (new) · orig: None · now: Optional Docker service</div>
       <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
     </div>
   </details><details class="fc-feat">
     <summary class="fc-feat-summary">
       <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Topics query (8-12s → 181ms, 40x)</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Storage backends: AWS S3 / MinIO</span>
       <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
     </summary>
     <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Unread counts (N+1 → batch query, ~20x)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Inline visibility (20+ calls → perf mode skip)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Bcrypt (10 → 2 rounds in dev, ~60x)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Perf harness (5k-blip seed, metrics, screenshots)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">CI perf budgets (`RIZZOMA_PERF_ENFORCE_BUDGETS=1`)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Bundle size (~5MB → ~500KB, 90% reduction)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details></div>
-  </details><details class="fc-cat">
-    <summary class="fc-cat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-cat-title">1. Authentication &amp; Security</span>
-      <span class="fc-cat-count">12</span>
-      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:50.00%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:50.00%"></span></span>
-      <span class="fc-cat-counts">
-        <span class="fc-chip fc-chip-pass">6✓</span>
-        
-        
-        <span class="fc-chip fc-chip-uncov">6○</span>
-      </span>
-      <span class="fc-cat-pct" style="color:var(--amber)">50%</span>
-    </summary>
-    <div class="fc-cat-body"><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
-      <span class="fc-feat-name">User registration (email/password)</span>
-      <span class="fc-feat-meta">2 captures</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
-      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
-    </div>
-  </div><div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/002-logged-out-sign-up-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/002-logged-out-sign-up-form.png" alt="002-logged-out-sign-up-form.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>logged out sign up form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Sign-up link opens the registration form state.</div>
-      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Authentication: registration entry</span><span class="cap-ref-tag">Authentication: signup form</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
-      <span class="fc-feat-name">User login (rate-limited, secure cookies)</span>
-      <span class="fc-feat-meta">1 capture</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: [orig](screenshots/comparison-analysis/orig-02-login-modal.p… · now: [new](screenshots/refactor-2026-01-18/modern-login-modal.png…</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
-      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
-      <span class="fc-feat-name">Google OAuth 2.0</span>
-      <span class="fc-feat-meta">1 capture</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
-      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
-      <span class="fc-feat-name">Facebook OAuth</span>
-      <span class="fc-feat-meta">1 capture</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
-      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
-      <span class="fc-feat-name">Microsoft OAuth (hand-rolled, Graph API)</span>
-      <span class="fc-feat-meta">1 capture</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
-      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
-      <span class="fc-feat-name">Twitter OAuth</span>
-      <span class="fc-feat-meta">1 capture</span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: Supported · now: OAuth2 PKCE via `/api/auth/twitter`</div>
-      <div class="cap-detail">
-    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
-    <div class="cap-meta">
-      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
-      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
-      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
-      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
-    </div>
-  </div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">SAML 2.0 (`@node-saml/node-saml` v5)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Session management (Redis 5)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">CSRF protection (double-submit token)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Permission guards (`requireAuth` middleware)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Zod request validation</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done (new) · orig: None · now: All endpoints</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Rate limiting (per-route)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done (new) · orig: None · now: 100 req/15min (register), 30 req/10min (login)</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details></div>
-  </details><details class="fc-cat">
-    <summary class="fc-cat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-cat-title">18. Testing &amp; Quality</span>
-      <span class="fc-cat-count">6</span>
-      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:100.00%"></span></span>
-      <span class="fc-cat-counts">
-        
-        
-        
-        <span class="fc-chip fc-chip-uncov">6○</span>
-      </span>
-      <span class="fc-cat-pct" style="color:var(--gray)">0%</span>
-    </summary>
-    <div class="fc-cat-body"><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Test framework (Vitest v4)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Unit tests: 134 across 44 files</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: ~10 tests · now: 134 tests</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">E2E: toolbar inline smoke (Playwright)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">E2E: follow-the-green multi-user smoke</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Health checks CI job (`npm run test:health`)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Browser smokes CI job (snapshots + artifacts)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details></div>
-  </details><details class="fc-cat">
-    <summary class="fc-cat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-cat-title">16. Database &amp; Storage</span>
-      <span class="fc-cat-count">5</span>
-      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:100.00%"></span></span>
-      <span class="fc-cat-counts">
-        
-        
-        
-        <span class="fc-chip fc-chip-uncov">5○</span>
-      </span>
-      <span class="fc-cat-pct" style="color:var(--gray)">0%</span>
-    </summary>
-    <div class="fc-cat-body"><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">CouchDB client (nano v10)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Typed document schemas (wave, blip, topic, comment, read, etc.)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">CouchDB Mango indexes (centralized at startup)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Redis sessions (v5 + connect-redis v7)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">CouchDB view deploy scripts</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details></div>
-  </details><details class="fc-cat">
-    <summary class="fc-cat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-cat-title">17. API Architecture</span>
-      <span class="fc-cat-count">5</span>
-      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:100.00%"></span></span>
-      <span class="fc-cat-counts">
-        
-        
-        
-        <span class="fc-chip fc-chip-uncov">5○</span>
-      </span>
-      <span class="fc-cat-pct" style="color:var(--gray)">0%</span>
-    </summary>
-    <div class="fc-cat-body"><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Express 5 (async/await, Zod validation)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Middleware: request ID, logging, CORS, Helmet, compression</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Middleware: rate limiting, session, CSRF, auth, error handler</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Route files (auth, topics, waves, blips, comments, uploads, editor, etc.)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done · orig: — · now: —</div>
-      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
-    </div>
-  </details><details class="fc-feat">
-    <summary class="fc-feat-summary">
-      <span class="fc-chev">▸</span>
-      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
-      <span class="fc-feat-name">Health endpoint (`GET /api/health`)</span>
-      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
-    </summary>
-    <div class="fc-feat-body">
-      <div class="fc-feat-desc">Done (new) · orig: None · now: Inline-comments + uploads checks</div>
+      <div class="fc-feat-desc">Done (new) · orig: None · now: Configurable</div>
       <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
     </div>
   </details></div>
@@ -4951,13 +4128,14 @@
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-cat-title">11. Email Notifications</span>
-      <span class="fc-cat-count">6</span>
+      <span class="fc-cat-count" title="6 visually-testable / 6 total">6<span style="color:var(--gray);opacity:0.6">/6</span></span>
       <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:33.33%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:66.67%"></span></span>
       <span class="fc-cat-counts">
         <span class="fc-chip fc-chip-pass">2✓</span>
         
         
         <span class="fc-chip fc-chip-uncov">4○</span>
+        
       </span>
       <span class="fc-cat-pct" style="color:var(--amber)">33%</span>
     </summary>
@@ -5064,13 +4242,14 @@
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-cat-title">8. Search &amp; Recovery</span>
-      <span class="fc-cat-count">5</span>
+      <span class="fc-cat-count" title="5 visually-testable / 5 total">5<span style="color:var(--gray);opacity:0.6">/5</span></span>
       <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:20.00%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:80.00%"></span></span>
       <span class="fc-cat-counts">
         <span class="fc-chip fc-chip-pass">1✓</span>
         
         
         <span class="fc-chip fc-chip-uncov">4○</span>
+        
       </span>
       <span class="fc-cat-pct" style="color:var(--red)">20%</span>
     </summary>
@@ -5142,13 +4321,14 @@
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-cat-title">10. History &amp; Playback</span>
-      <span class="fc-cat-count">13</span>
+      <span class="fc-cat-count" title="13 visually-testable / 13 total">13<span style="color:var(--gray);opacity:0.6">/13</span></span>
       <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:76.92%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:23.08%"></span></span>
       <span class="fc-cat-counts">
         <span class="fc-chip fc-chip-pass">10✓</span>
         
         
         <span class="fc-chip fc-chip-uncov">3○</span>
+        
       </span>
       <span class="fc-cat-pct" style="color:var(--green)">77%</span>
     </summary>
@@ -5436,13 +4616,14 @@
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
       <span class="fc-cat-title">9. Blip Operations (Gear Menu)</span>
-      <span class="fc-cat-count">9</span>
+      <span class="fc-cat-count" title="9 visually-testable / 9 total">9<span style="color:var(--gray);opacity:0.6">/9</span></span>
       <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:77.78%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:22.22%"></span></span>
       <span class="fc-cat-counts">
         <span class="fc-chip fc-chip-pass">7✓</span>
         
         
         <span class="fc-chip fc-chip-uncov">2○</span>
+        
       </span>
       <span class="fc-cat-pct" style="color:var(--green)">78%</span>
     </summary>
@@ -5669,11 +4850,216 @@
   </details><details class="fc-cat">
     <summary class="fc-cat-summary">
       <span class="fc-chev">▸</span>
+      <span class="fc-cat-title">1. Authentication &amp; Security</span>
+      <span class="fc-cat-count" title="7 visually-testable / 12 total">7<span style="color:var(--gray);opacity:0.6">/12</span></span>
+      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:50.00%"></span><span style="display:inline-block;height:6px;background:rgba(255,255,255,0.10);width:8.33%"></span><span style="display:inline-block;height:6px;background:repeating-linear-gradient(45deg,#3a4660,#3a4660 3px,#2a3344 3px,#2a3344 6px);width:41.67%"></span></span>
+      <span class="fc-cat-counts">
+        <span class="fc-chip fc-chip-pass">6✓</span>
+        
+        
+        <span class="fc-chip fc-chip-uncov">1○</span>
+        <span class="fc-chip fc-chip-na" title="Non-visual: backend / infra / deploy. Excluded from coverage %.">5∅</span>
+      </span>
+      <span class="fc-cat-pct" style="color:var(--amber)">50%</span>
+    </summary>
+    <div class="fc-cat-body"><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
+      <span class="fc-feat-name">User registration (email/password)</span>
+      <span class="fc-feat-meta">2 captures</span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
+      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
+    </div>
+  </div><div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/002-logged-out-sign-up-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/002-logged-out-sign-up-form.png" alt="002-logged-out-sign-up-form.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>logged out sign up form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">Sign-up link opens the registration form state.</div>
+      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Authentication: registration entry</span><span class="cap-ref-tag">Authentication: signup form</span></div>
+    </div>
+  </div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
+      <span class="fc-feat-name">User login (rate-limited, secure cookies)</span>
+      <span class="fc-feat-meta">1 capture</span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: [orig](screenshots/comparison-analysis/orig-02-login-modal.p… · now: [new](screenshots/refactor-2026-01-18/modern-login-modal.png…</div>
+      <div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
+      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
+    </div>
+  </div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
+      <span class="fc-feat-name">Google OAuth 2.0</span>
+      <span class="fc-feat-meta">1 capture</span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
+      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
+    </div>
+  </div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
+      <span class="fc-feat-name">Facebook OAuth</span>
+      <span class="fc-feat-meta">1 capture</span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
+      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
+    </div>
+  </div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
+      <span class="fc-feat-name">Microsoft OAuth (hand-rolled, Graph API)</span>
+      <span class="fc-feat-meta">1 capture</span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
+      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
+    </div>
+  </div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--green);border-color:var(--green)">✓</span>
+      <span class="fc-feat-name">Twitter OAuth</span>
+      <span class="fc-feat-meta">1 capture</span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: Supported · now: OAuth2 PKCE via `/api/auth/twitter`</div>
+      <div class="cap-detail">
+    <div class="cap-thumb"><a href="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" target="_blank" rel="noopener"><img src="screenshots/260507-FULL-VERIFY-sweep-feature-sweep/001-logged-out-sign-in-form.png" alt="001-logged-out-sign-in-form.png" loading="lazy"/></a></div>
+    <div class="cap-meta">
+      <div class="cap-label"><strong>logged out sign in form</strong> · <span style="color:var(--green);font-weight:700">PASS</span></div>
+      <div class="cap-assertion">Unauthenticated session shows OAuth and email sign-in entry points.</div>
+      <div class="cap-gate"><code>first-pass: selector=&quot;input[type=&quot;email&quot;]&quot; count=1 need≥1</code></div>
+      <div class="cap-refs"><span class="cap-ref-tag">Authentication: login modal</span><span class="cap-ref-tag">Authentication: email login</span><span class="cap-ref-tag">Authentication: OAuth buttons</span></div>
+    </div>
+  </div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:var(--gray);border-color:var(--gray)">○</span>
+      <span class="fc-feat-name">SAML 2.0 (`@node-saml/node-saml` v5)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Session management (Redis 5)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">CSRF protection (double-submit token)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Permission guards (`requireAuth` middleware)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Zod request validation</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done (new) · orig: None · now: All endpoints</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Rate limiting (per-route)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done (new) · orig: None · now: 100 req/15min (register), 30 req/10min (login)</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details></div>
+  </details><details class="fc-cat">
+    <summary class="fc-cat-summary">
+      <span class="fc-chev">▸</span>
       <span class="fc-cat-title">15. Inline Widgets &amp; Styling</span>
-      <span class="fc-cat-count">8</span>
+      <span class="fc-cat-count" title="8 visually-testable / 8 total">8<span style="color:var(--gray);opacity:0.6">/8</span></span>
       <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:var(--green);width:100.00%"></span></span>
       <span class="fc-cat-counts">
         <span class="fc-chip fc-chip-pass">8✓</span>
+        
         
         
         
@@ -5863,6 +5249,603 @@
       <div class="cap-refs"><span class="cap-ref-tag">Rich Text: gadget palette</span><span class="cap-ref-tag">Inline Widgets: gadget insert shortcuts</span></div>
     </div>
   </div>
+    </div>
+  </details></div>
+  </details><details class="fc-cat">
+    <summary class="fc-cat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-cat-title">16. Database &amp; Storage</span>
+      <span class="fc-cat-count" title="0 visually-testable / 5 total">0<span style="color:var(--gray);opacity:0.6">/5</span></span>
+      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:repeating-linear-gradient(45deg,#3a4660,#3a4660 3px,#2a3344 3px,#2a3344 6px);width:100.00%"></span></span>
+      <span class="fc-cat-counts">
+        
+        
+        
+        
+        <span class="fc-chip fc-chip-na" title="Non-visual: backend / infra / deploy. Excluded from coverage %.">5∅</span>
+      </span>
+      <span class="fc-cat-pct" style="color:var(--gray)">0%</span>
+    </summary>
+    <div class="fc-cat-body"><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">CouchDB client (nano v10)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Typed document schemas (wave, blip, topic, comment, read, etc.)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">CouchDB Mango indexes (centralized at startup)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Redis sessions (v5 + connect-redis v7)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">CouchDB view deploy scripts</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details></div>
+  </details><details class="fc-cat">
+    <summary class="fc-cat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-cat-title">17. API Architecture</span>
+      <span class="fc-cat-count" title="0 visually-testable / 5 total">0<span style="color:var(--gray);opacity:0.6">/5</span></span>
+      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:repeating-linear-gradient(45deg,#3a4660,#3a4660 3px,#2a3344 3px,#2a3344 6px);width:100.00%"></span></span>
+      <span class="fc-cat-counts">
+        
+        
+        
+        
+        <span class="fc-chip fc-chip-na" title="Non-visual: backend / infra / deploy. Excluded from coverage %.">5∅</span>
+      </span>
+      <span class="fc-cat-pct" style="color:var(--gray)">0%</span>
+    </summary>
+    <div class="fc-cat-body"><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Express 5 (async/await, Zod validation)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Middleware: request ID, logging, CORS, Helmet, compression</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Middleware: rate limiting, session, CSRF, auth, error handler</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Route files (auth, topics, waves, blips, comments, uploads, editor, etc.)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Health endpoint (`GET /api/health`)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done (new) · orig: None · now: Inline-comments + uploads checks</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details></div>
+  </details><details class="fc-cat">
+    <summary class="fc-cat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-cat-title">18. Testing &amp; Quality</span>
+      <span class="fc-cat-count" title="0 visually-testable / 6 total">0<span style="color:var(--gray);opacity:0.6">/6</span></span>
+      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:repeating-linear-gradient(45deg,#3a4660,#3a4660 3px,#2a3344 3px,#2a3344 6px);width:100.00%"></span></span>
+      <span class="fc-cat-counts">
+        
+        
+        
+        
+        <span class="fc-chip fc-chip-na" title="Non-visual: backend / infra / deploy. Excluded from coverage %.">6∅</span>
+      </span>
+      <span class="fc-cat-pct" style="color:var(--gray)">0%</span>
+    </summary>
+    <div class="fc-cat-body"><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Test framework (Vitest v4)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Unit tests: 134 across 44 files</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: ~10 tests · now: 134 tests</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">E2E: toolbar inline smoke (Playwright)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">E2E: follow-the-green multi-user smoke</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Health checks CI job (`npm run test:health`)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Browser smokes CI job (snapshots + artifacts)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details></div>
+  </details><details class="fc-cat">
+    <summary class="fc-cat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-cat-title">19. Performance Optimizations</span>
+      <span class="fc-cat-count" title="0 visually-testable / 8 total">0<span style="color:var(--gray);opacity:0.6">/8</span></span>
+      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:repeating-linear-gradient(45deg,#3a4660,#3a4660 3px,#2a3344 3px,#2a3344 6px);width:100.00%"></span></span>
+      <span class="fc-cat-counts">
+        
+        
+        
+        
+        <span class="fc-chip fc-chip-na" title="Non-visual: backend / infra / deploy. Excluded from coverage %.">8∅</span>
+      </span>
+      <span class="fc-cat-pct" style="color:var(--gray)">0%</span>
+    </summary>
+    <div class="fc-cat-body"><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Blips-by-wave query (18,000ms → 29ms, 600x)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Topics query (8-12s → 181ms, 40x)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Unread counts (N+1 → batch query, ~20x)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Inline visibility (20+ calls → perf mode skip)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Bcrypt (10 → 2 rounds in dev, ~60x)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Perf harness (5k-blip seed, metrics, screenshots)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">CI perf budgets (`RIZZOMA_PERF_ENFORCE_BUDGETS=1`)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Bundle size (~5MB → ~500KB, 90% reduction)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details></div>
+  </details><details class="fc-cat">
+    <summary class="fc-cat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-cat-title">20. DevOps &amp; Deployment</span>
+      <span class="fc-cat-count" title="0 visually-testable / 23 total">0<span style="color:var(--gray);opacity:0.6">/23</span></span>
+      <span class="fc-mini-bar"><span style="display:inline-block;height:6px;background:repeating-linear-gradient(45deg,#3a4660,#3a4660 3px,#2a3344 3px,#2a3344 6px);width:100.00%"></span></span>
+      <span class="fc-cat-counts">
+        
+        
+        
+        
+        <span class="fc-chip fc-chip-na" title="Non-visual: backend / infra / deploy. Excluded from coverage %.">23∅</span>
+      </span>
+      <span class="fc-cat-pct" style="color:var(--gray)">0%</span>
+    </summary>
+    <div class="fc-cat-body"><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Docker Compose (CouchDB, Redis, optional ClamAV)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Dockerfile (production image)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">CI/CD: unit tests (GitHub Actions)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">CI/CD: E2E Playwright</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">CI/CD: health checks job</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">CI/CD: perf budgets job</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Feature flags (`FEAT_ALL`, `EDITOR_ENABLE`, per-feature)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Backup scripts (bundle)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Backup automation (GDrive cadence)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Not started · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">getUserMedia adapter (modern constraints, permissions)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Done · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Legacy assets disposition (jQuery-era static)</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">Not started · orig: — · now: —</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Perf/resilience sweeps</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: large waves/blips stress testing, inline comments under load, realtime updates at scale; run `npm run perf:harness` regularly, document thresholds/limits, add alerts/budgets.</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Full-render scale-up</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: 100-blip public-prod full-render baseline now passes; rerun at 500/1000 blips, compare against lite mode, and investigate optional absolute-TTF drift.</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Visual sweep hardening</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: `npm run visual:sweep` and `npm run visual:coverage` now produce a broad fresh feature sweep plus a row-level coverage matrix for all 161 screenshot-valid rows. The current branch verdict is 161 green / 0 orange / 0 red after physical Android-device evidence.</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Mobile device validation</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: PWA infrastructure, runtime tests, physical Pixel 9 Pro XL / Chrome validation, and public-VPS Pixel Chrome cursor-inline smoke are complete for the branch. iPhone Safari is still a separate risk.</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Legacy reference disposition</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: All active code is TypeScript (zero CoffeeScript in `src/`). The `original-rizzoma-src/` and `original-rizzoma/` directories contain legacy reference code — decide whether to keep, archive, or remove.</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Gadget iframe rendering</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: Gadget palette (11 types) works, but selected gadgets render as URL prompts/placeholders, not interactive iframes (YouTube, Yes/No/Maybe poll, etc.).</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">~~Playback timeline~~</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: DONE — `WavePlaybackModal.tsx` provides wave-level playback with split pane, color-coded timeline dots, date jump, per-blip diff, cluster fast-forward, and keyboard shortcuts. Per-blip playback also available via `BlipHistoryModal.tsx`.</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Gear menu copy/paste variants</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: Core gear actions work (reply, edit, delete, duplicate, cut/paste, copy link, history). The original&#39;s &quot;copy reply&quot; / &quot;paste cursor&quot; variants are not yet reimplemented.</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Visual polish</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: Nav panel icons (emojis → SVG sprites), toolbar icons (emojis → SVG), date format (&quot;Feb 7&quot; → &quot;7 Feb&quot;), unread bar color (green → blue), Next button color (red → green).</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Backup automation</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: Bundle script exists (`scripts/backup.sh`), but automated GDrive cadence and CI alerting for failures are not set up.</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Mentions tab content</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: Tab exists but shows &quot;No mentions yet&quot; — needs mention indexing from blip content.</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
+    </div>
+  </details><details class="fc-feat">
+    <summary class="fc-feat-summary">
+      <span class="fc-chev">▸</span>
+      <span class="fc-feat-badge" style="color:#7080a0;border-color:#7080a0">∅</span>
+      <span class="fc-feat-name">Tasks tab filters</span>
+      <span class="fc-feat-meta"><span style="color:var(--gray)">no capture</span></span>
+    </summary>
+    <div class="fc-feat-body">
+      <div class="fc-feat-desc">: Tab shows tasks but lacks the &quot;All 68 | No date 14 | With date&quot; filter buttons.</div>
+      <div class="fc-feat-empty">No sweep capture currently targets this feature. Consider adding a capture() call with assertFn in scripts/visual-feature-sweep.mjs.</div>
     </div>
   </details></div>
   </details>
@@ -6238,104 +6221,104 @@
   <div class="recent-commits">
 
     <div class="commit-row">
+      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/ada01fd1af9194d5c7452785ad6c5cf915a7d03b" target="_blank" rel="noopener">ada01fd1</a></span>
+      <span class="commit-subject">pm(visual): Feature Sweep — sort by FAIL %, all collapsed, merge dup sections</span>
+      <span class="commit-when">66 minutes ago</span>
+    </div>
+    <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/bb97d87d01f0a6b0dfedb15ddeee15a4cdf51a28" target="_blank" rel="noopener">bb97d87d</a></span>
       <span class="commit-subject">pm(visual): Feature Sweep tab — fractal accordion (Category → Feature → Capture)</span>
-      <span class="commit-when">5 minutes ago</span>
+      <span class="commit-when">72 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/3258504da9896f58d2abe08f902f7b4aab23a3ef" target="_blank" rel="noopener">3258504d</a></span>
       <span class="commit-subject">fix(pm): parse the Comprehensive Feature Comparison table — 83 → 283 features</span>
-      <span class="commit-when">33 minutes ago</span>
+      <span class="commit-when">2 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/968e5532273db1fb31186b8374b8a0d993a4194c" target="_blank" rel="noopener">968e5532</a></span>
       <span class="commit-subject">pm(visual): tab-based layout — Live activity / Dev Phases / Feature sweep</span>
-      <span class="commit-when">39 minutes ago</span>
+      <span class="commit-when">2 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/f882051211cfd4b3ea889e39d4d09e1504936132" target="_blank" rel="noopener">f8820512</a></span>
       <span class="commit-subject">pm(visual): redesign feature coverage as compact category strips + overall bar</span>
-      <span class="commit-when">58 minutes ago</span>
+      <span class="commit-when">2 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/9d7b7b6716cfc0d037209a3399b584e765c7a7a3" target="_blank" rel="noopener">9d7b7b67</a></span>
       <span class="commit-subject">fix(pm): feature-matrix coverage matcher — items now show real PASS/FAIL badges</span>
-      <span class="commit-when">64 minutes ago</span>
+      <span class="commit-when">2 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/d1db628be8fded66dbfd12f1c6b903318d217058" target="_blank" rel="noopener">d1db628b</a></span>
       <span class="commit-subject">sweep(260507): full visual feature sweep against dev VPS — 43/45 gates PASS</span>
-      <span class="commit-when">2 hours ago</span>
+      <span class="commit-when">3 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/5f02c5cd1bb3b1cd5b8d717ae93cba297a66755c" target="_blank" rel="noopener">5f02c5cd</a></span>
       <span class="commit-subject">verify(blip): Bug A &amp; B PASS on live VPS dev container — 430ms / 318ms</span>
-      <span class="commit-when">2 hours ago</span>
+      <span class="commit-when">3 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/a6079ac5c3d9aca8fb9ba453eb4999ea2c5ee54a" target="_blank" rel="noopener">a6079ac5</a></span>
       <span class="commit-subject">perf(blip): Bug A — drop the 600ms Ctrl+Enter idle timer; await topic reload directly</span>
-      <span class="commit-when">3 hours ago</span>
+      <span class="commit-when">4 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/6a1220bd835e3667a0233f11b5bc2ddd9d84cf6c" target="_blank" rel="noopener">6a1220bd</a></span>
       <span class="commit-subject">fix(blip): Bug B — nested Ctrl+Enter at depth 2+ now mounts new child editor</span>
-      <span class="commit-when">3 hours ago</span>
+      <span class="commit-when">4 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/f40b2a7bc88c8c0be722012ced18fdd3e0a9a915" target="_blank" rel="noopener">f40b2a7b</a></span>
       <span class="commit-subject">docs: NATIVE_RENDER_ARCHITECTURE — section 9 expanded with visual-feature-sweep + gate semantics</span>
-      <span class="commit-when">3 hours ago</span>
+      <span class="commit-when">5 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/d4638019831ad4e176925f3901c8c18b61d02ee8" target="_blank" rel="noopener">d4638019</a></span>
       <span class="commit-subject">visual-feature-sweep: PROGRAMMATIC gate verification (was descriptive-only)</span>
-      <span class="commit-when">3 hours ago</span>
+      <span class="commit-when">5 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/24344afdc547e84ad3c85a9ef7d2e5aa75102fbd" target="_blank" rel="noopener">24344afd</a></span>
       <span class="commit-subject">FULL VISUAL SWEEP (round 3): 10/10 depths nest, 9/10 gates pass, d2 timing-flake</span>
-      <span class="commit-when">6 hours ago</span>
+      <span class="commit-when">7 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/032886bdda22ab8e997cf9fac30239fded92b3d9" target="_blank" rel="noopener">032886bd</a></span>
       <span class="commit-subject">docs: clarify NATIVE_RENDER_ARCHITECTURE — TipTap + React stay; only the per-blip portal pattern replaced</span>
-      <span class="commit-when">9 hours ago</span>
+      <span class="commit-when">11 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/be04dba7d8e10905b0d430d797a1e8f899c5937e" target="_blank" rel="noopener">be04dba7</a></span>
       <span class="commit-subject">docs: NATIVE_RENDER_ARCHITECTURE.md — onboarding doc for src/client/native/</span>
-      <span class="commit-when">10 hours ago</span>
+      <span class="commit-when">11 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/dd93fb9a848c39f7f505d66b101a5d5f0538141d" target="_blank" rel="noopener">dd93fb9a</a></span>
       <span class="commit-subject">Phase 5 (#56): mark non-destructive deliverables done; deletes DEFERRED</span>
-      <span class="commit-when">10 hours ago</span>
+      <span class="commit-when">11 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/b8b608fc2ecbe26d550ed83b610d80003d55e17f" target="_blank" rel="noopener">b8b608fc</a></span>
       <span class="commit-subject">Phase 4 (#55) DONE: unread state + mobile gestures + sweep</span>
-      <span class="commit-when">10 hours ago</span>
+      <span class="commit-when">11 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/eb5fcd920979fbe76c8b4dddbe283cd9e9d48c19" target="_blank" rel="noopener">eb5fcd92</a></span>
       <span class="commit-subject">Phase 4 (#55) chunk: tiptap-adapter.ts + 3 deliverables + mtime-WIP</span>
-      <span class="commit-when">10 hours ago</span>
+      <span class="commit-when">11 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/303cafe9ffab2bf1a0480a6d6fb7127bc72ae368" target="_blank" rel="noopener">303cafe9</a></span>
       <span class="commit-subject">Revert &quot;PM HTML: dark text on light bg — high contrast for screen + print&quot;</span>
-      <span class="commit-when">10 hours ago</span>
+      <span class="commit-when">11 hours ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/5067d099a1d0136b1f9de5802f17020b24ed2908" target="_blank" rel="noopener">5067d099</a></span>
       <span class="commit-subject">PM HTML: dark text on light bg — high contrast for screen + print</span>
-      <span class="commit-when">10 hours ago</span>
-    </div>
-    <div class="commit-row">
-      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/584f888033022a4ba2d60c4d4b3662ddb83c2778" target="_blank" rel="noopener">584f8880</a></span>
-      <span class="commit-subject">Phase 4 (#55): per-blip gear menu w/ history button</span>
-      <span class="commit-when">12 hours ago</span>
+      <span class="commit-when">11 hours ago</span>
     </div>
   </div>
 </section>
