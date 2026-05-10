@@ -721,13 +721,16 @@ export function RizzomaBlip({
           window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
             detail: { threadId: newBlipId, parentId: blip.id },
           }));
-          // Two RAFs so the new RizzomaBlip mounts + registers its
-          // enter-edit-blip listener before we dispatch.
-          requestAnimationFrame(() => requestAnimationFrame(() => {
+          // Bug A perf fix (2026-05-11): single RAF instead of two. The
+          // new RizzomaBlip mounts in the React commit triggered by the
+          // toggle event's setLocalExpandedInline; useEffect (which
+          // registers the enter-edit listener) runs synchronously after
+          // commit, so a single RAF is sufficient to land after both.
+          requestAnimationFrame(() => {
             window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
               detail: { blipId: newBlipId },
             }));
-          }));
+          });
         }
       } catch (error) {
         console.error('Error creating child blip:', error);
@@ -869,14 +872,23 @@ export function RizzomaBlip({
       setIsActive(true);
       if (blip.permissions.canEdit) {
         setIsEditing(true);
-        // Defer cursor focus until inlineEditor mounts (next tick after isEditing flips on).
+        // Bug A perf fix (2026-05-11): single RAF instead of two. The
+        // setIsEditing's effect commits + the inlineEditor's
+        // useEffect-mount runs in the same tick; one RAF lands after
+        // both. Falls back to a 50ms retry if the editor isn't ready
+        // yet — covers the rare case where TipTap's async initializer
+        // hasn't finished, without paying the second RAF cost in the
+        // common path.
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            const ed = inlineEditorRef.current;
-            if (ed) {
-              (ed.commands as any)['focus']('end');
-            }
-          });
+          const ed = inlineEditorRef.current;
+          if (ed) {
+            (ed.commands as any)['focus']('end');
+          } else {
+            setTimeout(() => {
+              const ed2 = inlineEditorRef.current;
+              if (ed2) (ed2.commands as any)['focus']('end');
+            }, 50);
+          }
         });
       }
     };

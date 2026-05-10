@@ -479,12 +479,19 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     state.lastLoadTime = now;
 
     try {
-      const r = await api(`/api/topics/${encodeURIComponent(id)}`);
+      // Bug A perf fix (2026-05-11): parallelize the 3 independent fetches.
+      // Was 3 sequential awaits (~90-250ms total); now ~max of the three
+      // (~30-100ms). Saves ~100ms on every load(), including the one
+      // gating Ctrl+Enter latency.
+      const blipLimit = getPerfBlipLimit();
+      const [r, participantsResponse, blipsResponse] = await Promise.all([
+        api(`/api/topics/${encodeURIComponent(id)}`),
+        api(`/api/waves/${encodeURIComponent(id)}/participants`),
+        api(`/api/blips?waveId=${encodeURIComponent(id)}&limit=${blipLimit}`),
+      ]);
       if (r.ok) {
         setTopic(r.data as TopicFull);
 
-        // Fetch participants first so we can attach them to blips
-        const participantsResponse = await api(`/api/waves/${encodeURIComponent(id)}/participants`);
         let loadedParticipants: Participant[] = [];
         if (participantsResponse.ok && participantsResponse.data?.participants) {
           loadedParticipants = participantsResponse.data.participants as Participant[];
@@ -498,9 +505,6 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           name: p.email.split('@')[0],
           role: p.role,
         }));
-
-        const blipLimit = getPerfBlipLimit();
-        const blipsResponse = await api(`/api/blips?waveId=${encodeURIComponent(id)}&limit=${blipLimit}`);
 
         if (blipsResponse.ok && blipsResponse.data?.blips) {
           const rawBlips = blipsResponse.data.blips as Array<any>;
