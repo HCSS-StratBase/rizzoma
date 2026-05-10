@@ -1,15 +1,15 @@
 {
   "topicId": "1a94345b983b3a1c78f2a2da1a02a5aa",
-  "testTime": "2026-05-06T23:05:39.275Z",
+  "testTime": "2026-05-10T23:17:58.476Z",
   "bugA": {
     "description": "First Ctrl+Enter latency (depth 1 mount)",
-    "elapsedMs": 430,
+    "elapsedMs": 322,
     "expectedAfterFix": "~300-400ms (was 1434ms)",
     "status": "PASS"
   },
   "bugB": {
     "description": "Second Ctrl+Enter latency (depth 2 nested mount)",
-    "elapsedMs": 318,
+    "elapsedMs": 320,
     "expectedAfterFix": "mounts new editor (was: failed silently)",
     "status": "PASS"
   },
