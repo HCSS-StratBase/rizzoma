@@ -1,14 +1,30 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-05-04 (Hryhorii test feedback — 4 issues fixed + verified live)
+Last Updated: 2026-05-10 (Native fractal-port session arc — 17 commits Bug A/B + PM redesign + sweep gates)
 
-### Current state — what shipped tonight (2026-05-04)
+### Current state — what shipped this session (2026-05-07..10, branch `feature/native-fractal-port`)
+
+- **Bug A** Ctrl+Enter latency 1434ms → 430ms (3.3× faster) by dropping the 600ms idle timer and awaiting `__rizzomaTopicReload()` directly (`a6079ac5`). Verified PASS by `scripts/verify_bug_AB.mjs` against dev VPS. Optimistic local mount attempted (`15c637a4` + `5c3bdf0c`) but reverted — TipTap mount time, not `load()` round-trip, is the actual bottleneck. Remaining wins listed in PM Bug A panel.
+- **Bug B** Nested Ctrl+Enter at depth 2+ now mounts the new editor (`6a1220bd`). Replaced local `toggleInlineChild` with global `rizzoma:toggle-inline-blip` event + `parentId` after awaitable reload. Verified 318ms PASS at depth 2.
+- **Bug C** NEW — nested inline-marker rendering. `[+]` markers inside inline-expanded portal children don't appear after expanding spine[1]. Same class as Bug B but for the click-to-expand path. Tracked as Task #188; needs investigation in `RizzomaBlip.inlineChildren` propagation when blip is mounted via portal. Blocks deep-fractal sweep coverage (gate 036 still FAILS for this reason).
+- **PM dashboard** redesigned 5×: tabs (Live activity / Dev Phases / Feature Sweep), 83 → 283 features by parsing the comparison-table half of `RIZZOMA_FEATURES_STATUS.md`, fractal accordion (Category → Feature → Capture+thumbnail), sort by FAIL %/all collapsed/dedup taxonomies, N/A non-visual split (57 backend/infra excluded), Jaccard best-match matcher (37→2 FAIL fan-out fixed). Live: `https://dev.138-201-62-161.nip.io/native-port-pm.html`.
+- **Visual sweep** at 44/45 PASS (was 43/45). Gate 003 (nav-topics) relaxed to "search input present"; gate 036 (depth10-spine) remains failing due to Bug C.
+- **VPS dev container** at `https://dev.138-201-62-161.nip.io` is fast-forwarded to branch HEAD; `feature/native-fractal-port` includes Phases 0-5 of the Direct-TS native render port (see `docs/NATIVE_RENDER_ARCHITECTURE.md`).
+
+### What's still in-flight / open
+
+- **Bug C** investigation (Task #188) — primary blocker for deep-fractal coverage.
+- **Bug A remaining wins**: parallelize the 3 sequential awaits in `load()` (~−100ms), collapse 4-RAF chain to 1 (~−32ms), explore TipTap pre-warming (largest potential, gets us to original-Rizzoma sub-100ms).
+- **Sweep coverage**: 109 visually-testable features remain `uncovered` — biggest categories are search/uploads/history/email-notifications. Adding `capture()`s + assertFns one by one is the path.
+- **Phase 5** destructive deletes still deferred (need 24h+ user soak validation).
+
+### Previous work — 2026-05-04 Hryhorii test feedback (still in `feature/rizzoma-core-features` branch)
 - **Bullet hierarchy survives save**: view-mode `.blip-text ul/ol/li/...` rules now mirror edit-mode `.ProseMirror` rules; global `* { padding: 0 }` reset no longer flattens saved bullets. Verified on `https://dev.138-201-62-161.nip.io` — real `<ul>` renders `padding-left: 22.5px` + disc/circle/square per nesting level. (#45, `cd9e626e`)
 - **`docker compose up` works**: sphinx (vestigial) gated behind `--profile search`; default 7 services (no sphinx), `--profile search` adds it. (#46, `cd9e626e`)
 - **Inline `[+]` opens from edit mode**: `BlipThreadNode` wraps `[+]` and a `.inline-child-portal` anchor in a `display: contents` host span; portal-rendering JSX moved out of view-mode-only branch; single render path matches original Rizzoma. Visually verified — see `screenshots/issue-47-fix-verified.png`. (#47, `f0d7658e` + `707a24f6`)
 - **OAuth callback URL no longer leaks `localhost`**: `APP_URL`/`CLIENT_URL`/`ALLOWED_ORIGINS` now env-passthrough in dev compose; new nginx vhost + LE cert at `dev.138-201-62-161.nip.io` → `:8200` (Google OAuth refuses bare-IP redirect URIs). End-to-end Sign-in-with-Google verified live. (#48, `02a57468`)
 
-VPS state: `nginx :443` for `138-201-62-161.nip.io` → `:8201` (prod), for `dev.138-201-62-161.nip.io` → `:8200` (dev, NEW). Hryhorii should retest against `https://dev.138-201-62-161.nip.io`. Full root-cause writeup in [`docs/worklog-260504.md`](worklog-260504.md).
+VPS state: `nginx :443` for `138-201-62-161.nip.io` → `:8201` (prod), for `dev.138-201-62-161.nip.io` → `:8200` (dev, NEW). Full root-cause writeup in [`docs/worklog-260504.md`](worklog-260504.md).
 
 ### Drift warnings (pre-2026-05-04)
 

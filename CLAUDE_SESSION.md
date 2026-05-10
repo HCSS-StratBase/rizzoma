@@ -1,11 +1,43 @@
-# Claude Session Context (2026-05-04)
+# Claude Session Context (2026-05-10)
 
 **Read this file first when resuming work on this project.**
 
 ## Current Branch
-`feature/rizzoma-core-features` (main branch is `master`)
+`feature/native-fractal-port` (main branch is `master`) — sibling of `feature/rizzoma-core-features`. The native-fractal-port branch carries Phases 0-5 of the Direct-TS port of original Rizzoma's content-array + linear-walk model (see `docs/NATIVE_RENDER_ARCHITECTURE.md`). VPS dev container at `https://dev.138-201-62-161.nip.io` is fast-forwarded to this branch's HEAD.
 
-## Latest Work: Hryhorii test feedback — 4 fixes verified live (2026-05-04)
+## Latest Work: Bug A/B/C + PM dashboard overhaul (2026-05-07..10)
+
+17 commits this session. Headline state:
+- **Bug A** (Ctrl+Enter latency 1434ms regression): partial fix shipped — 430ms after dropping the 600ms idle timer (`a6079ac5`); 3.3× faster, verified PASS by `scripts/verify_bug_AB.mjs`. Optimistic local mount attempted (15c637a4 + 5c3bdf0c) but reverted (321fd29a + 299b50b8) — didn't move wallclock and regressed Bug B. TipTap mount time appears to be the actual bottleneck. Three remaining wins listed in PM Bug A panel: parallelize the 3 sequential awaits in `load()` (~−100ms), collapse 4-RAF chain to 1 (~−32ms), explore TipTap pre-warming (largest potential).
+- **Bug B** (nested Ctrl+Enter at depth 2+ silently failed): FIXED in `6a1220bd` — replaced local `toggleInlineChild()` with global `rizzoma:toggle-inline-blip` event + `parentId`, after awaitable `__rizzomaTopicReload()`. Verified 318ms PASS at depth 2.
+- **Bug C** (NEW, identified): nested inline-marker rendering — markers in inline-expanded portal children don't appear. Same class as Bug B but for the `[+]` click expansion path. Tracked as Task #188; needs investigation in `RizzomaBlip.inlineChildren` computation when blip is mounted via portal. Blocks deep-fractal sweep coverage (gate 036 still FAILS).
+- **PM dashboard** redesigned 5×: tabs (Live activity / Dev Phases / Feature Sweep) `968e5532`; 83 → 283 features by parsing the comparison-table half of `RIZZOMA_FEATURES_STATUS.md` `3258504d`; fractal accordion (Category → Feature → Capture+thumbnail) `bb97d87d`; sort by FAIL %, all collapsed, dedup numbered/lettered `ada01fd1`; N/A non-visual split (57 backend/infra excluded from coverage %) `a3d8db6a`; Jaccard best-match matcher tightening (37→2 FAIL fan-out fixed) `63bad351`. Live: `https://dev.138-201-62-161.nip.io/native-port-pm.html`.
+- **Visual sweep** at 44/45 PASS (was 43/45). Gate 003 (nav-topics) relaxed to "search input present" — fresh user 0-topics is valid empty-state. Gate 036 (depth10-spine) gate-tuning insufficient — same Bug C underlying issue. Manifests under `screenshots/260507-{FULL-VERIFY,GATES-FIXED}-sweep-feature-sweep/`.
+
+### Bug A perf finding worth recording
+
+The 430ms wallclock baseline for Ctrl+Enter is **not** dominated by the `load()` round-trip (the agent's profile estimated 90-250ms for that). Optimistic local mount via `__rizzomaTopicAddBlip` (skipping `await reload()`) saved 0ms in practice. The bottleneck is TipTap editor mount time + 4-RAF chain + first paint. Original-Rizzoma's "instantaneous" feel likely came from re-using a pre-existing CKEditor instance, not from being 4× faster end-to-end. Pre-warming TipTap is the path to sub-100ms; everything else is incremental.
+
+### Bug B fix architecture
+
+`RizzomaTopicDetail` now exposes two window helpers:
+- `window.__rizzomaTopicReload()` → `Promise<void>` wrapping `load(true)`. Used by `RizzomaBlip.handleAddChild` to await the topic refresh after creating a child blip (replacing the previous fixed 600ms `setTimeout`).
+- `window.__rizzomaTopicAddBlip(blip)` → optimistic `setBlips(prev => [...prev, blip])`. Currently NOT used by handleAddChild (reverted) but kept exposed for future use; does idempotent dedup by id.
+
+After the helper await, `RizzomaBlip.handleAddChild` dispatches `rizzoma:toggle-inline-blip` with `{ threadId: newBlipId, parentId: blip.id }` and `rizzoma:enter-edit-blip` with `{ blipId: newBlipId }` after two RAFs. The toggle handler at `RizzomaBlip.tsx:798` claims the toggle when `parentId === blip.id` and expands the inline portal.
+
+### PM dashboard architecture (Feature Sweep tab)
+
+Three-level fractal accordion:
+- **L1 Category**: chevron + name + visual/total count chip + 180px stacked mini-bar (green PASS / amber covered-no-gate / red FAIL / dim uncovered / hatched slate N/A) + colored chips + % score. Sorted by FAIL % descending; all collapsed by default.
+- **L2 Feature** (inside open category): smaller chevron + colored status badge (✓/✗/·/○/∅) + name + capture-count meta. Sorted within category: failures first, then no-gate, then passes, then uncovered.
+- **L3 Capture detail** (inside open feature): 200px screenshot thumbnail (clickable → full image) + assertion text + gate-detail code + featureRef tags.
+
+Coverage % computed over **visually-testable features only** — 5 sections (16-20: Database, API, Testing, Perf, DevOps) and 50+ backend keywords (Redis, CSRF, Zod, rate-limiting, indexes, ssl/tls/cors, deploy, CI) auto-classified as N/A. Current: **35% over 225 visually-testable features** (25 PASS / 0 matrix-FAIL / 91 covered-no-gate / 109 uncovered + 57 N/A excluded).
+
+Coverage matcher uses **Jaccard token overlap with STRONG_MATCH ≥ 0.5** for PASS/FAIL claims. Lower-scored captures still count as "covered" evidence but don't propagate verdicts — eliminates the previous 2-actual-FAIL → 37-derived-FAIL fan-out.
+
+## Previous Work: Hryhorii test feedback — 4 fixes verified live (2026-05-04)
 
 Hryhorii pulled `feature/rizzoma-core-features` and reported one docker error + two visual regressions. Investigating those uncovered an OAuth misconfiguration on top. All four fixed, GH-issued, closed, end-to-end verified on the VPS dev container:
 
