@@ -320,6 +320,14 @@ export function RizzomaBlip({
       : false;
   const [isExpanded, setIsExpanded] = useState(() => initialExpanded);
   const [isEditing, setIsEditing] = useState(false);
+  // Mirror isEditing into a ref so the TipTap onUpdate callback (which is
+  // captured at editor-creation time) can read the CURRENT value instead of
+  // the stale initial value. Without this ref, onUpdate fires when blip
+  // content is programmatically set on mount (view mode), thinks it's a
+  // user edit, and autosaves an empty `<p></p>` over the saved content.
+  // Documented as Task #190 (sweep-state contamination → spine[1] empty).
+  const isEditingRef = useRef(false);
+  useEffect(() => { isEditingRef.current = isEditing; }, [isEditing]);
   const isTopicRoot = renderMode === 'topic-root';
   // Root blips start expanded by default, but can be collapsed
   // Non-root blips follow the collapse preference
@@ -513,6 +521,15 @@ export function RizzomaBlip({
       onUpdate: ({ editor, transaction }: { editor: Editor; transaction: any }) => {
         // Skip auto-save during Y.Doc seeding (setContent triggers onUpdate)
         if (seedingYdocRef.current) return;
+
+        // Critical: skip auto-save when NOT in edit mode. Programmatic
+        // setContent calls (e.g. on mount, on blip-id change at line ~617,
+        // on handleStartEdit at line ~997) trigger onUpdate even though
+        // the user isn't typing. If we autosave from those calls AND
+        // TipTap's parser falls back to <p></p> for unrecognized markup,
+        // we silently overwrite the saved content with empty. This was
+        // Task #190's root cause for the gate-036 spine[1] empty render.
+        if (!isEditingRef.current) return;
 
         const html = editor.getHTML();
         setEditedContent(html);
