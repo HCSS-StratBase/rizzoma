@@ -1,8 +1,16 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-05-10 (Native fractal-port session arc — 17 commits Bug A/B + PM redesign + sweep gates)
+Last Updated: 2026-05-11 (Bug C autosave root cause + 44/44 sweep + Task #191 investigation)
 
-### Current state — what shipped this session (2026-05-07..10, branch `feature/native-fractal-port`)
+### Current state — what shipped today (2026-05-11, branch `feature/native-fractal-port`)
+
+- **Bug C / Task #190 RESOLVED at root** (`65e2a11c`): TipTap's `onUpdate` was autosaving `<p></p>` over saved content when programmatic `setContent()` fired on inline-child mount. Bare `<span class="blip-thread-marker">` isn't a recognized TipTap node — parser fell back to empty paragraph; autosave PUT `<p></p>` to server; spine[k+1]'s marker disappeared; sweep gate 036 failed walking the depth-10 spine. Fix: `isEditingRef` guard in `onUpdate` skips autosave when not in edit mode. Broader impact: eliminates silent content corruption for any real user expanding an inline child without intending to edit.
+- **Sweep**: 43/44 → **44/44 PASS · 0 FAIL · 0 no-gate**.
+- **Cherry-pick** to `feature/rizzoma-core-features` (`899f9196`): Hryhorii's branch also gets the autosave fix.
+- **Task #191** (Bug A last mile): INVESTIGATED but no further latency win shipped. Profile showed the bottleneck (271ms of 432ms) is the `/api/waves/.../participants` fetch in `await load(true)`. Optimistic mount + skip await broke depth-1 AND regressed Bug B because React's batched `setBlips` hadn't committed before toggle dispatch. All attempts reverted. Bug A stays at 322-433ms (3-4× faster than 1434ms).
+- See `docs/worklog-260511.md` for full details + the React-batching gotcha.
+
+### Previous state — 2026-05-07..10 session arc
 
 - **Bug A** Ctrl+Enter latency 1434ms → 430ms (3.3× faster) by dropping the 600ms idle timer and awaiting `__rizzomaTopicReload()` directly (`a6079ac5`). Verified PASS by `scripts/verify_bug_AB.mjs` against dev VPS. Optimistic local mount attempted (`15c637a4` + `5c3bdf0c`) but reverted — TipTap mount time, not `load()` round-trip, is the actual bottleneck. Remaining wins listed in PM Bug A panel.
 - **Bug B** Nested Ctrl+Enter at depth 2+ now mounts the new editor (`6a1220bd`). Replaced local `toggleInlineChild` with global `rizzoma:toggle-inline-blip` event + `parentId` after awaitable reload. Verified 318ms PASS at depth 2.

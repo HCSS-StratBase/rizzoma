@@ -1,11 +1,23 @@
-# Claude Session Context (2026-05-10)
+# Claude Session Context (2026-05-11)
 
 **Read this file first when resuming work on this project.**
 
 ## Current Branch
 `feature/native-fractal-port` (main branch is `master`) — sibling of `feature/rizzoma-core-features`. The native-fractal-port branch carries Phases 0-5 of the Direct-TS port of original Rizzoma's content-array + linear-walk model (see `docs/NATIVE_RENDER_ARCHITECTURE.md`). VPS dev container at `https://dev.138-201-62-161.nip.io` is fast-forwarded to this branch's HEAD.
 
-## Latest Work: Bug A/B/C + PM dashboard overhaul (2026-05-07..10)
+## Latest Work: Bug C autosave root cause + sweep 44/44 + Task #191 investigation (2026-05-11)
+
+9 commits this session. Headline state:
+- **Bug C / Task #190 RESOLVED at root** (`65e2a11c`): TipTap's `onUpdate` was autosaving `<p></p>` over saved content when programmatic `setContent()` fired on inline-child mount. Added `isEditingRef` guard — skip autosave when not in edit mode. Sweep gate 036 went FAIL → PASS. Broader impact: eliminates silent content corruption for any real user expanding an inline child without intending to edit.
+- **Sweep**: 43/44 → **44/44 PASS · 0 FAIL · 0 no-gate**. Manifest in `screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/`.
+- **Cherry-pick** to `feature/rizzoma-core-features` (`899f9196`): Hryhorii's branch also gets the silent-content-corruption fix.
+- **Task #191** (TipTap pre-warming / Bug A last mile): INVESTIGATED but no further latency win shipped. Profile showed TipTap mount is only 6ms; real bottleneck (271ms of 432ms) is the `/api/waves/.../participants` fetch inside `await load(true)`. Attempting optimistic local mount + skip `await load()` broke depth-1 entirely AND regressed Bug B because React's batched `setBlips` hadn't committed before the toggle dispatch fired. All 4 attempt commits reverted (c9228790 + 17d07cc8). Bug A stays at 322-433ms (3-4× faster than 1434ms baseline). Further reduction needs server-side CouchDB index for participants OR React `flushSync` — both out of scope.
+
+### React batching gotcha (recorded for future Bug A attempts)
+
+The `await load(true)` after optimistic `setBlips` is NOT just for server data — it's giving React time to commit the batched state update so the toggle dispatch can read the new optimistic blip from `inlineChildren`. Removing the await produces a stale-state read that drops the toggle silently.
+
+## Previous Work: Bug A/B/C + PM dashboard overhaul (2026-05-07..10)
 
 17 commits this session. Headline state:
 - **Bug A** (Ctrl+Enter latency 1434ms regression): partial fix shipped — 430ms after dropping the 600ms idle timer (`a6079ac5`); 3.3× faster, verified PASS by `scripts/verify_bug_AB.mjs`. Optimistic local mount attempted (15c637a4 + 5c3bdf0c) but reverted (321fd29a + 299b50b8) — didn't move wallclock and regressed Bug B. TipTap mount time appears to be the actual bottleneck. Three remaining wins listed in PM Bug A panel: parallelize the 3 sequential awaits in `load()` (~−100ms), collapse 4-RAF chain to 1 (~−32ms), explore TipTap pre-warming (largest potential).
