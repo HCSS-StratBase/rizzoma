@@ -544,6 +544,9 @@ async function captureNavigationTabs(page) {
       'User Interface: Unread count aggregation (batch query)',
       'User Interface: Next/Prev unread navigation (server-computed)',
       'User Interface: Green left border on unread blips',
+      'User Interface: Mark single blip read API',
+      'User Interface: Mark batch read API',
+      'User Interface: Follow the Green CTA button',
       'Waves: wave list',
       'Waves: Wave CRUD API (list, create, read, update, delete)',
       'Waves: Wave participants API (list participants for wave)',
@@ -566,7 +569,15 @@ async function captureNavigationTabs(page) {
   const search = page.locator('input[placeholder="Search topics..."]').first();
   await search.fill('Visual Sweep');
   await capture(page, 'topics search filter typed',
-    ['Search: topic search', 'User Interface: Topics list search', 'Search: Full-text search (Mango regex, title + content)'],
+    [
+      'Search: topic search',
+      'User Interface: Topics list search',
+      'Search: Full-text search (Mango regex, title + content)',
+      'Search: Snippet generation (150-char context + highlight)',
+      'Search: Yjs document rebuild on demand',
+      'Search: Wave materialization for indexing',
+      'Search: Rebuild status polling (GET /api/search/rebuild-status)',
+    ],
     'Search input accepts text and filters visible topic list state.',
     { dynamicStep: 'after-search',
       assertFn: async (p) => {
@@ -624,7 +635,15 @@ async function captureTopicChrome(page) {
   await closeOpenModal(page);
 
   await page.locator('.invite-btn').click();
-  await capture(page, 'invite participants modal open', ['User Interface: Participants bar', 'Email: invite emails', 'Email: Digest emails (daily/weekly summary notifications)'],
+  await capture(page, 'invite participants modal open', [
+      'User Interface: Participants bar',
+      'Email: invite emails',
+      'Email: Digest emails (daily/weekly summary notifications)',
+      'Email: Activity notifications (mentions, replies)',
+      'Email: Email service (Nodemailer v7 SMTP)',
+      'Email: Notification preferences API',
+      'Email: SMTP templates (styled HTML)',
+    ],
     'Invite button opens participant invitation modal.', { dynamicStep: 'after-invite-click', assertFn: modalOpen });
   const inviteEmail = page.locator('input[type="email"], input[placeholder*="email" i]').first();
   if (await inviteEmail.count()) {
@@ -768,6 +787,8 @@ async function captureBlipAndToolbarStates(page, fixture) {
       'File Uploads: MIME-type validation',
       'File Uploads: ClamAV virus scanning',
       'File Uploads: MIME magic-byte sniffing',
+      'File Uploads: Executable extension blocking (.exe, .bat, etc.)',
+      'File Uploads: Storage backends — local filesystem',
       'Inline Widgets: Insert buttons auto-enter-edit-mode',
       'Inline Widgets: Toolbar decluttered (Hide/Delete → gear overflow)',
     ],
@@ -855,7 +876,16 @@ async function captureBlipAndToolbarStates(page, fixture) {
 
   await main.locator('[data-testid="blip-menu-comments-show"], [data-testid="blip-menu-comments-hide"]').first().click().catch(() => {});
   await page.waitForTimeout(800);
-  await capture(page, 'inline comments nav state', ['Inline Comments: sidebar/nav', 'Inline Comments: filters'],
+  await capture(page, 'inline comments nav state', [
+      'Inline Comments: sidebar/nav',
+      'Inline Comments: filters',
+      'Inline Comments: Annotation structure (range anchoring, text snapshot)',
+      'Inline Comments: Annotation CRUD APIs',
+      'Inline Comments: Annotation threading (rootId + parentId)',
+      'Inline Comments: Resolve / unresolve comments',
+      'Inline Comments: Visibility preference per-blip (server + localStorage)',
+      'Inline Comments: Keyboard shortcuts (Ctrl+Shift+Up/Down)',
+    ],
     'Inline comments control surfaces the comment navigation/filter area when available.',
     { dynamicStep: 'after-comments-toggle', assertFn: gateExists('[data-testid^="blip-menu-comments"], .inline-comments-nav, [class*="comments"]') });
 
@@ -924,6 +954,8 @@ async function captureRealtimeCollaborationStates(baseContext, ownerPage, fixtur
         'Real-time Collaboration: Collaborative selection (see what others highlighted)',
         'Real-time Collaboration: Transport layer (Socket.IO v4)',
         'Real-time Collaboration: CRDT engine (Yjs)',
+        'Real-time Collaboration: Presence indicator (avatars, overflow counts)',
+        'Real-time Collaboration: Event broadcasting (blip:created/updated/deleted)',
       ],
       'A second authenticated editor produces remote cursor/typing UI in the owner editor.',
       { dynamicStep: 'after-second-client-typing',
@@ -965,6 +997,7 @@ async function captureBlbDynamics(page, fixture) {
         'BLB: Orphaned markers hidden (cross-wave references)',
         'BLB: Reply vs inline comment distinction',
         'BLB: Auth-gated Edit button',
+        'BLB: Mid-sentence [+] markers (multiple per paragraph)',
       ],
       'Clicking inline marker expands the inline child at the marker position.',
       { dynamicStep: 'after-inline-plus-click', assertFn: gateExists('.inline-child-expanded') });
@@ -1145,6 +1178,7 @@ async function captureMobile(baseContext, fixture) {
       'Mobile & PWA: BottomSheet mobile menu',
       'Mobile & PWA: Pull-to-refresh',
       'Mobile & PWA: iOS zoom prevention (font-size: 16px on inputs)',
+      'Mobile & PWA: Offline mutation queue (auto-sync, max 3 retries)',
     ],
     'Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.',
     { assertFn: gateAny(gateExists('.rizzoma-layout'), gateExists('.mobile-topbar'), gateExists('.topic-card')) });
