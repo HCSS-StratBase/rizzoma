@@ -721,6 +721,7 @@ export function RizzomaBlip({
         // RizzomaTopicDetail's create handler uses. The toggle listener at
         // RizzomaBlip.tsx:798 claims via parentId === blip.id and expands.
         if (newBlipId) {
+          if (typeof performance !== 'undefined') performance.mark('handle-after-postresp');
           // Bug A last-mile (Task #191, 2026-05-11): optimistic local
           // mount. Profile showed the 271ms `await reload()` round-trip
           // dominated the 432ms total. Construct an optimistic BlipData
@@ -739,6 +740,7 @@ export function RizzomaBlip({
             __rizzomaTopicReload?: () => Promise<void>;
           };
           const responseBlip = newBlip.blip;
+          if (typeof performance !== 'undefined') performance.mark('handle-before-add');
           if (responseBlip && typeof w.__rizzomaTopicAddBlip === 'function') {
             const optimistic: BlipData = {
               id: newBlipId,
@@ -765,6 +767,7 @@ export function RizzomaBlip({
             window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
             await new Promise((r) => setTimeout(r, 250));
           }
+          if (typeof performance !== 'undefined') performance.mark('handle-before-toggle');
           window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
             detail: { threadId: newBlipId, parentId: blip.id },
           }));
