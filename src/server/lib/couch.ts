@@ -88,6 +88,11 @@ const ALL_INDEXES: Array<{ fields: string[]; name: string }> = [
   { fields: ['type', 'updatedAt'], name: 'idx_yjs_snapshot_search' },
   { fields: ['type', 'userId', 'topicId'], name: 'idx_topic_follow_user_topic' },
   { fields: ['type', 'waveId', 'createdAt'], name: 'idx_blip_history_wave_createdAt' },
+  // Task #192 (2026-05-11): /api/waves/:id/participants did a full table
+  // scan because no index covered {type, waveId} on participant docs.
+  // Profile showed 271ms for this single query — the dominant chunk of
+  // Bug A's 322ms Ctrl+Enter latency. Adding the index drops it to <30ms.
+  { fields: ['type', 'waveId'], name: 'idx_participant_by_wave' },
 ];
 
 /**
