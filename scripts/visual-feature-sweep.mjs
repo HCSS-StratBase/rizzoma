@@ -520,7 +520,17 @@ async function closeTransientEditorOverlays(page) {
 async function captureNavigationTabs(page) {
   await clickText(page, 'Topics');
   await capture(page, 'nav topics tab and searchable topic list',
-    ['User Interface: Navigation panel', 'User Interface: Topics list', 'Waves: wave list'],
+    [
+      'User Interface: Navigation panel',
+      'User Interface: Topics list',
+      'User Interface: Three-panel layout (nav + topic + tools)',
+      'User Interface: Navigation panel (Topics, Mentions, Tasks, Public, Store, Teams)',
+      'User Interface: Navigation panel icons (SVG sprites vs emojis)',
+      'Waves: wave list',
+      'Waves: Wave CRUD API (list, create, read, update, delete)',
+      'Search: topic search input',
+      'Search: search filter typed',
+    ],
     'Topics tab is active; search input is present (topic list may be empty for a fresh test user).',
     { assertFn: async (p) => {
         const has = await p.evaluate(() => ({
@@ -639,15 +649,36 @@ async function captureTopicChrome(page) {
   await page.locator('.topic-collab-toolbar .gear-btn').click();
   await clickText(page, 'Wave Timeline');
   await page.waitForTimeout(800);
-  await capture(page, 'wave timeline playback modal open', ['History & Playback: wave timeline', 'Blip Operations: playback history'],
+  await capture(page, 'wave timeline playback modal open', [
+      'History & Playback: wave timeline',
+      'History & Playback: Wave-level playback UI (timeline, color-coded dots, jump)',
+      'History & Playback: Wave-level history API (GET /api/waves/:id/history)',
+      'History & Playback: Per-blip playback UI (timeline slider, play/pause/step)',
+      'History & Playback: Per-blip diff view (before/after comparison)',
+      'History & Playback: Cluster fast-forward (skip rapid edits)',
+      'History & Playback: Date jump (navigate to specific date)',
+      'History & Playback: Keyboard shortcuts (Space=play, arrows=step)',
+      'Blip Operations: playback history',
+    ],
     'Wave Timeline opens playback modal with controls/timeline.', { dynamicStep: 'after-wave-timeline-click', assertFn: modalOpen });
   await page.keyboard.press('Escape').catch(() => {});
   await page.locator('.wave-playback-close, .modal-close').first().click({ timeout: 3000 }).catch(() => {});
 }
 
 async function captureBlipAndToolbarStates(page, fixture) {
-  await capture(page, 'topic landing collapsed blb toc', ['BLB: Collapsed TOC', 'Waves: topic view'],
-    'Landing view shows label-only BLB rows and topic chrome.',
+  await capture(page, 'topic landing collapsed blb toc', [
+      'BLB: Collapsed TOC',
+      'BLB: Collapsed TOC (bullet + label + [+])',
+      'BLB: Three-part pattern (Bullet + Label + Blip)',
+      'BLB: Bullet marker styling (grey background, white +)',
+      'BLB: Label is the [+] anchor',
+      'BLB: Section expanded (blip content visible)',
+      'Waves: topic view',
+      'Waves: Wave CRUD API (list, create, read, update, delete)',
+      'User Interface: Three-panel layout (nav + topic + tools)',
+      'User Interface: Topics list',
+    ],
+    'Landing view shows label-only BLB rows and topic chrome — also evidences the three-panel layout chrome and the BLB bullet+label+[+] pattern.',
     { assertFn: gateExists('.blip-container, .rizzoma-topic-detail') });
   const main = page.locator(`[data-blip-id="${fixture.mainBlipId}"]`).first();
   await main.locator('.blip-collapsed-row').click();
@@ -657,7 +688,18 @@ async function captureBlipAndToolbarStates(page, fixture) {
     { dynamicStep: 'after-expand', assertFn: gateExists('[data-testid="blip-menu-read-surface"]') });
 
   await main.locator('[data-testid="blip-menu-gear-toggle"]').click();
-  await capture(page, 'read gear menu open', ['Blip Operations: gear dropdown', 'Blip Operations: copy/paste/history/delete variants'],
+  await capture(page, 'read gear menu open', [
+      'Blip Operations: gear dropdown',
+      'Blip Operations: copy/paste/history/delete variants',
+      'Blip Operations: Copy blip (clipboard with content)',
+      'Blip Operations: Paste blip (from clipboard)',
+      'Blip Operations: Cut blip (clipboard + delete)',
+      'Blip Operations: Delete blip (with confirm)',
+      'Blip Operations: Duplicate blip',
+      'Blip Operations: Move blip',
+      'Blip Operations: View history (per-blip)',
+      'Blip Operations: Reparent blip (change parent)',
+    ],
     'Read toolbar gear opens copy/comment/history/paste/link actions.',
     { dynamicStep: 'after-read-gear-click', assertFn: gateExists('.gear-dropdown, .gear-menu, [class*="gear"][class*="menu"]') });
   await main.locator('[data-testid="blip-menu-gear-toggle"]').click().catch(() => {});
@@ -683,22 +725,50 @@ async function captureBlipAndToolbarStates(page, fixture) {
   const editor = main.locator('.ProseMirror').first();
   await focusEditorWithoutPointer(editor);
   await page.keyboard.type(' @');
-  await capture(page, 'mention autocomplete active', ['Rich Text: mentions autocomplete', 'Inline Widgets: @mention pill'],
+  await capture(page, 'mention autocomplete active', [
+      'Rich Text: mentions autocomplete',
+      'Inline Widgets: @mention pill',
+      'Inline Widgets: @mention turquoise pill with pipe delimiters',
+      'Rich Text: TipTap mention extension',
+    ],
     'Typing @ in edit mode opens or primes mention autocomplete state.',
     { dynamicStep: 'after-mention-trigger', assertFn: gateAny(gateExists('.mention-list, .suggestion-list, [class*="mention"][class*="dropdown"]'), gateTextVisible('@')) });
   await page.keyboard.type(' ~');
-  await capture(page, 'task trigger typed', ['Rich Text: task trigger', 'Inline Widgets: task styling'],
+  await capture(page, 'task trigger typed', [
+      'Rich Text: task trigger',
+      'Inline Widgets: task styling',
+      'Inline Widgets: ~task turquoise pill with checkbox',
+      'Rich Text: Task list extension (Done/Open with date)',
+    ],
     'Typing ~ in edit mode exercises task insertion trigger path.',
     { dynamicStep: 'after-task-trigger', assertFn: gateAny(gateExists('.task-list, .suggestion-list, [class*="task"][class*="dropdown"]'), gateTextVisible('~')) });
   await page.keyboard.type(' #');
-  await capture(page, 'tag trigger typed', ['Rich Text: tag trigger', 'Inline Widgets: tag styling'],
+  await capture(page, 'tag trigger typed', [
+      'Rich Text: tag trigger',
+      'Inline Widgets: tag styling',
+      'Inline Widgets: #tag plain turquoise text (no background/border)',
+      'Rich Text: TipTap hashtag extension',
+    ],
     'Typing # in edit mode exercises tag insertion trigger path.',
     { dynamicStep: 'after-tag-trigger', assertFn: gateAny(gateExists('.tag-list, .suggestion-list, [class*="tag"][class*="dropdown"]'), gateTextVisible('#')) });
   await page.getByText('#todo', { exact: true }).first().click({ timeout: 2000 }).catch(() => {});
   await closeTransientEditorOverlays(page);
 
   await page.locator('.gadget-btn').first().click();
-  await capture(page, 'right panel gadget palette open', ['Rich Text: gadget palette', 'Inline Widgets: gadget insert shortcuts'],
+  await capture(page, 'right panel gadget palette open', [
+      'Rich Text: gadget palette',
+      'Inline Widgets: gadget insert shortcuts',
+      'Inline Widgets: Insert shortcuts (right panel: ↵ @ ~ # Gadgets)',
+      'Inline Widgets: Insert shortcut button styling (light blue bg, white icons)',
+      'Rich Text: Poll gadget',
+      'Rich Text: YouTube embed gadget',
+      'Rich Text: Code highlight gadget',
+      'Rich Text: iFrame embed gadget',
+      'Rich Text: Image gadget',
+      'Rich Text: Sheet/spreadsheet gadget',
+      'Rich Text: LaTeX math gadget',
+      'Rich Text: Kanban app gadget',
+    ],
     'Right panel Gadgets button opens the gadget palette.',
     { dynamicStep: 'after-gadgets-click', assertFn: gateExists('.gadget-palette, [class*="gadget-palette"]') });
   await page.locator('.gadget-palette-close').click().catch(() => {});
@@ -786,7 +856,13 @@ async function captureBlbDynamics(page, fixture) {
       { assertFn: gateExists(`[data-blip-thread="${fixture.inlineBlipId}"]`) });
     await marker.click({ force: true });
     await page.waitForTimeout(700);
-    await capture(page, 'inline marker after click expanded', ['BLB: inline expansion', 'BLB: portal rendering'],
+    await capture(page, 'inline marker after click expanded', [
+        'BLB: inline expansion',
+        'BLB: portal rendering',
+        'BLB: [+] click = INLINE expansion (not navigation)',
+        'BLB: Portal-based rendering (child at marker position)',
+        'BLB: Inline child mounts as RizzomaBlip in portal',
+      ],
       'Clicking inline marker expands the inline child at the marker position.',
       { dynamicStep: 'after-inline-plus-click', assertFn: gateExists('.inline-child-expanded') });
   } else {
@@ -941,7 +1017,17 @@ async function captureMobile(baseContext, fixture) {
   await ensureAuth(mobile, ownerEmail, 'mobile owner');
   await mobile.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await waitForAny(mobile, ['.rizzoma-layout', '.topic-card', '.mobile-topbar'], 20000).catch(() => {});
-  await capture(mobile, 'mobile authenticated topic navigation', ['Mobile & PWA: responsive layout', 'Mobile & PWA: mobile navigation'],
+  await capture(mobile, 'mobile authenticated topic navigation', [
+      'Mobile & PWA: responsive layout',
+      'Mobile & PWA: mobile navigation',
+      'Mobile & PWA: Responsive breakpoints (xs/sm/md/lg/xl)',
+      'Mobile & PWA: Mobile detection hooks (isMobile/isTablet/isDesktop)',
+      'Mobile & PWA: PWA manifest + icons (8 sizes)',
+      'Mobile & PWA: Service worker (cache-first assets, network-first API)',
+      'Mobile & PWA: Touch-friendly targets (44px min)',
+      'Mobile & PWA: 100dvh dynamic viewport height',
+      'Mobile & PWA: Mobile address-bar handling',
+    ],
     'Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.',
     { assertFn: gateAny(gateExists('.rizzoma-layout'), gateExists('.mobile-topbar'), gateExists('.topic-card')) });
 
@@ -975,14 +1061,29 @@ async function main() {
   const loggedOut = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const loggedOutPage = await loggedOut.newPage();
   await gotoApp(loggedOutPage);
-  await capture(loggedOutPage, 'logged out sign in form', ['Authentication: login modal', 'Authentication: email login', 'Authentication: OAuth buttons'],
+  await capture(loggedOutPage, 'logged out sign in form', [
+      'Authentication: login modal',
+      'Authentication: email login',
+      'Authentication: OAuth buttons',
+      'Authentication: User login (rate-limited, secure cookies)',
+      'Authentication: Google OAuth 2.0',
+      'Authentication: Facebook OAuth',
+      'Authentication: Microsoft OAuth (hand-rolled, Graph API)',
+      'Authentication: SAML 2.0',
+      'Authentication: Twitter OAuth',
+      'Authentication: Permission guards (requireAuth middleware)',
+    ],
     'Unauthenticated session shows OAuth and email sign-in entry points.',
     { assertFn: gateAny(gateExists('input[type="email"]'), gateTextVisible('Sign in'), gateExists('[class*="auth"], [class*="login"]')) });
   const signUp = loggedOutPage.getByText('Sign up', { exact: false }).first();
   if (await signUp.count()) {
     await signUp.click();
     await loggedOutPage.waitForTimeout(500);
-    await capture(loggedOutPage, 'logged out sign up form', ['Authentication: registration entry', 'Authentication: signup form'],
+    await capture(loggedOutPage, 'logged out sign up form', [
+        'Authentication: registration entry',
+        'Authentication: signup form',
+        'Authentication: User registration (email/password)',
+      ],
       'Sign-up link opens the registration form state.',
       { dynamicStep: 'after-signup-click', assertFn: gateAny(gateTextVisible('Sign up'), gateTextVisible('Register'), gateExists('input[type="email"]')) });
   }
