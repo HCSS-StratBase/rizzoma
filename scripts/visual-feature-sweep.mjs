@@ -445,6 +445,14 @@ async function createFractalFixture(page) {
 }
 
 async function openWave(page, waveId) {
+  // BUG C ROOT CAUSE (2026-05-11): page.goto with hash-only URL changes
+  // (#/topic/X → #/topic/Y) does NOT reload — Playwright fires a hashchange
+  // event only, leaving the previous topic's React tree mounted. Result:
+  // the test thinks it's on topic Y but the DOM is still topic X. Forcing
+  // a hard navigation by routing to about:blank first guarantees a fresh
+  // mount. Documented as "Bug C" in CLAUDE_SESSION.md / docs/HANDOFF.md;
+  // turned out to be sweep mechanics, not rendering.
+  await page.goto('about:blank');
   await page.goto(`${baseUrl}/?layout=rizzoma#/topic/${encodeURIComponent(waveId)}`, { waitUntil: 'domcontentloaded' });
   await page.locator('.rizzoma-topic-detail').waitFor({ timeout: 30000 });
   await page.locator('.blip-collapsed-row, [data-blip-id]').first().waitFor({ timeout: 30000 });
