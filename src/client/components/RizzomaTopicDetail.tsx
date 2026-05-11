@@ -825,12 +825,44 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   // can do `await window.__rizzomaTopicReload()` instead of dispatching
   // refresh-topics + sleeping 600ms blindly. Saves ~350ms on Ctrl+Enter at
   // depth 1 (load completes in 90-250ms vs 600ms timer).
+  //
+  // Bug A last-mile (Task #191, 2026-05-11): profile showed the remaining
+  // 271ms of 432ms total Ctrl+Enter wallclock IS the load() round-trip
+  // (POST is only 54ms, TipTap mount only 6ms). Re-exposing
+  // __rizzomaTopicAddBlip for optimistic mount — the earlier revert
+  // (321fd29a + 299b50b8) was actually caused by the autosave-on-mount
+  // bug that wrote <p></p> over the new blip's content, not by the
+  // optimistic mount itself. Now that the autosave fix is in (65e2a11c),
+  // optimistic mount should work cleanly.
   useEffect(() => {
-    (window as unknown as { __rizzomaTopicReload?: () => Promise<void> }).__rizzomaTopicReload =
-      () => load(true);
+    const w = window as unknown as {
+      __rizzomaTopicReload?: () => Promise<void>;
+      __rizzomaTopicAddBlip?: (blip: BlipData) => void;
+    };
+    w.__rizzomaTopicReload = () => load(true);
+    w.__rizzomaTopicAddBlip = (blip: BlipData) => {
+      setBlips((prev) => {
+        if (prev.some((b) => b.id === blip.id)) return prev;
+        // Also attach to parent's childBlips if parent is already in the tree —
+        // this is what makes the new inline child immediately findable by
+        // the parent's renderInlineHtml walker.
+        const walk = (items: BlipData[]): BlipData[] => items.map((b) => {
+          if (b.id === blip.parentBlipId) {
+            const exists = (b.childBlips || []).some((c) => c.id === blip.id);
+            if (exists) return b;
+            return { ...b, childBlips: [...(b.childBlips || []), blip] };
+          }
+          if (b.childBlips?.length) {
+            return { ...b, childBlips: walk(b.childBlips) };
+          }
+          return b;
+        });
+        return walk(prev);
+      });
+    };
     return () => {
-      const w = window as unknown as { __rizzomaTopicReload?: () => Promise<void> };
       if (w.__rizzomaTopicReload) delete w.__rizzomaTopicReload;
+      if (w.__rizzomaTopicAddBlip) delete w.__rizzomaTopicAddBlip;
     };
   }, [load]);
 

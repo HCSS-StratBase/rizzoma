@@ -721,16 +721,46 @@ export function RizzomaBlip({
         // RizzomaTopicDetail's create handler uses. The toggle listener at
         // RizzomaBlip.tsx:798 claims via parentId === blip.id and expands.
         if (newBlipId) {
-          // Bug A perf fix (2026-05-07): await the topic reload directly
-          // instead of dispatching refresh-topics + sleeping 600ms. The
-          // topic-level component exposes `__rizzomaTopicReload` for exactly
-          // this purpose — load() actually finishes in 90-250ms, so the
-          // 600ms timer was pure idle. Falls back to dispatch+250ms wait if
-          // the helper isn't mounted (e.g. standalone blip view).
-          const reload = (window as unknown as { __rizzomaTopicReload?: () => Promise<void> })
-            .__rizzomaTopicReload;
-          if (typeof reload === 'function') {
-            await reload();
+          // Bug A last-mile (Task #191, 2026-05-11): optimistic local
+          // mount. Profile showed the 271ms `await reload()` round-trip
+          // dominated the 432ms total. Construct an optimistic BlipData
+          // from the POST response and inject directly via
+          // __rizzomaTopicAddBlip — skip the reload entirely. Background
+          // reload runs fire-and-forget for eventual reconciliation but
+          // doesn't gate any visible UI.
+          //
+          // Previous attempt at this (15c637a4, reverted 299b50b8) failed
+          // because the autosave bug at the time wrote <p></p> over the
+          // newly-mounted blip's content. That bug is fixed in 65e2a11c
+          // (autosave guard against programmatic setContent), so this
+          // optimistic path is now safe.
+          const w = window as unknown as {
+            __rizzomaTopicAddBlip?: (b: BlipData) => void;
+            __rizzomaTopicReload?: () => Promise<void>;
+          };
+          const responseBlip = newBlip.blip;
+          if (responseBlip && typeof w.__rizzomaTopicAddBlip === 'function') {
+            const optimistic: BlipData = {
+              id: newBlipId,
+              content: responseBlip.content || '',
+              authorId: responseBlip.authorId || '',
+              authorName: responseBlip.authorName || 'Anonymous',
+              createdAt: responseBlip.createdAt || Date.now(),
+              updatedAt: responseBlip.updatedAt || Date.now(),
+              isRead: true,
+              parentBlipId: responseBlip.parentId || blip.id,
+              anchorPosition: responseBlip.anchorPosition,
+              permissions: { canEdit: true, canComment: true, canRead: true },
+              childBlips: [],
+            };
+            w.__rizzomaTopicAddBlip(optimistic);
+            // Background reconcile — fire-and-forget.
+            if (typeof w.__rizzomaTopicReload === 'function') {
+              w.__rizzomaTopicReload().catch(() => {});
+            }
+          } else if (typeof w.__rizzomaTopicReload === 'function') {
+            // Fallback: still await reload if optimistic helper isn't available.
+            await w.__rizzomaTopicReload();
           } else {
             window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
             await new Promise((r) => setTimeout(r, 250));
