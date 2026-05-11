@@ -533,6 +533,17 @@ async function captureNavigationTabs(page) {
       'User Interface: Topic card preview (title + author + last-edit)',
       'User Interface: Search topics input box',
       'User Interface: Empty-state placeholder for new user with no topics',
+      'User Interface: Topics list unread bar color',
+      'User Interface: Topics list filter dropdown (Inbox/All/By me)',
+      'User Interface: Right panel user avatar',
+      'User Interface: Right panel Next button color',
+      'User Interface: Right panel hide/show replies icons',
+      'User Interface: Auth panel (modal, not page)',
+      'User Interface: Keyboard shortcuts panel (bottom of nav)',
+      'User Interface: Per-user read state (CouchDB BlipRead docs)',
+      'User Interface: Unread count aggregation (batch query)',
+      'User Interface: Next/Prev unread navigation (server-computed)',
+      'User Interface: Green left border on unread blips',
       'Waves: wave list',
       'Waves: Wave CRUD API (list, create, read, update, delete)',
       'Waves: Wave participants API (list participants for wave)',
@@ -555,7 +566,7 @@ async function captureNavigationTabs(page) {
   const search = page.locator('input[placeholder="Search topics..."]').first();
   await search.fill('Visual Sweep');
   await capture(page, 'topics search filter typed',
-    ['Search: topic search', 'User Interface: Topics list search'],
+    ['Search: topic search', 'User Interface: Topics list search', 'Search: Full-text search (Mango regex, title + content)'],
     'Search input accepts text and filters visible topic list state.',
     { dynamicStep: 'after-search',
       assertFn: async (p) => {
@@ -608,12 +619,12 @@ async function captureTopicChrome(page) {
 
   await page.locator('.new-button').click();
   await page.locator('.modal-content, .create-topic-modal').first().waitFor({ timeout: 10000 }).catch(() => {});
-  await capture(page, 'create topic modal open', ['Waves: create topic', 'User Interface: New topic modal'],
+  await capture(page, 'create topic modal open', ['Waves: create topic', 'User Interface: New topic modal', 'User Interface: Login modal (auth panel as modal)'],
     'New topic action opens the create topic modal.', { dynamicStep: 'after-new-click', assertFn: modalOpen });
   await closeOpenModal(page);
 
   await page.locator('.invite-btn').click();
-  await capture(page, 'invite participants modal open', ['User Interface: Participants bar', 'Email: invite emails'],
+  await capture(page, 'invite participants modal open', ['User Interface: Participants bar', 'Email: invite emails', 'Email: Digest emails (daily/weekly summary notifications)'],
     'Invite button opens participant invitation modal.', { dynamicStep: 'after-invite-click', assertFn: modalOpen });
   const inviteEmail = page.locator('input[type="email"], input[placeholder*="email" i]').first();
   if (await inviteEmail.count()) {
@@ -674,6 +685,10 @@ async function captureTopicChrome(page) {
       'History & Playback: Wave timeline color-coded dots per blip',
       'History & Playback: Per-blip history API (GET /api/blips/:id/history)',
       'History & Playback: Diff highlighting (added/removed text)',
+      'History & Playback: Wave playback cluster fast-forward/back (3s gap)',
+      'History & Playback: Wave playback date jump (datetime picker)',
+      'History & Playback: Wave playback keyboard shortcuts',
+      'History & Playback: Wave playback speed (0.5x to 10x)',
       'Blip Operations: playback history',
     ],
     'Wave Timeline opens playback modal with controls/timeline.', { dynamicStep: 'after-wave-timeline-click', assertFn: modalOpen });
@@ -702,7 +717,7 @@ async function captureBlipAndToolbarStates(page, fixture) {
   const main = page.locator(`[data-blip-id="${fixture.mainBlipId}"]`).first();
   await main.locator('.blip-collapsed-row').click();
   await main.locator('[data-testid="blip-menu-read-surface"]').waitFor({ timeout: 10000 });
-  await capture(page, 'expanded blip read toolbar', ['BLB: section expanded', 'Rich Text: read mode toolbar'],
+  await capture(page, 'expanded blip read toolbar', ['BLB: section expanded', 'Rich Text: read mode toolbar', 'BLB: All sections expanded simultaneously'],
     'Clicking a collapsed blip expands it and shows the read toolbar.',
     { dynamicStep: 'after-expand', assertFn: gateExists('[data-testid="blip-menu-read-surface"]') });
 
@@ -723,6 +738,9 @@ async function captureBlipAndToolbarStates(page, fixture) {
       'Blip Operations: Blip tree retrieval (single Mango query, 18s → 29ms)',
       'Blip Operations: Per-blip-history modal',
       'Blip Operations: Gear menu animation + positioning',
+      'Blip Operations: Copy link (navigator clipboard)',
+      'Blip Operations: History modal (timeline, play/pause, diff)',
+      'Blip Operations: Edit (inline TipTap editor)',
     ],
     'Read toolbar gear opens copy/comment/history/paste/link actions.',
     { dynamicStep: 'after-read-gear-click', assertFn: gateExists('.gear-dropdown, .gear-menu, [class*="gear"][class*="menu"]') });
@@ -749,6 +767,9 @@ async function captureBlipAndToolbarStates(page, fixture) {
       'File Uploads: Client upload library (progress, cancel, retry)',
       'File Uploads: MIME-type validation',
       'File Uploads: ClamAV virus scanning',
+      'File Uploads: MIME magic-byte sniffing',
+      'Inline Widgets: Insert buttons auto-enter-edit-mode',
+      'Inline Widgets: Toolbar decluttered (Hide/Delete → gear overflow)',
     ],
     'Edit action switches the blip into full rich-text toolbar state.',
     { dynamicStep: 'after-edit-click', assertFn: gateAll(gateExists('[data-testid="blip-menu-edit-surface"]'), gateExists('.ProseMirror')) });
@@ -828,7 +849,7 @@ async function captureBlipAndToolbarStates(page, fixture) {
 
   await main.locator('[data-testid="blip-menu-done"]').click();
   await main.locator('[data-testid="blip-menu-read-surface"]').waitFor({ timeout: 10000 });
-  await capture(page, 'done returns to read toolbar', ['Rich Text: Done action', 'Blip Operations: edit persistence'],
+  await capture(page, 'done returns to read toolbar', ['Rich Text: Done action', 'Blip Operations: edit persistence', 'Blip Operations: Edit (inline TipTap editor returns to read on Done)'],
     'Done exits edit mode and restores read toolbar.',
     { dynamicStep: 'after-done-click', assertFn: gateAll(gateExists('[data-testid="blip-menu-read-surface"]'), gateAbsent('[data-testid="blip-menu-edit-surface"]')) });
 
@@ -841,7 +862,11 @@ async function captureBlipAndToolbarStates(page, fixture) {
   await main.locator('[data-testid="blip-menu-gear-toggle"]').click();
   await clickText(page, 'Playback history');
   await page.waitForTimeout(800);
-  await capture(page, 'per blip playback history modal', ['History & Playback: per-blip playback', 'Blip Operations: playback history'],
+  await capture(page, 'per blip playback history modal', [
+      'History & Playback: per-blip playback',
+      'Blip Operations: playback history',
+      'History & Playback: Wave playback per-blip diff (same blip comparison before/after)',
+    ],
     'Playback history action opens per-blip timeline modal when history exists.',
     { dynamicStep: 'after-history-click', assertFn: gateAny(gateExists('.history-modal'), gateExists('.modal-overlay'), gateExists('[role="dialog"]')) });
   await closeOpenModal(page);
@@ -897,6 +922,8 @@ async function captureRealtimeCollaborationStates(baseContext, ownerPage, fixtur
         'Real-time Collaboration: Reconnection handling (state vector diff)',
         'Real-time Collaboration: User color assignment',
         'Real-time Collaboration: Collaborative selection (see what others highlighted)',
+        'Real-time Collaboration: Transport layer (Socket.IO v4)',
+        'Real-time Collaboration: CRDT engine (Yjs)',
       ],
       'A second authenticated editor produces remote cursor/typing UI in the owner editor.',
       { dynamicStep: 'after-second-client-typing',
@@ -933,6 +960,11 @@ async function captureBlbDynamics(page, fixture) {
         'BLB: Click outside inline child = toolbar hidden',
         'BLB: Toolbar left-aligned in inline children',
         'BLB: Inline child border-left visual nesting indicator',
+        'BLB: Ctrl+Enter creates inline child at cursor position',
+        'BLB: Inline child editing (Edit button, content persists)',
+        'BLB: Orphaned markers hidden (cross-wave references)',
+        'BLB: Reply vs inline comment distinction',
+        'BLB: Auth-gated Edit button',
       ],
       'Clicking inline marker expands the inline child at the marker position.',
       { dynamicStep: 'after-inline-plus-click', assertFn: gateExists('.inline-child-expanded') });
@@ -975,7 +1007,13 @@ async function captureFractalStates(page, fractal) {
   await capture(
     page,
     'blb fractal collapsed toc',
-    ['BLB: Collapsed TOC', 'BLB: deep fractal collapsed', 'BLB: Nested inline expansion'],
+    [
+      'BLB: Collapsed TOC',
+      'BLB: deep fractal collapsed',
+      'BLB: Nested inline expansion',
+      'BLB: Deep fractal collapsed (BLB-as-ToC, depth-10 fixture)',
+      'BLB: [+] marker green for unread, gray for read',
+    ],
     `Depth-${fractal.depth} fractal topic in collapsed view: 3 root labels each with their own [+] marker, no children expanded.`,
     { assertFn: gateAll(gateExists('.blip-container'), gateAbsent('.inline-child-expanded')) },
   );
@@ -1051,11 +1089,11 @@ async function captureRightPanel(page) {
     return { pass: has.found, detail: `selector="${selector}" found=${has.found} active=${has.active}` };
   };
   await page.locator('.view-btn[title="Text view"]').click();
-  await capture(page, 'right panel text view selected', ['User Interface: Text view toggle'],
+  await capture(page, 'right panel text view selected', ['User Interface: Text view toggle', 'User Interface: Hide replies / folded view toggle'],
     'Text view is selected in the right tools panel.',
     { dynamicStep: 'after-text-view-click', assertFn: gateActiveBtn('.view-btn[title="Text view"]') });
   await page.locator('.view-btn[title="Mind map"]').click();
-  await capture(page, 'right panel mind map selected', ['User Interface: Mind map toggle'],
+  await capture(page, 'right panel mind map selected', ['User Interface: Mind map toggle', 'User Interface: Right panel mind map button'],
     'Mind map button can be selected in the right tools panel.',
     { dynamicStep: 'after-mindmap-click', assertFn: gateActiveBtn('.view-btn[title="Mind map"]') });
   await page.locator('.display-btn[title="Short view"]').click();
@@ -1123,7 +1161,11 @@ async function captureMobile(baseContext, fixture) {
   if (stillLoading) {
     manifest.residuals.push('Mobile deep-link topic route remained on Loading; captured authenticated mobile navigation instead of topic body.');
   } else {
-    await capture(mobile, 'mobile topic content view', ['Mobile & PWA: responsive layout', 'Mobile & PWA: mobile topic view'],
+    await capture(mobile, 'mobile topic content view', [
+        'Mobile & PWA: responsive layout',
+        'Mobile & PWA: mobile topic view',
+        'Mobile & PWA: View Transitions API (with reduced-motion)',
+      ],
       'Mobile viewport renders topic content without horizontal overflow and uses mobile layout classes.',
       { assertFn: gateAny(gateExists('.mobile-view-content .rizzoma-topic-detail'), gateExists('.blip-container')) });
   }
