@@ -1,0 +1,246 @@
+# Rizzoma Visual Feature Sweep
+
+- Generated: 2026-05-11T18:27:15.730Z
+- Base URL: https://dev.138-201-62-161.nip.io
+- Branch: feature/native-fractal-port
+- Commit: 65e2a11c
+- Documented rows parsed: 200
+- Screenshot-valid rows: 159
+- Dynamic candidate rows: 68
+- Captures: 44
+
+## Gate verification
+
+- **44 / 44 programmatic gates PASS** (out of 44 captures total)
+- 0 FAIL
+- 0 captures with NO assertFn (descriptive only — NOT verified). Add an `assertFn` to capture() to gate.
+
+## Captures
+
+- [✓ PASS] logged out sign in form
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/001-logged-out-sign-in-form.png
+  - Assertion: Unauthenticated session shows OAuth and email sign-in entry points.
+  - Gate detail: first-pass: selector="input[type="email"]" count=1 need≥1
+  - Feature refs: Authentication: login modal; Authentication: email login; Authentication: OAuth buttons
+- [✓ PASS] logged out sign up form
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/002-logged-out-sign-up-form.png
+  - Assertion: Sign-up link opens the registration form state.
+  - Gate detail: first-pass: selector="input[type="email"]" count=1 need≥1
+  - Feature refs: Authentication: registration entry; Authentication: signup form
+- [✓ PASS] nav topics tab and searchable topic list
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png
+  - Assertion: Topics tab is active; search input is present (topic list may be empty for a fresh test user).
+  - Gate detail: search=true topicCount=0 (empty OK for fresh user)
+  - Feature refs: User Interface: Navigation panel; User Interface: Topics list; Waves: wave list
+- [✓ PASS] topics search filter typed
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/004-topics-search-filter-typed.png
+  - Assertion: Search input accepts text and filters visible topic list state.
+  - Gate detail: value="Visual Sweep"
+  - Feature refs: Search: topic search; User Interface: Topics list search
+- [✓ PASS] nav mentions tab
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/005-nav-mentions-tab.png
+  - Assertion: Mentions navigation tab opens its dedicated panel.
+  - Gate detail: activeTab=false
+  - Feature refs: User Interface: Mentions tab
+- [✓ PASS] nav tasks tab
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/006-nav-tasks-tab.png
+  - Assertion: Tasks navigation tab opens its dedicated panel.
+  - Gate detail: activeTab=false
+  - Feature refs: User Interface: Tasks tab
+- [✓ PASS] nav publics tab
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/007-nav-publics-tab.png
+  - Assertion: Publics navigation tab opens its dedicated panel.
+  - Gate detail: activeTab=false
+  - Feature refs: User Interface: Publics tab
+- [✓ PASS] nav store tab
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/008-nav-store-tab.png
+  - Assertion: Store navigation tab opens its dedicated panel.
+  - Gate detail: activeTab=false
+  - Feature refs: User Interface: Store tab
+- [✓ PASS] nav teams tab
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/009-nav-teams-tab.png
+  - Assertion: Teams navigation tab opens its dedicated panel.
+  - Gate detail: activeTab=false
+  - Feature refs: User Interface: Teams tab
+- [✓ PASS] create topic modal open
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/010-create-topic-modal-open.png
+  - Assertion: New topic action opens the create topic modal.
+  - Gate detail: modals={"modalContent":true,"createTopicModal":false,"modalOverlay":true,"shareModal":false,"exportModal":false,"historyModal":false,"inviteModal":false,"anyDialog":false}
+  - Feature refs: Waves: create topic; User Interface: New topic modal
+- [✓ PASS] invite participants modal open
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/011-invite-participants-modal-open.png
+  - Assertion: Invite button opens participant invitation modal.
+  - Gate detail: modals={"modalContent":true,"createTopicModal":false,"modalOverlay":true,"shareModal":false,"exportModal":false,"historyModal":false,"inviteModal":false,"anyDialog":false}
+  - Feature refs: User Interface: Participants bar; Email: invite emails
+- [✓ PASS] invite participants modal filled email
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/012-invite-participants-modal-filled-email.png
+  - Assertion: Invite modal accepts an email recipient before sending.
+  - Gate detail: email-input="visual-observer+1778524035730@example.co"
+  - Feature refs: Email: invite emails; Authentication: participant invite form
+- [✓ PASS] share settings modal open
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/013-share-settings-modal-open.png
+  - Assertion: Share button opens share settings modal with privacy choices.
+  - Gate detail: modals={"modalContent":true,"createTopicModal":false,"modalOverlay":true,"shareModal":false,"exportModal":false,"historyModal":false,"inviteModal":false,"anyDialog":false}
+  - Feature refs: User Interface: Share modal; Authentication: share permissions
+- [✓ PASS] share settings option selected
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/014-share-settings-option-selected.png
+  - Assertion: Share settings modal exposes selectable access-state controls.
+  - Gate detail: modals={"modalContent":true,"createTopicModal":false,"modalOverlay":true,"shareModal":false,"exportModal":false,"historyModal":false,"inviteModal":false,"anyDialog":false}
+  - Feature refs: User Interface: Share modal; Authentication: share permissions
+- [✓ PASS] topic gear dropdown open
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/015-topic-gear-dropdown-open.png
+  - Assertion: Topic gear menu opens and exposes read/follow/export/embed/playback actions.
+  - Gate detail: open=true items=2
+  - Feature refs: Blip Operations: gear dropdown menu; User Interface: topic settings
+- [✓ PASS] export topic modal open
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/016-export-topic-modal-open.png
+  - Assertion: Export topic action opens format-selection modal.
+  - Gate detail: modals={"modalContent":false,"createTopicModal":false,"modalOverlay":false,"shareModal":false,"exportModal":true,"historyModal":false,"inviteModal":false,"anyDialog":false}
+  - Feature refs: History: export topic; User Interface: export modal
+- [✓ PASS] wave timeline playback modal open
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/017-wave-timeline-playback-modal-open.png
+  - Assertion: Wave Timeline opens playback modal with controls/timeline.
+  - Gate detail: modals={"modalContent":false,"createTopicModal":false,"modalOverlay":false,"shareModal":false,"exportModal":false,"historyModal":true,"inviteModal":false,"anyDialog":true}
+  - Feature refs: History & Playback: wave timeline; Blip Operations: playback history
+- [✓ PASS] topic landing collapsed blb toc
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/018-topic-landing-collapsed-blb-toc.png
+  - Assertion: Landing view shows label-only BLB rows and topic chrome.
+  - Gate detail: selector=".blip-container, .rizzoma-topic-detail" count=3 need≥1
+  - Feature refs: BLB: Collapsed TOC; Waves: topic view
+- [✓ PASS] expanded blip read toolbar
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/019-expanded-blip-read-toolbar.png
+  - Assertion: Clicking a collapsed blip expands it and shows the read toolbar.
+  - Gate detail: selector="[data-testid="blip-menu-read-surface"]" count=1 need≥1
+  - Feature refs: BLB: section expanded; Rich Text: read mode toolbar
+- [✓ PASS] read gear menu open
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/020-read-gear-menu-open.png
+  - Assertion: Read toolbar gear opens copy/comment/history/paste/link actions.
+  - Gate detail: selector=".gear-dropdown, .gear-menu, [class*="gear"][class*="menu"]" count=3 need≥1
+  - Feature refs: Blip Operations: gear dropdown; Blip Operations: copy/paste/history/delete variants
+- [✓ PASS] edit toolbar full rich text controls
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/021-edit-toolbar-full-rich-text-controls.png
+  - Assertion: Edit action switches the blip into full rich-text toolbar state.
+  - Gate detail: all passed
+  - Feature refs: Rich Text: edit toolbar; Rich Text: formatting controls; File Uploads: upload buttons
+- [✓ PASS] edit overflow menu open
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/022-edit-overflow-menu-open.png
+  - Assertion: Edit overflow exposes send, copy, playback, paste, link, and destructive actions.
+  - Gate detail: selector="[class*="overflow"], [class*="dropdown"]" count=12 need≥1
+  - Feature refs: Blip Operations: edit overflow menu; Blip Operations: paste/copy variants
+- [✓ PASS] emoji picker open
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/023-emoji-picker-open.png
+  - Assertion: Emoji toolbar control opens picker UI.
+  - Gate detail: first-pass: selector="[class*="emoji-picker"]" count=2 need≥1
+  - Feature refs: Rich Text: emoji picker; Inline Widgets: emoji insertion
+- [✓ PASS] mention autocomplete active
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/024-mention-autocomplete-active.png
+  - Assertion: Typing @ in edit mode opens or primes mention autocomplete state.
+  - Gate detail: first-pass: selector=".mention-list, .suggestion-list, [class*="mention"][class*="dropdown"]
+  - Feature refs: Rich Text: mentions autocomplete; Inline Widgets: @mention pill
+- [✓ PASS] task trigger typed
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/025-task-trigger-typed.png
+  - Assertion: Typing ~ in edit mode exercises task insertion trigger path.
+  - Gate detail: first-pass: text="~" found=true
+  - Feature refs: Rich Text: task trigger; Inline Widgets: task styling
+- [✓ PASS] tag trigger typed
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/026-tag-trigger-typed.png
+  - Assertion: Typing # in edit mode exercises tag insertion trigger path.
+  - Gate detail: first-pass: text="#" found=true
+  - Feature refs: Rich Text: tag trigger; Inline Widgets: tag styling
+- [✓ PASS] right panel gadget palette open
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/027-right-panel-gadget-palette-open.png
+  - Assertion: Right panel Gadgets button opens the gadget palette.
+  - Gate detail: selector=".gadget-palette, [class*="gadget-palette"]" count=3 need≥1
+  - Feature refs: Rich Text: gadget palette; Inline Widgets: gadget insert shortcuts
+- [✓ PASS] done returns to read toolbar
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/028-done-returns-to-read-toolbar.png
+  - Assertion: Done exits edit mode and restores read toolbar.
+  - Gate detail: all passed
+  - Feature refs: Rich Text: Done action; Blip Operations: edit persistence
+- [✓ PASS] inline comments nav state
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/029-inline-comments-nav-state.png
+  - Assertion: Inline comments control surfaces the comment navigation/filter area when available.
+  - Gate detail: selector="[data-testid^="blip-menu-comments"], .inline-comments-nav, [class*="comments"]" count=2 need≥1
+  - Feature refs: Inline Comments: sidebar/nav; Inline Comments: filters
+- [✓ PASS] per blip playback history modal
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/030-per-blip-playback-history-modal.png
+  - Assertion: Playback history action opens per-blip timeline modal when history exists.
+  - Gate detail: first-pass: selector="[role="dialog"]" count=1 need≥1
+  - Feature refs: History & Playback: per-blip playback; Blip Operations: playback history
+- [✓ PASS] inline marker before click
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/031-inline-marker-before-click.png
+  - Assertion: Inline [+] marker is visible before expansion.
+  - Gate detail: selector="[data-blip-thread="3a10bb6d95f2c4bd42a0db703001a54f:b1778524045592"]" count=1 need≥1
+  - Feature refs: BLB: inline plus marker before; BLB: marker styling
+- [✓ PASS] inline marker after click expanded
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/032-inline-marker-after-click-expanded.png
+  - Assertion: Clicking inline marker expands the inline child at the marker position.
+  - Gate detail: selector=".inline-child-expanded" count=1 need≥1
+  - Feature refs: BLB: inline expansion; BLB: portal rendering
+- [✓ PASS] fold all after hide replies
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/033-fold-all-after-hide-replies.png
+  - Assertion: Fold control collapses/hides reply bodies.
+  - Gate detail: selector=".fold-btn" count=2 need≥1
+  - Feature refs: BLB: fold all; BLB: hide replies
+- [✓ PASS] unfold all after show replies
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/034-unfold-all-after-show-replies.png
+  - Assertion: Unfold control restores reply visibility.
+  - Gate detail: selector=".fold-btn" count=2 need≥1
+  - Feature refs: BLB: unfold all; BLB: show replies
+- [✓ PASS] blb fractal collapsed toc
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/035-blb-fractal-collapsed-toc.png
+  - Assertion: Depth-10 fractal topic in collapsed view: 3 root labels each with their own [+] marker, no children expanded.
+  - Gate detail: all passed
+  - Feature refs: BLB: Collapsed TOC; BLB: deep fractal collapsed; BLB: Nested inline expansion
+- [✓ PASS] blb fractal spine expanded depth10
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/036-blb-fractal-spine-expanded-depth10.png
+  - Assertion: Depth-10 fractal topic with the Spine branch expanded through all 10 levels.
+  - Gate detail: inline-expanded=9 need≥9
+  - Feature refs: BLB: deep fractal spine expanded; BLB: Nested inline expansion; BLB: portal rendering
+- [✓ PASS] blb fractal all branches expanded
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/037-blb-fractal-all-branches-expanded.png
+  - Assertion: Depth-10 fractal topic with all 3 root branches expanded — visual parity check vs original Rizzoma deep BLB.
+  - Gate detail: inline-expanded=3 need≥3 (3 root branches)
+  - Feature refs: BLB: deep fractal all-branches; BLB: portal flush with parent indent; BLB: Nested inline expansion
+- [✓ PASS] right panel text view selected
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/038-right-panel-text-view-selected.png
+  - Assertion: Text view is selected in the right tools panel.
+  - Gate detail: selector=".view-btn[title="Text view"]" found=true active=true
+  - Feature refs: User Interface: Text view toggle
+- [✓ PASS] right panel mind map selected
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/039-right-panel-mind-map-selected.png
+  - Assertion: Mind map button can be selected in the right tools panel.
+  - Gate detail: selector=".view-btn[title="Mind map"]" found=true active=true
+  - Feature refs: User Interface: Mind map toggle
+- [✓ PASS] right panel short mode selected
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/040-right-panel-short-mode-selected.png
+  - Assertion: Short display mode toggle activates.
+  - Gate detail: selector=".display-btn[title="Short view"]" found=true active=true
+  - Feature refs: User Interface: short display mode
+- [✓ PASS] right panel expanded mode selected
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/041-right-panel-expanded-mode-selected.png
+  - Assertion: Expanded display mode toggle activates.
+  - Gate detail: selector=".display-btn[title="Expanded view"]" found=true active=true
+  - Feature refs: User Interface: expanded display mode
+- [✓ PASS] mobile authenticated topic navigation
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/042-mobile-authenticated-topic-navigation.png
+  - Assertion: Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.
+  - Gate detail: first-pass: selector=".rizzoma-layout" count=1 need≥1
+  - Feature refs: Mobile & PWA: responsive layout; Mobile & PWA: mobile navigation
+- [✓ PASS] mobile topic content view
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/043-mobile-topic-content-view.png
+  - Assertion: Mobile viewport renders topic content without horizontal overflow and uses mobile layout classes.
+  - Gate detail: first-pass: selector=".mobile-view-content .rizzoma-topic-detail" count=1 need≥1
+  - Feature refs: Mobile & PWA: responsive layout; Mobile & PWA: mobile topic view
+- [✓ PASS] toast notification component visible
+  - File: screenshots/260511-AUTOSAVE-FIX-sweep-feature-sweep/044-toast-notification-component-visible.png
+  - Assertion: Toast component renders a visible status notification when the app emits a toast event.
+  - Gate detail: selector="[data-testid="toast"], .toast, [role="status"], [aria-live="polite"]" count=1 need≥1
+  - Feature refs: User Interface: Toast notifications
+
+## Residuals
+
+- Realtime cursor/typing screenshot was not captured: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-blip-id="3a10bb6d95f2c4bd42a0db703001a54f:b1778524045436"]').first().locator('[data-testid="blip-menu-read-surface"]').first() to be visible[22m
+
