@@ -74,6 +74,7 @@ export interface BlipData {
   anchorPosition?: number; // BLB: If set, this blip is anchored inline at this position (not shown in list)
 }
 
+console.log('[BugA] RizzomaBlip module loaded, build marker=445c7a19+optimistic');
 let globalActiveBlipId: string | null = null;
 
 export function getGlobalActiveBlipId(): string | null {
