@@ -262,7 +262,7 @@ try {
       const name = raw.replace(/[✅⚠️❌🚧]/g, '').trim();
       // Skip generic top-level umbrella headers and the Summary section.
       if (!name) { currentSection = null; continue; }
-      if (/^Summary$/i.test(name)) { currentSection = null; continue; }
+      if (/^Summary/i.test(name)) { currentSection = null; continue; }
       if (depth === 2 && /^Implemented Features$|^Partial Features$|^Missing Features$|^Notes$/i.test(name)) {
         currentSection = null; continue;
       }
@@ -274,8 +274,10 @@ try {
     const itemMatch = ln.match(/^[-*]\s+\*\*([^*]+?)\*\*\s*[—-]?\s*(.*)$/);
     if (itemMatch) {
       const name = itemMatch[1].trim();
-      // Skip "Files created" and similar pseudo-rows.
-      if (/^Files? created$|^Files?$/i.test(name)) continue;
+      // Skip meta-markers in the doc that aren't real features.
+      if (/^Files?( created| modified| changed)?:?$|^Tests?:?$|^Documentation:?$|^Grade:?$|^Notes?:?$|^Coverage:?$|^Status:?$|^Area$|^Persistence$|^TODO:?$/i.test(name)) continue;
+      // Skip strikethrough items (~~text~~) — they're already-resolved gaps.
+      if (/^~~.+~~$/.test(name)) continue;
       currentSection.items.push({
         name,
         description: (itemMatch[2] || '').trim(),
