@@ -74,6 +74,7 @@ export interface BlipData {
   anchorPosition?: number; // BLB: If set, this blip is anchored inline at this position (not shown in list)
 }
 
+console.log('[BugA] RizzomaBlip module loaded, build marker=445c7a19+optimistic');
 let globalActiveBlipId: string | null = null;
 
 export function getGlobalActiveBlipId(): string | null {
@@ -721,6 +722,7 @@ export function RizzomaBlip({
         // RizzomaTopicDetail's create handler uses. The toggle listener at
         // RizzomaBlip.tsx:798 claims via parentId === blip.id and expands.
         if (newBlipId) {
+          if (typeof performance !== 'undefined') performance.mark('handle-after-postresp');
           // Bug A last-mile (Task #191, 2026-05-11): optimistic local
           // mount. Profile showed the 271ms `await reload()` round-trip
           // dominated the 432ms total. Construct an optimistic BlipData
@@ -739,7 +741,10 @@ export function RizzomaBlip({
             __rizzomaTopicReload?: () => Promise<void>;
           };
           const responseBlip = newBlip.blip;
+          if (typeof performance !== 'undefined') performance.mark('handle-before-add');
+          console.log('[BugA] optimistic check: responseBlip=', !!responseBlip, 'addBlipFn=', typeof w.__rizzomaTopicAddBlip, 'newBlip keys=', Object.keys(newBlip || {}));
           if (responseBlip && typeof w.__rizzomaTopicAddBlip === 'function') {
+            console.log('[BugA] taking OPTIMISTIC path');
             const optimistic: BlipData = {
               id: newBlipId,
               content: responseBlip.content || '',
@@ -759,11 +764,13 @@ export function RizzomaBlip({
               w.__rizzomaTopicReload().catch(() => {});
             }
           } else if (typeof w.__rizzomaTopicReload === 'function') {
+            console.log('[BugA] taking AWAITED RELOAD fallback');
             await w.__rizzomaTopicReload();
           } else {
             window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
             await new Promise((r) => setTimeout(r, 250));
           }
+          if (typeof performance !== 'undefined') performance.mark('handle-before-toggle');
           window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
             detail: { threadId: newBlipId, parentId: blip.id },
           }));

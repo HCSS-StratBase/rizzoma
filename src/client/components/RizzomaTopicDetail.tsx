@@ -760,24 +760,20 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             //      blip in `inlineChildren` and expand it.
             //   3. RAF + dispatch enter-edit — the inline editor needs one
             //      paint cycle to mount before we can focus it.
-            // Bug A last-mile (Task #191, 2026-05-11): the optimistic
-            // setBlips above ALREADY puts the new blip in inlineChildren —
-            // the comment block originally said the AWAIT was needed
-            // because the optimistic add didn't exist back then. Now that
-            // it does, the await is pure 271ms idle. Profile confirms
-            // toggle fires only when /api/waves/.../participants returns
-            // (the slowest of the 3 parallel load() fetches). Fire reload
-            // in the background for eventual reconciliation but DON'T
-            // gate the toggle on it.
-            load(true).catch(() => {});
+            try {
+              await load(true);
+            } catch {
+              // load() rarely fails; if it does the optimistic state above
+              // still lets the toggle render.
+            }
             window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
               detail: { threadId: newBlipId, parentId: id }
             }));
-            requestAnimationFrame(() => {
+            requestAnimationFrame(() => requestAnimationFrame(() => {
               window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
                 detail: { blipId: newBlipId }
               }));
-            });
+            }));
           } else {
             toast('Subblip created');
             load(true); // Fallback: reload to show the new blip
