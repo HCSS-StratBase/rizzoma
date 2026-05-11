@@ -339,7 +339,7 @@
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/NATIVE_RENDER_PORT_PLAN.md">Plan</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md">Why</a> ·
     <a href="https://github.com/HCSS-StratBase/rizzoma/issues/50">Epic #50</a>
-    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-11 21:05:10 UTC</span>
+    &nbsp;·&nbsp; Snapshot: <span id="stamp" class="stamp">2026-05-11 21:14:57 UTC</span>
     &nbsp;·&nbsp; <span id="refresh-status">auto-refresh ON</span>
   </p>
 </header>
@@ -358,7 +358,7 @@
     <div class="stat-card"><div class="stat-num">92%</div><div class="stat-lbl">Complete</div></div>
     <div class="stat-card"><div class="stat-num">13.3<span style="font-size:1rem;color:var(--lb)"> / 14.5</span></div><div class="stat-lbl">Workdays</div></div>
     <div class="stat-card"><div class="stat-num">5<span style="font-size:1rem;color:var(--lb)"> / 6</span></div><div class="stat-lbl">Phases done</div></div>
-    <div class="stat-card"><div class="stat-num">92</div><div class="stat-lbl">Commits on port branch</div></div>
+    <div class="stat-card"><div class="stat-num">93</div><div class="stat-lbl">Commits on port branch</div></div>
   </div>
   <div class="pbar-row">
     <div class="pbar-wrapper"><div class="pbar-fill" style="--target:92%"></div></div>
@@ -380,10 +380,10 @@
     </div>
     <div class="live-row"><span></span><span class="live-detail">pid 1820: npm exec @playwright/mcp@latest</span></div><div class="live-row"><span></span><span class="live-detail">pid 1967: sh -c playwright-mcp</span></div><div class="live-row"><span></span><span class="live-detail">pid 1968: node /home/stephan/.npm-cache/_npx/9833c18b2d85bc59/node_modules/.bin/playwright-mcp</span></div><div class="live-row"><span></span><span class="live-detail">pid 2808: npm exec @executeautomation/playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 2953: sh -c playwright-mcp-server</span></div><div class="live-row"><span></span><span class="live-detail">pid 2954: node /home/stephan/.nvm/versions/node/v20.19.0/bin/playwright-mcp-server</span></div>
     <div class="live-row">
-      <span class="lbl" style="color:var(--gray)">EDITED</span>
-      <span>0 file(s) in last 120s (no recent edits)</span>
+      <span class="lbl" style="color:var(--amber)">EDITED</span>
+      <span>1 file(s) in last 120s</span>
     </div>
-    
+    <div class="live-row"><span></span><span class="live-detail">scripts/build_native_pm.mjs <span style="opacity:0.6">(68s ago)</span></span></div>
   </div>
 </section>
 
@@ -435,10 +435,10 @@
 <section>
   <h2>📊 Feature coverage</h2>
   <div style="font-size:0.85rem;color:var(--lb);margin-bottom:0.75rem">
-    Each row is a category. Each square is a feature — hover for name + status, click row to expand details. Categories sorted by coverage (best first).
+    Each row is a category. Each square is a feature — hover for name + status, click row to expand details. Categories sorted by coverage (best first). Coverage matching uses Jaccard token overlap between doc-feature names and sweep-capture featureRef labels; <strong>weak match</strong> = a capture targeting this feature's broader category exists and PASSES, but its featureRef name doesn't share enough tokens (Jaccard ≥ 0.5) with this specific feature's name to claim a verified PASS — typically fixable by adding the feature's keywords to the relevant capture's featureRefs array.
     <span style="margin-left:1rem"><span style="display:inline-block;width:10px;height:10px;background:var(--green);border-radius:2px;vertical-align:middle"></span> PASS</span>
     <span style="margin-left:0.6rem"><span style="display:inline-block;width:10px;height:10px;background:var(--red);border-radius:2px;vertical-align:middle"></span> FAIL</span>
-    <span style="margin-left:0.6rem"><span style="display:inline-block;width:10px;height:10px;background:var(--amber);border-radius:2px;vertical-align:middle"></span> captured (no gate)</span>
+    <span style="margin-left:0.6rem" title="A capture in the matching section exists AND its gate PASSES, but its featureRef name has weak (Jaccard token overlap < 0.5) match with this feature's name. Evidence is nearby but match confidence is too low to claim a specific verified PASS."><span style="display:inline-block;width:10px;height:10px;background:var(--amber);border-radius:2px;vertical-align:middle"></span> weak match (low confidence)</span>
     <span style="margin-left:0.6rem"><span style="display:inline-block;width:10px;height:10px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);border-radius:2px;vertical-align:middle"></span> uncovered</span>
   </div>
   <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem">
@@ -453,7 +453,7 @@
     <div style="display:flex;gap:1.25rem;font-size:0.85rem;color:var(--lb);flex-wrap:wrap">
       <span><span style="color:var(--green);font-weight:700">●</span> 55 verified PASS</span>
       <span><span style="color:var(--red);font-weight:700">●</span> 0 verified FAIL</span>
-      <span><span style="color:var(--amber);font-weight:700">●</span> 84 captured (no gate)</span>
+      <span title="A capture in the matching section exists AND its gate PASSES, but its featureRef name has weak (Jaccard token overlap < 0.5) match with this feature's name. Evidence is nearby but match confidence is too low to claim a specific verified PASS. Tighten by adding the feature's name keywords to the relevant capture's featureRefs array in scripts/visual-feature-sweep.mjs."><span style="color:var(--amber);font-weight:700">●</span> 84 weak match (low confidence)</span>
       <span><span style="color:var(--gray)">●</span> 86 not yet covered (visual)</span>
       <span><span style="color:#7080a0;font-weight:700">●</span> 57 N/A — backend / infra (excluded)</span>
       <span style="margin-left:auto"><strong>282</strong> total features in 20 categories</span>
@@ -6805,24 +6805,29 @@
   <div class="recent-commits">
 
     <div class="commit-row">
+      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/4e528b3d232c54e8d1457c94c3013a74ffd9ae9c" target="_blank" rel="noopener">4e528b3d</a></span>
+      <span class="commit-subject">sweep(260511-COV-LIFT): 45/45 PASS + matrix coverage 25→55 (2.2× more verified features)</span>
+      <span class="commit-when">9 minutes ago</span>
+    </div>
+    <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/a0337f5d303222582b353be21c491f7a7d43fc5e" target="_blank" rel="noopener">a0337f5d</a></span>
       <span class="commit-subject">sweep(coverage): enrich featureRefs on existing captures (Task #193)</span>
-      <span class="commit-when">3 minutes ago</span>
+      <span class="commit-when">13 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/12a1da226f776a18dd76fec7e3b58cfc3d259ca4" target="_blank" rel="noopener">12a1da22</a></span>
       <span class="commit-subject">sweep(260511-IDX-WIN): 🎯 45/45 PASS — CouchDB participants index regression-tested clean</span>
-      <span class="commit-when">15 minutes ago</span>
+      <span class="commit-when">24 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/bd8cea234b2db22eb4d193955e08929a806ce322" target="_blank" rel="noopener">bd8cea23</a></span>
       <span class="commit-subject">perf(server): add idx_participant_by_wave — Bug A&#39;s 271ms participants query → &lt;30ms</span>
-      <span class="commit-when">21 minutes ago</span>
+      <span class="commit-when">31 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/e1443e340f151eaea6761b1edfdf4d69a679808a" target="_blank" rel="noopener">e1443e34</a></span>
       <span class="commit-subject">docs: refresh HANDOFF/RESTART/CLAUDE_SESSION + add worklog-260511 for today&#39;s work</span>
-      <span class="commit-when">27 minutes ago</span>
+      <span class="commit-when">37 minutes ago</span>
     </div>
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/17d07cc8a8e8acde416abd1cd2580031355a5dad" target="_blank" rel="noopener">17d07cc8</a></span>
@@ -6897,11 +6902,6 @@
     <div class="commit-row">
       <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/e29bb5e2d49d5ed9bfeaabe0a24709b019d8ea97" target="_blank" rel="noopener">e29bb5e2</a></span>
       <span class="commit-subject">verify(blip): Bug A small wins shipped — 430ms → 322ms (25% faster, 4.5× total improvement vs 1434ms baseline)</span>
-      <span class="commit-when">22 hours ago</span>
-    </div>
-    <div class="commit-row">
-      <span class="commit-hash"><a href="https://github.com/HCSS-StratBase/rizzoma/commit/144a584d383fe275370dfa1c9ff87bb2ebbe0c5c" target="_blank" rel="noopener">144a584d</a></span>
-      <span class="commit-subject">perf(blip): Bug A small wins — parallel load() awaits + RAF chain collapse</span>
       <span class="commit-when">22 hours ago</span>
     </div>
   </div>

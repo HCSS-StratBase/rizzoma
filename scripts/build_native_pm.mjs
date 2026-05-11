@@ -627,7 +627,7 @@ const overallBar = (() => {
     <div style="display:flex;gap:1.25rem;font-size:0.85rem;color:var(--lb);flex-wrap:wrap">
       <span><span style="color:var(--green);font-weight:700">●</span> ${G.pass} verified PASS</span>
       <span><span style="color:var(--red);font-weight:700">●</span> ${G.fail} verified FAIL</span>
-      <span><span style="color:var(--amber);font-weight:700">●</span> ${G.noGate} captured (no gate)</span>
+      <span title="A capture in the matching section exists AND its gate PASSES, but its featureRef name has weak (Jaccard token overlap < 0.5) match with this feature's name. Evidence is nearby but match confidence is too low to claim a specific verified PASS. Tighten by adding the feature's name keywords to the relevant capture's featureRefs array in scripts/visual-feature-sweep.mjs."><span style="color:var(--amber);font-weight:700">●</span> ${G.noGate} weak match (low confidence)</span>
       <span><span style="color:var(--gray)">●</span> ${G.uncov} not yet covered (visual)</span>
       ${G.naNon > 0 ? `<span><span style="color:#7080a0;font-weight:700">●</span> ${G.naNon} N/A — backend / infra (excluded)</span>` : ''}
       <span style="margin-left:auto"><strong>${G.total}</strong> total features in ${sectionStats.length} categories</span>
@@ -1198,10 +1198,10 @@ const html = `<!doctype html>
 <section>
   <h2>📊 Feature coverage</h2>
   <div style="font-size:0.85rem;color:var(--lb);margin-bottom:0.75rem">
-    Each row is a category. Each square is a feature — hover for name + status, click row to expand details. Categories sorted by coverage (best first).
+    Each row is a category. Each square is a feature — hover for name + status, click row to expand details. Categories sorted by coverage (best first). Coverage matching uses Jaccard token overlap between doc-feature names and sweep-capture featureRef labels; <strong>weak match</strong> = a capture targeting this feature's broader category exists and PASSES, but its featureRef name doesn't share enough tokens (Jaccard ≥ 0.5) with this specific feature's name to claim a verified PASS — typically fixable by adding the feature's keywords to the relevant capture's featureRefs array.
     <span style="margin-left:1rem"><span style="display:inline-block;width:10px;height:10px;background:var(--green);border-radius:2px;vertical-align:middle"></span> PASS</span>
     <span style="margin-left:0.6rem"><span style="display:inline-block;width:10px;height:10px;background:var(--red);border-radius:2px;vertical-align:middle"></span> FAIL</span>
-    <span style="margin-left:0.6rem"><span style="display:inline-block;width:10px;height:10px;background:var(--amber);border-radius:2px;vertical-align:middle"></span> captured (no gate)</span>
+    <span style="margin-left:0.6rem" title="A capture in the matching section exists AND its gate PASSES, but its featureRef name has weak (Jaccard token overlap < 0.5) match with this feature's name. Evidence is nearby but match confidence is too low to claim a specific verified PASS."><span style="display:inline-block;width:10px;height:10px;background:var(--amber);border-radius:2px;vertical-align:middle"></span> weak match (low confidence)</span>
     <span style="margin-left:0.6rem"><span style="display:inline-block;width:10px;height:10px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);border-radius:2px;vertical-align:middle"></span> uncovered</span>
   </div>
   ${featureMatrixHtml}
