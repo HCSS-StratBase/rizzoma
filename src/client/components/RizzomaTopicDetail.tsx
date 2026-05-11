@@ -842,12 +842,15 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     w.__rizzomaTopicReload = () => load(true);
     w.__rizzomaTopicAddBlip = (blip: BlipData) => {
       setBlips((prev) => {
+        // Dedup — if already in the flat top-level list, no-op.
         if (prev.some((b) => b.id === blip.id)) return prev;
-        // Also attach to parent's childBlips if parent is already in the tree —
-        // this is what makes the new inline child immediately findable by
-        // the parent's renderInlineHtml walker.
+        // Try to attach as a child of an existing blip's childBlips. Track
+        // whether we found the parent in the tree so we can fall back to
+        // top-level append if not.
+        let foundParent = false;
         const walk = (items: BlipData[]): BlipData[] => items.map((b) => {
           if (b.id === blip.parentBlipId) {
+            foundParent = true;
             const exists = (b.childBlips || []).some((c) => c.id === blip.id);
             if (exists) return b;
             return { ...b, childBlips: [...(b.childBlips || []), blip] };
@@ -857,7 +860,13 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           }
           return b;
         });
-        return walk(prev);
+        const updated = walk(prev);
+        if (foundParent) return updated;
+        // Parent not in the in-memory tree → must be the topic itself (or a
+        // not-yet-loaded blip). For topic-root parented blips, append at the
+        // top level of `blips` — load() does the same in its parentless
+        // branch (rootBlips.push).
+        return [...prev, blip];
       });
     };
     return () => {
