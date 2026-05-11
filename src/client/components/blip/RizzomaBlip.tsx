@@ -74,7 +74,6 @@ export interface BlipData {
   anchorPosition?: number; // BLB: If set, this blip is anchored inline at this position (not shown in list)
 }
 
-console.log('[BugA] RizzomaBlip module loaded, build marker=445c7a19+optimistic');
 let globalActiveBlipId: string | null = null;
 
 export function getGlobalActiveBlipId(): string | null {
@@ -722,55 +721,20 @@ export function RizzomaBlip({
         // RizzomaTopicDetail's create handler uses. The toggle listener at
         // RizzomaBlip.tsx:798 claims via parentId === blip.id and expands.
         if (newBlipId) {
-          if (typeof performance !== 'undefined') performance.mark('handle-after-postresp');
-          // Bug A last-mile (Task #191, 2026-05-11): optimistic local
-          // mount. Profile showed the 271ms `await reload()` round-trip
-          // dominated the 432ms total. Construct an optimistic BlipData
-          // from the POST response and inject directly via
-          // __rizzomaTopicAddBlip — skip the reload entirely. Background
-          // reload runs fire-and-forget for eventual reconciliation but
-          // doesn't gate any visible UI.
-          //
-          // Previous attempt at this (15c637a4, reverted 299b50b8) failed
-          // because the autosave bug at the time wrote <p></p> over the
-          // newly-mounted blip's content. That bug is fixed in 65e2a11c
-          // (autosave guard against programmatic setContent), so this
-          // optimistic path is now safe.
-          const w = window as unknown as {
-            __rizzomaTopicAddBlip?: (b: BlipData) => void;
-            __rizzomaTopicReload?: () => Promise<void>;
-          };
-          const responseBlip = newBlip.blip;
-          if (typeof performance !== 'undefined') performance.mark('handle-before-add');
-          console.log('[BugA] optimistic check: responseBlip=', !!responseBlip, 'addBlipFn=', typeof w.__rizzomaTopicAddBlip, 'newBlip keys=', Object.keys(newBlip || {}));
-          if (responseBlip && typeof w.__rizzomaTopicAddBlip === 'function') {
-            console.log('[BugA] taking OPTIMISTIC path');
-            const optimistic: BlipData = {
-              id: newBlipId,
-              content: responseBlip.content || '',
-              authorId: responseBlip.authorId || '',
-              authorName: responseBlip.authorName || 'Anonymous',
-              createdAt: responseBlip.createdAt || Date.now(),
-              updatedAt: responseBlip.updatedAt || Date.now(),
-              isRead: true,
-              parentBlipId: responseBlip.parentId || blip.id,
-              anchorPosition: responseBlip.anchorPosition,
-              permissions: { canEdit: true, canComment: true, canRead: true },
-              childBlips: [],
-            };
-            w.__rizzomaTopicAddBlip(optimistic);
-            // Background reconcile — fire-and-forget.
-            if (typeof w.__rizzomaTopicReload === 'function') {
-              w.__rizzomaTopicReload().catch(() => {});
-            }
-          } else if (typeof w.__rizzomaTopicReload === 'function') {
-            console.log('[BugA] taking AWAITED RELOAD fallback');
+          // Bug A perf fix (2026-05-07): await topic reload via the
+          // helper exposed by RizzomaTopicDetail. Optimistic local mount
+          // was attempted (Task #191) but reverted — the React batched
+          // setBlips state hadn't committed before the toggle dispatch
+          // fired, so the toggle handler couldn't find the new blip in
+          // inlineChildren. The await of load(true) gives React time to
+          // commit the optimistic state.
+          const w = window as unknown as { __rizzomaTopicReload?: () => Promise<void> };
+          if (typeof w.__rizzomaTopicReload === 'function') {
             await w.__rizzomaTopicReload();
           } else {
             window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
             await new Promise((r) => setTimeout(r, 250));
           }
-          if (typeof performance !== 'undefined') performance.mark('handle-before-toggle');
           window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
             detail: { threadId: newBlipId, parentId: blip.id },
           }));
