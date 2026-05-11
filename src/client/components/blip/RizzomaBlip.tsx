@@ -741,7 +741,9 @@ export function RizzomaBlip({
           };
           const responseBlip = newBlip.blip;
           if (typeof performance !== 'undefined') performance.mark('handle-before-add');
+          console.log('[BugA] optimistic check: responseBlip=', !!responseBlip, 'addBlipFn=', typeof w.__rizzomaTopicAddBlip, 'newBlip keys=', Object.keys(newBlip || {}));
           if (responseBlip && typeof w.__rizzomaTopicAddBlip === 'function') {
+            console.log('[BugA] taking OPTIMISTIC path');
             const optimistic: BlipData = {
               id: newBlipId,
               content: responseBlip.content || '',
@@ -761,7 +763,7 @@ export function RizzomaBlip({
               w.__rizzomaTopicReload().catch(() => {});
             }
           } else if (typeof w.__rizzomaTopicReload === 'function') {
-            // Fallback: still await reload if optimistic helper isn't available.
+            console.log('[BugA] taking AWAITED RELOAD fallback');
             await w.__rizzomaTopicReload();
           } else {
             window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
