@@ -455,6 +455,28 @@ async function openWave(page, waveId) {
   await page.goto('about:blank');
   await page.goto(`${baseUrl}/?layout=rizzoma#/topic/${encodeURIComponent(waveId)}`, { waitUntil: 'domcontentloaded' });
   await page.locator('.rizzoma-topic-detail').waitFor({ timeout: 30000 });
+  // Sweep-state contamination fix (Task #190, 2026-05-11): the
+  // .rizzoma-topic-detail element appears as soon as React renders the
+  // wrapping component, but BEFORE load() finishes fetching topic + blips
+  // data. The 800ms timeout in captureFractalStates wasn't enough — gate
+  // 036 saw spine[1] mount with empty content because its data hadn't
+  // loaded yet. Wait until the topic root has at least 1 .blip-thread-marker
+  // (or .blip-text non-empty content), proving load() completed and React
+  // committed the topic-content render.
+  try {
+    await page.waitForFunction(
+      () => {
+        const text = document.querySelector('.blip-text');
+        if (!text) return false;
+        // Either content is non-empty, or there's at least one inline marker.
+        return (text.textContent || '').trim().length > 0
+          || !!document.querySelector('.blip-thread-marker');
+      },
+      { timeout: 8000 },
+    );
+  } catch {
+    // Topics without inline markers + with empty content (rare) fall through.
+  }
   await page.locator('.blip-collapsed-row, [data-blip-id]').first().waitFor({ timeout: 30000 });
 }
 
