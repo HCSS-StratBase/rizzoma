@@ -963,12 +963,15 @@ async function captureBlipAndToolbarStates(page, fixture) {
 
 async function enterMainBlipEdit(page, fixture) {
   const main = page.locator(`[data-blip-id="${fixture.mainBlipId}"]`).first();
+  // Wait for the specific main-blip element to mount — observer page may need
+  // a moment after openWave() before the blip data is loaded into the DOM.
+  await main.waitFor({ timeout: 25000 });
   await main.locator('.blip-collapsed-row').click({ timeout: 5000 }).catch(() => {});
   if (!(await main.locator('[data-testid="blip-menu-edit-surface"]').first().count())) {
-    await main.locator('[data-testid="blip-menu-read-surface"]').first().waitFor({ timeout: 10000 });
+    await main.locator('[data-testid="blip-menu-read-surface"]').first().waitFor({ timeout: 25000 });
     await main.locator('[data-testid="blip-menu-edit"]').first().click();
   }
-  await main.locator('[data-testid="blip-menu-edit-surface"]').first().waitFor({ timeout: 10000 });
+  await main.locator('[data-testid="blip-menu-edit-surface"]').first().waitFor({ timeout: 25000 });
   const editor = main.locator('.ProseMirror').first();
   await editor.waitFor({ timeout: 10000 });
   await focusEditorWithoutPointer(editor);
