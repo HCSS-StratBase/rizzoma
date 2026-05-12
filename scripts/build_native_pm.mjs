@@ -263,6 +263,11 @@ try {
       // Skip generic top-level umbrella headers and the Summary section.
       if (!name) { currentSection = null; continue; }
       if (/^Summary/i.test(name)) { currentSection = null; continue; }
+      // "Permissions & Auth" in the bullet half is a misc remnant
+      // (lists items like "Perf/resilience sweeps", "Backup automation",
+      // "Gadget iframe rendering" — none of which are auth features).
+      // Skip — those features are covered in their own captures.
+      if (/^Permissions\s*&\s*Auth$/i.test(name)) { currentSection = null; continue; }
       if (depth === 2 && /^Implemented Features$|^Partial Features$|^Missing Features$|^Notes$/i.test(name)) {
         currentSection = null; continue;
       }
