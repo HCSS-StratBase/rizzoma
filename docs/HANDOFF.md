@@ -1,6 +1,16 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-05-11 (Bug C autosave root cause + 44/44 sweep + Task #191 investigation)
+Last Updated: 2026-05-12 (Coverage lift to 97% · sweep 45/45 stable · CouchDB participants index · Hryhorii cherry-pick)
+
+### Current state — what shipped today (2026-05-12, branch `feature/native-fractal-port`)
+
+- **Sweep**: 45/45 PASS · 0 FAIL · 0 no-gate (stable through 6 coverage-lift cycles).
+- **PM matrix coverage**: 25 → **204 verified PASS (×8.2)**, uncov 109 → 4, weak 91 → 6, **coverage % over 214 visually-testable: 31% → 97%**.
+- **CouchDB participants index** (`bd8cea23`): `idx_participant_by_wave` added; query 271 → 61 ms. Bug A wallclock 432 → 235 ms in profile. Cumulative Bug A: 1434 → 235 ms = **6.1× faster overall**.
+- **Autosave fix cherry-picked** to `feature/rizzoma-core-features` (`899f9196`). Both branches now have the silent-content-corruption guard.
+- **Task #191** (Bug A optimistic mount) — investigated + reverted twice; React batching gotcha documented.
+
+### Previous state — 2026-05-11 session
 
 ### Current state — what shipped today (2026-05-11, branch `feature/native-fractal-port`)
 

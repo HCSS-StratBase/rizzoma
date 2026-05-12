@@ -608,14 +608,29 @@ async function captureNavigationTabs(page) {
   for (const label of ['Mentions', 'Tasks', 'Publics', 'Store', 'Teams']) {
     await clickText(page, label);
     await page.waitForTimeout(400);
+    // Per-tab capture — also check that the SECONDARY pane (right of nav)
+    // rendered content for this tab. Mentions/Tasks each have a dedicated
+    // empty-state UI for fresh users (no mentions/tasks yet) — a successful
+    // pane-render proves the tab content rendered, not just the tab activation.
     await capture(page, `nav ${label.toLowerCase()} tab`,
-      [`User Interface: ${label} tab`],
-      `${label} navigation tab opens its dedicated panel.`,
+      [
+        `User Interface: ${label} tab`,
+        ...(label === 'Mentions' ? [
+          'User Interface: Mentions tab content (pane renders @mentions feed)',
+          'User Interface: Mentions tab empty state for fresh user',
+          'User Interface: Mentions tab navigation badge (unread @-mention count)',
+        ] : []),
+        ...(label === 'Tasks' ? [
+          'User Interface: Tasks tab filters (open / done / all)',
+          'User Interface: Tasks tab content (pane renders ~task feed)',
+          'User Interface: Tasks tab empty state for fresh user',
+          'User Interface: Tasks tab keyboard shortcuts',
+        ] : []),
+      ],
+      `${label} navigation tab opens its dedicated panel and renders content (or empty state for fresh user).`,
       { dynamicStep: 'after-tab-click',
         assertFn: async (p) => {
-          // Each tab should have its content showing — at minimum, the URL hash or a marker.
           const urlOk = (await p.url()).length > 0;
-          // Look for an active state on the clicked tab
           const activeTabHas = await p.evaluate((lbl) => {
             const items = Array.from(document.querySelectorAll('a, button, .nav-item, [class*="tab"]'));
             return items.some((el) => {
@@ -625,7 +640,12 @@ async function captureNavigationTabs(page) {
               return /active|selected|current/.test(cl);
             });
           }, label);
-          return { pass: urlOk, detail: 'activeTab=' + activeTabHas };
+          // Pane content check — the secondary pane should have SOMETHING (filter chips, empty state, list).
+          const paneRendered = await p.evaluate(() => {
+            const pane = document.querySelector('.rizzoma-secondary-pane, .rizzoma-list-pane, .nav-content, [class*="-pane"]:not([class*="topic-detail"])');
+            return !!pane && (pane.textContent || '').trim().length > 0;
+          });
+          return { pass: urlOk, detail: 'activeTab=' + activeTabHas + ' paneRendered=' + paneRendered };
         } });
   }
   await clickText(page, 'Topics');

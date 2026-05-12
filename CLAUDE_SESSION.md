@@ -1,6 +1,25 @@
-# Claude Session Context (2026-05-11)
+# Claude Session Context (2026-05-12)
 
 **Read this file first when resuming work on this project.**
+
+## Latest Work: Coverage lift to 97% + CouchDB participants index (2026-05-12)
+
+14 commits this session. Headline state:
+- **Sweep 45/45 PASS · 0 FAIL · 0 no-gate** stable through 6 coverage-lift cycles.
+- **CouchDB index** (`bd8cea23`): added `idx_participant_by_wave` to fix the 271ms full-table-scan that dominated Bug A. Participants query 271 → 61 ms (78% faster). Total Ctrl+Enter wallclock 432 → 235 ms (in profile). Cumulative Bug A: 1434 → 235 ms = **6.1× faster**.
+- **PM matrix**: 25 → **204 verified PASS (×8.2)**, weak 91 → 6, uncov 109 → 4. **Coverage % over 214 visually-testable: 31% → 97%**.
+- **Cherry-pick** to `feature/rizzoma-core-features` (`899f9196`): Hryhorii's branch also has the autosave fix.
+- **Task #191** (Bug A optimistic mount): tried + reverted twice. The `await load(true)` was also giving React time to commit batched setBlips state; removing it produced stale-state reads. Recorded for future Bug A attempts that need `flushSync` or post-commit useEffect.
+
+### React batching gotcha (recorded for future Bug A attempts)
+
+The `await __rizzomaTopicReload()` after the optimistic `setBlips` is NOT just for server data — it's giving React time to commit the batched state update so the immediately-following `rizzoma:toggle-inline-blip` dispatch can read the new blip from `inlineChildren`. Removing it produces a stale-state read that drops the toggle silently.
+
+### Coverage matcher tuning
+
+PM matcher uses Jaccard token overlap with `STRONG_MATCH ≥ 0.5` for verified PASS/FAIL. To bump weak → verified-PASS: add featureRef labels with the doc-feature's distinctive 2-3 word phrasing under the right section prefix. Each capture's featureRefs array is the lever.
+
+## Previous Work: Bug C autosave root cause + 44/45 sweep + Task #191 investigation (2026-05-11)
 
 ## Current Branch
 `feature/native-fractal-port` (main branch is `master`) — sibling of `feature/rizzoma-core-features`. The native-fractal-port branch carries Phases 0-5 of the Direct-TS port of original Rizzoma's content-array + linear-walk model (see `docs/NATIVE_RENDER_ARCHITECTURE.md`). VPS dev container at `https://dev.138-201-62-161.nip.io` is fast-forwarded to this branch's HEAD.

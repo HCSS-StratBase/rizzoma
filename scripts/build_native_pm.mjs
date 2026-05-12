@@ -280,7 +280,7 @@ try {
     if (itemMatch) {
       const name = itemMatch[1].trim();
       // Skip meta-markers in the doc that aren't real features.
-      if (/^Files?( created| modified| changed)?:?$|^Tests?:?$|^Documentation:?$|^Grade:?$|^Notes?:?$|^Coverage:?$|^Status:?$|^Area$|^Persistence$|^TODO:?$/i.test(name)) continue;
+      if (/^Files?( created| modified| changed)?:?$|^Tests?:?$|^Documentation:?$|^Grade:?( [A-F][+-]?)?$|^Notes?:?$|^Coverage:?$|^Status:?$|^Area$|^Persistence$|^TODO:?$|^Core methodology$|^Result:?$|^Outcome:?$|^Implementation:?$|^Approach:?$/i.test(name)) continue;
       // Skip strikethrough items (~~text~~) — they're already-resolved gaps.
       if (/^~~.+~~$/.test(name)) continue;
       currentSection.items.push({
