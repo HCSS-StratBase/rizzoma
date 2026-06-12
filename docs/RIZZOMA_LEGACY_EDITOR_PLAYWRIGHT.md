@@ -1,3 +1,5 @@
+> **⚠️ SUPERSEDED FOR POSTING (2026-06-12).** Do NOT hand-roll Playwright posting flows from the recipes below — several are now known to be incorrect or dangerous (appending after the last LI **steals that LI's reply thread**; container-edge clicks activate the *wrong blip*). The canonical, guard-complete posting engine is **`rizzoma_post.py`** in the `rizzoma` skill — repo copy: [docs/skills/rizzoma/](https://github.com/HCSS-StratBase/rizzoma/tree/master/docs/skills/rizzoma). This file remains REFERENCE ONLY for selectors and background mechanics.
+
 # Scripting the legacy rizzoma.com editor via Playwright
 
 **Audience:** Claude Code / Codex / Gemini agents driving `https://rizzoma.com` (the 2013-vintage Wave-derived production platform, NOT this repository's modernized fork) headlessly to add or edit BLB-shaped content.
