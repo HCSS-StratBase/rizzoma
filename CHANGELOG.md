@@ -7,6 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Fishman Rizzoma topic repair (2026-06-12)** - converted the initial flat
+  section fill into house-bar content by adding live Drive links in Relevant
+  links, folded `[+]` depth under the Troitskiy miss and visual-verification
+  methodology lines, verified exact `gpt-5.5` / `codex-cli 0.139.0`
+  attribution, and recorded the structural acceptance probe output.
+- **Rizzoma skill standard-topic skeleton support (2026-06-12)** - `rizzoma_post.py`
+  now supports a reusable `standard-topic` skeleton operation plus a clean
+  `operation: "hashtags"` root update path and a bounded
+  `operation: "populate-standard-topic"` fill path for existing folded skeleton
+  sections. Used on the Fishman topic to add `#HCSS #RuBase`, the canonical root
+  labels, and rich section bullets; verified by live readback and PNG screenshot.
+- **Live rizzoma.com posting mechanics (2026-05-18)** - "Claude's Rizzoma training" topic built unaided on live rizzoma.com; net-new operational findings (root meta-blip edit-mode on `div.js-wave-panel`; VIEW-state Ctrl+Enter pixel-x anchoring correcting M3; nested-subblip recursion keystone; headless re-auth bypassing the hanging `rizzoma_login.bat`) documented in `RIZZOMA_BLIP_EDITING_PROCEDURE.md` §"Lessons added 2026-05-18" (S1–S6) and `docs/worklog-260518.md`
 - **BLB parity snapshots** - Automated BLB snapshot set captured for legacy comparison
 - **BLB parity checklist** - `docs/BLB_PARITY_CHECKLIST.md`
 - **BLB snapshot assertions** - Snapshot harness now verifies collapsed/default, toolbar, inline, and unread states

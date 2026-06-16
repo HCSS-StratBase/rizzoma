@@ -1,0 +1,1978 @@
+{
+  "generatedAt": "2026-04-23T23:57:27.566Z",
+  "sweepDir": "screenshots/260424-015008-feature-sweep",
+  "manifest": "screenshots/260424-015008-feature-sweep/manifest.json",
+  "totalRows": 161,
+  "stats": {
+    "screenshot_covered": 101,
+    "non_screenshot_artifact": 58,
+    "dynamic_screenshot_covered": 2
+  },
+  "rows": [
+    {
+      "id": "VF-001",
+      "section": "Authentication & Security",
+      "functionality": "User registration (email/password)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/001-logged-out-sign-in-form.png",
+        "screenshots/260424-015008-feature-sweep/002-logged-out-sign-up-form.png"
+      ],
+      "note": "Sign-in and sign-up forms are captured."
+    },
+    {
+      "id": "VF-002",
+      "section": "Authentication & Security",
+      "functionality": "User login (rate-limited, secure cookies)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/001-logged-out-sign-in-form.png"
+      ],
+      "note": "Login/OAuth entry buttons are visible in the sign-in form."
+    },
+    {
+      "id": "VF-003",
+      "section": "Authentication & Security",
+      "functionality": "Google OAuth 2.0",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/001-logged-out-sign-in-form.png"
+      ],
+      "note": "Login/OAuth entry buttons are visible in the sign-in form."
+    },
+    {
+      "id": "VF-004",
+      "section": "Authentication & Security",
+      "functionality": "Facebook OAuth",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/001-logged-out-sign-in-form.png"
+      ],
+      "note": "Login/OAuth entry buttons are visible in the sign-in form."
+    },
+    {
+      "id": "VF-005",
+      "section": "Authentication & Security",
+      "functionality": "Microsoft OAuth (hand-rolled, Graph API)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/001-logged-out-sign-in-form.png"
+      ],
+      "note": "Login/OAuth entry buttons are visible in the sign-in form."
+    },
+    {
+      "id": "VF-006",
+      "section": "Authentication & Security",
+      "functionality": "SAML 2.0 (`@node-saml/node-saml` v5)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Internal/auth backend behavior; verify with API/unit/security tests, not a screenshot."
+    },
+    {
+      "id": "VF-007",
+      "section": "Authentication & Security",
+      "functionality": "Twitter OAuth",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Internal/auth backend behavior; verify with API/unit/security tests, not a screenshot."
+    },
+    {
+      "id": "VF-008",
+      "section": "Authentication & Security",
+      "functionality": "Session management (Redis 5)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Internal/auth backend behavior; verify with API/unit/security tests, not a screenshot."
+    },
+    {
+      "id": "VF-009",
+      "section": "Authentication & Security",
+      "functionality": "CSRF protection (double-submit token)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Internal/auth backend behavior; verify with API/unit/security tests, not a screenshot."
+    },
+    {
+      "id": "VF-010",
+      "section": "Authentication & Security",
+      "functionality": "Permission guards (`requireAuth` middleware)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Internal/auth backend behavior; verify with API/unit/security tests, not a screenshot."
+    },
+    {
+      "id": "VF-011",
+      "section": "Authentication & Security",
+      "functionality": "Zod request validation",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Internal/auth backend behavior; verify with API/unit/security tests, not a screenshot."
+    },
+    {
+      "id": "VF-012",
+      "section": "Authentication & Security",
+      "functionality": "Rate limiting (per-route)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Internal/auth backend behavior; verify with API/unit/security tests, not a screenshot."
+    },
+    {
+      "id": "VF-013",
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Wave (topic) schema + typed interface",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Data model/API behavior; verify with route/unit tests and DB state."
+    },
+    {
+      "id": "VF-014",
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Wave CRUD API (list, create, read, update, delete)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Data model/API behavior; verify with route/unit tests and DB state."
+    },
+    {
+      "id": "VF-015",
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip schema + typed interface",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Data model/API behavior; verify with route/unit tests and DB state."
+    },
+    {
+      "id": "VF-016",
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip CRUD API (list, create, read, update, delete)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Data model/API behavior; verify with route/unit tests and DB state."
+    },
+    {
+      "id": "VF-017",
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip tree retrieval (single Mango query, 18s → 29ms)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Data model/API behavior; verify with route/unit tests and DB state."
+    },
+    {
+      "id": "VF-018",
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip soft-delete + cascade to children",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Data model/API behavior; verify with route/unit tests and DB state."
+    },
+    {
+      "id": "VF-019",
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Topic view with full blip tree",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png"
+      ],
+      "note": "Topic tree and expanded blip states are visible."
+    },
+    {
+      "id": "VF-020",
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Wave participants API",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Data model/API behavior; verify with route/unit tests and DB state."
+    },
+    {
+      "id": "VF-021",
+      "section": "Rich Text Editor",
+      "functionality": "Editor framework (TipTap v2 / ProseMirror)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-022",
+      "section": "Rich Text Editor",
+      "functionality": "Bold / Italic / Underline / Strikethrough",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-023",
+      "section": "Rich Text Editor",
+      "functionality": "Headings (H1-H6)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-024",
+      "section": "Rich Text Editor",
+      "functionality": "Bullet list / Ordered list",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-025",
+      "section": "Rich Text Editor",
+      "functionality": "Task lists (checkboxes)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-026",
+      "section": "Rich Text Editor",
+      "functionality": "Code / Code block / Blockquote",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-027",
+      "section": "Rich Text Editor",
+      "functionality": "Code block: syntax highlighting (30 languages)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-028",
+      "section": "Rich Text Editor",
+      "functionality": "Highlight (text background color)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-029",
+      "section": "Rich Text Editor",
+      "functionality": "Links (add/edit/remove)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-030",
+      "section": "Rich Text Editor",
+      "functionality": "Images (node extension)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-031",
+      "section": "Rich Text Editor",
+      "functionality": "@mentions autocomplete dropdown",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/024-mention-autocomplete-active.png"
+      ],
+      "note": "Mention trigger/autocomplete state is captured."
+    },
+    {
+      "id": "VF-032",
+      "section": "Rich Text Editor",
+      "functionality": "Edit mode toolbar (blue #4EA0F1)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-033",
+      "section": "Rich Text Editor",
+      "functionality": "Read mode toolbar (minimal)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png"
+      ],
+      "note": "Expanded read toolbar is captured."
+    },
+    {
+      "id": "VF-034",
+      "section": "Rich Text Editor",
+      "functionality": "Gadget nodes (chart, poll, attachment, image)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/027-right-panel-gadget-palette-open.png"
+      ],
+      "note": "Gadget palette and installed gadget tiles are captured."
+    },
+    {
+      "id": "VF-035",
+      "section": "Rich Text Editor",
+      "functionality": "Gadget palette (11 types in grid layout)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/027-right-panel-gadget-palette-open.png"
+      ],
+      "note": "Gadget palette and installed gadget tiles are captured."
+    },
+    {
+      "id": "VF-036",
+      "section": "Rich Text Editor",
+      "functionality": "Toolbar icons: SVG sprites vs emoji characters",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/021-edit-toolbar-full-rich-text-controls.png"
+      ],
+      "note": "Full edit toolbar shows the rich-text controls and current icon treatment."
+    },
+    {
+      "id": "VF-037",
+      "section": "Real-time Collaboration",
+      "functionality": "Transport layer (Socket.IO v4)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Protocol behavior; verify with multi-client tests/logs rather than a static screenshot."
+    },
+    {
+      "id": "VF-038",
+      "section": "Real-time Collaboration",
+      "functionality": "CRDT engine (Yjs)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Protocol behavior; verify with multi-client tests/logs rather than a static screenshot."
+    },
+    {
+      "id": "VF-039",
+      "section": "Real-time Collaboration",
+      "functionality": "Live cursors (Yjs awareness, user colors)",
+      "status": "dynamic_screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/042-real-time-cursor-and-typing-indicator-visible.png"
+      ],
+      "note": "Two authenticated editors produce remote cursor/typing UI in the owner editor."
+    },
+    {
+      "id": "VF-040",
+      "section": "Real-time Collaboration",
+      "functionality": "Typing indicators",
+      "status": "dynamic_screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/042-real-time-cursor-and-typing-indicator-visible.png"
+      ],
+      "note": "Two authenticated editors produce remote cursor/typing UI in the owner editor."
+    },
+    {
+      "id": "VF-041",
+      "section": "Real-time Collaboration",
+      "functionality": "Presence indicator (avatars, overflow counts)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png"
+      ],
+      "note": "Authenticated navigation chrome provides presence/avatar evidence; live cursor and typing states need separate multi-client captures."
+    },
+    {
+      "id": "VF-042",
+      "section": "Real-time Collaboration",
+      "functionality": "Event broadcasting (blip:created/updated/deleted)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Protocol behavior; verify with multi-client tests/logs rather than a static screenshot."
+    },
+    {
+      "id": "VF-043",
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Per-user read state (CouchDB BlipRead docs)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Unread persistence/API behavior; verify with route tests and follow-green smoke logs."
+    },
+    {
+      "id": "VF-044",
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Mark single blip read API",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Unread persistence/API behavior; verify with route tests and follow-green smoke logs."
+    },
+    {
+      "id": "VF-045",
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Mark batch read API",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Unread persistence/API behavior; verify with route tests and follow-green smoke logs."
+    },
+    {
+      "id": "VF-046",
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Unread count aggregation (batch query)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Unread persistence/API behavior; verify with route tests and follow-green smoke logs."
+    },
+    {
+      "id": "VF-047",
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Next/Prev unread navigation (server-computed)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Unread persistence/API behavior; verify with route tests and follow-green smoke logs."
+    },
+    {
+      "id": "VF-048",
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Green left border on unread blips",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png"
+      ],
+      "note": "Follow-green desktop/mobile dynamic captures cover unread navigation end state and green markers."
+    },
+    {
+      "id": "VF-049",
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Wave list badge (unread/total count)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png"
+      ],
+      "note": "Follow-green desktop/mobile dynamic captures cover unread navigation end state and green markers."
+    },
+    {
+      "id": "VF-050",
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "\"Follow the Green\" CTA button",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png"
+      ],
+      "note": "Follow-green desktop/mobile dynamic captures cover unread navigation end state and green markers."
+    },
+    {
+      "id": "VF-051",
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Keyboard navigation (j/k/g/G)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png"
+      ],
+      "note": "Follow-green desktop/mobile dynamic captures cover unread navigation end state and green markers."
+    },
+    {
+      "id": "VF-052",
+      "section": "Inline Comments System",
+      "functionality": "Comment structure (range anchoring, text snapshot)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Comment data/API/shortcut behavior; verify with tests plus comment UI screenshot."
+    },
+    {
+      "id": "VF-053",
+      "section": "Inline Comments System",
+      "functionality": "Comment CRUD APIs",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Comment data/API/shortcut behavior; verify with tests plus comment UI screenshot."
+    },
+    {
+      "id": "VF-054",
+      "section": "Inline Comments System",
+      "functionality": "Comment threading (rootId + parentId)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Comment data/API/shortcut behavior; verify with tests plus comment UI screenshot."
+    },
+    {
+      "id": "VF-055",
+      "section": "Inline Comments System",
+      "functionality": "Resolve / unresolve",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/029-inline-comments-nav-state.png"
+      ],
+      "note": "Inline comment UI/filter state is captured."
+    },
+    {
+      "id": "VF-056",
+      "section": "Inline Comments System",
+      "functionality": "Visibility preference per-blip (server + localStorage)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Comment data/API/shortcut behavior; verify with tests plus comment UI screenshot."
+    },
+    {
+      "id": "VF-057",
+      "section": "Inline Comments System",
+      "functionality": "Keyboard shortcuts (Ctrl+Shift+Up/Down)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Comment data/API/shortcut behavior; verify with tests plus comment UI screenshot."
+    },
+    {
+      "id": "VF-058",
+      "section": "File Uploads & Storage",
+      "functionality": "Upload endpoint (Multer, 10MB limit)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Upload/storage/security behavior; verify with route tests and upload smoke, not static screenshots."
+    },
+    {
+      "id": "VF-059",
+      "section": "File Uploads & Storage",
+      "functionality": "MIME magic-byte sniffing",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Upload/storage/security behavior; verify with route tests and upload smoke, not static screenshots."
+    },
+    {
+      "id": "VF-060",
+      "section": "File Uploads & Storage",
+      "functionality": "Executable extension blocking (.exe, .bat, etc.)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Upload/storage/security behavior; verify with route tests and upload smoke, not static screenshots."
+    },
+    {
+      "id": "VF-061",
+      "section": "File Uploads & Storage",
+      "functionality": "ClamAV virus scanning (optional)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Upload/storage/security behavior; verify with route tests and upload smoke, not static screenshots."
+    },
+    {
+      "id": "VF-062",
+      "section": "File Uploads & Storage",
+      "functionality": "Storage backends: local filesystem",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Upload/storage/security behavior; verify with route tests and upload smoke, not static screenshots."
+    },
+    {
+      "id": "VF-063",
+      "section": "File Uploads & Storage",
+      "functionality": "Storage backends: AWS S3 / MinIO",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Upload/storage/security behavior; verify with route tests and upload smoke, not static screenshots."
+    },
+    {
+      "id": "VF-064",
+      "section": "File Uploads & Storage",
+      "functionality": "Client upload library (progress, cancel, retry)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Upload/storage/security behavior; verify with route tests and upload smoke, not static screenshots."
+    },
+    {
+      "id": "VF-065",
+      "section": "Search & Recovery",
+      "functionality": "Full-text search (Mango regex, title + content)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Search/rebuild backend behavior; verify with API/UI tests and logs."
+    },
+    {
+      "id": "VF-066",
+      "section": "Search & Recovery",
+      "functionality": "Snippet generation (150-char context + highlight)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/004-topics-search-filter-typed.png"
+      ],
+      "note": "Topic search input/filter state is captured; editor-search result details remain a gap."
+    },
+    {
+      "id": "VF-067",
+      "section": "Search & Recovery",
+      "functionality": "Yjs document rebuild",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Search/rebuild backend behavior; verify with API/UI tests and logs."
+    },
+    {
+      "id": "VF-068",
+      "section": "Search & Recovery",
+      "functionality": "Wave materialization",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Search/rebuild backend behavior; verify with API/UI tests and logs."
+    },
+    {
+      "id": "VF-069",
+      "section": "Search & Recovery",
+      "functionality": "Rebuild status polling",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Search/rebuild backend behavior; verify with API/UI tests and logs."
+    },
+    {
+      "id": "VF-070",
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Reply (create child blip)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Read gear and edit overflow menus expose core blip operations."
+    },
+    {
+      "id": "VF-071",
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Edit (inline TipTap editor)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Read gear and edit overflow menus expose core blip operations."
+    },
+    {
+      "id": "VF-072",
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Delete (soft delete + children)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Edit overflow includes destructive action affordance."
+    },
+    {
+      "id": "VF-073",
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Duplicate blip",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Read gear and edit overflow menus expose core blip operations."
+    },
+    {
+      "id": "VF-074",
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Cut / Paste (clipboard store, reparent)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Read gear and edit overflow menus expose core blip operations."
+    },
+    {
+      "id": "VF-075",
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Copy link (navigator clipboard)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Read gear and edit overflow menus expose core blip operations."
+    },
+    {
+      "id": "VF-076",
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "History modal (timeline, play/pause, diff)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/030-per-blip-playback-history-modal.png"
+      ],
+      "note": "Per-blip playback/history modal is captured."
+    },
+    {
+      "id": "VF-077",
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Gear dropdown menu",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Read gear and edit overflow menus expose core blip operations."
+    },
+    {
+      "id": "VF-078",
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Copy/paste reply/cursor variants",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Read gear and edit overflow menus expose core blip operations."
+    },
+    {
+      "id": "VF-079",
+      "section": "History & Playback",
+      "functionality": "History storage (BlipHistoryDoc, snapshots)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "History API/storage behavior; verify with API tests plus playback UI screenshots."
+    },
+    {
+      "id": "VF-080",
+      "section": "History & Playback",
+      "functionality": "History API (`GET /api/blips/:id/history`)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "History API/storage behavior; verify with API tests plus playback UI screenshots."
+    },
+    {
+      "id": "VF-081",
+      "section": "History & Playback",
+      "functionality": "Per-blip playback UI (timeline slider, play/pause/step)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/030-per-blip-playback-history-modal.png"
+      ],
+      "note": "Per-blip timeline modal is captured."
+    },
+    {
+      "id": "VF-082",
+      "section": "History & Playback",
+      "functionality": "Per-blip playback speed (0.5x to 4x)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/030-per-blip-playback-history-modal.png"
+      ],
+      "note": "Per-blip timeline modal is captured."
+    },
+    {
+      "id": "VF-083",
+      "section": "History & Playback",
+      "functionality": "Per-blip diff view (before/after comparison)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/030-per-blip-playback-history-modal.png"
+      ],
+      "note": "Per-blip timeline modal is captured."
+    },
+    {
+      "id": "VF-084",
+      "section": "History & Playback",
+      "functionality": "Wave-level history API (`GET /api/waves/:id/history`)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "History API/storage behavior; verify with API tests plus playback UI screenshots."
+    },
+    {
+      "id": "VF-085",
+      "section": "History & Playback",
+      "functionality": "Wave-level playback modal (all blips chronologically)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/017-wave-timeline-playback-modal-open.png"
+      ],
+      "note": "Wave playback modal and controls are captured."
+    },
+    {
+      "id": "VF-086",
+      "section": "History & Playback",
+      "functionality": "Wave playback: split pane (content + wave overview)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/017-wave-timeline-playback-modal-open.png"
+      ],
+      "note": "Wave playback modal and controls are captured."
+    },
+    {
+      "id": "VF-087",
+      "section": "History & Playback",
+      "functionality": "Wave playback: cluster fast-forward/back (3s gap)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/017-wave-timeline-playback-modal-open.png"
+      ],
+      "note": "Wave playback modal and controls are captured."
+    },
+    {
+      "id": "VF-088",
+      "section": "History & Playback",
+      "functionality": "Wave playback: date jump (datetime picker)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/017-wave-timeline-playback-modal-open.png"
+      ],
+      "note": "Wave playback modal and controls are captured."
+    },
+    {
+      "id": "VF-089",
+      "section": "History & Playback",
+      "functionality": "Wave playback: per-blip diff (same blip comparison)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/030-per-blip-playback-history-modal.png"
+      ],
+      "note": "Per-blip timeline modal is captured."
+    },
+    {
+      "id": "VF-090",
+      "section": "History & Playback",
+      "functionality": "Wave playback: keyboard shortcuts",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/017-wave-timeline-playback-modal-open.png"
+      ],
+      "note": "Wave playback modal and controls are captured."
+    },
+    {
+      "id": "VF-091",
+      "section": "History & Playback",
+      "functionality": "Wave playback: speed (0.5x to 10x)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/017-wave-timeline-playback-modal-open.png"
+      ],
+      "note": "Wave playback modal and controls are captured."
+    },
+    {
+      "id": "VF-092",
+      "section": "Email Notifications",
+      "functionality": "Email service (Nodemailer v7)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Email backend/template behavior; verify with mailer tests or captured emails."
+    },
+    {
+      "id": "VF-093",
+      "section": "Email Notifications",
+      "functionality": "Invite emails",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/011-invite-participants-modal-open.png",
+        "screenshots/260424-015008-feature-sweep/012-invite-participants-modal-filled-email.png"
+      ],
+      "note": "Invite email modal and filled recipient state are captured."
+    },
+    {
+      "id": "VF-094",
+      "section": "Email Notifications",
+      "functionality": "Activity notifications (mentions, replies)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Email backend/template behavior; verify with mailer tests or captured emails."
+    },
+    {
+      "id": "VF-095",
+      "section": "Email Notifications",
+      "functionality": "Digest emails (daily/weekly summary)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Email backend/template behavior; verify with mailer tests or captured emails."
+    },
+    {
+      "id": "VF-096",
+      "section": "Email Notifications",
+      "functionality": "Notification preferences API",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Email backend/template behavior; verify with mailer tests or captured emails."
+    },
+    {
+      "id": "VF-097",
+      "section": "Email Notifications",
+      "functionality": "SMTP templates (styled HTML)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Email backend/template behavior; verify with mailer tests or captured emails."
+    },
+    {
+      "id": "VF-098",
+      "section": "Mobile & PWA",
+      "functionality": "Responsive breakpoints (xs/sm/md/lg/xl)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Platform/runtime behavior; verify with tests/device runs, not a static screenshot."
+    },
+    {
+      "id": "VF-099",
+      "section": "Mobile & PWA",
+      "functionality": "Mobile detection hooks (isMobile/isTablet/isDesktop)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Platform/runtime behavior; verify with tests/device runs, not a static screenshot."
+    },
+    {
+      "id": "VF-100",
+      "section": "Mobile & PWA",
+      "functionality": "PWA manifest + icons (8 sizes)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Platform/runtime behavior; verify with tests/device runs, not a static screenshot."
+    },
+    {
+      "id": "VF-101",
+      "section": "Mobile & PWA",
+      "functionality": "Service worker (cache-first assets, network-first API)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Platform/runtime behavior; verify with tests/device runs, not a static screenshot."
+    },
+    {
+      "id": "VF-102",
+      "section": "Mobile & PWA",
+      "functionality": "Swipe gestures (left/right panel navigation)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/039-mobile-authenticated-topic-navigation.png"
+      ],
+      "note": "Mobile topic list and mobile topic content are captured."
+    },
+    {
+      "id": "VF-103",
+      "section": "Mobile & PWA",
+      "functionality": "Pull to refresh",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/039-mobile-authenticated-topic-navigation.png"
+      ],
+      "note": "Mobile topic list and mobile topic content are captured."
+    },
+    {
+      "id": "VF-104",
+      "section": "Mobile & PWA",
+      "functionality": "View Transitions API (with reduced-motion)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Runtime/browser API behavior; verify with reduced-motion and transition tests, not a static screenshot."
+    },
+    {
+      "id": "VF-105",
+      "section": "Mobile & PWA",
+      "functionality": "Offline mutation queue (auto-sync, max 3 retries)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Platform/runtime behavior; verify with tests/device runs, not a static screenshot."
+    },
+    {
+      "id": "VF-106",
+      "section": "Mobile & PWA",
+      "functionality": "BottomSheet mobile menu",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/039-mobile-authenticated-topic-navigation.png"
+      ],
+      "note": "Mobile topic list and mobile topic content are captured."
+    },
+    {
+      "id": "VF-107",
+      "section": "Mobile & PWA",
+      "functionality": "Touch targets (44px minimum)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/039-mobile-authenticated-topic-navigation.png"
+      ],
+      "note": "Mobile topic list and mobile topic content are captured."
+    },
+    {
+      "id": "VF-108",
+      "section": "Mobile & PWA",
+      "functionality": "Mobile layout (device validation on real devices)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Platform/runtime behavior; verify with tests/device runs, not a static screenshot."
+    },
+    {
+      "id": "VF-109",
+      "section": "User Interface Components",
+      "functionality": "Three-panel layout (nav + topic + tools)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png"
+      ],
+      "note": "Desktop three-panel layout is captured."
+    },
+    {
+      "id": "VF-110",
+      "section": "User Interface Components",
+      "functionality": "Navigation panel (Topics, Mentions, Tasks, Public, Store, Teams)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png",
+        "screenshots/260424-015008-feature-sweep/005-nav-mentions-tab.png",
+        "screenshots/260424-015008-feature-sweep/006-nav-tasks-tab.png",
+        "screenshots/260424-015008-feature-sweep/007-nav-publics-tab.png",
+        "screenshots/260424-015008-feature-sweep/008-nav-store-tab.png",
+        "screenshots/260424-015008-feature-sweep/009-nav-teams-tab.png"
+      ],
+      "note": "Navigation tabs are captured."
+    },
+    {
+      "id": "VF-111",
+      "section": "User Interface Components",
+      "functionality": "Navigation panel icons (SVG sprites vs emojis)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png",
+        "screenshots/260424-015008-feature-sweep/005-nav-mentions-tab.png",
+        "screenshots/260424-015008-feature-sweep/006-nav-tasks-tab.png",
+        "screenshots/260424-015008-feature-sweep/007-nav-publics-tab.png",
+        "screenshots/260424-015008-feature-sweep/008-nav-store-tab.png",
+        "screenshots/260424-015008-feature-sweep/009-nav-teams-tab.png"
+      ],
+      "note": "Navigation tabs are captured."
+    },
+    {
+      "id": "VF-112",
+      "section": "User Interface Components",
+      "functionality": "Navigation badge count",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png",
+        "screenshots/260424-015008-feature-sweep/004-topics-search-filter-typed.png"
+      ],
+      "note": "Topic cards/search and visible badges/bars are captured; filter dropdown remains a gap if no dropdown is open."
+    },
+    {
+      "id": "VF-113",
+      "section": "User Interface Components",
+      "functionality": "Topics list",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png",
+        "screenshots/260424-015008-feature-sweep/004-topics-search-filter-typed.png"
+      ],
+      "note": "Topic cards/search and visible badges/bars are captured; filter dropdown remains a gap if no dropdown is open."
+    },
+    {
+      "id": "VF-114",
+      "section": "User Interface Components",
+      "functionality": "Topics list: date format",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png",
+        "screenshots/260424-015008-feature-sweep/004-topics-search-filter-typed.png"
+      ],
+      "note": "Topic cards/search and visible badges/bars are captured; filter dropdown remains a gap if no dropdown is open."
+    },
+    {
+      "id": "VF-115",
+      "section": "User Interface Components",
+      "functionality": "Topics list: unread bar color",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png",
+        "screenshots/260424-015008-feature-sweep/004-topics-search-filter-typed.png"
+      ],
+      "note": "Topic cards/search and visible badges/bars are captured; filter dropdown remains a gap if no dropdown is open."
+    },
+    {
+      "id": "VF-116",
+      "section": "User Interface Components",
+      "functionality": "Topics list: filter dropdown (Inbox/All/By me)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png",
+        "screenshots/260424-015008-feature-sweep/004-topics-search-filter-typed.png"
+      ],
+      "note": "Topic cards/search and visible badges/bars are captured; filter dropdown remains a gap if no dropdown is open."
+    },
+    {
+      "id": "VF-117",
+      "section": "User Interface Components",
+      "functionality": "Mentions tab",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/005-nav-mentions-tab.png"
+      ],
+      "note": "Mentions tab state is captured."
+    },
+    {
+      "id": "VF-118",
+      "section": "User Interface Components",
+      "functionality": "Mentions tab: populated content",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/005-nav-mentions-tab.png"
+      ],
+      "note": "Mentions tab state is captured."
+    },
+    {
+      "id": "VF-119",
+      "section": "User Interface Components",
+      "functionality": "Tasks tab",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/006-nav-tasks-tab.png"
+      ],
+      "note": "Tasks tab state is captured."
+    },
+    {
+      "id": "VF-120",
+      "section": "User Interface Components",
+      "functionality": "Tasks tab: filter buttons",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png",
+        "screenshots/260424-015008-feature-sweep/004-topics-search-filter-typed.png"
+      ],
+      "note": "Topic cards/search and visible badges/bars are captured; filter dropdown remains a gap if no dropdown is open."
+    },
+    {
+      "id": "VF-121",
+      "section": "User Interface Components",
+      "functionality": "Participants bar (invite + avatars)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/011-invite-participants-modal-open.png",
+        "screenshots/260424-015008-feature-sweep/012-invite-participants-modal-filled-email.png"
+      ],
+      "note": "Participants invite modal is captured."
+    },
+    {
+      "id": "VF-122",
+      "section": "User Interface Components",
+      "functionality": "Share modal",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/013-share-settings-modal-open.png",
+        "screenshots/260424-015008-feature-sweep/014-share-settings-option-selected.png"
+      ],
+      "note": "Share modal and selected option state are captured."
+    },
+    {
+      "id": "VF-123",
+      "section": "User Interface Components",
+      "functionality": "Right panel: user avatar",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png",
+        "screenshots/260424-015008-feature-sweep/035-right-panel-text-view-selected.png",
+        "screenshots/260424-015008-feature-sweep/036-right-panel-mind-map-selected.png",
+        "screenshots/260424-015008-feature-sweep/037-right-panel-short-mode-selected.png",
+        "screenshots/260424-015008-feature-sweep/038-right-panel-expanded-mode-selected.png"
+      ],
+      "note": "Right panel buttons/toggles are captured."
+    },
+    {
+      "id": "VF-124",
+      "section": "User Interface Components",
+      "functionality": "Right panel: Next button color",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png",
+        "screenshots/260424-015008-feature-sweep/035-right-panel-text-view-selected.png",
+        "screenshots/260424-015008-feature-sweep/036-right-panel-mind-map-selected.png",
+        "screenshots/260424-015008-feature-sweep/037-right-panel-short-mode-selected.png",
+        "screenshots/260424-015008-feature-sweep/038-right-panel-expanded-mode-selected.png"
+      ],
+      "note": "Right panel buttons/toggles are captured."
+    },
+    {
+      "id": "VF-125",
+      "section": "User Interface Components",
+      "functionality": "Right panel: hide/show replies icons",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png",
+        "screenshots/260424-015008-feature-sweep/035-right-panel-text-view-selected.png",
+        "screenshots/260424-015008-feature-sweep/036-right-panel-mind-map-selected.png",
+        "screenshots/260424-015008-feature-sweep/037-right-panel-short-mode-selected.png",
+        "screenshots/260424-015008-feature-sweep/038-right-panel-expanded-mode-selected.png"
+      ],
+      "note": "Right panel buttons/toggles are captured."
+    },
+    {
+      "id": "VF-126",
+      "section": "User Interface Components",
+      "functionality": "Right panel: mind map button",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png",
+        "screenshots/260424-015008-feature-sweep/035-right-panel-text-view-selected.png",
+        "screenshots/260424-015008-feature-sweep/036-right-panel-mind-map-selected.png",
+        "screenshots/260424-015008-feature-sweep/037-right-panel-short-mode-selected.png",
+        "screenshots/260424-015008-feature-sweep/038-right-panel-expanded-mode-selected.png"
+      ],
+      "note": "Right panel buttons/toggles are captured."
+    },
+    {
+      "id": "VF-127",
+      "section": "User Interface Components",
+      "functionality": "Login modal",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/001-logged-out-sign-in-form.png",
+        "screenshots/260424-015008-feature-sweep/002-logged-out-sign-up-form.png"
+      ],
+      "note": "Auth panel states are captured."
+    },
+    {
+      "id": "VF-128",
+      "section": "User Interface Components",
+      "functionality": "Hide replies / folded view",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png",
+        "screenshots/260424-015008-feature-sweep/035-right-panel-text-view-selected.png",
+        "screenshots/260424-015008-feature-sweep/036-right-panel-mind-map-selected.png",
+        "screenshots/260424-015008-feature-sweep/037-right-panel-short-mode-selected.png",
+        "screenshots/260424-015008-feature-sweep/038-right-panel-expanded-mode-selected.png"
+      ],
+      "note": "Right panel buttons/toggles are captured."
+    },
+    {
+      "id": "VF-129",
+      "section": "User Interface Components",
+      "functionality": "Auth panel (modal, not page)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/001-logged-out-sign-in-form.png",
+        "screenshots/260424-015008-feature-sweep/002-logged-out-sign-up-form.png"
+      ],
+      "note": "Auth panel states are captured."
+    },
+    {
+      "id": "VF-130",
+      "section": "User Interface Components",
+      "functionality": "Toast notifications",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/041-toast-notification-component-visible.png"
+      ],
+      "note": "Toast component visible state is captured through the app toast event."
+    },
+    {
+      "id": "VF-131",
+      "section": "User Interface Components",
+      "functionality": "Keyboard shortcuts panel (bottom of nav)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png",
+        "screenshots/260424-015008-feature-sweep/039-mobile-authenticated-topic-navigation.png"
+      ],
+      "note": "Keyboard shortcut hints are visible in the navigation footer."
+    },
+    {
+      "id": "VF-132",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Collapsed TOC (bullet + label + [+])",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-133",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Section expanded (blip content visible)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-134",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[+] click = INLINE expansion (not navigation)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-135",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[−] click = collapse back",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png"
+      ],
+      "note": "Inline before/after and fold states provide collapse-back visual evidence."
+    },
+    {
+      "id": "VF-136",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Portal-based rendering (child at marker position)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-137",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: [+] expand = just text",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-138",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: click into child = read toolbar",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-139",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: click Edit = full edit toolbar",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-140",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Click outside inline child = toolbar hidden",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-141",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Toolbar left-aligned in inline children",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-142",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Ctrl+Enter creates inline child at cursor position",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Persistence/auth/keyboard behavior; verify with tests plus BLB screenshots."
+    },
+    {
+      "id": "VF-143",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Inline child editing (Edit button, content persists)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Persistence/auth/keyboard behavior; verify with tests plus BLB screenshots."
+    },
+    {
+      "id": "VF-144",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[+] marker styling (gray #b3b3b3, 16x14px, white text)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-145",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[+] marker: green for unread, gray for read",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-146",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Orphaned markers hidden (cross-wave references)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [],
+      "note": "Persistence/auth/keyboard behavior; verify with tests plus BLB screenshots."
+    },
+    {
+      "id": "VF-147",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "All sections expanded simultaneously",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-148",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Fold/Unfold all (▲/▼ in right panel)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-149",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Fold state persistence (localStorage + server)",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Persistence/auth/keyboard behavior; verify with tests plus BLB screenshots."
+    },
+    {
+      "id": "VF-150",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Reply vs inline comment distinction",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-151",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Mid-sentence [+] markers (multiple per paragraph)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-152",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Nested inline expansion ([+] within expanded [+])",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+        "screenshots/260424-015008-feature-sweep/019-expanded-blip-read-toolbar.png",
+        "screenshots/260424-015008-feature-sweep/031-inline-marker-before-click.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png",
+        "screenshots/260424-015008-feature-sweep/033-fold-all-after-hide-replies.png",
+        "screenshots/260424-015008-feature-sweep/034-unfold-all-after-show-replies.png"
+      ],
+      "note": "BLB collapsed, expanded, inline marker, and fold/unfold states are captured."
+    },
+    {
+      "id": "VF-153",
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Auth-gated Edit button",
+      "status": "non_screenshot_artifact",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [],
+      "note": "Persistence/auth/keyboard behavior; verify with tests plus BLB screenshots."
+    },
+    {
+      "id": "VF-154",
+      "section": "Inline Widgets & Styling",
+      "functionality": "@mention: turquoise pill with pipe delimiters (\\",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/024-mention-autocomplete-active.png"
+      ],
+      "note": "Mention widget trigger is captured."
+    },
+    {
+      "id": "VF-155",
+      "section": "Inline Widgets & Styling",
+      "functionality": "~task: turquoise pill with checkbox (\\",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/025-task-trigger-typed.png"
+      ],
+      "note": "Task trigger state is captured."
+    },
+    {
+      "id": "VF-156",
+      "section": "Inline Widgets & Styling",
+      "functionality": "#tag: plain turquoise text (no background/border)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": false,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/026-tag-trigger-typed.png",
+        "screenshots/260424-015008-feature-sweep/032-inline-marker-after-click-expanded.png"
+      ],
+      "note": "Tag trigger and rendered tag text are captured."
+    },
+    {
+      "id": "VF-157",
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert shortcuts (right panel: ↵ @ ~ # Gadgets)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/027-right-panel-gadget-palette-open.png",
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Insert shortcuts, gadget palette, and decluttered overflow are captured."
+    },
+    {
+      "id": "VF-158",
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert shortcut button styling (light blue bg, white icons)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/027-right-panel-gadget-palette-open.png",
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Insert shortcuts, gadget palette, and decluttered overflow are captured."
+    },
+    {
+      "id": "VF-159",
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert buttons auto-enter-edit-mode",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/027-right-panel-gadget-palette-open.png",
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Insert shortcuts, gadget palette, and decluttered overflow are captured."
+    },
+    {
+      "id": "VF-160",
+      "section": "Inline Widgets & Styling",
+      "functionality": "Toolbar decluttered (Hide/Delete → gear overflow)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/027-right-panel-gadget-palette-open.png",
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Insert shortcuts, gadget palette, and decluttered overflow are captured."
+    },
+    {
+      "id": "VF-161",
+      "section": "Inline Widgets & Styling",
+      "functionality": "Gadget iframe rendering (Yes/No/Maybe poll, YouTube, etc.)",
+      "status": "screenshot_covered",
+      "screenshotValid": true,
+      "dynamicCandidate": true,
+      "evidence": [
+        "screenshots/260424-015008-feature-sweep/027-right-panel-gadget-palette-open.png",
+        "screenshots/260424-015008-feature-sweep/020-read-gear-menu-open.png",
+        "screenshots/260424-015008-feature-sweep/022-edit-overflow-menu-open.png"
+      ],
+      "note": "Insert shortcuts, gadget palette, and decluttered overflow are captured."
+    }
+  ]
+}

@@ -144,27 +144,24 @@ export const BlipKeyboardShortcuts = Extension.create({
         return true;
       },
 
-      // Ctrl/Cmd+Enter: Create a NEW inline child blip document at cursor position
-      // This creates a SEPARATE blip document anchored at the current cursor position.
-      // The anchor position allows the child blip to be rendered inline in the parent.
+      // Ctrl/Cmd+Enter: Create a NEW inline child blip document at cursor position.
+      //
+      // The anchorPosition value is now a SENTINEL (always 0) — its only role
+      // is to satisfy the inline-vs-list discriminator (typeof === 'number'
+      // → inline child). Position is owned STRUCTURALLY by the marker span
+      // that the create-handler inserts into the parent's editor via
+      // insertBlipThread, matching original Rizzoma's blip-thread model
+      // (editor/renderer.coffee:107-113 — blip-thread elements live in the
+      // parent's content array; there was no separate numeric offset).
+      //
+      // The renderer (renderInlineHtml / inlineMarkers) no longer reads the
+      // anchorPosition value; it walks the saved HTML for marker spans and
+      // renders children at their structural location. So we don't need to
+      // compute a text offset here anymore.
       'Mod-Enter': () => {
-        const editor = this.editor;
-        const { from } = editor.state.selection;
-
-        // Get the cursor position (character offset from start of document)
-        // This will be used as the anchor position for the inline child blip
-        const anchorPosition = from;
-
-        // Call the callback to create the inline child blip
         if (opts.onCreateInlineChildBlip) {
-          opts.onCreateInlineChildBlip(anchorPosition);
+          opts.onCreateInlineChildBlip(0);
         }
-
-        // NOTE: We now create a SEPARATE blip document, not a nested bullet.
-        // The child blip is stored with an anchorPosition field that indicates
-        // where in the parent content it should be rendered inline.
-        // This is different from reply blips (no anchor) which appear at the bottom.
-
         return true;
       },
 

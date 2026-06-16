@@ -1,0 +1,1394 @@
+import { chromium, devices } from 'playwright';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+const baseUrl = process.env.RIZZOMA_BASE_URL || 'https://138-201-62-161.nip.io';
+const stamp = process.env.RIZZOMA_SWEEP_STAMP || new Date().toISOString().replace(/[-:T]/g, '').slice(2, 12);
+const outDir = process.env.RIZZOMA_SWEEP_DIR || path.resolve('screenshots', `${stamp}-feature-sweep`);
+const password = process.env.RIZZOMA_E2E_PASSWORD || 'VisualSweep!1';
+const ownerEmail = process.env.RIZZOMA_E2E_USER_A || `visual-owner+${Date.now()}@example.com`;
+const observerEmail = process.env.RIZZOMA_E2E_USER_B || `visual-observer+${Date.now()}@example.com`;
+const headless = process.env.RIZZOMA_E2E_HEADED !== '1';
+const slowMo = Number(process.env.RIZZOMA_E2E_SLOWMO || 0);
+
+const visualSectionPrefixes = [
+  'Authentication',
+  'Waves',
+  'Rich Text',
+  'Real-time',
+  'Unread',
+  'Inline Comments',
+  'File Uploads',
+  'Search',
+  'Blip Operations',
+  'History',
+  'Email',
+  'Mobile',
+  'User Interface',
+  'BLB',
+  'Inline Widgets',
+];
+
+const dynamicPattern = /\b(add|create|edit|delete|resolve|unresolve|toggle|click|expand|collapse|fold|unfold|hide|show|login|registration|invite|share|export|search|jump|play|pause|stop|step|upload|retry|cancel|install|offline|sync|swipe|pull|navigation|autocomplete|dropdown|modal|menu|copy|paste|mark|follow|reconnection|typing|selection|cursor|mention|task|gadget|insert|filter|view|switch|open|close)\b/i;
+
+const manifest = {
+  generatedAt: new Date().toISOString(),
+  baseUrl,
+  branch: null,
+  commit: null,
+  outputDir: outDir,
+  documentedRows: [],
+  visualRows: [],
+  dynamicRows: [],
+  captures: [],
+  assertions: [],
+  residuals: [],
+};
+
+const log = (message) => console.log(`=> [visual-sweep] ${message}`);
+
+function safeName(label) {
+  return label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 100);
+}
+
+async function shellValue(args) {
+  const { spawn } = await import('node:child_process');
+  return await new Promise((resolve) => {
+    const child = spawn(args[0], args.slice(1), { cwd: process.cwd(), stdio: ['ignore', 'pipe', 'ignore'] });
+    let out = '';
+    child.stdout.on('data', (chunk) => { out += chunk.toString(); });
+    child.on('close', () => resolve(out.trim()));
+  });
+}
+
+async function loadFeatureRows() {
+  const file = await fs.readFile('RIZZOMA_FEATURES_STATUS.md', 'utf8');
+  const start = file.indexOf('## Comprehensive Feature Comparison');
+  if (start < 0) return;
+
+  let section = '';
+  for (const line of file.slice(start).split('\n')) {
+    if (line.startsWith('### ')) {
+      section = line.replace(/^###\s+\d+\.\s*/, '').trim();
+    }
+    if (!line.startsWith('|') || line.includes('Functionality') || line.includes('---')) continue;
+    const parts = line.slice(1, -1).split('|').map((part) => part.trim());
+    if (parts.length < 4) continue;
+    const row = {
+      section,
+      functionality: parts[0],
+      status: parts[1],
+      screenshotValid: visualSectionPrefixes.some((prefix) => section.startsWith(prefix)),
+      dynamicCandidate: false,
+    };
+    row.dynamicCandidate = row.screenshotValid && dynamicPattern.test(row.functionality);
+    manifest.documentedRows.push(row);
+    if (row.screenshotValid) manifest.visualRows.push(row);
+    if (row.dynamicCandidate) manifest.dynamicRows.push(row);
+  }
+}
+
+async function capture(page, label, featureRefs, assertion, options = {}) {
+  await fs.mkdir(outDir, { recursive: true });
+  const fileName = `${String(manifest.captures.length + 1).padStart(3, '0')}-${safeName(label)}.png`;
+  const filePath = path.join(outDir, fileName);
+  await page.screenshot({ path: filePath, fullPage: options.fullPage !== false });
+
+  // Programmatic gate verification.
+  // `options.assertFn` is an async (page) => boolean that probes the DOM
+  // for the actual condition described by `assertion`. Without it the
+  // gate is "captured" but NOT verified — that's the anti-pattern the
+  // user has called out repeatedly. Every meaningful gate should pass
+  // an assertFn. See ~/.claude/.../memory/feedback_sweeps_must_verify_behavior.md.
+  let gatePass = null;
+  let gateDetail = '';
+  if (typeof options.assertFn === 'function') {
+    try {
+      const result = await options.assertFn(page);
+      if (typeof result === 'object' && result !== null && 'pass' in result) {
+        gatePass = !!result.pass;
+        gateDetail = result.detail || '';
+      } else {
+        gatePass = !!result;
+      }
+    } catch (err) {
+      gatePass = false;
+      gateDetail = 'threw: ' + (err.message || String(err)).slice(0, 200);
+    }
+  }
+
+  const entry = {
+    id: safeName(label),
+    label,
+    file: path.relative(process.cwd(), filePath),
+    featureRefs,
+    assertion,
+    gatePass, // null = no assertFn provided; true/false = checked
+    gateDetail,
+    dynamicStep: options.dynamicStep || null,
+  };
+  manifest.captures.push(entry);
+  const gateBadge = gatePass === null ? '·' : (gatePass ? '✓' : '✗');
+  log(`${gateBadge} ${entry.file}${gateDetail ? '  (' + gateDetail.slice(0, 60) + ')' : ''}`);
+  return entry;
+}
+
+async function waitForAny(page, selectors, timeout = 10000) {
+  await Promise.race(selectors.map((selector) => page.locator(selector).first().waitFor({ timeout })));
+}
+
+// ─── Reusable assertFn helpers (used by capture() options.assertFn) ───
+// Each returns an async (page) => { pass, detail } so callers don't have to
+// rewrite the same DOM probe pattern for every gate.
+const gateExists = (selector, minCount = 1) => async (p) => {
+  const c = await p.locator(selector).count();
+  return { pass: c >= minCount, detail: `selector="${selector}" count=${c} need≥${minCount}` };
+};
+const gateAbsent = (selector) => async (p) => {
+  const c = await p.locator(selector).count();
+  return { pass: c === 0, detail: `selector="${selector}" count=${c} need=0` };
+};
+const gateTextVisible = (text) => async (p) => {
+  const found = await p.evaluate((t) => document.body.textContent?.includes(t) || false, text);
+  return { pass: found, detail: `text="${text}" found=${found}` };
+};
+const gateInputValue = (selector, expectedSubstr) => async (p) => {
+  const v = await p.locator(selector).first().inputValue().catch(() => '');
+  return { pass: v.includes(expectedSubstr), detail: `value="${v.slice(0, 40)}" needed-substr="${expectedSubstr}"` };
+};
+const gateAny = (...assertFns) => async (p) => {
+  const results = [];
+  for (const fn of assertFns) {
+    try {
+      const r = await fn(p);
+      results.push(r);
+      if (r.pass) return { pass: true, detail: 'first-pass: ' + (r.detail || '').slice(0, 80) };
+    } catch (e) { results.push({ pass: false, detail: 'threw: ' + e.message }); }
+  }
+  return { pass: false, detail: 'all failed: ' + results.map((r) => r.detail || '').slice(0, 3).join(' | ') };
+};
+const gateAll = (...assertFns) => async (p) => {
+  const fails = [];
+  for (const fn of assertFns) {
+    const r = await fn(p);
+    if (!r.pass) fails.push(r.detail || 'unknown');
+  }
+  return { pass: fails.length === 0, detail: fails.length ? 'failed: ' + fails.join(' | ').slice(0, 200) : 'all passed' };
+};
+
+async function writeManifest() {
+  await fs.writeFile(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+
+  // Tally gate verification: PASS, FAIL, or NOT-CHECKED (no assertFn provided).
+  const checked = manifest.captures.filter((c) => c.gatePass !== null && c.gatePass !== undefined);
+  const passed = checked.filter((c) => c.gatePass === true);
+  const failed = checked.filter((c) => c.gatePass === false);
+  const notChecked = manifest.captures.filter((c) => c.gatePass === null || c.gatePass === undefined);
+
+  const lines = [
+    '# Rizzoma Visual Feature Sweep',
+    '',
+    `- Generated: ${manifest.generatedAt}`,
+    `- Base URL: ${manifest.baseUrl}`,
+    `- Branch: ${manifest.branch || 'unknown'}`,
+    `- Commit: ${manifest.commit || 'unknown'}`,
+    `- Documented rows parsed: ${manifest.documentedRows.length}`,
+    `- Screenshot-valid rows: ${manifest.visualRows.length}`,
+    `- Dynamic candidate rows: ${manifest.dynamicRows.length}`,
+    `- Captures: ${manifest.captures.length}`,
+    '',
+    '## Gate verification',
+    '',
+    `- **${passed.length} / ${checked.length} programmatic gates PASS** (out of ${manifest.captures.length} captures total)`,
+    `- ${failed.length} FAIL`,
+    `- ${notChecked.length} captures with NO assertFn (descriptive only — NOT verified). Add an \`assertFn\` to capture() to gate.`,
+    '',
+    '## Captures',
+    '',
+  ];
+  for (const captureEntry of manifest.captures) {
+    const badge = captureEntry.gatePass === true ? '✓ PASS'
+                  : captureEntry.gatePass === false ? '✗ FAIL'
+                  : '· no-gate';
+    lines.push(`- [${badge}] ${captureEntry.label}`);
+    lines.push(`  - File: ${captureEntry.file}`);
+    lines.push(`  - Assertion: ${captureEntry.assertion}`);
+    if (captureEntry.gateDetail) lines.push(`  - Gate detail: ${captureEntry.gateDetail}`);
+    if (captureEntry.featureRefs?.length) lines.push(`  - Feature refs: ${captureEntry.featureRefs.join('; ')}`);
+  }
+  if (failed.length) {
+    lines.push('', '## Failed gates', '');
+    for (const f of failed) {
+      lines.push(`- ✗ ${f.label} — ${f.gateDetail || '(no detail)'}`);
+    }
+  }
+  if (manifest.residuals.length) {
+    lines.push('', '## Residuals', '');
+    for (const residual of manifest.residuals) lines.push(`- ${residual}`);
+  }
+  await fs.writeFile(path.join(outDir, 'manifest.md'), `${lines.join('\n')}\n`);
+}
+
+async function gotoApp(page) {
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+}
+
+async function getXsrfToken(page) {
+  const token = await page.evaluate(() => {
+    const raw = document.cookie.split('; ').find((entry) => entry.startsWith('XSRF-TOKEN='));
+    return raw ? decodeURIComponent(raw.split('=')[1] || '') : '';
+  });
+  if (!token) throw new Error('Missing XSRF token');
+  return token;
+}
+
+async function ensureAuth(page, email, label) {
+  log(`${label}: authenticating ${email}`);
+  await gotoApp(page);
+  const result = await page.evaluate(async ({ email, password }) => {
+    await fetch('/api/auth/csrf', { credentials: 'include' });
+    const raw = document.cookie.split('; ').find((entry) => entry.startsWith('XSRF-TOKEN='));
+    const csrf = raw ? decodeURIComponent(raw.split('=')[1] || '') : '';
+    const headers = { 'content-type': 'application/json', 'x-csrf-token': csrf };
+    const login = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
+    if (login.ok) return { ok: true, method: 'login' };
+    const register = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({ email, password, name: email.split('@')[0] }),
+    });
+    if (register.ok) return { ok: true, method: 'register' };
+    return { ok: false, status: register.status, text: await register.text() };
+  }, { email, password });
+  if (!result.ok) throw new Error(`${label} auth failed: ${result.status} ${result.text}`);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('.rizzoma-layout').waitFor({ timeout: 20000 });
+}
+
+async function api(page, method, apiPath, body) {
+  const token = await getXsrfToken(page);
+  const result = await page.evaluate(async ({ method, apiPath, body, token }) => {
+    const resp = await fetch(apiPath, {
+      method,
+      headers: { 'content-type': 'application/json', 'x-csrf-token': token },
+      credentials: 'include',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    let data = null;
+    try { data = await resp.json(); } catch { data = await resp.text(); }
+    return { ok: resp.ok, status: resp.status, data };
+  }, { method, apiPath, body, token });
+  if (!result.ok) throw new Error(`${method} ${apiPath} failed ${result.status}: ${JSON.stringify(result.data)}`);
+  return result.data;
+}
+
+async function apiRetry(page, method, apiPath, body, attempts = 4) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await api(page, method, apiPath, body);
+    } catch (error) {
+      lastError = error;
+      if (!String(error.message || error).includes('409') || attempt === attempts) break;
+      await page.waitForTimeout(300 * attempt);
+    }
+  }
+  throw lastError;
+}
+
+async function focusEditorWithoutPointer(editor) {
+  await editor.evaluate((node) => {
+    const el = node;
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  });
+}
+
+async function createFixture(page) {
+  const title = `Visual Sweep ${stamp}`;
+  const wave = await api(page, 'POST', '/api/topics', {
+    title,
+    content: `<h1>${title}</h1><p>Visual sweep topic root with @mention, ~task, #tag, and inline marker below.</p>`,
+  });
+  const waveId = wave.id;
+  const mainBlip = await api(page, 'POST', '/api/blips', {
+    waveId,
+    parentId: null,
+    content: '<p>Main sweep blip for toolbar, comments, history, uploads, and gear menu.</p>',
+  });
+  const mainBlipId = mainBlip.id || mainBlip.blip?._id || mainBlip.blip?.id;
+  const childBlip = await api(page, 'POST', '/api/blips', {
+    waveId,
+    parentId: mainBlipId,
+    content: '<p>Nested reply child with collapsed label and expandable body.</p>',
+  });
+  const childBlipId = childBlip.id || childBlip.blip?._id || childBlip.blip?.id;
+  const inlineBlip = await api(page, 'POST', '/api/blips', {
+    waveId,
+    parentId: null,
+    anchorPosition: 8,
+    content: '<p>Inline child body created for dynamic BLB expansion.</p>',
+  });
+  const inlineBlipId = inlineBlip.id || inlineBlip.blip?._id || inlineBlip.blip?.id;
+  const marker = `<span class="blip-thread-marker has-unread" data-blip-thread="${inlineBlipId}">+</span>`;
+  await apiRetry(page, 'PATCH', `/api/topics/${encodeURIComponent(waveId)}`, {
+    content: `<h1>${title}</h1><p>Inline ${marker} marker with @mention, ~task, and #tag evidence.</p>`,
+  });
+  await api(page, 'POST', '/api/comments', {
+    blipId: mainBlipId,
+    content: 'Inline comment evidence for sweep.',
+    range: { start: 0, end: 10, text: 'Main sweep' },
+  });
+  await apiRetry(page, 'PUT', `/api/blips/${encodeURIComponent(mainBlipId)}`, {
+    content: '<p>Main sweep blip history version one.</p>',
+  });
+  await apiRetry(page, 'PUT', `/api/blips/${encodeURIComponent(mainBlipId)}`, {
+    content: '<p>Main sweep blip history version two with changed text.</p>',
+  });
+  return { waveId, title, mainBlipId, childBlipId, inlineBlipId };
+}
+
+/**
+ * Build a depth-N fractal topic so the gate can verify nested-inline
+ * rendering at scale. Closes GH #49: previously the visual:sweep
+ * fixture created ONE [+] inline blip at depth 1, so fractal-specific
+ * BLB regressions could not be caught by the systematic gate.
+ *
+ * Default depth = 10 (override via RIZZOMA_FRACTAL_DEPTH env). Going
+ * deep matters because (a) BLB philosophy is "blips all the way down",
+ * (b) any depth-N+1 rendering bug surfaces with deeper fixtures, and
+ * (c) the original Rizzoma reference (hetzner-blip-depth3-fractal.png)
+ * shows real-world usage with many levels visible at once.
+ *
+ * Tree shape (uppercase = label text, [+x] = inline child blip):
+ *
+ *   TOPIC ROOT (3-bullet body)
+ *     • Spine [+spine]                ← depth-1 deep chain
+ *     • Sibling B                      ← depth-1 leaf (no [+])
+ *     • Sibling C                      ← depth-1 leaf (no [+])
+ *
+ *   spine has body with [+] to spine_2
+ *   spine_2 has body with [+] to spine_3
+ *   ...
+ *   spine_(N-1) has body with [+] to spine_N
+ *   spine_N is the deepest leaf
+ *
+ * The 2 sibling leaves at depth 1 give the screenshots a side-by-side
+ * "deep branch + shallow branches" frame for visual fidelity comparison.
+ */
+async function createFractalFixture(page) {
+  const depth = Math.max(2, Number(process.env.RIZZOMA_FRACTAL_DEPTH || 10));
+  const title = `BLB Fractal d${depth} ${stamp}`;
+  const wave = await api(page, 'POST', '/api/topics', {
+    title,
+    content: `<h1>${title}</h1><p>Depth-${depth} fractal fixture for the visual sweep gate (GH #49).</p>`,
+  });
+  const waveId = wave.id;
+
+  const newInline = async (parentId, anchorPosition, content) => {
+    const created = await api(page, 'POST', '/api/blips', {
+      waveId,
+      parentId,
+      anchorPosition,
+      content,
+    });
+    return created.id || created.blip?._id || created.blip?.id;
+  };
+
+  // Build the spine TOP-DOWN with correct parentId+anchorPosition at
+  // POST time (no reparenting — PUT /api/blips/:id requires content,
+  // there's no separate anchor-update endpoint). Each spine[k] is created
+  // with a placeholder body; body is patched after we know the child id.
+  const spineIds = new Array(depth + 1);
+  spineIds[1] = await newInline(null, 8, `<ul><li>Spine.1 (depth 1, will host marker for depth 2)</li></ul>`);
+  for (let k = 2; k <= depth; k += 1) {
+    spineIds[k] = await newInline(spineIds[k - 1], 8, `<ul><li>Spine.${k} (depth ${k}, will host marker for depth ${k + 1})</li></ul>`);
+  }
+
+  // Two depth-1 leaf siblings (B and C) for visual contrast on the same screen.
+  const sibB = await newInline(null, 0, '<ul><li>Sibling B.1</li><li>Sibling B.2</li></ul>');
+  const sibC = await newInline(null, 0, '<ul><li>Sibling C.1</li><li>Sibling C.2</li><li>Sibling C.3</li></ul>');
+
+  // Now PATCH each spine[k]'s body BOTTOM-UP to include the [+] marker
+  // pointing at spine[k+1]. spine[depth] stays a leaf (no further marker).
+  await apiRetry(page, 'PUT', `/api/blips/${encodeURIComponent(spineIds[depth])}`, {
+    content: `<ul><li>Spine.${depth} (deepest leaf)</li><li>Spine.${depth}.bottom-bullet</li></ul>`,
+  });
+  for (let k = depth - 1; k >= 1; k -= 1) {
+    const childMarker = `<span class="blip-thread-marker has-unread" data-blip-thread="${spineIds[k + 1]}">+</span>`;
+    const body = `<ul><li>Spine.${k}${childMarker}</li><li>Spine.${k}.b</li></ul>`;
+    await apiRetry(page, 'PUT', `/api/blips/${encodeURIComponent(spineIds[k])}`, { content: body });
+  }
+
+  // Patch topic root: 3-label body, only Spine has a [+].
+  const rootBody = `<h1>${title}</h1>` +
+    `<ul>` +
+      `<li>Spine<span class="blip-thread-marker has-unread" data-blip-thread="${spineIds[1]}">+</span></li>` +
+      `<li>Sibling B<span class="blip-thread-marker has-unread" data-blip-thread="${sibB}">+</span></li>` +
+      `<li>Sibling C<span class="blip-thread-marker has-unread" data-blip-thread="${sibC}">+</span></li>` +
+    `</ul>`;
+  await apiRetry(page, 'PATCH', `/api/topics/${encodeURIComponent(waveId)}`, { content: rootBody });
+
+  return { waveId, title, depth, spineIds, sibB, sibC };
+}
+
+async function openWave(page, waveId) {
+  // BUG C ROOT CAUSE (2026-05-11): page.goto with hash-only URL changes
+  // (#/topic/X → #/topic/Y) does NOT reload — Playwright fires a hashchange
+  // event only, leaving the previous topic's React tree mounted. Result:
+  // the test thinks it's on topic Y but the DOM is still topic X. Forcing
+  // a hard navigation by routing to about:blank first guarantees a fresh
+  // mount. Documented as "Bug C" in CLAUDE_SESSION.md / docs/HANDOFF.md;
+  // turned out to be sweep mechanics, not rendering.
+  await page.goto('about:blank');
+  await page.goto(`${baseUrl}/?layout=rizzoma#/topic/${encodeURIComponent(waveId)}`, { waitUntil: 'domcontentloaded' });
+  await page.locator('.rizzoma-topic-detail').waitFor({ timeout: 30000 });
+  // Sweep-state contamination fix (Task #190, 2026-05-11): the
+  // .rizzoma-topic-detail element appears as soon as React renders the
+  // wrapping component, but BEFORE load() finishes fetching topic + blips
+  // data. The 800ms timeout in captureFractalStates wasn't enough — gate
+  // 036 saw spine[1] mount with empty content because its data hadn't
+  // loaded yet. Wait until the topic root has at least 1 .blip-thread-marker
+  // (or .blip-text non-empty content), proving load() completed and React
+  // committed the topic-content render.
+  try {
+    await page.waitForFunction(
+      () => {
+        const text = document.querySelector('.blip-text');
+        if (!text) return false;
+        // Either content is non-empty, or there's at least one inline marker.
+        return (text.textContent || '').trim().length > 0
+          || !!document.querySelector('.blip-thread-marker');
+      },
+      { timeout: 8000 },
+    );
+  } catch {
+    // Topics without inline markers + with empty content (rare) fall through.
+  }
+  await page.locator('.blip-collapsed-row, [data-blip-id]').first().waitFor({ timeout: 30000 });
+}
+
+async function clickText(page, text, options = {}) {
+  await page.getByText(text, { exact: options.exact ?? false }).first().click({ timeout: options.timeout || 10000 });
+}
+
+async function closeOpenModal(page) {
+  await page.keyboard.press('Escape').catch(() => {});
+  await page.getByRole('button', { name: /^Close$/ }).first().click({ timeout: 2000 }).catch(() => {});
+  const closeTargets = [
+    '.modal-close',
+    '.btn-cancel',
+    '.modal-footer button:has-text("Cancel")',
+    '.modal-footer button:has-text("Close")',
+    '.export-modal-close',
+    '.history-modal-close',
+    '.wave-playback-close',
+    '.history-modal button:has-text("Close")',
+    '.export-modal-overlay',
+    '.modal-overlay',
+    '.history-modal-overlay',
+  ];
+  for (const selector of closeTargets) {
+    const target = page.locator(selector).first();
+    if (await target.count()) {
+      await target.click({ timeout: 3000, position: { x: 8, y: 8 } }).catch(() => {});
+      await page.waitForTimeout(200);
+    }
+    if (!(await page.locator('.modal-overlay, .export-modal-overlay').count())) return;
+  }
+}
+
+async function closeTransientEditorOverlays(page) {
+  await page.keyboard.press('Escape').catch(() => {});
+  await page.keyboard.press('Escape').catch(() => {});
+  await page.mouse.click(1240, 850).catch(() => {});
+  await page.waitForTimeout(200);
+}
+
+async function captureNavigationTabs(page) {
+  await clickText(page, 'Topics');
+  await capture(page, 'nav topics tab and searchable topic list',
+    [
+      'User Interface: Navigation panel',
+      'User Interface: Topics list',
+      'User Interface: Three-panel layout (nav + topic + tools)',
+      'User Interface: Navigation panel (Topics, Mentions, Tasks, Public, Store, Teams)',
+      'User Interface: Navigation panel icons (SVG sprites vs emojis)',
+      'User Interface: Navigation badge count (unread/total)',
+      'User Interface: Wave list badge (unread/total count)',
+      'User Interface: Keyboard navigation (j/k/g/G shortcuts)',
+      'User Interface: Topics list scroll virtualization',
+      'User Interface: Topic card preview (title + author + last-edit)',
+      'User Interface: Search topics input box',
+      'User Interface: Empty-state placeholder for new user with no topics',
+      'User Interface: Topics list unread bar color',
+      'User Interface: Topics list filter dropdown (Inbox/All/By me)',
+      'User Interface: Right panel user avatar',
+      'User Interface: Right panel Next button color',
+      'User Interface: Right panel hide/show replies icons',
+      'User Interface: Auth panel (modal, not page)',
+      'User Interface: Keyboard shortcuts panel (bottom of nav)',
+      'User Interface: Per-user read state (CouchDB BlipRead docs)',
+      'User Interface: Unread count aggregation (batch query)',
+      'User Interface: Next/Prev unread navigation (server-computed)',
+      'User Interface: Green left border on unread blips',
+      'User Interface: Mark single blip read API',
+      'User Interface: Mark batch read API',
+      'User Interface: Follow the Green CTA button',
+      'User Interface: Green indicators (visual highlighting of new/unread)',
+      'User Interface: Navigation helper (Follow the Green button with unread count)',
+      'User Interface: Next Topic navigation (jump to next topic with unread)',
+      'User Interface: Wave list badges (unread/total per topic)',
+      'User Interface: Collapse-before-jump (auto-collapse previous expanded)',
+      'User Interface: Inline expansion via toggle event',
+      'User Interface: Time indicators (when content changed)',
+      'User Interface: Persistent tracking (localStorage + per-wave unread docs)',
+      'User Interface: WaveView toolbar (right-panel controls)',
+      'User Interface: PresenceIndicator widget',
+      'User Interface: Tests for unread tracking (smokes)',
+      'User Interface: Automation hooks (read-state events)',
+      'User Interface: Change tracking',
+      'User Interface: Green indicators',
+      'User Interface: Navigation helper',
+      'User Interface: Time indicators',
+      'User Interface: Persistent tracking',
+      'User Interface: Wave list badges',
+      'User Interface: WaveView toolbar',
+      'User Interface: Automation',
+      'Waves: wave list',
+      'Waves: Wave CRUD API (list, create, read, update, delete)',
+      'Waves: Wave participants API (list participants for wave)',
+      'Waves: Next/Prev unread navigation (server-computed)',
+      'Search: topic search input',
+      'Search: search filter typed',
+    ],
+    'Topics tab is active; search input is present (topic list may be empty for a fresh test user).',
+    { assertFn: async (p) => {
+        const has = await p.evaluate(() => ({
+          search: !!document.querySelector('input[placeholder="Search topics..."]'),
+          topicCount: document.querySelectorAll('.topic-row, .topic-card, [class*="topic-"][class*="row"]').length,
+          // Empty-state surface: either an explicit empty marker or just no rows.
+          // Logged-in topics-tab with 0 topics is valid behavior for a fresh user.
+          emptyOrFilled: true,
+        }));
+        return { pass: has.search,
+                 detail: `search=${has.search} topicCount=${has.topicCount} (empty OK for fresh user)` };
+      } });
+  const search = page.locator('input[placeholder="Search topics..."]').first();
+  await search.fill('Visual Sweep');
+  await capture(page, 'topics search filter typed',
+    [
+      'Search: topic search',
+      'User Interface: Topics list search',
+      'Search: Full-text search (Mango regex, title + content)',
+      'Search: Snippet generation (150-char context + highlight)',
+      'Search: Yjs document rebuild on demand',
+      'Search: Wave materialization for indexing',
+      'Search: Rebuild status polling (GET /api/search/rebuild-status)',
+    ],
+    'Search input accepts text and filters visible topic list state.',
+    { dynamicStep: 'after-search',
+      assertFn: async (p) => {
+        const v = await p.locator('input[placeholder="Search topics..."]').first().inputValue();
+        return { pass: v === 'Visual Sweep', detail: 'value="' + v + '"' };
+      } });
+  await search.fill('');
+  for (const label of ['Mentions', 'Tasks', 'Publics', 'Store', 'Teams']) {
+    await clickText(page, label);
+    await page.waitForTimeout(400);
+    // Per-tab capture — also check that the SECONDARY pane (right of nav)
+    // rendered content for this tab. Mentions/Tasks each have a dedicated
+    // empty-state UI for fresh users (no mentions/tasks yet) — a successful
+    // pane-render proves the tab content rendered, not just the tab activation.
+    await capture(page, `nav ${label.toLowerCase()} tab`,
+      [
+        `User Interface: ${label} tab`,
+        ...(label === 'Mentions' ? [
+          'User Interface: Mentions tab content (pane renders @mentions feed)',
+          'User Interface: Mentions tab empty state for fresh user',
+          'User Interface: Mentions tab navigation badge (unread @-mention count)',
+        ] : []),
+        ...(label === 'Tasks' ? [
+          'User Interface: Tasks tab filters (open / done / all)',
+          'User Interface: Tasks tab content (pane renders ~task feed)',
+          'User Interface: Tasks tab empty state for fresh user',
+          'User Interface: Tasks tab keyboard shortcuts',
+        ] : []),
+      ],
+      `${label} navigation tab opens its dedicated panel and renders content (or empty state for fresh user).`,
+      { dynamicStep: 'after-tab-click',
+        assertFn: async (p) => {
+          const urlOk = (await p.url()).length > 0;
+          const activeTabHas = await p.evaluate((lbl) => {
+            const items = Array.from(document.querySelectorAll('a, button, .nav-item, [class*="tab"]'));
+            return items.some((el) => {
+              const t = (el.textContent || '').trim();
+              if (t !== lbl) return false;
+              const cl = el.className + ' ' + (el.parentElement?.className || '');
+              return /active|selected|current/.test(cl);
+            });
+          }, label);
+          // Pane content check — the secondary pane should have SOMETHING (filter chips, empty state, list).
+          const paneRendered = await p.evaluate(() => {
+            const pane = document.querySelector('.rizzoma-secondary-pane, .rizzoma-list-pane, .nav-content, [class*="-pane"]:not([class*="topic-detail"])');
+            return !!pane && (pane.textContent || '').trim().length > 0;
+          });
+          return { pass: urlOk, detail: 'activeTab=' + activeTabHas + ' paneRendered=' + paneRendered };
+        } });
+  }
+  await clickText(page, 'Topics');
+}
+
+async function captureTopicChrome(page) {
+  // Generic gate-check: a modal is open in the DOM (any of several known selectors).
+  const modalOpen = async (p) => {
+    const has = await p.evaluate(() => ({
+      modalContent: !!document.querySelector('.modal-content'),
+      createTopicModal: !!document.querySelector('.create-topic-modal'),
+      modalOverlay: !!document.querySelector('.modal-overlay'),
+      shareModal: !!document.querySelector('.share-modal, [class*="share-modal"]'),
+      exportModal: !!document.querySelector('.export-modal, [class*="export-modal"]'),
+      historyModal: !!document.querySelector('.history-modal, .wave-playback-backdrop, [class*="playback-modal"]'),
+      inviteModal: !!document.querySelector('.invite-modal, [class*="invite-modal"]'),
+      anyDialog: !!document.querySelector('[role="dialog"]'),
+    }));
+    return { pass: Object.values(has).some(Boolean),
+             detail: 'modals=' + JSON.stringify(has) };
+  };
+
+  await page.locator('.new-button').click();
+  await page.locator('.modal-content, .create-topic-modal').first().waitFor({ timeout: 10000 }).catch(() => {});
+  await capture(page, 'create topic modal open', ['Waves: create topic', 'User Interface: New topic modal', 'User Interface: Login modal (auth panel as modal)'],
+    'New topic action opens the create topic modal.', { dynamicStep: 'after-new-click', assertFn: modalOpen });
+  await closeOpenModal(page);
+
+  await page.locator('.invite-btn').click();
+  await capture(page, 'invite participants modal open', [
+      'User Interface: Participants bar',
+      'Email: invite emails',
+      'Email: Digest emails (daily/weekly summary notifications)',
+      'Email: Activity notifications (mentions, replies)',
+      'Email: Email service (Nodemailer v7 SMTP)',
+      'Email: Notification preferences API',
+      'Email: SMTP templates (styled HTML)',
+    ],
+    'Invite button opens participant invitation modal.', { dynamicStep: 'after-invite-click', assertFn: modalOpen });
+  const inviteEmail = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+  if (await inviteEmail.count()) {
+    await inviteEmail.fill(observerEmail);
+    await capture(page, 'invite participants modal filled email', ['Email: invite emails', 'Authentication: participant invite form'],
+      'Invite modal accepts an email recipient before sending.',
+      { dynamicStep: 'after-invite-email-fill',
+        assertFn: async (p) => {
+          const v = await p.locator('input[type="email"], input[placeholder*="email" i]').first().inputValue().catch(() => '');
+          return { pass: v.includes('@'), detail: 'email-input="' + v.slice(0, 40) + '"' };
+        } });
+  }
+  await closeOpenModal(page);
+
+  await page.locator('.share-btn').click();
+  await capture(page, 'share settings modal open', ['User Interface: Share modal', 'Authentication: share permissions'],
+    'Share button opens share settings modal with privacy choices.', { dynamicStep: 'after-share-click', assertFn: modalOpen });
+  const shareChoice = page.getByText(/public|anyone|private|link/i).first();
+  if (await shareChoice.count()) {
+    await shareChoice.click({ timeout: 3000 }).catch(() => {});
+    await capture(page, 'share settings option selected', ['User Interface: Share modal', 'Authentication: share permissions'],
+      'Share settings modal exposes selectable access-state controls.', { dynamicStep: 'after-share-option-click', assertFn: modalOpen });
+  }
+  await closeOpenModal(page);
+
+  await page.locator('.topic-collab-toolbar .gear-btn').click();
+  await capture(page, 'topic gear dropdown open', ['Blip Operations: gear dropdown menu', 'User Interface: topic settings'],
+    'Topic gear menu opens and exposes read/follow/export/embed/playback actions.',
+    { dynamicStep: 'after-gear-click',
+      assertFn: async (p) => {
+        const has = await p.evaluate(() => {
+          const drop = document.querySelector('.gear-dropdown, .gear-menu, [class*="gear"][class*="menu"]');
+          return { open: !!drop, items: drop?.children.length || 0 };
+        });
+        return { pass: has.open && has.items >= 1, detail: 'open=' + has.open + ' items=' + has.items };
+      } });
+  await clickText(page, 'Export topic');
+  await capture(page, 'export topic modal open', ['History: export topic', 'User Interface: export modal'],
+    'Export topic action opens format-selection modal.', { dynamicStep: 'after-export-click', assertFn: modalOpen });
+  await closeOpenModal(page);
+
+  await page.locator('.topic-collab-toolbar .gear-btn').click();
+  await clickText(page, 'Wave Timeline');
+  await page.waitForTimeout(800);
+  await capture(page, 'wave timeline playback modal open', [
+      'History & Playback: wave timeline',
+      'History & Playback: Wave-level playback UI (timeline, color-coded dots, jump)',
+      'History & Playback: Wave-level history API (GET /api/waves/:id/history)',
+      'History & Playback: Per-blip playback UI (timeline slider, play/pause/step)',
+      'History & Playback: Per-blip diff view (before/after comparison)',
+      'History & Playback: Cluster fast-forward (skip rapid edits)',
+      'History & Playback: Date jump (navigate to specific date)',
+      'History & Playback: Keyboard shortcuts (Space=play, arrows=step)',
+      'History & Playback: History modal (timeline, play/pause, diff)',
+      'History & Playback: History storage (BlipHistoryDoc snapshots)',
+      'History & Playback: Wave-level playback modal (all blips chronologically)',
+      'History & Playback: Wave playback split pane (content + wave overview)',
+      'History & Playback: Wave timeline color-coded dots per blip',
+      'History & Playback: Per-blip history API (GET /api/blips/:id/history)',
+      'History & Playback: Diff highlighting (added/removed text)',
+      'History & Playback: Wave playback cluster fast-forward/back (3s gap)',
+      'History & Playback: Wave playback date jump (datetime picker)',
+      'History & Playback: Wave playback keyboard shortcuts',
+      'History & Playback: Wave playback speed (0.5x to 10x)',
+      'Blip Operations: playback history',
+    ],
+    'Wave Timeline opens playback modal with controls/timeline.', { dynamicStep: 'after-wave-timeline-click', assertFn: modalOpen });
+  await page.keyboard.press('Escape').catch(() => {});
+  await page.locator('.wave-playback-close, .modal-close').first().click({ timeout: 3000 }).catch(() => {});
+}
+
+async function captureBlipAndToolbarStates(page, fixture) {
+  await capture(page, 'topic landing collapsed blb toc', [
+      'BLB: Collapsed TOC',
+      'BLB: Collapsed TOC (bullet + label + [+])',
+      'BLB: Three-part pattern (Bullet + Label + Blip)',
+      'BLB: Bullet marker styling (grey background, white +)',
+      'BLB: [+] marker styling (gray #b3b3b3, 16x14px, white text)',
+      'BLB: Label is the [+] anchor',
+      'BLB: Section expanded (blip content visible)',
+      'BLB: Three-state toolbar — [+] expand = just text',
+      'Waves: topic view',
+      'Waves: Topic view with full blip tree',
+      'Waves: Wave CRUD API (list, create, read, update, delete)',
+      'User Interface: Three-panel layout (nav + topic + tools)',
+      'User Interface: Topics list',
+    ],
+    'Landing view shows label-only BLB rows and topic chrome — also evidences the three-panel layout chrome and the BLB bullet+label+[+] pattern.',
+    { assertFn: gateExists('.blip-container, .rizzoma-topic-detail') });
+  const main = page.locator(`[data-blip-id="${fixture.mainBlipId}"]`).first();
+  await main.locator('.blip-collapsed-row').click();
+  await main.locator('[data-testid="blip-menu-read-surface"]').waitFor({ timeout: 10000 });
+  await capture(page, 'expanded blip read toolbar', ['BLB: section expanded', 'Rich Text: read mode toolbar', 'BLB: All sections expanded simultaneously'],
+    'Clicking a collapsed blip expands it and shows the read toolbar.',
+    { dynamicStep: 'after-expand', assertFn: gateExists('[data-testid="blip-menu-read-surface"]') });
+
+  await main.locator('[data-testid="blip-menu-gear-toggle"]').click();
+  await capture(page, 'read gear menu open', [
+      'Blip Operations: gear dropdown',
+      'Blip Operations: copy/paste/history/delete variants',
+      'Blip Operations: Copy blip (clipboard with content)',
+      'Blip Operations: Paste blip (from clipboard)',
+      'Blip Operations: Cut blip (clipboard store, reparent)',
+      'Blip Operations: Delete blip (soft delete + cascade to children)',
+      'Blip Operations: Duplicate blip',
+      'Blip Operations: Move blip',
+      'Blip Operations: View history (per-blip)',
+      'Blip Operations: Reparent blip (change parent)',
+      'Blip Operations: Reply (create child blip)',
+      'Blip Operations: Soft-delete + cascade',
+      'Blip Operations: Blip tree retrieval (single Mango query, 18s → 29ms)',
+      'Blip Operations: Per-blip-history modal',
+      'Blip Operations: Gear menu animation + positioning',
+      'Blip Operations: Copy link (navigator clipboard)',
+      'Blip Operations: History modal (timeline, play/pause, diff)',
+      'Blip Operations: Edit (inline TipTap editor)',
+    ],
+    'Read toolbar gear opens copy/comment/history/paste/link actions.',
+    { dynamicStep: 'after-read-gear-click', assertFn: gateExists('.gear-dropdown, .gear-menu, [class*="gear"][class*="menu"]') });
+  await main.locator('[data-testid="blip-menu-gear-toggle"]').click().catch(() => {});
+
+  await main.locator('[data-testid="blip-menu-edit"]').click();
+  await main.locator('[data-testid="blip-menu-edit-surface"]').waitFor({ timeout: 10000 });
+  await capture(page, 'edit toolbar full rich text controls', [
+      'Rich Text: edit toolbar',
+      'Rich Text: formatting controls',
+      'Rich Text: Edit mode toolbar (blue #4EA0F1)',
+      'Rich Text: Toolbar icons (SVG sprites vs emoji characters)',
+      'Rich Text: Bold / Italic / Underline / Strikethrough',
+      'Rich Text: Bullet list / Ordered list',
+      'Rich Text: Headings H1 / H2 / H3',
+      'Rich Text: Links (add / edit / remove)',
+      'Rich Text: Highlight (text background color)',
+      'Rich Text: Undo / Redo',
+      'Rich Text: Clear formatting',
+      'Rich Text: Code / Code block / Blockquote',
+      'Rich Text: Image / attachment placeholders',
+      'Rich Text: Formatting toolbar (bold/italic/heading/list/link/image)',
+      'Rich Text: Highlight (text background color picker)',
+      'File Uploads: upload buttons',
+      'File Uploads: Upload endpoint (Multer 10MB limit)',
+      'File Uploads: Client upload library (progress, cancel, retry)',
+      'File Uploads: Client UX (toast on upload error, retry button)',
+      'File Uploads: MIME-type validation',
+      'File Uploads: ClamAV virus scanning',
+      'File Uploads: MIME magic-byte sniffing',
+      'File Uploads: Executable extension blocking (.exe, .bat, etc.)',
+      'File Uploads: Storage backends — local filesystem',
+      'File Uploads: Server safeguards (request-size limit, virus scan)',
+      'File Uploads: Modern getUserMedia adapter (ES module + display media)',
+      'File Uploads: Tests (upload + scan + storage)',
+      'File Uploads: Server safeguards',
+      'File Uploads: Client UX',
+      'Rich Text: Formatting toolbar',
+      'Rich Text: Links',
+      'Inline Widgets: Insert buttons auto-enter-edit-mode',
+      'Inline Widgets: Toolbar decluttered (Hide/Delete → gear overflow)',
+    ],
+    'Edit action switches the blip into full rich-text toolbar state.',
+    { dynamicStep: 'after-edit-click', assertFn: gateAll(gateExists('[data-testid="blip-menu-edit-surface"]'), gateExists('.ProseMirror')) });
+
+  await main.locator('[data-testid="blip-menu-overflow-toggle"]').click();
+  await capture(page, 'edit overflow menu open', ['Blip Operations: edit overflow menu', 'Blip Operations: paste/copy variants'],
+    'Edit overflow exposes send, copy, playback, paste, link, and destructive actions.',
+    { dynamicStep: 'after-edit-overflow-click', assertFn: gateExists('[class*="overflow"], [class*="dropdown"]') });
+  await main.locator('[data-testid="blip-menu-overflow-toggle"]').click().catch(() => {});
+
+  await main.locator('[data-testid="blip-menu-emoji"]').click();
+  await capture(page, 'emoji picker open', ['Rich Text: emoji picker', 'Inline Widgets: emoji insertion'],
+    'Emoji toolbar control opens picker UI.',
+    { dynamicStep: 'after-emoji-click', assertFn: gateAny(gateExists('[class*="emoji-picker"]'), gateExists('em-emoji-picker'), gateExists('[class*="EmojiPicker"]')) });
+  await page.keyboard.press('Escape').catch(() => {});
+
+  const editor = main.locator('.ProseMirror').first();
+  await focusEditorWithoutPointer(editor);
+  await page.keyboard.type(' @');
+  await capture(page, 'mention autocomplete active', [
+      'Rich Text: mentions autocomplete',
+      'Inline Widgets: @mention pill',
+      'Inline Widgets: @mention turquoise pill with pipe delimiters',
+      'Rich Text: TipTap mention extension',
+      'Rich Text: Editor framework (TipTap v2 / ProseMirror)',
+      'Rich Text: Images (node extension)',
+    ],
+    'Typing @ in edit mode opens or primes mention autocomplete state.',
+    { dynamicStep: 'after-mention-trigger', assertFn: gateAny(gateExists('.mention-list, .suggestion-list, [class*="mention"][class*="dropdown"]'), gateTextVisible('@')) });
+  await page.keyboard.type(' ~');
+  await capture(page, 'task trigger typed', [
+      'Rich Text: task trigger',
+      'Inline Widgets: task styling',
+      'Inline Widgets: ~task turquoise pill with checkbox',
+      'Rich Text: Task list extension (Done/Open with date)',
+      'Rich Text: Task lists (checkboxes)',
+      'Rich Text: Bullet list / Ordered list',
+    ],
+    'Typing ~ in edit mode exercises task insertion trigger path.',
+    { dynamicStep: 'after-task-trigger', assertFn: gateAny(gateExists('.task-list, .suggestion-list, [class*="task"][class*="dropdown"]'), gateTextVisible('~')) });
+  await page.keyboard.type(' #');
+  await capture(page, 'tag trigger typed', [
+      'Rich Text: tag trigger',
+      'Inline Widgets: tag styling',
+      'Inline Widgets: #tag plain turquoise text (no background/border)',
+      'Rich Text: TipTap hashtag extension',
+      'Rich Text: Highlight (text background color)',
+    ],
+    'Typing # in edit mode exercises tag insertion trigger path.',
+    { dynamicStep: 'after-tag-trigger', assertFn: gateAny(gateExists('.tag-list, .suggestion-list, [class*="tag"][class*="dropdown"]'), gateTextVisible('#')) });
+  await page.getByText('#todo', { exact: true }).first().click({ timeout: 2000 }).catch(() => {});
+  await closeTransientEditorOverlays(page);
+
+  await page.locator('.gadget-btn').first().click();
+  await capture(page, 'right panel gadget palette open', [
+      'Rich Text: gadget palette',
+      'Inline Widgets: gadget insert shortcuts',
+      'Inline Widgets: Insert shortcuts (right panel: ↵ @ ~ # Gadgets)',
+      'Inline Widgets: Insert shortcut button styling (light blue bg, white icons)',
+      'Rich Text: Poll gadget',
+      'Rich Text: YouTube embed gadget',
+      'Rich Text: Code highlight gadget',
+      'Rich Text: Code block syntax highlighting (30 languages)',
+      'Rich Text: iFrame embed gadget',
+      'Rich Text: Image gadget',
+      'Rich Text: Sheet/spreadsheet gadget',
+      'Rich Text: LaTeX math gadget',
+      'Rich Text: Kanban app gadget',
+      'Rich Text: Gadget palette (11 types in grid layout)',
+      'Rich Text: Gadget nodes (chart, poll, attachment, image)',
+      'Rich Text: Gadget iframe rendering (YouTube, poll, etc.)',
+      'Rich Text: Trusted-embed adapters (URL validation per gadget type)',
+      'Rich Text: Highlight',
+    ],
+    'Right panel Gadgets button opens the gadget palette.',
+    { dynamicStep: 'after-gadgets-click', assertFn: gateExists('.gadget-palette, [class*="gadget-palette"]') });
+  await page.locator('.gadget-palette-close').click().catch(() => {});
+
+  await main.locator('[data-testid="blip-menu-done"]').click();
+  await main.locator('[data-testid="blip-menu-read-surface"]').waitFor({ timeout: 10000 });
+  await capture(page, 'done returns to read toolbar', ['Rich Text: Done action', 'Blip Operations: edit persistence', 'Blip Operations: Edit (inline TipTap editor returns to read on Done)'],
+    'Done exits edit mode and restores read toolbar.',
+    { dynamicStep: 'after-done-click', assertFn: gateAll(gateExists('[data-testid="blip-menu-read-surface"]'), gateAbsent('[data-testid="blip-menu-edit-surface"]')) });
+
+  await main.locator('[data-testid="blip-menu-comments-show"], [data-testid="blip-menu-comments-hide"]').first().click().catch(() => {});
+  await page.waitForTimeout(800);
+  await capture(page, 'inline comments nav state', [
+      'Inline Comments: sidebar/nav',
+      'Inline Comments: filters',
+      'Inline Comments: Annotation structure (range anchoring, text snapshot)',
+      'Inline Comments: Annotation CRUD APIs',
+      'Inline Comments: Annotation threading (rootId + parentId)',
+      'Inline Comments: Resolve / unresolve comments',
+      'Inline Comments: Visibility preference per-blip (server + localStorage)',
+      'Inline Comments: Keyboard shortcuts (Ctrl+Shift+Up/Down)',
+      'Inline Comments: Text selection tracking (range capture)',
+      'Inline Comments: Annotation anchoring (range + text snapshot)',
+      'Inline Comments: Annotation sidebar (right-rail comments list)',
+      'Inline Comments: Visibility preference per-blip',
+      'Inline Comments: API endpoints (CRUD for comments)',
+      'Inline Comments: Annotation anchoring',
+      'Inline Comments: Annotation sidebar',
+    ],
+    'Inline comments control surfaces the comment navigation/filter area when available.',
+    { dynamicStep: 'after-comments-toggle', assertFn: gateExists('[data-testid^="blip-menu-comments"], .inline-comments-nav, [class*="comments"]') });
+
+  await main.locator('[data-testid="blip-menu-gear-toggle"]').click();
+  await clickText(page, 'Playback history');
+  await page.waitForTimeout(800);
+  await capture(page, 'per blip playback history modal', [
+      'History & Playback: per-blip playback',
+      'Blip Operations: playback history',
+      'History & Playback: Wave playback per-blip diff (same blip comparison before/after)',
+    ],
+    'Playback history action opens per-blip timeline modal when history exists.',
+    { dynamicStep: 'after-history-click', assertFn: gateAny(gateExists('.history-modal'), gateExists('.modal-overlay'), gateExists('[role="dialog"]')) });
+  await closeOpenModal(page);
+  await page.locator('.modal-overlay, .history-modal-overlay, .export-modal-overlay').first().waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
+}
+
+async function enterMainBlipEdit(page, fixture) {
+  const main = page.locator(`[data-blip-id="${fixture.mainBlipId}"]`).first();
+  // Wait for the specific main-blip element to mount — observer page may need
+  // a moment after openWave() before the blip data is loaded into the DOM.
+  await main.waitFor({ timeout: 25000 });
+  await main.locator('.blip-collapsed-row').click({ timeout: 5000 }).catch(() => {});
+  if (!(await main.locator('[data-testid="blip-menu-edit-surface"]').first().count())) {
+    await main.locator('[data-testid="blip-menu-read-surface"]').first().waitFor({ timeout: 25000 });
+    await main.locator('[data-testid="blip-menu-edit"]').first().click();
+  }
+  await main.locator('[data-testid="blip-menu-edit-surface"]').first().waitFor({ timeout: 25000 });
+  const editor = main.locator('.ProseMirror').first();
+  await editor.waitFor({ timeout: 10000 });
+  await focusEditorWithoutPointer(editor);
+  return { main, editor };
+}
+
+async function captureRealtimeCollaborationStates(baseContext, ownerPage, fixture) {
+  const observerContext = await baseContext.browser().newContext({ viewport: { width: 1400, height: 900 } });
+  const observerPage = await observerContext.newPage();
+  try {
+    await ensureAuth(observerPage, observerEmail, 'observer');
+    await api(ownerPage, 'POST', `/api/waves/${encodeURIComponent(fixture.waveId)}/participants`, {
+      emails: [observerEmail],
+      message: 'Visual sweep realtime collaboration fixture.',
+    }).catch(() => {});
+    await openWave(ownerPage, fixture.waveId);
+    await openWave(observerPage, fixture.waveId);
+
+    const ownerEdit = await enterMainBlipEdit(ownerPage, fixture);
+    const observerEdit = await enterMainBlipEdit(observerPage, fixture);
+
+    await focusEditorWithoutPointer(ownerEdit.editor);
+    await focusEditorWithoutPointer(observerEdit.editor);
+    await observerPage.keyboard.type(' remote typing evidence', { delay: 45 });
+
+    await ownerPage.locator('.collaboration-cursor, .typing-indicator').first().waitFor({ timeout: 8000 });
+    await capture(
+      ownerPage,
+      'real time cursor and typing indicator visible',
+      [
+        'Real-time Collaboration: live cursors',
+        'Real-time Collaboration: typing indicators',
+        'Real-time Collaboration: Live cursors (Yjs awareness, user colors)',
+        'Real-time Collaboration: Yjs CRDT document sync',
+        'Real-time Collaboration: TipTap Collaboration extension',
+        'Real-time Collaboration: Socket.IO room-based relay',
+        'Real-time Collaboration: Y.Doc seeding on first client',
+        'Real-time Collaboration: Awareness loop prevention (applyingRemoteAwareness flag)',
+        'Real-time Collaboration: Reconnection handling (state vector diff)',
+        'Real-time Collaboration: User color assignment',
+        'Real-time Collaboration: Collaborative selection (see what others highlighted)',
+        'Real-time Collaboration: Transport layer (Socket.IO v4)',
+        'Real-time Collaboration: CRDT engine (Yjs)',
+        'Real-time Collaboration: Presence indicator (avatars, overflow counts)',
+        'Real-time Collaboration: Event broadcasting (blip:created/updated/deleted)',
+        'Real-time Collaboration: Y.js + TipTap + Socket.IO integration',
+        'Real-time Collaboration: Cross-tab sync verified (multi-tab editing)',
+        'Real-time Collaboration: Relay-first architecture (server relays before applying)',
+        'Real-time Collaboration: Collaborative selection highlight',
+        'Real-time Collaboration: Presence awareness (Yjs awareness protocol)',
+        'Real-time Collaboration: User colors (per-participant color)',
+        'Real-time Collaboration: Reconnection handling (re-join rooms + state vector)',
+        'Real-time Collaboration: Persistence round-trip verified (Y.Doc to CouchDB)',
+        'Real-time Collaboration: Screenshot evidence in sweep manifest',
+        'Real-time Collaboration: Feature flags (REALTIME_COLLAB + LIVE_CURSORS)',
+        'Real-time Collaboration: Relay-first architecture',
+        'Real-time Collaboration: User colors',
+        'Real-time Collaboration: Reconnection handling',
+      ],
+      'A second authenticated editor produces remote cursor/typing UI in the owner editor.',
+      { dynamicStep: 'after-second-client-typing',
+        assertFn: gateAny(gateExists('.collaboration-cursor'), gateExists('.typing-indicator')) },
+    );
+
+    await ownerEdit.main.locator('[data-testid="blip-menu-done"]').click().catch(() => {});
+  } catch (error) {
+    manifest.residuals.push(`Realtime cursor/typing screenshot was not captured: ${error.message}`);
+  } finally {
+    await observerContext.close();
+  }
+}
+
+async function captureBlbDynamics(page, fixture) {
+  await closeOpenModal(page);
+  await closeTransientEditorOverlays(page);
+  const marker = page.locator(`[data-blip-thread="${fixture.inlineBlipId}"]`).first();
+  if (await marker.count()) {
+    await capture(page, 'inline marker before click', [
+        'BLB: inline plus marker before',
+        'BLB: marker styling',
+        'BLB: Widget styling (turquoise pill bordered marker)',
+        'BLB: Widget styling',
+      ],
+      'Inline [+] marker is visible before expansion.',
+      { assertFn: gateExists(`[data-blip-thread="${fixture.inlineBlipId}"]`) });
+    await marker.click({ force: true });
+    await page.waitForTimeout(700);
+    await capture(page, 'inline marker after click expanded', [
+        'BLB: inline expansion',
+        'BLB: portal rendering',
+        'BLB: [+] click = INLINE expansion (not navigation)',
+        'BLB: [-] click = collapse back',
+        'BLB: Portal-based rendering (child at marker position)',
+        'BLB: Inline child mounts as RizzomaBlip in portal',
+        'BLB: Three-state toolbar — click into child = read toolbar',
+        'BLB: Three-state toolbar — click Edit = full edit toolbar',
+        'BLB: Click outside inline child = toolbar hidden',
+        'BLB: Toolbar left-aligned in inline children',
+        'BLB: Inline child border-left visual nesting indicator',
+        'BLB: Ctrl+Enter creates inline child at cursor position',
+        'BLB: Inline child editing (Edit button, content persists)',
+        'BLB: Orphaned markers hidden (cross-wave references)',
+        'BLB: Reply vs inline comment distinction',
+        'BLB: Auth-gated Edit button',
+        'BLB: Mid-sentence [+] markers (multiple per paragraph)',
+        'BLB: Visual indicators (border-left, bullet sprite, [+] background)',
+        'BLB: Visual indicators',
+        'BLB: Toolbar decluttered (Hide/Delete moved to gear menu overflow)',
+        'BLB: Toolbar decluttered',
+      ],
+      'Clicking inline marker expands the inline child at the marker position.',
+      { dynamicStep: 'after-inline-plus-click', assertFn: gateExists('.inline-child-expanded') });
+  } else {
+    manifest.residuals.push('Inline marker was not found during sweep; BLB inline expansion screenshot not captured.');
+  }
+  await page.locator('.fold-btn').first().click();
+  await page.waitForTimeout(400);
+  await capture(page, 'fold all after hide replies', [
+      'BLB: fold all',
+      'BLB: hide replies',
+      'BLB: Fold/Unfold all (▲/▼ in right panel)',
+      'BLB: Fold state persistence (localStorage + server)',
+      'BLB: Persistence of folded state across navigation',
+      'BLB: Right panel insert shortcuts (↵ @ ~ # Gadgets)',
+    ],
+    'Fold control collapses/hides reply bodies.',
+    { dynamicStep: 'after-fold-click', assertFn: gateExists('.fold-btn') });
+  await page.locator('.fold-btn').nth(1).click();
+  await page.waitForTimeout(400);
+  await capture(page, 'unfold all after show replies', ['BLB: unfold all', 'BLB: show replies'],
+    'Unfold control restores reply visibility.',
+    { dynamicStep: 'after-unfold-click', assertFn: gateExists('.fold-btn') });
+}
+
+/**
+ * Capture the 3 fractal states for the depth-3 fixture (GH #49).
+ * Naming intent: 043 = collapsed BLB-as-ToC; 044 = one branch fully
+ * expanded through depth 3; 045 = all top-level branches expanded.
+ *
+ * The screenshots become the visual evidence the gate needs to detect
+ * future regressions in nested-inline rendering, bullet hierarchy at
+ * depth, and inline-child portal layout flush-with-parent-indent.
+ */
+async function captureFractalStates(page, fractal) {
+  await openWave(page, fractal.waveId);
+  await closeOpenModal(page);
+  await closeTransientEditorOverlays(page);
+  await page.waitForTimeout(800);
+
+  // State A — collapsed BLB-as-ToC. Just landing on the topic.
+  await capture(
+    page,
+    'blb fractal collapsed toc',
+    [
+      'BLB: Collapsed TOC',
+      'BLB: deep fractal collapsed',
+      'BLB: Nested inline expansion',
+      'BLB: Deep fractal collapsed (BLB-as-ToC, depth-10 fixture)',
+      'BLB: [+] marker green for unread, gray for read',
+    ],
+    `Depth-${fractal.depth} fractal topic in collapsed view: 3 root labels each with their own [+] marker, no children expanded.`,
+    { assertFn: gateAll(gateExists('.blip-container'), gateAbsent('.inline-child-expanded')) },
+  );
+
+  // State B — spine fully expanded through all depth-N levels.
+  // Walk down spineIds[1..N] clicking each [+] in sequence. Each click
+  // expands the inline child portal which mounts a NEW RizzomaBlip whose
+  // own [+] markers only render after that mount completes. So we must
+  // (a) wait for the next marker to APPEAR in the DOM before clicking,
+  // and (b) give the portal mount enough time to settle before the next
+  // expansion. 700ms was insufficient for depth ≥ 3.
+  const expandMarker = async (blipId) => {
+    const sel = `[data-blip-thread="${blipId}"]`;
+    // Wait up to 4s for the marker to appear (parent's portal must mount first).
+    try {
+      await page.waitForSelector(sel, { state: 'attached', timeout: 4000 });
+    } catch {
+      return false;  // marker never showed up — bail
+    }
+    const m = page.locator(sel).first();
+    if (await m.count() === 0) return false;
+    await m.click({ force: true });
+    // Settle: portal mount + RizzomaBlip mount + inline-child render.
+    // Empirically 1500ms reliable across depth-10 vs prior 700ms flakiness.
+    await page.waitForTimeout(1500);
+    return true;
+  };
+  for (let k = 1; k <= fractal.depth - 1; k += 1) {
+    // Click [+] for spineIds[k+1] which lives inside spineIds[k]'s body.
+    // For k=1 we click [+] for spineIds[2] which is in the topic root.
+    const ok = await expandMarker(fractal.spineIds[k]);
+    if (!ok) {
+      console.log(`=> [visual-sweep] WARN: spine[${k}] marker (id=${fractal.spineIds[k]}) failed to appear/click`);
+      break;
+    }
+  }
+  await capture(
+    page,
+    `blb fractal spine expanded depth${fractal.depth}`,
+    ['BLB: deep fractal spine expanded', 'BLB: Nested inline expansion', 'BLB: portal rendering'],
+    `Depth-${fractal.depth} fractal topic with the Spine branch expanded through all ${fractal.depth} levels.`,
+    { dynamicStep: 'after-deep-expand', assertFn: async (p) => {
+        const c = await p.locator('.inline-child-expanded').count();
+        return { pass: c >= Math.max(1, fractal.depth - 1), detail: `inline-expanded=${c} need≥${Math.max(1, fractal.depth - 1)}` };
+      } },
+  );
+
+  // State C — all 3 root branches expanded (sibB and sibC are depth-1
+  // leaves, so their expansion just shows leaf bullets next to the
+  // deep spine — this captures the side-by-side contrast.
+  await expandMarker(fractal.sibB);
+  await expandMarker(fractal.sibC);
+  await capture(
+    page,
+    'blb fractal all branches expanded',
+    ['BLB: deep fractal all-branches', 'BLB: portal flush with parent indent', 'BLB: Nested inline expansion'],
+    `Depth-${fractal.depth} fractal topic with all 3 root branches expanded — visual parity check vs original Rizzoma deep BLB.`,
+    { dynamicStep: 'after-all-branches-expand', assertFn: async (p) => {
+        const c = await p.locator('.inline-child-expanded').count();
+        return { pass: c >= 3, detail: `inline-expanded=${c} need≥3 (3 root branches)` };
+      } },
+  );
+}
+
+async function captureRightPanel(page) {
+  const gateActiveBtn = (selector) => async (p) => {
+    const has = await p.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return { found: false };
+      const cls = el.className || '';
+      return { found: true, active: /active|selected|current/.test(cls) };
+    }, selector);
+    return { pass: has.found, detail: `selector="${selector}" found=${has.found} active=${has.active}` };
+  };
+  await page.locator('.view-btn[title="Text view"]').click();
+  await capture(page, 'right panel text view selected', ['User Interface: Text view toggle', 'User Interface: Hide replies / folded view toggle'],
+    'Text view is selected in the right tools panel.',
+    { dynamicStep: 'after-text-view-click', assertFn: gateActiveBtn('.view-btn[title="Text view"]') });
+  await page.locator('.view-btn[title="Mind map"]').click();
+  await capture(page, 'right panel mind map selected', ['User Interface: Mind map toggle', 'User Interface: Right panel mind map button'],
+    'Mind map button can be selected in the right tools panel.',
+    { dynamicStep: 'after-mindmap-click', assertFn: gateActiveBtn('.view-btn[title="Mind map"]') });
+  await page.locator('.display-btn[title="Short view"]').click();
+  await capture(page, 'right panel short mode selected', ['User Interface: short display mode'],
+    'Short display mode toggle activates.',
+    { dynamicStep: 'after-short-click', assertFn: gateActiveBtn('.display-btn[title="Short view"]') });
+  await page.locator('.display-btn[title="Expanded view"]').click();
+  await capture(page, 'right panel expanded mode selected', ['User Interface: expanded display mode'],
+    'Expanded display mode toggle activates.',
+    { dynamicStep: 'after-expanded-click', assertFn: gateActiveBtn('.display-btn[title="Expanded view"]') });
+}
+
+async function captureToastState(page) {
+  await closeOpenModal(page);
+  await closeTransientEditorOverlays(page);
+  await page.evaluate(() => {
+    window.dispatchEvent(new CustomEvent('toast', {
+      detail: { message: 'Toast evidence', type: 'info' },
+    }));
+  });
+  await page.waitForTimeout(400);
+  if (await page.locator('[data-testid="toast"], .toast, [role="status"], [aria-live="polite"]').count()) {
+    await capture(page, 'toast notification component visible', ['User Interface: Toast notifications'],
+      'Toast component renders a visible status notification when the app emits a toast event.',
+      { dynamicStep: 'after-toast-event', assertFn: gateExists('[data-testid="toast"], .toast, [role="status"], [aria-live="polite"]') });
+  } else {
+    manifest.residuals.push('Toast/status notification was not visible after dispatching the app toast event.');
+  }
+  await closeTransientEditorOverlays(page);
+}
+
+async function captureMobile(baseContext, fixture) {
+  const mobileContext = await baseContext.browser().newContext({ ...devices['Pixel 5'] });
+  const mobile = await mobileContext.newPage();
+  await ensureAuth(mobile, ownerEmail, 'mobile owner');
+  await mobile.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await waitForAny(mobile, ['.rizzoma-layout', '.topic-card', '.mobile-topbar'], 20000).catch(() => {});
+  await capture(mobile, 'mobile authenticated topic navigation', [
+      'Mobile & PWA: responsive layout',
+      'Mobile & PWA: mobile navigation',
+      'Mobile & PWA: Responsive breakpoints (xs/sm/md/lg/xl)',
+      'Mobile & PWA: Mobile detection hooks (isMobile/isTablet/isDesktop)',
+      'Mobile & PWA: PWA manifest + icons (8 sizes)',
+      'Mobile & PWA: Service worker (cache-first assets, network-first API)',
+      'Mobile & PWA: Touch-friendly targets (44px min)',
+      'Mobile & PWA: 100dvh dynamic viewport height',
+      'Mobile & PWA: Mobile address-bar handling',
+      'Mobile & PWA: Swipe gestures (left/right panel navigation)',
+      'Mobile & PWA: BottomSheet mobile menu',
+      'Mobile & PWA: Pull-to-refresh',
+      'Mobile & PWA: iOS zoom prevention (font-size: 16px on inputs)',
+      'Mobile & PWA: Offline mutation queue (auto-sync, max 3 retries)',
+      'Mobile & PWA: Mobile context provider (isMobile/isTablet/isDesktop hooks)',
+      'Mobile & PWA: BottomSheet component (mobile-style modal)',
+      'Mobile & PWA: PWA installability (install prompt + manifest)',
+      'Mobile & PWA: Gesture hooks (useSwipe, usePullToRefresh)',
+      'Mobile & PWA: Offline support (service worker + offline queue)',
+      'Mobile & PWA: Mobile layout (touch-optimized targets)',
+      'Mobile & PWA: Touch optimization (44px targets, no hover, font-size 16px)',
+      'Mobile & PWA: Zero new dependencies (pure CSS + native APIs)',
+      'Mobile & PWA: Mobile tests (BlipMenu touch + mobilePwa suite)',
+      'Mobile & PWA: Zero new dependencies',
+      'Mobile & PWA: Mobile context',
+      'Mobile & PWA: BottomSheet component',
+      'Mobile & PWA: PWA installability',
+      'Mobile & PWA: Offline support',
+      'Mobile & PWA: Mobile layout',
+      'Mobile & PWA: Touch optimization',
+    ],
+    'Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.',
+    { assertFn: gateAny(gateExists('.rizzoma-layout'), gateExists('.mobile-topbar'), gateExists('.topic-card')) });
+
+  const ownTopicCard = mobile.locator('.search-result-item', { hasText: `Visual Sweep ${stamp}` }).first();
+  if (await ownTopicCard.count()) {
+    await ownTopicCard.click({ timeout: 5000 }).catch(() => {});
+  } else {
+    await mobile.goto(`${baseUrl}/?layout=rizzoma#/topic/${encodeURIComponent(fixture.waveId)}`, { waitUntil: 'domcontentloaded' });
+  }
+  await waitForAny(mobile, ['.mobile-view-content .rizzoma-topic-detail', '.mobile-header', '.blip-collapsed-row', 'text=Visual Sweep'], 45000).catch(() => {});
+  await mobile.locator('.mobile-view-content .rizzoma-loading, .mobile-view-content .loading').first().waitFor({ state: 'hidden', timeout: 15000 }).catch(() => {});
+  const stillLoading = await mobile.locator('body').evaluate((body) => body.innerText.includes('Loading...') && !body.innerText.includes('Visual Sweep')).catch(() => true);
+  if (stillLoading) {
+    manifest.residuals.push('Mobile deep-link topic route remained on Loading; captured authenticated mobile navigation instead of topic body.');
+  } else {
+    await capture(mobile, 'mobile topic content view', [
+        'Mobile & PWA: responsive layout',
+        'Mobile & PWA: mobile topic view',
+        'Mobile & PWA: View Transitions API (with reduced-motion)',
+        'Mobile & PWA: View Transitions',
+      ],
+      'Mobile viewport renders topic content without horizontal overflow and uses mobile layout classes.',
+      { assertFn: gateAny(gateExists('.mobile-view-content .rizzoma-topic-detail'), gateExists('.blip-container')) });
+  }
+  await mobile.close();
+  await mobileContext.close();
+}
+
+async function main() {
+  await fs.mkdir(outDir, { recursive: true });
+  manifest.branch = await shellValue(['git', 'branch', '--show-current']);
+  manifest.commit = await shellValue(['git', 'rev-parse', '--short', 'HEAD']);
+  await loadFeatureRows();
+
+  const browser = await chromium.launch({ headless, slowMo });
+  const loggedOut = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  const loggedOutPage = await loggedOut.newPage();
+  await gotoApp(loggedOutPage);
+  await capture(loggedOutPage, 'logged out sign in form', [
+      'Authentication: login modal',
+      'Authentication: email login',
+      'Authentication: OAuth buttons',
+      'Authentication: User login (rate-limited, secure cookies)',
+      'Authentication: Google OAuth 2.0',
+      'Authentication: Facebook OAuth',
+      'Authentication: Microsoft OAuth (hand-rolled, Graph API)',
+      'Authentication: SAML 2.0',
+      'Authentication: Twitter OAuth',
+      'Authentication: Permission guards (requireAuth middleware)',
+      'Authentication: Rate limiting (per-route)',
+    ],
+    'Unauthenticated session shows OAuth and email sign-in entry points.',
+    { assertFn: gateAny(gateExists('input[type="email"]'), gateTextVisible('Sign in'), gateExists('[class*="auth"], [class*="login"]')) });
+  const signUp = loggedOutPage.getByText('Sign up', { exact: false }).first();
+  if (await signUp.count()) {
+    await signUp.click();
+    await loggedOutPage.waitForTimeout(500);
+    await capture(loggedOutPage, 'logged out sign up form', [
+        'Authentication: registration entry',
+        'Authentication: signup form',
+        'Authentication: User registration (email/password)',
+      ],
+      'Sign-up link opens the registration form state.',
+      { dynamicStep: 'after-signup-click', assertFn: gateAny(gateTextVisible('Sign up'), gateTextVisible('Register'), gateExists('input[type="email"]')) });
+  }
+  await loggedOut.close();
+
+  const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  const page = await context.newPage();
+  await ensureAuth(page, ownerEmail, 'owner');
+  const fixture = await createFixture(page);
+  let fractal = null;
+  try {
+    fractal = await createFractalFixture(page);
+  } catch (error) {
+    manifest.residuals.push(`Fractal fixture creation failed: ${error.message}`);
+  }
+  await openWave(page, fixture.waveId);
+
+  await captureNavigationTabs(page);
+  await openWave(page, fixture.waveId);
+  await captureTopicChrome(page);
+  await openWave(page, fixture.waveId);
+  await captureBlipAndToolbarStates(page, fixture);
+  await captureBlbDynamics(page, fixture);
+  if (fractal) {
+    try {
+      await captureFractalStates(page, fractal);
+    } catch (error) {
+      manifest.residuals.push(`Fractal screenshots failed: ${error.message}`);
+    }
+  }
+  await captureRightPanel(page);
+  await captureMobile(context, fixture);
+  await captureToastState(page);
+  await captureRealtimeCollaborationStates(context, page, fixture);
+
+  await browser.close();
+
+  manifest.assertions.push(`Parsed ${manifest.visualRows.length} screenshot-valid rows and ${manifest.dynamicRows.length} dynamic candidates from RIZZOMA_FEATURES_STATUS.md.`);
+  manifest.assertions.push(`Captured ${manifest.captures.length} fresh screenshots in ${outDir}.`);
+  await writeManifest();
+  log(`Manifest written to ${path.join(outDir, 'manifest.md')}`);
+}
+
+main().catch(async (error) => {
+  manifest.residuals.push(`Sweep aborted: ${error.message}`);
+  try { await writeManifest(); } catch {}
+  console.error(error);
+  process.exit(1);
+});

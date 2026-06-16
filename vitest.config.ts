@@ -27,6 +27,8 @@ export default defineConfig({
       'src/tests/routes.uploads*.test.ts',
       'src/tests/server.*.test.ts',
       'src/tests/client.*.test.ts?(x)',
+      // Native fractal-render port tests live next to their sources.
+      'src/client/native/**/*.test.ts',
     ],
     setupFiles: ['src/tests/setup.ts'],
     pool: 'forks',

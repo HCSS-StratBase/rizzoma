@@ -346,7 +346,15 @@ router.post('/:id/read', async (req, res) => {
 router.get('/:id/participants', async (req, res) => {
   const id = req.params.id;
   try {
-    const r = await find<WaveParticipant>({ type: 'participant', waveId: id }, { limit: 200 });
+    // Task #192 (2026-05-11): explicitly use idx_participant_by_wave —
+    // without it CouchDB Mango may pick a different (slower) index or do
+    // a full table scan. Per memory: "Mango IGNORES use_index if sort
+    // doesn't match index fields" — here we have no sort, so use_index
+    // is honored.
+    const r = await find<WaveParticipant>(
+      { type: 'participant', waveId: id },
+      { limit: 200, use_index: 'idx_participant_by_wave' },
+    );
     const participants = (r.docs || []).map(p => ({
       id: p._id,
       userId: p.userId,

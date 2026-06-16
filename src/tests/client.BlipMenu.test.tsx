@@ -3,6 +3,7 @@ import { act } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { createRoot, Root } from 'react-dom/client';
 import { BlipMenu } from '../client/components/blip/BlipMenu';
+import { createBlipMenuItems } from '../client/components/mobile/BottomSheetMenu';
 
 type Listener = () => void;
 
@@ -96,6 +97,7 @@ describe('client: BlipMenu toolbar', () => {
     onCopyComment: vi.fn(),
     onPasteAsReply: vi.fn(),
     onPasteAtCursor: vi.fn(),
+    onCreateInlineChild: vi.fn(),
     isDeleting: false,
     isUploading: false,
     uploadProgress: null as number | null,
@@ -155,6 +157,17 @@ describe('client: BlipMenu toolbar', () => {
       'clearNodes',
       'unsetAllMarks',
     ]);
+  });
+
+  it('creates a cursor-position inline comment from the edit toolbar', () => {
+    const inlineCommentBtn = container.querySelector('[data-testid="blip-menu-insert-inline-comment"]');
+    expect(inlineCommentBtn).toBeTruthy();
+
+    act(() => {
+      inlineCommentBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(baseProps.onCreateInlineChild).toHaveBeenCalled();
   });
 
   it('reflects active marks and toggles undo/redo disabled state', () => {
@@ -248,11 +261,7 @@ describe('client: BlipMenu toolbar', () => {
     expect((commentsBtn as HTMLButtonElement | null)?.disabled).toBe(false);
   });
 
-  it('omits the read-only banner and still disables paste-as-reply when comments are read-only', () => {
-    // Hard Gap #11 (2026-04-13): the degraded-state inline-comment banner has
-    // been removed from the BlipMenu surface entirely. Read-only state must
-    // still hide the comment-write affordances and disable paste-as-reply,
-    // but the alien notice no longer pollutes the toolbar.
+  it('surfaces a read-only banner and disables paste-as-reply when comments are read-only', () => {
     act(() => root.unmount());
     container.remove();
     baseProps = {
@@ -270,7 +279,8 @@ describe('client: BlipMenu toolbar', () => {
     ));
 
     const banner = container.querySelector('[data-testid="blip-menu-comments-disabled"]');
-    expect(banner).toBeNull();
+    expect(banner).toBeTruthy();
+    expect(banner?.textContent).toContain('read-only');
 
     const hideBtn = container.querySelector('[data-testid="blip-menu-comments-hide"]') as HTMLButtonElement | null;
     const showBtn = container.querySelector('[data-testid="blip-menu-comments-show"]') as HTMLButtonElement | null;
@@ -287,11 +297,44 @@ describe('client: BlipMenu toolbar', () => {
     expect(pasteReply?.getAttribute('title')).toContain('read-only');
   });
 
-  // Hard Gap #11 (2026-04-13): the inlineCommentsNotice prop has been removed
-  // from BlipMenu entirely. The two prior tests that exercised it (API failure
-  // notices in read mode and edit mode) have been deleted along with the
-  // banner JSX — original Rizzoma never showed degraded-state notices in the
-  // blip toolbar.
+  it('shows API failure notices when selection annotations report an error', () => {
+    act(() => root.unmount());
+    container.remove();
+    baseProps = {
+      ...createBaseProps(),
+      inlineCommentsNotice: 'Selection annotations are temporarily unavailable',
+    } as any;
+    ({ container, root } = renderMenu(
+      <BlipMenu
+        {...baseProps}
+        isEditing={false}
+        editor={editor as any}
+      />
+    ));
+
+    const banner = container.querySelector('[data-testid="blip-menu-comments-disabled"]');
+    expect(banner).toBeTruthy();
+    expect(banner?.textContent).toContain('temporarily unavailable');
+  });
+
+  it('renders selection annotation notices while editing', () => {
+    act(() => root.unmount());
+    container.remove();
+    baseProps = {
+      ...createBaseProps(),
+      inlineCommentsNotice: 'Selection annotations are temporarily unavailable',
+    } as any;
+    ({ container, root } = renderMenu(
+      <BlipMenu
+        {...baseProps}
+        editor={editor as any}
+      />
+    ));
+
+    const banner = container.querySelector('[data-testid="blip-menu-comments-disabled"]');
+    expect(banner).toBeTruthy();
+    expect(banner?.textContent).toContain('temporarily unavailable');
+  });
 
   it('shows highlight palette and applies color', () => {
     const bgBtn = container.querySelector('button[title="Text background color"]');
@@ -417,6 +460,27 @@ describe('client: BlipMenu toolbar', () => {
     expect(baseProps.onCopyComment).toHaveBeenCalled();
     expect(baseProps.onPasteAsReply).toHaveBeenCalled();
     expect(baseProps.onPasteAtCursor).toHaveBeenCalled();
+  });
+
+  it('exposes cursor-position inline comment creation in the mobile edit sheet items', () => {
+    const onCreateInlineChild = vi.fn();
+    const items = createBlipMenuItems({
+      canEdit: true,
+      canComment: true,
+      isEditing: true,
+      areCommentsVisible: true,
+      collapseByDefault: false,
+      clipboardAvailable: false,
+      isUploading: false,
+      isSending: false,
+      isDeleting: false,
+      onFinishEdit: vi.fn(),
+      onCreateInlineChild,
+    });
+
+    const item = items.find((entry) => 'id' in entry && entry.id === 'insert-inline-comment');
+    expect(item && 'label' in item ? item.label : '').toBe('Insert inline comment');
+    expect(item && 'disabled' in item ? item.disabled : true).toBe(false);
   });
 
   it('disables paste actions when clipboard is empty', () => {

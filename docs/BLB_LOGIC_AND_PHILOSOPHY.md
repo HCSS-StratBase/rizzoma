@@ -460,9 +460,9 @@ The following screenshots from live Rizzoma (captured 2026-01-19) document the a
 ### Live Rizzoma Analysis Screenshots (Critical Reference!)
 | Screenshot | Shows |
 |------------|-------|
-| `screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-main.png` | Topic landing with single meta‑blip container (title is first line) |
-| `screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-blip-view.png` | Expanded blip in view mode with read‑only toolbar |
-| `screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-blip-edit.png` | Same blip in edit mode with full formatting toolbar + Hidden checkbox |
+| `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-main.png` | Topic landing with single meta‑blip container (title is first line) |
+| `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-blip-view.png` | Expanded blip in view mode with read‑only toolbar |
+| `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/rizzoma-blip-edit.png` | Same blip in edit mode with full formatting toolbar + Hidden checkbox |
 
 ### Visual Reference: Complete Topic Anatomy
 
@@ -1517,3 +1517,17 @@ User clicks Next
     → Mark read: POST /api/waves/:id/blips/:blipId/read
     → Record: lastExpandedRef = { blipId, isInline }
 ```
+
+## 20. In-Place BLB Hierarchy Editing — Tab-Demote Pattern (2026-05-02)
+
+A flat list inside a blip body can be **edited in place** to add hierarchy without deleting and recreating the blip. Use Playwright to position the cursor at the start of an LI's first text node via the Selection/Range API, then `page.keyboard.press('Tab')` to demote.
+
+This was the answer to a long detour where I kept delete-and-recreating sub-sub-blips because I didn't realize Tab works in place on existing LIs. Verified at scale: 6 sub-sub-blips, 16 demotions, all margin-left values persist after Done + reload (22px → 37px → 52px per indent level).
+
+**Critical scoping rule:** when finding the change-mode button on `.blip-container.active`, filter via "not nested in another `.blip-container`" walk-up. Otherwise `.first` matches a child blip's button instead of the active one.
+
+**Ineffective alternatives:** `Ctrl+Shift+8` doesn't convert DIVs to LIs. `document.execCommand('insertText', ...)` returns ok=false (Rizzoma uses TipTap CRDT-aware input handler that bypasses execCommand).
+
+**Known unresolved:** When you Range-clear a prose body (`<div>...</div>`) inside a UL editor, subsequent typing creates DIVs not LIs. Bulleted toggle does not normalize. Workaround: for prose bodies, prefer `Ctrl+Enter`-to-create-fresh-blip + Bulleted-on-empty-editor + type bullets.
+
+Full procedure + reference implementation: see [worklog-260502.md](worklog-260502.md) and [Tana's RIZZOMA_BLIP_EDITING_PROCEDURE.md](https://drive.google.com/file/d/) (`/mnt/g/My Drive/Tana/RIZZOMA_BLIP_EDITING_PROCEDURE.md`).

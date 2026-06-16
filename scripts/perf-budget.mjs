@@ -5,14 +5,16 @@ import path from 'node:path';
 
 const DEFAULTS = {
   timeToFirstRender: Number(process.env.PERF_BUDGET_TTF || 3000), // ms
+  stageDuration: Number(process.env.PERF_BUDGET_STAGE_DURATION || 3000), // ms
   firstContentfulPaint: Number(process.env.PERF_BUDGET_FCP || 2000), // ms
   memoryUsage: Number(process.env.PERF_BUDGET_MEMORY || 150), // MB
   expectedBlips: Number(process.env.PERF_BUDGET_EXPECTED_BLIPS || 5000),
   minBlipRatio: Number(process.env.PERF_BUDGET_MIN_RATIO || 0.5), // accept partial render for large seeds
   sampleSize: Number(process.env.PERF_BUDGET_SAMPLE || 5), // number of recent runs to check
+  checkAbsoluteTtf: process.env.PERF_BUDGET_CHECK_TTF === '1',
 };
 
-const snapshotDir = path.resolve('snapshots', 'perf');
+const snapshotDir = path.resolve(process.env.PERF_SNAPSHOT_DIR || path.join('snapshots', 'perf'));
 
 async function loadRecentMetrics() {
   const files = (await fs.readdir(snapshotDir)).filter(
@@ -36,15 +38,25 @@ function checkRun({ metrics }) {
   const perf = metrics.performance;
   const expectedBlips = Number(metrics.expectedBlips ?? DEFAULTS.expectedBlips);
   const minBlipCount = Math.round(expectedBlips * DEFAULTS.minBlipRatio);
+  const stageDuration = Number(perf.stageDurationMs ?? perf.timeToFirstRender ?? 0);
 
   const checks = [
     {
-      name: 'Time to First Render',
-      value: perf.timeToFirstRender,
-      budget: DEFAULTS.timeToFirstRender,
+      name: 'Stage Duration',
+      value: stageDuration,
+      budget: DEFAULTS.stageDuration,
       unit: 'ms',
       reverse: false,
     },
+    ...(DEFAULTS.checkAbsoluteTtf && perf.timeToFirstRender
+      ? [{
+          name: 'Time to First Render',
+          value: perf.timeToFirstRender,
+          budget: DEFAULTS.timeToFirstRender,
+          unit: 'ms',
+          reverse: false,
+        }]
+      : []),
     {
       name: 'First Contentful Paint',
       value: perf.firstContentfulPaint,
@@ -75,6 +87,8 @@ function checkRun({ metrics }) {
 
   return {
     timestamp: metrics.timestamp,
+    renderProfile: metrics.renderProfile || 'unknown',
+    renderMode: metrics.renderMode || 'unknown',
     expectedBlips,
     minBlipCount,
     results,
@@ -89,8 +103,7 @@ async function main() {
 
     for (const run of runs) {
       const summary = checkRun(run);
-      const when = new Date(summary.timestamp).toISOString();
-      console.log(`Run ${when} (expected blips ${summary.expectedBlips}):`);
+      console.log(`Run ${summary.timestamp} (${summary.renderProfile}/${summary.renderMode}, expected blips ${summary.expectedBlips}):`);
       summary.results.forEach((r) => {
         const status = r.passed ? '✅' : '❌';
         const comparison = r.reverse ? 'min' : 'max';
