@@ -262,6 +262,7 @@ interface RizzomaBlipProps {
   depth?: number;
   onBlipUpdate?: (blipId: string, content: string) => void;
   onAddReply?: (parentBlipId: string, content: string) => void;
+  onInlineChildCreated?: (parentBlipId: string, child: BlipData) => void;
   onToggleCollapse?: (blipId: string) => void;
   onDeleteBlip?: (blipId: string) => Promise<void> | void;
   onBlipRead?: (blipId: string) => Promise<unknown> | void;
@@ -307,6 +308,7 @@ export function RizzomaBlip({
   depth = 0,
   onBlipUpdate,
   onAddReply,
+  onInlineChildCreated,
   onToggleCollapse,
   onDeleteBlip,
   onBlipRead,
@@ -749,7 +751,8 @@ export function RizzomaBlip({
         }
 
         const newBlip = await response.json();
-        const newBlipId = newBlip.id || newBlip._id;
+        const createdBlip = newBlip.blip || newBlip;
+        const newBlipId = newBlip.id || createdBlip.id || createdBlip._id;
 
         // BLB: Insert [+] marker at cursor position in the parent content
         // This makes the marker PART of the content (like original Rizzoma)
@@ -778,6 +781,24 @@ export function RizzomaBlip({
         // in its `inlineChildren` auto-expands + auto-edits it,
         // producing a fractal grandchild ready for typing.
         if (newBlipId) {
+          const blipPathSegment = newBlipId.includes(':') ? newBlipId.split(':')[1] : newBlipId;
+          const now = Date.now();
+          const newBlipData: BlipData = {
+            id: newBlipId,
+            blipPath: blipPathSegment,
+            content: createdBlip.content || '<ul><li><p></p></li></ul>',
+            authorId: createdBlip.authorId || '',
+            authorName: createdBlip.authorName || 'Anonymous',
+            createdAt: createdBlip.createdAt || now,
+            updatedAt: createdBlip.updatedAt || createdBlip.createdAt || now,
+            isRead: true,
+            parentBlipId: blip.id,
+            childBlips: [],
+            permissions: createdBlip.permissions || { canEdit: true, canComment: true, canRead: true },
+            contributors: createdBlip.contributors || [],
+            anchorPosition,
+          };
+          onInlineChildCreated?.(blip.id, newBlipData);
           (window as any).__rizzomaPendingInlineExpand = newBlipId;
         }
         window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
@@ -786,7 +807,7 @@ export function RizzomaBlip({
         toast('Failed to create child blip', 'error');
       }
     };
-  }, [blip.id, blip.permissions.canComment]);
+  }, [blip.id, blip.permissions.canComment, depth, onInlineChildCreated]);
 
   const hasUnreadChildren = blip.childBlips?.some(child => !child.isRead) ?? false;
   const childCount = blip.childBlips?.length ?? 0;
@@ -2158,6 +2179,7 @@ export function RizzomaBlip({
                         depth={depth + 1}
                         onBlipUpdate={onBlipUpdate}
                         onAddReply={onAddReply}
+                        onInlineChildCreated={onInlineChildCreated}
                         onToggleCollapse={onToggleCollapse}
                         onDeleteBlip={onDeleteBlip}
                         onBlipRead={onBlipRead}
@@ -2223,6 +2245,7 @@ export function RizzomaBlip({
                           depth={depth + 1}
                           onBlipUpdate={onBlipUpdate}
                           onAddReply={onAddReply}
+                          onInlineChildCreated={onInlineChildCreated}
                           onToggleCollapse={onToggleCollapse}
                           onDeleteBlip={onDeleteBlip}
                           onBlipRead={onBlipRead}
@@ -2243,6 +2266,7 @@ export function RizzomaBlip({
                     depth={depth + 1}
                     onBlipUpdate={onBlipUpdate}
                     onAddReply={onAddReply}
+                    onInlineChildCreated={onInlineChildCreated}
                     onToggleCollapse={onToggleCollapse}
                     onDeleteBlip={onDeleteBlip}
                     onBlipRead={onBlipRead}
@@ -2301,6 +2325,7 @@ export function RizzomaBlip({
                           depth={depth + 1}
                           onBlipUpdate={onBlipUpdate}
                           onAddReply={onAddReply}
+                          onInlineChildCreated={onInlineChildCreated}
                           onToggleCollapse={onToggleCollapse}
                           onDeleteBlip={onDeleteBlip}
                           onBlipRead={onBlipRead}
