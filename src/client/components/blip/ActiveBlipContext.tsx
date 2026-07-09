@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 // Single-active-blip invariant (BLB §18b2 three-state model): a topic shows at
@@ -44,10 +44,23 @@ export function EditSurfaceActiveBridge({
   useEffect(() => {
     if (editing) setActiveBlip?.(surfaceId);
   }, [editing, surfaceId, setActiveBlip]);
-  // Release when someone else claims while we are editing.
+  // Release when someone else claims while we are editing — but only AFTER our
+  // own claim has been observed. The claim lands via setState from an effect,
+  // so the first post-edit commit still carries the PREVIOUS active id (e.g.
+  // the topic root's); releasing against that stale value would close the edit
+  // the instant it opened.
+  const claimedRef = useRef(false);
   useEffect(() => {
-    if (!ctx || !editing) return;
-    if (activeBlipId !== null && activeBlipId !== surfaceId) onRelease();
+    if (!ctx || !editing) {
+      claimedRef.current = false;
+      return;
+    }
+    if (activeBlipId === surfaceId) {
+      claimedRef.current = true;
+    } else if (claimedRef.current) {
+      claimedRef.current = false;
+      onRelease();
+    }
   }, [ctx, editing, activeBlipId, surfaceId, onRelease]);
   return null;
 }
