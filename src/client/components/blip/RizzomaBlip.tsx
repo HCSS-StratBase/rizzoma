@@ -748,16 +748,22 @@ export function RizzomaBlip({
           window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
             detail: { threadId: newBlipId, parentId: blip.id },
           }));
-          // Bug A perf fix (2026-05-11): single RAF instead of two. The
-          // new RizzomaBlip mounts in the React commit triggered by the
-          // toggle event's setLocalExpandedInline; useEffect (which
-          // registers the enter-edit listener) runs synchronously after
-          // commit, so a single RAF is sufficient to land after both.
-          requestAnimationFrame(() => {
+          // Robust edit-entry (2026-07-09): a single RAF dispatch races BOTH
+          // the child's mount (topic reload) AND the parent's finish-edit
+          // save under the single-active-blip model (the parent's editor
+          // closes when the child claims the active slot, and that save can
+          // re-render the child back to view mode). Re-dispatch until the
+          // child's editor is actually editable, backing off up to ~3s.
+          const tryEnterEdit = (attempt: number) => {
+            const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
+            const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
+            if (editable) return;
             window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
               detail: { blipId: newBlipId },
             }));
-          });
+            if (attempt < 6) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 500);
+          };
+          requestAnimationFrame(() => tryEnterEdit(0));
         }
       } catch (error) {
         console.error('Error creating child blip:', error);
