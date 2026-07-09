@@ -1265,6 +1265,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     <EditSurfaceActiveBridge
       editing={isEditingTopic}
       surfaceId={`topic-editor:${id}`}
+      hostBlipId={id}
       onRelease={finishEditingTopic}
     />
     <div className="rizzoma-topic-detail">

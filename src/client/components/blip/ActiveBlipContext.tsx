@@ -32,10 +32,16 @@ export function useActiveBlip(): ActiveBlipState | null {
 export function EditSurfaceActiveBridge({
   editing,
   surfaceId,
+  hostBlipId,
   onRelease,
 }: {
   editing: boolean;
   surfaceId: string;
+  // The blip whose container visually hosts this edit surface (e.g. the topic
+  // root). Clicks INSIDE the surface bubble to that blip's container and claim
+  // ITS id — that is a click on our own surface, never a reason to release.
+  // Without this, clicking into the topic editor blurred+closed it instantly.
+  hostBlipId?: string;
   onRelease: () => void;
 }) {
   const ctx = useContext(ActiveBlipContext);
@@ -44,11 +50,11 @@ export function EditSurfaceActiveBridge({
   useEffect(() => {
     if (editing) setActiveBlip?.(surfaceId);
   }, [editing, surfaceId, setActiveBlip]);
-  // Release when someone else claims while we are editing — but only AFTER our
-  // own claim has been observed. The claim lands via setState from an effect,
-  // so the first post-edit commit still carries the PREVIOUS active id (e.g.
-  // the topic root's); releasing against that stale value would close the edit
-  // the instant it opened.
+  // Release when a genuinely FOREIGN surface claims while we are editing — and
+  // only AFTER our own claim has been observed. The claim lands via setState
+  // from an effect, so the first post-edit commit still carries the PREVIOUS
+  // active id; releasing against that stale value would close the edit the
+  // instant it opened.
   const claimedRef = useRef(false);
   useEffect(() => {
     if (!ctx || !editing) {
@@ -57,10 +63,14 @@ export function EditSurfaceActiveBridge({
     }
     if (activeBlipId === surfaceId) {
       claimedRef.current = true;
+    } else if (activeBlipId === hostBlipId) {
+      // Our own host container was clicked (e.g. inside the editor) — reassert
+      // the surface claim instead of releasing.
+      if (claimedRef.current) setActiveBlip?.(surfaceId);
     } else if (claimedRef.current) {
       claimedRef.current = false;
       onRelease();
     }
-  }, [ctx, editing, activeBlipId, surfaceId, onRelease]);
+  }, [ctx, editing, activeBlipId, surfaceId, hostBlipId, setActiveBlip, onRelease]);
   return null;
 }
