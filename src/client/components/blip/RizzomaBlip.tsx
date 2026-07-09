@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } fr
 import { createPortal } from 'react-dom';
 import type { CSSProperties, ReactNode } from 'react';
 import { BlipMenu } from './BlipMenu';
+import { useActiveBlip } from './ActiveBlipContext';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
 import { getEditorExtensions, defaultEditorProps } from '../editor/EditorConfig';
@@ -352,9 +353,18 @@ export function RizzomaBlip({
     window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing } }));
   }, [isEditing]);
 
-  // BLB: Toolbar visibility — inline children start inactive (no toolbar on [+] expand),
-  // regular blips that are force-expanded start active. Toolbar appears on click into content.
-  const [isActive, setIsActive] = useState(forceExpanded && !isInlineChild);
+  // BLB §18b2: at most ONE blip in the topic shows chrome (menu bar / edit
+  // toolbar) at a time — the shared ActiveBlipContext holds which one. Blips
+  // start passive; the topic root claims the slot on open, everything else
+  // activates on click. Legacy fallback (no provider): force-expanded
+  // non-inline blips start active, as before.
+  const activeBlipCtx = useActiveBlip();
+  const activeBlipIdInCtx = activeBlipCtx ? activeBlipCtx.activeBlipId : null;
+  const [isActive, setIsActive] = useState(!activeBlipCtx && forceExpanded && !isInlineChild);
+  const claimActive = useCallback(() => {
+    setIsActive(true);
+    activeBlipCtx?.setActiveBlip(blip.id);
+  }, [activeBlipCtx, blip.id]);
 
   // Dispatch blip-active-editable event so RightToolsPanel shows insert buttons
   // even before entering edit mode (enables auto-enter-edit on insert click)
@@ -871,12 +881,12 @@ export function RizzomaBlip({
     const handleActivate = (e: Event) => {
       const { blipId: targetId } = (e as CustomEvent).detail || {};
       if (targetId === blip.id) {
-        setIsActive(true);
+        claimActive();
       }
     };
     window.addEventListener('rizzoma:activate-blip', handleActivate);
     return () => window.removeEventListener('rizzoma:activate-blip', handleActivate);
-  }, [blip.id]);
+  }, [blip.id, claimActive]);
 
   // External edit-mode trigger — used by Ctrl+Enter handler so a freshly-created
   // inline child immediately enters edit mode with cursor focus, instead of landing
@@ -886,7 +896,7 @@ export function RizzomaBlip({
     const handle = (e: Event) => {
       const { blipId: targetId } = (e as CustomEvent).detail || {};
       if (targetId !== blip.id) return;
-      setIsActive(true);
+      claimActive();
       if (blip.permissions.canEdit) {
         setIsEditing(true);
         // Bug A perf fix (2026-05-11): single RAF instead of two. The
@@ -911,7 +921,7 @@ export function RizzomaBlip({
     };
     window.addEventListener('rizzoma:enter-edit-blip', handle);
     return () => window.removeEventListener('rizzoma:enter-edit-blip', handle);
-  }, [blip.id, blip.permissions.canEdit]);
+  }, [blip.id, blip.permissions.canEdit, claimActive]);
 
   // Collapse-only for list children (from Follow-the-Green — collapse previous before jumping to next)
   useEffect(() => {
@@ -976,7 +986,7 @@ export function RizzomaBlip({
       onExpand(blip.id);
     }
     if (next) {
-      setIsActive(true);
+      claimActive();
     }
     setIsExpanded(next);
     onToggleCollapse?.(blip.id);
@@ -1008,7 +1018,7 @@ export function RizzomaBlip({
       const nextContent = injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline);
       setEditedContent(nextContent);
       setIsEditing(true);
-      setIsActive(true);
+      claimActive();
       // Update inline editor content and make it editable
       if (inlineEditor) {
         inlineEditor.commands.setContent(nextContent);
@@ -1428,9 +1438,12 @@ export function RizzomaBlip({
     };
   }, [blip.id, isPerfMode]);
 
-  // Handle click to make blip active (show menu)
-  const handleBlipClick = () => {
-    setIsActive(true);
+  // Handle click to make blip active (show menu). stopPropagation so the
+  // DEEPEST clicked blip claims the active slot — without it the click bubbles
+  // through every ancestor blip container and the outermost one wins.
+  const handleBlipClick = (e?: { stopPropagation: () => void }) => {
+    e?.stopPropagation();
+    claimActive();
     if (!blip.isRead) {
       onBlipRead?.(blip.id);
     }
@@ -2055,14 +2068,31 @@ export function RizzomaBlip({
   }, [forceExpanded]);
 
   useEffect(() => {
-    if (isInlineChild) {
-      // Inline children: only auto-activate when entering edit mode.
-      // On initial [+] expand, toolbar stays hidden until user clicks into content.
+    if (activeBlipCtx) {
+      // Single-active model: entering edit mode always claims the slot; the
+      // topic root claims it once on open (nothing else active yet) so the
+      // familiar editable-root UX is preserved. Expanding a blip does NOT
+      // activate it — that was the "toolbar on every nested blip" defect.
+      if (isEditing) {
+        claimActive();
+      } else if (isTopicRoot && effectiveExpanded && activeBlipCtx.activeBlipId === null) {
+        claimActive();
+      }
+    } else if (isInlineChild) {
+      // Legacy (no provider): inline children only auto-activate when editing.
       if (isEditing) setIsActive(true);
     } else {
       setIsActive(effectiveExpanded || isEditing);
     }
-  }, [effectiveExpanded, isEditing, isInlineChild]);
+  }, [effectiveExpanded, isEditing, isInlineChild, isTopicRoot, activeBlipCtx, claimActive]);
+
+  // Release: when another blip claims the active slot, this one drops its
+  // chrome — finishing (and thereby saving) any edit in progress first.
+  useEffect(() => {
+    if (!activeBlipCtx || activeBlipIdInCtx === blip.id) return;
+    if (isEditingRef.current) handleFinishEdit();
+    setIsActive(false);
+  }, [activeBlipCtx, activeBlipIdInCtx, blip.id, handleFinishEdit]);
 
 
   return (

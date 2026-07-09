@@ -10,7 +10,6 @@ import { noStore } from '../middleware/noStore.js';
 import { isSamlEnabled, getSamlInstance, extractUserFromProfile, generateMetadata } from '../lib/saml.js';
 import { logAuthEvent } from '../lib/logger.js';
 import { issueTicket, redeemTicket } from '../lib/authTickets.js';
-import { randomBytes } from 'crypto';
 // import { config } from '../config.js';
 
 // Mobile OAuth handoff: Android's WebView has a Chromium bug where

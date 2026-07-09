@@ -56,15 +56,17 @@ export default defineConfig(({ command, mode }) => {
   },
   server: {
     host: true,
-    port: 3000,
+    // Overridable so a second instance (e.g. a dev deployment next to the
+    // live one) can run on its own ports: VITE_PORT + VITE_API_TARGET.
+    port: Number(process.env.VITE_PORT || 3000),
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_API_TARGET || 'http://localhost:8000',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_API_TARGET || 'http://localhost:8000',
         ws: true,
       },
     },
