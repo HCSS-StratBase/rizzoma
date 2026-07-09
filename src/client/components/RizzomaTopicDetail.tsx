@@ -20,7 +20,7 @@ import { useCollaboration } from './editor/useCollaboration';
 import { yjsDocManager } from './editor/YjsDocumentManager';
 import { FEATURES } from '@shared/featureFlags';
 import { NativeWaveView } from './native/NativeWaveView';
-import { ActiveBlipProvider } from './blip/ActiveBlipContext';
+import { ActiveBlipProvider, EditSurfaceActiveBridge } from './blip/ActiveBlipContext';
 import { parseHtmlToContentArray } from '@client/native/parser';
 import type { ContentArray } from '@client/native/types';
 
@@ -1246,6 +1246,11 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
   return (
     <ActiveBlipProvider>
+    <EditSurfaceActiveBridge
+      editing={isEditingTopic}
+      surfaceId={`topic-editor:${id}`}
+      onRelease={finishEditingTopic}
+    />
     <div className="rizzoma-topic-detail">
       {/* ========================================
           TOPIC COLLABORATION BAR (outside meta-blip)
