@@ -1,5 +1,21 @@
 # 🚀 Native Fractal-Render Port — Live Project Tracker
 
+> **⚠️ 2026-07-09 STATUS CORRECTION (Claude Fable 5):** the "17 %" figure below was
+> written 2026-05-05 and never updated — git history shows **Phases 2, 3 and 4 were
+> committed DONE on 2026-05-06** (`0a3df9b1`, `142d18f0`/`ed33e131`, `b8b608fc`).
+> On **2026-07-09** the editor+parity render finally reached PRODUCTION: the
+> single-active-editor defect that killed the June-16 merge attempt was fixed
+> properly (`fix/single-active-editor`, shared ActiveBlipContext — one active blip
+> per topic, BLB §18b2), verified on a VPS staging instance (11/11 gates +
+> Ctrl+Enter + 1280/1366/1440/1600 viewport sweep, all eyeballed), and cut over to
+> https://138-201-62-161.nip.io (rollback: `/root/rizzoma-live-rollback-commit.txt`).
+> Verification harness: `scripts/verify_single_active_editor.mjs`,
+> `scripts/verify_ctrl_enter_dev.mjs`, `scripts/viewport_sweep_dev.mjs`.
+> The dead-"+" subblip bug on live is FIXED. Remaining from the original plan:
+> Phase 5 cleanup (delete the legacy React-only path) + 24h soak + native-render
+> (`?render=native`) cutover decision.
+
+
 > **Source of truth**: this file. Updated after every commit on `feature/native-fractal-port`.
 > **Backed by**: GH epic [#50](https://github.com/HCSS-StratBase/rizzoma/issues/50) + phase issues [#51](https://github.com/HCSS-StratBase/rizzoma/issues/51)–[#56](https://github.com/HCSS-StratBase/rizzoma/issues/56) + [docs/NATIVE_RENDER_PORT_PLAN.md](./NATIVE_RENDER_PORT_PLAN.md) + [docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md](./ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md)
 > **Why the port**: 7-layer React/TipTap hybrid kept cracking (10 fix-spawns-fix bugs in one day). Original Rizzoma's content-array + linear-walk model is elegant. Port it to TS instead of patching seams forever.

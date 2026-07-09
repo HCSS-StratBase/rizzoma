@@ -1,6 +1,20 @@
 # VPS Deployment — Rizzoma on 138.201.62.161
 
-**Last updated**: 2026-04-23 (after late-night prod-build + CI gate work)
+**Last updated**: 2026-07-09 (single-active-editor cutover)
+
+> **⚠️ 2026-07-09 REALITY CHECK — the Docker topology below is STALE.** Since at
+> least June 2026 the site is NOT served by the Docker containers described in
+> this file. Current truth (see [worklog-260709.md](./worklog-260709.md) for the
+> full table): **live** = `/data/large-projects/stephan/rizzoma_260612` (detached
+> at `origin/fix/single-active-editor`), nohup tsx server :8000 + vite :3000,
+> nginx vhost `138-201-62-161.nip.io`; **staging** =
+> `/data/large-projects/stephan/rizzoma_merge` (same branch), server :8100 +
+> vite :3100, nginx vhost `dev.138-201-62-161.nip.io`. Both with `FEAT_ALL=1
+> FEAT_RIZZOMA_PARITY_RENDER=1`. Only CouchDB (`rizzoma-couchdb`, :5984, db
+> `project_rizzoma` shared by both instances) and Redis (`rizzoma-redis`) still
+> run in Docker. Rollback artifacts: `/root/rizzoma-live-rollback-commit.txt`,
+> `/root/rizzoma-live.env.bak-cutover`. The sections below are kept for the
+> eventual re-productionization (Phase 5).
 
 ## Server details
 
