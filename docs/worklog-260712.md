@@ -24,3 +24,12 @@
 - Do not fast-forward `master` until CI or a clean local dependency installation completes the full suite and returns a final passing summary.
 - Live/staging topology remains bare `nohup` development processes with MemoryStore sessions, as documented in `VPS_DEPLOYMENT.md`.
 - Draft PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) is the merge vehicle and must remain unmerged until its complete CI verdict is green.
+
+## CI remediation follow-up
+
+- Inspected failed PR checks and separated infrastructure failures from application behavior.
+- Linux build/health/browser jobs had installed with `--no-optional`, which removed Rollup's required platform binary. All four Linux jobs now use deterministic `npm ci` with optional packages enabled and Cypress's binary download disabled separately.
+- The macOS workflow ignored Tiptap collaboration's `y-prosemirror` peer after deleting the lockfile under `legacy-peer-deps`. `y-prosemirror` is now direct, the lockfile carries it as a production dependency, and macOS uses deterministic `npm ci`.
+- Restored Vite's `/api` and `/socket.io` portable default from `:8000` to the reserved backend `:8788`; VPS live/staging targets are now explicit deployment overrides.
+- PR CI now runs the production build and readiness checks probe `/api/health` through Vite as well as the backend, catching dependency and proxy drift before merge.
+- Verification: workflow YAML PASS; typecheck PASS; production build PASS; complete Vitest PASS at 61 files / 275 passed / 3 skipped / 0 failed.

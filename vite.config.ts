@@ -62,11 +62,11 @@ export default defineConfig(({ command, mode }) => {
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_TARGET || 'http://localhost:8000',
+        target: process.env.VITE_API_TARGET || 'http://localhost:8788',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: process.env.VITE_API_TARGET || 'http://localhost:8000',
+        target: process.env.VITE_API_TARGET || 'http://localhost:8788',
         ws: true,
       },
     },

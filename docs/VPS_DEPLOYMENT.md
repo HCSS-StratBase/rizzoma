@@ -15,6 +15,12 @@
 > run in Docker. Rollback artifacts: `/root/rizzoma-live-rollback-commit.txt`,
 > `/root/rizzoma-live.env.bak-cutover`. The sections below are kept for the
 > eventual re-productionization (Phase 5).
+>
+> The repository default remains the reserved local backend `:8788`. The bare
+> VPS processes therefore **must** start Vite with explicit targets:
+> live `VITE_API_TARGET=http://127.0.0.1:8000`; staging
+> `VITE_PORT=3100 VITE_API_TARGET=http://127.0.0.1:8100`. Never change the
+> portable default to match one deployment topology.
 
 ## Server details
 

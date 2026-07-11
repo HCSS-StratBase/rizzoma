@@ -29,6 +29,7 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
+- CI remediation checkpoint (2026-07-12): full Vitest completed green (61 files / 275 passed / 3 skipped); production build and workflow YAML validation passed. PR #57 now carries fixes for Linux Rollup optional dependencies, macOS `y-prosemirror`, deterministic `npm ci`, and the Vite/backend port mismatch. Next action is to watch the fresh PR checks and merge only when every required Linux/macOS gate is green.
 - Active release-candidate branch: `fix/single-active-editor` (as of 2026-07-12). It is a fast-forward descendant of `origin/master`, contains the native fractal-port merge plus the July single-active-editor fixes, and is the code currently verified on the live site. Always cite branch + date when sharing status.
 - Release checkpoint: July visual evidence is under `screenshots/260709-*`: 11/11 single-active-editor gates on staging and live, Ctrl+Enter child creation PASS, viewport captures at 1280/1366/1440/1600, and a 44-screen feature sweep. Before advancing `master`, rerun branch-context lint, typecheck, full Vitest, build, and the relevant Playwright browser gates.
 - `docs/HANDOFF.md` now reflects `master` as of 2026-02-25; refresh if more changes land.
