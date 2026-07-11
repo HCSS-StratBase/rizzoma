@@ -60,7 +60,7 @@ function getInitials(name?: string, email?: string): string {
   return '??';
 }
 
-export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvailable }: RightToolsPanelProps) {
+export function RightToolsPanel(props: RightToolsPanelProps) {
   const isPerfMode = (() => {
     try {
       if (typeof window === 'undefined') return false;
@@ -78,6 +78,10 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
     return null;
   }
 
+  return <RightToolsPanelContent {...props} />;
+}
+
+function RightToolsPanelContent({ user, unreadState, onNextTopic, nextTopicAvailable }: RightToolsPanelProps) {
   const [viewMode, setViewMode] = useState<'text' | 'mindmap'>('text');
   // `navigating` (state) controls the button's disabled prop for visual
   // feedback. `navigatingRef` is the synchronous lock that prevents

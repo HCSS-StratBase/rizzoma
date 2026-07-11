@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { couchDbInfo } from '../lib/couch.js';
+import { couchDatabaseInfo } from '../lib/couch.js';
 
 const healthRouter = Router();
 
@@ -11,8 +11,8 @@ healthRouter.get('/health', async (_req, res) => {
   // CouchDB check
   const couchStart = Date.now();
   try {
-    const info = await couchDbInfo();
-    checks['couchdb'] = { status: 'ok', ms: Date.now() - couchStart, version: info?.version };
+    await couchDatabaseInfo();
+    checks['couchdb'] = { status: 'ok', ms: Date.now() - couchStart };
   } catch (e: any) {
     checks['couchdb'] = { status: 'error', ms: Date.now() - couchStart, error: e?.message || 'unreachable' };
   }

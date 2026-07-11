@@ -33,4 +33,7 @@
 - Restored Vite's `/api` and `/socket.io` portable default from `:8000` to the reserved backend `:8788`; VPS live/staging targets are now explicit deployment overrides.
 - PR CI now runs the production build and readiness checks probe `/api/health` through Vite as well as the backend, catching dependency and proxy drift before merge.
 - Raised the checked-in iOS project and Podfile deployment target from 14.0 to 15.0, matching Capacitor 8.3.0 and its Status Bar 8.0.2 podspecs; the first repaired macOS run had reached `cap sync` before exposing this native-project drift.
+- Initialized the application database explicitly in both Playwright-backed CI jobs. The first fully-started run proved that a healthy CouchDB server with a missing `project_rizzoma` database produced 500s in every browser and the perf harness.
+- Tightened `/api/health` to check the configured application database rather than only CouchDB's server root, so readiness can no longer return green while every data route is unusable.
+- Removed 22 React Hooks-order lint errors without changing feature behavior by keeping the feature/perf guards in thin exported wrappers and moving hook-bearing implementations into unconditional child components.
 - Verification: workflow YAML PASS; typecheck PASS; production build PASS; complete Vitest PASS at 61 files / 275 passed / 3 skipped / 0 failed.

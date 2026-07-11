@@ -76,6 +76,25 @@ jobs:
       - name: Start docker services
         if: ${{ steps.install-smoke.outcome == 'success' }}
         run: docker compose up -d couchdb redis
+      - name: Initialize CouchDB database
+        if: ${{ steps.install-smoke.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          for attempt in {1..30}; do
+            if curl -fsS -u admin:password http://127.0.0.1:5984/_up >/dev/null 2>&1; then
+              status="$(curl -sS -o /dev/null -w '%{http_code}' -u admin:password -X PUT http://127.0.0.1:5984/project_rizzoma)"
+              if [[ "$status" == "201" || "$status" == "202" || "$status" == "412" ]]; then
+                echo "CouchDB database is ready (HTTP $status)"
+                exit 0
+              fi
+              echo "Unexpected CouchDB database response: HTTP $status"
+              exit 1
+            fi
+            echo "Waiting for CouchDB (attempt ${attempt})..."
+            sleep 2
+          done
+          echo "CouchDB failed to become ready"
+          exit 1
       - name: Start dev stack
         if: ${{ steps.install-smoke.outcome == 'success' }}
         run: |
@@ -180,6 +199,25 @@ jobs:
       - name: Start docker services
         if: ${{ steps.install-perf.outcome == 'success' }}
         run: docker compose up -d couchdb redis
+      - name: Initialize CouchDB database
+        if: ${{ steps.install-perf.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          for attempt in {1..30}; do
+            if curl -fsS -u admin:password http://127.0.0.1:5984/_up >/dev/null 2>&1; then
+              status="$(curl -sS -o /dev/null -w '%{http_code}' -u admin:password -X PUT http://127.0.0.1:5984/project_rizzoma)"
+              if [[ "$status" == "201" || "$status" == "202" || "$status" == "412" ]]; then
+                echo "CouchDB database is ready (HTTP $status)"
+                exit 0
+              fi
+              echo "Unexpected CouchDB database response: HTTP $status"
+              exit 1
+            fi
+            echo "Waiting for CouchDB (attempt ${attempt})..."
+            sleep 2
+          done
+          echo "CouchDB failed to become ready"
+          exit 1
       - name: Start dev stack
         if: ${{ steps.install-perf.outcome == 'success' }}
         run: |
