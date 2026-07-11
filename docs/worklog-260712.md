@@ -32,4 +32,5 @@
 - The macOS workflow ignored Tiptap collaboration's `y-prosemirror` peer after deleting the lockfile under `legacy-peer-deps`. `y-prosemirror` is now direct, the lockfile carries it as a production dependency, and macOS uses deterministic `npm ci`.
 - Restored Vite's `/api` and `/socket.io` portable default from `:8000` to the reserved backend `:8788`; VPS live/staging targets are now explicit deployment overrides.
 - PR CI now runs the production build and readiness checks probe `/api/health` through Vite as well as the backend, catching dependency and proxy drift before merge.
+- Raised the checked-in iOS project and Podfile deployment target from 14.0 to 15.0, matching Capacitor 8.3.0 and its Status Bar 8.0.2 podspecs; the first repaired macOS run had reached `cap sync` before exposing this native-project drift.
 - Verification: workflow YAML PASS; typecheck PASS; production build PASS; complete Vitest PASS at 61 files / 275 passed / 3 skipped / 0 failed.
