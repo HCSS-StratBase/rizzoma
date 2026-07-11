@@ -23,3 +23,4 @@
 
 - Do not fast-forward `master` until CI or a clean local dependency installation completes the full suite and returns a final passing summary.
 - Live/staging topology remains bare `nohup` development processes with MemoryStore sessions, as documented in `VPS_DEPLOYMENT.md`.
+- Draft PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) is the merge vehicle and must remain unmerged until its complete CI verdict is green.
