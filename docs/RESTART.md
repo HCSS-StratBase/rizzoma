@@ -29,7 +29,8 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `master` (as of 2026-02-25). Always cite branch + date when sharing status; refresh any “Current State” bullets for this branch before quoting.
+- Active release-candidate branch: `fix/single-active-editor` (as of 2026-07-12). It is a fast-forward descendant of `origin/master`, contains the native fractal-port merge plus the July single-active-editor fixes, and is the code currently verified on the live site. Always cite branch + date when sharing status.
+- Release checkpoint: July visual evidence is under `screenshots/260709-*`: 11/11 single-active-editor gates on staging and live, Ctrl+Enter child creation PASS, viewport captures at 1280/1366/1440/1600, and a 44-screen feature sweep. Before advancing `master`, rerun branch-context lint, typecheck, full Vitest, build, and the relevant Playwright browser gates.
 - `docs/HANDOFF.md` now reflects `master` as of 2026-02-25; refresh if more changes land.
 - Re-read checkpoint: 2026-02-04 01:55 local — BLB child unread highlight removed (green [+] only) and BLB snapshots refreshed (`snapshots/blb/1770165748162-*`); drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
 - 2026-03-29 reality check: Docker Desktop WSL integration is required again for local live verification. The `src/server/app.ts` fallback route uses `'/{*path}'` which is the canonical Express 5 / path-to-regexp v8 syntax (previously called a "workaround" — see Hard Gap #29, 2026-04-13 for the cleanup that confirmed this and reordered the `/uploads` static handler ahead of the SPA catch-all).

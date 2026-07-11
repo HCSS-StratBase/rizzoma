@@ -73,7 +73,7 @@ describe('auth OAuth provider coverage', () => {
       twitter: true,
       saml: false,
     });
-  });
+  }, 15_000);
 
   it('starts the Twitter/X PKCE redirect flow when configured', async () => {
     process.env['TWITTER_CLIENT_ID'] = 'twitter-client';

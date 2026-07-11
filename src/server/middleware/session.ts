@@ -1,4 +1,5 @@
 import session from 'express-session';
+import type { RequestHandler } from 'express';
 import RedisStore from 'connect-redis';
 import { createClient, type RedisClientType } from 'redis';
 
@@ -78,7 +79,7 @@ function resolveStore(): session.Store {
   return redisStore as unknown as session.Store;
 }
 
-export function sessionMiddleware() {
+export function sessionMiddleware(): RequestHandler {
   return session({
     store: resolveStore(),
     secret: process.env['SESSION_SECRET'] || 'dev-secret-change-me',

@@ -1,5 +1,15 @@
 # Rizzoma Feature Testing Status
 
+## Release audit — 2026-07-12 (`fix/single-active-editor`)
+
+- PASS: `npm run lint:branch-context`.
+- PASS: `npm run typecheck`.
+- PASS: `npm run build`; server declaration emission and Vite client build completed, transforming 3,297 modules.
+- PASS: focused `src/tests/server.authOauth.test.ts`, 3/3 after giving its slow module-import integration path a scoped 15-second timeout.
+- INCOMPLETE: the parallel full suite produced one timeout in that OAuth test while other suites continued. A serialized `--maxWorkers=1` rerun continued without an observed assertion failure but exceeded the 600-second execution ceiling before producing a final summary. Do not treat the full suite as green yet.
+- Existing visual evidence from 2026-07-09 remains the current browser acceptance set: 11/11 single-active-editor gates on live/staging, Ctrl+Enter PASS, 1280/1366/1440/1600 viewport sweep, and 44 feature-sweep screenshots.
+- Release decision: `master` fast-forward deferred until a complete CI or clean local full-suite verdict exists.
+
 ## 🟢 Current Status
 - **Full Vitest run (2026-02-10)**: 44 test files passed, 146 tests passed, 3 skipped, **0 failures**. All 9 pre-existing failures fixed (permission-model mismatches, BlipMenu selector drift, feature flags missing in test env, inline comment visibility default, timeout tuning).
 - **Health checks (2026-02-03)**: `npm run test:health` pass (server health, inline comments health, upload edge cases).
