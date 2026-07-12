@@ -95,7 +95,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `release/deploy-helper-final` worktree/branch until PR #67 merges; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
+    - Continue in the isolated `fix/lockfile-driven-production-install` worktree/branch until the deterministic production-install fix merges; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -104,8 +104,8 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Push the rebased deploy-helper tree to PR #67, require all CI jobs, and merge only the green tree.
-  2) Install the exact merged helper assets and deploy that exact master SHA to the inactive managed lane; verify direct health/assets/journal/ClamAV, then drain old Vite and API with zero writer overlap before switching both vhosts.
+  1) Publish the lockfile-driven production-install fix, require all CI jobs, and merge only the green tree.
+  2) Install the exact merged helper assets and redeploy that exact master SHA to the inactive managed lane; verify installed versions against the lock plus direct health/assets/journal/ClamAV, then drain old Vite and API with zero writer overlap before switching both vhosts.
   3) Run public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs.
   4) Record the exact production result in project docs, global HANDOFF, and existing HCSS Tana node `8mGAbLRiBnne`; refresh the Git bundle after final docs merge.
   5) Keep native rendering disabled; after release, address 500/1,000-blip sweeps, physical iPhone Safari, staging-data separation, synthetic-data cleanup, and dependency/lint debt.

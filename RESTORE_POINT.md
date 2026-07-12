@@ -12,10 +12,12 @@
   durable Task stack as `bacb8a50`. Exact local gates passed at **107 files /
   588 tests / 3 skipped / 0 failed**, typecheck, full-source ESLint `--quiet`,
   and a **3,314-module** build; all seven GitHub checks passed on source head
-  `b8c9d110`. Branch `release/deploy-helper-final` rebases the managed helper
-  onto that merge and fixes npm 10's measured post-build lockfile rewrite.
-  PR #67 CI, zero-overlap cutover, and public acceptance remain the release
-  boundary.
+  `b8c9d110`. PR #67 then merged the managed helper as `599fe025`, but its first
+  private deployment measured an installed-versus-lock drift (`yjs` 13.6.31
+  versus 13.6.29) caused by lockfile-disabled prune. Branch
+  `fix/lockfile-driven-production-install` replaces prune with a second exact
+  `npm ci --omit=dev`. Fresh CI/private redeploy, zero-overlap cutover, and
+  public acceptance remain the release boundary.
 - (2026-07-12 password recovery candidate) Branch
   `codex/password-recovery` is based on combined integration checkpoint
   `c00e1711`. It adds generic non-enumerating reset requests, 32-byte one-time

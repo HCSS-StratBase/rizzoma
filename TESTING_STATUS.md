@@ -25,6 +25,12 @@
 - Exact PR CI also passed all seven checks: build, iOS, health, performance,
   browser smokes (toolbar, desktop/mobile Follow-the-Green, two-process
   collaboration), aggregate gate, and branch update.
+- PR #67 subsequently passed six deployment-helper checks and merged as
+  `599fe025`. Its first loopback-only candidate passed application health but
+  failed the stronger dependency-provenance audit: `yjs` installed at 13.6.31
+  while `package-lock.json` requires 13.6.29. Public nginx was not changed. The
+  replacement second `npm ci --omit=dev` must pass fresh CI and exact-version
+  private verification before cutover.
 - Boundary: this is merged/local evidence, not public acceptance. Exact-SHA
   managed deployment, real SMTP/invitation and reset-mail
   checks, real ClamAV upload/EICAR checks, two-account collaboration, persisted
