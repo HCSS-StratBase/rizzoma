@@ -2,6 +2,15 @@
 
 **Last updated**: 2026-07-12 (PR #60 cutover + 05:58 CEST runtime reality audit)
 
+> **Managed-service candidate (not yet public):** branch
+> `codex/production-service-hardening` replaces the obsolete Docker-era deploy
+> helper with immutable exact-SHA releases and systemd blue/green lanes on
+> loopback `:8101`/`:8102`. It also adds graceful Yjs/Socket.IO/Redis shutdown,
+> production session-secret rotation, and Redis readiness. The authoritative
+> target procedure is the [managed VPS deployment guide](../deploy/systemd/README.md).
+> Until merge, HTTPS canary, and atomic nginx cutover are complete, the runtime
+> truth immediately below remains authoritative.
+
 > **⚠️ CURRENT RUNTIME TRUTH — the Docker application topology below is
 > historical.** Public nginx now targets Vite `:3100`, which proxies to API
 > `:8100` from `/data/large-projects/stephan/rizzoma_merge` at exact merged

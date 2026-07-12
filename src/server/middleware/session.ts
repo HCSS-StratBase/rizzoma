@@ -29,6 +29,24 @@ import { createClient, type RedisClientType } from 'redis';
 
 let cachedRedisClient: RedisClientType | null = null;
 
+const DEVELOPMENT_SESSION_SECRET = 'dev-secret-change-me';
+
+function sessionSecrets(): string | string[] {
+  const primary = (process.env['SESSION_SECRET'] || '').trim();
+  const previous = (process.env['SESSION_SECRET_PREVIOUS'] || '')
+    .split(',')
+    .map(secret => secret.trim())
+    .filter(Boolean);
+
+  if (process.env['NODE_ENV'] === 'production' && (!primary || primary === DEVELOPMENT_SESSION_SECRET)) {
+    throw new Error('SESSION_SECRET must be set to a non-development value in production');
+  }
+
+  const secrets = [primary || DEVELOPMENT_SESSION_SECRET, ...previous]
+    .filter((secret, index, all) => all.indexOf(secret) === index);
+  return secrets.length === 1 ? secrets[0]! : secrets;
+}
+
 function resolveStore(): session.Store {
   const storeMode = (process.env['SESSION_STORE'] || '').trim().toLowerCase();
   const redisUrl = (process.env['REDIS_URL'] || '').trim();
@@ -79,10 +97,16 @@ function resolveStore(): session.Store {
   return redisStore as unknown as session.Store;
 }
 
-export function sessionMiddleware(): RequestHandler {
+export function sessionMiddleware(storeOverride?: session.Store): RequestHandler {
+  const secret = sessionSecrets();
   return session({
-    store: resolveStore(),
-    secret: process.env['SESSION_SECRET'] || 'dev-secret-change-me',
+    store: storeOverride || resolveStore(),
+    // express-session signs with the first secret and accepts the remaining
+    // entries for verification. This permits a no-logout secret rotation:
+    // deploy a new SESSION_SECRET with the old value in
+    // SESSION_SECRET_PREVIOUS, then remove the previous value after the
+    // longest session lifetime has elapsed.
+    secret,
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -93,4 +117,50 @@ export function sessionMiddleware(): RequestHandler {
     },
     name: 'rizzoma.sid',
   });
+}
+
+export type SessionStoreHealth = {
+  status: 'ok' | 'error';
+  mode: 'redis' | 'memory';
+  ms: number;
+  error?: string;
+};
+
+export async function sessionStoreHealth(): Promise<SessionStoreHealth> {
+  const startedAt = Date.now();
+  if (!cachedRedisClient) {
+    const isProduction = process.env['NODE_ENV'] === 'production';
+    return {
+      status: isProduction ? 'error' : 'ok',
+      mode: 'memory',
+      ms: Date.now() - startedAt,
+      ...(isProduction ? { error: 'Redis session store is not initialized' } : {}),
+    };
+  }
+
+  try {
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<never>((_resolve, reject) => {
+      timeout = setTimeout(() => reject(new Error('Redis PING timed out after 2000ms')), 2_000);
+      timeout.unref?.();
+    });
+    const reply = await Promise.race([cachedRedisClient.ping(), timeoutPromise])
+      .finally(() => { if (timeout) clearTimeout(timeout); });
+    if (reply !== 'PONG') throw new Error(`Unexpected Redis PING response: ${reply}`);
+    return { status: 'ok', mode: 'redis', ms: Date.now() - startedAt };
+  } catch (error: any) {
+    return {
+      status: 'error',
+      mode: 'redis',
+      ms: Date.now() - startedAt,
+      error: error?.message || 'Redis session store is unreachable',
+    };
+  }
+}
+
+export async function closeSessionStore(): Promise<void> {
+  const client = cachedRedisClient;
+  cachedRedisClient = null;
+  if (!client || !client.isOpen) return;
+  await client.quit();
 }

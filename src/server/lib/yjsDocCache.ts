@@ -2,23 +2,25 @@ import * as Y from 'yjs';
 import { findOne, insertDoc, updateDoc } from './couch.js';
 
 class YjsDocCache {
-  private docs = new Map<string, { doc: Y.Doc; lastAccess: number; refCount: number }>();
+  private docs = new Map<string, { doc: Y.Doc; lastAccess: number; refCount: number; version: number }>();
   private dirty = new Set<string>();
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
   private persistInterval: ReturnType<typeof setInterval> | null = null;
+  private persistPromise: Promise<PersistResult> | null = null;
   private readonly TTL_MS = 5 * 60 * 1000; // 5 min idle cleanup
 
   start() {
+    if (this.cleanupInterval || this.persistInterval) return;
     this.cleanupInterval = setInterval(() => this.cleanup(), 60_000);
     this.cleanupInterval.unref?.();
-    this.persistInterval = setInterval(() => this.persistDirty(), 30_000);
+    this.persistInterval = setInterval(() => { void this.persistDirty(); }, 30_000);
     this.persistInterval.unref?.();
   }
 
   getOrCreate(blipId: string): Y.Doc {
     let entry = this.docs.get(blipId);
     if (!entry) {
-      entry = { doc: new Y.Doc(), lastAccess: Date.now(), refCount: 0 };
+      entry = { doc: new Y.Doc(), lastAccess: Date.now(), refCount: 0, version: 0 };
       this.docs.set(blipId, entry);
     }
     entry.lastAccess = Date.now();
@@ -53,6 +55,8 @@ class YjsDocCache {
   applyUpdate(blipId: string, update: Uint8Array, origin?: any) {
     const doc = this.getOrCreate(blipId);
     Y.applyUpdate(doc, update, origin);
+    const entry = this.docs.get(blipId);
+    if (entry) entry.version += 1;
     this.dirty.add(blipId);
   }
 
@@ -84,10 +88,20 @@ class YjsDocCache {
     }
   }
 
-  async persistDirty() {
-    for (const blipId of this.dirty) {
+  persistDirty(): Promise<PersistResult> {
+    if (this.persistPromise) return this.persistPromise;
+    this.persistPromise = this.persistDirtyPass().finally(() => {
+      this.persistPromise = null;
+    });
+    return this.persistPromise;
+  }
+
+  private async persistDirtyPass(): Promise<PersistResult> {
+    const result: PersistResult = { persisted: 0, failed: [] };
+    for (const blipId of Array.from(this.dirty)) {
       const entry = this.docs.get(blipId);
       if (!entry) { this.dirty.delete(blipId); continue; }
+      const versionAtStart = entry.version;
       try {
         const state = Y.encodeStateAsUpdate(entry.doc);
         const snapshotB64 = Buffer.from(state).toString('base64');
@@ -99,12 +113,41 @@ class YjsDocCache {
         } else {
           await insertDoc({ type: 'yjs_snapshot', waveId, blipId, snapshotB64, updatedAt: Date.now() });
         }
-        this.dirty.delete(blipId);
+        // An update may arrive while the CouchDB write is in flight. Clear the
+        // dirty bit only when the exact version we serialized is still current.
+        if (entry.version === versionAtStart) this.dirty.delete(blipId);
+        result.persisted += 1;
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(`[yjsDocCache] persistDirty(${blipId}):`, err);
+        result.failed.push(blipId);
       }
     }
+    return result;
+  }
+
+  getDirtyCount(): number {
+    return this.dirty.size;
+  }
+
+  async shutdown(): Promise<void> {
+    this.stopIntervals();
+
+    // Socket.IO is closed before this method is called, so the dirty set is
+    // stable. Retry transient CouchDB failures while systemd's stop timeout is
+    // still available; never silently report a clean shutdown with dirty docs.
+    for (let attempt = 1; this.dirty.size > 0 && attempt <= 3; attempt += 1) {
+      await this.persistDirty();
+      if (this.dirty.size > 0 && attempt < 3) {
+        await new Promise(resolve => setTimeout(resolve, 250 * attempt));
+      }
+    }
+
+    if (this.dirty.size > 0) {
+      throw new Error(`Failed to persist ${this.dirty.size} dirty collaborative document(s)`);
+    }
+
+    this.destroyDocs();
   }
 
   private cleanup() {
@@ -119,12 +162,24 @@ class YjsDocCache {
   }
 
   destroy() {
+    this.stopIntervals();
+    this.destroyDocs();
+  }
+
+  private stopIntervals() {
     if (this.cleanupInterval) clearInterval(this.cleanupInterval);
     if (this.persistInterval) clearInterval(this.persistInterval);
+    this.cleanupInterval = null;
+    this.persistInterval = null;
+  }
+
+  private destroyDocs() {
     this.docs.forEach(e => e.doc.destroy());
     this.docs.clear();
     this.dirty.clear();
   }
 }
+
+export type PersistResult = { persisted: number; failed: string[] };
 
 export const yjsDocCache = new YjsDocCache();

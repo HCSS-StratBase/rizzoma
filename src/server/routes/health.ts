@@ -1,21 +1,32 @@
 import { Router } from 'express';
 import { couchDatabaseInfo } from '../lib/couch.js';
+import { sessionStoreHealth } from '../middleware/session.js';
 
 const healthRouter = Router();
 
 const startedAt = Date.now();
 
 healthRouter.get('/health', async (_req, res) => {
-  const checks: Record<string, { status: 'ok' | 'error'; ms?: number; error?: string; version?: string }> = {};
+  const checks: Record<string, {
+    status: 'ok' | 'error';
+    ms?: number;
+    error?: string;
+    version?: string;
+    mode?: 'redis' | 'memory';
+  }> = {};
 
   // CouchDB check
   const couchStart = Date.now();
   try {
-    await couchDatabaseInfo();
+    await couchDatabaseInfo(3_000);
     checks['couchdb'] = { status: 'ok', ms: Date.now() - couchStart };
   } catch (e: any) {
     checks['couchdb'] = { status: 'error', ms: Date.now() - couchStart, error: e?.message || 'unreachable' };
   }
+
+  // Session persistence is part of readiness, not an optional diagnostic.
+  // A production process backed by MemoryStore logs every user out on restart.
+  checks['sessions'] = await sessionStoreHealth();
 
   const allOk = Object.values(checks).every(c => c.status === 'ok');
   const uptimeMs = Date.now() - startedAt;
