@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { seedVerifiedE2EAccount } from './scripts/lib/e2e-sharing-fixtures.mjs';
 
 const baseUrl = process.env.RIZZOMA_BASE_URL || 'http://localhost:3000';
 const headed = process.env.RIZZOMA_E2E_HEADED === '1';
@@ -414,6 +415,10 @@ async function captureMetrics(waveId, creds) {
 const enforceBudgets = process.env.RIZZOMA_PERF_ENFORCE_BUDGETS === '1';
 
 async function main() {
+  // Production registration requires mailbox proof. Seed a verified account
+  // directly in the isolated E2E database, then exercise the normal login
+  // route; never add an HTTP registration bypass for performance fixtures.
+  await seedVerifiedE2EAccount(ownerEmail, password);
   const browser = await chromium.launch({ headless: !headed, slowMo });
   const ownerContext = await browser.newContext();
   const ownerPage = await ownerContext.newPage();

@@ -21,6 +21,17 @@
   margin-top: 0.5rem;
 }
 
+.auth-notice {
+  color: #245b3b;
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 0.75rem;
+  background: #eef8f1;
+  border: 1px solid #b9dfc5;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
 .login-form {
   display: flex;
   flex-direction: column;
@@ -67,6 +78,10 @@
   color: #5f6f7a;
   font-size: 0.88rem;
   text-align: center;
+}
+
+.auth-footer-secondary {
+  margin-top: 0.75rem;
 }
 
 .signup-link {
@@ -196,5 +211,12 @@
 
   .submit-btn {
     min-height: 44px;
+  }
+}
+
+@media (max-width: 600px) {
+  .auth-panel {
+    box-sizing: border-box;
+    padding-inline: 1rem;
   }
 }

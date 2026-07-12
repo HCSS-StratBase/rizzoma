@@ -42,6 +42,28 @@ describe('server: YjsDocCache', () => {
     expect(doc).toBeInstanceOf(Y.Doc);
   });
 
+  it('creates the first cache entry when a live join adds its reference', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-07-12T10:00:00Z'));
+      yjsDocCache.addRef('blip-first-join');
+      const activeState = yjsDocCache.getState('blip-first-join');
+      expect(activeState).not.toBeNull();
+
+      vi.setSystemTime(new Date('2026-07-12T10:06:00Z'));
+      (yjsDocCache as any).cleanup();
+
+      // Active references are not evicted even after the idle TTL.
+      expect(yjsDocCache.getState('blip-first-join')).not.toBeNull();
+
+      yjsDocCache.removeRef('blip-first-join');
+      (yjsDocCache as any).cleanup();
+      expect(yjsDocCache.getState('blip-first-join')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('removeRef does not go below 0', () => {
     yjsDocCache.getOrCreate('blip-1');
     yjsDocCache.removeRef('blip-1');

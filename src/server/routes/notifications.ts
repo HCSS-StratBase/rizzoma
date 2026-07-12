@@ -9,6 +9,13 @@ import { requireAuth } from '../middleware/auth.js';
 import { noStore } from '../middleware/noStore.js';
 import { sendInviteEmail } from '../services/email.js';
 import { getDoc, insertDoc, updateDoc, find } from '../lib/couch.js';
+import { requireWaveAccess } from '../lib/access.js';
+import { csrfProtect } from '../middleware/csrf.js';
+import { buildInviteUrl, createInviteToken, invitationTokenDocId, resolveInviteBaseUrl, sortParticipantCandidates } from '../lib/invitations.js';
+import type { WaveParticipant } from '../schemas/wave.js';
+import { refreshWaveSocketAccess } from '../lib/socket.js';
+import { inviteRateLimit } from '../middleware/inviteRateLimit.js';
+import { z } from 'zod';
 
 const router = Router();
 
@@ -39,34 +46,109 @@ const defaultPreferences: Omit<NotificationPreferencesDoc, '_id' | 'type' | 'use
 };
 
 // POST /api/notifications/invite - Send invite to topic
-router.post('/invite', requireAuth, async (req, res): Promise<void> => {
+router.post('/invite', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const userName = req.user?.name || req.user?.email || 'Someone';
 
   try {
-    const { topicId, recipientEmail, recipientName, message } = req.body || {};
-
-    if (!topicId || !recipientEmail) {
-      res.status(400).json({ error: 'missing_required_fields' });
+    const parsed = z.object({
+      topicId: z.string().min(1).max(300),
+      recipientEmail: z.string().trim().email().max(320).transform((email) => email.toLowerCase()),
+      recipientName: z.string().max(200).optional(),
+      message: z.string().max(2_000).optional(),
+    }).safeParse(req.body || {});
+    if (!parsed.success) {
+      res.status(400).json({ error: 'invalid_invite_request', issues: parsed.error.issues });
       return;
     }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(recipientEmail)) {
-      res.status(400).json({ error: 'invalid_email_format' });
-      return;
-    }
+    const { topicId, recipientEmail, recipientName, message } = parsed.data;
 
     // Get topic details
-    const topic = await getDoc<{ _id: string; title?: string; type?: string }>(topicId);
+    const topic = await getDoc<{ _id: string; title?: string; type?: string; authorId?: string }>(topicId);
     if (!topic || topic.type !== 'topic') {
       res.status(404).json({ error: 'topic_not_found' });
       return;
     }
+    const access = await requireWaveAccess(req, res, String(topicId), 'manage', topic);
+    if (!access) return;
 
-    const baseUrl = process.env['APP_URL'] || 'http://localhost:8788';
-    const topicUrl = `${baseUrl}/?layout=rizzoma#/topic/${topicId}`;
+    const normalizedEmail = recipientEmail;
+    if (normalizedEmail === String(req.user?.email || '').trim().toLowerCase()) {
+      res.status(400).json({ error: 'owner_already_participant' });
+      return;
+    }
+    const now = Date.now();
+    const existingUsers = await find<any>({ type: 'user', email: normalizedEmail }, { limit: 1 }).catch(() => ({ docs: [] as any[] }));
+    const existingUser = existingUsers.docs?.[0];
+    const invite = createInviteToken(now);
+    const targetUserId = existingUser?._id || `invite:${normalizedEmail}`;
+    const participantCandidates = await find<WaveParticipant & { _id: string; _rev: string }>(
+      { type: 'participant', waveId: String(topicId) },
+      { limit: 500 },
+    ).catch(() => ({ docs: [] as Array<WaveParticipant & { _id: string; _rev: string }> }));
+    const allMatchingParticipants = (participantCandidates.docs || []).filter((candidate) => (
+      candidate.userId === targetUserId || String(candidate.email || '').trim().toLowerCase() === normalizedEmail
+    ));
+    if (allMatchingParticipants.some((candidate) => candidate.role === 'owner')) {
+      res.status(400).json({ error: 'owner_already_participant' });
+      return;
+    }
+    const matchingParticipants = sortParticipantCandidates(
+      allMatchingParticipants.filter((candidate) => candidate.role !== 'owner'),
+      targetUserId,
+    );
+    const existingParticipant = matchingParticipants[0] || null;
+    const participantId = existingParticipant?._id || `participant:wave:${topicId}:user:${targetUserId}`;
+    if (existingParticipant?.status === 'accepted') {
+      res.json({ success: true, status: 'accepted', alreadyParticipant: true });
+      return;
+    }
+    const participant: WaveParticipant & { _rev?: string } = {
+      ...(existingParticipant || {}),
+      _id: participantId,
+      type: 'participant',
+      waveId: String(topicId),
+      userId: targetUserId,
+      email: normalizedEmail,
+      role: existingParticipant?.role || 'editor',
+      invitedBy: userId,
+      invitedAt: now,
+      status: 'pending',
+      acceptedAt: undefined,
+      inviteTokenHash: invite.tokenHash,
+      inviteExpiresAt: invite.expiresAt,
+    };
+
+    const baseUrl = resolveInviteBaseUrl(req);
+    const topicUrl = buildInviteUrl(baseUrl, String(topicId), invite.token);
+
+    if (existingParticipant) await updateDoc(participant as any);
+    else await insertDoc(participant as any);
+    const tokenDoc: any = {
+      _id: invitationTokenDocId(invite.tokenHash),
+      type: 'invitation_token',
+      tokenHash: invite.tokenHash,
+      participantId,
+      waveId: String(topicId),
+      email: normalizedEmail,
+      status: 'pending_delivery',
+      createdAt: now,
+      expiresAt: invite.expiresAt,
+    };
+    const tokenInsert = await insertDoc(tokenDoc);
+    tokenDoc._rev = tokenInsert.rev;
+    for (const duplicate of matchingParticipants.slice(1)) {
+      await updateDoc({
+        ...duplicate,
+        status: 'declined',
+        declinedAt: now,
+        declinedBy: userId,
+        inviteTokenHash: undefined,
+        inviteExpiresAt: undefined,
+        acceptedInviteTokenHash: undefined,
+        acceptedInviteExpiresAt: undefined,
+      } as any);
+    }
 
     const result = await sendInviteEmail({
       inviterName: userName,
@@ -79,23 +161,11 @@ router.post('/invite', requireAuth, async (req, res): Promise<void> => {
     });
 
     if (result.success) {
-      // Record the invite
-      const inviteDoc = {
-        _id: `invite:${topicId}:${Date.now()}`,
-        type: 'topic_invite',
-        topicId,
-        inviterId: userId,
-        inviterName: userName,
-        recipientEmail,
-        recipientName: recipientName || null,
-        message: message || null,
-        sentAt: Date.now(),
-        status: 'sent',
-      };
-      await insertDoc(inviteDoc as any);
-
-      res.json({ success: true, messageId: result.messageId });
+      await updateDoc({ ...tokenDoc, status: 'sent', deliveredAt: Date.now() } as any).catch(() => undefined);
+      await refreshWaveSocketAccess(String(topicId));
+      res.json({ success: true, messageId: result.messageId, status: 'pending' });
     } else {
+      await updateDoc({ ...tokenDoc, status: 'failed', failedAt: Date.now() } as any).catch(() => undefined);
       res.status(500).json({ error: 'email_send_failed', details: result.error });
     }
   } catch (e: any) {
@@ -128,7 +198,7 @@ router.get('/preferences', noStore, requireAuth, async (req, res): Promise<void>
 });
 
 // PATCH /api/notifications/preferences - Update user notification preferences
-router.patch('/preferences', requireAuth, async (req, res): Promise<void> => {
+router.patch('/preferences', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const updates = req.body || {};
 
@@ -200,17 +270,20 @@ router.patch('/preferences', requireAuth, async (req, res): Promise<void> => {
 // GET /api/notifications/invites - List pending invites for a topic (topic owner only)
 router.get('/invites/:topicId', requireAuth, async (req, res): Promise<void> => {
   try {
-    const topicId = req.params['topicId'];
-    const result = await find<{ _id: string; recipientEmail: string; sentAt: number; status: string }>(
-      { type: 'topic_invite', topicId },
+    const topicId = String(req.params['topicId'] || '');
+    const access = await requireWaveAccess(req, res, topicId, 'manage');
+    if (!access) return;
+    const result = await find<WaveParticipant>(
+      { type: 'participant', waveId: topicId },
       { limit: 100 }
     );
 
-    const invites = result.docs.map(doc => ({
+    const invites = result.docs.filter((doc) => doc.role !== 'owner').map(doc => ({
       id: doc._id,
-      recipientEmail: doc.recipientEmail,
-      sentAt: doc.sentAt,
+      recipientEmail: doc.email,
+      sentAt: doc.invitedAt,
       status: doc.status,
+      role: doc.role,
     }));
 
     res.json({ invites });

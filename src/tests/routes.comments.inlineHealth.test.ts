@@ -8,7 +8,10 @@ vi.mock('../server/lib/couch.js', () => ({
   view: vi.fn().mockResolvedValue({ rows: [] }),
   find: vi.fn().mockResolvedValue({ docs: [] }),
   insertDoc: vi.fn(),
-  getDoc: vi.fn(),
+  getDoc: vi.fn().mockImplementation(async (id: string) => {
+    if (id === 'b1') return { _id: 'b1', type: 'blip', waveId: 'w1', createdAt: 1, updatedAt: 1 };
+    throw new Error('404 not_found');
+  }),
   updateDoc: vi.fn(),
   deleteDoc: vi.fn(),
 }));

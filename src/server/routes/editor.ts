@@ -1,6 +1,9 @@
 import { Router } from 'express';
-import { findOne, insertDoc, updateDoc } from '../lib/couch.js';
+import { findOne, getDoc, insertDoc, updateDoc } from '../lib/couch.js';
 import { emitEvent, emitEditorUpdate } from '../lib/socket.js';
+import { identityFromRequest, requireWaveAccess, resolveWaveAccess } from '../lib/access.js';
+import { csrfProtect } from '../middleware/csrf.js';
+import type { Blip } from '../schemas/wave.js';
 
 // Feature flag: set EDITOR_ENABLE=1 to enable endpoints
 const ENABLED = process.env['EDITOR_ENABLE'] === '1';
@@ -28,6 +31,16 @@ type YDocUpdate = {
   createdAt: number;
 };
 
+type YDocSequence = {
+  _id: string;
+  _rev?: string;
+  type: 'yjs_sequence';
+  waveId: string;
+  blipId?: string;
+  value: number;
+  updatedAt: number;
+};
+
 const router = Router();
 
 if (!ENABLED) {
@@ -53,6 +66,81 @@ if (!ENABLED) {
   const rebuildJobs = new Map<string, RebuildJobState>();
   const jobKey = (waveId: string, blipId?: string) => `${waveId}::${blipId || ''}`;
   const CLEANUP_AFTER_MS = 5 * 60 * 1000;
+
+  const sequenceDocId = (waveId: string, blipId?: string) =>
+    `yseq:${waveId}:${encodeURIComponent(blipId || '__wave__')}`;
+
+  const readNextSequence = async (waveId: string, blipId?: string): Promise<number> => {
+    try {
+      const counter = await getDoc<YDocSequence>(sequenceDocId(waveId, blipId));
+      return counter.type === 'yjs_sequence' && Number.isSafeInteger(counter.value) && counter.value >= 0
+        ? counter.value + 1
+        : 1;
+    } catch (error: any) {
+      if (String(error?.message || '').startsWith('404')) return 1;
+      throw error;
+    }
+  };
+
+  const allocateSequence = async (waveId: string, blipId?: string): Promise<number> => {
+    const id = sequenceDocId(waveId, blipId);
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const now = Date.now();
+      let existing: YDocSequence | null = null;
+      try {
+        existing = await getDoc<YDocSequence>(id);
+      } catch (error: any) {
+        if (!String(error?.message || '').startsWith('404')) throw error;
+      }
+      if (existing && (existing.type !== 'yjs_sequence' || !Number.isSafeInteger(existing.value) || existing.value < 0)) {
+        throw new Error('invalid_yjs_sequence');
+      }
+      const value = (existing?.value || 0) + 1;
+      const next: YDocSequence = existing
+        ? { ...existing, value, updatedAt: now }
+        : { _id: id, type: 'yjs_sequence', waveId, blipId, value, updatedAt: now };
+      try {
+        if (existing) await updateDoc(next as any);
+        else await insertDoc(next as any);
+        return value;
+      } catch (error: any) {
+        if (!String(error?.message || '').startsWith('409')) throw error;
+      }
+    }
+    throw new Error('sequence_allocation_conflict');
+  };
+
+  const normalizedBlipId = (value: unknown): string | undefined => {
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim();
+    return trimmed || undefined;
+  };
+
+  const validateEditorBlip = async (
+    res: any,
+    waveId: string,
+    blipId: string | undefined,
+  ): Promise<boolean> => {
+    if (!blipId) return true;
+    if (blipId.length > 500) {
+      res.status(400).json({ error: 'invalid_blip' });
+      return false;
+    }
+    try {
+      const blip = await getDoc<Blip & { _id: string }>(blipId);
+      if (blip.type !== 'blip' || blip.deleted || String(blip.waveId) !== waveId) {
+        res.status(400).json({ error: 'invalid_blip' });
+        return false;
+      }
+      return true;
+    } catch (error: any) {
+      if (String(error?.message || '').startsWith('404')) {
+        res.status(404).json({ error: 'blip_not_found' });
+        return false;
+      }
+      throw error;
+    }
+  };
 
   const addLog = (job: RebuildJobState, message: string, level: 'info' | 'error' = 'info') => {
     job.logs.push({ at: Date.now(), message, level });
@@ -154,21 +242,20 @@ if (!ENABLED) {
   // GET /api/editor/:waveId/snapshot — latest snapshot + next seq
   router.get('/:waveId/snapshot', async (req, res) => {
     const waveId = req.params.waveId;
-    const blipId = ((req.query as any)?.blipId ? String((req.query as any).blipId).trim() : '') || undefined;
+    const blipId = normalizedBlipId((req.query as any)?.blipId);
     try {
+      const access = await requireWaveAccess(req, res, waveId, 'read');
+      if (!access) return;
+      if (!(await validateEditorBlip(res, waveId, blipId))) return;
       // Prefer a blip-specific snapshot when requested; otherwise fall back to wave-level
       let snap: YDocSnapshot | null = null;
       if (blipId) {
         try { snap = await findOne<YDocSnapshot>({ type: 'yjs_snapshot', waveId, blipId }); } catch {}
       }
-      if (!snap) {
+      if (!snap && !blipId) {
         try { snap = await findOne<YDocSnapshot>({ type: 'yjs_snapshot', waveId }); } catch {}
       }
-      // next seq based on latest update
-      let nextSeq = 1;
-      const u = await findOne<YDocUpdate>({ type: 'yjs_update', waveId });
-      // Note: findOne has no sort; in real impl we’d query by max seq. Keep it simple for dev.
-      if (u && typeof (u as any).seq === 'number') nextSeq = (u as any).seq + 1;
+      const nextSeq = await readNextSequence(waveId, blipId);
       res.json({ snapshotB64: snap?.snapshotB64 || null, nextSeq });
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'snapshot_error' });
@@ -176,13 +263,16 @@ if (!ENABLED) {
   });
 
   // POST /api/editor/:waveId/snapshot { snapshotB64 }
-  router.post('/:waveId/snapshot', async (req, res) => {
+  router.post('/:waveId/snapshot', csrfProtect(), async (req, res) => {
     const waveId = req.params.waveId;
     const snapshotB64 = String((req.body || {}).snapshotB64 || '');
     const text = typeof (req.body || {}).text === 'string' ? String((req.body as any).text) : undefined;
-    const blipIdVal = (req.body && typeof (req.body as any).blipId === 'string') ? String((req.body as any).blipId) : undefined;
+    const blipIdVal = normalizedBlipId((req.body as any)?.blipId);
     if (!snapshotB64) { res.status(400).json({ error: 'missing_snapshot' }); return; }
     try {
+      const access = await requireWaveAccess(req, res, waveId, 'edit');
+      if (!access) return;
+      if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
       const selector: any = blipIdVal ? { type: 'yjs_snapshot', waveId, blipId: blipIdVal } : { type: 'yjs_snapshot', waveId };
       const existing = await findOne<YDocSnapshot>(selector);
       const doc: YDocSnapshot = existing
@@ -197,17 +287,20 @@ if (!ENABLED) {
   });
 
   // POST /api/editor/:waveId/updates { seq, updateB64, blipId? }
-  router.post('/:waveId/updates', async (req, res) => {
+  router.post('/:waveId/updates', csrfProtect(), async (req, res) => {
     const waveId = req.params.waveId;
-    const seq = Number((req.body || {}).seq);
     const updateB64 = String((req.body || {}).updateB64 || '');
-    const blipIdVal = (req.body && typeof (req.body as any).blipId === 'string') ? String((req.body as any).blipId) : undefined;
-    if (!Number.isFinite(seq) || seq < 1 || !updateB64) { res.status(400).json({ error: 'invalid_payload' }); return; }
+    const blipIdVal = normalizedBlipId((req.body as any)?.blipId);
+    if (!updateB64) { res.status(400).json({ error: 'invalid_payload' }); return; }
     try {
-      const id = `yupd:${waveId}:${seq}`;
+      const access = await requireWaveAccess(req, res, waveId, 'edit');
+      if (!access) return;
+      if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
+      const seq = await allocateSequence(waveId, blipIdVal);
+      const id = `yupd:${waveId}:${encodeURIComponent(blipIdVal || '__wave__')}:${seq}`;
       const doc: YDocUpdate = { _id: id, type: 'yjs_update', waveId, blipId: blipIdVal, seq, updateB64, createdAt: Date.now() };
       const r = await insertDoc(doc as any);
-      res.status(201).json({ ok: true, id: r.id, rev: r.rev });
+      res.status(201).json({ ok: true, id: r.id, rev: r.rev, seq });
       try { emitEditorUpdate(waveId, blipIdVal, { waveId, blipId: blipIdVal, seq, updateB64 }); } catch {}
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'update_save_error' });
@@ -215,19 +308,23 @@ if (!ENABLED) {
   });
 
   // GET /api/editor/:waveId/rebuild — inspect rebuild job status
-  router.get('/:waveId/rebuild', (req, res) => {
+  router.get('/:waveId/rebuild', async (req, res) => {
     const waveId = req.params.waveId;
-    const blipIdVal = typeof (req.query as any)?.blipId === 'string' && String((req.query as any).blipId).trim()
-      ? String((req.query as any).blipId).trim()
-      : undefined;
+    const access = await requireWaveAccess(req, res, waveId, 'read');
+    if (!access) return;
+    const blipIdVal = normalizedBlipId((req.query as any)?.blipId);
+    if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
     const job = rebuildJobs.get(jobKey(waveId, blipIdVal));
     res.json(serializeJob(job));
   });
 
   // POST /api/editor/:waveId/rebuild — enqueue rebuild snapshot job
-  router.post('/:waveId/rebuild', async (req, res) => {
+  router.post('/:waveId/rebuild', csrfProtect(), async (req, res) => {
     const waveId = req.params.waveId;
-    const blipIdVal = (req.body && typeof (req.body as any).blipId === 'string') ? String((req.body as any).blipId) : undefined;
+    const access = await requireWaveAccess(req, res, waveId, 'edit');
+    if (!access) return;
+    const blipIdVal = normalizedBlipId((req.body as any)?.blipId);
+    if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
     const key = jobKey(waveId, blipIdVal);
     const existing = rebuildJobs.get(key);
     if (existing && (existing.status === 'queued' || existing.status === 'running')) {
@@ -284,7 +381,11 @@ if (!ENABLED) {
       const selector: any = { type: 'yjs_snapshot', text: { $regex: `(?i).*${safe}.*` } };
       if (blipIdFilter) selector.blipId = blipIdFilter;
       const { find } = await import('../lib/couch.js');
-      const options: any = { limit: limit + 1, sort: [{ updatedAt: 'desc' }] };
+      // Preserve CouchDB bookmark boundaries exactly. Over-fetching and then
+      // slicing after authorization would advance the bookmark past visible
+      // results that were not returned, silently skipping them on page 2.
+      const fetchLimit = limit;
+      const options: any = { limit: fetchLimit, sort: [{ updatedAt: 'desc' }] };
       if (bookmark) options.bookmark = bookmark;
       let r: any;
       try {
@@ -295,8 +396,17 @@ if (!ENABLED) {
         r = await (find as any)(selector, fallback);
       }
       const docs = Array.isArray(r?.docs) ? r.docs : [];
-      const paged = docs.slice(0, limit);
-      const nextBookmark = docs.length > limit && r?.bookmark ? r.bookmark : null;
+      const identity = identityFromRequest(req);
+      const accessChecks = await Promise.all(docs.map(async (d: any) => {
+        try {
+          const access = await resolveWaveAccess(String(d.waveId || ''), identity);
+          return access.canRead ? d : null;
+        } catch {
+          return null;
+        }
+      }));
+      const paged = accessChecks.filter(Boolean).slice(0, limit) as any[];
+      const nextBookmark = docs.length >= fetchLimit && r?.bookmark ? r.bookmark : null;
       const results = paged.map((d: any) => ({
         waveId: d.waveId,
         blipId: d.blipId,

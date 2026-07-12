@@ -3,11 +3,13 @@
  *
  * Caching strategy:
  * - Static assets (JS, CSS, images): Cache-first with network fallback
- * - API requests: Network-first with cache fallback
+ * - Authenticated API, Socket.IO, and uploaded content: Network-only
  * - Navigation: Network-first
  */
 
-const CACHE_VERSION = 'v1';
+// v2 is a privacy boundary: activating it removes the former v1 dynamic cache,
+// which could contain authenticated API responses keyed only by URL.
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `rizzoma-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `rizzoma-dynamic-${CACHE_VERSION}`;
 
@@ -35,8 +37,8 @@ const STATIC_EXTENSIONS = [
   '.webp',
 ];
 
-// API paths that should use network-first
-const API_PATHS = ['/api/', '/socket.io/'];
+// Authenticated transports must never be written to or served from CacheStorage.
+const PRIVATE_NETWORK_PATHS = ['/api/', '/socket.io/', '/uploads/'];
 
 /**
  * Check if a request is for a static asset
@@ -48,8 +50,8 @@ function isStaticAsset(url) {
 /**
  * Check if a request is for an API endpoint
  */
-function isApiRequest(url) {
-  return API_PATHS.some((path) => url.pathname.startsWith(path));
+function isPrivateNetworkRequest(url) {
+  return PRIVATE_NETWORK_PATHS.some((path) => url.pathname.startsWith(path));
 }
 
 /**
@@ -131,9 +133,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API requests: Network-first
-  if (isApiRequest(url)) {
-    event.respondWith(networkFirst(event.request, DYNAMIC_CACHE));
+  // Authenticated transport: network-only. A cache fallback here can expose the
+  // previous account's private response after logout or an account switch.
+  if (isPrivateNetworkRequest(url)) {
+    event.respondWith(networkOnly(event.request));
     return;
   }
 
@@ -152,6 +155,25 @@ self.addEventListener('fetch', (event) => {
   // Default: Network-first
   event.respondWith(networkFirst(event.request, DYNAMIC_CACHE));
 });
+
+/**
+ * Network-only strategy for authenticated transports.
+ * Never consult or update CacheStorage, including when the request fails.
+ */
+async function networkOnly(request) {
+  try {
+    return await fetch(request);
+  } catch (error) {
+    console.error('[SW] Network-only request failed:', error);
+    return new Response(JSON.stringify({ error: 'Offline' }), {
+      status: 503,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
+}
 
 /**
  * Cache-first strategy

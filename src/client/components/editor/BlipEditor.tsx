@@ -1,5 +1,5 @@
 import { useEditor, EditorContent } from '@tiptap/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import * as Y from 'yjs';
 import { getEditorExtensions, defaultEditorProps } from './EditorConfig';
 import { yjsDocManager } from './YjsDocumentManager';
@@ -28,11 +28,15 @@ export function BlipEditor({
   enableCollaboration = false,
 }: BlipEditorProps): JSX.Element {
   const collaborationUser = useAuthenticatedCollaborationUser();
-  const [localYdoc] = useState(() => ydoc || yjsDocManager.getDocument(blipId));
+  const collaborationOwnerId = collaborationUser?.id ?? null;
+  const localYdoc = useMemo(
+    () => ydoc || yjsDocManager.getDocument(blipId, collaborationOwnerId),
+    [blipId, collaborationOwnerId, ydoc],
+  );
   const provider = useCollaboration(
     localYdoc,
     blipId,
-    enableCollaboration && !isReadOnly,
+    enableCollaboration && !isReadOnly && !!collaborationOwnerId,
     collaborationUser,
   );
 
@@ -67,10 +71,10 @@ export function BlipEditor({
   useEffect(() => {
     return () => {
       if (!ydoc) {
-        yjsDocManager.removeDocument(blipId);
+        yjsDocManager.removeDocument(blipId, collaborationOwnerId);
       }
     };
-  }, [blipId, ydoc]);
+  }, [blipId, collaborationOwnerId, ydoc]);
 
   useEffect(() => {
     if (!editor || isReadOnly) return;

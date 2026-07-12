@@ -11,6 +11,7 @@ services:
       - ./src:/app/src
       - ./public:/app/public
       - /app/node_modules
+      - uploads-data:/app/data/uploads
     environment:
       NODE_ENV: development
       # FEAT_ALL=1 keeps every Track-A..E feature on in the dev server too
@@ -21,13 +22,21 @@ services:
       FEAT_ALL: "1"
       ALLOWED_ORIGINS: http://localhost:3000
       REDIS_URL: redis://redis:6379
+      UPLOADS_STORAGE: local
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: "3310"
       COUCHDB_URL: http://admin:password@couchdb:5984
       RABBITMQ_URL: amqp://rabbitmq:5672
       SESSION_SECRET: dev-secret-change-me
     depends_on:
-      - redis
-      - couchdb
-      - rabbitmq
+      redis:
+        condition: service_started
+      couchdb:
+        condition: service_started
+      clamav:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
     networks:
       - rizzoma-network
 
@@ -47,20 +56,29 @@ services:
       COUCHDB_URL: http://admin:password@couchdb:5984
       COUCHDB_DB: project_rizzoma
       REDIS_URL: redis://redis:6379
+      UPLOADS_STORAGE: local
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: "3310"
       # Keep inactive-profile `docker compose config` and dependency-only
       # startup usable. If app-prod is selected without a strong value, the
       # server's production validator fails closed at runtime.
       SESSION_SECRET: "${SESSION_SECRET:-}"
     ports:
       - "127.0.0.1:8788:8788"
+    volumes:
+      - uploads-data:/app/data/uploads
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8788/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
     depends_on:
-      - redis
-      - couchdb
+      redis:
+        condition: service_started
+      couchdb:
+        condition: service_started
+      clamav:
+        condition: service_healthy
     networks:
       - rizzoma-network
 
@@ -139,10 +157,14 @@ services:
       - rizzoma-network
 
   clamav:
-    image: clamav/clamav:latest
+    image: clamav/clamav:stable
     container_name: rizzoma-clamav
+    restart: unless-stopped
+    mem_limit: 4g
     ports:
       - "127.0.0.1:3310:3310"
+    volumes:
+      - clamav-data:/var/lib/clamav
     networks:
       - rizzoma-network
 
@@ -166,3 +188,5 @@ volumes:
   rabbitmq-data:
   sphinx-data:
   minio-data:
+  clamav-data:
+  uploads-data:

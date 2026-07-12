@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { api } from '../lib/api';
+import { api, ensureCsrf } from '../lib/api';
 import './MentionsList.css';
 
 interface MentionsListProps {
   isAuthed: boolean;
-  onSelectMention: (topicId: string) => void;
+  onSelectMention: (topicId: string, blipId: string) => void;
 }
 
 interface Mention {
   id: string;
   topicId: string;
   topicTitle: string;
+  blipId: string;
   mentionText: string;
   authorName: string;
   authorId: string;
@@ -22,27 +23,43 @@ interface MentionsResponse {
   mentions: Mention[];
   total: number;
   unreadCount: number;
+  hasMore: boolean;
+  nextOffset: number;
 }
 
 export function MentionsList({ isAuthed, onSelectMention }: MentionsListProps): JSX.Element {
   const [mentions, setMentions] = useState<Mention[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextOffset, setNextOffset] = useState(0);
 
-  const loadMentions = useCallback(async (): Promise<void> => {
-    setLoading(true);
+  const loadMentions = useCallback(async (offset = 0, append = false): Promise<void> => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
     try {
-      const response = await api<MentionsResponse>(`/api/mentions?filter=${filter}`);
+      const response = await api<MentionsResponse>(`/api/mentions?filter=${filter}&limit=50&offset=${offset}`);
       if (response.ok && response.data && typeof response.data === 'object') {
         const data = response.data as MentionsResponse;
-        setMentions(data.mentions);
+        setMentions((previous) => {
+          if (!append) return data.mentions;
+          const byId = new Map(previous.map((mention) => [mention.id, mention]));
+          data.mentions.forEach((mention) => byId.set(mention.id, mention));
+          return [...byId.values()];
+        });
         setUnreadCount(data.unreadCount);
+        setTotal(data.total);
+        setHasMore(Boolean(data.hasMore));
+        setNextOffset(Number.isFinite(data.nextOffset) ? data.nextOffset : offset + data.mentions.length);
       }
     } catch (error) {
       console.error('Failed to load mentions:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [filter]);
 
@@ -52,12 +69,14 @@ export function MentionsList({ isAuthed, onSelectMention }: MentionsListProps): 
       return;
     }
 
-    loadMentions();
+    void loadMentions(0, false);
   }, [isAuthed, loadMentions]);
 
   const markAsRead = async (mentionId: string): Promise<void> => {
     try {
-      await api(`/api/mentions/${mentionId}/read`, { method: 'POST' });
+      await ensureCsrf();
+      const response = await api(`/api/mentions/${mentionId}/read`, { method: 'POST' });
+      if (!response.ok || response.queued || response.status !== 200) return;
       setMentions(prev => prev.map(m =>
         m.id === mentionId ? { ...m, isRead: true } : m
       ));
@@ -108,7 +127,7 @@ export function MentionsList({ isAuthed, onSelectMention }: MentionsListProps): 
           className={filter === 'all' ? 'active' : ''}
           onClick={() => setFilter('all')}
         >
-          All ({mentions.length})
+          All ({total})
         </button>
         <button 
           className={filter === 'unread' ? 'active' : ''}
@@ -132,7 +151,7 @@ export function MentionsList({ isAuthed, onSelectMention }: MentionsListProps): 
                 if (!mention.isRead) {
                   markAsRead(mention.id);
                 }
-                onSelectMention(mention.topicId);
+                onSelectMention(mention.topicId, mention.blipId);
               }}
             >
               <div className="mention-header">
@@ -148,6 +167,16 @@ export function MentionsList({ isAuthed, onSelectMention }: MentionsListProps): 
           ))
         )}
       </div>
+      {hasMore && (
+        <button
+          type="button"
+          className="mentions-load-more"
+          disabled={loadingMore}
+          onClick={() => void loadMentions(nextOffset, true)}
+        >
+          {loadingMore ? 'Loading…' : 'Load more'}
+        </button>
+      )}
     </div>
   );
 }

@@ -1,5 +1,46 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
+## Integrated release candidate — 2026-07-12
+
+- `release/preintegration-offline-upload` at audited application checkpoint
+  `b3cd054f` combines persisted sharing roles, authenticated collaboration,
+  owner-partitioned offline state, ACL-backed uploads with mandatory ClamAV,
+  secure OAuth/password recovery, realtime structural reloads, recursive
+  export, mentions, and durable Tasks on the React/TipTap parity renderer.
+- Account/session boundaries now remount all stateful topic/editor surfaces by
+  authenticated owner. A denied or failed topic load scrubs topic, blip,
+  participant, draft, editor, and modal state before another account can render.
+- Task completion is server-authoritative in normal and edit views. Only an
+  author or assignee receives toggle authority; denied refreshes fail closed,
+  stale generations cannot revoke newer grants, view→edit mutations remain
+  ordered, and reconnect/access changes restore authority without navigation.
+- Exact local gates are green: **107/107 test files, 588 passed, 3 skipped, 0
+  failed**; typecheck; full-source ESLint `--quiet`; and a **3,314-module**
+  production build. The independent final audit returned **GO**.
+- Responsive local evidence covers Task owner/public/toggle/editor-handoff at
+  1280/1366/1440/1600 plus 390 mobile and Share/Invite dialogs at all four
+  desktop widths. See the [candidate evidence](screenshots/260712-1928-final-candidate-ui/README.md).
+- Boundary: the candidate is not merged or deployed. Public production remains
+  on the earlier parity release until PR CI, managed exact-SHA deployment, and
+  full public acceptance complete.
+
+## Offline/auth isolation candidate — 2026-07-12
+
+- The modern shell now has one real auth surface per viewport and a reserved
+  offline/read-only strip; offline mutation controls and active editors freeze.
+- Production durable replay remains disabled behind an empty allowlist. Queue
+  records, Yjs documents, pending acknowledgements, and unresolved in-memory
+  recovery snapshots are partitioned by authenticated owner.
+- Auth epochs propagate across tabs; an authoritative server-user mismatch
+  fails closed before Yjs sync. Literal state-changing client `fetch` calls
+  were removed in favor of the shared online-only API boundary.
+- Local gates: targeted 60/60, full 343 passed / 3 skipped, typecheck,
+  3,306-module build, and 24 visually inspected desktop/mobile captures with 0
+  unexpected console errors.
+- Boundary: integrate PR #66's server socket auth/access/revocation/user result
+  with this candidate's client owner/ack checks before two-user browser
+  acceptance or deployment.
+
 ## Authenticated cursor identity candidate — 2026-07-12
 
 - Topic-root, nested-blip, and generic editor collaboration now seed Yjs
@@ -43,6 +84,15 @@
   Public HTTPS health remains green; users must sign in once after secret
   rotation.
 
+## Stacked sharing-authorization checkpoint — 2026-07-12
+
+- `codex/sharing-access-control-stack`, rebased onto merged hardening commit `2595d2de` (tree-identical to source head `dda4d1d5`), persists private/link/public policy and implements viewer/commenter/editor/owner roles through one server resolver.
+- Topic/wave listing and reads, topic/blip/comment/link/editor writes, participants/invitations, and Socket.IO collaboration rooms now enforce the same capabilities. Live demotion removes Yjs/awareness write authority immediately.
+- Share settings load their saved value and fail closed on load error. Invite UI can assign viewer, commenter, or editor.
+- New topics are explicitly private. Legacy documents missing both policy shapes remain discoverable **read-only**; no unaffiliated legacy edit/comment/socket write is preserved.
+- Stacked verification is green at 67 files / 361 passed / 3 skipped, with build/typecheck, ESLint at **0 errors / 6,684 warnings**, and the required four-width UI sweep. See the [sharing and authorization reference](docs/SHARING_AUTHORIZATION.md).
+- Production inventory measured **26 topic metadata documents: 0 explicit policies, 26 missing-policy legacy documents, and 0 malformed policies**. All 26 therefore use the public-read-only outsider fallback; owners retain management. Boundary: this stacked branch is not merged or deployed.
+
 ## Public production checkpoint — 2026-07-12
 
 - **Runtime correction:** public production is the React/TipTap parity implementation, not the native fractal renderer. The live client has `FEAT_RIZZOMA_PARITY_RENDER=1` and `FEAT_RIZZOMA_NATIVE_RENDER` unset; `NativeWaveView` is still an opt-in, read-only path and cannot replace the editing UI. The Express API runs in production mode, while the public frontend is served as source modules by Vite in development mode.
@@ -54,7 +104,7 @@
 - Boundary: the active Node/Vite processes remain unsupervised, the public frontend is still a development server, and both active and rollback lanes share production CouchDB. Native-render completion, 500/1,000 full-render sweeps, physical iPhone Safari, test-data cleanup, backup automation, and the lint backlog remain open.
 
 ## Summary
-Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests. Follow-the-Green now has deterministic Vitest coverage, multi-user Playwright coverage, and CI gating. Uploads run through MIME sniffing + optional ClamAV, optionally stream to S3/MinIO, and the client surfaces cancel/retry/preview UI. The performance harness continuously gates the 120-blip full-render/lazy path, while larger 500/1,000 full-render sweeps remain scale work. Health/inline-comments/uploads checks run in CI. Pixel 9 Pro XL / Android Chrome evidence exists; physical iPhone Safari remains outstanding.
+Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests. Follow-the-Green now has deterministic Vitest coverage, multi-user Playwright coverage, and CI gating. Uploads run through MIME sniffing plus mandatory production ClamAV, bind opaque metadata to the canonical wave, and recheck current read access on every local-file download; missing, empty, or malformed scanner verdicts fail closed. S3/MinIO is fail-closed until it can preserve the same revocation guarantee. The client surfaces cancel/retry/preview UI. The performance harness continuously gates the 120-blip full-render/lazy path, while larger 500/1,000 full-render sweeps remain scale work. Health/inline-comments/uploads checks run in CI. Pixel 9 Pro XL / Android Chrome evidence exists; physical iPhone Safari remains outstanding.
 
 ## ✅ Implemented Features
 
@@ -131,9 +181,9 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
   - The job now runs even when the main build fails so snapshots/artifacts are always available for triage; fetch them locally with `npm run snapshots:pull` if you need the latest screenshots without rerunning Playwright.
 
 ### Uploads & gadget nodes
-- **Server safeguards** - `/api/uploads` inspects MIME signatures, blocks executables by signature/extension, optionally streams file buffers through ClamAV (`CLAMAV_HOST`/`CLAMAV_PORT`), and supports filesystem or S3/MinIO storage (configure via `UPLOADS_STORAGE`, `UPLOADS_S3_*`, `UPLOADS_S3_PUBLIC_URL`). Docker Compose now includes an optional `clamav` service for local scanning.
+- **Server safeguards** - `/api/uploads` inspects MIME signatures, blocks executables by signature/extension, requires CSRF plus edit access to the canonical blip, and streams production file buffers through ClamAV. Only an explicit `OK` verdict is accepted; malware, scanner outage, missing configuration, and an empty/malformed verdict fail closed. `/uploads/:id` resolves current wave-read access on every request and sends private/no-store/nosniff responses. S3/MinIO fails closed until object streaming is ACL-proxied.
 - **Client UX** - `src/client/lib/upload.ts` exposes a cancelable `createUploadTask`, and `RizzomaBlip` renders inline preview/progress/cancel/retry controls so attachments/images surface their state (with toasts for success/failure). The toolbar upload buttons respect the new `isUploading` state, and Vitest exercises the degraded flows.
-- **Tests** - `src/tests/routes.uploads.edgecases.test.ts` covers auth/missing file/virus/S3 flows, and `src/tests/client.editor.GadgetNodes.test.ts` exercises the chart/poll gadget parse/render/command helpers so the restored gadget buttons stay in sync with the CoffeeScript UI.
+- **Tests** - `src/tests/routes.uploads.edgecases.test.ts` covers authentication, CSRF, edit authorization, canonical-wave binding, wave mismatch, file/virus failures, metadata cleanup, S3 fail-closed behavior, private download, cache headers, and immediate known-URL revocation. `src/tests/server.virusScan.test.ts` proves explicit clean/malware verdicts plus empty-response and unconfigured-production failure. `src/tests/client.uploadCancellation.test.ts` proves a pre-CSRF cancellation never opens or sends XHR. `src/tests/client.editor.GadgetNodes.test.ts` exercises the chart/poll gadget parse/render/command helpers.
 
 ### Media adapter
 - **Modern getUserMedia adapter** - `src/static/js/getUserMediaAdapter.js` now normalizes constraints (including simple strings), prefers modern `mediaDevices.getUserMedia`, detects display media support, exposes permission status helpers and device enumeration, and retains legacy fallbacks. Covered by `src/tests/client.getUserMediaAdapter.test.ts`.
@@ -143,7 +193,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - **Responsive breakpoints** - CSS variables and hooks for consistent breakpoints (xs: 320px, sm: 480px, md: 768px, lg: 1024px, xl: 1200px)
 - **Mobile context** - `MobileProvider` wraps app, `useMobileContext()` provides isMobile/isTablet/isDesktop/isTouchDevice state
 - **BottomSheet component** - Slide-up mobile menu with swipe-to-dismiss, backdrop click, escape key, body scroll lock, safe area padding
-- **PWA installability** - Web manifest, service worker (cache-first for assets, network-first for API), 8 SVG icons, apple-touch-icon support
+- **PWA installability** - Web manifest, service worker (cache-first for public assets; network-only for `/api`, `/socket.io`, and `/uploads`; v2 activation purges legacy dynamic caches), 8 SVG icons, apple-touch-icon support
 - **Gesture hooks** - `useSwipe` (swipe detection with threshold/timeout), `usePullToRefresh` (with visual indicator), `useSwipeToDismiss`
 - **View Transitions** - `useViewTransition` wraps native View Transitions API with reduced-motion support, navigation transitions
 - **Offline support** - `offlineQueue` queues mutations when offline, auto-syncs on reconnect, max 3 retries, localStorage persistence; `useOfflineStatus` hook with toast notifications
@@ -199,9 +249,11 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
   - `RizzomaTopicDetail.tsx` - Dispatches EDIT_MODE_EVENT + handles insert events with topicEditor
 
 ### Permissions & Auth
-- `requireAuth` now guards topic/blip write endpoints, logs denied operations, and respects actual author IDs.
+- `requireAuth` guards authenticated mutations; centralized wave access additionally enforces viewer/commenter/editor/owner capabilities across REST and Socket.IO.
+- Sharing policy is persisted through owner-only `GET/PATCH /api/waves/:id/sharing`; participant roles and public comment/edit flags are effective, not display-only.
+- Legacy missing-policy topics remain public read-only until explicitly stamped; `npm run sharing:count-legacy` measures the remaining inventory without writing it.
 - Rizzoma layout login flow uses the real `AuthPanel` modal instead of demo users.
-- New Vitest coverage exercises unauthenticated, unauthorized, and authorized flows.
+- The route matrix and Socket.IO integration coverage exercise anonymous, outsider, viewer, commenter, editor, owner, identity spoofing, and live demotion flows.
 
 ## Still pending
 - **App runtime expansion**: The first persistence-critical sandboxed app bug is now fixed. Root cause was rogue topic-root `PUT /api/blips/:topicId` writes overwriting the correct topic PATCH after `Done`; fresh verification on `http://127.0.0.1:4192` now shows the saved planner payload keeps `Ship preview (delayed)` at `16:30` and no rogue writes remain (`screenshots/260330-app-runtime/live-topic-planner-debug-saved-topic.json`, `.../live-topic-planner-debug-mutation-traffic.json`, `.../topic-patch-log.ndjson`). Next work is broader app-frame/host-API expansion, not basic correctness repair.
@@ -315,7 +367,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Upload endpoint (Multer, 10MB limit) | Done | — | — |
 | MIME magic-byte sniffing | Done (new) | Extension-only | Magic bytes |
 | Executable extension blocking (.exe, .bat, etc.) | Done (new) | None | Blocked |
-| ClamAV virus scanning (optional) | Done (new) | None | Optional Docker service |
+| ClamAV virus scanning | Done (new) | None | Required and fail-closed in production; optional in local/test |
 | Storage backends: local filesystem | Done | — | — |
 | Storage backends: AWS S3 / MinIO | Done (new) | None | Configurable |
 | Client upload library (progress, cancel, retry) | Done | — | — |
@@ -380,7 +432,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Responsive breakpoints (xs/sm/md/lg/xl) | Done (new) | 30+ separate mobile files | Single responsive codebase |
 | Mobile detection hooks (isMobile/isTablet/isDesktop) | Done (new) | User-agent sniffing | Media queries + touch detection |
 | PWA manifest + icons (8 sizes) | Done (new) | None | `public/manifest.json` |
-| Service worker (cache-first assets, network-first API) | Done (new) | None | `public/sw.js` |
+| Service worker (cache-first assets, network-only authenticated transports) | Done (new) | None | `public/sw.js` v2 purges legacy dynamic caches |
 | Swipe gestures (left/right panel navigation) | Done (new) | None | `useSwipe.ts` |
 | Pull to refresh | Done (new) | None | `usePullToRefresh.ts` |
 | View Transitions API (with reduced-motion) | Done (new) | None | `useViewTransition.ts` |

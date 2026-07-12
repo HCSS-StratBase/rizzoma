@@ -1,4 +1,13 @@
-import { vi, describe, it, expect, beforeAll } from 'vitest';
+import { vi, describe, it, expect, beforeAll, beforeEach } from 'vitest';
+
+const logoutState = vi.hoisted(() => ({
+  events: [] as string[],
+  disconnectSessionSockets: vi.fn(() => { logoutState.events.push('disconnect'); return 0; }),
+}));
+
+vi.mock('../server/lib/socket.js', () => ({
+  disconnectSessionSockets: logoutState.disconnectSessionSockets,
+}));
 
 // Use bcryptjs in tests to avoid native binding issues
 vi.mock('bcrypt', async () => {
@@ -37,6 +46,7 @@ import bcrypt from 'bcrypt';
 describe('routes: /api/auth', () => {
   let app: express.Express;
   let goodHash = '';
+  const inviteToken = 'valid-email-invitation-token-for-registration-123456789';
 
   beforeAll(async () => {
     goodHash = await bcrypt.hash('pw123456', 10);
@@ -57,6 +67,16 @@ describe('routes: /api/auth', () => {
         const sel = (body?.['selector'] as Record<string, unknown> | undefined) || {};
         if (sel['email'] === 'dup@example.com') return okResp({ docs: [{ _id: 'u-dup', type: 'user', email: 'dup@example.com', passwordHash: goodHash }] });
         if (sel['email'] === 'user@example.com') return okResp({ docs: [{ _id: 'u1', type: 'user', email: 'user@example.com', passwordHash: goodHash }] });
+        if (sel['type'] === 'participant' && sel['inviteTokenHash']) {
+          return okResp({ docs: [{
+            _id: 'pending-new-user',
+            type: 'participant',
+            email: 'new@example.com',
+            status: 'pending',
+            inviteTokenHash: sel['inviteTokenHash'],
+            inviteExpiresAt: Date.now() + 60_000,
+          }] });
+        }
         return okResp({ docs: [] });
       }
       if (method === 'POST' && /\/[^/]+$/.test(path)) {
@@ -73,23 +93,33 @@ describe('routes: /api/auth', () => {
     app.use(requestId());
     // Add mock session middleware
     app.use((req, _res, next) => {
+      (req as any).sessionID = 'test-session-id';
       (req as any).session = {
         userId: undefined,
         userEmail: undefined,
         userName: undefined,
-        destroy: (cb: () => void) => cb(),
+        csrfToken: 'test-csrf-token',
+        destroy: (cb: (error?: Error) => void) => {
+          logoutState.events.push('destroy');
+          cb(req.get('x-test-destroy-fail') === '1' ? new Error('store unavailable') : undefined);
+        },
       };
       next();
     });
     app.use('/api/auth', authRouter);
   }, 30000); // bcrypt with 10 rounds is CPU-heavy on WSL2
 
+  beforeEach(() => {
+    logoutState.events.length = 0;
+    logoutState.disconnectSessionSockets.mockClear();
+  });
+
   it('registers a new user', async () => {
     const server = app.listen(0);
     const addr = server.address();
     const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
     const resp = await fetch(`http://127.0.0.1:${port}/api/auth/register`, {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'new@example.com', password: 'pw123456' })
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-csrf-token': 'test-csrf-token' }, body: JSON.stringify({ email: 'new@example.com', password: 'new-password-123', inviteToken })
     });
     const body = await resp.json();
     server.close();
@@ -102,7 +132,7 @@ describe('routes: /api/auth', () => {
     const addr = server.address();
     const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
     const resp = await fetch(`http://127.0.0.1:${port}/api/auth/register`, {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'dup@example.com', password: 'pw123456' })
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-csrf-token': 'test-csrf-token' }, body: JSON.stringify({ email: 'dup@example.com', password: 'new-password-123' })
     });
     const body = await resp.json();
     server.close();
@@ -115,11 +145,62 @@ describe('routes: /api/auth', () => {
     const addr = server.address();
     const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
     const resp = await fetch(`http://127.0.0.1:${port}/api/auth/login`, {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'user@example.com', password: 'pw123456' })
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-csrf-token': 'test-csrf-token' }, body: JSON.stringify({ email: 'user@example.com', password: 'pw123456' })
     });
     const body = await resp.json();
     server.close();
     expect(resp.status).toBe(200);
     expect(body.id).toBe('u1');
+  });
+
+  it.each(['/register', '/login'])('rejects %s without a CSRF token', async (path) => {
+    const server = app.listen(0);
+    const addr = server.address();
+    const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
+    const resp = await fetch(`http://127.0.0.1:${port}/api/auth${path}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: path === '/register' ? 'new@example.com' : 'user@example.com',
+        password: path === '/register' ? 'new-password-123' : 'pw123456',
+        ...(path === '/register' ? { inviteToken } : {}),
+      }),
+    });
+    const body = await resp.json();
+    server.close();
+    expect(resp.status).toBe(403);
+    expect(body.error).toBe('csrf_failed');
+  });
+
+  it('reports a failed durable session revocation instead of claiming logout success', async () => {
+    const server = app.listen(0);
+    const addr = server.address();
+    const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
+    const resp = await fetch(`http://127.0.0.1:${port}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'test-csrf-token', 'x-test-destroy-fail': '1' },
+    });
+    const body = await resp.json();
+    server.close();
+    expect(resp.status).toBe(503);
+    expect(body.error).toBe('revocation_failed');
+    expect(resp.headers.get('set-cookie')).toBeNull();
+    expect(logoutState.disconnectSessionSockets).not.toHaveBeenCalled();
+    expect(logoutState.events).toEqual(['destroy']);
+  });
+
+  it('clears the cookie and disconnects sockets only after durable revocation succeeds', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const resp = await fetch(`http://127.0.0.1:${port}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'test-csrf-token' },
+    });
+    server.close();
+
+    expect(resp.status).toBe(200);
+    expect(resp.headers.get('set-cookie')).toContain('rizzoma.sid=');
+    expect(logoutState.disconnectSessionSockets).toHaveBeenCalledWith('test-session-id');
+    expect(logoutState.events).toEqual(['destroy', 'disconnect']);
   });
 });

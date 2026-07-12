@@ -1,7 +1,56 @@
 import { io, Socket } from 'socket.io-client';
 
 let socket: Socket | undefined;
+let scheduledAuthReconnect: ReturnType<typeof setTimeout> | null = null;
+let socketAuthGeneration = 0;
 const PRESENCE_HEARTBEAT_INTERVAL_MS = 10000;
+
+type SocketWithBuffers = Socket & {
+  sendBuffer?: unknown[];
+  receiveBuffer?: unknown[];
+};
+
+function clearSocketBuffers(target: Socket): void {
+  const buffered = target as SocketWithBuffers;
+  if (Array.isArray(buffered.sendBuffer)) buffered.sendBuffer.splice(0);
+  if (Array.isArray(buffered.receiveBuffer)) buffered.receiveBuffer.splice(0);
+}
+
+/**
+ * Sever the transport before an auth mutation or cross-tab rebootstrap.
+ * Socket.IO otherwise keeps the handshake's old server session and can retain
+ * packets emitted while disconnected for delivery under the next account.
+ */
+export function disconnectSocketForAuthTransition(): void {
+  socketAuthGeneration += 1;
+  if (scheduledAuthReconnect !== null) {
+    clearTimeout(scheduledAuthReconnect);
+    scheduledAuthReconnect = null;
+  }
+  if (!socket) return;
+  socket.disconnect();
+  clearSocketBuffers(socket);
+}
+
+/** Reconnect the same listener-bearing Socket after React applies new auth. */
+export function reconnectSocketAfterAuthTransition(): void {
+  const target = socket;
+  if (!target) return;
+  if (scheduledAuthReconnect !== null) clearTimeout(scheduledAuthReconnect);
+  scheduledAuthReconnect = setTimeout(() => {
+    scheduledAuthReconnect = null;
+    if (socket !== target) return;
+    // Cleanup effects may have emitted leave packets while disconnected. None
+    // of those account-bound packets may cross the auth boundary.
+    clearSocketBuffers(target);
+    if (!target.connected) target.connect();
+  }, 0);
+}
+
+export function resetSocketForAuthTransition(): void {
+  disconnectSocketForAuthTransition();
+  reconnectSocketAfterAuthTransition();
+}
 
 function getSocket(): Socket {
   if (!socket) {
@@ -26,10 +75,48 @@ function getSocket(): Socket {
     });
     socket.on('connect', () => console.log('[socket] connected', socket?.id));
     socket.on('connect_error', (err) => console.error('[socket] connect_error', err));
+    socket.on('session:ended', (payload: { reason?: string } = {}) => {
+      // A server-forced disconnect intentionally must not reconnect with the
+      // stale session identity. Surface the boundary and let the app return to
+      // its authentication state; an explicit successful login creates the
+      // next handshake via refreshSocketSession().
+      socket?.disconnect();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('toast', {
+          detail: {
+            type: 'error',
+            message: payload.reason === 'logout'
+              ? 'Your session was signed out.'
+              : 'Your session expired. Sign in again to continue editing.',
+          },
+        }));
+        window.dispatchEvent(new CustomEvent('rizzoma:auth-changed', {
+          detail: { authenticated: false, reason: payload.reason || 'session_ended' },
+        }));
+        window.dispatchEvent(new CustomEvent('rizzoma:access-changed', {
+          detail: { reason: payload.reason || 'session_ended' },
+        }));
+      }
+    });
+    socket.on('access:changed', (payload: { waveId?: string }) => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('rizzoma:access-changed', { detail: payload }));
+      }
+    });
     // Expose for debugging
     if (typeof window !== 'undefined') (window as any).__socket = socket;
   }
   return socket;
+}
+
+/** Re-handshake the singleton against the current session cookie. Socket.IO
+ * middleware binds identity at connection time, so in-place login/logout must
+ * reconnect instead of reusing an anonymous or revoked transport. */
+export function refreshSocketSession(): Socket {
+  const current = getSocket();
+  if (current.connected) current.disconnect();
+  current.connect();
+  return current;
 }
 
 export function subscribeTopicsRefresh(onRefresh: () => void): () => void {
@@ -38,10 +125,12 @@ export function subscribeTopicsRefresh(onRefresh: () => void): () => void {
   s.on('topic:created', handler);
   s.on('topic:updated', handler);
   s.on('topic:deleted', handler);
+  s.on('access:changed', handler);
   return () => {
     s.off('topic:created', handler);
     s.off('topic:updated', handler);
     s.off('topic:deleted', handler);
+    s.off('access:changed', handler);
   };
 }
 
@@ -72,13 +161,17 @@ export function subscribeLinks(onChange: () => void): () => void {
 }
 export function subscribeEditor(waveId: string, onChange: (payload: any) => void): () => void {
   const s = getSocket();
-  // Join wave-level room for targeted updates
-  s.emit('editor:join', { waveId });
+  // Rejoin after an auth-bound transport reset; Socket.IO rooms belong to a
+  // connection and are discarded server-side on disconnect.
+  const join = () => s.emit('editor:join', { waveId });
+  s.on('connect', join);
+  if (s.connected) join();
   const handler = (p: any) => { if (!p || p.waveId !== waveId) return; onChange(p); };
   s.on('editor:snapshot', handler);
   s.on('editor:update', handler);
   return () => {
-    try { s.emit('editor:leave', { waveId }); } catch {}
+    try { if (s.connected) s.emit('editor:leave', { waveId }); } catch {}
+    s.off('connect', join);
     s.off('editor:snapshot', handler);
     s.off('editor:update', handler);
   };
@@ -90,8 +183,10 @@ export function subscribeEditorPresence(
   onPresence: (payload: { room: string; waveId: string; blipId?: string; count: number; users?: Array<{ userId?: string; name?: string }> }) => void,
 ): () => void {
   const s = getSocket();
-  // Join presence with optional identity by best-effort fetching /api/auth/me
-  (async () => {
+  let disposed = false;
+  // Join presence with the newly authenticated identity on every connection.
+  const join = async () => {
+    const authGeneration = socketAuthGeneration;
     try {
       const meResp = await fetch('/api/auth/me', { credentials: 'include' });
       let userId: string | undefined;
@@ -103,11 +198,15 @@ export function subscribeEditorPresence(
           ? String(body.name).trim()
           : body?.email ? String(body.email) : undefined;
       } catch {}
+      if (disposed || !s.connected || authGeneration !== socketAuthGeneration) return;
       s.emit('editor:join', { waveId, blipId, userId, name });
     } catch {
+      if (disposed || !s.connected || authGeneration !== socketAuthGeneration) return;
       s.emit('editor:join', { waveId, blipId });
     }
-  })();
+  };
+  s.on('connect', join);
+  if (s.connected) void join();
   const handler = (p: any) => {
     if (!p || p.waveId !== waveId) return;
     if (p.blipId && blipId && p.blipId !== blipId) return;
@@ -116,18 +215,20 @@ export function subscribeEditorPresence(
   s.on('editor:presence', handler);
   const heartbeat = typeof window !== 'undefined'
     ? window.setInterval(() => {
-      try { s.emit('editor:presence:heartbeat'); } catch {}
+      try { if (s.connected) s.emit('editor:presence:heartbeat'); } catch {}
     }, PRESENCE_HEARTBEAT_INTERVAL_MS)
     : null;
   return () => {
-    try { s.emit('editor:leave', { waveId, blipId }); } catch {}
+    disposed = true;
+    try { if (s.connected) s.emit('editor:leave', { waveId, blipId }); } catch {}
+    s.off('connect', join);
     s.off('editor:presence', handler);
     if (heartbeat && typeof window !== 'undefined') window.clearInterval(heartbeat);
   };
 }
 
 export type BlipSocketEvent =
-  | { action: 'created' | 'updated' | 'deleted'; waveId: string; blipId: string; updatedAt?: number; userId?: string }
+  | { action: 'created' | 'updated' | 'moved' | 'deleted'; waveId: string; blipId: string; updatedAt?: number; userId?: string }
   | { action: 'read'; waveId: string; blipId: string; readAt?: number; userId?: string };
 export type WaveUnreadEvent = { waveId: string; userId?: string };
 
@@ -139,15 +240,18 @@ export function subscribeBlipEvents(waveId: string, onEvent: (payload: BlipSocke
   };
   const created = handlerFor('created');
   const updated = handlerFor('updated');
+  const moved = handlerFor('moved');
   const deleted = handlerFor('deleted');
   const read = handlerFor('read');
   s.on('blip:created', created);
   s.on('blip:updated', updated);
+  s.on('blip:moved', moved);
   s.on('blip:deleted', deleted);
   s.on('blip:read', read);
   return () => {
     s.off('blip:created', created);
     s.off('blip:updated', updated);
+    s.off('blip:moved', moved);
     s.off('blip:deleted', deleted);
     s.off('blip:read', read);
   };
@@ -155,27 +259,30 @@ export function subscribeBlipEvents(waveId: string, onEvent: (payload: BlipSocke
 
 export function subscribeWaveUnread(waveId: string, onEvent: (payload: WaveUnreadEvent) => void, userId?: string | null): () => void {
   const s = getSocket();
-  s.emit('wave:unread:join', { waveId, userId: userId || undefined });
+  const join = () => s.emit('wave:unread:join', { waveId, userId: userId || undefined });
+  s.on('connect', join);
+  if (s.connected) join();
   const handler = (p: any) => {
     if (!p || p.waveId !== waveId) return;
     onEvent({ waveId: String(p.waveId), userId: p.userId ? String(p.userId) : undefined });
   };
   s.on('wave:unread', handler);
   return () => {
-    try { s.emit('wave:unread:leave', { waveId, userId: userId || undefined }); } catch {}
+    try { if (s.connected) s.emit('wave:unread:leave', { waveId, userId: userId || undefined }); } catch {}
+    s.off('connect', join);
     s.off('wave:unread', handler);
   };
 }
 
 export function ensureWaveUnreadJoin(waveId: string, userId?: string | null) {
   const s = getSocket();
-  s.emit('wave:unread:join', { waveId, userId: userId || undefined });
+  if (s.connected) s.emit('wave:unread:join', { waveId, userId: userId || undefined });
 }
 
 export function emitWaveUnread(waveId: string, userId?: string | null) {
   const s = getSocket();
   try {
-    s.emit('wave:unread', { waveId, userId: userId || undefined });
+    if (s.connected) s.emit('wave:unread', { waveId, userId: userId || undefined });
   } catch {}
 }
 

@@ -8,7 +8,6 @@ export interface GadgetSandboxDescriptor {
 
 const DEFAULT_SANDBOX_FLAGS = [
   'allow-scripts',
-  'allow-same-origin',
   'allow-forms',
   'allow-popups',
 ].join(' ');

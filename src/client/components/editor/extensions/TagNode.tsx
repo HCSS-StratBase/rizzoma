@@ -69,11 +69,22 @@ export const TagNode = Node.create({
 
           const updateDOM = () => {
             if (!element) return;
-            element.innerHTML = currentItems.length
-              ? currentItems.map((tag, i) =>
-                  `<button class="mention-item${i === selectedIndex ? ' is-selected' : ''}" data-index="${i}">#${tag}</button>`
-                ).join('')
-              : '<div class="mention-item is-empty">No tags found</div>';
+            element.replaceChildren();
+            if (currentItems.length) {
+              currentItems.forEach((tag, index) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `mention-item${index === selectedIndex ? ' is-selected' : ''}`;
+                button.dataset['index'] = String(index);
+                button.textContent = `#${tag}`;
+                element!.appendChild(button);
+              });
+            } else {
+              const empty = document.createElement('div');
+              empty.className = 'mention-item is-empty';
+              empty.textContent = 'No tags found';
+              element.appendChild(empty);
+            }
           };
 
           return {

@@ -1,4 +1,5 @@
 .rizzoma-layout {
+  position: relative;
   display: flex;
   height: 100vh;
   height: 100dvh; /* dynamic viewport height — accounts for mobile address bar */
@@ -8,6 +9,10 @@
     linear-gradient(180deg, #edf3fa 0%, #e6edf6 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   color: #203247;
+}
+
+.rizzoma-layout.offline-readonly {
+  padding-top: 48px;
 }
 
 /* Navigation Panel - Far Left */
@@ -20,6 +25,35 @@
   flex-direction: column;
   box-shadow: 14px 0 28px rgba(15, 23, 42, 0.16);
   z-index: 3;
+}
+
+.mobile-shell-auth-dock {
+  display: none;
+}
+
+.offline-readonly-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1200;
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(164, 103, 19, 0.38);
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: rgba(255, 247, 224, 0.98);
+  padding: 9px 13px;
+  color: #5f4218;
+  box-shadow: 0 6px 16px rgba(62, 45, 20, 0.12);
+  font-size: 12px;
+}
+
+.offline-readonly-banner strong {
+  flex: 0 0 auto;
+  color: #7a4b0c;
 }
 
 /* Search/List Panel - Left Center */
@@ -287,6 +321,25 @@
 }
 
 @media (max-width: 768px) {
+  .mobile-shell-auth-dock {
+    position: fixed;
+    right: 12px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    z-index: 100;
+    display: block;
+  }
+
+  .offline-readonly-banner {
+    min-height: 62px;
+    align-items: center;
+    gap: 4px;
+    flex-direction: column;
+  }
+
+  .rizzoma-layout.offline-readonly {
+    padding-top: 62px;
+  }
+
   .navigation-container {
     width: 60px;
     min-width: 60px;

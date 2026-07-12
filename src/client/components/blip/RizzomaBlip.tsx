@@ -14,6 +14,9 @@ import { InlineComments, InlineCommentsStatus } from '../editor/InlineComments';
 import { FEATURES } from '@shared/featureFlags';
 import { BlipHistoryModal } from './BlipHistoryModal';
 import { api, ensureCsrf } from '../../lib/api';
+import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
+import { insertGadget } from '../../gadgets/insert';
+import type { GadgetInsertDetail } from '../../gadgets/types';
 import {
   getInlineCommentsVisibility,
   getInlineCommentsVisibilityFromStorage,
@@ -37,11 +40,12 @@ import { createUploadTask, type UploadResult, type UploadTask } from '../../lib/
 import { INSERT_EVENTS, EDIT_MODE_EVENT, EDITOR_FOCUS_EVENT, EDITOR_BLUR_EVENT, BLIP_ACTIVE_EVENT } from '../RightToolsPanel';
 import './RizzomaBlip.css';
 import { injectInlineMarkers } from './inlineMarkers';
-import { renderInlineHtml } from './InlineHtmlRenderer';
+import { InlineHtmlRenderer } from './InlineHtmlRenderer';
 import { LazyBlipSlot, LAZY_MOUNT_THRESHOLD } from './LazyBlipSlot';
 import { useCollaboration } from '../editor/useCollaboration';
 import { yjsDocManager } from '../editor/YjsDocumentManager';
 import { useAuthenticatedCollaborationUser } from '../editor/useAuthenticatedCollaborationUser';
+import { requestTaskCompletionHydration } from '../editor/extensions/TaskWidget';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
 export type BlipContributor = {
@@ -49,7 +53,7 @@ export type BlipContributor = {
   email: string;
   name?: string;
   avatar?: string;
-  role?: 'owner' | 'editor' | 'viewer';
+  role?: 'owner' | 'editor' | 'commenter' | 'viewer';
 };
 
 export interface BlipData {
@@ -352,8 +356,10 @@ export function RizzomaBlip({
   // Dispatch edit mode event to RightToolsPanel
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing } }));
-  }, [isEditing]);
+    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, {
+      detail: { isEditing, blipId: blip.id },
+    }));
+  }, [blip.id, isEditing]);
 
   // BLB §18b2: at most ONE blip in the topic shows chrome (menu bar / edit
   // toolbar) at a time — the shared ActiveBlipContext holds which one. Blips
@@ -384,7 +390,8 @@ export function RizzomaBlip({
 
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
-  const [editedContent, setEditedContent] = useState(blip.content);
+  const safeBlipContent = useMemo(() => sanitizeRichHtml(blip.content || ''), [blip.content]);
+  const [editedContent, setEditedContent] = useState(safeBlipContent);
   const [showInlineCommentBtn, setShowInlineCommentBtn] = useState(false);
   const [inlineCommentsNotice, setInlineCommentsNotice] = useState<string | null>(null);
   const [selectionCoords, setSelectionCoords] = useState<{ x: number; y: number } | null>(null);
@@ -409,7 +416,7 @@ export function RizzomaBlip({
   const [isSavingEdit] = useState(false); // Auto-save handles saving now
   const [isDeleting, setIsDeleting] = useState(false);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSavedContentRef = useRef<string>(blip.content);
+  const lastSavedContentRef = useRef<string>(safeBlipContent);
   const editorRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const blipContainerRef = useRef<HTMLDivElement>(null);
@@ -420,20 +427,26 @@ export function RizzomaBlip({
   const collapsePreferenceUpdatedAtRef = useRef(collapsePreferenceMetadata?.updatedAt ?? 0);
   const readOnlySelectionWarned = useRef(false);
   const pendingInsertRef = useRef<string | null>(null);
-  const pendingGadgetDetailRef = useRef<{ type?: string; url?: string } | null>(null);
+  const pendingGadgetDetailRef = useRef<GadgetInsertDetail | null>(null);
+  const inlineEditorRef = useRef<Editor | null>(null);
 
   // Auto-save blip content (debounced, silent)
   const autoSaveBlip = useCallback(async (content: string) => {
     if (content === lastSavedContentRef.current) return;
     try {
-      const response = await fetch(`/api/blips/${blip.id}`, {
+      await ensureCsrf();
+      const response = await api(`/api/blips/${encodeURIComponent(blip.id)}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        queueable: false,
         body: JSON.stringify({ content }),
       });
       if (response.ok) {
         lastSavedContentRef.current = content;
         onBlipUpdate?.(blip.id, content);
+        // Task side-documents are derived only after this durable save. A
+        // freshly inserted task may have been absent from the earlier
+        // hydration, so refresh its server-provided completion/permission now.
+        requestTaskCompletionHydration(inlineEditorRef.current);
         // No toast - auto-save is silent for real-time experience
       }
     } catch {
@@ -446,7 +459,6 @@ export function RizzomaBlip({
 
   // Refs to hold current editor and callback (avoids stale closures in useEditor)
   const createChildBlipRef = useRef<(anchorPosition: number) => Promise<void>>();
-  const inlineEditorRef = useRef<Editor | null>(null);
 
   // Stable callback that reads from ref (never goes stale)
   const stableCreateInlineChildBlip = useCallback((anchorPosition: number) => {
@@ -461,9 +473,9 @@ export function RizzomaBlip({
   const stableShowComments = useCallback(() => { showCommentsRef.current?.(); }, []);
 
   // --- Real-time collaboration (awareness + document sync) ---
-  // Activate based on canEdit (NOT isEditing or authUser) so the Collaboration extension
+  // Activate based on canEdit (NOT isEditing or auth state) so the Collaboration extension
   // is present from editor creation. canEdit already gates unauthenticated users.
-  // authUser is converted to the provider's awareness identity synchronously,
+  // The authenticated user is converted to the provider's awareness identity synchronously,
   // before TipTap creates its collaborative-cursor extension.
   const collaborationUser = useAuthenticatedCollaborationUser();
   // Skip collab for topic root — RizzomaTopicDetail.tsx owns the collab-enabled topicEditor.
@@ -476,8 +488,8 @@ export function RizzomaBlip({
   // set; late `setOptions()` calls do not reliably install ySyncPlugin.
   const collabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && blip.permissions.canEdit && !isTopicRoot);
   const ydoc = useMemo(
-    () => collabEnabled ? yjsDocManager.getDocument(blip.id) : undefined,
-    [blip.id, collabEnabled]
+    () => collabEnabled ? yjsDocManager.getDocument(blip.id, collaborationUser?.id) : undefined,
+    [blip.id, collabEnabled, collaborationUser?.id]
   );
   const collabProvider = useCollaboration(ydoc, blip.id, collabEnabled, collaborationUser);
 
@@ -505,9 +517,15 @@ export function RizzomaBlip({
         onCreateInlineChildBlip: stableCreateInlineChildBlip,
         onHideComments: stableHideComments,
         onShowComments: stableShowComments,
+        currentUser: collaborationUser ? { id: collaborationUser.id, label: collaborationUser.name } : null,
+        participants: (blip.contributors || []).map((contributor) => ({
+          id: contributor.id,
+          label: contributor.name || contributor.email || contributor.id,
+          email: contributor.email,
+        })),
       }
     ),
-    [blip.id, collabActive, ydoc, collabProvider, stableToggleInlineComments, stableCreateInlineChildBlip, stableHideComments, stableShowComments]
+    [blip.id, blip.contributors, collaborationUser?.id, collaborationUser?.name, collabActive, ydoc, collabProvider, stableToggleInlineComments, stableCreateInlineChildBlip, stableHideComments, stableShowComments]
   );
 
   // Create inline editor for editing mode.
@@ -574,6 +592,20 @@ export function RizzomaBlip({
     inlineEditor.setEditable(isEditing);
   }, [inlineEditor, isEditing]);
 
+  // Losing mutation permission (including the shell going offline) freezes
+  // an already-open editor without firing a REST save. Any local Yjs update
+  // remains in memory and the provider's acknowledged reconnect path retries
+  // it; the global beforeunload guard protects that interim state.
+  useEffect(() => {
+    if (blip.permissions.canEdit || !isEditing) return;
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
+    setIsEditing(false);
+    inlineEditor?.setEditable(false);
+  }, [blip.permissions.canEdit, inlineEditor, isEditing]);
+
   // Seed Y.Doc from blip HTML content after the server sync response arrives.
   // TipTap's Collaboration extension renders from Y.Doc fragment 'default' (ignoring the content prop).
   // The server always sends a blip:sync response — if it contains state, the Y.Doc is populated
@@ -587,9 +619,9 @@ export function RizzomaBlip({
       if ((inlineEditor as any).isDestroyed) return;
       if (!collabProvider.shouldSeed) return;
       const frag = ydoc.getXmlFragment('default');
-      if (frag.length === 0 && blip.content) {
+      if (frag.length === 0 && safeBlipContent) {
         seedingYdocRef.current = true;
-        inlineEditor.commands.setContent(blip.content);
+        inlineEditor.commands.setContent(safeBlipContent);
         seedingYdocRef.current = false;
       }
     };
@@ -613,7 +645,7 @@ export function RizzomaBlip({
     });
 
     return () => { disposed = true; clearTimeout(timer); };
-  }, [inlineEditor, collabEnabled, ydoc, collabProvider, blip.content]);
+  }, [inlineEditor, collabEnabled, ydoc, collabProvider, safeBlipContent, blip.id]);
 
   // Cleanup auto-save timeout on unmount to prevent stale saves to wrong topic
   useEffect(() => {
@@ -636,13 +668,13 @@ export function RizzomaBlip({
       autoSaveTimeoutRef.current = null;
     }
     // Reset state to new blip's content
-    setEditedContent(blip.content);
-    lastSavedContentRef.current = blip.content;
+    setEditedContent(safeBlipContent);
+    lastSavedContentRef.current = safeBlipContent;
     setIsEditing(false);
     if (inlineEditor && !(inlineEditor as any).isDestroyed) {
-      inlineEditor.commands.setContent(blip.content);
+      inlineEditor.commands.setContent(safeBlipContent);
     }
-  }, [blip.id, blip.content, inlineEditor]);
+  }, [blip.id, safeBlipContent, inlineEditor]);
 
   // Dispatch editor focus/blur events for RightToolsPanel insert button visibility
   useEffect(() => {
@@ -676,11 +708,10 @@ export function RizzomaBlip({
         const waveId = blip.id.split(':')[0];
         console.log('[RizzomaBlip] Creating child blip for wave:', waveId, 'parent:', blip.id);
 
-        const response = await fetch('/api/blips', {
+        await ensureCsrf();
+        const response = await api('/api/blips', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          queueable: false,
           body: JSON.stringify({
             waveId,
             parentId: blip.id,
@@ -697,7 +728,7 @@ export function RizzomaBlip({
           throw new Error('Failed to create child blip');
         }
 
-        const newBlip = await response.json();
+        const newBlip = response.data as { id?: string; _id?: string };
         const newBlipId = newBlip.id || newBlip._id;
 
         console.log('[RizzomaBlip] Created child blip via Ctrl+Enter:', newBlipId);
@@ -810,10 +841,10 @@ export function RizzomaBlip({
   // and for edit mode (where TipTap NodeView still emits portal anchors).
   const parityViewRender = FEATURES.RIZZOMA_PARITY_RENDER && !isEditing;
   const viewContentHtml = parityViewRender
-    ? (blip.content || '')
+    ? safeBlipContent
     : (!isEditing && inlineChildren.length > 0
-        ? injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)
-        : (blip.content || ''));
+        ? injectInlineMarkers(safeBlipContent, inlineChildren, localExpandedInline)
+        : safeBlipContent);
 
   // Portal containers for rendering expanded inline children at their marker positions
   const portalContainers = useRef<Map<string, HTMLElement>>(new Map());
@@ -903,6 +934,7 @@ export function RizzomaBlip({
       if (targetId !== blip.id) return;
       claimActive();
       if (blip.permissions.canEdit) {
+        requestTaskCompletionHydration(inlineEditorRef.current);
         setIsEditing(true);
         // Bug A perf fix (2026-05-11): single RAF instead of two. The
         // setIsEditing's effect commits + the inlineEditor's
@@ -1021,6 +1053,10 @@ export function RizzomaBlip({
     console.log('handleStartEdit called for blip:', blip.id, 'canEdit:', blip.permissions.canEdit);
     if (blip.permissions.canEdit) {
       const nextContent = injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline);
+      // Revalidate the hidden editor before replacing its content. Existing
+      // task IDs refresh after a parity-view toggle; a new task signature is
+      // detected by the durability plugin's setContent lifecycle update.
+      requestTaskCompletionHydration(inlineEditor);
       setEditedContent(nextContent);
       setIsEditing(true);
       claimActive();
@@ -1068,11 +1104,10 @@ export function RizzomaBlip({
       // Extract waveId from the blip id (format: waveId:blipId)
       const waveId = blip.id.split(':')[0];
 
-      const response = await fetch('/api/blips', {
+      await ensureCsrf();
+      const response = await api('/api/blips', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        queueable: false,
         body: JSON.stringify({
           waveId,
           parentId: blip.id,
@@ -1083,8 +1118,6 @@ export function RizzomaBlip({
       if (!response.ok) {
         throw new Error('Failed to create reply');
       }
-
-      await response.json();
 
       onAddReply?.(blip.id, replyContent);
       setReplyContent('');
@@ -1154,6 +1187,7 @@ export function RizzomaBlip({
       });
       lastUploadRef.current = { file, kind, ...handlers };
       const task = createUploadTask(file, {
+        blipId: blip.id,
         onProgress: (percent) => {
           setUploadState((prev) => (prev ? { ...prev, progress: percent } : prev));
         },
@@ -1185,7 +1219,7 @@ export function RizzomaBlip({
           toast(handlers.failureToast, 'error');
         });
     },
-    [toast],
+    [blip.id, toast],
   );
 
   const handleCancelUpload = useCallback(() => {
@@ -1494,6 +1528,7 @@ export function RizzomaBlip({
         await ensureCsrf();
         await api(`/api/blips/${encodeURIComponent(blip.id)}/inline-comments-visibility`, {
           method: 'PATCH',
+          queueable: false,
           body: JSON.stringify({ isVisible }),
         });
       } catch (error) {
@@ -1589,45 +1624,11 @@ export function RizzomaBlip({
     };
 
     // Helper: execute a gadget insert action
-    const executeGadgetInsert = (editor: any, detail: { type?: string; url?: string } | null) => {
-      const gadgetType = detail?.type || 'iframe';
-      const url = detail?.url;
-
-      switch (gadgetType) {
-        case 'youtube': {
-          if (!url) return;
-          let embedUrl = url;
-          const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
-          if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
-          editor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
-          break;
-        }
-        case 'code':
-          editor.chain().focus().toggleCodeBlock().run();
-          break;
-        case 'poll':
-          editor.chain().focus().insertContent({
-            type: 'pollGadget',
-            attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
-          }).run();
-          break;
-        case 'latex':
-          editor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run();
-          break;
-        case 'iframe':
-        case 'spreadsheet':
-        case 'image': {
-          if (!url) return;
-          if (gadgetType === 'image') {
-            editor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
-          } else {
-            editor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
-          }
-          break;
-        }
-        default:
-          editor.chain().focus().insertContent(`[${gadgetType} gadget]`).run();
-          break;
+    const executeGadgetInsert = (editor: any, detail: GadgetInsertDetail | null) => {
+      try {
+        insertGadget(editor, detail);
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Invalid gadget source', 'error');
       }
     };
 
@@ -1648,7 +1649,7 @@ export function RizzomaBlip({
     const handleInsertReply = () => handleInsert(INSERT_EVENTS.REPLY);
 
     const handleInsertGadget = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { type?: string; url?: string } | undefined;
+      const detail = (e as CustomEvent<GadgetInsertDetail>).detail;
       if (isEditing && inlineEditor) {
         executeGadgetInsert(inlineEditor, detail || null);
       } else if (blip.permissions.canEdit) {
@@ -1685,44 +1686,10 @@ export function RizzomaBlip({
       if (action === INSERT_EVENTS.GADGET) {
         const detail = pendingGadgetDetailRef.current;
         pendingGadgetDetailRef.current = null;
-        const gadgetType = detail?.type || 'iframe';
-        const url = detail?.url;
-
-        switch (gadgetType) {
-          case 'youtube': {
-            if (!url) return;
-            let embedUrl = url;
-            const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
-            if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
-            inlineEditor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
-            break;
-          }
-          case 'code':
-            inlineEditor.chain().focus().toggleCodeBlock().run();
-            break;
-          case 'poll':
-            inlineEditor.chain().focus().insertContent({
-              type: 'pollGadget',
-              attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
-            }).run();
-            break;
-          case 'latex':
-            inlineEditor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run();
-            break;
-          case 'iframe':
-          case 'spreadsheet':
-          case 'image': {
-            if (!url) return;
-            if (gadgetType === 'image') {
-              inlineEditor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
-            } else {
-              inlineEditor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
-            }
-            break;
-          }
-          default:
-            inlineEditor.chain().focus().insertContent(`[${gadgetType} gadget]`).run();
-            break;
+        try {
+          insertGadget(inlineEditor as any, detail);
+        } catch (error) {
+          toast(error instanceof Error ? error.message : 'Invalid gadget source', 'error');
         }
       } else {
         // Trigger chars: @, ~, #, ↵
@@ -1785,6 +1752,7 @@ export function RizzomaBlip({
       await ensureCsrf();
       const response = await api('/api/comments', {
         method: 'POST',
+        queueable: false,
         body: JSON.stringify({
           blipId: blip.id,
           content: inlineCommentDraft.trim(),
@@ -1870,9 +1838,10 @@ export function RizzomaBlip({
     if (!blip.permissions.canEdit || isDuplicating) return;
     setIsDuplicating(true);
     try {
-      const response = await fetch(`/api/blips/${encodeURIComponent(blip.id)}/duplicate`, {
+      await ensureCsrf();
+      const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/duplicate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        queueable: false,
       });
       if (!response.ok) {
         throw new Error('Failed to duplicate blip');
@@ -1922,9 +1891,10 @@ export function RizzomaBlip({
     }
     try {
       const waveId = blip.id.split(':')[0];
-      const response = await fetch('/api/blips', {
+      await ensureCsrf();
+      const response = await api('/api/blips', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        queueable: false,
         body: JSON.stringify({
           waveId,
           parentId: blip.id, // Paste as child of current blip
@@ -1937,9 +1907,11 @@ export function RizzomaBlip({
       // If this was a cut operation, delete the original
       if (payload.isCut && payload.blipId) {
         try {
-          await fetch(`/api/blips/${encodeURIComponent(payload.blipId)}`, {
+          const deleteResponse = await api(`/api/blips/${encodeURIComponent(payload.blipId)}`, {
             method: 'DELETE',
+            queueable: false,
           });
+          if (!deleteResponse.ok) throw new Error('Failed to delete cut blip');
           clearCutState(payload.blipId);
         } catch (deleteError) {
           console.warn('Failed to delete cut blip', deleteError);
@@ -1968,6 +1940,7 @@ export function RizzomaBlip({
       await ensureCsrf();
       const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/collapse-default`, {
         method: 'PATCH',
+        queueable: false,
         body: JSON.stringify({ collapseByDefault: next })
       });
       if (!response.ok) {
@@ -1997,6 +1970,7 @@ export function RizzomaBlip({
         await ensureCsrf();
         const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/inline-comments-visibility`, {
           method: 'PATCH',
+          queueable: false,
           body: JSON.stringify({ isVisible: next }),
         });
         if (!response.ok) {
@@ -2260,12 +2234,13 @@ export function RizzomaBlip({
                     title={contentTitle}
                     style={onContentClick ? { cursor: 'pointer' } : undefined}
                   >
-                    {renderInlineHtml({
-                      html: blip.content || '',
-                      inlineChildren,
-                      expandedSet: localExpandedInline,
-                      everMountedSet: everMountedInline,
-                      renderInlineChild: (childId: string) => {
+                    <InlineHtmlRenderer
+                      taskBlipId={blip.id}
+                      html={blip.content || ''}
+                      inlineChildren={inlineChildren}
+                      expandedSet={localExpandedInline}
+                      everMountedSet={everMountedInline}
+                      renderInlineChild={(childId: string) => {
                         const child = inlineChildren.find(c => c.id === childId);
                         if (!child) return null;
                         return (
@@ -2283,8 +2258,8 @@ export function RizzomaBlip({
                             expandedBlips={expandedBlips}
                           />
                         );
-                      },
-                    })}
+                      }}
+                    />
                   </div>
                 ) : (
                   <div

@@ -4,6 +4,7 @@ import { Badge, Box, Group, Text } from '@mantine/core';
 import { LayoutDashboard } from 'lucide-react';
 import { describeSandboxedApp } from '../../../gadgets/apps/runtime';
 import { getAppManifest } from '../../../gadgets/apps/catalog';
+import { normalizeAppFrameAttrs } from '../../../gadgets/security';
 
 function parseAppData(data: unknown) {
   if (data && typeof data === 'object' && !Array.isArray(data)) {
@@ -50,7 +51,8 @@ export function SandboxAppGadgetView(props: any) {
   const { node, selected, editor, getPos } = props;
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const manifest = useMemo(() => getAppManifest(node.attrs.appId), [node.attrs.appId]);
-  const sandbox = manifest ? describeSandboxedApp(manifest) : null;
+  const safeFrame = useMemo(() => normalizeAppFrameAttrs(node.attrs), [node.attrs]);
+  const sandbox = manifest && safeFrame ? describeSandboxedApp(manifest) : null;
   const appData = useMemo(() => parseAppData(node.attrs.data), [node.attrs.data]);
   const summary = useMemo(() => summarizeAppData(node.attrs.data), [node.attrs.data]);
 
@@ -67,8 +69,12 @@ export function SandboxAppGadgetView(props: any) {
   };
 
   useEffect(() => {
+    if (!safeFrame || !sandbox) return;
     const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
+      // App frames deliberately omit allow-same-origin. Their messages have
+      // an opaque `null` origin, so authenticate the exact WindowProxy source
+      // instead of granting the frame our application origin.
+      if (event.origin !== 'null') return;
       if (event.source !== iframeRef.current?.contentWindow) return;
       const payload = event.data;
       if (!payload || typeof payload !== 'object' || payload.scope !== 'rizzoma-gadget') return;
@@ -76,7 +82,7 @@ export function SandboxAppGadgetView(props: any) {
       const reply = (response: Record<string, unknown>) => {
         iframeRef.current?.contentWindow?.postMessage(
           { scope: 'rizzoma-gadget', requestId: payload.requestId, ...response },
-          window.location.origin
+          '*'
         );
       };
 
@@ -91,7 +97,7 @@ export function SandboxAppGadgetView(props: any) {
       }
 
       if (payload.type === 'host.resize') {
-        const nextHeight = String(Math.max(320, Number(payload.height || 0)));
+        const nextHeight = String(Math.min(1_200, Math.max(320, Number(payload.height || 0))));
         commitNodeAttrs({ height: nextHeight });
         reply({ type: 'host.response', data: { height: nextHeight } });
         return;
@@ -112,16 +118,25 @@ export function SandboxAppGadgetView(props: any) {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [appData, editor, getPos, node.attrs]);
+  }, [appData, editor, getPos, node.attrs, safeFrame, sandbox]);
 
   useEffect(() => {
+    if (!safeFrame || !sandbox) return;
     const frameWindow = iframeRef.current?.contentWindow;
     if (!frameWindow) return;
     frameWindow.postMessage(
       { scope: 'rizzoma-gadget', type: 'host.pushNodeData', data: appData || null },
-      window.location.origin
+      '*'
     );
-  }, [appData]);
+  }, [appData, safeFrame, sandbox]);
+
+  if (!safeFrame || !sandbox) {
+    return (
+      <NodeViewWrapper className="gadget-node-view blocked" style={{ display: 'block', width: '100%' }}>
+        <Text c="red" size="sm">Blocked untrusted app frame</Text>
+      </NodeViewWrapper>
+    );
+  }
 
   return (
     <NodeViewWrapper
@@ -178,13 +193,13 @@ export function SandboxAppGadgetView(props: any) {
           <Box px="sm" pb="sm">
             <iframe
               ref={iframeRef}
-              src={node.attrs.src}
-              title={node.attrs.title}
+              src={safeFrame.src}
+              title={safeFrame.title}
               sandbox={sandbox?.sandbox}
               allow={sandbox?.allow}
               style={{
                 width: '100%',
-                minHeight: `${node.attrs.height || 430}px`,
+                minHeight: `${safeFrame.height}px`,
                 border: 0,
                 borderRadius: '16px',
                 background: 'white',

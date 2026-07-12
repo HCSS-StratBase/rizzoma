@@ -9,7 +9,9 @@ describe('routes: inline comments threading', () => {
   app.use(cookieParser());
   app.use(requestId());
   app.use((req: any, _res, next) => {
-    req.session = { userId: 'inline-user', userName: 'Inline Tester' };
+    req.session = req.get('x-test-anonymous') === '1'
+      ? { csrfToken: 'token' }
+      : { userId: 'inline-user', userName: 'Inline Tester', csrfToken: 'token' };
     next();
   });
 
@@ -70,6 +72,18 @@ describe('routes: inline comments threading', () => {
 
       if (method === 'GET' && /\/[^/]+$/.test(path)) {
         const id = decodeURIComponent(path.split('/').pop() || '');
+        if (id === 'b1') {
+          return okResp({ _id: 'b1', type: 'blip', waveId: 'w1', content: '<p>hello</p>', createdAt: 1, updatedAt: 1 });
+        }
+        if (id === 'task-as-blip') {
+          return okResp({ _id: id, _rev: '1-task', type: 'task', waveId: 'w1', content: 'task', createdAt: 1, updatedAt: 1 });
+        }
+        if (id === 'deleted-blip') {
+          return okResp({ _id: id, _rev: '1-blip', type: 'blip', waveId: 'w1', deleted: true, content: 'deleted', createdAt: 1, updatedAt: 1 });
+        }
+        if (id === 'w1') {
+          return okResp({ _id: 'w1', type: 'wave', title: 'Wave', authorId: 'inline-user', createdAt: 1, updatedAt: 1 });
+        }
         const found = inlineDocs.find((doc) => doc._id === id);
         if (found) return okResp(found);
         return okResp({}, 404);
@@ -104,7 +118,7 @@ describe('routes: inline comments threading', () => {
 
     const rootResp = await fetch(`http://127.0.0.1:${port}/api/comments`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' },
       body: JSON.stringify({ blipId: 'b1', content: 'Root', range: baseRange }),
     });
     const rootBody = await rootResp.json();
@@ -112,7 +126,7 @@ describe('routes: inline comments threading', () => {
 
     const replyResp = await fetch(`http://127.0.0.1:${port}/api/comments`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' },
       body: JSON.stringify({ blipId: 'b1', content: 'Child', range: baseRange, parentId: root.id }),
     });
     const replyBody = await replyResp.json();
@@ -130,7 +144,7 @@ describe('routes: inline comments threading', () => {
 
     const resolveResp = await fetch(`http://127.0.0.1:${port}/api/comments/${encodeURIComponent(root.id)}/resolve`, {
       method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' },
       body: JSON.stringify({ resolved: true }),
     });
     expect(resolveResp.status).toBe(200);
@@ -141,7 +155,7 @@ describe('routes: inline comments threading', () => {
 
     const reopenResp = await fetch(`http://127.0.0.1:${port}/api/comments/${encodeURIComponent(root.id)}/resolve`, {
       method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' },
       body: JSON.stringify({ resolved: false }),
     });
     expect(reopenResp.status).toBe(200);
@@ -149,6 +163,112 @@ describe('routes: inline comments threading', () => {
     expect(afterReopen?.resolved).toBe(false);
     expect(afterReopen?.resolvedAt).toBeNull();
 
+    server.close();
+  });
+
+  it('rejects non-comment documents as parents or mutation targets', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const task = {
+      _id: 'task:confused-target',
+      _rev: '1-task',
+      type: 'task',
+      blipId: 'b1',
+      waveId: 'w1',
+      userId: 'inline-user',
+      content: 'Task content',
+      range: { start: 0, end: 5, text: 'hello' },
+      resolved: false,
+    };
+    inlineDocs.push(task);
+
+    const headers = { 'content-type': 'application/json', 'x-csrf-token': 'token' };
+    const asParent = await fetch(`http://127.0.0.1:${port}/api/comments`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        blipId: 'b1',
+        content: 'Must not attach',
+        range: { start: 0, end: 5, text: 'hello' },
+        parentId: task._id,
+      }),
+    });
+    expect(asParent.status).toBe(400);
+
+    const resolve = await fetch(`http://127.0.0.1:${port}/api/comments/${encodeURIComponent(task._id)}/resolve`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ resolved: true }),
+    });
+    expect(resolve.status).toBe(404);
+
+    const remove = await fetch(`http://127.0.0.1:${port}/api/comments/${encodeURIComponent(task._id)}`, {
+      method: 'DELETE',
+      headers,
+    });
+    expect(remove.status).toBe(404);
+    expect(inlineDocs.find((doc) => doc._id === task._id)).toEqual(task);
+
+    server.close();
+  });
+
+  it('rejects non-blip and deleted backing documents on every inline-comment path', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const headers = { 'content-type': 'application/json', 'x-csrf-token': 'token' };
+    const range = { start: 0, end: 4, text: 'test' };
+    const taskComment = {
+      _id: 'comment-task-backing', _rev: '1-comment', id: 'comment-task-backing',
+      type: 'inline_comment', blipId: 'task-as-blip', userId: 'inline-user', userName: 'Inline Tester',
+      content: 'comment', range, resolved: false, createdAt: 1, updatedAt: 1,
+    };
+    const deletedComment = {
+      ...taskComment, _id: 'comment-deleted-backing', id: 'comment-deleted-backing', blipId: 'deleted-blip',
+    };
+    inlineDocs.push(taskComment, deletedComment);
+
+    for (const [blipId, commentId, expected] of [
+      ['task-as-blip', taskComment._id, 404],
+      ['deleted-blip', deletedComment._id, 410],
+    ] as const) {
+      const list = await fetch(`http://127.0.0.1:${port}/api/blip/${blipId}/comments`);
+      const create = await fetch(`http://127.0.0.1:${port}/api/comments`, {
+        method: 'POST', headers, body: JSON.stringify({ blipId, content: 'new', range }),
+      });
+      const resolve = await fetch(`http://127.0.0.1:${port}/api/comments/${commentId}/resolve`, {
+        method: 'PATCH', headers, body: JSON.stringify({ resolved: true }),
+      });
+      const remove = await fetch(`http://127.0.0.1:${port}/api/comments/${commentId}`, {
+        method: 'DELETE', headers,
+      });
+      expect([list.status, create.status, resolve.status, remove.status]).toEqual([expected, expected, expected, expected]);
+    }
+    expect(inlineDocs).toEqual(expect.arrayContaining([taskComment, deletedComment]));
+    server.close();
+  });
+
+  it('returns an explicit public DTO without email, revisions, or arbitrary stored fields', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    inlineDocs.push({
+      _id: 'comment-public-safe', _rev: '7-secret', id: 'comment-public-safe', type: 'inline_comment',
+      blipId: 'b1', userId: 'author-user', userName: 'Public Author', userEmail: 'secret@example.test',
+      userAvatar: 'https://example.test/avatar.png', content: 'Visible comment',
+      range: { start: 0, end: 5, text: 'hello' }, resolved: false, createdAt: 1, updatedAt: 1,
+      arbitrarySecret: 'must-not-leak',
+    });
+
+    const response = await fetch(`http://127.0.0.1:${port}/api/blip/b1/comments`, {
+      headers: { 'x-test-anonymous': '1' },
+    });
+    const body = await response.json();
+    const comment = body.comments.find((candidate: any) => candidate.id === 'comment-public-safe');
+
+    expect(response.status).toBe(200);
+    expect(comment).toMatchObject({ content: 'Visible comment', userName: 'Public Author' });
+    expect(comment).not.toHaveProperty('userEmail');
+    expect(comment).not.toHaveProperty('_rev');
+    expect(comment).not.toHaveProperty('arbitrarySecret');
     server.close();
   });
 });

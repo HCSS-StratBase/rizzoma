@@ -76,7 +76,7 @@
   * For every backend or frontend change, cross-check behavior and UI against the legacy sources in `original-rizzoma/` and `original-rizzoma-src/`, and against the current live UI references in `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/` (PNGs + MD notes). Keep the modernized implementation functionally and visually close to the legacy GUI while upgrading “under the hood.”
 
   ## Branch Context Guardrails
-  * Active branch: `master` (2026-07-12; public production checkpoint `fe6988fb`, PR #60). Always cite branch name + date when summarizing status.
+  * Active development branch: `release/preintegration-offline-upload` (2026-07-12; audited application checkpoint `b3cd054f`; undeployed). Public production remains on the earlier parity release until exact-merge acceptance. Always cite branch name + date when summarizing status.
   * Treat any "Current State" bullets in docs as historical snapshots unless explicitly refreshed for the active branch; update them before quoting.
   * Run `npm run lint:branch-context` after touching status docs; CI/local lint will fail if the branch name is missing from `docs/HANDOFF.md` Current State.
 
@@ -89,7 +89,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Run "git checkout master" immediately — that is the active branch for this backlog.
+    - Continue in the isolated `release/preintegration-offline-upload` worktree/branch until PR #66 contains the audited tree; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md (plus any Markdown touched in the last 31 days); capture drift into RESTORE_POINT.md + handoff/restart docs.
   Step 0.1:
     - Run "npm run lint:branch-context" to verify docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -97,15 +97,15 @@ codex exec '
     - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`). Ensure `http://localhost:3000/` is reachable before Playwright.
 
   Priority focus (current backlog):
-  1) Replace the public Vite development server and both lanes' bare root-owned processes with managed production services; preserve Redis sessions and exact-SHA rollback.
-  2) Decide the native-render direction: finish write/edit/reply support and gate a real cutover, or retain the React/TipTap parity path and correct the release naming.
-  3) Soak PR #60, clean synthetic production topics, separate staging from production CouchDB, then retire `:3000`/`:8788` after the rollback window.
-  4) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
-  5) Repair/refresh BLB snapshots and test real-device iPhone Safari.
-  6) Reconcile the dirty canonical checkout and automate bundle/GDrive backup cadence.
-  7) Triage 3 stale PRs / 7 native-port issues; address Node 22, Capacitor CLI 8, GitHub Action majors, 6,354 lint warnings, and legacy assets.
+  1) Publish the exact audited candidate and docs/evidence to PR #66; require all CI jobs and merge only the green tree.
+  2) Rebase the tested deploy-helper commits onto merged master, update PR #67, require CI, and install the exact merged helper assets.
+  3) Deploy the exact application merge SHA to the inactive managed lane; verify direct health/assets/journal/ClamAV, then drain old Vite and API with zero writer overlap before switching both vhosts.
+  4) Run public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs.
+  5) Record the exact production result in project docs, global HANDOFF, and existing HCSS Tana node `8mGAbLRiBnne`; refresh the Git bundle after final docs merge.
+  6) Keep native rendering disabled; after release, address 500/1,000-blip sweeps, physical iPhone Safari, staging-data separation, synthetic-data cleanup, and dependency/lint debt.
 
   Testing/CI hygiene:
+  - Keep the central sharing/access, route-role matrix, real-session Socket.IO authorization, and ShareModal tests green; production policy changes require staging evidence first.
   - Keep `npm run test:toolbar-inline`, `npm run test:follow-green`, and `npm run test:collab` green; snapshots live under `snapshots/<feature>/` and are uploaded as Actions artifacts.
   - Follow-the-Green acceptance must fail on any non-2xx or malformed unread response and must prove the real desktop and mobile Next control persists `2 -> 1 -> 0`; DOM mutation, debug hooks, direct-API fallbacks, missing-button success, and swallowed errors are forbidden.
   - Keep the enforced 120-blip full-render perf gate green: exact 120/120 rendering, required lazy slots, no timeout, stage duration under 3 seconds, and heap under 100 MB.

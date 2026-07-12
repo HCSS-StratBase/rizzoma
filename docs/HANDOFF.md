@@ -1,8 +1,15 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (follow-on candidate `codex/authenticated-cursor-identity`; `master` base `2595d2de`, merged PR #64; public runtime code `fe6988fb`). The production auth user now reaches actual topic-root, nested-blip, and generic-editor collaboration providers, and reconnect writes wait for the authorized `blip:sync` acknowledgement. Measured local gates: focused tests **23/23**, typecheck, a **3,300-module** build, and **307 regression tests passed / 3 skipped**; one OAuth test timed out only during the concurrent build and its full file passed **3/3** serially. This is not browser acceptance or deployment: two real signed-in users remain required, and PR #66 must enforce server-bound awareness identity plus demotion cleanup. See the [authenticated cursor identity worklog](worklog-260712-authenticated-cursor-identity.md).
-
-**Base branch state:** PR #64 merged production-service hardening to `master` as `2595d2de`. This follow-on branch does not alter its service/deployment files or make a new deployment claim; the inherited [production service hardening worklog](worklog-260712-production-service-hardening.md) remains the checkpoint for that separate rollout.
+Last Updated: 2026-07-12 (`release/preintegration-offline-upload`; audited
+application checkpoint `b3cd054f`; **not merged or deployed**). The complete
+sharing/access, authenticated collaboration, offline/auth isolation, private
+upload/ClamAV, OAuth/password-recovery, realtime/export, mention, and durable
+Task stack is integrated. Exact local gates passed at **107 files / 588 tests /
+3 skipped / 0 failed**, typecheck, full-source ESLint `--quiet`, and a
+**3,314-module** production build; the independent final audit returned GO.
+Responsive local evidence is in the
+[final candidate archive](../screenshots/260712-1928-final-candidate-ui/README.md).
+GitHub CI, managed exact-SHA deployment, and public acceptance remain open.
 
 **Deployment boundary:** nginx serves Vite `:3100` → API `:8100`; Redis backs API sessions. The public frontend is Vite's **development server**, not a compiled production frontend. The live client has parity rendering enabled and native rendering unset, so production uses the React/TipTap parity path; `NativeWaveView` remains read-only and is not the deployed architecture. The former `:3000`/`:8788` lane remains healthy for immediate rollback via `/root/rizzoma.conf.pre-pr60-20260712-052206`. Both lanes are unmanaged bare processes and share CouchDB.
 
@@ -37,7 +44,11 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active branch: `codex/authenticated-cursor-identity` (2026-07-12), based on merged PR #64 `master` at `2595d2de`; public production remains `fe6988fb` from PR #60. Always include branch name + date when summarizing status.
+- Active development branch: `release/preintegration-offline-upload`
+  (2026-07-12; audited application checkpoint `b3cd054f`; undeployed). Public
+  production remains on the earlier parity release until exact-merge CI and
+  public acceptance complete. Always include branch name + date when
+  summarizing status.
 - The "Current State" section below is refreshed for the deployed parity release; older dated entries and “native release” labels are historical until the native renderer is write-capable and actually enabled.
 
 Branching mode (private repo):
@@ -71,8 +82,30 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`codex/authenticated-cursor-identity` based on `master` `2595d2de` @ 2026-07-12; public production still `fe6988fb`, PR #60)
-- The follow-on cursor candidate removes random/numbered collaborator identities. Account names (email fallback) and deterministic colors are present before TipTap configures collaborative cursors; the same identity is used for awareness cursors and typing indicators, updated in place after auth, re-announced after reconnect, and removed immediately on destroy. Local code gates are green, while the required two-real-user Playwright acceptance has not run.
+Current State (`release/preintegration-offline-upload` at audited application checkpoint `b3cd054f` @ 2026-07-12; public production intentionally unchanged pending exact-merge acceptance)
+- The full application candidate is integrated locally: private/link/public
+  sharing, viewer/commenter/editor/owner enforcement, server-session Socket.IO
+  identity, live demotion, owner-partitioned offline/Yjs state, ACL-backed
+  uploads, mandatory ClamAV readiness, hardened OAuth/registration/logout,
+  password recovery, structural realtime, recursive export, mentions, and
+  durable Tasks.
+- Exact gates passed: **107/107 test files, 588 passed, 3 skipped, 0 failed**;
+  typecheck; full-source ESLint `--quiet`; and a **3,314-module** production
+  build. The focused combined matrix passed **120/120** and the independent
+  final audit returned GO.
+- Account changes remount the complete shell/topic/editor tree by owner and
+  denied loads scrub private state. Task state is server-authoritative in view
+  and edit modes, fails closed on denied refreshes, preserves generation order,
+  and recovers on reconnect/access change.
+- Final local UI evidence contains **20 Task PNGs** and **8 Share/Invite PNGs**
+  across the required desktop widths plus 390 mobile. The Task manifest has
+  zero unexpected console errors and every sharing modal remains within its
+  viewport.
+- Remaining release gates are operational: update PR #66 to this exact tree,
+  require green CI, merge the deploy-helper PR, deploy the exact merged SHA to
+  the inactive managed lane, perform a zero-overlap drain/cutover, and complete
+  public mail/scanner/restart/collaboration/role/Task/mention/export/responsive
+  acceptance.
 - The managed compiled topology is code-complete on the in-flight branch but not yet public. `deploy/systemd/` defines immutable blue/green lanes on loopback `:8101`/`:8102`; `scripts/deploy-vps.sh` now builds and starts an exact candidate SHA without touching nginx. Graceful shutdown flushes dirty Yjs documents, production refuses the development session secret, and `/api/health` includes Redis session readiness.
 - A live security preflight proved CouchDB `5984` and unauthenticated Redis `6379` were externally reachable. Redis showed active attacker replication/config activity and an SSH-key payload. Root-only evidence was preserved; all 54 untrusted keys/sessions were flushed; Redis was recreated clean. Persistent dual-stack rules now close both dependencies and every direct Rizzoma internal port while public HTTPS health remains 200. The managed cutover must use a fresh secret with no previous verifier, intentionally forcing one re-login. See `screenshots/260712-1218-redis-incident-response/`.
 - Public nginx targets Vite `:3100`, which proxies to API `:8100`; RedisStore is active. The VPS checkout is clean at documentation checkpoint `3a55155a`, while the running application code is PR #60 `fe6988fb` because the intervening files are docs/evidence only. The prior public lane on Vite `:3000` and API `:8788` remains healthy but is rollback-only.
@@ -80,7 +113,7 @@ Current State (`codex/authenticated-cursor-identity` based on `master` `2595d2de
 - `/mnt/c/Rizzoma` is not the release checkout: it remains on `feature/native-fractal-port` at `6e988cc` with one tracked modification and 134 untracked entries. Preserve those user-owned changes; use the clean release checkout for release work until reconciled.
 - FEAT_ALL required: start both server (:8788, the reserved Rizzoma backend port — see CLAUDE.md "Reserved Ports") and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Docker Desktop WSL integration was re-enabled on 2026-03-29; `docker compose up -d couchdb redis` works again from WSL for local live-app verification.
-- Express 5 SPA fallback: `src/server/app.ts` uses `app.get('/{*path}', ...)` which is the canonical path-to-regexp v8 syntax under Express 5 (bare `*` was dropped in v8). This was documented as a "workaround" in earlier snapshots but is actually the correct form. Cleaned up in Hard Gap #29 (2026-04-13): the `/uploads` static handler is now mounted BEFORE the SPA catch-all so the catch-all only has to skip `/api` paths, and the code comment explains the syntax is canonical.
+- Express 5 SPA fallback: `src/server/app.ts` uses `app.get('/{*path}', ...)`, the canonical path-to-regexp v8 syntax under Express 5. The access-controlled `/uploads/:id` router is mounted before that catch-all so missing attachment metadata returns a real 404 rather than SPA HTML; the storage directory is never mounted statically.
 - Latest live-app artifacts (2026-03-29):
   - `screenshots/260329-live/topic-c7febb62dc333aa08f4a50aea8004efc.png`
   - `screenshots/260329-live/blb-study-expanded.png`
@@ -184,18 +217,28 @@ Current State (`codex/authenticated-cursor-identity` based on `master` `2595d2de
 - Perf: `perf-harness.mjs` 200-blip run PASS (TTF 2173.8ms, FCP 260ms, rendered 101/200); 1000-blip runs now PASS in `perfRender=lite` mode — latest 2026-02-02 run (1000 blips) reported stage duration ~1.5s landing and ~0.5s expanded, memory 23MB, labels rendered 1000/1000 (`snapshots/perf/metrics-1770042725851-*.json`). Windowed 200-label time ~2.6–2.9s. `perfLimit` raises `/api/blips` limits in perf mode; `x-rizzoma-perf=1` skips blip history writes during perf seeding, `perf=full` skips unread/sidebar fetches, and benchmarks now use per-stage duration. Keep working on full-render perf beyond lite mode.
 - Follow-the-Green: socket host fix restores `wave:unread` delivery; CTA clears without API fallback. Snapshots under `snapshots/follow-the-green/` (desktop+mobile). RightToolsPanel uses unread sockets/refresh and logs debug when `rizzoma:debug:unread=1`.
 - Toolbar/inline comments: inline toolbar parity smoke green; inline comment nav remains optional in smoke but UI renders toolbars. Snapshots under `snapshots/toolbar-inline/`.
-- Health/Uploads: `/api/health` + inline comment/upload health tests green locally; uploads pipeline retains MIME/ClamAV/S3/MinIO support.
+- Health/Uploads: `/api/health` + inline comment/upload health tests are green locally. Local uploads retain MIME/ClamAV checks and now use wave-bound metadata plus per-request read ACLs; S3/MinIO is deliberately fail-closed until its bytes can be proxied through the same revocable authorization path.
 - Perf/monitoring: `scripts/perf-budget.mjs` added; `src/client/lib/performance.d.ts` supports perf monitor consumers; perf snapshots stored under `snapshots/perf/`.
 - Dependency upgrades: audit captured in `docs/DEPENDENCY_UPGRADE_AUDIT.md`; minor/patch batch applied (Playwright/Vitest/Prettier, AWS SDK, session/email libs). Major editor/tooling/server upgrades remain deferred.
 
 Current Next Work
-1. Merge and deploy the managed production-service branch, run direct candidate preflight, fully drain/stop `:3100`/`:8100`, cut both vhosts atomically, then run public Playwright acceptance. Retain the exact rollback recipe and artifacts, not a live old writer.
-2. Keep the native renderer disabled. Its runtime is read-only, omits ordinary reply trees, and drops rich content; begin with read-complete tree loading and lossless semantic round trips before any native editing work.
-3. Measure longer-window errors/latency, clean synthetic production topics, and retire the disconnected `:3000`/`:8788` legacy processes while preserving their exact restart recipe.
-4. Separate staging data from production CouchDB before further destructive acceptance testing.
-5. Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
-6. Repair/refresh BLB snapshots and test real-device iPhone Safari.
-7. Reconcile the dirty canonical checkout, automate backup cadence, triage 3 stale PRs / 7 native-port issues, and address Node/Capacitor/Action upgrades plus 6,354 lint warnings.
+1. Publish audited application checkpoint `b3cd054f` plus the current docs and
+   evidence to PR #66; require every GitHub CI gate before merge.
+2. Rebase the tested deploy-helper commits onto the new merged `master`, update
+   PR #67, require CI, and install the exact merged helper assets.
+3. Deploy the exact application merge SHA to the inactive managed lane, verify
+   direct health/assets/journal/scanner, then execute the documented
+   zero-overlap old-Vite/old-API drain and atomic both-vhost cutover.
+4. Run full public acceptance: login and restart continuity, immediate-edit
+   persistence, OAuth, two-account collaboration, Follow-the-Green `2 → 1 → 0`,
+   role/demotion/invitation, Task/mention/export/password reset, clean upload,
+   EICAR rejection, mail delivery, and inspected desktop/mobile PNGs.
+5. Record the exact production result in project docs, global `HANDOFF.md`, and
+   existing HCSS Tana node `8mGAbLRiBnne`; refresh the Git bundle only after the
+   final merged documentation checkpoint.
+6. After release, keep native rendering disabled; then address 500/1,000-blip
+   full-render sweeps, physical iPhone Safari, staging/production CouchDB
+   separation, synthetic-data cleanup, and the historical lint/dependency debt.
 
 Historical Next Work (pre-merge; superseded)
 - Branch focus (current batch): keep changes small/flagged; land perf/resilience sweeps and adapter/health/backup work in slices.

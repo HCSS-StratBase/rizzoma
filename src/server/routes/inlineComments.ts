@@ -4,20 +4,64 @@ import { requireAuth } from '../middleware/auth.js';
 import { find, insertDoc, getDoc, updateDoc, deleteDoc } from '../lib/couch.js';
 import { InlineComment } from '../../shared/types/comments.js';
 import { FEATURES } from '../../shared/featureFlags.js';
+import type { Blip } from '../schemas/wave.js';
+import { requireWaveAccess } from '../lib/access.js';
+import { csrfProtect } from '../middleware/csrf.js';
 
 const router = Router();
 
+async function loadLiveBlip(blipId: string): Promise<Blip> {
+  const doc = await getDoc<unknown>(blipId) as Partial<Blip> | null;
+  if (!doc || doc.type !== 'blip' || typeof doc.waveId !== 'string' || !doc.waveId) {
+    throw new Error('404 not_a_blip');
+  }
+  if (doc.deleted) throw new Error('410 blip_deleted');
+  return doc as Blip;
+}
+
+function respondToBlipLookupFailure(error: unknown, res: any): boolean {
+  const message = String((error as any)?.message || '');
+  if (message.startsWith('404')) {
+    res.status(404).json({ error: 'blip_not_found' });
+    return true;
+  }
+  if (message.startsWith('410')) {
+    res.status(410).json({ error: 'blip_deleted' });
+    return true;
+  }
+  return false;
+}
+
 // Schema for comment creation
+const inlineCommentRangeSchema = z.object({
+  start: z.number().int().min(0),
+  end: z.number().int().min(0),
+  text: z.string().max(10_000),
+}).refine(({ start, end }) => end >= start, { message: 'range end must not precede start' });
+
 const createCommentSchema = z.object({
-  blipId: z.string(),
-  content: z.string().min(1),
-  range: z.object({
-    start: z.number(),
-    end: z.number(),
-    text: z.string()
-  }),
-  parentId: z.string().optional(),
+  blipId: z.string().min(1).max(500),
+  content: z.string().trim().min(1).max(20_000),
+  range: inlineCommentRangeSchema,
+  parentId: z.string().min(1).max(500).optional(),
 });
+
+const inlineCommentDocSchema = z.object({
+  _id: z.string().min(1),
+  _rev: z.string().optional(),
+  id: z.string().min(1),
+  type: z.literal('inline_comment'),
+  blipId: z.string().min(1),
+  userId: z.string().min(1),
+  content: z.string(),
+  range: z.object({
+    start: z.number().int().min(0),
+    end: z.number().int().min(0),
+    text: z.string(),
+  }),
+  resolved: z.boolean(),
+  rootId: z.string().optional(),
+}).passthrough();
 
 // Get comments for a blip
 //
@@ -35,6 +79,9 @@ router.get('/blip/:blipId/comments', async (req, res): Promise<void> => {
     }
 
     const blipId = req.params['blipId'] as string;
+    const blip = await loadLiveBlip(blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
 
     const result = await find<InlineComment>(
       { type: 'inline_comment', blipId },
@@ -43,20 +90,34 @@ router.get('/blip/:blipId/comments', async (req, res): Promise<void> => {
 
     const comments = (result.docs || [])
       .map((comment) => ({
-        ...comment,
+        id: comment.id,
+        blipId: comment.blipId,
+        userId: comment.userId,
+        userName: comment.userName,
+        userAvatar: comment.userAvatar,
+        ...(access.canManage && comment.userEmail ? { userEmail: comment.userEmail } : {}),
+        content: comment.content,
+        range: comment.range,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        resolved: comment.resolved,
+        resolvedAt: comment.resolvedAt,
+        parentId: comment.parentId,
+        rootId: comment.rootId,
         isAuthenticated:
           typeof comment.userId === 'string' && comment.userId.trim().length > 0,
       }));
 
     res.json({ comments });
   } catch (error) {
+    if (respondToBlipLookupFailure(error, res)) return;
     console.error('Error in comments route:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Create a new comment
-router.post('/comments', requireAuth, async (req, res): Promise<void> => {
+router.post('/comments', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   try {
     if (!FEATURES.INLINE_COMMENTS) {
       res.status(404).json({ error: 'Feature not enabled' });
@@ -64,6 +125,9 @@ router.post('/comments', requireAuth, async (req, res): Promise<void> => {
     }
 
     const { blipId, content, range, parentId } = createCommentSchema.parse(req.body);
+    const blip = await loadLiveBlip(blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'comment');
+    if (!access) return;
     const userId = req.user!.id;
     const userName = req.user!.name || 'Anonymous';
     const userEmail = req.user!.email || '';
@@ -73,11 +137,13 @@ router.post('/comments', requireAuth, async (req, res): Promise<void> => {
 
     if (parentId) {
       try {
-        const parent = await getDoc<InlineComment & { _id: string }>(parentId);
-        if (!parent || parent.blipId !== blipId) {
+        const rawParent = await getDoc<unknown>(parentId);
+        const parsedParent = inlineCommentDocSchema.safeParse(rawParent);
+        if (!parsedParent.success || parsedParent.data.blipId !== blipId) {
           res.status(400).json({ error: 'invalid_parent' });
           return;
         }
+        const parent = parsedParent.data;
         resolvedRange = parent.range;
         rootId = parent.rootId || parent._id;
       } catch (error) {
@@ -111,13 +177,14 @@ router.post('/comments', requireAuth, async (req, res): Promise<void> => {
     
     res.json({ comment });
   } catch (error) {
+    if (respondToBlipLookupFailure(error, res)) return;
     console.error('Error creating comment:', error);
     res.status(500).json({ error: 'Failed to create comment' });
   }
 });
 
 // Resolve/unresolve a comment
-router.patch('/comments/:commentId/resolve', requireAuth, async (req, res): Promise<void> => {
+router.patch('/comments/:commentId/resolve', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   try {
     if (!FEATURES.INLINE_COMMENTS) {
       res.status(404).json({ error: 'Feature not enabled' });
@@ -127,7 +194,19 @@ router.patch('/comments/:commentId/resolve', requireAuth, async (req, res): Prom
     const commentId = req.params['commentId'] as string;
     const { resolved } = z.object({ resolved: z.boolean() }).parse(req.body);
     
-    const doc = await getDoc<any>(commentId);
+    const parsed = inlineCommentDocSchema.safeParse(await getDoc<unknown>(commentId));
+    if (!parsed.success) {
+      res.status(404).json({ error: 'comment_not_found' });
+      return;
+    }
+    const doc = parsed.data;
+    const blip = await loadLiveBlip(doc.blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'comment');
+    if (!access) return;
+    if (doc.userId !== req.user!.id && !access.canEdit) {
+      res.status(403).json({ error: 'Not authorized' });
+      return;
+    }
     await updateDoc({
       ...doc,
       resolved,
@@ -137,13 +216,14 @@ router.patch('/comments/:commentId/resolve', requireAuth, async (req, res): Prom
     
     res.json({ success: true });
   } catch (error) {
+    if (respondToBlipLookupFailure(error, res)) return;
     console.error('Error updating comment:', error);
     res.status(500).json({ error: 'Failed to update comment' });
   }
 });
 
 // Delete a comment (only by creator)
-router.delete('/comments/:commentId', requireAuth, async (req, res): Promise<void> => {
+router.delete('/comments/:commentId', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   try {
     if (!FEATURES.INLINE_COMMENTS) {
       res.status(404).json({ error: 'Feature not enabled' });
@@ -153,16 +233,29 @@ router.delete('/comments/:commentId', requireAuth, async (req, res): Promise<voi
     const commentId = req.params['commentId'] as string;
     const userId = req.user!.id;
     
-    const doc = await getDoc<any>(commentId);
-    if (doc.userId !== userId) {
+    const parsed = inlineCommentDocSchema.safeParse(await getDoc<unknown>(commentId));
+    if (!parsed.success) {
+      res.status(404).json({ error: 'comment_not_found' });
+      return;
+    }
+    const doc = parsed.data;
+    const blip = await loadLiveBlip(doc.blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'comment');
+    if (!access) return;
+    if (doc.userId !== userId && !access.canEdit) {
       res.status(403).json({ error: 'Not authorized' });
       return;
     }
     
+    if (!doc._rev) {
+      res.status(409).json({ error: 'comment_revision_missing' });
+      return;
+    }
     await deleteDoc(doc._id, doc._rev);
     
     res.json({ success: true });
   } catch (error) {
+    if (respondToBlipLookupFailure(error, res)) return;
     console.error('Error deleting comment:', error);
     res.status(500).json({ error: 'Failed to delete comment' });
   }

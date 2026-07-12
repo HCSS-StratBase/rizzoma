@@ -9,8 +9,14 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { noStore } from '../middleware/noStore.js';
-import { find, updateDoc, getDoc, getDocsById, insertDoc } from '../lib/couch.js';
-import { randomUUID } from 'crypto';
+import { find, updateDoc, getDoc, getDocsById } from '../lib/couch.js';
+import {
+  identityFromRequest,
+  resolveBlipAccess,
+  resolveWaveAccess,
+  sendAccessDenied,
+} from '../lib/access.js';
+import { csrfProtect } from '../middleware/csrf.js';
 
 const router = Router();
 
@@ -39,8 +45,8 @@ interface TaskDoc {
 router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const filter = req.query['filter'] as string; // 'all' | 'pending' | 'completed'
-  const limit = Math.min(parseInt(req.query['limit'] as string) || 50, 100);
-  const offset = parseInt(req.query['offset'] as string) || 0;
+  const limit = Math.min(Math.max(parseInt(req.query['limit'] as string) || 50, 1), 100);
+  const offset = Math.max(parseInt(req.query['offset'] as string) || 0, 0);
 
   try {
     const selector: Record<string, unknown> = {
@@ -62,19 +68,30 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
       skip: offset,
       sort: [{ createdAt: 'desc' }],
       use_index: filter === 'pending' || filter === 'completed'
-        ? 'idx_task_assignee_isCompleted'
+        ? 'idx_task_assignee_isCompleted_createdAt'
         : 'idx_task_assignee_createdAt',
     });
 
+    const identity = identityFromRequest(req);
+    const accessByWave = new Map<string, Promise<boolean>>();
+    const canReadWave = (waveId: string) => {
+      if (!accessByWave.has(waveId)) {
+        accessByWave.set(waveId, resolveWaveAccess(waveId, identity).then((access) => access.canRead).catch(() => false));
+      }
+      return accessByWave.get(waveId)!;
+    };
+    const visibleFlags = await Promise.all(result.docs.map((doc) => canReadWave(doc.waveId)));
+    const visibleDocs = result.docs.filter((_, index) => visibleFlags[index]);
+
     // Batch topic title lookups in a single _all_docs request.
-    const topicIds = [...new Set(result.docs.map(d => d.topicId).filter(Boolean))];
+    const topicIds = [...new Set(visibleDocs.map(d => d.topicId).filter(Boolean))];
     const topicDocs = await getDocsById<{ title?: string }>(topicIds);
     const topicTitles: Record<string, string> = {};
     for (const id of topicIds) {
       topicTitles[id] = topicDocs[id]?.title || 'Untitled Topic';
     }
 
-    const tasks = result.docs.map(doc => ({
+    const tasks = visibleDocs.map(doc => ({
       id: doc._id,
       waveId: doc.waveId,
       topicId: doc.topicId,
@@ -101,13 +118,20 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
       { type: 'task', assigneeId: userId, isCompleted: true },
       { limit: COUNT_CAP, use_index: 'idx_task_assignee_isCompleted' },
     );
+    const countDocs = [...(pendingResult.docs as any[]), ...(completedResult.docs as any[])];
+    const countVisible = await Promise.all(countDocs.map((doc) => canReadWave(String(doc.waveId || ''))));
+    const pendingVisible = pendingResult.docs.filter((_, index) => countVisible[index]).length;
+    const completedVisible = completedResult.docs.filter((_, index) => countVisible[pendingResult.docs.length + index]).length;
 
     res.json({
       tasks,
-      total: pendingResult.docs.length + completedResult.docs.length,
-      pendingCount: pendingResult.docs.length,
-      completedCount: completedResult.docs.length,
+      total: pendingVisible + completedVisible,
+      pendingCount: pendingVisible,
+      completedCount: completedVisible,
+      // Filtering revoked/private waves after the indexed query must not make
+      // clients stop while a later raw page can still contain visible tasks.
       hasMore: result.docs.length === limit,
+      nextOffset: offset + result.docs.length,
     });
   } catch (e: any) {
     console.error('[tasks] list error', e);
@@ -118,15 +142,21 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
 // GET /api/tasks/by-blip/:blipId - List tasks anchored to a specific blip.
 // Used by the TaskWidget node view to hydrate current completion state for
 // every task the blip's content references.
-router.get('/by-blip/:blipId', requireAuth, async (req, res): Promise<void> => {
+router.get('/by-blip/:blipId', noStore, async (req, res): Promise<void> => {
   const blipId = String(req.params['blipId']);
   try {
+    const identity = identityFromRequest(req);
+    const resolved = await resolveBlipAccess(blipId, identity);
+    if (!resolved.access.canRead) {
+      sendAccessDenied(res, identity, 'read', (req as any)?.id);
+      return;
+    }
     const result = await find<TaskDoc>(
       { type: 'task', blipId, createdAt: { $gt: 0 } },
       {
-        limit: 100,
+        limit: 1_000,
         sort: [{ createdAt: 'desc' }],
-        use_index: 'idx_task_wave_blip_createdAt',
+        use_index: 'idx_task_blip_createdAt',
       },
     );
     res.json({
@@ -138,6 +168,10 @@ router.get('/by-blip/:blipId', requireAuth, async (req, res): Promise<void> => {
         assigneeName: doc.assigneeName,
         dueDate: doc.dueDate ? new Date(doc.dueDate).toISOString() : undefined,
         isCompleted: doc.isCompleted,
+        canToggle: Boolean(
+          identity.id
+          && (doc.assigneeId === identity.id || doc.authorId === identity.id),
+        ),
       })),
     });
   } catch (e: any) {
@@ -146,67 +180,15 @@ router.get('/by-blip/:blipId', requireAuth, async (req, res): Promise<void> => {
   }
 });
 
-// POST /api/tasks - Create a new task backing a ~task widget instance.
-// Called by TaskWidget.command() when the user picks an assignee, so the
-// sidebar can find it immediately.
-router.post('/', requireAuth, async (req, res): Promise<void> => {
-  const author = req.user!;
-  const {
-    waveId,
-    topicId,
-    blipId,
-    taskText,
-    assigneeId,
-    assigneeName,
-    dueDate,
-  } = req.body || {};
-
-  if (!waveId || !topicId || !assigneeId) {
-    res.status(400).json({ error: 'missing_required_fields' });
-    return;
-  }
-
-  const now = Date.now();
-  const doc: TaskDoc = {
-    _id: `task:${randomUUID()}`,
-    type: 'task',
-    waveId: String(waveId),
-    topicId: String(topicId),
-    blipId: String(blipId || ''),
-    taskText: String(taskText || ''),
-    assigneeId: String(assigneeId),
-    assigneeName: assigneeName ? String(assigneeName) : undefined,
-    authorId: author.id,
-    authorName: author.name || author.email?.split('@')[0] || 'Unknown',
-    dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
-    isCompleted: false,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  try {
-    const inserted = await insertDoc(doc);
-    res.json({
-      id: inserted.id,
-      taskId: inserted.id,
-      waveId: doc.waveId,
-      topicId: doc.topicId,
-      blipId: doc.blipId,
-      taskText: doc.taskText,
-      assigneeId: doc.assigneeId,
-      assigneeName: doc.assigneeName,
-      dueDate: doc.dueDate ? new Date(doc.dueDate).toISOString() : undefined,
-      isCompleted: false,
-      createdAt: new Date(now).toISOString(),
-    });
-  } catch (e: any) {
-    console.error('[tasks] create error', e);
-    res.status(500).json({ error: e?.message || 'create_task_error' });
-  }
+// Tasks are derived from successfully persisted TipTap content. Creating a
+// side document first can leave a phantom task when the blip save fails and
+// also lets callers spoof arbitrary assignee names/IDs.
+router.post('/', requireAuth, csrfProtect(), (_req, res): void => {
+  res.status(409).json({ error: 'tasks_are_derived_from_saved_content' });
 });
 
 // POST /api/tasks/:id/toggle - Toggle task completion status.
-router.post('/:id/toggle', requireAuth, async (req, res): Promise<void> => {
+router.post('/:id/toggle', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const taskId = String(req.params['id']);
 
@@ -215,6 +197,12 @@ router.post('/:id/toggle', requireAuth, async (req, res): Promise<void> => {
 
     if (!doc || doc.type !== 'task') {
       res.status(404).json({ error: 'task_not_found' });
+      return;
+    }
+
+    const access = await resolveWaveAccess(doc.waveId, identityFromRequest(req));
+    if (!access.canRead) {
+      res.status(403).json({ error: 'forbidden' });
       return;
     }
 
@@ -242,7 +230,7 @@ router.post('/:id/toggle', requireAuth, async (req, res): Promise<void> => {
 });
 
 // PATCH /api/tasks/:id - Update task (due date, text, etc.)
-router.patch('/:id', requireAuth, async (req, res): Promise<void> => {
+router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const taskId = String(req.params['id']);
   const updates = req.body || {};
@@ -252,6 +240,14 @@ router.patch('/:id', requireAuth, async (req, res): Promise<void> => {
 
     if (!doc || doc.type !== 'task') {
       res.status(404).json({ error: 'task_not_found' });
+      return;
+    }
+
+
+    const access = await resolveWaveAccess(doc.waveId, identityFromRequest(req));
+    const completionOnly = Object.keys(updates).every((key) => key === 'isCompleted');
+    if (!(completionOnly ? access.canRead : access.canEdit)) {
+      res.status(403).json({ error: 'forbidden' });
       return;
     }
 

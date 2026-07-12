@@ -1,4 +1,6 @@
-# Rizzoma Project Status (master)
+# Rizzoma Project Status (`codex/password-recovery`)
+
+> **2026-07-12 password-recovery checkpoint:** This isolated branch starts at combined integration commit `c00e1711` and adds generic password-reset requests, hashed fragment-only one-time tokens, atomic credential-generation invalidation, eager session cleanup, and responsive request/complete UI. Focused tests, typecheck, touched-file lint, production build, and the inspected viewport matrix pass. It is not merged or deployed; integrate it onto the final combined head and run full CI plus staging SMTP/session acceptance. See the [password recovery worklog](docs/worklog-260712-password-recovery.md).
 
 > **Session Continuity**: Read `CLAUDE_SESSION.md` first for detailed context from the last working session (recent fixes, test status, gotchas, key files).
 
@@ -308,7 +310,7 @@ regression.
   - Removed duplicate toolbar buttons in `BlipMenu.tsx`
   - Full methodology documented in `docs/BLB_LOGIC_AND_PHILOSOPHY.md`
 - **Major dependency upgrades (2026-01-18)**: Express 4→5, Redis 4→5, Vite 5→7, Vitest 1→4, @vitejs/plugin-react→5.0.0
-- **AWS SDK v3 migration (2026-01-18)**: S3 uploads now use modular `@aws-sdk/client-s3` with lazy initialization
+- **AWS SDK v3 migration (2026-01-18, superseded for uploads 2026-07-12)**: the earlier public/pre-signed S3 upload path was removed because its URL outlived participant revocation. S3/MinIO now fails closed until object bytes are streamed through the wave ACL.
 - **Massive legacy cleanup (2026-01-18)**: Removed 480 files, -66,949 lines:
   - All CoffeeScript files (`src/share/`, `src/*_index.coffee`)
   - All legacy static assets (`src/static/` - images, CSS, jQuery plugins)

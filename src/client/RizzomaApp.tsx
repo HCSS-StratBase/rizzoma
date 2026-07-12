@@ -4,6 +4,7 @@ import { RizzomaLayout } from './components/RizzomaLayout';
 import { Toast } from './components/Toast';
 import { FEATURES } from '@shared/featureFlags';
 import { AuthProvider, type User } from './hooks/useAuth';
+import { useCollaborationUnloadGuard } from './hooks/useCollaborationPending';
 import './RizzomaApp.css';
 
 type AuthedUser = User | null;
@@ -11,6 +12,7 @@ type AuthedUser = User | null;
 const CALENDAR_BANNER_DISMISSED_KEY = 'rizzoma:calendarBannerDismissed';
 
 export function RizzomaApp(): JSX.Element {
+  useCollaborationUnloadGuard();
   const [me, setMe] = useState<AuthedUser>(null);
   const [loading, setLoading] = useState(true);
   const [showCalendarBanner, setShowCalendarBanner] = useState(() => {
@@ -27,7 +29,9 @@ export function RizzomaApp(): JSX.Element {
     void (async () => {
       try {
         const r = await api('/api/auth/me');
-        if (r.ok) setMe(r.data as AuthedUser);
+        if (r.ok) {
+          setMe(r.data as AuthedUser);
+        }
       } catch (error) {
         console.error('Auth check failed:', error);
       } finally {
@@ -78,7 +82,11 @@ export function RizzomaApp(): JSX.Element {
           </div>
         )}
 
-        <RizzomaLayout isAuthed={!!me} user={me} />
+        <RizzomaLayout
+          key={me?.id ? `authenticated:${me.id}` : 'anonymous'}
+          isAuthed={!!me}
+          user={me}
+        />
         <Toast />
       </div>
     </AuthProvider>

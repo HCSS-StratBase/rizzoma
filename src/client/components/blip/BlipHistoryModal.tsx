@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { BlipHistoryEntry } from '@shared/types/blips';
 import { api } from '../../lib/api';
 import { computeDiff } from '../../lib/htmlDiff';
+import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
 import './BlipHistoryModal.css';
 
 type BlipHistoryModalProps = {
@@ -134,9 +135,9 @@ export function BlipHistoryModal({ blipId, onClose }: BlipHistoryModalProps) {
   const displayContent = useMemo(() => {
     if (!currentEntry) return '';
     if (showDiff && prevEntry) {
-      return computeDiff(prevEntry.content, currentEntry.content);
+      return sanitizeRichHtml(computeDiff(prevEntry.content, currentEntry.content));
     }
-    return currentEntry.content;
+    return sanitizeRichHtml(currentEntry.content);
   }, [currentEntry, prevEntry, showDiff]);
 
   return (

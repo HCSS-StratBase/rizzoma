@@ -111,9 +111,19 @@ const ALL_INDEXES: Array<{ fields: string[]; name: string }> = [
   { fields: ['type', 'blipId'], name: 'idx_inline_comment_blip' },
   { fields: ['type', 'mentionedUserId', 'createdAt'], name: 'idx_mention_user_createdAt' },
   { fields: ['type', 'mentionedUserId', 'isRead'], name: 'idx_mention_user_isRead' },
+  { fields: ['type', 'mentionedUserId', 'isRead', 'createdAt'], name: 'idx_mention_user_isRead_createdAt' },
+  { fields: ['type', 'blipId'], name: 'idx_mention_blip' },
   { fields: ['type', 'assigneeId', 'createdAt'], name: 'idx_task_assignee_createdAt' },
   { fields: ['type', 'assigneeId', 'isCompleted'], name: 'idx_task_assignee_isCompleted' },
+  { fields: ['type', 'assigneeId', 'isCompleted', 'createdAt'], name: 'idx_task_assignee_isCompleted_createdAt' },
+  { fields: ['type', 'blipId', 'createdAt'], name: 'idx_task_blip_createdAt' },
   { fields: ['type', 'waveId', 'blipId', 'createdAt'], name: 'idx_task_wave_blip_createdAt' },
+  { fields: ['type', 'waveId', 'userId'], name: 'idx_participant_wave_user' },
+  { fields: ['type', 'waveId', 'email'], name: 'idx_participant_wave_email' },
+  { fields: ['type', 'userId', 'waveId'], name: 'idx_participant_user_wave' },
+  { fields: ['type', 'email', 'waveId'], name: 'idx_participant_email_wave' },
+  { fields: ['type', 'shareLevel', 'updatedAt'], name: 'idx_topic_share_updatedAt' },
+  { fields: ['type', 'passwordReset.tokenHash'], name: 'idx_user_password_reset_token' },
 ];
 
 /**

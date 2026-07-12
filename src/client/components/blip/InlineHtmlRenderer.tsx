@@ -1,5 +1,19 @@
-import type { ReactNode } from 'react';
-import { Fragment, createElement } from 'react';
+import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import {
+  Fragment,
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
+import {
+  formatTaskDate,
+  loadTaskCompletionSnapshot,
+  toggleTaskOnServer,
+} from '../editor/extensions/TaskWidget';
 
 type InlineChildLike = {
   id: string;
@@ -92,6 +106,14 @@ export interface InlineHtmlRenderOptions {
    */
   everMountedSet?: Set<string>;
   renderInlineChild: (childId: string) => ReactNode;
+  /** Authoritative completion state for task widgets in this saved HTML. */
+  taskCompletions?: ReadonlyMap<string, boolean> | null;
+  /** Task IDs the access-checked API allows this reader to toggle. */
+  toggleableTaskIds?: ReadonlySet<string>;
+  /** Task IDs with a server mutation already in flight. */
+  pendingTaskIds?: ReadonlySet<string>;
+  /** Server-authoritative, non-optimistic task toggle. */
+  onTaskToggle?: (taskId: string) => void;
 }
 
 /**
@@ -105,7 +127,17 @@ export interface InlineHtmlRenderOptions {
  * No portals. No useLayoutEffect DOM mutation. Single React-owned tree.
  */
 export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
-  const { html, inlineChildren, expandedSet, everMountedSet, renderInlineChild } = opts;
+  const {
+    html,
+    inlineChildren,
+    expandedSet,
+    everMountedSet,
+    renderInlineChild,
+    taskCompletions,
+    toggleableTaskIds,
+    pendingTaskIds,
+    onTaskToggle,
+  } = opts;
   if (!html) return null;
   if (typeof document === 'undefined') return null;
 
@@ -126,7 +158,7 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
   // function — visible but at the end of the parent rather than at a guessed
   // text-offset that would drift after parent edits.
   const container = document.createElement('div');
-  container.innerHTML = html;
+  container.innerHTML = sanitizeRichHtml(html);
 
   // Track which markers are expanded and need a child placed after their block parent.
   // We walk the DOM and emit React nodes. When a block parent (li/p) finishes, if any
@@ -162,6 +194,64 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     // Skip stale portal anchors from old injectInlineMarkers output.
     if (el.classList.contains('inline-child-portal')) {
       return null;
+    }
+
+    // A task widget in view mode is not a TipTap NodeView. Render it as a
+    // React-owned control so the durable task side-document, rather than the
+    // stale HTML class, controls the visible checkbox. This is deliberately
+    // handled before the generic element walker to avoid a global DOM patch.
+    if (el.matches('span[data-task-widget]')) {
+      const taskId = el.getAttribute('data-task-id') || '';
+      const savedDone = el.classList.contains('task-done');
+      const isCompleted = taskId && taskCompletions?.has(taskId)
+        ? taskCompletions.get(taskId) === true
+        : savedDone;
+      const classNames = new Set(
+        (el.getAttribute('class') || '').split(/\s+/).filter(Boolean),
+      );
+      classNames.add('task-widget');
+      classNames.delete('task-done');
+      classNames.delete('task-overdue');
+      if (isCompleted) classNames.add('task-done');
+
+      const dueDate = el.getAttribute('data-due-date') || '';
+      if (dueDate && !isCompleted) {
+        const date = new Date(dueDate);
+        if (!Number.isNaN(date.getTime()) && date.getTime() < Date.now()) {
+          classNames.add('task-overdue');
+        }
+      }
+
+      const assignee = el.getAttribute('data-assignee') || '';
+      const savedLabel = (el.textContent || '').trim().replace(/^[\u2610\u2611]\s*/, '');
+      const label = assignee || dueDate
+        ? `${assignee}${dueDate ? ` ${formatTaskDate(dueDate)}` : ''}`.trim()
+        : savedLabel;
+      const props = elementToProps(el);
+      const canToggle = Boolean(taskId && toggleableTaskIds?.has(taskId) && onTaskToggle);
+      classNames.delete('task-interactive');
+      classNames.delete('task-readonly');
+      classNames.add(canToggle ? 'task-interactive' : 'task-readonly');
+      props['key'] = nextKey();
+      props['className'] = [...classNames].join(' ');
+      if (canToggle) {
+        props['aria-pressed'] = isCompleted;
+        if (pendingTaskIds?.has(taskId)) props['aria-busy'] = true;
+        props['role'] = 'button';
+        props['tabIndex'] = 0;
+        props['onClick'] = (event: ReactMouseEvent<HTMLElement>) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onTaskToggle?.(taskId);
+        };
+        props['onKeyDown'] = (event: { key: string; preventDefault: () => void; stopPropagation: () => void }) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          event.stopPropagation();
+          onTaskToggle?.(taskId);
+        };
+      }
+      return createElement('span', props, `${isCompleted ? '\u2611' : '\u2610'}${label ? ` ${label}` : ''}`);
     }
 
     // Marker span — render with current expanded state.
@@ -284,4 +374,152 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
   });
 
   return createElement(Fragment, null, ...topNodes, ...orphanFollowups);
+}
+
+export interface InlineHtmlRendererProps extends Omit<
+  InlineHtmlRenderOptions,
+  'taskCompletions' | 'toggleableTaskIds' | 'pendingTaskIds' | 'onTaskToggle'
+> {
+  /** Blip ID used by the task side-doc API; for topic roots this is topic.id. */
+  taskBlipId: string;
+}
+
+/**
+ * Parity-view renderer with one authoritative task hydration per visible blip.
+ * Toggle responses are applied only after the server confirms them. Failed
+ * mutations rehydrate and never create a checked-but-unpersisted phantom.
+ */
+export function InlineHtmlRenderer({ taskBlipId, ...renderOptions }: InlineHtmlRendererProps) {
+  const [taskCompletions, setTaskCompletions] = useState<ReadonlyMap<string, boolean> | null>(null);
+  const [toggleableTaskIds, setToggleableTaskIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [pendingTaskIds, setPendingTaskIds] = useState<ReadonlySet<string>>(() => new Set());
+  const pendingTaskIdsRef = useRef(new Set<string>());
+  const hydrationGenerationRef = useRef(0);
+  const hydrationControllerRef = useRef<AbortController | null>(null);
+  const activeBlipIdRef = useRef(taskBlipId);
+  const mountedRef = useRef(true);
+
+  // Rehydrate if the set of task references changes while this view remains
+  // mounted (for example after a realtime content update).
+  const taskIdsKey = useMemo(() => {
+    if (typeof document === 'undefined') return '';
+    const container = document.createElement('div');
+    container.innerHTML = sanitizeRichHtml(renderOptions.html);
+    return Array.from(container.querySelectorAll<HTMLElement>('[data-task-widget][data-task-id]'))
+      .map((element) => element.getAttribute('data-task-id') || '')
+      .filter(Boolean)
+      .sort()
+      .join(',');
+  }, [renderOptions.html]);
+
+  const hydrate = useCallback(() => {
+    const generation = ++hydrationGenerationRef.current;
+    hydrationControllerRef.current?.abort();
+    const controller = new AbortController();
+    hydrationControllerRef.current = controller;
+    const requestedBlipId = taskBlipId;
+
+    void loadTaskCompletionSnapshot(requestedBlipId, controller.signal).then((snapshot) => {
+      if (
+        !mountedRef.current
+        || controller.signal.aborted
+        || generation !== hydrationGenerationRef.current
+        || activeBlipIdRef.current !== requestedBlipId
+      ) return;
+      // A current denied/failed refresh must revoke previously granted UI
+      // authority. Keep the last confirmed completion glyph for continuity,
+      // but fail closed so a stale button cannot keep issuing denied writes.
+      if (!snapshot) {
+        setToggleableTaskIds(new Set());
+        return;
+      }
+      setTaskCompletions(snapshot.completions);
+      setToggleableTaskIds(snapshot.toggleableTaskIds);
+    });
+  }, [taskBlipId]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    activeBlipIdRef.current = taskBlipId;
+    setTaskCompletions(null);
+    setToggleableTaskIds(new Set());
+    pendingTaskIdsRef.current.clear();
+    setPendingTaskIds(new Set());
+    // Most blips do not contain tasks. Do not turn a large topic into one
+    // by-blip request per visible blip when there is nothing to hydrate.
+    if (taskIdsKey) hydrate();
+    return () => {
+      hydrationGenerationRef.current += 1;
+      hydrationControllerRef.current?.abort();
+      hydrationControllerRef.current = null;
+    };
+  }, [hydrate, taskBlipId, taskIdsKey]);
+
+  useEffect(() => {
+    if (!taskIdsKey) return;
+    // A transient/offline refresh deliberately revokes stale authority. Give
+    // the same mounted surface a deterministic recovery edge once transport or
+    // the current wave's access policy changes; neither event necessarily
+    // changes the blip HTML or authenticated owner key.
+    const revalidateAuthority = () => hydrate();
+    window.addEventListener('online', revalidateAuthority);
+    window.addEventListener('rizzoma:access-changed', revalidateAuthority);
+    return () => {
+      window.removeEventListener('online', revalidateAuthority);
+      window.removeEventListener('rizzoma:access-changed', revalidateAuthority);
+    };
+  }, [hydrate, taskIdsKey]);
+
+  const handleTaskToggle = useCallback((taskId: string) => {
+    if (
+      !taskId
+      || !toggleableTaskIds.has(taskId)
+      || pendingTaskIdsRef.current.has(taskId)
+    ) return;
+    pendingTaskIdsRef.current.add(taskId);
+    setPendingTaskIds(new Set(pendingTaskIdsRef.current));
+
+    // A hydration started before this write cannot overwrite the newer server
+    // response. The POST is nonqueued and the visible state is not optimistic.
+    hydrationGenerationRef.current += 1;
+    hydrationControllerRef.current?.abort();
+    const requestedBlipId = taskBlipId;
+
+    // Deliberately do not attach the renderer's AbortSignal to this POST. Once
+    // sent, aborting on view -> editor unmount would make its commit ambiguous.
+    void toggleTaskOnServer(taskId, requestedBlipId).then((isCompleted) => {
+      if (!mountedRef.current || activeBlipIdRef.current !== requestedBlipId) return;
+      if (isCompleted === null) {
+        hydrate();
+        return;
+      }
+      // A full hydrate started by a failed different task may have captured a
+      // pre-write snapshot. Confirmed writes always invalidate it first.
+      hydrationGenerationRef.current += 1;
+      hydrationControllerRef.current?.abort();
+      setTaskCompletions((current) => {
+        const next = new Map(current || []);
+        next.set(taskId, isCompleted);
+        return next;
+      });
+    }).finally(() => {
+      if (!mountedRef.current || activeBlipIdRef.current !== requestedBlipId) return;
+      pendingTaskIdsRef.current.delete(taskId);
+      setPendingTaskIds(new Set(pendingTaskIdsRef.current));
+    });
+  }, [hydrate, taskBlipId, toggleableTaskIds]);
+
+  return createElement(Fragment, null, renderInlineHtml({
+    ...renderOptions,
+    taskCompletions,
+    toggleableTaskIds,
+    pendingTaskIds,
+    onTaskToggle: handleTaskToggle,
+  }));
 }

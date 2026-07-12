@@ -24,34 +24,55 @@ export function CreateTopicModal({ isOpen, onClose, onTopicCreated }: CreateTopi
       return;
     }
 
+    const rawEmails = participants.split(/[,;\n]/).map((email) => email.trim().toLowerCase()).filter(Boolean);
+    const invalidEmails = rawEmails.filter((email) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+    const emails = [...new Set(rawEmails)];
+    if (invalidEmails.length > 0 || emails.length > 20) {
+      toast(invalidEmails.length > 0 ? 'Fix invalid participant email addresses' : 'A topic can invite at most 20 participants', 'error');
+      return;
+    }
+
     setCreating(true);
-    await ensureCsrf();
-    
-    const emails = participants
-      .split(',')
-      .map(e => e.trim())
-      .filter(e => e.length > 0);
+    try {
+      await ensureCsrf();
+      const escapedTitle = trimmedTitle.replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      })[character]!);
+      const response = await api('/api/topics', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: trimmedTitle,
+          content: `<h1>${escapedTitle}</h1>`,
+          participants: emails,
+        }),
+      });
 
-    const response = await api('/api/topics', {
-      method: 'POST',
-      body: JSON.stringify({
-        title: trimmedTitle,
-        content: `<h1>${trimmedTitle}</h1>`,
-        participants: emails
-      })
-    });
-
-    setCreating(false);
-
-    if (response.ok && response.data) {
-      const topic = response.data as { id: string };
-      toast('Topic created successfully');
-      setTitle('');
-      setParticipants('');
-      onClose();
-      onTopicCreated(topic.id);
-    } else {
-      toast('Failed to create topic', 'error');
+      if (response.ok && response.data) {
+        const topic = response.data as {
+          id: string;
+          invitations?: Array<{ email: string; ok: boolean; status: string }>;
+        };
+        const inviteResults = topic.invitations || [];
+        const delivered = inviteResults.filter((result) => result.ok).length;
+        const failed = inviteResults.length - delivered;
+        if (failed > 0) {
+          toast(`Topic created; ${delivered} invitation(s) delivered and ${failed} failed. Retry failed addresses from the topic invite panel.`, 'error');
+        } else {
+          toast(inviteResults.length > 0
+            ? `Topic created and ${delivered} invitation(s) delivered`
+            : 'Topic created successfully');
+        }
+        setTitle('');
+        setParticipants('');
+        onClose();
+        onTopicCreated(topic.id);
+      } else {
+        toast('Failed to create topic', 'error');
+      }
+    } catch {
+      toast('Topic creation could not reach the server. Please try again.', 'error');
+    } finally {
+      setCreating(false);
     }
   };
 

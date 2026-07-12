@@ -1,10 +1,24 @@
 import { Router } from 'express';
 import { getDoc, updateDoc, insertDoc, find } from '../lib/couch.js';
-import { emitEvent } from '../lib/socket.js';
+import { emitEvent, revokeBlipSockets } from '../lib/socket.js';
 import { requireAuth } from '../middleware/auth.js';
 import { noStore } from '../middleware/noStore.js';
 import { invalidateUnreadCacheForWave } from '../lib/unread.js';
 import type { Blip } from '../schemas/wave.js';
+import { identityFromRequest, requireWaveAccess, resolveBlipAccess } from '../lib/access.js';
+import { csrfProtect } from '../middleware/csrf.js';
+import { randomUUID } from 'node:crypto';
+import {
+  reconcileStoredContentReferences,
+  validateStoredContentReferences,
+} from '../lib/contentReferences.js';
+
+const CONTENT_REFERENCE_ERRORS = new Set([
+  'invalid_mention_target',
+  'invalid_task_assignee',
+  'invalid_task_reference',
+  'task_reference_conflict',
+]);
 
 type LinkDoc = {
   _id?: string;
@@ -66,7 +80,7 @@ async function recordBlipHistory(
     const nextVersion = existing.docs.reduce((max, doc) => Math.max(max, doc.snapshotVersion || 0), 0) + 1;
     const now = Date.now();
     const historyDoc: BlipHistoryDoc = {
-      _id: `blip_history:${blip._id}:${now}`,
+      _id: `blip_history:${blip._id}:${now}:${randomUUID()}`,
       type: 'blip_history',
       blipId: blip._id,
       waveId: blip.waveId,
@@ -98,12 +112,24 @@ async function touchTopic(waveId: string): Promise<void> {
 }
 
 async function markBlipAndDescendantsDeleted(
-  blip: Blip & { _id: string; _rev: string },
+  blip: Blip & { _id: string; _rev?: string },
   userId: string,
-): Promise<void> {
+  allowSubtree: boolean,
+): Promise<string[]> {
   try {
-    const result = await find<Blip & { _rev: string }>({ type: 'blip', waveId: blip.waveId }, { limit: 500 });
-    const docs = result.docs || [];
+    const docs: Array<Blip & { _rev?: string }> = [];
+    const pageSize = 500;
+    for (let skip = 0; ; skip += pageSize) {
+      const result = await find<Blip & { _rev?: string }>(
+        { type: 'blip', waveId: blip.waveId },
+        { limit: pageSize, skip },
+      );
+      const page = result.docs || [];
+      docs.push(...page);
+      if (page.length < pageSize) break;
+      if (docs.length >= 100_000) throw new Error('blip_subtree_too_large');
+    }
+    if (!docs.some((doc) => doc._id === blip._id)) docs.push(blip);
     const targetIds = new Set<string>([blip._id]);
     let added = true;
     while (added) {
@@ -115,6 +141,10 @@ async function markBlipAndDescendantsDeleted(
         }
       });
     }
+
+    // Commenters may remove only their own leaf. Cascading a commenter-owned
+    // parent would otherwise erase owner/editor replies they cannot edit.
+    if (!allowSubtree && targetIds.size > 1) throw new Error('commenter_cannot_delete_subtree');
 
     const now = Date.now();
     const toUpdate = docs.filter((doc) => doc._id && targetIds.has(doc._id)).map((doc) => ({
@@ -128,6 +158,7 @@ async function markBlipAndDescendantsDeleted(
     for (const doc of toUpdate) {
       await updateDoc(doc as any);
     }
+    return [...targetIds];
   } catch (error) {
     console.error('Failed to mark blip descendants as deleted', error);
     throw error;
@@ -136,29 +167,120 @@ async function markBlipAndDescendantsDeleted(
 
 const router = Router();
 
-// PATCH /api/blips/:id/reparent { parentId }
-router.patch('/:id/reparent', requireAuth, async (req, res): Promise<void> => {
+type StoredBlip = Blip & { _id: string; _rev?: string };
+
+async function loadBlipDoc(id: string): Promise<StoredBlip> {
+  const doc = await getDoc<unknown>(id) as Partial<StoredBlip> | null;
+  if (
+    !doc
+    || doc.type !== 'blip'
+    || typeof doc._id !== 'string'
+    || typeof doc.waveId !== 'string'
+    || !doc.waveId
+  ) {
+    // Keep every blip-specific route type-safe. A task, mention, participant,
+    // or other Couch document must never be mutated through a blip endpoint.
+    throw new Error('404 not_a_blip');
+  }
+  return doc as StoredBlip;
+}
+
+async function validateNewParent(
+  blip: Blip & { _id: string },
+  parentId: string | null,
+): Promise<void> {
+  if (!parentId) return;
+  if (parentId === blip._id) throw new Error('cannot_move_to_self');
+  let current: any;
   try {
-    const id = req.params['id'] as string;
-    const parentId = (req.body || {}).parentId as string | null | undefined;
-    const blip = await getDoc<Blip & { _id: string; _rev: string }>(id);
-    const next: Blip & { _rev?: string } = {
-      ...blip,
-      parentId: parentId ?? null,
-      updatedAt: Date.now(),
-    };
-    const r = await updateDoc(next as any);
-    res.json({ id: r['id'], rev: r['rev'] });
-    return;
-  } catch (e: any) {
-    if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
-    res.status(500).json({ error: e?.message || 'reparent_error', requestId: (req as any)?.id });
+    current = await getDoc<any>(parentId);
+  } catch (error: any) {
+    if (String(error?.message || '').startsWith('404')) throw new Error('parent_not_found');
+    throw error;
+  }
+  const visited = new Set<string>();
+  for (let depth = 0; depth < 1_000; depth += 1) {
+    const currentId = String(current?._id || '');
+    if (!currentId || current.type !== 'blip') throw new Error('invalid_parent');
+    if (current.deleted) throw new Error('parent_deleted');
+    if (String(current.waveId) !== String(blip.waveId)) throw new Error('cross_wave_parent');
+    if (currentId === blip._id) throw new Error('cannot_move_to_descendant');
+    if (visited.has(currentId)) throw new Error('parent_cycle_detected');
+    visited.add(currentId);
+    const nextParentId = current.parentId ? String(current.parentId) : '';
+    if (!nextParentId) return;
+    try {
+      current = await getDoc<any>(nextParentId);
+    } catch (error: any) {
+      if (String(error?.message || '').startsWith('404')) throw new Error('parent_chain_broken');
+      throw error;
+    }
+  }
+  throw new Error('parent_depth_exceeded');
+}
+
+async function moveBlip(req: any, res: any, requestedParentId: unknown): Promise<void> {
+  const id = String(req.params?.['id'] || '');
+  if (requestedParentId !== null && requestedParentId !== undefined && typeof requestedParentId !== 'string') {
+    res.status(400).json({ error: 'invalid_parent', requestId: req.id });
     return;
   }
+  const parentId = typeof requestedParentId === 'string' && requestedParentId.trim()
+    ? requestedParentId.trim()
+    : null;
+  try {
+    const blip = await loadBlipDoc(id);
+    if (blip.deleted) {
+      res.status(410).json({ error: 'deleted', requestId: req.id });
+      return;
+    }
+    const access = await requireWaveAccess(req, res, blip.waveId, 'edit');
+    if (!access) return;
+    await validateNewParent(blip, parentId);
+    const updatedAt = Date.now();
+    const updatedBlip = { ...blip, parentId, updatedAt };
+    const result = await updateDoc(updatedBlip as any);
+    void touchTopic(blip.waveId);
+    try { emitEvent('blip:moved', { waveId: blip.waveId, blipId: id, newParentId: parentId, updatedAt, userId: req.user!.id }); } catch {}
+    res.json({
+      id: result['id'],
+      rev: result['rev'],
+      blip: {
+        ...updatedBlip,
+        permissions: {
+          role: access.role,
+          canEdit: access.canEdit,
+          canComment: access.canComment,
+          canRead: access.canRead,
+          canManage: access.canManage,
+        },
+      },
+    });
+  } catch (error: any) {
+    const code = String(error?.message || '');
+    if (code === 'parent_not_found') {
+      res.status(404).json({ error: code, requestId: req.id });
+      return;
+    }
+    if (['cannot_move_to_self', 'invalid_parent', 'parent_deleted', 'cross_wave_parent', 'cannot_move_to_descendant', 'parent_cycle_detected', 'parent_chain_broken', 'parent_depth_exceeded'].includes(code)) {
+      res.status(400).json({ error: code, requestId: req.id });
+      return;
+    }
+    if (code.startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: req.id });
+      return;
+    }
+    res.status(500).json({ error: code || 'move_blip_error', requestId: req.id });
+  }
+}
+
+// PATCH /api/blips/:id/reparent { parentId }
+router.patch('/:id/reparent', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
+  await moveBlip(req, res, (req.body || {}).parentId);
 });
 
 // POST /api/blips - Create a new blip
-router.post('/', requireAuth, async (req, res): Promise<void> => {
+router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
     const { waveId, parentId, content, anchorPosition } = req.body || {};
@@ -168,20 +290,36 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
       return;
     }
 
+    const access = await requireWaveAccess(req, res, String(waveId), 'comment');
+    if (!access) return;
+
     const now = Date.now();
-    const blipId = `${waveId}:b${now}`;
+    const blipId = `${waveId}:b${randomUUID()}`;
+    const references = await validateStoredContentReferences(String(waveId), blipId, String(content));
+    if (parentId !== null && parentId !== undefined && typeof parentId !== 'string') {
+      res.status(400).json({ error: 'invalid_parent', requestId: (req as any)?.id });
+      return;
+    }
+    const normalizedParentId = typeof parentId === 'string' && parentId.trim() ? parentId.trim() : null;
+    try {
+      await validateNewParent({ _id: blipId, waveId } as Blip & { _id: string }, normalizedParentId);
+    } catch (error: any) {
+      const code = String(error?.message || 'invalid_parent');
+      res.status(code === 'parent_not_found' ? 404 : 400).json({ error: code, requestId: (req as any)?.id });
+      return;
+    }
 
     const fallbackName = (req.user?.name && req.user.name.trim()) ? req.user.name : (req.user?.email || 'Unknown');
     const blip: Blip = {
       _id: blipId,
       type: 'blip',
       waveId,
-      parentId: parentId || null,
+      parentId: normalizedParentId,
       content,
       createdAt: now,
       updatedAt: now,
       authorId: userId,
-      authorName: (req.body?.authorName as string)?.trim() || fallbackName,
+      authorName: fallbackName,
       deleted: false,
       isFoldedByDefault: false,
       // Store anchor position for inline blips created via Ctrl+Enter
@@ -189,6 +327,13 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
     } as any;
 
     const r = await insertDoc(blip as any);
+    let referencesSynced = true;
+    try {
+      await reconcileStoredContentReferences(String(waveId), blipId, references, req.user!);
+    } catch (referenceError) {
+      referencesSynced = false;
+      console.error('[blips] created content but failed to reconcile references', { waveId, blipId, referenceError });
+    }
     invalidateUnreadCacheForWave(waveId);
     if (!isPerfRequest(req)) {
       void touchTopic(waveId);
@@ -200,22 +345,29 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
     res.status(201).json({ 
       id: r['id'], 
       rev: r['rev'],
+      referencesSynced,
       blip: {
         ...blip,
         permissions: {
-          canEdit: true,
-          canComment: true,
-          canRead: true
+          role: access.role,
+          canEdit: access.canEdit,
+          canComment: access.canComment,
+          canRead: access.canRead,
+          canManage: access.canManage,
         }
       }
     });
   } catch (e: any) {
+    if (CONTENT_REFERENCE_ERRORS.has(String(e?.message || ''))) {
+      res.status(400).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
     res.status(500).json({ error: e?.message || 'create_blip_error', requestId: (req as any)?.id });
   }
 });
 
 // PUT /api/blips/:id - Update blip content
-router.put('/:id', requireAuth, async (req, res): Promise<void> => {
+router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
 
   try {
@@ -227,19 +379,14 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
       return;
     }
 
-    const blip = await getDoc<Blip & { _id: string; _rev: string }>(id);
-    if ((blip as any).type !== 'blip') {
-      res.status(400).json({ error: 'not_a_blip', requestId: (req as any)?.id });
-      return;
-    }
+    const blip = await loadBlipDoc(id);
     if (blip.deleted) {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;
     }
-    
-    // In original Rizzoma, all wave participants can edit any blip (collaborative editing).
-    // Any authenticated user who can access the wave can edit its blips.
-    // In original Rizzoma, all wave participants can edit (collaborative editing)
+    const access = await requireWaveAccess(req, res, blip.waveId, 'edit');
+    if (!access) return;
+    const references = await validateStoredContentReferences(blip.waveId, id, String(content));
 
     const updatedBlip: Blip & { _id: string; _rev?: string } = {
       ...blip,
@@ -249,12 +396,14 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
     };
 
     const r = await updateDoc(updatedBlip as any);
+    await reconcileStoredContentReferences(blip.waveId, id, references, req.user!);
     invalidateUnreadCacheForWave(blip.waveId);
     if (!isPerfRequest(req)) {
       void touchTopic(blip.waveId);
     }
     if (!isPerfRequest(req)) {
-      void recordBlipHistory(updatedBlip, 'update', userId, req.body?.authorName || (blip as any).authorName);
+      const actorName = (req.user?.name && req.user.name.trim()) ? req.user.name : (req.user?.email || 'Unknown');
+      void recordBlipHistory(updatedBlip, 'update', userId, actorName);
     }
     try { emitEvent('blip:updated', { waveId: blip.waveId, blipId: blip._id, updatedAt: updatedBlip.updatedAt, userId }); } catch {}
     res.json({ 
@@ -263,13 +412,19 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
       blip: {
         ...updatedBlip,
         permissions: {
-          canEdit: true,
-          canComment: true,
-          canRead: true
+          role: access.role,
+          canEdit: access.canEdit,
+          canComment: access.canComment,
+          canRead: access.canRead,
+          canManage: access.canManage,
         }
       }
     });
   } catch (e: any) {
+    if (CONTENT_REFERENCE_ERRORS.has(String(e?.message || ''))) {
+      res.status(400).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
     if (String(e?.message).startsWith('404')) { 
       res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); 
       return; 
@@ -280,21 +435,24 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
 
 // GET /api/blips/:id - Get single blip with permissions
 router.get('/:id', async (req, res): Promise<void> => {
-  const userId = req.session?.userId;
   try {
     const id = req.params['id'] as string;
-    const blip = await getDoc<Blip>(id);
+    const blip = await loadBlipDoc(id);
     if ((blip as any).deleted) {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;
     }
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
     
     res.json({
       ...blip,
       permissions: {
-        canEdit: !!userId, // All wave participants can edit (original Rizzoma behavior)
-        canComment: !!userId,
-        canRead: true
+        role: access.role,
+        canEdit: access.canEdit,
+        canComment: access.canComment,
+        canRead: access.canRead,
+        canManage: access.canManage,
       }
     });
   } catch (e: any) {
@@ -306,12 +464,12 @@ router.get('/:id', async (req, res): Promise<void> => {
   }
 });
 
-router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
+router.delete('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
 
   try {
     const id = req.params['id'] as string;
-    const blip = await getDoc<Blip & { _id: string; _rev: string }>(id);
+    const blip = await loadBlipDoc(id);
     if (blip._id === blip.waveId) {
       res.status(400).json({ error: 'cannot_delete_root', requestId: (req as any)?.id });
       return;
@@ -320,19 +478,37 @@ router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;
     }
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
     const isAuthor = !blip.authorId || blip.authorId === userId;
-    if (!isAuthor) {
+    if (!access.canManage && !access.canEdit && !(access.canComment && isAuthor)) {
       console.warn('[blips] forbidden delete', { blipId: id, userId, ownerId: blip.authorId, requestId: (req as any)?.id });
       res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
       return;
     }
 
-    await markBlipAndDescendantsDeleted(blip, userId);
+    const deletedBlipIds = await markBlipAndDescendantsDeleted(blip, userId, access.canManage || access.canEdit);
+    const referenceCleanup = await Promise.allSettled(
+      deletedBlipIds.map((deletedId) => reconcileStoredContentReferences(
+        blip.waveId,
+        deletedId,
+        { mentions: [], tasks: [] },
+        req.user!,
+      )),
+    );
+    if (referenceCleanup.some((result) => result.status === 'rejected')) {
+      console.error('[blips] failed to remove one or more deleted blip references', { waveId: blip.waveId, deletedBlipIds });
+    }
+    revokeBlipSockets(deletedBlipIds);
     invalidateUnreadCacheForWave(blip.waveId);
     void touchTopic(blip.waveId);
-    try { emitEvent('blip:deleted', { waveId: blip.waveId, blipId: blip._id, userId, deletedAt: Date.now() }); } catch {}
+    try { emitEvent('blip:deleted', { waveId: blip.waveId, blipId: blip._id, descendantIds: deletedBlipIds.slice(1), userId, deletedAt: Date.now() }); } catch {}
     res.json({ deleted: true, id });
   } catch (e: any) {
+    if (String(e?.message) === 'commenter_cannot_delete_subtree') {
+      res.status(403).json({ error: 'commenter_cannot_delete_subtree', requestId: (req as any)?.id });
+      return;
+    }
     if (String(e?.message).startsWith('404')) {
       res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
       return;
@@ -349,10 +525,38 @@ router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
 router.get('/:id/links', async (req, res): Promise<void> => {
   const id = req.params['id'] as string;
   try {
+    const blip = await loadBlipDoc(id);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
     const out = (await find<LinkDoc>({ type: 'link', fromBlipId: id }, { limit: 1000 })).docs || [];
     const inn = (await find<LinkDoc>({ type: 'link', toBlipId: id }, { limit: 1000 })).docs || [];
-    res.json({ out: out.map((d) => ({ fromBlipId: d.fromBlipId, toBlipId: d.toBlipId, waveId: d.waveId })), in: inn.map((d) => ({ fromBlipId: d.fromBlipId, toBlipId: d.toBlipId, waveId: d.waveId })) });
+    const identity = identityFromRequest(req);
+    const canReadBothEnds = async (link: LinkDoc): Promise<boolean> => {
+      try {
+        const [from, to] = await Promise.all([
+          link.fromBlipId === id ? Promise.resolve({ access }) : resolveBlipAccess(link.fromBlipId, identity),
+          link.toBlipId === id ? Promise.resolve({ access }) : resolveBlipAccess(link.toBlipId, identity),
+        ]);
+        return from.access.canRead && to.access.canRead;
+      } catch {
+        return false;
+      }
+    };
+    const [visibleOutFlags, visibleInFlags] = await Promise.all([
+      Promise.all(out.map(canReadBothEnds)),
+      Promise.all(inn.map(canReadBothEnds)),
+    ]);
+    const visibleOut = out.filter((_, index) => visibleOutFlags[index]);
+    const visibleIn = inn.filter((_, index) => visibleInFlags[index]);
+    res.json({
+      out: visibleOut.map((d) => ({ fromBlipId: d.fromBlipId, toBlipId: d.toBlipId, waveId: d.waveId })),
+      in: visibleIn.map((d) => ({ fromBlipId: d.fromBlipId, toBlipId: d.toBlipId, waveId: d.waveId })),
+    });
   } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
     res.status(500).json({ error: e?.message || 'links_error', requestId: (req as any)?.id });
   }
 });
@@ -361,6 +565,9 @@ router.get('/:id/links', async (req, res): Promise<void> => {
 router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
   try {
     const blipId = req.params['id'] as string;
+    const blip = await loadBlipDoc(blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
     const result = await find<BlipHistoryDoc>({ type: 'blip_history', blipId }, { limit: 200 });
     const history = (result.docs || [])
       .slice()
@@ -368,6 +575,10 @@ router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
       .map(({ _id, _rev, type, ...rest }) => ({ id: _id, ...rest }));
     res.json({ history });
   } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
     res.status(500).json({ error: e?.message || 'blip_history_error', requestId: (req as any)?.id });
   }
 });
@@ -378,9 +589,9 @@ router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
 // would show the wrong permissions after a session switch and would
 // mask mark-read state changes.
 router.get('/', noStore, async (req, res): Promise<void> => {
-  const userId = req.session?.userId;
   const waveId = (req.query as Record<string, string | undefined>)['waveId'];
   const limitParam = (req.query as Record<string, string | undefined>)['limit'];
+  const bookmark = (req.query as Record<string, string | undefined>)['bookmark'];
   
   if (!waveId) {
     res.status(400).json({ error: 'missing_waveId', requestId: (req as any)?.id });
@@ -388,12 +599,18 @@ router.get('/', noStore, async (req, res): Promise<void> => {
   }
   
   try {
-    const limit = Math.min(Math.max(parseInt(String(limitParam ?? '100'), 10) || 100, 1), 5000);
+    const access = await requireWaveAccess(req, res, waveId, 'read');
+    if (!access) return;
+    const limit = Math.min(Math.max(parseInt(String(limitParam ?? '100'), 10) || 100, 1), 500);
     // Use the find method to query blips by waveId
     // Sort by [type, waveId, createdAt] to leverage idx_blip_wave_createdAt index
     const result = await find<Blip>(
       { type: 'blip', waveId },
-      { limit, sort: [{ type: 'asc' as const }, { waveId: 'asc' as const }, { createdAt: 'asc' as const }] }
+      {
+        limit,
+        sort: [{ type: 'asc' as const }, { waveId: 'asc' as const }, { createdAt: 'asc' as const }],
+        ...(bookmark ? { bookmark } : {}),
+      }
     );
     const blips = result.docs.filter((blip) => !(blip as any).deleted);
     
@@ -402,11 +619,14 @@ router.get('/', noStore, async (req, res): Promise<void> => {
         ...blip,
         isFoldedByDefault: !!(blip as any).isFoldedByDefault,
         permissions: {
-          canEdit: !!userId, // All wave participants can edit (original Rizzoma behavior)
-          canComment: !!userId,
-          canRead: true
+          role: access.role,
+          canEdit: access.canEdit,
+          canComment: access.canComment,
+          canRead: access.canRead,
+          canManage: access.canManage,
         }
-      }))
+      })),
+      nextBookmark: result.docs.length === limit && result.bookmark ? result.bookmark : null,
     });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'get_blips_error', requestId: (req as any)?.id });
@@ -418,7 +638,9 @@ router.get('/', noStore, async (req, res): Promise<void> => {
 router.get('/:id/collapse-default', noStore, requireAuth, async (req, res): Promise<void> => {
   try {
     const blipId = req.params['id'] as string;
-    const doc = await getDoc<Blip>(blipId);
+    const doc = await loadBlipDoc(blipId);
+    const access = await requireWaveAccess(req, res, doc.waveId, 'read');
+    if (!access) return;
     res.json({ collapseByDefault: !!doc.isFoldedByDefault });
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) {
@@ -429,8 +651,7 @@ router.get('/:id/collapse-default', noStore, requireAuth, async (req, res): Prom
   }
 });
 
-router.patch('/:id/collapse-default', requireAuth, async (req, res): Promise<void> => {
-  const userId = req.user!.id;
+router.patch('/:id/collapse-default', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const { collapseByDefault } = req.body || {};
   if (typeof collapseByDefault !== 'boolean') {
     res.status(400).json({ error: 'invalid_payload', requestId: (req as any)?.id });
@@ -439,11 +660,9 @@ router.patch('/:id/collapse-default', requireAuth, async (req, res): Promise<voi
 
   const blipId = req.params['id'] as string;
   try {
-    const existing = await getDoc<Blip & { _rev: string }>(blipId);
-    if (existing.authorId && existing.authorId !== userId) {
-      res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
-      return;
-    }
+    const existing = await loadBlipDoc(blipId);
+    const access = await requireWaveAccess(req, res, existing.waveId, 'edit');
+    if (!access) return;
     const next: Blip & { _rev?: string } = {
       ...existing,
       isFoldedByDefault: collapseByDefault,
@@ -463,8 +682,20 @@ router.patch('/:id/collapse-default', requireAuth, async (req, res): Promise<voi
 // noStore: per-user inline-comments visibility preference
 router.get('/:id/inline-comments-visibility', noStore, requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
+  const blipId = req.params['id'] as string;
   try {
-    const blipId = req.params['id'] as string;
+    const blip = await loadBlipDoc(blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'blip_access_error', requestId: (req as any)?.id });
+    return;
+  }
+  try {
     const doc = await getDoc<InlineCommentsVisibilityDoc>(inlineCommentsPrefDocId(userId, blipId));
     res.json({ isVisible: typeof doc.isVisible === 'boolean' ? doc.isVisible : true, source: 'user' });
   } catch (e: any) {
@@ -476,7 +707,7 @@ router.get('/:id/inline-comments-visibility', noStore, requireAuth, async (req, 
   }
 });
 
-router.patch('/:id/inline-comments-visibility', requireAuth, async (req, res): Promise<void> => {
+router.patch('/:id/inline-comments-visibility', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const { isVisible } = req.body || {};
   if (typeof isVisible !== 'boolean') {
@@ -487,6 +718,18 @@ router.patch('/:id/inline-comments-visibility', requireAuth, async (req, res): P
   const blipId = req.params['id'] as string;
   const docId = inlineCommentsPrefDocId(userId, blipId);
 
+  try {
+    const blip = await loadBlipDoc(blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'blip_access_error', requestId: (req as any)?.id });
+    return;
+  }
   try {
     const existing = await getDoc<InlineCommentsVisibilityDoc & { _rev: string }>(docId);
     const next: InlineCommentsVisibilityDoc & { _rev: string } = {
@@ -517,19 +760,21 @@ router.patch('/:id/inline-comments-visibility', requireAuth, async (req, res): P
 });
 
 // POST /api/blips/:id/duplicate - Duplicate a blip (creates a copy as a sibling)
-router.post('/:id/duplicate', requireAuth, async (req, res): Promise<void> => {
+router.post('/:id/duplicate', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
     const id = req.params['id'] as string;
-    const sourceBlip = await getDoc<Blip & { _id: string }>(id);
+    const sourceBlip = await loadBlipDoc(id);
 
     if ((sourceBlip as any).deleted) {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;
     }
+    const access = await requireWaveAccess(req, res, sourceBlip.waveId, 'edit');
+    if (!access) return;
 
     const now = Date.now();
-    const newBlipId = `${sourceBlip.waveId}:b${now}`;
+    const newBlipId = `${sourceBlip.waveId}:b${randomUUID()}`;
     const fallbackName = (req.user?.name && req.user.name.trim()) ? req.user.name : (req.user?.email || 'Unknown');
 
     const duplicatedBlip: Blip = {
@@ -561,9 +806,11 @@ router.post('/:id/duplicate', requireAuth, async (req, res): Promise<void> => {
       blip: {
         ...duplicatedBlip,
         permissions: {
-          canEdit: true,
-          canComment: true,
-          canRead: true
+          role: access.role,
+          canEdit: access.canEdit,
+          canComment: access.canComment,
+          canRead: access.canRead,
+          canManage: access.canManage,
         }
       }
     });
@@ -577,57 +824,8 @@ router.post('/:id/duplicate', requireAuth, async (req, res): Promise<void> => {
 });
 
 // POST /api/blips/:id/move - Move a blip to a new parent (cut & paste)
-router.post('/:id/move', requireAuth, async (req, res): Promise<void> => {
-  const userId = req.user!.id;
-  try {
-    const id = req.params['id'] as string;
-    const { newParentId } = req.body || {};
-
-    const blip = await getDoc<Blip & { _id: string; _rev: string }>(id);
-
-    if ((blip as any).deleted) {
-      res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
-      return;
-    }
-
-    // All wave participants can edit (original Rizzoma collaborative editing model)
-
-    // Prevent moving to self or to a descendant (would create cycle)
-    if (newParentId === id) {
-      res.status(400).json({ error: 'cannot_move_to_self', requestId: (req as any)?.id });
-      return;
-    }
-
-    const now = Date.now();
-    const updatedBlip: Blip & { _id: string; _rev?: string } = {
-      ...blip,
-      parentId: newParentId || null,
-      updatedAt: now,
-    };
-
-    const r = await updateDoc(updatedBlip as any);
-    void touchTopic(blip.waveId);
-    try { emitEvent('blip:moved', { waveId: blip.waveId, blipId: id, newParentId, updatedAt: now, userId }); } catch {}
-
-    res.json({
-      id: r['id'],
-      rev: r['rev'],
-      blip: {
-        ...updatedBlip,
-        permissions: {
-          canEdit: true,
-          canComment: true,
-          canRead: true
-        }
-      }
-    });
-  } catch (e: any) {
-    if (String(e?.message).startsWith('404')) {
-      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
-      return;
-    }
-    res.status(500).json({ error: e?.message || 'move_blip_error', requestId: (req as any)?.id });
-  }
+router.post('/:id/move', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
+  await moveBlip(req, res, (req.body || {}).newParentId);
 });
 
 export default router;

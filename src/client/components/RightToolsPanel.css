@@ -68,6 +68,23 @@
   font-weight: 500;
 }
 
+.right-tools-panel > .shell-auth {
+  width: 100%;
+}
+
+.right-tools-panel > .shell-auth .shell-auth-action {
+  border-color: rgba(112, 143, 176, 0.42);
+  background: rgba(255, 255, 255, 0.92);
+  color: #35536f;
+  box-shadow: 0 6px 16px rgba(38, 67, 96, 0.08);
+}
+
+.right-tools-panel > .shell-auth .shell-auth-action:hover:not(:disabled) {
+  border-color: rgba(74, 151, 226, 0.64);
+  background: #ffffff;
+  color: #1f4669;
+}
+
 /* Next button (Follow the Green) */
 .next-button {
   display: flex;

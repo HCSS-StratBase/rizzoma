@@ -5,7 +5,50 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-07-12 integrated release candidate) Branch
+  `release/preintegration-offline-upload` combines the full authorization,
+  offline/auth isolation, private upload/ClamAV, OAuth/password recovery,
+  collaboration/realtime/export, mentions, and durable Task stack at audited
+  application checkpoint `b3cd054f`. The exact full run passed **107 files / 588
+  tests / 3 skipped / 0 failed**; typecheck, full-source ESLint `--quiet`, and
+  the **3,314-module** production build passed. An independent final audit is
+  GO after the Task parity, account-switch privacy, fail-closed authority, and
+  reconnect recovery fixes. Local responsive evidence is archived under
+  [`screenshots/260712-1928-final-candidate-ui/`](screenshots/260712-1928-final-candidate-ui/).
+  The branch is not merged or deployed; GitHub CI, managed zero-overlap cutover,
+  and public acceptance remain the release boundary.
+- (2026-07-12 password recovery candidate) Branch
+  `codex/password-recovery` is based on combined integration checkpoint
+  `c00e1711`. It adds generic non-enumerating reset requests, 32-byte one-time
+  bearers stored only as SHA-256 hashes, fragment-only email links, 30-minute
+  expiry, revision-atomic password/token/generation replacement, HTTP and
+  Socket.IO stale-generation rejection, eager Redis/MemoryStore cleanup, and
+  request/complete UI that scrubs the bearer before auth bootstrap even when a
+  valid signed-in session exists. Focused gates passed at 11 files / 79 tests,
+  typecheck, touched-file ESLint `--quiet`, 3,309 build modules, and ten visually
+  inspected responsive captures with zero unexpected console errors. It is not
+  merged or deployed; full combined CI and staging SMTP/session acceptance are
+  still required. Worklog: [password recovery](docs/worklog-260712-password-recovery.md).
+- (2026-07-12 offline/auth isolation candidate) Branch
+  `codex/offline-auth-isolation` is based on PR #65 source checkpoint
+  `5a376119`. Production mutation replay is kill-switched behind an empty
+  allowlist; the modern shell exposes real Sign in/identity/Logout states and
+  becomes read-only offline. REST queues, Yjs documents, pending
+  acknowledgements, and in-memory quarantine are owner-partitioned; cross-tab
+  auth epochs and server-user mismatch force rebootstrap before any replay.
+  Service-worker v2 makes `/api`, `/socket.io`, and `/uploads` network-only and
+  purges the legacy dynamic cache that could retain account-bound responses by
+  URL.
+  Auth transitions also disconnect Socket.IO, erase both packet buffers, and
+  reconnect only after old-owner providers clean up and the new identity lands.
+  Full gates passed: 70 files / 343 tests / 3 skipped, typecheck, 3,306-module
+  build, and 24 visually inspected viewport captures with 0 unexpected console
+  errors. This is not deployable alone: integration must preserve PR #66's
+  authoritative socket authorization, server `user.id` sync result, and
+  network-only transport policy while retaining the v2 cache purge. Worklog:
+  [offline/auth isolation](docs/worklog-260712-offline-auth-isolation.md).
 - (2026-07-12 authenticated cursor identity candidate) Branch `codex/authenticated-cursor-identity` follows merged PR #64 on `master` at `2595d2de`. The production shells now place their real `/api/auth/me` user in context; actual topic-root, nested-blip, and generic-editor components pass that identity into collaboration. Initial/reconnect Yjs and awareness writes wait for the server's authorized `blip:sync`, with offline edits diffed only after admission. Measured gates: focused tests 23/23, typecheck, 3,300-module build, and 307 regression tests passed / 3 skipped; one OAuth test timed out only under concurrent build load and its full file passed 3/3 serially. This remains a draft code candidate pending two-real-user Playwright acceptance; PR #66 must additionally bind awareness identity to the server session and remove awareness server-side on demotion. Worklog: [authenticated cursor identity](docs/worklog-260712-authenticated-cursor-identity.md).
+- (2026-07-12 sharing authorization stacked candidate) `codex/sharing-access-control-stack`, rebased onto merged hardening commit `2595d2de` (tree-identical to source head `dda4d1d5`), layers persisted private/link/public policy, viewer/commenter/editor/owner enforcement, session-backed Socket.IO authorization, live demotion, and role-selecting invitations onto the managed runtime. The production read-only inventory measured **26 topic metadata documents: 0 explicit policies, 26 missing-policy legacy documents, and 0 malformed policies**. Those 26 topics therefore use the documented public-read-only outsider fallback; owners retain management, and new topics are private. This branch is not merged or deployed.
 - (2026-07-12 Redis incident response) Public Redis was actively compromised, not merely exposed: attacker SSH-key payload, 1,257 `CONFIG SET`, 578 `SLAVEOF`, and repeated malicious RDB synchronizations. Preserved root-only evidence, flushed 54 untrusted keys/sessions, recreated Redis clean, enabled dependency restart policies, and persisted dual-stack public-interface drops for CouchDB/Redis plus every direct Rizzoma internal port. External dependencies/APIs are closed; public HTTPS health remains 200. The attacker key matched no host authorized key; all accepted SSH journal entries used known authorized fingerprints; no miner/module/persistence was found. Managed cutover now requires a fresh secret and intentional logout, not old-secret compatibility. Evidence: `screenshots/260712-1218-redis-incident-response/`.
 - (2026-07-12 production-service hardening in flight) On branch `codex/production-service-hardening`, added explicit production loopback binding, strong session-secret enforcement with planned rotation, Redis-backed session readiness, dirty-Yjs retention, and ordered HTTP/Socket.IO/Redis shutdown. Added immutable blue/green systemd assets plus exact-SHA install/deploy helpers; the obsolete Docker-era deploy behavior is removed. Local gates passed: typecheck, 63 Vitest files / 299 passed / 3 skipped, and the 3,298-module production build. This is not yet a deployment claim: public nginx still targets Vite `:3100` → API `:8100` until merge, direct preflight, zero-overlap maintenance drain, both-vhost cutover, and public Playwright acceptance complete. Worklog: [production service hardening](docs/worklog-260712-production-service-hardening.md).
 - (2026-07-12 reality-audit closeout) The eight-file runtime correction merged through PR [#62](https://github.com/HCSS-StratBase/rizzoma/pull/62) as `9c4fb68f` after build, health, performance, browser, aggregate, and branch-update checks passed. Tana now separates the release truth into top-level output `8mGAbLRiBnne`, bounds and cross-links PR #60 node `cJolEA2G4Lvb`, and makes the completed 9 July precursor `74Hvd17c3Vfc` retrievable under both Rizzoma tags. Global `HANDOFF.md` was advanced to the same state.
@@ -120,10 +163,11 @@
   - [x] (2026-01-05) Inline comments now show a persistent degraded-state banner with a Retry control whenever the fetch fails, including unauthorized messaging and Vitest coverage in `client.inlineCommentsPopover.test.tsx`; retry clears the failure banner once comments load successfully so API outages are explicit.
   - [x] (2025-12-04) BlipMenu always renders the inline comment toggle, shows a read-only banner when commenting is disabled, keeps paste-as-reply visible (but disabled with explanatory tooltip), and adds a loading indicator in `InlineComments.tsx` so degraded states are surfaced directly from the toolbar/editor surfaces.
   - [x] (2025-12-04) InlineComments now reports load failures back to `RizzomaBlip`, and BlipMenu mirrors those degraded/error banners directly in the inline toolbar so outages are obvious without opening the popover; Vitest covers the new status callback + toolbar banner rendering.
-- [ ] Align inline comments, playback, uploads, and delete actions with authenticated identity metadata; add logging for denied actions.
+- [x] Align inline comments, playback, uploads, and delete actions with authenticated identity metadata; add logging for denied actions.
+  - (2026-07-12) The isolated upload-ACL slice requires canonical blip edit access, persists opaque wave-bound metadata, and rechecks current read access for every download. Known URLs stop working after revocation; production inventory is 0 upload files / 0 bytes. Companion service-worker cache purge remains an integration gate.
 
 ### Uploads, media, and gadget nodes
-- [x] Finish real upload pipeline: `src/server/routes/uploads.ts` now validates MIME signatures, blocks executables, optionally streams through ClamAV via `CLAMAV_HOST`/`CLAMAV_PORT`, and supports both filesystem and S3/MinIO storage (`UPLOADS_STORAGE`, `UPLOADS_S3_*`, `UPLOADS_S3_PUBLIC_URL`). The client upload helper gained a cancelable `createUploadTask`, `RizzomaBlip` surfaces inline progress + preview + retry/dismiss controls, and the new GitHub smoke job captures toolbar/upload screenshots for regressions.
+- [x] Finish real upload pipeline: `src/server/routes/uploads.ts` validates MIME signatures, blocks executables, requires CSRF plus canonical-blip edit access, and persists local files behind wave-bound metadata and a revocable download router. Production ClamAV is mandatory and fail-closed unless it returns an explicit clean verdict. Public/pre-signed S3 URLs are intentionally rejected until private object bytes can be proxied through the same ACL. The client helper remains cancelable even before CSRF setup completes, and `RizzomaBlip` surfaces progress, preview, retry, and dismiss controls.
 - [x] Replace placeholder gadget buttons with durable TipTap nodes (chart/poll/attachment/image) that load from stored payloads; add serialization/parse tests and UI coverage for insert/edit/delete.
   - (2026-03-12) Added `src/tests/client.editor.GadgetNodes.test.ts` to assert chart/poll gadgets parse/render legacy attributes and expose working commands through TipTap, keeping the restored gadget buttons honest.
 - [x] Modernize `getUserMedia` adapter (`src/static/js/getUserMediaAdapter.js`, `src/static/tests/adapter.js`) to new APIs with fallback detection and tests.

@@ -1,5 +1,81 @@
 # Rizzoma Feature Testing Status
 
+## Integrated pre-deployment release candidate — 2026-07-12
+
+- Branch `release/preintegration-offline-upload`; exact audited application
+  checkpoint `b3cd054f`. The candidate is not yet merged or deployed.
+- Exact full Vitest run: **107 files / 588 passed / 3 skipped / 0 failed**.
+  The focused combined authorization, account-isolation, Task, password-reset,
+  offline, and realtime matrix separately passed **120/120**.
+- TypeScript no-emit passed. Full-source ESLint `--quiet` passed with no errors.
+  The exact production build passed with **3,314 transformed modules**; the
+  existing large-chunk advisory is the only build warning.
+- Independent adversarial re-audit returned **GO** after closing three late
+  blockers: stale normal-view Task state, account A private-topic retention
+  across A→B session replacement, and Task authority that could fail closed
+  without recovering after reconnect. Regression coverage proves fail-closed
+  denial, generation-safe recovery, account-keyed remounts, and reconnect/access
+  revalidation in both parity and editor surfaces.
+- Local Playwright evidence contains **20 Task PNGs** at 1280/1366/1440/1600
+  and 390 mobile plus **8 sharing-dialog PNGs** at the four required desktop
+  widths. The Task manifest reports **0 unexpected console errors**; the sharing
+  manifest reports every modal inside its viewport. Representative final
+  desktop/mobile owner, public, toggle, and editor-handoff PNGs were visually
+  inspected. See the [final local candidate evidence](screenshots/260712-1928-final-candidate-ui/README.md).
+- Boundary: this is exact local candidate evidence, not public acceptance.
+  GitHub CI, exact-SHA managed deployment, real SMTP/invitation and reset-mail
+  checks, real ClamAV upload/EICAR checks, two-account collaboration, persisted
+  restart, and public responsive Playwright acceptance still gate production.
+
+## Password recovery candidate — 2026-07-12
+
+- Branch `codex/password-recovery`, based on combined integration checkpoint
+  `c00e1711`; not merged or deployed.
+- Focused password/auth/session/socket/offline regression run: **11 files / 79
+  passed / 0 failed**.
+- Typecheck and touched-file ESLint `--quiet` passed; the production build
+  passed with **3,309 transformed modules**.
+- Playwright produced and visually verified **10 PNGs** for request and
+  completion surfaces at 1280/1366/1440/1600 × 900 and 390 × 844 mobile, with
+  **0 unexpected console errors**. The final mobile rerun includes the padding
+  fix found during visual inspection. See the [evidence archive](screenshots/260712-1723-password-recovery-ui/README.md).
+- Coverage proves generic non-enumerating request responses, hashed-only
+  fragment bearers, bounded expiry, atomic one-time consumption under races,
+  bcrypt policy, HTTP/Socket.IO generation invalidation, eager Redis/
+  MemoryStore cleanup, boot-time fragment scrubbing even with an existing
+  valid session, and client `finally` recovery behavior.
+- Boundary: final integration/full CI and live staging SMTP/session acceptance
+  remain required; no production change is claimed.
+
+## Offline/auth isolation candidate — 2026-07-12
+
+- Branch `codex/offline-auth-isolation`, based on PR #65 source checkpoint
+  `5a376119`.
+- Targeted auth/offline/collaboration/mobile/transport suite: **7 files / 60
+  passed / 0 failed**.
+- Full Vitest: **70 files / 343 passed / 3 skipped / 0 failed**.
+- Typecheck passed; production build passed with **3,306 transformed modules**;
+  ESLint measured **0 errors / 6,561 warnings**.
+- Playwright rendered and visually verified **24 PNGs** across guest, sign-in,
+  signed-in, and authenticated-offline states at desktop widths
+  1280/1366/1440/1600 and mobile 390×844/412×915. Unexpected console errors:
+  **0**. See the [evidence archive](screenshots/260712-1348-offline-auth-isolation/README.md).
+- Regression coverage includes A→logout→B REST and Yjs isolation, active-editor
+  and unmount quarantine, cross-tab auth epoch rebootstrap, server-user mismatch,
+  acknowledgement-gated unload protection, logout 401/503 semantics, secret
+  non-persistence, accessible sign-in Escape/focus restoration, offline
+  read-only New gating, a source-wide ban on literal mutation `fetch`, and a
+  service-worker invariant that `/api`/`socket.io`/`uploads` are network-only
+  under v2 so the former authenticated v1 dynamic cache is purged, plus an A→logout/B
+  Socket.IO regression proving the old transport and both packet buffers are
+  gone before the new account can join or write, and a delayed A presence lookup
+  cannot publish after B reconnects.
+- Boundary: durable production replay is intentionally disabled with an empty
+  allowlist. The combined release must retain PR #66's server auth/access/user
+  checks and network-only service-worker policy together with this branch's
+  client owner/ack checks and v2 cache purge; no deployment or public two-user
+  acceptance is claimed here.
+
 ## Authenticated cursor identity candidate — 2026-07-12
 
 - Branch `codex/authenticated-cursor-identity` follows merged PR #64 on
@@ -43,6 +119,26 @@
   preserving evidence, 54 untrusted Redis keys were flushed and the container
   was recreated clean as master with no modules; public HTTPS health remained
   HTTP 200.
+
+## Stacked sharing-authorization checkpoint — 2026-07-12 (`codex/sharing-access-control-stack`)
+
+- Full stacked Vitest passed: **67 files / 361 passed / 3 skipped / 0 failed**.
+- The focused access suite passed **62/62**: central role/policy semantics, anonymous/outsider/viewer/commenter/editor/owner route matrices, owner-only sharing and invitations, client policy hydration/fail-closed behavior, and real session-backed Socket.IO spoof/write/demotion checks.
+- TypeScript no-emit check and production build passed; ESLint measured **0 errors / 6,684 warnings**, and Vite transformed **3,298 modules**. The warning count remains maintenance debt rather than a green-clean lint claim.
+- Playwright captured and the model visually inspected both sharing and invite modals at **1280 / 1366 / 1440 / 1600 × 900**. All eight screenshots fit without clipping or overlap; evidence is in [`screenshots/260712-122218-sharing-access-ui/`](screenshots/260712-122218-sharing-access-ui/).
+- Read-only production inventory measured **26 total topic metadata documents / 0 explicit policies / 26 missing-policy legacy / 0 malformed**. Boundary: the UI evidence is local mocked-API evidence, the branch is not merged or deployed, and no production policy was changed.
+
+## Private-upload ACL checkpoint — 2026-07-12 (`codex/private-upload-acl`)
+
+- The upload route now requires a server-resolved editable blip, persists opaque wave-bound metadata, and serves local bytes only after resolving current read access. The former public `express.static('/uploads')` mount is gone.
+- Focused stacked run passed **70/70** tests: the 14 upload authorization/lifecycle cases plus the central access resolver and six-identity route matrix. It covers anonymous/private denial, outsider upload denial, canonical-wave binding, wave mismatch, metadata failure cleanup, revocation of a known URL, no-store/nosniff headers, and S3 fail-closed behavior.
+- TypeScript no-emit and the production server/client build passed.
+- Read-only production inventory measured **0 files / 0 bytes** in every known legacy, active, managed-release, and persistent upload directory, so this URL/metadata transition has no legacy attachment migration.
+- Boundary: this upload slice still requires PR #66's centralized access resolver. In this isolated preintegration branch, the offline/auth-isolation service worker already makes `/api/*`, `/socket.io/*`, and `/uploads/*` network-only and purges legacy caches, but the combined sharing dependency is not present yet. Do not deploy until that dependency is integrated and the full combined gate passes.
+- Scanner/cancellation/active-content hardening follow-up passed **24/24** focused tests across `routes.uploads.edgecases`, `server.virusScan`, and `client.uploadCancellation`, followed by a green full TypeScript typecheck. Production rejects missing, empty, malformed, and unavailable ClamAV verdicts; cancellation while CSRF setup is pending does not open or send XHR; and SVG plus disguised HTML/JavaScript filenames are rejected while private storage suffixes no longer follow untrusted filenames.
+- Scanner readiness follow-up passed **30/30** across the same suites plus `server.health`: clamd must answer a bounded `PING` before production `/api/health` reports green. Typecheck and `git diff --check` passed afterward.
+- The upload-client transport regression separately passed **2/2**, including explicit FormData assertions for `file`, canonical `blipId`, and optional `waveId` plus the pre-CSRF cancellation race.
+- Production Compose configuration now wires `app-prod` to the health-gated ClamAV service, persistent signatures, and a named upload volume instead of relying on an undeclared runtime environment variable or container-ephemeral attachment bytes.
 
 ## Public production acceptance — 2026-07-12 (public runtime `fe6988fb`)
 

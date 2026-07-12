@@ -21,7 +21,7 @@ import { BlipKeyboardShortcuts } from './extensions/BlipKeyboardShortcuts';
 import { AppFrameGadget, ChartGadget, EmbedFrameGadget, PollGadget } from './extensions/GadgetNodes';
 import { BlipThreadNode } from './extensions/BlipThreadNode';
 import { TagNode } from './extensions/TagNode';
-import { TaskWidgetNode, installTaskWidgetToggleHandler } from './extensions/TaskWidget';
+import { TaskWidgetNode } from './extensions/TaskWidget';
 import { CodeBlockView } from './extensions/CodeBlockView';
 import { FEATURES } from '@shared/featureFlags';
 import {
@@ -42,14 +42,7 @@ export const createYjsDocument = (initialContent?: any): Y.Doc => {
   return ydoc;
 };
 
-// Mock user data - in production, this would come from an API
-const mockUsers = [
-  { id: '1', label: 'John Doe', email: 'john@example.com' },
-  { id: '2', label: 'Jane Smith', email: 'jane@example.com' },
-  { id: '3', label: 'Bob Johnson', email: 'bob@example.com' },
-  { id: '4', label: 'Alice Brown', email: 'alice@example.com' },
-  { id: '5', label: 'Charlie Davis', email: 'charlie@example.com' },
-];
+export type EditorRosterUser = { id: string; label: string; email?: string };
 
 type EditorExtensionOptions = {
   blipId?: string;
@@ -65,16 +58,26 @@ type EditorExtensionOptions = {
   /** Callback to show (unfold) all inline comments. Triggered by Ctrl+Shift+Down. */
   onShowComments?: () => void;
   /** Currently signed-in user — injected into the ~task assignee picker so the user can assign tasks to themselves. */
-  currentUser?: { id: string; label: string } | null;
+  currentUser?: EditorRosterUser | null;
   /** Real wave participants — injected into the ~task assignee picker. */
-  participants?: Array<{ id: string; label: string }>;
+  participants?: EditorRosterUser[];
 };
+
+export function buildEditorRoster(options?: EditorExtensionOptions): EditorRosterUser[] {
+  const users = new Map<string, EditorRosterUser>();
+  if (options?.currentUser?.id) users.set(options.currentUser.id, options.currentUser);
+  for (const participant of options?.participants || []) {
+    if (participant.id && !users.has(participant.id)) users.set(participant.id, participant);
+  }
+  return [...users.values()];
+}
 
 export const getEditorExtensions = (
   ydoc?: Y.Doc,
   provider?: any,
   options?: EditorExtensionOptions
 ): any[] => {
+  const editorRoster = buildEditorRoster(options);
   const extensions = [
     StarterKit.configure({
       // Disable history when using Collaboration (Yjs has its own undo manager)
@@ -166,13 +169,11 @@ export const getEditorExtensions = (
     extensions.push(TagNode.configure({}));
     extensions.push(TaskWidgetNode.configure({
       waveId: options?.waveId || '',
-      blipId: options?.blipId || '',
+      // Topic-root tasks are reconciled against the topic ID itself.
+      blipId: options?.blipId || options?.waveId || '',
       currentUser: options?.currentUser || null,
       participants: options?.participants || [],
     }));
-    // Global click handler — toggles server-side task state when a
-    // rendered task widget is clicked. Idempotent (install-once).
-    installTaskWidgetToggleHandler();
   }
 
   // Add mentions if enabled
@@ -184,10 +185,10 @@ export const getEditorExtensions = (
         },
         suggestion: {
           items: ({ query }: { query: string }) => {
-            return mockUsers
+            return editorRoster
               .filter(user => 
                 user.label.toLowerCase().includes(query.toLowerCase()) ||
-                user.email.toLowerCase().includes(query.toLowerCase())
+                (user.email || '').toLowerCase().includes(query.toLowerCase())
               )
               .slice(0, 5);
           },

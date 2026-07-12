@@ -3,6 +3,7 @@ import { createDefaultPollAttrs } from './defaults';
 import { getGadgetManifest } from './registry';
 import { resolveGadgetUrl } from './embedAdapters';
 import { getAppManifest } from './apps/catalog';
+import { normalizeEmbedFrameAttrs } from './security';
 
 function insertAppFromManifest(editor: TiptapEditorLike, appId: string) {
   const instanceId = `app-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -42,15 +43,11 @@ export function insertGadget(editor: TiptapEditorLike, detail?: GadgetInsertDeta
     case 'youtube': {
       if (!url) return false;
       const youtube = resolveGadgetUrl(manifest.type, url);
+      const safe = normalizeEmbedFrameAttrs({ provider: 'youtube', src: youtube.normalizedUrl, width: '560', height: '315', title: 'YouTube' });
+      if (!safe) throw new Error('Unsafe YouTube embed URL.');
       return editor.chain().focus().insertContent({
         type: 'embedFrameGadget',
-        attrs: {
-          title: 'YouTube',
-          provider: 'youtube',
-          width: '560',
-          height: '315',
-          src: youtube.normalizedUrl,
-        },
+        attrs: safe,
       }).run();
     }
     case 'code':
@@ -69,15 +66,17 @@ export function insertGadget(editor: TiptapEditorLike, detail?: GadgetInsertDeta
     case 'spreadsheet': {
       if (!url) return false;
       const embed = resolveGadgetUrl(manifest.type, url);
+      const safe = normalizeEmbedFrameAttrs({
+        title: manifest.type === 'spreadsheet' ? 'Spreadsheet' : 'Embedded content',
+        provider: manifest.type,
+        width: manifest.type === 'spreadsheet' ? '720' : '600',
+        height: manifest.type === 'spreadsheet' ? '420' : '400',
+        src: embed.normalizedUrl,
+      });
+      if (!safe) throw new Error('Unsafe embed URL.');
       return editor.chain().focus().insertContent({
         type: 'embedFrameGadget',
-        attrs: {
-          title: manifest.type === 'spreadsheet' ? 'Spreadsheet' : 'Embedded content',
-          provider: manifest.type,
-          width: manifest.type === 'spreadsheet' ? '720' : '600',
-          height: manifest.type === 'spreadsheet' ? '420' : '400',
-          src: embed.normalizedUrl,
-        },
+        attrs: safe,
       }).run();
     }
     case 'image': {

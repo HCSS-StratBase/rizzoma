@@ -3,6 +3,7 @@ import './RightToolsPanel.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { emitWaveUnread } from '../lib/socket';
 import { GadgetPalette, type GadgetType } from './GadgetPalette';
+import { ShellAuthControls } from './ShellAuthControls';
 
 // Custom events for insert shortcuts - these are dispatched globally
 // and picked up by the active blip editor
@@ -39,6 +40,7 @@ if (typeof window !== 'undefined') {
 
 interface RightToolsPanelProps {
   isAuthed: boolean;
+  showShellAuth?: boolean;
   user?: { id?: string; email?: string; name?: string; avatar?: string } | null;
   unreadState?: WaveUnreadState | null;
   onNextTopic?: () => void;
@@ -81,7 +83,14 @@ export function RightToolsPanel(props: RightToolsPanelProps) {
   return <RightToolsPanelContent {...props} />;
 }
 
-function RightToolsPanelContent({ user, unreadState, onNextTopic, nextTopicAvailable }: RightToolsPanelProps) {
+function RightToolsPanelContent({
+  isAuthed,
+  showShellAuth = true,
+  user,
+  unreadState,
+  onNextTopic,
+  nextTopicAvailable,
+}: RightToolsPanelProps) {
   const [viewMode, setViewMode] = useState<'text' | 'mindmap'>('text');
   // `navigating` (state) controls the button's disabled prop for visual
   // feedback. `navigatingRef` is the synchronous lock that prevents
@@ -308,6 +317,8 @@ function RightToolsPanelContent({ user, unreadState, onNextTopic, nextTopicAvail
         </div>
       )}
 
+      {showShellAuth && <ShellAuthControls showIdentity={false} />}
+
       {/* Follow the Green - Next / Next Topic buttons */}
       {unreadCount === 0 && nextTopicAvailable ? (
         <button
@@ -387,7 +398,7 @@ function RightToolsPanelContent({ user, unreadState, onNextTopic, nextTopicAvail
       </div>
 
       {/* Insert shortcuts - visible when editing or when an editable blip is active */}
-      {(isEditMode || isBlipActiveEditable) && <div className="insert-shortcuts">
+      {isAuthed && (isEditMode || isBlipActiveEditable) && <div className="insert-shortcuts">
           <div className="insert-shortcuts-header">
             <div className="insert-shortcuts-title">Insert</div>
             <div className="insert-shortcuts-subtitle">into active blip</div>

@@ -24,19 +24,29 @@ import editorRouter from './routes/editor.js';
 import linksRouter from './routes/links.js';
 import blipsRouter from './routes/blips.js';
 import { inlineCommentsRouter } from './routes/inlineComments.js';
-import { uploadsPath, uploadsRouter } from './routes/uploads.js';
+import { uploadFilesRouter, uploadsRouter } from './routes/uploads.js';
 import healthRouter from './routes/health.js';
 import notificationsRouter from './routes/notifications.js';
 import gadgetsRouter from './routes/gadgets.js';
 import mentionsRouter from './routes/mentions.js';
 import tasksRouter from './routes/tasks.js';
+import { sessionCredentialGuard } from './middleware/sessionCredentials.js';
 
 const app = express();
+const isProd = process.env['NODE_ENV'] === 'production';
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      objectSrc: ["'none'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https:', ...(!isProd ? ['http:'] : [])],
+      frameSrc: ["'self'", 'https:', ...(!isProd ? ['http:'] : [])],
+    },
+  },
+}));
 // reflect origin from allowlist for credentialed requests
-const isProd = process.env['NODE_ENV'] === 'production';
 const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost:8788,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002,http://127.0.0.1:3003,http://127.0.0.1:3004,http://127.0.0.1:3005,http://127.0.0.1:8788')
   .split(',')
   .map(s => s.trim())
@@ -57,8 +67,11 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-// Sessions across API routes (auth, topics, comments)
-app.use(sessionMiddleware());
+// One shared session middleware instance backs both Express and Socket.IO.
+// Creating a second instance would create a second MemoryStore in local/test
+// mode, making authenticated HTTP and WebSocket identities disagree.
+const sharedSessionMiddleware = sessionMiddleware();
+app.use(sharedSessionMiddleware);
 app.use(requestId());
 app.use(requestLogger());
 app.use(csrfInit());
@@ -76,6 +89,10 @@ app.get('/api/deps', async (_req, res) => {
 
 // API routes
 app.use('/api/auth', authRouter);
+// Password reset increments a user credential generation atomically with the
+// password hash. Validate that generation before every non-auth data route so
+// old sessions fail closed even if eager Redis deletion is unavailable.
+app.use('/api', sessionCredentialGuard());
 app.use('/api/topics', topicsRouter);
 app.use('/api', commentsRouter);
 app.use('/api/waves', wavesRouter);
@@ -100,12 +117,10 @@ if (process.env['NODE_ENV'] === 'production') {
   app.use(express.static(staticDir));
 }
 
-// Uploads are served from disk; mount BEFORE the SPA catch-all so the
-// catch-all doesn't need to defensively skip /uploads paths itself.
-app.use('/uploads', express.static(uploadsPath, {
-  fallthrough: false,
-  maxAge: '1d',
-}));
+// Upload bytes are guarded against the current wave role on every request.
+// Never expose the storage directory via express.static: a known URL must stop
+// working as soon as its reader logs out or loses access.
+app.use('/uploads', sessionCredentialGuard(), uploadFilesRouter);
 
 // SPA navigation handler (last registered — catch-all for non-/api, non-/uploads
 // GET requests). Uses the Express 5 / path-to-regexp v8 named-wildcard syntax
@@ -139,7 +154,7 @@ app.get('/{*path}', (_req, res, next) => {
 const server = http.createServer(app);
 
 // Initialize socket.io with same CORS policy as HTTP
-initSocket(server, allowedOrigins);
+initSocket(server, allowedOrigins, sharedSessionMiddleware);
 
 server.listen(config.port, config.host, () => {
   // eslint-disable-next-line no-console

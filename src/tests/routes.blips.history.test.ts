@@ -71,6 +71,9 @@ describe('routes: blip history playback', () => {
 
       if (method === 'GET' && /\/[^/]+$/.test(path)) {
         const id = decodeURIComponent(path.split('/').pop() || '');
+        if (id === 'w1') {
+          return okResp({ _id: 'w1', type: 'wave', title: 'Wave', authorId: 'user-1', createdAt: 1, updatedAt: 1 });
+        }
         const found = blipDocs.find((doc) => doc._id === id);
         if (found) return okResp(found);
       }
@@ -91,7 +94,7 @@ describe('routes: blip history playback', () => {
 
   it('records and returns blip history snapshots', async () => {
     vi.spyOn(Date, 'now')
-      .mockReturnValueOnce(1000) // create blip id + history timestamp
+      .mockReturnValueOnce(1000) // create timestamp
       .mockReturnValueOnce(1500) // history snapshot timestamp
       .mockReturnValueOnce(2000) // update timestamp
       .mockReturnValueOnce(2500); // update history timestamp
@@ -101,7 +104,7 @@ describe('routes: blip history playback', () => {
 
     const createResp = await fetch(`http://127.0.0.1:${port}/api/blips`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' },
       body: JSON.stringify({ waveId: 'w1', content: '<p>hello</p>', authorName: 'Alice' }),
     });
     const created = await createResp.json();
@@ -109,7 +112,7 @@ describe('routes: blip history playback', () => {
 
     const updateResp = await fetch(`http://127.0.0.1:${port}/api/blips/${encodeURIComponent(blipId)}`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' },
       body: JSON.stringify({ content: '<p>updated</p>', authorName: 'Bob' }),
     });
     expect(updateResp.status).toBe(200);
@@ -120,7 +123,7 @@ describe('routes: blip history playback', () => {
 
     expect(historyResp.status).toBe(200);
     expect(historyBody.history).toHaveLength(2);
-    expect(historyBody.history[0]).toMatchObject({ event: 'create', authorName: 'Alice', snapshotVersion: 1 });
-    expect(historyBody.history[1]).toMatchObject({ event: 'update', authorName: 'Bob', snapshotVersion: 2 });
+    expect(historyBody.history[0]).toMatchObject({ event: 'create', authorName: 'Tester', snapshotVersion: 1 });
+    expect(historyBody.history[1]).toMatchObject({ event: 'update', authorName: 'Tester', snapshotVersion: 2 });
   });
 });
