@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { isNative, launchNativeOAuth } from '../lib/capacitor-native';
 import { toast } from './Toast';
+import { announceAuthChange } from '../lib/authSessionSignal';
 import './AuthPanel.css';
 
 type AuthUser = { id?: string; email?: string };
@@ -95,6 +96,7 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
       const idTag = (reqId !== undefined && reqId !== '') ? ` (${reqId})` : '';
       toast(`${kind === 'login' ? 'Login' : 'Register'} failed${detail}${idTag}`, 'error');
     } else {
+      announceAuthChange();
       onSignedIn(r.data as AuthUser);
       toast(kind === 'login' ? 'Welcome back!' : 'Account created!', 'info');
     }

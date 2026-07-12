@@ -1,5 +1,22 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
+## Offline/auth isolation candidate — 2026-07-12
+
+- The modern shell now has one real auth surface per viewport and a reserved
+  offline/read-only strip; offline mutation controls and active editors freeze.
+- Production durable replay remains disabled behind an empty allowlist. Queue
+  records, Yjs documents, pending acknowledgements, and unresolved in-memory
+  recovery snapshots are partitioned by authenticated owner.
+- Auth epochs propagate across tabs; an authoritative server-user mismatch
+  fails closed before Yjs sync. Literal state-changing client `fetch` calls
+  were removed in favor of the shared online-only API boundary.
+- Local gates: targeted 60/60, full 343 passed / 3 skipped, typecheck,
+  3,306-module build, and 24 visually inspected desktop/mobile captures with 0
+  unexpected console errors.
+- Boundary: integrate PR #66's server socket auth/access/revocation/user result
+  with this candidate's client owner/ack checks before two-user browser
+  acceptance or deployment.
+
 ## Authenticated cursor identity candidate — 2026-07-12
 
 - Topic-root, nested-blip, and generic editor collaboration now seed Yjs
@@ -143,7 +160,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - **Responsive breakpoints** - CSS variables and hooks for consistent breakpoints (xs: 320px, sm: 480px, md: 768px, lg: 1024px, xl: 1200px)
 - **Mobile context** - `MobileProvider` wraps app, `useMobileContext()` provides isMobile/isTablet/isDesktop/isTouchDevice state
 - **BottomSheet component** - Slide-up mobile menu with swipe-to-dismiss, backdrop click, escape key, body scroll lock, safe area padding
-- **PWA installability** - Web manifest, service worker (cache-first for assets, network-first for API), 8 SVG icons, apple-touch-icon support
+- **PWA installability** - Web manifest, service worker (cache-first for public assets; network-only for `/api`, `/socket.io`, and `/uploads`; v2 activation purges legacy dynamic caches), 8 SVG icons, apple-touch-icon support
 - **Gesture hooks** - `useSwipe` (swipe detection with threshold/timeout), `usePullToRefresh` (with visual indicator), `useSwipeToDismiss`
 - **View Transitions** - `useViewTransition` wraps native View Transitions API with reduced-motion support, navigation transitions
 - **Offline support** - `offlineQueue` queues mutations when offline, auto-syncs on reconnect, max 3 retries, localStorage persistence; `useOfflineStatus` hook with toast notifications
@@ -380,7 +397,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Responsive breakpoints (xs/sm/md/lg/xl) | Done (new) | 30+ separate mobile files | Single responsive codebase |
 | Mobile detection hooks (isMobile/isTablet/isDesktop) | Done (new) | User-agent sniffing | Media queries + touch detection |
 | PWA manifest + icons (8 sizes) | Done (new) | None | `public/manifest.json` |
-| Service worker (cache-first assets, network-first API) | Done (new) | None | `public/sw.js` |
+| Service worker (cache-first assets, network-only authenticated transports) | Done (new) | None | `public/sw.js` v2 purges legacy dynamic caches |
 | Swipe gestures (left/right panel navigation) | Done (new) | None | `useSwipe.ts` |
 | Pull to refresh | Done (new) | None | `usePullToRefresh.ts` |
 | View Transitions API (with reduced-motion) | Done (new) | None | `useViewTransition.ts` |

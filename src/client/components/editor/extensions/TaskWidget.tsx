@@ -2,6 +2,7 @@ import { Node } from '@tiptap/core';
 import { PluginKey } from '@tiptap/pm/state';
 import { Suggestion } from '@tiptap/suggestion';
 import type { SuggestionProps } from '@tiptap/suggestion';
+import { api, ensureCsrf } from '../../../lib/api';
 import './TaskWidget.css';
 
 type TaskUser = { id: string; label: string };
@@ -52,10 +53,10 @@ async function createTaskOnServer(
   try {
     // Strip the "(me)" suffix back out before sending to the server.
     const cleanLabel = assignee.label.replace(/ \(me\)$/, '');
-    const r = await fetch('/api/tasks', {
+    await ensureCsrf();
+    const r = await api<{ id?: string; taskId?: string }>('/api/tasks', {
       method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
+      queueable: false,
       body: JSON.stringify({
         waveId: opts.waveId,
         topicId: opts.waveId, // topic id == wave id in this schema
@@ -67,7 +68,7 @@ async function createTaskOnServer(
       }),
     });
     if (!r.ok) return null;
-    const data = await r.json();
+    const data = r.data as { id?: string; taskId?: string };
     return data.id || data.taskId || null;
   } catch {
     return null;
@@ -76,12 +77,13 @@ async function createTaskOnServer(
 
 async function toggleTaskOnServer(taskId: string): Promise<boolean | null> {
   try {
-    const r = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/toggle`, {
+    await ensureCsrf();
+    const r = await api<{ isCompleted?: boolean }>(`/api/tasks/${encodeURIComponent(taskId)}/toggle`, {
       method: 'POST',
-      credentials: 'same-origin',
+      queueable: false,
     });
     if (!r.ok) return null;
-    const data = await r.json();
+    const data = r.data as { isCompleted?: boolean };
     return Boolean(data.isCompleted);
   } catch {
     return null;

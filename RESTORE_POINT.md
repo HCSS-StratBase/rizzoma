@@ -5,6 +5,24 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-07-12 offline/auth isolation candidate) Branch
+  `codex/offline-auth-isolation` is based on PR #65 source checkpoint
+  `5a376119`. Production mutation replay is kill-switched behind an empty
+  allowlist; the modern shell exposes real Sign in/identity/Logout states and
+  becomes read-only offline. REST queues, Yjs documents, pending
+  acknowledgements, and in-memory quarantine are owner-partitioned; cross-tab
+  auth epochs and server-user mismatch force rebootstrap before any replay.
+  Service-worker v2 makes `/api`, `/socket.io`, and `/uploads` network-only and
+  purges the legacy dynamic cache that could retain account-bound responses by
+  URL.
+  Auth transitions also disconnect Socket.IO, erase both packet buffers, and
+  reconnect only after old-owner providers clean up and the new identity lands.
+  Full gates passed: 70 files / 343 tests / 3 skipped, typecheck, 3,306-module
+  build, and 24 visually inspected viewport captures with 0 unexpected console
+  errors. This is not deployable alone: integration must preserve PR #66's
+  authoritative socket authorization, server `user.id` sync result, and
+  network-only transport policy while retaining the v2 cache purge. Worklog:
+  [offline/auth isolation](docs/worklog-260712-offline-auth-isolation.md).
 - (2026-07-12 authenticated cursor identity candidate) Branch `codex/authenticated-cursor-identity` follows merged PR #64 on `master` at `2595d2de`. The production shells now place their real `/api/auth/me` user in context; actual topic-root, nested-blip, and generic-editor components pass that identity into collaboration. Initial/reconnect Yjs and awareness writes wait for the server's authorized `blip:sync`, with offline edits diffed only after admission. Measured gates: focused tests 23/23, typecheck, 3,300-module build, and 307 regression tests passed / 3 skipped; one OAuth test timed out only under concurrent build load and its full file passed 3/3 serially. This remains a draft code candidate pending two-real-user Playwright acceptance; PR #66 must additionally bind awareness identity to the server session and remove awareness server-side on demotion. Worklog: [authenticated cursor identity](docs/worklog-260712-authenticated-cursor-identity.md).
 - (2026-07-12 Redis incident response) Public Redis was actively compromised, not merely exposed: attacker SSH-key payload, 1,257 `CONFIG SET`, 578 `SLAVEOF`, and repeated malicious RDB synchronizations. Preserved root-only evidence, flushed 54 untrusted keys/sessions, recreated Redis clean, enabled dependency restart policies, and persisted dual-stack public-interface drops for CouchDB/Redis plus every direct Rizzoma internal port. External dependencies/APIs are closed; public HTTPS health remains 200. The attacker key matched no host authorized key; all accepted SSH journal entries used known authorized fingerprints; no miner/module/persistence was found. Managed cutover now requires a fresh secret and intentional logout, not old-secret compatibility. Evidence: `screenshots/260712-1218-redis-incident-response/`.
 - (2026-07-12 production-service hardening in flight) On branch `codex/production-service-hardening`, added explicit production loopback binding, strong session-secret enforcement with planned rotation, Redis-backed session readiness, dirty-Yjs retention, and ordered HTTP/Socket.IO/Redis shutdown. Added immutable blue/green systemd assets plus exact-SHA install/deploy helpers; the obsolete Docker-era deploy behavior is removed. Local gates passed: typecheck, 63 Vitest files / 299 passed / 3 skipped, and the 3,298-module production build. This is not yet a deployment claim: public nginx still targets Vite `:3100` → API `:8100` until merge, direct preflight, zero-overlap maintenance drain, both-vhost cutover, and public Playwright acceptance complete. Worklog: [production service hardening](docs/worklog-260712-production-service-hardening.md).

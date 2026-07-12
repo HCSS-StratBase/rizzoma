@@ -11,6 +11,13 @@ import {
   type CollaborationUser,
   isCollaborationUser,
 } from './collaborationIdentity';
+import {
+  acknowledgeCollaborationSnapshot,
+  acknowledgeCollaborationUpdate,
+  markCollaborationUpdatePending,
+} from '../../lib/collaborationPending';
+
+type UpdateAcknowledgement = { ok?: boolean } | undefined;
 
 export class SocketIOProvider {
   doc: Y.Doc;
@@ -30,12 +37,17 @@ export class SocketIOProvider {
    * updates on initial connect/reconnect.
    */
   private roomReady = false;
+  private readonly ownerId: string | null;
   private syncCallbacks: Array<() => void> = [];
   private reconnectHandler: (() => void) | null = null;
   private disconnectHandler: (() => void) | null = null;
   private docUpdateHandler: ((update: Uint8Array, origin: unknown) => void) | null = null;
   private remoteUpdateHandler: ((data: { update: number[] }) => void) | null = null;
-  private syncHandler: ((data: { state: number[]; shouldSeed?: boolean }) => void) | null = null;
+  private syncHandler: ((data: {
+    state: number[];
+    shouldSeed?: boolean;
+    user?: { id?: string } | null;
+  }) => void) | null = null;
   private localAwarenessHandler: ((change: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => void) | null = null;
   private remoteAwarenessHandler: ((data: { update?: number[]; states?: Record<string, unknown> }) => void) | null = null;
 
@@ -49,6 +61,7 @@ export class SocketIOProvider {
     this.socket = socket;
     this.blipId = blipId;
     this.awareness = new Awareness(doc);
+    this.ownerId = user?.id?.trim() || null;
 
     this.setupListeners();
     this.setupAwareness(user);
@@ -69,10 +82,11 @@ export class SocketIOProvider {
   private setupListeners() {
     this.docUpdateHandler = (update: Uint8Array, origin: unknown) => {
       if (origin !== this && this.roomReady) {
-        this.socket.emit('blip:update', {
-          blipId: this.blipId,
-          update: Array.from(update)
-        });
+        this.emitDocumentUpdate(update, false);
+      } else if (origin !== this) {
+        // The Y.Doc safely retains this local edit until an authorized
+        // reconnect. Track it so closing the tab cannot fail silently.
+        markCollaborationUpdatePending(this.ownerId, this.blipId);
       }
     };
     this.doc.on('update', this.docUpdateHandler);
@@ -84,7 +98,26 @@ export class SocketIOProvider {
     };
     this.socket.on(eventName, this.remoteUpdateHandler);
 
-    this.syncHandler = (data: { state: number[]; shouldSeed?: boolean }) => {
+    this.syncHandler = (data: {
+      state: number[];
+      shouldSeed?: boolean;
+      user?: { id?: string } | null;
+    }) => {
+      // The server session is authoritative on every join. A cookie can switch
+      // accounts in another tab while this tab still renders the old user; in
+      // that case never release the old owner's Y.Doc into the new session.
+      if (this.ownerId && data.user?.id !== this.ownerId) {
+        this.roomReady = false;
+        this.synced = false;
+        this.shouldSeed = false;
+        this.socket.emit('blip:leave', { blipId: this.blipId });
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('rizzoma:auth-session-mismatch', {
+            detail: { expectedUserId: this.ownerId, actualUserId: data.user?.id ?? null },
+          }));
+        }
+        return;
+      }
       // A blip:sync response is the server's authorized-join acknowledgement:
       // the server sends it only after room membership and role checks finish.
       const completesJoin = !this.roomReady;
@@ -106,10 +139,10 @@ export class SocketIOProvider {
         // server state is missing, then announce the authenticated identity.
         const localDiff = Y.encodeStateAsUpdate(this.doc, serverStateVector);
         if (localDiff.length > 2) {
-          this.socket.emit('blip:update', {
-            blipId: this.blipId,
-            update: Array.from(localDiff),
-          });
+          this.emitDocumentUpdate(localDiff, true);
+        } else {
+          // The authorized server state already contains everything local.
+          acknowledgeCollaborationSnapshot(this.ownerId, this.blipId);
         }
         this.reannounceLocalAwarenessState();
       }
@@ -117,6 +150,20 @@ export class SocketIOProvider {
       this.syncCallbacks = [];
     };
     this.socket.on(`blip:sync:${this.blipId}`, this.syncHandler);
+  }
+
+  private emitDocumentUpdate(update: Uint8Array, coversCompleteDocument: boolean) {
+    // A reconnect diff may already represent pending individual updates, so it
+    // must not increment their count again. Ordinary live edits do increment.
+    if (!coversCompleteDocument) markCollaborationUpdatePending(this.ownerId, this.blipId);
+    this.socket.emit('blip:update', {
+      blipId: this.blipId,
+      update: Array.from(update),
+    }, (ack: UpdateAcknowledgement) => {
+      if (!ack?.ok) return;
+      if (coversCompleteDocument) acknowledgeCollaborationSnapshot(this.ownerId, this.blipId);
+      else acknowledgeCollaborationUpdate(this.ownerId, this.blipId);
+    });
   }
 
   private setupAwareness(initialUser: CollaborationUser | null) {
@@ -235,9 +282,13 @@ export class SocketIOProvider {
     // Tell peers immediately that this cursor left instead of waiting for the
     // awareness protocol's 30-second stale-client timeout.
     removeAwarenessStates(this.awareness, [this.awareness.clientID], 'local-destroy');
-    this.socket.emit('blip:leave', {
-      blipId: this.blipId
-    });
+    // Never buffer the previous owner's leave packet across an auth reset. The
+    // server already removes all rooms when the old transport disconnects.
+    if (this.socket.connected) {
+      this.socket.emit('blip:leave', {
+        blipId: this.blipId
+      });
+    }
     if (this.docUpdateHandler) {
       this.doc.off('update', this.docUpdateHandler);
       this.docUpdateHandler = null;

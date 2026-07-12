@@ -20,6 +20,8 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
+import { api } from './api';
+import { announceAuthChange } from './authSessionSignal';
 
 /** True if the page is running inside the Capacitor native shell. */
 export const isNative = Capacitor.isNativePlatform();
@@ -99,16 +101,16 @@ function generateNonce(): string {
 
 async function redeemNonce(nonce: string): Promise<void> {
   try {
-    const res = await fetch('/api/auth/redeem-ticket', {
+    const res = await api('/api/auth/redeem-ticket', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      queueable: false,
       body: JSON.stringify({ ticket: nonce }),
     });
     if (!res.ok) {
       console.warn('[capacitor] ticket redemption failed', res.status);
       return;
     }
+    announceAuthChange();
     // Reload into the authed app shell so React's bootstrap sees
     // the new session cookie on its first /api/auth/me call.
     window.location.replace('/?layout=rizzoma');

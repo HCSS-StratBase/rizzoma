@@ -27,7 +27,9 @@ export function useCollaboration(
   // Track deps to detect changes and recreate the provider
   const depsKeyRef = useRef('');
 
-  const currentDepsKey = `${enabled}|${blipId}|${!!doc}|${!!socket}`;
+  // Include concrete document and owner identity. Boolean doc/socket presence
+  // let an A→B account switch reuse A's provider over B's document.
+  const currentDepsKey = `${enabled}|${blipId}|${doc?.clientID ?? 'no-doc'}|${!!socket}|${user?.id ?? 'guest'}`;
 
   if (currentDepsKey !== depsKeyRef.current) {
     // Deps changed — destroy old provider, potentially create new one

@@ -146,7 +146,7 @@ describe('client: mobile and PWA runtime coverage', () => {
     desktop.container.remove();
   });
 
-  it('ships a PWA manifest with eight install icons and a service worker with cache-first/network-first strategies', () => {
+  it('ships eight install icons and keeps authenticated transports out of service-worker caches', () => {
     const manifest = JSON.parse(readFileSync(join(process.cwd(), 'public/manifest.json'), 'utf8')) as {
       icons: Array<{ sizes: string; purpose?: string }>;
       display: string;
@@ -168,8 +168,23 @@ describe('client: mobile and PWA runtime coverage', () => {
     ]);
     expect(manifest.icons.filter((icon) => icon.purpose?.includes('maskable'))).toHaveLength(2);
     expect(serviceWorker).toContain('cacheFirst(event.request, STATIC_CACHE)');
-    expect(serviceWorker).toContain('networkFirst(event.request, DYNAMIC_CACHE)');
-    expect(serviceWorker).toContain("const API_PATHS = ['/api/', '/socket.io/']");
+    expect(serviceWorker).toContain("const CACHE_VERSION = 'v2'");
+    expect(serviceWorker).toContain(
+      "const PRIVATE_NETWORK_PATHS = ['/api/', '/socket.io/', '/uploads/']"
+    );
+
+    const apiBranch = serviceWorker.match(
+      /if \(isPrivateNetworkRequest\(url\)\) \{([\s\S]*?)\n {2}\}/
+    )?.[1];
+    expect(apiBranch).toContain('networkOnly(event.request)');
+    expect(apiBranch).not.toContain('DYNAMIC_CACHE');
+
+    const networkOnly = serviceWorker.match(
+      /async function networkOnly\(request\) \{([\s\S]*?)\n\}/
+    )?.[1];
+    expect(networkOnly).toContain('return await fetch(request)');
+    expect(networkOnly).not.toContain('caches.');
+    expect(networkOnly).not.toContain('cache.match');
   });
 
   it('keeps expanded blip toolbars in flow on small mobile screens', () => {
@@ -263,13 +278,18 @@ describe('client: mobile and PWA runtime coverage', () => {
     const queue = new OfflineQueueManager({
       storageKey: 'test-offline-queue',
       fetchFn: fetchFn as unknown as typeof fetch,
+      csrfTokenProvider: async () => 'fresh-csrf',
+      authUserProvider: async () => 'mobile-user',
+      replayLock: async (_name, task) => task(),
       retryDelay: 1,
       maxRetries: 3,
       autoSync: false,
     });
 
+    queue.initialize();
+    queue.activateUser('mobile-user');
     queue.enqueue({ method: 'PATCH', url: '/api/blips/b1', body: { content: 'offline edit' } });
-    expect(JSON.parse(localStorage.getItem('test-offline-queue') || '[]')).toHaveLength(1);
+    expect(queue.getPersistedQueue('mobile-user')).toHaveLength(1);
 
     const syncPromise = queue.sync();
     await vi.runAllTimersAsync();

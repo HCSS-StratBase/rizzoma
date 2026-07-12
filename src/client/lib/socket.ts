@@ -1,7 +1,56 @@
 import { io, Socket } from 'socket.io-client';
 
 let socket: Socket | undefined;
+let scheduledAuthReconnect: ReturnType<typeof setTimeout> | null = null;
+let socketAuthGeneration = 0;
 const PRESENCE_HEARTBEAT_INTERVAL_MS = 10000;
+
+type SocketWithBuffers = Socket & {
+  sendBuffer?: unknown[];
+  receiveBuffer?: unknown[];
+};
+
+function clearSocketBuffers(target: Socket): void {
+  const buffered = target as SocketWithBuffers;
+  if (Array.isArray(buffered.sendBuffer)) buffered.sendBuffer.splice(0);
+  if (Array.isArray(buffered.receiveBuffer)) buffered.receiveBuffer.splice(0);
+}
+
+/**
+ * Sever the transport before an auth mutation or cross-tab rebootstrap.
+ * Socket.IO otherwise keeps the handshake's old server session and can retain
+ * packets emitted while disconnected for delivery under the next account.
+ */
+export function disconnectSocketForAuthTransition(): void {
+  socketAuthGeneration += 1;
+  if (scheduledAuthReconnect !== null) {
+    clearTimeout(scheduledAuthReconnect);
+    scheduledAuthReconnect = null;
+  }
+  if (!socket) return;
+  socket.disconnect();
+  clearSocketBuffers(socket);
+}
+
+/** Reconnect the same listener-bearing Socket after React applies new auth. */
+export function reconnectSocketAfterAuthTransition(): void {
+  const target = socket;
+  if (!target) return;
+  if (scheduledAuthReconnect !== null) clearTimeout(scheduledAuthReconnect);
+  scheduledAuthReconnect = setTimeout(() => {
+    scheduledAuthReconnect = null;
+    if (socket !== target) return;
+    // Cleanup effects may have emitted leave packets while disconnected. None
+    // of those account-bound packets may cross the auth boundary.
+    clearSocketBuffers(target);
+    if (!target.connected) target.connect();
+  }, 0);
+}
+
+export function resetSocketForAuthTransition(): void {
+  disconnectSocketForAuthTransition();
+  reconnectSocketAfterAuthTransition();
+}
 
 function getSocket(): Socket {
   if (!socket) {
@@ -72,13 +121,17 @@ export function subscribeLinks(onChange: () => void): () => void {
 }
 export function subscribeEditor(waveId: string, onChange: (payload: any) => void): () => void {
   const s = getSocket();
-  // Join wave-level room for targeted updates
-  s.emit('editor:join', { waveId });
+  // Rejoin after an auth-bound transport reset; Socket.IO rooms belong to a
+  // connection and are discarded server-side on disconnect.
+  const join = () => s.emit('editor:join', { waveId });
+  s.on('connect', join);
+  if (s.connected) join();
   const handler = (p: any) => { if (!p || p.waveId !== waveId) return; onChange(p); };
   s.on('editor:snapshot', handler);
   s.on('editor:update', handler);
   return () => {
-    try { s.emit('editor:leave', { waveId }); } catch {}
+    try { if (s.connected) s.emit('editor:leave', { waveId }); } catch {}
+    s.off('connect', join);
     s.off('editor:snapshot', handler);
     s.off('editor:update', handler);
   };
@@ -90,8 +143,10 @@ export function subscribeEditorPresence(
   onPresence: (payload: { room: string; waveId: string; blipId?: string; count: number; users?: Array<{ userId?: string; name?: string }> }) => void,
 ): () => void {
   const s = getSocket();
-  // Join presence with optional identity by best-effort fetching /api/auth/me
-  (async () => {
+  let disposed = false;
+  // Join presence with the newly authenticated identity on every connection.
+  const join = async () => {
+    const authGeneration = socketAuthGeneration;
     try {
       const meResp = await fetch('/api/auth/me', { credentials: 'include' });
       let userId: string | undefined;
@@ -103,11 +158,15 @@ export function subscribeEditorPresence(
           ? String(body.name).trim()
           : body?.email ? String(body.email) : undefined;
       } catch {}
+      if (disposed || !s.connected || authGeneration !== socketAuthGeneration) return;
       s.emit('editor:join', { waveId, blipId, userId, name });
     } catch {
+      if (disposed || !s.connected || authGeneration !== socketAuthGeneration) return;
       s.emit('editor:join', { waveId, blipId });
     }
-  })();
+  };
+  s.on('connect', join);
+  if (s.connected) void join();
   const handler = (p: any) => {
     if (!p || p.waveId !== waveId) return;
     if (p.blipId && blipId && p.blipId !== blipId) return;
@@ -116,11 +175,13 @@ export function subscribeEditorPresence(
   s.on('editor:presence', handler);
   const heartbeat = typeof window !== 'undefined'
     ? window.setInterval(() => {
-      try { s.emit('editor:presence:heartbeat'); } catch {}
+      try { if (s.connected) s.emit('editor:presence:heartbeat'); } catch {}
     }, PRESENCE_HEARTBEAT_INTERVAL_MS)
     : null;
   return () => {
-    try { s.emit('editor:leave', { waveId, blipId }); } catch {}
+    disposed = true;
+    try { if (s.connected) s.emit('editor:leave', { waveId, blipId }); } catch {}
+    s.off('connect', join);
     s.off('editor:presence', handler);
     if (heartbeat && typeof window !== 'undefined') window.clearInterval(heartbeat);
   };
@@ -155,27 +216,30 @@ export function subscribeBlipEvents(waveId: string, onEvent: (payload: BlipSocke
 
 export function subscribeWaveUnread(waveId: string, onEvent: (payload: WaveUnreadEvent) => void, userId?: string | null): () => void {
   const s = getSocket();
-  s.emit('wave:unread:join', { waveId, userId: userId || undefined });
+  const join = () => s.emit('wave:unread:join', { waveId, userId: userId || undefined });
+  s.on('connect', join);
+  if (s.connected) join();
   const handler = (p: any) => {
     if (!p || p.waveId !== waveId) return;
     onEvent({ waveId: String(p.waveId), userId: p.userId ? String(p.userId) : undefined });
   };
   s.on('wave:unread', handler);
   return () => {
-    try { s.emit('wave:unread:leave', { waveId, userId: userId || undefined }); } catch {}
+    try { if (s.connected) s.emit('wave:unread:leave', { waveId, userId: userId || undefined }); } catch {}
+    s.off('connect', join);
     s.off('wave:unread', handler);
   };
 }
 
 export function ensureWaveUnreadJoin(waveId: string, userId?: string | null) {
   const s = getSocket();
-  s.emit('wave:unread:join', { waveId, userId: userId || undefined });
+  if (s.connected) s.emit('wave:unread:join', { waveId, userId: userId || undefined });
 }
 
 export function emitWaveUnread(waveId: string, userId?: string | null) {
   const s = getSocket();
   try {
-    s.emit('wave:unread', { waveId, userId: userId || undefined });
+    if (s.connected) s.emit('wave:unread', { waveId, userId: userId || undefined });
   } catch {}
 }
 

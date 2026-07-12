@@ -352,8 +352,10 @@ export function RizzomaBlip({
   // Dispatch edit mode event to RightToolsPanel
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing } }));
-  }, [isEditing]);
+    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, {
+      detail: { isEditing, blipId: blip.id },
+    }));
+  }, [blip.id, isEditing]);
 
   // BLB §18b2: at most ONE blip in the topic shows chrome (menu bar / edit
   // toolbar) at a time — the shared ActiveBlipContext holds which one. Blips
@@ -426,9 +428,10 @@ export function RizzomaBlip({
   const autoSaveBlip = useCallback(async (content: string) => {
     if (content === lastSavedContentRef.current) return;
     try {
-      const response = await fetch(`/api/blips/${blip.id}`, {
+      await ensureCsrf();
+      const response = await api(`/api/blips/${encodeURIComponent(blip.id)}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        queueable: false,
         body: JSON.stringify({ content }),
       });
       if (response.ok) {
@@ -476,8 +479,8 @@ export function RizzomaBlip({
   // set; late `setOptions()` calls do not reliably install ySyncPlugin.
   const collabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && blip.permissions.canEdit && !isTopicRoot);
   const ydoc = useMemo(
-    () => collabEnabled ? yjsDocManager.getDocument(blip.id) : undefined,
-    [blip.id, collabEnabled]
+    () => collabEnabled ? yjsDocManager.getDocument(blip.id, collaborationUser?.id) : undefined,
+    [blip.id, collabEnabled, collaborationUser?.id]
   );
   const collabProvider = useCollaboration(ydoc, blip.id, collabEnabled, collaborationUser);
 
@@ -573,6 +576,20 @@ export function RizzomaBlip({
     if (!inlineEditor || (inlineEditor as any).isDestroyed) return;
     inlineEditor.setEditable(isEditing);
   }, [inlineEditor, isEditing]);
+
+  // Losing mutation permission (including the shell going offline) freezes
+  // an already-open editor without firing a REST save. Any local Yjs update
+  // remains in memory and the provider's acknowledged reconnect path retries
+  // it; the global beforeunload guard protects that interim state.
+  useEffect(() => {
+    if (blip.permissions.canEdit || !isEditing) return;
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
+    setIsEditing(false);
+    inlineEditor?.setEditable(false);
+  }, [blip.permissions.canEdit, inlineEditor, isEditing]);
 
   // Seed Y.Doc from blip HTML content after the server sync response arrives.
   // TipTap's Collaboration extension renders from Y.Doc fragment 'default' (ignoring the content prop).
@@ -676,11 +693,10 @@ export function RizzomaBlip({
         const waveId = blip.id.split(':')[0];
         console.log('[RizzomaBlip] Creating child blip for wave:', waveId, 'parent:', blip.id);
 
-        const response = await fetch('/api/blips', {
+        await ensureCsrf();
+        const response = await api('/api/blips', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          queueable: false,
           body: JSON.stringify({
             waveId,
             parentId: blip.id,
@@ -697,7 +713,7 @@ export function RizzomaBlip({
           throw new Error('Failed to create child blip');
         }
 
-        const newBlip = await response.json();
+        const newBlip = response.data as { id?: string; _id?: string };
         const newBlipId = newBlip.id || newBlip._id;
 
         console.log('[RizzomaBlip] Created child blip via Ctrl+Enter:', newBlipId);
@@ -1068,11 +1084,10 @@ export function RizzomaBlip({
       // Extract waveId from the blip id (format: waveId:blipId)
       const waveId = blip.id.split(':')[0];
 
-      const response = await fetch('/api/blips', {
+      await ensureCsrf();
+      const response = await api('/api/blips', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        queueable: false,
         body: JSON.stringify({
           waveId,
           parentId: blip.id,
@@ -1083,8 +1098,6 @@ export function RizzomaBlip({
       if (!response.ok) {
         throw new Error('Failed to create reply');
       }
-
-      await response.json();
 
       onAddReply?.(blip.id, replyContent);
       setReplyContent('');
@@ -1494,6 +1507,7 @@ export function RizzomaBlip({
         await ensureCsrf();
         await api(`/api/blips/${encodeURIComponent(blip.id)}/inline-comments-visibility`, {
           method: 'PATCH',
+          queueable: false,
           body: JSON.stringify({ isVisible }),
         });
       } catch (error) {
@@ -1785,6 +1799,7 @@ export function RizzomaBlip({
       await ensureCsrf();
       const response = await api('/api/comments', {
         method: 'POST',
+        queueable: false,
         body: JSON.stringify({
           blipId: blip.id,
           content: inlineCommentDraft.trim(),
@@ -1870,9 +1885,10 @@ export function RizzomaBlip({
     if (!blip.permissions.canEdit || isDuplicating) return;
     setIsDuplicating(true);
     try {
-      const response = await fetch(`/api/blips/${encodeURIComponent(blip.id)}/duplicate`, {
+      await ensureCsrf();
+      const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/duplicate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        queueable: false,
       });
       if (!response.ok) {
         throw new Error('Failed to duplicate blip');
@@ -1922,9 +1938,10 @@ export function RizzomaBlip({
     }
     try {
       const waveId = blip.id.split(':')[0];
-      const response = await fetch('/api/blips', {
+      await ensureCsrf();
+      const response = await api('/api/blips', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        queueable: false,
         body: JSON.stringify({
           waveId,
           parentId: blip.id, // Paste as child of current blip
@@ -1937,9 +1954,11 @@ export function RizzomaBlip({
       // If this was a cut operation, delete the original
       if (payload.isCut && payload.blipId) {
         try {
-          await fetch(`/api/blips/${encodeURIComponent(payload.blipId)}`, {
+          const deleteResponse = await api(`/api/blips/${encodeURIComponent(payload.blipId)}`, {
             method: 'DELETE',
+            queueable: false,
           });
+          if (!deleteResponse.ok) throw new Error('Failed to delete cut blip');
           clearCutState(payload.blipId);
         } catch (deleteError) {
           console.warn('Failed to delete cut blip', deleteError);
@@ -1968,6 +1987,7 @@ export function RizzomaBlip({
       await ensureCsrf();
       const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/collapse-default`, {
         method: 'PATCH',
+        queueable: false,
         body: JSON.stringify({ collapseByDefault: next })
       });
       if (!response.ok) {
@@ -1997,6 +2017,7 @@ export function RizzomaBlip({
         await ensureCsrf();
         const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/inline-comments-visibility`, {
           method: 'PATCH',
+          queueable: false,
           body: JSON.stringify({ isVisible: next }),
         });
         if (!response.ok) {

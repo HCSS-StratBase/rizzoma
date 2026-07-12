@@ -32,6 +32,14 @@ const LOAD_THROTTLE_MS = 5000; // Minimum time between loads
 const SOCKET_COOLDOWN_MS = 10000; // Cooldown period after load to ignore socket events
 
 type LoadingState = { isLoading: boolean; lastLoadTime: number; lastCompleteTime: number };
+
+function asReadOnlyBlip(blip: BlipData): BlipData {
+  return {
+    ...blip,
+    permissions: { canRead: true, canEdit: false, canComment: false },
+    childBlips: blip.childBlips?.map(asReadOnlyBlip),
+  };
+}
 declare global {
   interface Window {
     __rizzomaLoadingState?: Map<string, LoadingState>;
@@ -210,6 +218,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const [showWavePlayback, setShowWavePlayback] = useState(false);
   const [showCommentsPanel, setShowCommentsPanel] = useState(true);
 
+  useEffect(() => {
+    if (isAuthed) return;
+    setShowInviteModal(false);
+    setShowShareModal(false);
+    setShowGearMenu(false);
+    setShowEditGearMenu(false);
+  }, [isAuthed]);
+
   // Topic content editing state (BLB: topic is meta-blip, title is first line)
   const [isEditingTopic, setIsEditingTopic] = useState(false);
   const [topicContent, setTopicContent] = useState('');
@@ -233,8 +249,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   // RizzomaBlip skips collab for topic root (isTopicRoot), so this is the sole owner.
   const topicCollabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && isAuthed);
   const topicYdoc = useMemo(
-    () => topicCollabEnabled ? yjsDocManager.getDocument(id) : undefined,
-    [id, topicCollabEnabled]
+    () => topicCollabEnabled ? yjsDocManager.getDocument(id, collaborationUser?.id) : undefined,
+    [collaborationUser?.id, id, topicCollabEnabled]
   );
   const topicCollabProvider = useCollaboration(
     topicYdoc,
@@ -295,8 +311,24 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   // Notify RightToolsPanel of edit mode changes
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing: isEditingTopic } }));
-  }, [isEditingTopic]);
+    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, {
+      detail: { isEditing: isEditingTopic, blipId: id },
+    }));
+  }, [id, isEditingTopic]);
+
+  // Connectivity is folded into `isAuthed` by RizzomaLayout. If it drops
+  // while this editor is active, freeze the surface without issuing a REST
+  // save. The Y.Doc/provider retains and retries any acknowledged-pending
+  // local state after the authorized reconnect.
+  useEffect(() => {
+    if (isAuthed || !isEditingTopic) return;
+    if (topicSaveTimeoutRef.current) {
+      clearTimeout(topicSaveTimeoutRef.current);
+      topicSaveTimeoutRef.current = null;
+    }
+    setIsEditingTopic(false);
+    topicEditor?.setEditable(false);
+  }, [isAuthed, isEditingTopic, topicEditor]);
 
   // Handle insert events from RightToolsPanel when topic editor is active
   useEffect(() => {
@@ -1224,8 +1256,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   }
 
   const tags = extractTags(topic.content || '');
-  const inlineRootBlips = blips.filter(b => typeof b.anchorPosition === 'number');
-  const listBlips = blips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
+  // Revoke the already-loaded tree synchronously when auth/connectivity drops;
+  // waiting for the async reload would leave a brief editable window.
+  const renderedBlips = isAuthed ? blips : blips.map(asReadOnlyBlip);
+  const renderedCurrentSubblip = currentSubblip && !isAuthed
+    ? asReadOnlyBlip(currentSubblip)
+    : currentSubblip;
+  const inlineRootBlips = renderedBlips.filter(b => typeof b.anchorPosition === 'number');
+  const listBlips = renderedBlips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
   const topicContentHtmlBase = topic.content && topic.content.trim().length > 0
     ? topic.content
     : `<h1>${topic.title || 'Untitled'}</h1>`;
@@ -1285,7 +1323,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         <button
           className="collab-btn invite-btn"
           title="Invite participants"
-          onClick={() => setShowInviteModal(true)}
+          onClick={() => { if (isAuthed) setShowInviteModal(true); }}
+          disabled={!isAuthed}
         >
           Invite
         </button>
@@ -1312,7 +1351,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         <button
           className="collab-btn share-btn"
           title="Share settings"
-          onClick={() => setShowShareModal(true)}
+          onClick={() => { if (isAuthed) setShowShareModal(true); }}
+          disabled={!isAuthed}
         >
           🔒 Share
         </button>
@@ -1326,10 +1366,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           </button>
           {showGearMenu && (
             <div className="gear-dropdown">
-              <button className="gear-menu-item" onClick={handleMarkTopicRead}>
+              <button className="gear-menu-item" onClick={handleMarkTopicRead} disabled={!isAuthed}>
                 Mark topic as read
               </button>
-              <button className="gear-menu-item" onClick={handleToggleFollow}>
+              <button className="gear-menu-item" onClick={handleToggleFollow} disabled={!isAuthed}>
                 {isFollowing ? 'Unfollow topic' : 'Follow topic'}
               </button>
               <div className="gear-menu-divider" />
@@ -1359,7 +1399,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           BLB SUBBLIP VIEW - When navigated into a subblip
           Shows: Hide button + subblip content + child blips
       ======================================== */}
-      {currentSubblip && (
+      {renderedCurrentSubblip && (
         <div className="subblip-view">
           {/* Subblip navigation bar */}
           <div className="subblip-nav-bar">
@@ -1376,7 +1416,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               </a>
               {' → '}
               <span className="current-blip-label">
-                {extractTitleFromContent(currentSubblip.content) || 'Subblip'}
+                {extractTitleFromContent(renderedCurrentSubblip.content) || 'Subblip'}
               </span>
             </span>
           </div>
@@ -1384,8 +1424,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           {/* Subblip content rendered as root */}
           <div className="subblip-content">
             <RizzomaBlip
-              key={currentSubblip.id}
-              blip={currentSubblip}
+              key={renderedCurrentSubblip.id}
+              blip={renderedCurrentSubblip}
               isRoot={true}
               depth={0}
               onBlipUpdate={handleBlipUpdate}
@@ -1414,6 +1454,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           <button
             className={`topic-tb-btn ${isEditingTopic ? 'active primary' : ''}`}
             title={isEditingTopic ? 'Done editing (changes auto-saved)' : 'Edit topic content'}
+            disabled={!isAuthed}
             onClick={() => {
               if (isEditingTopic) {
                 finishEditingTopic();
@@ -1487,10 +1528,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             </button>
             {showEditGearMenu && (
               <div className="gear-dropdown">
-                <button className="gear-menu-item" onClick={handleMarkTopicRead}>
+                <button className="gear-menu-item" onClick={handleMarkTopicRead} disabled={!isAuthed}>
                   Mark topic as read
                 </button>
-                <button className="gear-menu-item" onClick={handleToggleFollow}>
+                <button className="gear-menu-item" onClick={handleToggleFollow} disabled={!isAuthed}>
                   {isFollowing ? 'Unfollow topic' : 'Follow topic'}
                 </button>
                 <div className="gear-menu-divider" />

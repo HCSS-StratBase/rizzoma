@@ -1,6 +1,20 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-12 (follow-on branch `codex/authenticated-cursor-identity`; `master` base `2595d2de`, merged PR #64; public runtime code still `fe6988fb`). The real shell auth user now reaches actual topic-root, nested-blip, and generic-editor collaboration providers. Initial/reconnect writes remain behind the authorized `blip:sync` barrier. Focused tests passed 23/23; typecheck and the 3,300-module build passed; 307 regression tests passed / 3 skipped, while one OAuth test timed out only under concurrent build load and its full file passed 3/3 serially. Keep the PR draft until two real users pass Playwright; PR #66 also needs server-bound awareness identity and server-side demotion removal. No VPS change belongs to this branch. Worklog: [authenticated cursor identity](worklog-260712-authenticated-cursor-identity.md).
+Last refreshed: 2026-07-12 (integration branch
+`codex/offline-auth-isolation`; PR #65 source base `5a376119`; public runtime
+code still `fe6988fb`). Production replay is disabled; REST and Yjs recovery
+state is owner-partitioned; auth changes propagate across tabs; and the shell
+is visibly read-only offline. Service-worker v2 keeps `/api`, `/socket.io`, and
+`/uploads` network-only and purges the former v1 dynamic cache. Auth changes disconnect
+Socket.IO, empty both packet buffers, and reconnect only after identity cleanup.
+Targeted tests passed 60/60, full Vitest passed 343 with 3 skipped, typecheck
+and the 3,306-module build passed, and 24
+desktop/mobile PNGs were visually inspected with 0 unexpected console errors.
+Before deployment, integrate PR #66 and verify that its socket
+session/access/revocation/authoritative-user checks and network-only transport
+policy coexist with this branch's acknowledgement/owner checks and v2 purge.
+No VPS change belongs to this branch. Worklog:
+[offline/auth isolation](worklog-260712-offline-auth-isolation.md).
 
 Base branch state: PR #64 merged production-service hardening to `master` as `2595d2de`. This branch changes no service/deployment files and makes no new rollout claim. Worklog: [production service hardening](worklog-260712-production-service-hardening.md).
 

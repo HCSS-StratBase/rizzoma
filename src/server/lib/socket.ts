@@ -154,18 +154,28 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
       } catch {}
     });
 
-    socket.on('blip:update', (p: any) => {
+    socket.on('blip:update', (p: any, acknowledge?: (result: { ok: boolean; error?: string }) => void) => {
       try {
         const blipId = String(p?.blipId || '').trim();
-        if (!blipId || !Array.isArray(p.update)) return;
+        if (!blipId || !Array.isArray(p.update) || !collabBlips.has(blipId)) {
+          acknowledge?.({ ok: false, error: 'collaboration_room_required' });
+          return;
+        }
         const roomName = `collab:blip:${blipId}`;
         // Relay to other clients FIRST, then apply to cache
         socket.to(roomName).emit(`blip:update:${blipId}`, { update: p.update });
         try {
           const update = new Uint8Array(p.update);
           yjsDocCache.applyUpdate(blipId, update, 'remote');
-        } catch (cacheErr) { console.warn('[socket] blip:update cache error (relay already sent):', cacheErr); }
-      } catch (err) { console.error('[socket] blip:update error:', err); }
+          acknowledge?.({ ok: true });
+        } catch (cacheErr) {
+          console.warn('[socket] blip:update cache error (relay already sent):', cacheErr);
+          acknowledge?.({ ok: false, error: 'collaboration_update_rejected' });
+        }
+      } catch (err) {
+        console.error('[socket] blip:update error:', err);
+        acknowledge?.({ ok: false, error: 'collaboration_update_failed' });
+      }
     });
 
     socket.on('blip:sync:request', (p: any) => {

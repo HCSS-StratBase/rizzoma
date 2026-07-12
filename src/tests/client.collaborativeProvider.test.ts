@@ -3,9 +3,13 @@ import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { SocketIOProvider } from '../client/components/editor/CollaborativeProvider';
 import { collaborationUserFromAuth } from '../client/components/editor/collaborationIdentity';
+import {
+  getPendingCollaborationCount,
+  resetPendingCollaborationChanges,
+} from '../client/lib/collaborationPending';
 
 /** Create a minimal mock socket that mimics Socket.IO client behavior */
-function createMockSocket(connected = true) {
+function createMockSocket(connected = true, autoAcknowledge = true) {
   type SocketHandler = (...args: unknown[]) => void;
   const handlers = new Map<string, Set<SocketHandler>>();
   const socket = {
@@ -21,7 +25,10 @@ function createMockSocket(connected = true) {
         handlers.delete(event);
       }
     },
-    emit: vi.fn(),
+    emit: vi.fn((...args: any[]) => {
+      const [event, , acknowledge] = args as [string, unknown, ((result: { ok: boolean }) => void) | undefined];
+      if (event === 'blip:update' && autoAcknowledge) acknowledge?.({ ok: true });
+    }),
     // Test helper: simulate server sending an event to this client
     _receive(event: string, data: any) {
       handlers.get(event)?.forEach(fn => fn(data));
@@ -35,11 +42,13 @@ describe('client: CollaborativeProvider', () => {
   let socket: ReturnType<typeof createMockSocket>;
 
   beforeEach(() => {
+    resetPendingCollaborationChanges();
     doc = new Y.Doc();
     socket = createMockSocket(true);
   });
 
   afterEach(() => {
+    resetPendingCollaborationChanges();
     doc.destroy();
   });
 
@@ -185,6 +194,50 @@ describe('client: CollaborativeProvider', () => {
     expect(socket.emit.mock.calls.findIndex(([ev]: any) => ev === 'blip:update'))
       .toBeLessThan(socket.emit.mock.calls.findIndex(([ev]: any) => ev === 'awareness:update'));
 
+    provider.destroy();
+  });
+
+  it('retains an offline Yjs edit until the reconnect diff is acknowledged', () => {
+    socket = createMockSocket(true, false);
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-offline-pending');
+    socket._receive('blip:sync:blip-offline-pending', { state: [], shouldSeed: true });
+    socket._receive('disconnect', 'transport close');
+
+    doc.getText('default').insert(0, 'held in memory');
+    expect(getPendingCollaborationCount()).toBe(1);
+
+    socket._receive('connect', undefined);
+    socket._receive('blip:sync:blip-offline-pending', { state: [], shouldSeed: false });
+    const updateCall = socket.emit.mock.calls.find(([event]: any) => event === 'blip:update');
+    expect(updateCall).toBeTruthy();
+    expect(getPendingCollaborationCount()).toBe(1);
+
+    const acknowledge = updateCall?.[2] as ((result: { ok: boolean }) => void) | undefined;
+    acknowledge?.({ ok: true });
+    expect(getPendingCollaborationCount()).toBe(0);
+    provider.destroy();
+  });
+
+  it('refuses to release an A-owned document when the server session is B', () => {
+    const alice = collaborationUserFromAuth({ id: 'alice', name: 'Alice' });
+    const provider = new SocketIOProvider(doc, socket as any, 'cross-tab-blip', alice);
+    const mismatch = vi.fn();
+    window.addEventListener('rizzoma:auth-session-mismatch', mismatch);
+    doc.getText('default').insert(0, 'A pending');
+    expect(getPendingCollaborationCount()).toBe(1);
+
+    socket._receive('blip:sync:cross-tab-blip', {
+      state: [],
+      shouldSeed: false,
+      user: { id: 'bob' },
+    });
+
+    expect(provider.synced).toBe(false);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:update')).toHaveLength(0);
+    expect(socket.emit).toHaveBeenCalledWith('blip:leave', { blipId: 'cross-tab-blip' });
+    expect(mismatch).toHaveBeenCalledTimes(1);
+    expect(getPendingCollaborationCount()).toBe(1);
+    window.removeEventListener('rizzoma:auth-session-mismatch', mismatch);
     provider.destroy();
   });
 

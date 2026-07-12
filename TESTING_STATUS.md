@@ -1,5 +1,34 @@
 # Rizzoma Feature Testing Status
 
+## Offline/auth isolation candidate — 2026-07-12
+
+- Branch `codex/offline-auth-isolation`, based on PR #65 source checkpoint
+  `5a376119`.
+- Targeted auth/offline/collaboration/mobile/transport suite: **7 files / 60
+  passed / 0 failed**.
+- Full Vitest: **70 files / 343 passed / 3 skipped / 0 failed**.
+- Typecheck passed; production build passed with **3,306 transformed modules**;
+  ESLint measured **0 errors / 6,561 warnings**.
+- Playwright rendered and visually verified **24 PNGs** across guest, sign-in,
+  signed-in, and authenticated-offline states at desktop widths
+  1280/1366/1440/1600 and mobile 390×844/412×915. Unexpected console errors:
+  **0**. See the [evidence archive](screenshots/260712-1348-offline-auth-isolation/README.md).
+- Regression coverage includes A→logout→B REST and Yjs isolation, active-editor
+  and unmount quarantine, cross-tab auth epoch rebootstrap, server-user mismatch,
+  acknowledgement-gated unload protection, logout 401/503 semantics, secret
+  non-persistence, accessible sign-in Escape/focus restoration, offline
+  read-only New gating, a source-wide ban on literal mutation `fetch`, and a
+  service-worker invariant that `/api`/`socket.io`/`uploads` are network-only
+  under v2 so the former authenticated v1 dynamic cache is purged, plus an A→logout/B
+  Socket.IO regression proving the old transport and both packet buffers are
+  gone before the new account can join or write, and a delayed A presence lookup
+  cannot publish after B reconnects.
+- Boundary: durable production replay is intentionally disabled with an empty
+  allowlist. The combined release must retain PR #66's server auth/access/user
+  checks and network-only service-worker policy together with this branch's
+  client owner/ack checks and v2 cache purge; no deployment or public two-user
+  acceptance is claimed here.
+
 ## Authenticated cursor identity candidate — 2026-07-12
 
 - Branch `codex/authenticated-cursor-identity` follows merged PR #64 on

@@ -5,7 +5,7 @@ import { AuthPanel } from './components/AuthPanel';
 import { TopicsList } from './components/TopicsList';
 import { WavesList } from './components/WavesList';
 import { WaveView } from './components/WaveView';
-import { Toast } from './components/Toast';
+import { Toast, toast } from './components/Toast';
 import { StatusBar } from './components/StatusBar';
 import { RizzomaTopicDetail } from './components/RizzomaTopicDetail';
 import { EditorSearch } from './components/EditorSearch';
@@ -14,7 +14,8 @@ import { GreenNavigation } from './components/GreenNavigation';
 import { RizzomaLayout } from './components/RizzomaLayout';
 import { FEATURES } from '@shared/featureFlags';
 import { MobileProvider } from './contexts/MobileContext';
-import { AuthProvider } from './hooks/useAuth';
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import { useCollaborationUnloadGuard } from './hooks/useCollaborationPending';
 import { MantineProvider, createTheme } from '@mantine/core';
 import '@mantine/core/styles.css';
 import '@mantine/charts/styles.css';
@@ -27,9 +28,10 @@ const theme = createTheme({
 
 import { useServiceWorker, useInstallPrompt } from './hooks/useServiceWorker';
 import { useOfflineToast } from './hooks/useOfflineStatus';
-import { offlineQueue } from './lib/offlineQueue';
 import { setupBlipThreadClickHandler } from './components/editor/extensions/BlipThreadNode';
 import { initCapacitorNativeShell } from './lib/capacitor-native';
+import { announceAuthChange } from './lib/authSessionSignal';
+import { resetSocketForAuthTransition } from './lib/socket';
 
 // Mobile OAuth handoff: when the native Capacitor shell (or even a
 // plain browser) comes back from an OAuth callback, the backend has
@@ -50,10 +52,9 @@ import { initCapacitorNativeShell } from './lib/capacitor-native';
   // Fire-and-forget redemption; on success the session cookie is set
   // and the subsequent api('/api/auth/me') bootstrap call in <App />
   // will pick up the authed user.
-  void fetch('/api/auth/redeem-ticket', {
+  void api('/api/auth/redeem-ticket', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    queueable: false,
     body: JSON.stringify({ ticket }),
   })
     .then((res) => {
@@ -61,6 +62,7 @@ import { initCapacitorNativeShell } from './lib/capacitor-native';
         console.warn('[mobile-auth] ticket redemption failed', res.status);
         return;
       }
+      announceAuthChange();
       // Force a reload so React's auth bootstrap re-runs with the new
       // session cookie in place (simpler than threading state through).
       window.location.replace('/?layout=rizzoma');
@@ -69,9 +71,6 @@ import { initCapacitorNativeShell } from './lib/capacitor-native';
       console.warn('[mobile-auth] ticket redemption error', err);
     });
 })();
-
-// Initialize offline queue (loads pending mutations from localStorage, auto-syncs when online)
-offlineQueue.initialize();
 
 // Initialize Capacitor native shell (status bar, splash, back button,
 // app state listeners). No-op when running in a browser / PWA — the
@@ -135,13 +134,13 @@ if (new URLSearchParams(window.location.search).get('layout') === 'rizzoma') {
 }
 
 export function App() {
+  useCollaborationUnloadGuard();
   const perfMode = (window.location.hash || '').includes('perf=1');
   const [me, setMe] = useState<any>(perfMode ? { id: 'perf-mode' } : null);
   const [error] = useState<string | null>(null);
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [currentBlipPath, setCurrentBlipPath] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   // Check if we should use Rizzoma layout based on URL parameter
   const params = new URLSearchParams(window.location.search);
   // Default to Rizzoma layout unless explicitly set to 'basic'
@@ -182,7 +181,9 @@ export function App() {
     },
   });
   useInstallPrompt();
-  useOfflineToast();
+  // The modern shell owns one reserved-space offline/read-only strip. Avoid a
+  // duplicate bottom toast that collides with mobile navigation.
+  useOfflineToast({ showOffline: false });
 
   // Set up BlipThread click handler for inline [+] markers
   useEffect(() => {
@@ -195,7 +196,13 @@ export function App() {
     (async () => {
       try {
         const r = await api('/api/auth/me');
-        if (r.ok) setMe(r.data);
+        if (r.ok) {
+          setMe(r.data);
+          // The basic shell can instantiate Socket.IO before auth bootstrap
+          // resolves; rotate that guest handshake locally without broadcasting
+          // a false cross-tab auth transition.
+          resetSocketForAuthTransition();
+        }
       } catch {}
       finally {
         setCheckingAuth(false);
@@ -252,7 +259,7 @@ export function App() {
   // Always render the modern Rizzoma shell for topic/wave routes or explicit layout flag
   if (forceRizzomaLayout) {
     return (
-      <AuthProvider user={me} onUserChange={setMe}>
+      <AuthProvider user={me} loading={checkingAuth} onUserChange={setMe}>
         <div className="rizzoma-app">
           {FEATURES.FOLLOW_GREEN && showCalendarBanner && (
             <div className="notification-bar">
@@ -273,10 +280,6 @@ export function App() {
           )}
           {checkingAuth ? (
             <div className="rizzoma-loading">Loading…</div>
-          ) : !me ? (
-            <div className="rizzoma-auth-overlay">
-              <AuthPanel onSignedIn={(u) => setMe(u)} />
-            </div>
           ) : (
             <RizzomaLayout isAuthed={!!me} user={me} />
           )}
@@ -304,19 +307,7 @@ export function App() {
             <div style={{ marginTop: 8 }}>
               Signed in as {me.email || me.id}
               {' '}
-              <button
-                onClick={async () => {
-                  if (!window.confirm('Logout?')) return;
-                  setBusy(true);
-                  await api('/api/auth/logout', { method: 'POST' });
-                  setBusy(false);
-                  setMe(null);
-                  window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Logged out', type: 'info' } }));
-                }}
-                disabled={busy}
-              >
-                Logout
-              </button>
+              <BasicLogoutButton />
             </div>
           )}
           {error ? <div style={{ color: 'red', marginTop: 8 }}>{error}</div> : null}
@@ -340,6 +331,28 @@ export function App() {
         {FEATURES.FOLLOW_GREEN && <GreenNavigation />}
       </div>
     </AuthProvider>
+  );
+}
+
+function BasicLogoutButton(): JSX.Element {
+  const { loading, logout } = useAuth();
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (!window.confirm('Logout?')) return;
+        setBusy(true);
+        void logout()
+          .then(() => toast('Logged out', 'info'))
+          .catch(() => toast('Logout failed. Your session is still active.', 'error'))
+          .finally(() => setBusy(false));
+      }}
+      disabled={busy || loading}
+    >
+      {busy ? 'Logging out…' : 'Logout'}
+    </button>
   );
 }
 

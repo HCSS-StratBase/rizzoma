@@ -17,6 +17,10 @@ import { useMobileContextSafe } from '../contexts/MobileContext';
 import { useSwipe } from '../hooks/useSwipe';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { FEATURES } from '@shared/featureFlags';
+import { ShellAuthControls } from './ShellAuthControls';
+import { toast } from './Toast';
+import { useOnlineState } from '../hooks/useOnlineState';
+import { useCollaborationPendingCount } from '../hooks/useCollaborationPending';
 
 interface RizzomaLayoutProps {
   isAuthed: boolean;
@@ -83,6 +87,9 @@ const readBool = (key: string): boolean => {
 };
 
 export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
+  const isOnline = useOnlineState();
+  const pendingCollaborationCount = useCollaborationPendingCount();
+  const canMutate = isAuthed && isOnline;
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [currentBlipPath, setCurrentBlipPath] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('topics');
@@ -93,6 +100,10 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [perfSkipTopics, setPerfSkipTopics] = useState(getInitialPerfSkip);
   const unreadState = useWaveUnread(selectedTopicId);
+
+  useEffect(() => {
+    if (!isOnline) setShowCreateModal(false);
+  }, [isOnline]);
 
   // Persist collapse + width state whenever it changes.
   useEffect(() => {
@@ -305,6 +316,14 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
   }, [selectedTopicId]);
 
   const handleNewClick = () => {
+    if (!isOnline) {
+      toast('Reconnect before creating a topic.', 'info');
+      return;
+    }
+    if (!isAuthed) {
+      window.dispatchEvent(new CustomEvent('rizzoma:request-sign-in'));
+      return;
+    }
     setShowCreateModal(true);
   };
 
@@ -356,7 +375,22 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
   const mobileLayoutClass = isMobile ? `mobile-layout mobile-view-${mobileView}` : '';
 
   return (
-    <div className={`rizzoma-layout ${mobileLayoutClass}${FEATURES.RIZZOMA_PARITY_RENDER ? ' rizzoma-parity' : ''}${FEATURES.RIZZOMA_NATIVE_RENDER ? ' rizzoma-native' : ''}`}>
+    <div className={`rizzoma-layout ${mobileLayoutClass}${FEATURES.RIZZOMA_PARITY_RENDER ? ' rizzoma-parity' : ''}${FEATURES.RIZZOMA_NATIVE_RENDER ? ' rizzoma-native' : ''}${isOnline ? '' : ' offline-readonly'}`}>
+      {!isOnline && (
+        <div className="offline-readonly-banner" role="status" aria-live="polite">
+          <strong>Offline · read-only</strong>
+          <span>
+            Reconnect to edit{pendingCollaborationCount > 0
+              ? `; ${pendingCollaborationCount} unsent in-memory update${pendingCollaborationCount === 1 ? '' : 's'} will retry automatically.`
+              : '.'}
+          </span>
+        </div>
+      )}
+      {isMobile && (
+        <div className="mobile-shell-auth-dock">
+          <ShellAuthControls compact />
+        </div>
+      )}
       {/* Mobile header - shown when viewing content on mobile */}
       {isMobile && mobileView === 'content' && (
         <div className="mobile-header">
@@ -440,7 +474,7 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
                 key={selectedTopicId}
                 id={selectedTopicId}
                 blipPath={currentBlipPath}
-                isAuthed={isAuthed}
+                isAuthed={canMutate}
                 unreadState={unreadState}
               />
             </>
@@ -484,7 +518,8 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
         </button>
         {(!rightPaneCollapsed || isMobile) && (
           <RightToolsPanel
-            isAuthed={isAuthed}
+            isAuthed={canMutate}
+            showShellAuth={!isMobile}
             user={user}
             unreadState={selectedTopicId ? unreadState : null}
             onNextTopic={handleNextTopic}
@@ -495,13 +530,13 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
       
       {/* Create Topic Modal */}
       <CreateTopicModal
-        isOpen={showCreateModal}
+        isOpen={showCreateModal && isOnline}
         onClose={() => setShowCreateModal(false)}
         onTopicCreated={handleTopicCreated}
       />
 
       {/* PWA install prompt + notification opt-in + offline indicator */}
-      <PWAPrompts />
+      <PWAPrompts showOfflineStatus={false} />
     </div>
   );
 }
