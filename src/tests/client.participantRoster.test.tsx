@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { TopicAvatar, type Participant } from '../client/components/RizzomaTopicDetail';
+import { buildEditorRoster } from '../client/components/editor/EditorConfig';
 
 describe('accepted participant roster identity', () => {
   it('renders the safe server-provided name/avatar without needing an email', () => {
@@ -30,5 +31,18 @@ describe('accepted participant roster identity', () => {
     expect(markup).not.toContain('<img');
     expect(markup).not.toContain('javascript:');
     expect(markup).toContain('SN');
+  });
+
+  it('builds mention suggestions only from the signed-in user and real roster', () => {
+    expect(buildEditorRoster({
+      currentUser: { id: 'owner', label: 'Owner', email: 'owner@example.test' },
+      participants: [
+        { id: 'owner', label: 'Duplicate owner' },
+        { id: 'viewer', label: 'Visible Collaborator' },
+      ],
+    })).toEqual([
+      { id: 'owner', label: 'Owner', email: 'owner@example.test' },
+      { id: 'viewer', label: 'Visible Collaborator' },
+    ]);
   });
 });

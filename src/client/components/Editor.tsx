@@ -10,7 +10,7 @@ import { usePresence } from '../hooks/usePresence';
 import { PresenceIndicator } from './PresenceIndicator';
 import {
   createSerializedUpdateQueue,
-  REMOTE_EDITOR_UPDATE,
+  applyRemoteEditorUpdate,
   shouldPersistEditorUpdate,
 } from '../lib/editorPersistence';
 
@@ -62,7 +62,7 @@ export function Editor({ waveId, blipId, readOnly = true }: EditorProps): JSX.El
         const data = (snap.data || {}) as SnapshotResponse;
         const initialUpdate = b64ToUint8Array(data.snapshotB64);
         if (initialUpdate.length > 0) {
-          Y.applyUpdate(yDoc, initialUpdate, REMOTE_EDITOR_UPDATE);
+          applyRemoteEditorUpdate(yDoc, initialUpdate);
         }
       } catch (e: unknown) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'editor_init_error');
@@ -156,7 +156,7 @@ export function Editor({ waveId, blipId, readOnly = true }: EditorProps): JSX.El
       if (!updateB64) return;
       if (payload?.blipId && blipId && payload.blipId !== blipId) return;
       try {
-        Y.applyUpdate(yDoc, b64ToUint8Array(updateB64), REMOTE_EDITOR_UPDATE);
+        applyRemoteEditorUpdate(yDoc, b64ToUint8Array(updateB64));
       } catch {
         // ignore malformed payloads
       }

@@ -32,8 +32,8 @@ interface MentionDoc {
 router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const filter = req.query['filter'] as string; // 'all' | 'unread'
-  const limit = Math.min(parseInt(req.query['limit'] as string) || 50, 100);
-  const offset = parseInt(req.query['offset'] as string) || 0;
+  const limit = Math.min(Math.max(parseInt(req.query['limit'] as string) || 50, 1), 100);
+  const offset = Math.max(parseInt(req.query['offset'] as string) || 0, 0);
 
   try {
     const selector: Record<string, unknown> = {
@@ -55,7 +55,7 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
       skip: offset,
       sort: [{ createdAt: 'desc' }],
       use_index: filter === 'unread'
-        ? 'idx_mention_user_isRead'
+        ? 'idx_mention_user_isRead_createdAt'
         : 'idx_mention_user_createdAt',
     });
 
@@ -118,6 +118,7 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
       total: visibleDocs.length + offset + (result.docs.length === limit ? 1 : 0),
       unreadCount,
       hasMore: result.docs.length === limit,
+      nextOffset: offset + result.docs.length,
     });
   } catch (e: any) {
     console.error('[mentions] list error', e);

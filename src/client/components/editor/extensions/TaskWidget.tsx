@@ -45,34 +45,14 @@ function buildAssigneeList(opts: TaskWidgetOptions): TaskUser[] {
   return out;
 }
 
-async function createTaskOnServer(
-  opts: TaskWidgetOptions,
-  assignee: TaskUser,
-  dueDate: string,
-): Promise<string | null> {
-  try {
-    // Strip the "(me)" suffix back out before sending to the server.
-    const cleanLabel = assignee.label.replace(/ \(me\)$/, '');
-    await ensureCsrf();
-    const r = await api<{ id?: string; taskId?: string }>('/api/tasks', {
-      method: 'POST',
-      queueable: false,
-      body: JSON.stringify({
-        waveId: opts.waveId,
-        topicId: opts.waveId, // topic id == wave id in this schema
-        blipId: opts.blipId,
-        taskText: '',
-        assigneeId: assignee.id,
-        assigneeName: cleanLabel,
-        dueDate: dueDate || undefined,
-      }),
-    });
-    if (!r.ok) return null;
-    const data = r.data as { id?: string; taskId?: string };
-    return data.id || data.taskId || null;
-  } catch {
-    return null;
-  }
+function createTaskId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return `task:${globalThis.crypto.randomUUID()}`;
+  const bytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6]! & 0x0f) | 0x40;
+  bytes[8] = (bytes[8]! & 0x3f) | 0x80;
+  const hex = [...bytes].map((value) => value.toString(16).padStart(2, '0')).join('');
+  return `task:${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 async function toggleTaskOnServer(taskId: string): Promise<boolean | null> {
@@ -191,16 +171,17 @@ export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
         },
         command: ({ editor, range, props: user }: { editor: any; range: any; props: TaskUser }) => {
           const dateStr = window.prompt('Due date (YYYY-MM-DD, or leave empty):', '') || '';
-          // Fire-and-forget the POST; we still insert the visual widget
-          // immediately so the editor stays responsive. The server ID
-          // is patched into the node attrs when the POST resolves.
           const cleanLabel = user.label.replace(/ \(me\)$/, '');
+          // The task document is derived only after this node is durably saved
+          // with its blip. This stable client reference lets the server
+          // reconcile idempotently without creating a phantom task first.
+          const taskId = createTaskId();
           const tempNode = {
             type: 'taskWidget',
             attrs: {
               assignee: cleanLabel,
               assigneeId: user.id,
-              taskId: '',
+              taskId,
               dueDate: dateStr,
               done: false,
             },
@@ -213,24 +194,6 @@ export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
               { type: 'text', text: ' ' },
             ])
             .run();
-          // Patch in the real taskId once the server doc exists.
-          createTaskOnServer(opts, user, dateStr).then(taskId => {
-            if (!taskId) return;
-            // Walk the document and patch the most recent taskWidget
-            // matching this assignee that still has an empty taskId.
-            const tr = editor.state.tr;
-            let patched = false;
-            editor.state.doc.descendants((node: any, pos: number) => {
-              if (patched) return false;
-              if (node.type.name !== 'taskWidget') return;
-              if (node.attrs.taskId) return;
-              if (node.attrs.assigneeId !== user.id) return;
-              tr.setNodeMarkup(pos, undefined, { ...node.attrs, taskId });
-              patched = true;
-              return false;
-            });
-            if (patched) editor.view.dispatch(tr);
-          });
         },
         render: () => {
           let element: HTMLDivElement | null = null;

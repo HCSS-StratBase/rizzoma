@@ -8,6 +8,17 @@ import type { Blip } from '../schemas/wave.js';
 import { identityFromRequest, requireWaveAccess, resolveBlipAccess } from '../lib/access.js';
 import { csrfProtect } from '../middleware/csrf.js';
 import { randomUUID } from 'node:crypto';
+import {
+  reconcileStoredContentReferences,
+  validateStoredContentReferences,
+} from '../lib/contentReferences.js';
+
+const CONTENT_REFERENCE_ERRORS = new Set([
+  'invalid_mention_target',
+  'invalid_task_assignee',
+  'invalid_task_reference',
+  'task_reference_conflict',
+]);
 
 type LinkDoc = {
   _id?: string;
@@ -284,6 +295,7 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
 
     const now = Date.now();
     const blipId = `${waveId}:b${randomUUID()}`;
+    const references = await validateStoredContentReferences(String(waveId), blipId, String(content));
     if (parentId !== null && parentId !== undefined && typeof parentId !== 'string') {
       res.status(400).json({ error: 'invalid_parent', requestId: (req as any)?.id });
       return;
@@ -315,6 +327,13 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
     } as any;
 
     const r = await insertDoc(blip as any);
+    let referencesSynced = true;
+    try {
+      await reconcileStoredContentReferences(String(waveId), blipId, references, req.user!);
+    } catch (referenceError) {
+      referencesSynced = false;
+      console.error('[blips] created content but failed to reconcile references', { waveId, blipId, referenceError });
+    }
     invalidateUnreadCacheForWave(waveId);
     if (!isPerfRequest(req)) {
       void touchTopic(waveId);
@@ -326,6 +345,7 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
     res.status(201).json({ 
       id: r['id'], 
       rev: r['rev'],
+      referencesSynced,
       blip: {
         ...blip,
         permissions: {
@@ -338,6 +358,10 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
       }
     });
   } catch (e: any) {
+    if (CONTENT_REFERENCE_ERRORS.has(String(e?.message || ''))) {
+      res.status(400).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
     res.status(500).json({ error: e?.message || 'create_blip_error', requestId: (req as any)?.id });
   }
 });
@@ -362,6 +386,7 @@ router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> =
     }
     const access = await requireWaveAccess(req, res, blip.waveId, 'edit');
     if (!access) return;
+    const references = await validateStoredContentReferences(blip.waveId, id, String(content));
 
     const updatedBlip: Blip & { _id: string; _rev?: string } = {
       ...blip,
@@ -371,6 +396,7 @@ router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> =
     };
 
     const r = await updateDoc(updatedBlip as any);
+    await reconcileStoredContentReferences(blip.waveId, id, references, req.user!);
     invalidateUnreadCacheForWave(blip.waveId);
     if (!isPerfRequest(req)) {
       void touchTopic(blip.waveId);
@@ -395,6 +421,10 @@ router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> =
       }
     });
   } catch (e: any) {
+    if (CONTENT_REFERENCE_ERRORS.has(String(e?.message || ''))) {
+      res.status(400).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
     if (String(e?.message).startsWith('404')) { 
       res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); 
       return; 
@@ -458,6 +488,17 @@ router.delete('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void
     }
 
     const deletedBlipIds = await markBlipAndDescendantsDeleted(blip, userId, access.canManage || access.canEdit);
+    const referenceCleanup = await Promise.allSettled(
+      deletedBlipIds.map((deletedId) => reconcileStoredContentReferences(
+        blip.waveId,
+        deletedId,
+        { mentions: [], tasks: [] },
+        req.user!,
+      )),
+    );
+    if (referenceCleanup.some((result) => result.status === 'rejected')) {
+      console.error('[blips] failed to remove one or more deleted blip references', { waveId: blip.waveId, deletedBlipIds });
+    }
     revokeBlipSockets(deletedBlipIds);
     invalidateUnreadCacheForWave(blip.waveId);
     void touchTopic(blip.waveId);

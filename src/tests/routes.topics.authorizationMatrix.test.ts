@@ -972,6 +972,123 @@ describe('authorization route matrix', () => {
     expect(mentions.body.hasMore).toBe(true);
   });
 
+  it('uses composite filtered-sort indexes for unread mentions and pending tasks', async () => {
+    state.docs.set('mention-indexed', {
+      _id: 'mention-indexed', type: 'mention', topicId: 'topic-private', blipId: 'blip-private',
+      mentionedUserId: 'viewer', mentionText: '@Viewer', authorId: 'editor', authorName: 'Editor',
+      isRead: false, createdAt: 10,
+    });
+    state.docs.set('task-indexed', {
+      _id: 'task-indexed', type: 'task', waveId: 'topic-private', topicId: 'topic-private', blipId: 'blip-private',
+      taskText: 'Indexed task', assigneeId: 'viewer', authorId: 'editor', authorName: 'Editor',
+      isCompleted: false, createdAt: 10, updatedAt: 10,
+    });
+
+    await invokeRoute(mentionsRouter, 'get', '/', { identity: 'viewer', query: { filter: 'unread' } });
+    const mentionCall = vi.mocked(find).mock.calls.find(([selector]) => selector['type'] === 'mention' && selector['createdAt']);
+    expect(mentionCall?.[1]).toMatchObject({
+      sort: [{ createdAt: 'desc' }],
+      use_index: 'idx_mention_user_isRead_createdAt',
+    });
+
+    vi.mocked(find).mockClear();
+    await invokeRoute(tasksRouter, 'get', '/', { identity: 'viewer', query: { filter: 'pending' } });
+    const taskCall = vi.mocked(find).mock.calls.find(([selector]) => selector['type'] === 'task' && selector['createdAt']);
+    expect(taskCall?.[1]).toMatchObject({
+      sort: [{ createdAt: 'desc' }],
+      use_index: 'idx_task_assignee_isCompleted_createdAt',
+    });
+  });
+
+  it('derives idempotent mention and task docs only from durably saved trusted content', async () => {
+    const taskId = 'task:11111111-1111-4111-8111-111111111111';
+    const content = `<p>Prepare briefing <span data-task-widget="" data-task-id="${taskId}" data-assignee-id="viewer" data-assignee="Forged Name"></span></p><p><span class="mention" data-type="mention" data-id="viewer" data-label="Forged Name">@Forged Name</span></p>`;
+
+    const first = await invokeRoute(blipsRouter, 'put', '/:id', {
+      identity: 'editor',
+      params: { id: 'blip-private' },
+      body: { content },
+    });
+    expect(first.statusCode).toBe(200);
+
+    const tasks = [...state.docs.values()].filter((doc) => doc['type'] === 'task' && doc['blipId'] === 'blip-private');
+    const mentions = [...state.docs.values()].filter((doc) => doc['type'] === 'mention' && doc['blipId'] === 'blip-private');
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]).toMatchObject({
+      _id: taskId,
+      assigneeId: 'viewer',
+      taskText: 'Prepare briefing',
+      authorId: 'editor',
+    });
+    expect(tasks[0]?.['assigneeName']).not.toBe('Forged Name');
+    expect(mentions).toHaveLength(1);
+    expect(mentions[0]).toMatchObject({ mentionedUserId: 'viewer', authorId: 'editor' });
+    expect(mentions[0]?.['mentionText']).not.toBe('@Forged Name');
+
+    const repeated = await invokeRoute(blipsRouter, 'put', '/:id', {
+      identity: 'editor', params: { id: 'blip-private' }, body: { content },
+    });
+    expect(repeated.statusCode).toBe(200);
+    expect([...state.docs.values()].filter((doc) => doc['type'] === 'task' && doc['blipId'] === 'blip-private')).toHaveLength(1);
+    expect([...state.docs.values()].filter((doc) => doc['type'] === 'mention' && doc['blipId'] === 'blip-private')).toHaveLength(1);
+
+    const removed = await invokeRoute(blipsRouter, 'put', '/:id', {
+      identity: 'editor', params: { id: 'blip-private' }, body: { content: '<p>No references</p>' },
+    });
+    expect(removed.statusCode).toBe(200);
+    expect([...state.docs.values()].some((doc) => doc['type'] === 'task' && doc['blipId'] === 'blip-private')).toBe(false);
+    expect([...state.docs.values()].some((doc) => doc['type'] === 'mention' && doc['blipId'] === 'blip-private')).toBe(false);
+  });
+
+  it('rejects spoofed nonparticipant references and direct phantom task creation', async () => {
+    const originalContent = state.docs.get('blip-private')?.['content'];
+    const forgedMention = await invokeRoute(blipsRouter, 'put', '/:id', {
+      identity: 'editor',
+      params: { id: 'blip-private' },
+      body: { content: '<p><span class="mention" data-type="mention" data-id="outsider">@Owner</span></p>' },
+    });
+    expect(forgedMention.statusCode).toBe(400);
+    expect(forgedMention.body.error).toBe('invalid_mention_target');
+    expect(state.docs.get('blip-private')?.['content']).toBe(originalContent);
+
+    const forgedTask = await invokeRoute(blipsRouter, 'put', '/:id', {
+      identity: 'editor',
+      params: { id: 'blip-private' },
+      body: { content: '<p>Steal task <span data-task-widget="" data-task-id="task:22222222-2222-4222-8222-222222222222" data-assignee-id="outsider"></span></p>' },
+    });
+    expect(forgedTask.statusCode).toBe(400);
+    expect(forgedTask.body.error).toBe('invalid_task_assignee');
+    expect(state.docs.get('blip-private')?.['content']).toBe(originalContent);
+
+    const directCreate = await invokeRoute(tasksRouter, 'post', '/', {
+      identity: 'editor',
+      body: { waveId: 'topic-private', topicId: 'topic-private', blipId: 'blip-private', assigneeId: 'outsider' },
+    });
+    expect(directCreate.statusCode).toBe(409);
+    expect(directCreate.body.error).toBe('tasks_are_derived_from_saved_content');
+  });
+
+  it('never creates a task side document when durable blip persistence fails', async () => {
+    const originalUpdate = vi.mocked(updateDoc).getMockImplementation();
+    vi.mocked(updateDoc).mockImplementation(async (doc: any) => {
+      if (doc?._id === 'blip-private' && doc?.type === 'blip') throw new Error('couch_write_failed');
+      return originalUpdate!(doc);
+    });
+    try {
+      const response = await invokeRoute(blipsRouter, 'put', '/:id', {
+        identity: 'editor',
+        params: { id: 'blip-private' },
+        body: {
+          content: '<p>Persist me <span data-task-widget="" data-task-id="task:33333333-3333-4333-8333-333333333333" data-assignee-id="viewer"></span></p>',
+        },
+      });
+      expect(response.statusCode).toBe(500);
+      expect([...state.docs.values()].some((doc) => doc['type'] === 'task')).toBe(false);
+    } finally {
+      vi.mocked(updateDoc).mockImplementation(originalUpdate!);
+    }
+  });
+
   it('returns 404 for a random wave id with no metadata or legacy blips', async () => {
     const response = await invokeRoute(wavesRouter, 'get', '/:id', {
       identity: 'anonymous',

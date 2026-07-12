@@ -9,9 +9,8 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { noStore } from '../middleware/noStore.js';
-import { find, updateDoc, getDoc, getDocsById, insertDoc } from '../lib/couch.js';
-import { randomUUID } from 'crypto';
-import { identityFromRequest, requireWaveAccess, resolveBlipAccess, resolveWaveAccess } from '../lib/access.js';
+import { find, updateDoc, getDoc, getDocsById } from '../lib/couch.js';
+import { identityFromRequest, resolveBlipAccess, resolveWaveAccess } from '../lib/access.js';
 import { csrfProtect } from '../middleware/csrf.js';
 
 const router = Router();
@@ -41,8 +40,8 @@ interface TaskDoc {
 router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const filter = req.query['filter'] as string; // 'all' | 'pending' | 'completed'
-  const limit = Math.min(parseInt(req.query['limit'] as string) || 50, 100);
-  const offset = parseInt(req.query['offset'] as string) || 0;
+  const limit = Math.min(Math.max(parseInt(req.query['limit'] as string) || 50, 1), 100);
+  const offset = Math.max(parseInt(req.query['offset'] as string) || 0, 0);
 
   try {
     const selector: Record<string, unknown> = {
@@ -64,7 +63,7 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
       skip: offset,
       sort: [{ createdAt: 'desc' }],
       use_index: filter === 'pending' || filter === 'completed'
-        ? 'idx_task_assignee_isCompleted'
+        ? 'idx_task_assignee_isCompleted_createdAt'
         : 'idx_task_assignee_createdAt',
     });
 
@@ -127,6 +126,7 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
       // Filtering revoked/private waves after the indexed query must not make
       // clients stop while a later raw page can still contain visible tasks.
       hasMore: result.docs.length === limit,
+      nextOffset: offset + result.docs.length,
     });
   } catch (e: any) {
     console.error('[tasks] list error', e);
@@ -154,7 +154,7 @@ router.get('/by-blip/:blipId', requireAuth, async (req, res): Promise<void> => {
       {
         limit: 100,
         sort: [{ createdAt: 'desc' }],
-        use_index: 'idx_task_wave_blip_createdAt',
+        use_index: 'idx_task_blip_createdAt',
       },
     );
     res.json({
@@ -174,95 +174,11 @@ router.get('/by-blip/:blipId', requireAuth, async (req, res): Promise<void> => {
   }
 });
 
-// POST /api/tasks - Create a new task backing a ~task widget instance.
-// Called by TaskWidget.command() when the user picks an assignee, so the
-// sidebar can find it immediately.
-router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
-  const author = req.user!;
-  const {
-    waveId,
-    topicId,
-    blipId,
-    taskText,
-    assigneeId,
-    assigneeName,
-    dueDate,
-  } = req.body || {};
-
-  if (!waveId || !topicId || !assigneeId) {
-    res.status(400).json({ error: 'missing_required_fields' });
-    return;
-  }
-
-  if (String(waveId) !== String(topicId)) {
-    res.status(400).json({ error: 'wave_topic_mismatch' });
-    return;
-  }
-
-  try {
-    if (blipId) {
-      const resolved = await resolveBlipAccess(String(blipId), {
-        id: author.id,
-        email: author.email,
-        name: author.name,
-      });
-      if (String(resolved.blip.waveId) !== String(waveId)) {
-        res.status(400).json({ error: 'blip_wave_mismatch' });
-        return;
-      }
-      if (!resolved.access.canEdit) {
-        res.status(403).json({ error: 'forbidden' });
-        return;
-      }
-    } else {
-      const access = await requireWaveAccess(req, res, String(waveId), 'edit');
-      if (!access) return;
-    }
-  } catch (error: any) {
-    if (String(error?.message || '').startsWith('404') || String(error?.message || '').startsWith('410')) {
-      res.status(404).json({ error: 'blip_not_found' });
-      return;
-    }
-    throw error;
-  }
-
-  const now = Date.now();
-  const doc: TaskDoc = {
-    _id: `task:${randomUUID()}`,
-    type: 'task',
-    waveId: String(waveId),
-    topicId: String(topicId),
-    blipId: String(blipId || ''),
-    taskText: String(taskText || ''),
-    assigneeId: String(assigneeId),
-    assigneeName: assigneeName ? String(assigneeName) : undefined,
-    authorId: author.id,
-    authorName: author.name || author.email?.split('@')[0] || 'Unknown',
-    dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
-    isCompleted: false,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  try {
-    const inserted = await insertDoc(doc);
-    res.json({
-      id: inserted.id,
-      taskId: inserted.id,
-      waveId: doc.waveId,
-      topicId: doc.topicId,
-      blipId: doc.blipId,
-      taskText: doc.taskText,
-      assigneeId: doc.assigneeId,
-      assigneeName: doc.assigneeName,
-      dueDate: doc.dueDate ? new Date(doc.dueDate).toISOString() : undefined,
-      isCompleted: false,
-      createdAt: new Date(now).toISOString(),
-    });
-  } catch (e: any) {
-    console.error('[tasks] create error', e);
-    res.status(500).json({ error: e?.message || 'create_task_error' });
-  }
+// Tasks are derived from successfully persisted TipTap content. Creating a
+// side document first can leave a phantom task when the blip save fails and
+// also lets callers spoof arbitrary assignee names/IDs.
+router.post('/', requireAuth, csrfProtect(), (_req, res): void => {
+  res.status(409).json({ error: 'tasks_are_derived_from_saved_content' });
 });
 
 // POST /api/tasks/:id/toggle - Toggle task completion status.

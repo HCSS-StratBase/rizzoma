@@ -357,9 +357,25 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
           />
         );
       case 'mentions':
-        return <MentionsList isAuthed={isAuthed} onSelectMention={selectTopicFromSidebar} />;
+        return <MentionsList
+          isAuthed={isAuthed}
+          onSelectMention={(topicId, blipId) => {
+            const segment = blipId && blipId !== topicId
+              ? (blipId.includes(':') ? blipId.split(':').slice(1).join(':') : blipId)
+              : '';
+            window.location.hash = segment ? `#/topic/${topicId}/${segment}/` : `#/topic/${topicId}`;
+          }}
+        />;
       case 'tasks':
-        return <TasksList isAuthed={isAuthed} onSelectTask={selectTopicFromSidebar} />;
+        return <TasksList
+          isAuthed={isAuthed}
+          onSelectTask={(topicId, blipId) => {
+            const segment = blipId && blipId !== topicId
+              ? (blipId.includes(':') ? blipId.split(':').slice(1).join(':') : blipId)
+              : '';
+            window.location.hash = segment ? `#/topic/${topicId}/${segment}/` : `#/topic/${topicId}`;
+          }}
+        />;
       case 'publics':
         return <PublicTopicsPanel onSelectTopic={selectTopicFromSidebar} />;
       case 'store':

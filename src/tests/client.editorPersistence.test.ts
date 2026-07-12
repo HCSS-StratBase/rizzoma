@@ -1,4 +1,6 @@
+import * as Y from 'yjs';
 import {
+  applyRemoteEditorUpdate,
   createSerializedUpdateQueue,
   REMOTE_EDITOR_UPDATE,
   shouldPersistEditorUpdate,
@@ -45,5 +47,21 @@ describe('editor persistence ordering', () => {
     expect(shouldPersistEditorUpdate(REMOTE_EDITOR_UPDATE)).toBe(false);
     expect(shouldPersistEditorUpdate(undefined)).toBe(true);
     expect(shouldPersistEditorUpdate({ local: true })).toBe(true);
+  });
+
+  it('marks an asynchronously loaded bootstrap snapshot as remote', () => {
+    const source = new Y.Doc();
+    source.getText('default').insert(0, 'loaded snapshot');
+    const update = Y.encodeStateAsUpdate(source);
+    const target = new Y.Doc();
+    const persistableOrigins: unknown[] = [];
+    target.on('update', (_event, origin) => {
+      if (shouldPersistEditorUpdate(origin)) persistableOrigins.push(origin);
+    });
+
+    applyRemoteEditorUpdate(target, update);
+
+    expect(target.getText('default').toString()).toBe('loaded snapshot');
+    expect(persistableOrigins).toEqual([]);
   });
 });

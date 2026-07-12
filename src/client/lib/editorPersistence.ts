@@ -1,7 +1,13 @@
+import * as Y from 'yjs';
+
 export const REMOTE_EDITOR_UPDATE = Symbol('remote-editor-update');
 
 export function shouldPersistEditorUpdate(origin: unknown): boolean {
   return origin !== REMOTE_EDITOR_UPDATE;
+}
+
+export function applyRemoteEditorUpdate(document: Y.Doc, update: Uint8Array): void {
+  Y.applyUpdate(document, update, REMOTE_EDITOR_UPDATE);
 }
 
 export type SerializedUpdateQueue = {

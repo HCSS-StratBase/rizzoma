@@ -468,9 +468,9 @@ export function RizzomaBlip({
   const stableShowComments = useCallback(() => { showCommentsRef.current?.(); }, []);
 
   // --- Real-time collaboration (awareness + document sync) ---
-  // Activate based on canEdit (NOT isEditing or authUser) so the Collaboration extension
+  // Activate based on canEdit (NOT isEditing or auth state) so the Collaboration extension
   // is present from editor creation. canEdit already gates unauthenticated users.
-  // authUser is converted to the provider's awareness identity synchronously,
+  // The authenticated user is converted to the provider's awareness identity synchronously,
   // before TipTap creates its collaborative-cursor extension.
   const collaborationUser = useAuthenticatedCollaborationUser();
   // Skip collab for topic root — RizzomaTopicDetail.tsx owns the collab-enabled topicEditor.
@@ -512,9 +512,15 @@ export function RizzomaBlip({
         onCreateInlineChildBlip: stableCreateInlineChildBlip,
         onHideComments: stableHideComments,
         onShowComments: stableShowComments,
+        currentUser: collaborationUser ? { id: collaborationUser.id, label: collaborationUser.name } : null,
+        participants: (blip.contributors || []).map((contributor) => ({
+          id: contributor.id,
+          label: contributor.name || contributor.email || contributor.id,
+          email: contributor.email,
+        })),
       }
     ),
-    [blip.id, collabActive, ydoc, collabProvider, stableToggleInlineComments, stableCreateInlineChildBlip, stableHideComments, stableShowComments]
+    [blip.id, blip.contributors, collaborationUser?.id, collaborationUser?.name, collabActive, ydoc, collabProvider, stableToggleInlineComments, stableCreateInlineChildBlip, stableHideComments, stableShowComments]
   );
 
   // Create inline editor for editing mode.

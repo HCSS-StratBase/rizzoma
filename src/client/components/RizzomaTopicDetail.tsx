@@ -34,6 +34,23 @@ import { subscribeBlipEvents, subscribeTopicDetail } from '../lib/socket';
 const LOAD_THROTTLE_MS = 5000; // Minimum time between loads
 const SOCKET_COOLDOWN_MS = 10000; // Cooldown period after load to ignore socket events
 
+export function shouldThrottleSocketTopicLoad({
+  force,
+  fromSocket,
+  lastCompleteTime,
+  now,
+}: {
+  force: boolean;
+  fromSocket: boolean;
+  lastCompleteTime: number;
+  now: number;
+}): boolean {
+  return !force
+    && fromSocket
+    && lastCompleteTime > 0
+    && now - lastCompleteTime < SOCKET_COOLDOWN_MS;
+}
+
 type LoadingState = { isLoading: boolean; lastLoadTime: number; lastCompleteTime: number };
 
 function asReadOnlyBlip(blip: BlipData): BlipData {
@@ -288,15 +305,30 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   );
   const topicCollabActive = topicCollabEnabled && !!topicYdoc && !!topicCollabProvider;
   const seedingTopicYdocRef = useRef(false);
+  const acceptedEditorRoster = participants
+    .filter((participant) => participant.status === 'accepted' || !participant.status)
+    .filter((participant) => !participant.userId.startsWith('invite:'))
+    .map((participant) => ({
+      id: participant.userId,
+      label: participant.name || participant.email || participant.userId,
+      email: participant.email,
+    }));
+  const topicRosterKey = acceptedEditorRoster.map((participant) => `${participant.id}:${participant.label}`).join('|');
 
   // TipTap editor for topic content (meta-blip editing)
-  const topicEditor = useEditor({
+  const useTopicEditorWithDeps = useEditor as unknown as (
+    options: Parameters<typeof useEditor>[0],
+    deps: unknown[],
+  ) => Editor | null;
+  const topicEditor = useTopicEditorWithDeps({
     extensions: getEditorExtensions(
       topicCollabActive ? topicYdoc : undefined,
       topicCollabActive ? topicCollabProvider : undefined,
       {
         waveId: id,
         onCreateInlineChildBlip: stableCreateInlineChildBlip,
+        currentUser: collaborationUser ? { id: collaborationUser.id, label: collaborationUser.name } : null,
+        participants: acceptedEditorRoster,
       }
     ),
     content: '',
@@ -321,7 +353,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         autoSaveTopicContent(html);
       }, 300);
     },
-  });
+  }, [id, topicCollabActive, topicYdoc, topicCollabProvider, stableCreateInlineChildBlip, collaborationUser?.id, collaborationUser?.name, topicRosterKey]);
 
   // Keep editor ref updated for use in callbacks
   topicEditorRef.current = topicEditor;
@@ -505,10 +537,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
     // Socket-triggered loads have a longer cooldown after the last completed load
     // This breaks the feedback loop where load -> socket event -> load
-    // Explicit mutation subscriptions call load(force=true). Never discard
-    // those authoritative collaborator events merely because the initial GET
-    // completed recently; GET-only reloads do not emit another mutation.
-    if (!force && fromSocket && state.lastCompleteTime > 0 && (now - state.lastCompleteTime) < SOCKET_COOLDOWN_MS) {
+    if (shouldThrottleSocketTopicLoad({ force, fromSocket, lastCompleteTime: state.lastCompleteTime, now })) {
       return;
     }
 
@@ -543,13 +572,16 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         }
 
         // Convert participants to contributor format for blips
-        const contributors: BlipContributor[] = loadedParticipants.map(p => ({
+        const contributors: BlipContributor[] = loadedParticipants
+          .filter((participant) => participant.status === 'accepted' || !participant.status)
+          .filter((participant) => !participant.userId.startsWith('invite:'))
+          .map(p => ({
           id: p.userId,
           email: p.email || '',
           name: p.name || (p.email || p.userId).split('@')[0],
           avatar: p.avatar,
           role: p.role,
-        }));
+          }));
 
         if (blipsResponse.ok && blipsResponse.data?.blips) {
           const rawBlips = await collectBlipPages<any>(

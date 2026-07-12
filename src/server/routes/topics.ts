@@ -17,6 +17,17 @@ import {
 } from '../lib/access.js';
 import { buildInviteUrl, createInviteToken, invitationTokenDocId, resolveInviteBaseUrl } from '../lib/invitations.js';
 import { inviteRateLimit } from '../middleware/inviteRateLimit.js';
+import {
+  reconcileStoredContentReferences,
+  validateStoredContentReferences,
+} from '../lib/contentReferences.js';
+
+const CONTENT_REFERENCE_ERRORS = new Set([
+  'invalid_mention_target',
+  'invalid_task_assignee',
+  'invalid_task_reference',
+  'task_reference_conflict',
+]);
 
 // User type for lookups
 type User = {
@@ -606,6 +617,9 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
     const existing = await loadLiveTopic(id);
     const access = await requireWaveAccess(req, res, id, 'edit', existing);
     if (!access) return;
+    const references = payload.content !== undefined
+      ? await validateStoredContentReferences(id, id, payload.content)
+      : null;
     const nowPatch = Date.now();
     // Authorship is server authority. Ignore any unknown client sidecar and
     // derive changed blocks from the stored old/new content plus this session.
@@ -627,11 +641,16 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
       updatedAt: nowPatch,
     };
     const r = await updateDoc(next as any);
+    if (references) await reconcileStoredContentReferences(id, id, references, req.user!);
     res.json({ id: r['id'], rev: r['rev'] });
     try { emitEvent('topic:updated', { id: r['id'], title: next.title, updatedAt: next.updatedAt }); } catch {}
     return;
   } catch (e: any) {
     if (e?.issues) { res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id }); return; }
+    if (CONTENT_REFERENCE_ERRORS.has(String(e?.message || ''))) {
+      res.status(400).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
     if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
     res.status(500).json({ error: e?.message || 'update_error', requestId: (req as any)?.id });
     return;
