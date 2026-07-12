@@ -86,7 +86,23 @@ const readBool = (key: string): boolean => {
   try { return window.localStorage.getItem(key) === '1'; } catch { return false; }
 };
 
-export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
+/**
+ * Treat the authenticated identity as an ownership boundary for every piece of
+ * mounted shell state.  This wrapper is defense in depth for alternate entry
+ * points: even if a caller forgets to key the layout, a direct A -> B session
+ * transition cannot reuse A's selected topic, unread state, modal state, or
+ * mounted editor tree.
+ */
+export function RizzomaLayout(props: RizzomaLayoutProps) {
+  const ownerKey = props.user?.id
+    ? `authenticated:${props.user.id}`
+    : props.isAuthed
+      ? 'authenticated:unresolved'
+      : 'anonymous';
+  return <RizzomaLayoutState key={ownerKey} {...props} />;
+}
+
+function RizzomaLayoutState({ isAuthed, user }: RizzomaLayoutProps) {
   const isOnline = useOnlineState();
   const pendingCollaborationCount = useCollaborationPendingCount();
   const canMutate = isAuthed && isOnline;

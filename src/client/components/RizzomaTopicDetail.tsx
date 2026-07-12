@@ -26,6 +26,7 @@ import { ActiveBlipProvider, EditSurfaceActiveBridge } from './blip/ActiveBlipCo
 import { parseHtmlToContentArray } from '@client/native/parser';
 import type { ContentArray } from '@client/native/types';
 import { useAuthenticatedCollaborationUser } from './editor/useAuthenticatedCollaborationUser';
+import { useAuth } from '../hooks/useAuth';
 import { requestTaskCompletionHydration } from './editor/extensions/TaskWidget';
 import { collectBlipPages } from '../lib/blipPagination';
 import { subscribeBlipEvents, subscribeTopicDetail } from '../lib/socket';
@@ -225,10 +226,46 @@ function formatDate(timestamp: number): string {
   return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
-export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unreadState }: { id: string; blipPath?: string | null; isAuthed?: boolean; unreadState?: WaveUnreadState | null }) {
+type RizzomaTopicDetailProps = {
+  id: string;
+  blipPath?: string | null;
+  isAuthed?: boolean;
+  unreadState?: WaveUnreadState | null;
+};
+
+/**
+ * Topic data, editors, participants, and drafts are all owner-scoped. Key the
+ * stateful implementation here as well as at the app shell so alternate
+ * entry-points and tests cannot accidentally carry a private A-owned tree into
+ * a B-owned render.
+ */
+export function RizzomaTopicDetail(props: RizzomaTopicDetailProps) {
+  const { user } = useAuth();
+  const ownerKey = user?.id
+    ? `authenticated:${user.id}`
+    : props.isAuthed
+      ? 'authenticated:unresolved'
+      : 'anonymous';
+  return (
+    <RizzomaTopicDetailState
+      key={`${ownerKey}:${props.id}`}
+      {...props}
+      accessOwnerKey={ownerKey}
+    />
+  );
+}
+
+function RizzomaTopicDetailState({
+  id,
+  blipPath = null,
+  isAuthed = false,
+  unreadState,
+  accessOwnerKey,
+}: RizzomaTopicDetailProps & { accessOwnerKey: string }) {
   const collaborationUser = useAuthenticatedCollaborationUser();
   const perfRenderMode = getPerfRenderMode();
   const isPerfLite = perfRenderMode === 'lite';
+  const loadingStateKey = `${accessOwnerKey}:${id}`;
   const [topic, setTopic] = useState<TopicFull | null>(null);
   const [blips, setBlips] = useState<BlipData[]>([]);
   const [allBlipsMap, setAllBlipsMap] = useState<Map<string, BlipData>>(new Map());
@@ -506,21 +543,50 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     setAllBlipsMap(nextMap);
   }, [unreadState?.version, blips, allBlipsMap]);
 
-  // Initialize global loading state for this topic
+  const clearLoadedTopicState = useCallback(() => {
+    if (topicSaveTimeoutRef.current) {
+      clearTimeout(topicSaveTimeoutRef.current);
+      topicSaveTimeoutRef.current = null;
+    }
+    const mountedEditor = topicEditorRef.current;
+    if (mountedEditor && !mountedEditor.isDestroyed) {
+      mountedEditor.setEditable(false);
+    }
+    pendingBlipsRef.current.clear();
+    lastSavedContentRef.current = '';
+    setTopic(null);
+    setBlips([]);
+    setAllBlipsMap(new Map());
+    setParticipants([]);
+    setCurrentSubblip(null);
+    setExpandedBlips(new Set());
+    setNewBlipContent('');
+    setTopicContent('');
+    setIsEditingTopic(false);
+    setShowInviteModal(false);
+    setShowShareModal(false);
+    setShowExportModal(false);
+    setShowWavePlayback(false);
+    setShowGearMenu(false);
+    setShowEditGearMenu(false);
+  }, []);
+
+  // Loading/throttle state is owner-partitioned. An in-flight request from A
+  // must never suppress B's first access-checked request for the same topic.
   useEffect(() => {
     const loadingState = getLoadingState();
-    if (!loadingState.has(id)) {
-      loadingState.set(id, { isLoading: false, lastLoadTime: 0, lastCompleteTime: 0 });
+    if (!loadingState.has(loadingStateKey)) {
+      loadingState.set(loadingStateKey, { isLoading: false, lastLoadTime: 0, lastCompleteTime: 0 });
     }
-  }, [id]);
+  }, [loadingStateKey]);
 
   const load = useCallback(async (force = false, fromSocket = false): Promise<void> => {
-    // Get or create global state for this topic
+    // Get or create global state for this owner + topic pair.
     const loadingState = getLoadingState();
-    let state = loadingState.get(id);
+    let state = loadingState.get(loadingStateKey);
     if (!state) {
       state = { isLoading: false, lastLoadTime: 0, lastCompleteTime: 0 };
-      loadingState.set(id, state);
+      loadingState.set(loadingStateKey, state);
     }
 
     // Prevent concurrent loads — UNLESS force=true. The Ctrl+Enter create
@@ -569,8 +635,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         let loadedParticipants: Participant[] = [];
         if (participantsResponse.ok && participantsResponse.data?.participants) {
           loadedParticipants = participantsResponse.data.participants as Participant[];
-          setParticipants(loadedParticipants);
         }
+        // A demotion can make the participant endpoint inaccessible while the
+        // topic itself remains readable. Never retain the earlier roster.
+        setParticipants(loadedParticipants);
 
         // Convert participants to contributor format for blips
         const contributors: BlipContributor[] = loadedParticipants
@@ -646,6 +714,11 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           sortBlips(rootBlips);
           setBlips(rootBlips);
           setAllBlipsMap(blipMap); // Store for subblip navigation
+        } else {
+          // Fail closed if a partial access check denies the blip collection.
+          setBlips([]);
+          setAllBlipsMap(new Map());
+          setCurrentSubblip(null);
         }
 
         // DISABLED: Refreshing unread state here was contributing to infinite loop
@@ -655,19 +728,27 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         // }
         setError(null);
       } else {
-        setError('Failed to load topic');
+        if (r.status === 401 || r.status === 403) {
+          clearLoadedTopicState();
+          setError(r.status === 401 ? 'Sign in to view this topic' : 'You do not have access to this topic');
+        } else {
+          setError('Failed to load topic');
+        }
       }
     } catch {
+      // The response may have failed after an auth transition or mid-page
+      // revocation. The error UI already replaces the topic; erase the backing
+      // private state too so Retry can only repopulate it through a fresh,
+      // access-checked response.
+      clearLoadedTopicState();
       setError('Failed to load topic');
     } finally {
       state.isLoading = false;
       state.lastCompleteTime = Date.now();
     }
-  }, [id]);
+  }, [clearLoadedTopicState, id, loadingStateKey]);
 
-  // Initial load + reload when auth state changes
-  // load depends on [id, isAuthed], so when isAuthed changes (false→true after auth check),
-  // load is recreated and this effect re-fires, reloading with correct permissions
+  // Initial load + reload when the owner-scoped implementation is remounted.
   useEffect(() => { load(); }, [load]);
 
   // BLB: Find and set the current subblip when blipPath changes

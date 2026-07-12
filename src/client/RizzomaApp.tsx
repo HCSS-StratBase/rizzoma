@@ -82,7 +82,11 @@ export function RizzomaApp(): JSX.Element {
           </div>
         )}
 
-        <RizzomaLayout isAuthed={!!me} user={me} />
+        <RizzomaLayout
+          key={me?.id ? `authenticated:${me.id}` : 'anonymous'}
+          isAuthed={!!me}
+          user={me}
+        />
         <Toast />
       </div>
     </AuthProvider>

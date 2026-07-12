@@ -346,7 +346,7 @@ export function App() {
             <AuthPanel onSignedIn={(u) => setMe(u)} />
           </div>
         ) : (
-          <RizzomaLayout isAuthed={!!me} user={me} />
+          <RizzomaLayout key={`authenticated:${me.id}`} isAuthed user={me} />
         )}
         <Toast />
       </div>
@@ -387,7 +387,12 @@ export function App() {
         ) : route.startsWith('#/wave/') && currentId ? (
           <WaveView id={currentId} />
         ) : route.startsWith('#/topic/') && currentId ? (
-          <RizzomaTopicDetail id={currentId} blipPath={currentBlipPath} isAuthed={!!me} />
+          <RizzomaTopicDetail
+            key={`${me?.id ? `authenticated:${me.id}` : 'anonymous'}:${currentId}`}
+            id={currentId}
+            blipPath={currentBlipPath}
+            isAuthed={!!me}
+          />
         ) : (
           <TopicsList isAuthed={!!me} initialMy={listParams.my} initialLimit={listParams.limit} initialOffset={listParams.offset} initialQuery={listParams.q} />
         )}
