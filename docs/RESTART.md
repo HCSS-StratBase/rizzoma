@@ -1,6 +1,6 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-12 (`master` @ `8840f552`; PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) merged. Final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401) and [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404) passed. The merged source is not yet deployed; production verification is the next gate.)
+Last refreshed: 2026-07-12 (`master`; native-fractal release code checkpoint `8840f552`, with handoff/evidence landed through PR [#58](https://github.com/HCSS-StratBase/rizzoma/pull/58). Final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401) and [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404) passed. The merged source is not yet deployed; production verification is the next gate.)
 
 Last refreshed (prior): 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — verified Playwright sign-in lands as `sdspieg@gmail.com`. Tasks #140 + #143 closed. Two Hetzner Robot firewall changes needed: opened :80 + consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to cover return traffic from MASQUERADE'd outbound. tcpdump-diagnosed.)
 
@@ -31,7 +31,7 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `master` at `8840f552` (2026-07-12). Always cite branch + date when sharing status.
+- Active branch: `master` (2026-07-12; release code checkpoint `8840f552`, handoff/evidence PR #58). Always cite branch + date when sharing status.
 - Final release gates: 62 Vitest files / 283 passed / 3 skipped; production build 3,298 modules; collaboration 10/10 with 1 ms relay and zero remote REST PUTs; enforced full-render perf 120/120 with 101 lazy slots, 394.3 ms landing, 595.6 ms expanded, and 36 MB heap.
 - Latest inspected release evidence is under `screenshots/260712-0313-pr57-release-gates/`. It contains CI fixture screenshots and metrics, not production-deployment proof.
 - Deployment boundary: merged `master` has not yet been deployed; live/staging still need health, auth, two-user collaboration, reconnect/catch-up, and unread verification after deployment.

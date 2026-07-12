@@ -48,6 +48,7 @@
 This section supersedes the initial release boundary above.
 
 - PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) merged to `master` as `8840f552` from source head `daa3f2f3` at 2026-07-12 03:38 CEST.
+- PR [#58](https://github.com/HCSS-StratBase/rizzoma/pull/58) landed the final handoff and inspected evidence as `6db65e20`; the release code checkpoint remains `8840f552`.
 - Final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401) passed build, browser smokes, performance budgets, health checks, and the aggregate gate; [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404) also passed.
 - Final CI measured 62 files / 283 passed / 3 skipped, 3,298 transformed build modules, lint at 0 errors, and 10/10 health checks.
 - The two-browser-process collaboration smoke passed 10/10: 1 ms A-to-B relay, zero receiving-client REST PUTs, bidirectional convergence, reconnect catch-up, stable unread drain, and no-store topic reads.

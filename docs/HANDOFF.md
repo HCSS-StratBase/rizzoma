@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`master` @ `8840f552`). PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) merged from source head `daa3f2f3` after final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401) and [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404) passed. Final CI measured **62 files / 283 passed / 3 skipped**, a **3,298-module** production build, and lint at **0 errors** with 6,363 warnings retained as maintenance debt. The two-browser-process collaboration smoke passed **10/10** with **1 ms** A-to-B relay, **0** remote REST PUTs, bidirectional convergence, reconnect catch-up, stable unread drain, and no-store topic reads. The enforced full-render performance gate passed **120/120** labels and blips with **101** lazy slots, **394.3 ms** landing, **595.6 ms** expanded, and **36 MB** heap. Inspected CI fixture evidence is under `screenshots/260712-0313-pr57-release-gates/`.
+Last Updated: 2026-07-12 (`master`; native-fractal release code checkpoint `8840f552`, handoff/evidence merged through PR [#58](https://github.com/HCSS-StratBase/rizzoma/pull/58) as `6db65e20`). PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) merged from source head `daa3f2f3` after final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401) and [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404) passed. Final CI measured **62 files / 283 passed / 3 skipped**, a **3,298-module** production build, and lint at **0 errors** with 6,363 warnings retained as maintenance debt. The two-browser-process collaboration smoke passed **10/10** with **1 ms** A-to-B relay, **0** remote REST PUTs, bidirectional convergence, reconnect catch-up, stable unread drain, and no-store topic reads. The enforced full-render performance gate passed **120/120** labels and blips with **101** lazy slots, **394.3 ms** landing, **595.6 ms** expanded, and **36 MB** heap. Inspected CI fixture evidence is under `screenshots/260712-0313-pr57-release-gates/`.
 
 **Deployment boundary:** merged `master` has not yet been deployed. Live/staging remain bare `nohup` development processes with MemoryStore sessions until a separate deployment and topology-hardening batch verifies health, auth, collaboration, reconnect/catch-up, and unread behavior in production.
 
@@ -35,7 +35,7 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active branch: `master` at `8840f552` (2026-07-12). Always include branch name + date when summarizing status.
+- Active branch: `master` (2026-07-12; release code checkpoint `8840f552`, handoff/evidence PR #58). Always include branch name + date when summarizing status.
 - The "Current State" section below is refreshed for the merged native-fractal release; older dated entries are historical evidence only.
 
 Branching mode (private repo):
@@ -69,7 +69,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`master` @ 2026-07-12; `8840f552`)
+Current State (`master` @ 2026-07-12; release code `8840f552` + handoff/evidence PR #58)
 - FEAT_ALL required: start both server (:8788, the reserved Rizzoma backend port — see CLAUDE.md "Reserved Ports") and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Docker Desktop WSL integration was re-enabled on 2026-03-29; `docker compose up -d couchdb redis` works again from WSL for local live-app verification.
 - Express 5 SPA fallback: `src/server/app.ts` uses `app.get('/{*path}', ...)` which is the canonical path-to-regexp v8 syntax under Express 5 (bare `*` was dropped in v8). This was documented as a "workaround" in earlier snapshots but is actually the correct form. Cleaned up in Hard Gap #29 (2026-04-13): the `/uploads` static handler is now mounted BEFORE the SPA catch-all so the catch-all only has to skip `/api` paths, and the code comment explains the syntax is canonical.
