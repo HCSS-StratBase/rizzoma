@@ -5,6 +5,16 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-07-12 managed cutover and auth-race gate) PR #68 merged as `e21afd04`;
+  that exact tree passed dependency/provenance gates and became public through
+  a zero-overlap drain at 21:32 CEST. Strict public acceptance then reproduced
+  an intermittent `POST /login` 200 followed by `/auth/me` 401. Every anonymous
+  page, API, and asset request was mutating the session to add CSRF state, so
+  concurrent first-load responses could overwrite the regenerated login
+  cookie. Branch `fix/production-auth-session-race` restricts anonymous session
+  creation to `/api/auth/csrf`; focused auth tests, server build, and lint at
+  zero errors pass. CI, private deployment, repeated public proof, and the rest
+  of the acceptance matrix remain open.
 - (2026-07-12 integrated release merge) PR
   [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) merged the full
   authorization, offline/auth isolation, private upload/ClamAV,

@@ -6,10 +6,21 @@ const HEADER_NAME = 'x-csrf-token';
 export function csrfInit() {
   return (req: any, res: any, next: any) => {
     const sess = (req as any).session as any;
-    if (sess && !sess.csrfToken) {
+    // Do not turn every anonymous page/API/asset request into a saved session.
+    // A first page load fans out many concurrent requests; when each response
+    // creates a different anonymous session cookie, a late asset response can
+    // overwrite the freshly regenerated login cookie. The dedicated endpoint
+    // is the only anonymous request allowed to mint the pre-auth CSRF session.
+    const requestPath = String(req.originalUrl || req.url || req.path || '').split('?')[0];
+    const isTokenEndpoint = requestPath === '/api/auth/csrf';
+    if (sess && !sess.csrfToken && isTokenEndpoint) {
       sess.csrfToken = randomBytes(16).toString('hex');
     }
-    if (sess?.csrfToken) {
+    // A request that loaded the old pre-auth session before login regeneration
+    // may complete afterwards. Restrict the readable cookie too, otherwise it
+    // could overwrite the fresh post-login XSRF token even though the SID is
+    // now safe. establishAuthenticatedSession emits the post-login token.
+    if (isTokenEndpoint && sess?.csrfToken) {
       const isProd = process.env['NODE_ENV'] === 'production';
       res.cookie(TOKEN_COOKIE, sess.csrfToken, {
         httpOnly: false,
