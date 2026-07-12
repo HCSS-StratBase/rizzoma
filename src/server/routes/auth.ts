@@ -241,23 +241,24 @@ router.post('/login', loginLimiter, csrfProtect(), async (req, res): Promise<voi
 });
 
 router.post('/logout', csrfProtect(), async (req, res): Promise<void> => {
-  disconnectSessionSockets(String((req as any).sessionID || ''));
+  const sessionId = String((req as any).sessionID || '');
   if (!req.session) {
     res.json({ ok: true, requestId: (req as any)?.id });
     return;
   }
   const destroyError = await new Promise<unknown>((resolve) => req.session.destroy((error) => resolve(error)));
+  if (destroyError) {
+    console.error('[auth] session revocation failed', { requestId: (req as any)?.id, error: String((destroyError as any)?.message || destroyError) });
+    res.status(503).json({ error: 'revocation_failed', requestId: (req as any)?.id });
+    return;
+  }
   res.clearCookie('rizzoma.sid', {
     path: '/',
     httpOnly: true,
     secure: process.env['NODE_ENV'] === 'production',
     sameSite: 'lax',
   });
-  if (destroyError) {
-    console.error('[auth] session revocation failed', { requestId: (req as any)?.id, error: String((destroyError as any)?.message || destroyError) });
-    res.status(503).json({ error: 'revocation_failed', requestId: (req as any)?.id });
-    return;
-  }
+  disconnectSessionSockets(sessionId);
   res.json({ ok: true, requestId: (req as any)?.id });
 });
 

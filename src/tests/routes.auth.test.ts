@@ -1,4 +1,13 @@
-import { vi, describe, it, expect, beforeAll } from 'vitest';
+import { vi, describe, it, expect, beforeAll, beforeEach } from 'vitest';
+
+const logoutState = vi.hoisted(() => ({
+  events: [] as string[],
+  disconnectSessionSockets: vi.fn(() => { logoutState.events.push('disconnect'); return 0; }),
+}));
+
+vi.mock('../server/lib/socket.js', () => ({
+  disconnectSessionSockets: logoutState.disconnectSessionSockets,
+}));
 
 // Use bcryptjs in tests to avoid native binding issues
 vi.mock('bcrypt', async () => {
@@ -84,19 +93,26 @@ describe('routes: /api/auth', () => {
     app.use(requestId());
     // Add mock session middleware
     app.use((req, _res, next) => {
+      (req as any).sessionID = 'test-session-id';
       (req as any).session = {
         userId: undefined,
         userEmail: undefined,
         userName: undefined,
         csrfToken: 'test-csrf-token',
-        destroy: (cb: (error?: Error) => void) => cb(
-          req.get('x-test-destroy-fail') === '1' ? new Error('store unavailable') : undefined,
-        ),
+        destroy: (cb: (error?: Error) => void) => {
+          logoutState.events.push('destroy');
+          cb(req.get('x-test-destroy-fail') === '1' ? new Error('store unavailable') : undefined);
+        },
       };
       next();
     });
     app.use('/api/auth', authRouter);
   }, 30000); // bcrypt with 10 rounds is CPU-heavy on WSL2
+
+  beforeEach(() => {
+    logoutState.events.length = 0;
+    logoutState.disconnectSessionSockets.mockClear();
+  });
 
   it('registers a new user', async () => {
     const server = app.listen(0);
@@ -168,6 +184,23 @@ describe('routes: /api/auth', () => {
     server.close();
     expect(resp.status).toBe(503);
     expect(body.error).toBe('revocation_failed');
+    expect(resp.headers.get('set-cookie')).toBeNull();
+    expect(logoutState.disconnectSessionSockets).not.toHaveBeenCalled();
+    expect(logoutState.events).toEqual(['destroy']);
+  });
+
+  it('clears the cookie and disconnects sockets only after durable revocation succeeds', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const resp = await fetch(`http://127.0.0.1:${port}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'test-csrf-token' },
+    });
+    server.close();
+
+    expect(resp.status).toBe(200);
     expect(resp.headers.get('set-cookie')).toContain('rizzoma.sid=');
+    expect(logoutState.disconnectSessionSockets).toHaveBeenCalledWith('test-session-id');
+    expect(logoutState.events).toEqual(['destroy', 'disconnect']);
   });
 });
