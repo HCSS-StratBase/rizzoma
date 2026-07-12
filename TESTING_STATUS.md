@@ -29,8 +29,8 @@
   `599fe025`. Its first loopback-only candidate passed application health but
   failed the stronger dependency-provenance audit: `yjs` installed at 13.6.31
   while `package-lock.json` requires 13.6.29. Public nginx was not changed. The
-  replacement second `npm ci --omit=dev` must pass fresh CI and exact-version
-  private verification before cutover.
+  replacement second `npm ci --omit=dev` plus the new full installed-tree versus
+  lockfile gate must pass fresh CI and private verification before cutover.
 - Boundary: this is merged/local evidence, not public acceptance. Exact-SHA
   managed deployment, real SMTP/invitation and reset-mail
   checks, real ClamAV upload/EICAR checks, two-account collaboration, persisted

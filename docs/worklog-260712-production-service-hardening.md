@@ -160,7 +160,10 @@ lockfile**. Disabling lockfile writes also made npm ignore the lock during
 reification and resolve current ranged versions. The corrected helper no
 longer prunes. After building, it runs a second `npm ci --omit=dev`, which
 destructively recreates the production-only tree from the reviewed lockfile.
-The private candidate was never exposed through nginx.
+It then walks the installed package tree and fails on any version absent from
+or different to `package-lock.json`, followed by a full production `npm ls`.
+This makes installed dependency provenance a deployment gate instead of a
+manual post-hoc sample. The private candidate was never exposed through nginx.
 
 ## ClamAV as a managed readiness dependency
 

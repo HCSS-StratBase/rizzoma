@@ -301,6 +301,8 @@ if [[ ! -d "$RELEASE" ]]; then
   # leaves an exact production-only tree without either failure mode.
   CYPRESS_INSTALL_BINARY=0 npm ci --omit=dev \
     --no-audit --no-fund --legacy-peer-deps
+  node scripts/verify-production-dependencies.cjs .
+  npm ls --omit=dev --all >/dev/null
   install -d -m 0755 data
   rm -rf data/uploads
   ln -s /var/lib/rizzoma/uploads data/uploads

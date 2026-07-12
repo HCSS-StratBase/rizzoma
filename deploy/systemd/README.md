@@ -76,7 +76,8 @@ the prior lane target and its active/inactive plus enabled/disabled state if
 startup or health fails. It installs exact dependencies, builds with the parity
 renderer enabled and the native renderer disabled, then recreates a
 production-only dependency tree from the same reviewed lockfile before it
-starts `rizzoma@blue` and verifies:
+mechanically compares every installed package version with that lockfile,
+requires `npm ls --omit=dev --all` to pass, starts `rizzoma@blue`, and verifies:
 
 - service active
 - `/api/health` green, including Redis sessions

@@ -9,7 +9,8 @@ Task stack after all seven GitHub gates passed, and PR #67 merged the managed
 helper after six more green checks. Its first private deployment exposed a
 second npm 10 failure mode: disabling lockfile writes during prune installed
 `yjs` 13.6.31 although the lock requires 13.6.29. The current fix replaces
-prune with a second lockfile-driven `npm ci --omit=dev`. A fresh PR/CI/private
+prune with a second lockfile-driven `npm ci --omit=dev` and rejects any
+installed package version that differs from the lock. A fresh PR/CI/private
 redeploy, zero-overlap cutover, and public acceptance remain open.
 
 **Deployment boundary:** nginx serves Vite `:3100` → API `:8100`; Redis backs API sessions. The public frontend is Vite's **development server**, not a compiled production frontend. The live client has parity rendering enabled and native rendering unset, so production uses the React/TipTap parity path; `NativeWaveView` remains read-only and is not the deployed architecture. The former `:3000`/`:8788` lane remains healthy for immediate rollback via `/root/rizzoma.conf.pre-pr60-20260712-052206`. Both lanes are unmanaged bare processes and share CouchDB.
