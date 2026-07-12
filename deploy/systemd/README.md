@@ -67,8 +67,9 @@ The script takes a global deployment lock, verifies the SHA is an ancestor of
 `origin/master`, checks root-only environment ownership and exact non-secret
 runtime invariants, and requires the installed service unit to match the
 candidate with no effective drop-ins. Existing releases are reused only after
-their Git HEAD, tracked tree, ownership, read-only mode, and persistent-upload
-symlink are revalidated. It scans all effective nginx configuration before and immediately
+their Git HEAD, tracked tree, ownership, read-only mode, persistent-upload
+symlink, installed-versus-lock package versions, and complete production
+dependency graph are revalidated. It scans all effective nginx configuration before and immediately
 after the build, refusing any lane referenced by a loaded public or dev vhost,
 including indirect upstream definitions. It then builds in a private disposable
 staging worktree, publishes the release symlink atomically, and restores both

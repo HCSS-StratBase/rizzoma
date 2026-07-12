@@ -163,7 +163,12 @@ destructively recreates the production-only tree from the reviewed lockfile.
 It then walks the installed package tree and fails on any version absent from
 or different to `package-lock.json`, followed by a full production `npm ls`.
 This makes installed dependency provenance a deployment gate instead of a
-manual post-hoc sample. The private candidate was never exposed through nginx.
+manual post-hoc sample. An independent review then caught that the first gate
+placement covered only newly built releases; existing immutable releases could
+still bypass it because tracked-tree validation ignores `node_modules`. Both
+the version walk and production `npm ls` now run after the new-versus-reused
+branch, before any lane publication. The private candidate was never exposed
+through nginx.
 
 ## ClamAV as a managed readiness dependency
 
