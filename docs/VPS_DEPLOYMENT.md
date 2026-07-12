@@ -1,6 +1,22 @@
 # VPS Deployment — Rizzoma on 138.201.62.161
 
-**Last updated**: 2026-07-12 (integrated candidate pre-cutover checkpoint)
+**Last updated**: 2026-07-13 (exact PR #71 green deployment; read-marker hotfix pending)
+
+> **Current runtime truth:** exact merged master
+> `0553a611c54a7cfa8faf466ac0797a13b4aa51d4` is public through both nginx
+> vhosts to compiled, systemd-managed green `:8102`. Blue `:8101` is
+> stopped/disabled. Public health reports CouchDB, Redis, and ClamAV ready; the
+> deployed client assets are `main-C53x9A2I.js` and `main-BNWeJdg2.css`.
+> Root-only rollback capture: `/root/rizzoma-cutover-coherence-20260713-003633`.
+>
+> Resumed public acceptance verified the collaboration/authorization/Task/
+> mention/export/FtG/ACL matrix, then found a duplicate mark-read update race:
+> one concurrent write returned 200 and the stale-revision twin returned 500.
+> Branch `fix/read-marker-conflict` is locally green at 108 test files / 651
+> passed / 3 skipped, typecheck, full-source lint, and a 3,315-module build. It
+> must merge through green CI, deploy as an exact immutable release to inactive
+> blue `:8101`, and pass the same public acceptance before replacing this
+> checkpoint with a final-production claim.
 
 > **Application merged, not yet public:** PR
 > [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) merged as `bacb8a50`

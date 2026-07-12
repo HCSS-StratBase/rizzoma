@@ -1,5 +1,30 @@
 # Rizzoma Feature Testing Status
 
+## Concurrent read-marker hotfix — 2026-07-13
+
+- Public production is exact merged master `0553a611` on managed green
+  `:8102`. The resumed two-user acceptance run proved the generation-safe
+  collaboration stack through roles, reconnect, Tasks, mentions, exports,
+  Follow-the-Green, ACL changes, and revocation, then correctly failed its
+  console gate on a duplicate mark-read race: one identical CouchDB update
+  returned 200 and the other surfaced as 500.
+- Branch `fix/read-marker-conflict` routes single and bulk read markers through
+  one deterministic-ID upsert. A conflict rereads the exact document and
+  retries at most four writes; legacy random-ID markers are updated in place;
+  `readAt` never moves backward; non-conflict database errors are not masked.
+- Regression evidence: simultaneous existing-marker updates **both return
+  2xx** with one valid marker; simultaneous first inserts **both return 2xx**
+  with one deterministic marker; legacy reuse creates no duplicate; simulated
+  503 remains a visible 500. The route suite passes **8/8**.
+- Full local release gate: **108 test files / 651 passed / 3 skipped / 0
+  failed**; TypeScript no-emit, full-source ESLint `--quiet`, `git diff --check`,
+  and the production build all pass; Vite transformed **3,315 modules**. An
+  independent read-only audit returned **GO** for the observed two-request
+  race.
+- Boundary: this branch is not yet merged or public. GitHub CI, exact inactive
+  blue-lane deployment, and a console-clean public acceptance rerun still gate
+  the final production claim.
+
 ## REST/Yjs content-coherence candidate — 2026-07-12
 
 - Branch `fix/rest-yjs-content-coherence` is based on public master

@@ -1,5 +1,27 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
+## Final production hotfix checkpoint — 2026-07-13
+
+- PR [#71](https://github.com/HCSS-StratBase/rizzoma/pull/71) merged the
+  generation-safe collaboration, authorization, recovery, and auth closeout as
+  exact master `0553a611`; all seven GitHub checks passed and that exact release
+  is public on managed green `:8102`.
+- Resumed production acceptance verified the substantive feature matrix through
+  two-account collaboration/reconnect, viewer/commenter/editor enforcement,
+  Tasks and mentions, Follow-the-Green, recursive export, public/private ACLs,
+  and revocation. It then found one genuine remaining runtime defect: duplicate
+  mark-read requests could race on the same CouchDB revision and produce one
+  500.
+- `fix/read-marker-conflict` makes single and bulk read markers conflict-
+  idempotent with deterministic IDs, authoritative direct rereads, bounded
+  retry, monotonic timestamps, and legacy marker compatibility. Full local
+  gates pass at **108 files / 651 tests / 3 skipped**, plus typecheck,
+  full-source ESLint `--quiet`, `git diff --check`, and a **3,315-module** build;
+  an independent audit returned **GO**.
+- Boundary: merge/CI, exact blue deployment, and final clean production
+  acceptance remain required. Physical iPhone Safari and 500/1,000-blip
+  full-render sweeps remain explicit post-release risks, not hidden blockers.
+
 ## REST/Yjs coherence candidate — 2026-07-12
 
 - Collaborative HTML materialization now carries the exact durable Yjs

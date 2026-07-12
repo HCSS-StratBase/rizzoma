@@ -1,6 +1,11 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-12 (`fix/lockfile-driven-production-install`; helper
+Last refreshed: 2026-07-13 (`fix/read-marker-conflict`; PR #71 exact
+`0553a611` public on managed green `:8102`; concurrent read-marker hotfix
+locally green and pending CI/deploy/final acceptance. Resume from the isolated
+release worktree; do not touch the dirty canonical checkout.)
+
+Last refreshed (prior): 2026-07-12 (`fix/lockfile-driven-production-install`; helper
 merge `599fe025`; **not yet public**). PR #66 merged the complete authorization,
 offline/auth, private upload/ClamAV, OAuth/password recovery,
 collaboration/realtime/export, mention, and durable Task stack after all seven
@@ -40,9 +45,9 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `fix/lockfile-driven-production-install` (2026-07-12), based
-  on merged helper commit `599fe025`; public production remains on the earlier
-  parity release. Always cite branch + date when sharing status.
+- Active branch: `fix/read-marker-conflict` (2026-07-13), based on deployed
+  master `0553a611`; public production runs that exact generation-safe release
+  on green `:8102`. Always cite branch + date when sharing status.
 - Current local gates: 107/107 Vitest files, 588 passed, 3 skipped, typecheck,
   full-source ESLint `--quiet`, 3,314 build modules, responsive local evidence,
   and independent GO audit. Public collaboration, restart persistence, roles,
@@ -68,7 +73,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `fix/lockfile-driven-production-install` worktree/branch until the deterministic production-install fix merges; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
+    - Continue in the isolated `fix/read-marker-conflict` worktree/branch until the concurrent read-marker fix merges; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -77,10 +82,10 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Publish the lockfile-driven production-install fix, require all CI jobs, and merge only the green tree.
-  2) Install the exact merged helper assets and redeploy that exact master SHA to the inactive managed lane; verify installed versions against the lock plus direct health/assets/journal/ClamAV, then drain old Vite and API with zero writer overlap before switching both vhosts.
-  3) Run public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs.
-  4) Record the exact production result in project docs, global HANDOFF, and existing HCSS Tana node `8mGAbLRiBnne`; refresh the Git bundle after final docs merge.
+  1) Publish the concurrent read-marker hotfix, require all CI jobs, and merge only the green tree.
+  2) Deploy the exact squash merge to inactive managed blue `:8101`; verify exact release/dependency provenance plus direct health/assets/journal/ClamAV, then drain green with zero writer overlap before switching both vhosts.
+  3) Rerun public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs and a zero-5xx journal check.
+  4) Record the exact production result in project docs, global HANDOFF, and HCSS Tana under the correct 2026-07-13 date; refresh the Git bundle after final docs merge.
   5) Keep native rendering disabled; after release, address 500/1,000-blip sweeps, physical iPhone Safari, staging-data separation, synthetic-data cleanup, and dependency/lint debt.
 
   Testing/CI hygiene:

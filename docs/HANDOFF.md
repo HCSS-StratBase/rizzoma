@@ -1,39 +1,28 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`fix/rest-yjs-content-coherence`; deployed base
-`04b9462244832c0567bf3741da07f0c18c10d1bb`). PRs
-[#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) through
-[#70](https://github.com/HCSS-StratBase/rizzoma/pull/70) are merged and public.
-The strict acceptance gate passed login-race proof, phase-1 restart/OAuth-shape/
-hierarchy/upload/scanner checks, invitation acceptance, role enforcement,
-two-browser collaboration/reconnect, Follow-the-Green `2 -> 1 -> 0`, recursive
-exports, public/private ACLs, and revocation. It then exposed a real
-dual-authority defect: an out-of-band REST blip replacement left an older Yjs
-cache/snapshot live, and a later collaborative edit restored the stale HTML and
-deleted its derived Task side-document. The current branch replaces that dual
-authority with a durable per-blip `yjsGeneration`: external REST replacements
-advance the generation; browser documents, cache entries, snapshots, updates,
-and socket leases are generation-bound; and collaborative projections require
-the matching writable session, generation, and SHA-256 digest of the full Yjs
-state. Every mutation is serialized, acknowledged dirty state cannot be
-overwritten, the exact snapshot is persisted before HTML materialization,
-seeding has one socket-owned claimant, and the legacy editor uses an isolated
-snapshot namespace. Queued demotion/deletion races and the final native-auth
-ticket/preclaim/logout edges are regression-covered. Per-wave policy epochs
-also invalidate every pending room/join across demotion or deletion, and
-failure-safe route cleanup refreshes live authority after partial access-policy
-writes. Snapshot reads fail closed: storage/decode errors publish no room,
-reference, or seed, and the client retries with bounded backoff. Local full
-gates pass at 108 files / 647 tests / 3 skipped, typecheck,
-full-source ESLint `--quiet`, and
-a 3,315-module build. GitHub CI, private deployment, and resumed acceptance
-remain open.
+Last Updated: 2026-07-13 (`fix/read-marker-conflict`; deployed base
+`0553a611c54a7cfa8faf466ac0797a13b4aa51d4`). PR
+[#71](https://github.com/HCSS-StratBase/rizzoma/pull/71) merged the complete
+generation-safe collaboration/auth repair after all seven GitHub checks passed,
+and that exact master is public on managed green `:8102`. Resumed production
+acceptance proved invitation delivery/acceptance, viewer/commenter/editor
+enforcement, Tasks and mentions, two-browser relay/reconnect, Follow-the-Green
+`2 -> 1 -> 0`, recursive exports, public/private ACLs, and revocation. Its final
+console gate then caught one real 500: two concurrent mark-read writes could use
+the same CouchDB revision, so one succeeded while the second conflict surfaced
+as 500. The current branch replaces both single and bulk read-marker writes
+with one deterministic-ID, direct-reread, bounded-retry upsert; legacy random-ID
+markers remain compatible, timestamps stay monotonic, and non-conflict failures
+remain visible. Local gates pass at **108 files / 651 tests / 3 skipped / 0
+failed**, plus typecheck, full-source ESLint `--quiet`, `git diff --check`, a
+**3,315-module** build, and an independent GO audit. GitHub CI, exact blue-lane
+deployment, and the final clean public acceptance rerun remain open.
 
 **Deployment boundary:** both public vhosts point exactly once to the compiled,
-systemd-managed blue lane on loopback `:8101`; green and the old listeners are
-inactive. `rizzoma@blue` is active/enabled at exact release `04b94622`, with
+systemd-managed green lane on loopback `:8102`; blue and the old listeners are
+inactive. `rizzoma@green` is active/enabled at exact release `0553a611`, with
 Redis sessions, CouchDB, and ClamAV healthy. The root-only rollback capture is
-`/root/rizzoma-cutover-topic-root-20260712-221536`. Native rendering remains
+`/root/rizzoma-cutover-coherence-20260713-003633`. Native rendering remains
 disabled; production uses the React/TipTap parity path.
 
 Last Updated: 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — Playwright sign-in lands as `sdspieg@gmail.com` "Stephan De Spiegeleire" with Google avatar. Tasks #140 + #143 both closed. Required two Hetzner Robot firewall passes: (1) opened port 80 for Let's Encrypt; (2) consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to allow return traffic from MASQUERADE'd outbound — without that, server couldn't reach `oauth2.googleapis.com/token`. Diagnosed via tcpdump (SYN egressed, no SYN-ACK returned). Same fix unblocks SMTP / S3 / any container-outbound feature.)
@@ -67,9 +56,9 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active development branch: `fix/rest-yjs-content-coherence` (2026-07-12),
-  based on deployed master `04b94622`; the coherence fix remains private until
-  CI, exact-lane deployment, and resumed console-clean acceptance pass. Always include branch name + date when
+- Active development branch: `fix/read-marker-conflict` (2026-07-13), based on
+  deployed master `0553a611`; the read-marker hotfix remains private until CI,
+  exact-lane deployment, and resumed console-clean acceptance pass. Always include branch name + date when
   summarizing status.
 - The "Current State" section below is refreshed for the deployed parity release; older dated entries and “native release” labels are historical until the native renderer is write-capable and actually enabled.
 
@@ -104,7 +93,16 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`fix/rest-yjs-content-coherence` @ 2026-07-12; deployed base `04b94622`; coherence fix pending)
+Current State (`fix/read-marker-conflict` @ 2026-07-13; deployed base `0553a611`; read-marker hotfix pending)
+- The complete integrated stack is merged through PR #71 and publicly running
+  as exact `0553a611` on managed green `:8102`. All seven PR checks passed.
+- The only acceptance failure now in scope is the measured duplicate mark-read
+  race. The current helper fixes both initial-insert and existing-revision
+  conflicts for single and bulk routes; focused **8/8**, full **651 passed / 3
+  skipped**, typecheck, lint, build, and an independent audit are green.
+- Next: publish this branch, require green CI, deploy its exact squash merge to
+  inactive blue `:8101`, perform a zero-overlap cutover, and rerun the same
+  public acceptance through restart/auth/export/upload/visual/journal gates.
 - The full application stack is merged on `master` through PR #66: private/link/public
   sharing, viewer/commenter/editor/owner enforcement, server-session Socket.IO
   identity, live demotion, owner-partitioned offline/Yjs state, ACL-backed
