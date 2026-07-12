@@ -5,8 +5,9 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
-- (2026-07-12 CI remediation) PR #57 failures were dependency/workflow defects rather than fractal-editor regressions: Linux stripped Rollup's native optional package, macOS ignored an undeclared `y-prosemirror` peer, and Vite defaulted to `:8000` while the portable server default is `:8788`. Fixed all three, hardened PR build/readiness gates, and closed the local full-suite boundary at 61 files / 275 passed / 3 skipped.
-- (2026-07-12 re-read) The July production cutover lived on `fix/single-active-editor`, while HANDOFF/RESTART still presented March/May branch snapshots. Refreshed the release-candidate context before running the full release gates. Canonical `master` must not be called current until the fast-forward is pushed and verified.
+- (2026-07-12 post-merge) PR #57 merged to `master` as `8840f552` from source `daa3f2f3`. Final-head CI 29175331401 and iOS 29175331404 passed: 62 files / 283 passed / 3 skipped, 3,298 build modules, collaboration 10/10 with 1 ms relay and zero remote REST PUTs, and enforced full-render perf at 120/120 with 101 lazy slots, 394.3 ms landing, 595.6 ms expanded, and 36 MB heap. Merged source is not yet deployed; production verification and topology hardening remain open.
+- (2026-07-12 CI remediation, superseded by post-merge checkpoint above) PR #57 failures were dependency/workflow defects rather than fractal-editor regressions: Linux stripped Rollup's native optional package, macOS ignored an undeclared `y-prosemirror` peer, and Vite defaulted to `:8000` while the portable server default is `:8788`. Fixed all three and hardened PR build/readiness gates.
+- (2026-07-12 re-read, historical) The July release candidate lived on `fix/single-active-editor`, while HANDOFF/RESTART still presented March/May snapshots. That release has now merged to `master`.
 - (2026-03-30 18:20 local re-read) Re-read RESTORE_POINT/docs/HANDOFF/docs/RESTART during the shared app-shell generalization pass. Added the runtime-harness verification note for `src/client/test-app-runtime.html`, the new shared browser-side shell (`public/gadgets/apps/app-shell.js`), and accepted harness artifacts under `screenshots/260330-app-runtime/`.
 - (2026-03-30 05:10 local re-read) Re-read RESTORE_POINT/docs/HANDOFF/docs/RESTART while closing the planner app persistence bug. Updated worklog + handoff/restart/testing/status docs to record the actual root cause (rogue `PUT /api/blips/:topicId` writes from the topic-root `RizzomaBlip` path), the server hardening in `src/server/routes/blips.ts`, and the accepted fresh-client verification under `screenshots/260330-app-runtime/` from `:4192`.
 - (2026-03-30 01:45 local re-read) Re-read RESTORE_POINT/docs/HANDOFF/docs/RESTART during the `PollGadget` contract repair. Added `docs/worklog-260330.md` to capture the serializer fix in `src/client/components/editor/extensions/GadgetNodes.ts`, the new real-path Vitest coverage in `src/tests/client.editor.GadgetNodes.test.ts`, and fresh Playwright artifacts under `screenshots/260330-poll-fix/` from a clean feature-flagged client on `:4174`.
@@ -335,11 +336,11 @@
   - (2025-12-04) `client.BlipMenu.test.tsx` now asserts inline comment error banners render in edit mode and that read-only commenting disables the edit overflow paste actions, covering the failure-path toasts surfaced by the inline toolbar; the existing `npm run test:toolbar-inline` smoke already iterates Chromium/Firefox/WebKit.
 - [x] Manual testing checklist (MANUAL_TEST_CHECKLIST.md): rerun with restored toolbar/popovers, including keyboard shortcuts (j/k), editor search, performance responsiveness, mobile layout.
   - (2025-12-04) Checklist now contains a dedicated inline toolbar walkthrough (read/edit states, overflow, degraded banners) plus inline comment navigation/shortcut steps so manual runs cover the restored surfaces without extra notes.
-- [ ] Add health checks for `/api/health`, inline comments endpoints, and upload endpoints; wire to CI smoke where feasible.
-  - (2026-03-05) Added `/api/health` router (`src/server/routes/health.ts`) with `src/tests/server.health.test.ts`, basic inline comments health tests in `src/tests/routes.comments.inlineHealth.test.ts` (feature-flag on/off and empty view handling), and upload edgecase coverage in `src/tests/routes.uploads.edgecases.test.ts` (auth required, missing file error, and successful upload metadata). CI wiring remains outstanding.
-  - (2026-03-12) Added the `browser-smokes` GitHub Actions job (`.github/workflows/ci.yml`) to run `npm run test:toolbar-inline` + `npm run test:follow-green`, capture `snapshots/<feature>/`, and upload logs/artifacts whenever the Playwright suites regress. Health endpoint checks still need to be threaded into CI.
+- [x] Add health checks for `/api/health`, inline comments endpoints, and upload endpoints; wire to CI smoke where feasible.
+  - (2026-03-05 historical checkpoint) Added `/api/health` router (`src/server/routes/health.ts`) with `src/tests/server.health.test.ts`, basic inline comments health tests in `src/tests/routes.comments.inlineHealth.test.ts` (feature-flag on/off and empty view handling), and upload edgecase coverage in `src/tests/routes.uploads.edgecases.test.ts`; CI wiring was still outstanding at that checkpoint.
+  - (2026-07-12) `health-checks` now runs `npm run test:health` in CI; final-head run 29175331401 passed all 10 health/upload/inline-comment checks.
 - [x] Performance tests: large document load, realtime under concurrency, mobile responsiveness; capture metrics/budgets.
-  - (2026-03-12) Added `perf-harness.mjs` (`npm run perf:harness`) to seed a 5k-blip wave via the API, drive Playwright to capture time-to-first-render, and store metrics/screenshots under `snapshots/perf/` so we can start tracking large-wave regressions; wiring it into scheduled runs and broader perf sweeps remains.
+  - (2026-03-12 historical checkpoint) Added `perf-harness.mjs` (`npm run perf:harness`) to seed waves through the API, drive Playwright, and store metrics/screenshots under `snapshots/perf/`. The 120-blip full-render/lazy path is now CI-wired and release-blocking; scheduling plus 500/1,000 full-render sweeps remain.
   - (2025-12-09) Latest local runs: `npm run lint:branch-context` (pass); `npm run test:toolbar-inline` + `npm run test:follow-green` (desktop+mobile) pass with FEAT_ALL=1 after socket host fix; `npm run test:health` passes; `npm test -- --run src/tests/client.getUserMediaAdapter.test.ts` passes; perf harness 200-blip PASS and 1000-blip FAIL (TTF/render count) with budgets enforced via `scripts/perf-budget.mjs`.
 
 ### Documentation and knowledge base
@@ -587,7 +588,8 @@
 ### Operations, automation, and backups
 - [ ] Implement Google Drive bundle automation in `scripts/deploy-updates.sh`; schedule post-merge bundle + copy commands and document cadence.
 - [ ] Maintain bundle + GDrive backup workflow; verify bundle after each merge.
-- [ ] Ensure CI runs typecheck/tests/build and Docker image build; add alerts for failures.
+- [x] Ensure CI runs typecheck/tests/build; final-head run 29175331401 passed all three gates.
+- [ ] Keep Docker image build push-only and add failure alerting/operational ownership.
 
 ### Miscellaneous code cleanups
 - [ ] Investigate and relax restrictions noted in `src/share/utils/string.coffee`.

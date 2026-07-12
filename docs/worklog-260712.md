@@ -42,3 +42,15 @@
 - Replaced fixed collaboration sleeps with bounded waits on socket events, editor convergence, disconnect, reconnect, and catch-up state.
 - Fixed `SocketIOProvider.destroy()` to remove its own Y.Doc and socket callbacks by handler identity. The previous teardown leaked ghost outbound emitters and could remove another provider's same-event listener during editor churn.
 - Verification: workflow YAML PASS; typecheck PASS; production build PASS; complete Vitest PASS at 61 files / 275 passed / 3 skipped / 0 failed.
+
+## Final CI and merge
+
+This section supersedes the initial release boundary above.
+
+- PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) merged to `master` as `8840f552` from source head `daa3f2f3` at 2026-07-12 03:38 CEST.
+- Final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401) passed build, browser smokes, performance budgets, health checks, and the aggregate gate; [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404) also passed.
+- Final CI measured 62 files / 283 passed / 3 skipped, 3,298 transformed build modules, lint at 0 errors, and 10/10 health checks.
+- The two-browser-process collaboration smoke passed 10/10: 1 ms A-to-B relay, zero receiving-client REST PUTs, bidirectional convergence, reconnect catch-up, stable unread drain, and no-store topic reads.
+- The enforced full-render gate passed 120/120 labels and blips with 101 lazy slots, 394.3 ms landing, 595.6 ms expanded, and 36 MB heap.
+- Rendered evidence and metric payloads are preserved under `screenshots/260712-0313-pr57-release-gates/`; the PNGs were inspected for layout, clipping, toolbar state, and desktop/mobile readability.
+- Boundary: the merged source has not yet been deployed. Production verification, managed services plus Redis-backed sessions, 500/1,000 full-render sweeps, physical iPhone Safari, backup automation, and the 6,363-warning lint backlog remain separate follow-ups.

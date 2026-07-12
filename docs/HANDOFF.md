@@ -1,10 +1,8 @@
 ## Handoff Summary — Rizzoma Modernization
 
-CI remediation update (2026-07-12): local full suite is now green (**61 files, 275 passed, 3 skipped**), typecheck/build remain green, and PR #57's three observed root causes are fixed: optional Rollup binaries restored in Linux installs, `y-prosemirror` declared for macOS, and Vite's portable proxy default restored to backend `:8788`. Workflow hardening now builds PRs and probes health through Vite. Await the new cross-platform CI verdict before merging.
+Last Updated: 2026-07-12 (`master` @ `8840f552`). PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) merged from source head `daa3f2f3` after final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401) and [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404) passed. Final CI measured **62 files / 283 passed / 3 skipped**, a **3,298-module** production build, and lint at **0 errors** with 6,363 warnings retained as maintenance debt. The two-browser-process collaboration smoke passed **10/10** with **1 ms** A-to-B relay, **0** remote REST PUTs, bidirectional convergence, reconnect catch-up, stable unread drain, and no-store topic reads. The enforced full-render performance gate passed **120/120** labels and blips with **101** lazy slots, **394.3 ms** landing, **595.6 ms** expanded, and **36 MB** heap. Inspected CI fixture evidence is under `screenshots/260712-0313-pr57-release-gates/`.
 
-Release vehicle: draft PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) from `fix/single-active-editor` (`255257c8`) to `master`; keep it unmerged until complete CI is green.
-
-Last Updated: 2026-07-12 (`fix/single-active-editor` @ `681c626c` plus release-audit fixes, release candidate for `master`). The native fractal editor and July single-active-editor fixes are live and visually verified, but the canonical GitHub `master` pointer has not been advanced. Release gates: branch-context lint PASS; TypeScript PASS; production server+client build PASS (3,297 client modules); focused OAuth suite PASS (3/3); existing July evidence remains 11/11 single-active-editor gates, Ctrl+Enter child creation PASS, four-width viewport sweep, and 44 fresh feature-sweep screenshots. The parallel full suite exposed a false five-second OAuth timeout, now raised locally to 15 seconds; a serialized rerun made continuous progress but exceeded 600 seconds before completing. **Merge boundary:** do not advance `master` until CI or a clean native-node_modules run returns a complete full-suite verdict. Operational boundary: live and staging remain bare `nohup` development processes with MemoryStore sessions; productionization remains open.
+**Deployment boundary:** merged `master` has not yet been deployed. Live/staging remain bare `nohup` development processes with MemoryStore sessions until a separate deployment and topology-hardening batch verifies health, auth, collaboration, reconnect/catch-up, and unread behavior in production.
 
 Last Updated: 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — Playwright sign-in lands as `sdspieg@gmail.com` "Stephan De Spiegeleire" with Google avatar. Tasks #140 + #143 both closed. Required two Hetzner Robot firewall passes: (1) opened port 80 for Let's Encrypt; (2) consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to allow return traffic from MASQUERADE'd outbound — without that, server couldn't reach `oauth2.googleapis.com/token`. Diagnosed via tcpdump (SYN egressed, no SYN-ACK returned). Same fix unblocks SMTP / S3 / any container-outbound feature.)
 
@@ -37,8 +35,8 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active branch: `master`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.
-- The "Current State" section below is inherited from `feature/rizzoma-core-features` snapshot content and should be refreshed for `master` as changes land.
+- Active branch: `master` at `8840f552` (2026-07-12). Always include branch name + date when summarizing status.
+- The "Current State" section below is refreshed for the merged native-fractal release; older dated entries are historical evidence only.
 
 Branching mode (private repo):
 - Direct development on `master` is acceptable in this private/solo setup.
@@ -47,22 +45,22 @@ Branching mode (private repo):
 
 ### Drift warnings (actively curating)
 - Some onboarding/status docs (`README*.md`, `README_MODERNIZATION.md`, `MODERNIZATION_STRATEGY.md`, `PARALLEL_DEVELOPMENT_PLAN.md`) still talk about demo-mode shortcuts, “all core features green,” or aggressive auto-merge flows that predate the unread/perf backlog. Treat them as historical until we rewrite them with the current perf harness + CI gating expectations.
-- Phase language (e.g., `modernization/phase1` or “Phase 1 complete”) in README/modernization strategy docs is historical only and does not apply to `feature/rizzoma-core-features`; rely on `RIZZOMA_FEATURES_STATUS.md` for the active branch snapshot (perf/getUserMedia/health/backups still pending).
-- `TESTING_STATUS.md` and `RIZZOMA_FEATURES_STATUS.md` were refreshed to call out the perf/getUserMedia/backups/health-check gaps, but they remain summaries only; rerun tests before trusting them.
+- Phase language (e.g., `modernization/phase1` or “Phase 1 complete”) in README/modernization strategy docs is historical only; rely on the 2026-07-12 checkpoints in `RIZZOMA_FEATURES_STATUS.md` and `TESTING_STATUS.md` for the merged release.
+- Status summaries record final-head CI evidence, but production claims still require a post-deployment Playwright run against the deployed URL.
 - If link management guidance is still needed, `docs/LINKS_REPARENT.md` was removed; restore or replace before directing contributors to it.
 - Demo-mode login references are stale: the Rizzoma layout routes sign-in through the real `AuthPanel`, so contributors must use authenticated sessions rather than `?demo=true` fallbacks.
-- Playwright smokes are required for merges: the `browser-smokes` GitHub job runs `npm run test:toolbar-inline` + `npm run test:follow-green`, uploads `snapshots/<feature>/` artifacts, and now runs even when the build stage fails so snapshots/artifacts are always available for triage. Pull them locally via `npm run snapshots:pull` if you need to inspect without rerunning Playwright.
+- Playwright smokes are required for merges: `browser-smokes` runs toolbar-inline, Follow-the-Green desktop/mobile, and the two-process collaboration smoke, then uploads `snapshots/<feature>/` artifacts. Pull them locally via `npm run snapshots:pull` if needed.
 
 ## CI gates (Hard Gap #19, 2026-04-13)
 - `.github/workflows/ci.yml` defines five jobs: `build`, `browser-smokes`, `perf-budgets`, `health-checks`, and `ci-gate` (the aggregator).
-  - `build` — typecheck, lint (non-blocking), `npm test`, build, Docker image build (push-only).
-  - `browser-smokes` — runs `test:toolbar-inline` + `test:follow-green` (desktop + mobile) on the dev stack with `FEAT_ALL=1 EDITOR_ENABLE=1`, uploads snapshots. Runs `if: always()`.
-  - `perf-budgets` — runs `npm run perf:harness` against the dev stack with `RIZZOMA_PERF_BLIPS=50` and `RIZZOMA_PERF_ENFORCE_BUDGETS=0` (advisory). Toggle the enforce flag to make perf regressions block merges.
+  - `build` — typecheck, lint (non-blocking), full Vitest, production build, Docker image build (push-only).
+  - `browser-smokes` — runs `test:toolbar-inline`, `test:follow-green` (desktop + mobile), and `test:collab` on the dev stack with `FEAT_ALL=1 EDITOR_ENABLE=1`, then uploads snapshots. Runs `if: always()`.
+  - `perf-budgets` — runs the 120-blip full-render harness with `RIZZOMA_PERF_ENFORCE_BUDGETS=1`; exact render counts, the `>100` lazy-slot branch, no timeout, a 3-second stage-duration ceiling, and a 100 MB heap ceiling are release-blocking.
   - `health-checks` — runs `npm run test:health` (which exercises `server.health.test.ts` + `routes.comments.inlineHealth.test.ts` + `routes.uploads.edgecases.test.ts`). Runs `if: always()` so health regressions surface independently of build/typecheck.
   - `ci-gate` — single aggregator that depends on all four jobs above and fails if ANY of them failed or were cancelled. **This is the job to require in branch protection** (Settings → Branches → master → Require status checks → check `ci-gate`). With that one box checked, no merge can land if build, browser-smokes, perf-budgets, or health-checks regressed.
 - `README_MODERNIZATION.md` still positions Phase 1 as largely complete and omits the current perf/getUserMedia/health/backups backlog; rewrite before citing it for the active branch.
 - `docs/EDITOR_REALTIME.md` "Next steps" still lists presence/recovery/search as pending even though they shipped; update the roadmap to match the current perf/resilience focus.
-- `TESTING_STATUS.md` and `RIZZOMA_FEATURES_STATUS.md` reflect historical Dec 2025 runs; rerun suites before relying on them.
+- `TESTING_STATUS.md` and `RIZZOMA_FEATURES_STATUS.md` include the 2026-07-12 merged-release checkpoint; older sections within them remain historical.
 - Remaining historical docs still promote `npm run start:all` or demo-mode flows; use the branch-specific guidance in `docs/RESTART.md` + `docs/HANDOFF.md` instead.
 - Operational scripts (`scripts/deploy-updates.sh`, `scripts/create-bundle.sh`) still reference demo-mode URLs; treat those references as historical and update if the scripts are used again.
 - Landing view parity: topic landing page must match `screenshots/rizzoma-live/feature/rizzoma-core-features/rizzoma-main.png` — only root labels visible, no children/body/editor until user clicks “+”. Perf harness landing metric should measure this collapsed state; expansion metrics can be separate.
@@ -71,7 +69,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`fix/single-active-editor` @ 2026-07-12; release candidate containing native fractal port + July single-active-editor fixes)
+Current State (`master` @ 2026-07-12; `8840f552`)
 - FEAT_ALL required: start both server (:8788, the reserved Rizzoma backend port — see CLAUDE.md "Reserved Ports") and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Docker Desktop WSL integration was re-enabled on 2026-03-29; `docker compose up -d couchdb redis` works again from WSL for local live-app verification.
 - Express 5 SPA fallback: `src/server/app.ts` uses `app.get('/{*path}', ...)` which is the canonical path-to-regexp v8 syntax under Express 5 (bare `*` was dropped in v8). This was documented as a "workaround" in earlier snapshots but is actually the correct form. Cleaned up in Hard Gap #29 (2026-04-13): the `/uploads` static handler is now mounted BEFORE the SPA catch-all so the catch-all only has to skip `/api` paths, and the code comment explains the syntax is canonical.
@@ -182,10 +180,16 @@ Current State (`fix/single-active-editor` @ 2026-07-12; release candidate contai
 - Perf/monitoring: `scripts/perf-budget.mjs` added; `src/client/lib/performance.d.ts` supports perf monitor consumers; perf snapshots stored under `snapshots/perf/`.
 - Dependency upgrades: audit captured in `docs/DEPENDENCY_UPGRADE_AUDIT.md`; minor/patch batch applied (Playwright/Vitest/Prettier, AWS SDK, session/email libs). Major editor/tooling/server upgrades remain deferred.
 
-Open PRs
-- #37: BLB: refresh snapshot harness + inline expansion
+Current Next Work
+1. Deploy merged `master`; verify health, auth, two-user collaboration, reconnect/catch-up, and unread behavior with repo-stored Playwright evidence.
+2. Replace bare `nohup` processes and MemoryStore sessions with managed services and Redis-backed sessions.
+3. Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
+4. Repair/refresh BLB snapshots and continue inline-marker, toolbar, and unread parity.
+5. Test real-device iPhone Safari; Pixel 9 Pro XL / Android Chrome is already evidenced.
+6. Automate bundle/GDrive backup cadence.
+7. Address Node 22, Capacitor CLI 8, GitHub Action majors, 6,363 lint warnings, and legacy assets.
 
-Next Work
+Historical Next Work (pre-merge; superseded)
 - Branch focus (current batch): keep changes small/flagged; land perf/resilience sweeps and adapter/health/backup work in slices.
   - Immediate fix: continue BLB parity cleanup from the accepted dense live BLB scenario baseline plus the unread/toolbar probes, now that the richer multi-reply toolbar-focus leak is fixed on the clean `:4197` client (`screenshots/260331-blb-live-scenario/blb-live-scenario-v3.{png,html}`), the scenario reads with less synthetic business-thread copy, and the unread mix is less evenly seeded across grandchildren. Next target is less scripted live-topic distribution beyond the current scenario and then mobile/perf consequences.
   - Mobile consequence check is now accepted too: `scripts/capture_blb_live_scenario_mobile.cjs` passes on the clean `:4197` client with `screenshots/260331-blb-live-scenario-mobile/blb-live-scenario-mobile-v1.{png,html}` after tightening the small-screen toolbar/header footprint. Next target remains broader, less-seeded live-topic distributions and then perf pressure on the denser shell.
@@ -211,8 +215,8 @@ Restart Checklist (any machine)
 - Verify: `npm run typecheck && npm test && npm run build`
 
 CI Notes
-- PRs run typecheck/tests and skip full build; pushes run build and Docker image build.
-- `browser-smokes` GitHub job runs `npm run test:toolbar-inline` + `npm run test:follow-green`, saves `snapshots/toolbar-inline/` + `snapshots/follow-the-green/`, and uploads `dev.log` whenever the Playwright suites regress (it runs even if build fails). Keep it green before merging.
+- PRs run typecheck, non-blocking lint, full Vitest, and the production build; Docker image build remains push-only.
+- `browser-smokes` runs toolbar-inline, Follow-the-Green desktop/mobile, and the two-process collaboration smoke. `perf-budgets` is a blocking 120-blip full-render/lazy-path gate. Keep both green before merging.
 
 Backup (GDrive)
 - Script: `scripts/backup-bundle.sh` (runs bundle + PowerShell copy; honors `RIZZOMA_BUNDLE_PATH` + `RIZZOMA_GDRIVE_DIR` overrides).
