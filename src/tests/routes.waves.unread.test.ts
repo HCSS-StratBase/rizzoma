@@ -10,6 +10,7 @@ const cloneBlips = (nodes: any[]): any[] => nodes.map((n) => ({ ...n, children: 
 describe('routes: /api/waves unread/next', () => {
   let waveBlips = makeBlips();
   let readDocs: Array<Record<string, unknown>> = [];
+  let selfFetchPaths: string[] = [];
   const findRoute = (method: string, path: string) => {
     return (wavesRouter as any).stack.find((layer: any) => layer.route?.path === path && layer.route?.methods?.[method.toLowerCase()]);
   };
@@ -58,6 +59,7 @@ describe('routes: /api/waves unread/next', () => {
   beforeEach(() => {
     waveBlips = makeBlips();
     readDocs = [];
+    selfFetchPaths = [];
   });
 
   beforeAll(() => {
@@ -69,6 +71,7 @@ describe('routes: /api/waves unread/next', () => {
       const method = ((init?.method as string | undefined) ?? 'GET').toUpperCase();
       // Forward local API routes except the tree fetch we stub
       if ((u.hostname === '127.0.0.1' || u.hostname === 'localhost') && path.startsWith('/api/waves/')) {
+        selfFetchPaths.push(path);
         // If fetching just the wave detail (not unread/next/read), return stub tree
         if (method === 'GET' && /^\/api\/waves\/[^/]+$/.test(path)) {
           const body = {
@@ -123,9 +126,10 @@ describe('routes: /api/waves unread/next', () => {
     const resp = await runRoute('GET', '/:id/unread', { params: { id: 'w1' } });
     const body = resp.body;
     expect(resp.statusCode ?? 200).toBe(200);
-    expect(Array.isArray(body.unread)).toBe(true);
-    // flattened preorder: [b1, b1a, b2]
-    expect(body.unread[0]).toBe('b1');
+    expect(body.unread).toEqual(['b1', 'b1a', 'b2']);
+    expect(body.total).toBe(3);
+    expect(body.read).toBe(0);
+    expect(selfFetchPaths).toEqual([]);
   });
 
   it('next returns first unread, then advances after marking read', async () => {

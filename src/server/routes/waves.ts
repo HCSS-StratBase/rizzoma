@@ -9,6 +9,45 @@ import { noStore } from '../middleware/noStore.js';
 const router = Router();
 type FlatBlip = { id: string; updatedAt: number; createdAt?: number; content?: string; children?: FlatBlip[] };
 
+async function loadWaveBlipTree(waveId: string): Promise<{ blips: Blip[]; roots: FlatBlip[] }> {
+  const result = await find<Blip>(
+    { type: 'blip', waveId },
+    { limit: 20000, sort: [{ createdAt: 'asc' }] },
+  ).catch(async () => find<Blip>({ type: 'blip', waveId }, { limit: 20000 }));
+
+  let blips = (result.docs || []).map((blip) => ({
+    ...blip,
+    createdAt: (blip as any).createdAt || (blip as any).contentTimestamp || 0,
+  }));
+
+  if (blips.length === 0) {
+    const legacy = await view<any>('nonremoved_blips_by_wave_id', 'get', {
+      include_docs: true as any,
+      key: waveId as any,
+    }).catch(() => ({ rows: [] as any[] }));
+    blips = (legacy.rows || []).map((row: any) => ({
+      ...(row.doc || {}),
+      createdAt: (row.doc && (row.doc.createdAt || row.doc.contentTimestamp)) || 0,
+    }));
+  }
+
+  const byParent = new Map<string | null, Blip[]>();
+  for (const blip of blips) {
+    const parentId = (blip.parentId ?? null) as string | null;
+    if (!byParent.has(parentId)) byParent.set(parentId, []);
+    byParent.get(parentId)!.push(blip as Blip);
+  }
+  const toNode = (blip: Blip): FlatBlip => ({
+    id: (blip as any)._id,
+    content: (blip as any).content || '',
+    createdAt: (blip as any).createdAt,
+    updatedAt: (blip as any).updatedAt || (blip as any).createdAt || 0,
+    children: (byParent.get((blip as any)._id || '') || []).map(toNode),
+  });
+
+  return { blips, roots: (byParent.get(null) || []).map(toNode) };
+}
+
 // GET /api/waves?limit&offset&q
 router.get('/', async (req, res) => {
   const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
@@ -120,34 +159,7 @@ router.get('/:id', async (req, res) => {
       // ignore 404; treat as legacy-only wave id
       if (!String(e?.message || '').startsWith('404')) throw e;
     }
-    // fetch blips (works for both modern and legacy data)
-    const r = await find<Blip>(
-      { type: 'blip', waveId: id },
-      { limit: 20000, sort: [{ createdAt: 'asc' }] },
-    ).catch(async () => {
-      return find<Blip>({ type: 'blip', waveId: id }, { limit: 20000 });
-    });
-    let blips = (r.docs || []).map((b) => ({ ...b, createdAt: (b as any).createdAt || (b as any).contentTimestamp || 0 }));
-    // If no blips found try legacy view with include_docs
-    if (blips.length === 0) {
-      const legacy = await view<any>('nonremoved_blips_by_wave_id', 'get', { include_docs: true as any, key: id as any }).catch(() => ({ rows: [] as any[] }));
-      blips = (legacy.rows || []).map((row: any) => ({ ...(row.doc || {}), createdAt: (row.doc && (row.doc.createdAt || row.doc.contentTimestamp)) || 0 }));
-    }
-    // Build tree
-    const byParent = new Map<string | null, Blip[]>();
-    for (const b of blips) {
-      const p = (b.parentId ?? null) as string | null;
-      if (!byParent.has(p)) byParent.set(p, []);
-      byParent.get(p)!.push(b as any);
-    }
-    const toNode = (b: Blip): FlatBlip => ({
-      id: (b as any)._id,
-      content: (b as any).content || '',
-      createdAt: (b as any).createdAt,
-      updatedAt: (b as any).updatedAt || (b as any).createdAt || 0,
-      children: (byParent.get(((b as any)._id) || '') || []).map(toNode),
-    } as any);
-    const roots = (byParent.get(null) || []).concat(byParent.get(undefined as any) || []).map(toNode);
+    const { blips, roots } = await loadWaveBlipTree(id);
     const title = wave?.title || `(legacy) wave ${id.slice(0, 6)}`;
     const createdAt = wave?.createdAt || (blips[0]?.createdAt || Date.now());
     res.json({ id, title, createdAt, blips: roots });
@@ -178,10 +190,8 @@ router.get('/:id/unread', noStore, async (req, res) => {
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
   const id = req.params['id'] as string;
   try {
-    // get tree
-    const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
-    const waveData: any = await waveResp.json();
-    const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
+    const { roots } = await loadWaveBlipTree(id);
+    const order = flattenBlips(roots);
 
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
@@ -202,9 +212,8 @@ router.get('/:id/next', noStore, async (req, res) => {
   const id = req.params['id'] as string;
   const after = String((req.query as any).after || '');
   try {
-    const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
-    const waveData: any = await waveResp.json();
-    const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
+    const { roots } = await loadWaveBlipTree(id);
+    const order = flattenBlips(roots);
 
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
@@ -226,9 +235,8 @@ router.get('/:id/prev', noStore, async (req, res) => {
   const id = req.params['id'] as string;
   const before = String((req.query as any).before || '');
   try {
-    const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
-    const waveData: any = await waveResp.json();
-    const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
+    const { roots } = await loadWaveBlipTree(id);
+    const order = flattenBlips(roots);
 
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();

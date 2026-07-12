@@ -26,21 +26,16 @@ describe('routes: /api/waves prev', () => {
       const path = target.pathname;
       const method = ((init?.method as string | undefined) ?? 'GET').toUpperCase();
       if ((target.hostname === '127.0.0.1' || target.hostname === 'localhost') && path.startsWith('/api/waves/')) {
-        if (method === 'GET' && /^\/api\/waves\/[^/]+$/.test(path)) {
-          const body = {
-            id: 'w1',
-            title: 'W1',
-            createdAt: 1,
-            blips: [
-              { id: 'b1', content: 'one', createdAt: 1 },
-              { id: 'b2', content: 'two', createdAt: 2 },
-            ],
-          };
-          return toJsonResponse(body);
-        }
         return realFetch(url, init);
       }
       if (method === 'POST' && path.endsWith('/_find')) {
+        const request = JSON.parse(String(init?.body || '{}')) as { selector?: { type?: string; waveId?: string } };
+        if (request.selector?.type === 'blip') {
+          return toJsonResponse({ docs: [
+            { _id: 'b1', type: 'blip', waveId: request.selector.waveId || 'w1', parentId: null, content: 'one', createdAt: 1, updatedAt: 1 },
+            { _id: 'b2', type: 'blip', waveId: request.selector.waveId || 'w1', parentId: null, content: 'two', createdAt: 2, updatedAt: 2 },
+          ] });
+        }
         return toJsonResponse({ docs: [] });
       }
       return toJsonResponse({}, 404);

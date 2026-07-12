@@ -6,6 +6,7 @@ import type { AddressInfo } from 'net';
 
 describe('routes: /api/waves edge cases', () => {
   const app = express();
+  app.set('trust proxy', 1);
   app.use(express.json());
   app.use(cookieParser());
   type SessionReq = Request & { session?: (Session & Partial<SessionData> & { userId?: string }) };
@@ -37,7 +38,12 @@ describe('routes: /api/waves edge cases', () => {
     const server = app.listen(0);
     const addr = server.address();
     const port = typeof addr === 'string' ? 0 : (addr as AddressInfo).port;
-    const resp = await fetch(`http://127.0.0.1:${port}/api/waves/empty/unread`);
+    const resp = await fetch(`http://127.0.0.1:${port}/api/waves/empty/unread`, {
+      // Reproduce nginx/Vite metadata: the public request is HTTPS while the
+      // Express listener itself is plain HTTP. The route must not synthesize
+      // an HTTPS self-request to this backend from proxy-derived metadata.
+      headers: { 'x-forwarded-proto': 'https' },
+    });
     const body = await resp.json();
     server.close();
     expect(resp.status).toBe(200);
