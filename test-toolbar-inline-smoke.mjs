@@ -1,6 +1,7 @@
 import { chromium, firefox, webkit } from 'playwright';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { seedVerifiedE2EAccount } from './scripts/lib/e2e-sharing-fixtures.mjs';
 
 const baseUrl = process.env.RIZZOMA_BASE_URL || 'http://localhost:3000';
 const topicPath = process.env.RIZZOMA_TOPIC_PATH || '#/topic/';
@@ -307,6 +308,9 @@ async function runSmoke(browserName) {
 }
 
 async function main() {
+  // Production registration requires mailbox proof. Seed only the isolated
+  // E2E database and keep the browser path on the normal authenticated login.
+  await seedVerifiedE2EAccount(testEmail, testPassword);
   const failures = [];
   for (const browserName of browserList) {
     try {

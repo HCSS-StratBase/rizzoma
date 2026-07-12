@@ -224,3 +224,18 @@ This section supersedes the deployment boundary above.
   perform the documented zero-overlap drain/cutover, and run full public
   acceptance including mail, ClamAV/EICAR, restart persistence, two-account
   collaboration, sharing roles, Tasks, mentions, export, and responsive PNGs.
+
+### CI verified-account fixture correction
+
+- PR #66's first integrated CI run passed build, iOS, and health, but the
+  performance job stopped before measurement: the harness attempted ordinary
+  password registration, which now correctly requires mailbox proof and
+  returned 403; fallback login then returned 401 for the nonexistent account.
+- Reused the existing isolated-E2E fixture contract from the collaboration and
+  Follow-the-Green smokes. Performance and toolbar harnesses now seed a
+  mailbox-verified account directly in the disposable E2E CouchDB and exercise
+  only the normal login route. No production registration bypass or server
+  authorization exception was added.
+- `node --check` and `git diff --check` gate the harness patch locally; the
+  refreshed GitHub perf/browser jobs remain the authoritative end-to-end
+  verification because Docker Desktop is unavailable in this WSL session.
