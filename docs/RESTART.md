@@ -1,6 +1,14 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-12 (`codex/password-recovery`; isolated from combined checkpoint `c00e1711`; **not merged or deployed**). Password reset now has generic requests, hashed fragment-only tokens, atomic one-time consume, session-generation invalidation across HTTP/Socket.IO, eager session-store cleanup, and boot-forced responsive UI. Focused gates passed at 11 files / 79 tests plus typecheck, touched-file lint, 3,309-module build, and ten inspected PNGs. Integrate this commit onto the final combined branch, then run full CI and staging SMTP/session acceptance. See the [password recovery worklog](worklog-260712-password-recovery.md).
+Last refreshed: 2026-07-12 (`release/preintegration-offline-upload` at audited
+application checkpoint `b3cd054f`; **not merged or deployed**). The complete
+authorization, offline/auth, private upload/ClamAV, OAuth/password recovery,
+collaboration/realtime/export, mention, and durable Task stack is integrated.
+Exact local gates passed at 107 files / 588 tests / 3 skipped / 0 failed,
+typecheck, full-source ESLint `--quiet`, a 3,314-module production build, final
+responsive Playwright, and an independent GO audit. Next: publish PR #66,
+require CI, merge the deploy helper, execute the exact-SHA zero-overlap cutover,
+and run public acceptance.
 
 Last refreshed (prior): 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — verified Playwright sign-in lands as `sdspieg@gmail.com`. Tasks #140 + #143 closed. Two Hetzner Robot firewall changes needed: opened :80 + consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to cover return traffic from MASQUERADE'd outbound. tcpdump-diagnosed.)
 
@@ -31,8 +39,13 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `codex/password-recovery` (2026-07-12), isolated password-recovery candidate on combined checkpoint `c00e1711`; public production remains `fe6988fb` from PR #60. Always cite branch + date when sharing status.
-- Final release gates: 62 Vitest files / 284 passed / 3 skipped; production build 3,298 modules; public collaboration 10/10 with 39 ms relay and zero receiving-client REST PUTs; strict public desktop/mobile Follow-the-Green `2 → 1 → 0`; RedisStore active; zero API 5xx during acceptance.
+- Active branch: `release/preintegration-offline-upload` (2026-07-12), audited
+  application checkpoint `b3cd054f`; public production remains on the earlier
+  parity release. Always cite branch + date when sharing status.
+- Current local gates: 107/107 Vitest files, 588 passed, 3 skipped, typecheck,
+  full-source ESLint `--quiet`, 3,314 build modules, responsive local evidence,
+  and independent GO audit. Public collaboration, restart persistence, roles,
+  mail, scanner, and visual acceptance must be re-measured after exact cutover.
 - Latest inspected production evidence is under `screenshots/260712-0530-pr60-production-final/`, including command logs, real-control before/after captures, and the required desktop viewport sweep.
 - Deployment boundary: nginx targets the exact merge through Vite `:3100` → API `:8100`; the old `:3000`/`:8788` lane remains healthy for immediate rollback. Both lanes are unmanaged bare processes and share CouchDB.
 - Re-read checkpoint: 2026-02-04 01:55 local — BLB child unread highlight removed (green [+] only) and BLB snapshots refreshed (`snapshots/blb/1770165748162-*`); drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
@@ -54,7 +67,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `codex/sharing-access-control-stack` worktree/branch; do not switch this worktree to `master` or modify another checkout.
+    - Continue in the isolated `release/preintegration-offline-upload` worktree/branch until PR #66 contains the audited tree; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -63,13 +76,12 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Merge `codex/production-service-hardening`, install the managed unit/root-only env, and deploy exact SHA to `:8101`; run direct preflight, drain/stop the old lane with zero overlap, switch both vhosts, then run full public acceptance.
-  2) Review the stacked sharing authorization PR through normal CI, then run the anonymous/outsider/viewer/commenter/editor/owner matrix and live socket-demotion checks against an isolated staging database before any public cutover. Production inventory is already measured at 26 missing-policy legacy topics out of 26 total, with 0 malformed.
-  3) Keep native rendering disabled until full tree loading and lossless rich-content round trips pass; only then begin edit/reply/persistence integration.
-  4) Clean synthetic production topics, separate staging from production CouchDB, and retire disconnected `:3000`/`:8788` while preserving the exact restart recipe.
-  5) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
-  6) Repair/refresh BLB snapshots and test real-device iPhone Safari.
-  7) Reconcile the dirty canonical checkout, automate bundle/GDrive backup cadence, and triage native/dependency/lint debt.
+  1) Publish the exact audited candidate and docs/evidence to PR #66; require all CI jobs and merge only the green tree.
+  2) Rebase the tested deploy-helper commits onto merged master, update PR #67, require CI, and install the exact merged helper assets.
+  3) Deploy the exact application merge SHA to the inactive managed lane; verify direct health/assets/journal/ClamAV, then drain old Vite and API with zero writer overlap before switching both vhosts.
+  4) Run public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs.
+  5) Record the exact production result in project docs, global HANDOFF, and existing HCSS Tana node `8mGAbLRiBnne`; refresh the Git bundle after final docs merge.
+  6) Keep native rendering disabled; after release, address 500/1,000-blip sweeps, physical iPhone Safari, staging-data separation, synthetic-data cleanup, and dependency/lint debt.
 
   Testing/CI hygiene:
   - Keep the central sharing/access, route-role matrix, real-session Socket.IO authorization, and ShareModal tests green; production policy changes require staging evidence first.

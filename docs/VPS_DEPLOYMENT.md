@@ -1,6 +1,17 @@
 # VPS Deployment — Rizzoma on 138.201.62.161
 
-**Last updated**: 2026-07-12 (PR #60 cutover + 05:58 CEST runtime reality audit)
+**Last updated**: 2026-07-12 (integrated candidate pre-cutover checkpoint)
+
+> **Exact candidate ready locally, not yet public:**
+> `release/preintegration-offline-upload` application checkpoint `b3cd054f`
+> passed 107/107 test files (588 passed, 3 skipped), typecheck, full-source
+> ESLint `--quiet`, a 3,314-module production build, responsive local
+> Playwright, and an independent GO audit. Public production remains on the
+> earlier parity release until the application and deploy-helper PRs merge.
+> The required next operation is an immutable exact-merge deployment to the
+> inactive managed lane, followed by the zero-overlap drain below and full
+> public acceptance. Do not expose a candidate lane while the old process-local
+> Yjs cache can still receive writes.
 
 > **Managed-service candidate (not yet public):** branch
 > `codex/production-service-hardening` replaces the obsolete Docker-era deploy

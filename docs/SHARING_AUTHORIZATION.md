@@ -1,6 +1,12 @@
 # Sharing and Authorization
 
-Status: sharing core, offline/auth isolation, and ACL-backed attachments are integrated on `release/preintegration-offline-upload` (2026-07-12). The branch is not merged or deployed; later realtime/tasks/mentions/export/UI work and the full combined acceptance gate still block release.
+Status: the complete sharing, offline/auth, ACL-backed attachment, realtime,
+mentions, Task, export, and password-recovery stack is integrated on
+`release/preintegration-offline-upload` at audited application checkpoint
+`b3cd054f` (2026-07-12). Exact local gates passed at 107 test files, 588 passed,
+3 skipped, 0 failed, typecheck, full-source ESLint `--quiet`, and a
+3,314-module production build. The branch is not merged or deployed; GitHub CI
+and public role/socket/upload/mail acceptance still gate release.
 
 ## Persisted policy
 
@@ -76,6 +82,16 @@ The read-only production inventory measured **26 total topic metadata documents:
 
 ## Source-slice verification
 
+- The exact combined candidate at `b3cd054f` passed **107/107 test files, 588
+  tests, 3 skipped, and 0 failures**. The focused account/access/Task/offline
+  matrix passed **120/120**; typecheck, full-source ESLint `--quiet`, and the
+  **3,314-module** production build also passed.
+- The final independent audit returned GO after verifying owner-keyed A→B
+  remounts, state scrubbing on denied access, Task authority revocation on
+  denied refresh, stale-generation protection, and reconnect/access recovery.
+- Fresh local Task and sharing evidence is in the
+  [final candidate archive](../screenshots/260712-1928-final-candidate-ui/README.md).
+
 - PR #66's source slice reported full stacked Vitest at 67 files, 361 passed, 3 skipped, 0 failed before this preintegration branch was assembled.
 - Focused authorization gates: 62 passed, covering the anonymous/outsider/viewer/commenter/editor/owner route matrix, legacy behavior, sharing persistence, alternate invitations, client fail-closed loading, session-backed Socket.IO identity spoofing, read-only viewer sync, and live editor demotion.
 - Stacked upload/access gates: 70 passed across the 62 role-policy checks and 14 upload tests, with overlap between suites. Upload coverage includes anonymous denial, non-editor denial, canonical wave binding, wave-claim mismatch, metadata-write cleanup, S3 fail-closed behavior, private download, non-cacheable streaming, and immediate denial of the same URL after participant revocation.
@@ -87,4 +103,7 @@ The read-only production inventory measured **26 total topic metadata documents:
 - The inventory is a read-only count; no policy-stamping migration or production policy mutation was performed.
 - No deployment was performed. Public role/socket acceptance remains a post-merge gate after the managed-runtime base lands.
 - Service-worker v2 makes `/api`, `/socket.io`, and `/uploads` network-only and purges the prior dynamic cache; full combined verification must prove that policy survives all later merges.
-- User-scoped mention/task wiring, structural realtime, large-wave pagination, sanitizer/export hardening, and final UI acceptance remain in the next checkpoint.
+- Local combined verification now covers user-scoped mention/Task wiring,
+  structural realtime, large-wave pagination, and sanitizer/export hardening.
+  Real public two-account, mail, scanner, restart, and responsive acceptance
+  remain open until the exact merged SHA is deployed.

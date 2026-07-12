@@ -1,5 +1,32 @@
 # Rizzoma Feature Testing Status
 
+## Integrated pre-deployment release candidate — 2026-07-12
+
+- Branch `release/preintegration-offline-upload`; exact audited application
+  checkpoint `b3cd054f`. The candidate is not yet merged or deployed.
+- Exact full Vitest run: **107 files / 588 passed / 3 skipped / 0 failed**.
+  The focused combined authorization, account-isolation, Task, password-reset,
+  offline, and realtime matrix separately passed **120/120**.
+- TypeScript no-emit passed. Full-source ESLint `--quiet` passed with no errors.
+  The exact production build passed with **3,314 transformed modules**; the
+  existing large-chunk advisory is the only build warning.
+- Independent adversarial re-audit returned **GO** after closing three late
+  blockers: stale normal-view Task state, account A private-topic retention
+  across A→B session replacement, and Task authority that could fail closed
+  without recovering after reconnect. Regression coverage proves fail-closed
+  denial, generation-safe recovery, account-keyed remounts, and reconnect/access
+  revalidation in both parity and editor surfaces.
+- Local Playwright evidence contains **20 Task PNGs** at 1280/1366/1440/1600
+  and 390 mobile plus **8 sharing-dialog PNGs** at the four required desktop
+  widths. The Task manifest reports **0 unexpected console errors**; the sharing
+  manifest reports every modal inside its viewport. Representative final
+  desktop/mobile owner, public, toggle, and editor-handoff PNGs were visually
+  inspected. See the [final local candidate evidence](screenshots/260712-1928-final-candidate-ui/README.md).
+- Boundary: this is exact local candidate evidence, not public acceptance.
+  GitHub CI, exact-SHA managed deployment, real SMTP/invitation and reset-mail
+  checks, real ClamAV upload/EICAR checks, two-account collaboration, persisted
+  restart, and public responsive Playwright acceptance still gate production.
+
 ## Password recovery candidate — 2026-07-12
 
 - Branch `codex/password-recovery`, based on combined integration checkpoint

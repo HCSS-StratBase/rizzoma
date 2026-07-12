@@ -1,5 +1,29 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
+## Integrated release candidate — 2026-07-12
+
+- `release/preintegration-offline-upload` at audited application checkpoint
+  `b3cd054f` combines persisted sharing roles, authenticated collaboration,
+  owner-partitioned offline state, ACL-backed uploads with mandatory ClamAV,
+  secure OAuth/password recovery, realtime structural reloads, recursive
+  export, mentions, and durable Tasks on the React/TipTap parity renderer.
+- Account/session boundaries now remount all stateful topic/editor surfaces by
+  authenticated owner. A denied or failed topic load scrubs topic, blip,
+  participant, draft, editor, and modal state before another account can render.
+- Task completion is server-authoritative in normal and edit views. Only an
+  author or assignee receives toggle authority; denied refreshes fail closed,
+  stale generations cannot revoke newer grants, view→edit mutations remain
+  ordered, and reconnect/access changes restore authority without navigation.
+- Exact local gates are green: **107/107 test files, 588 passed, 3 skipped, 0
+  failed**; typecheck; full-source ESLint `--quiet`; and a **3,314-module**
+  production build. The independent final audit returned **GO**.
+- Responsive local evidence covers Task owner/public/toggle/editor-handoff at
+  1280/1366/1440/1600 plus 390 mobile and Share/Invite dialogs at all four
+  desktop widths. See the [candidate evidence](screenshots/260712-1928-final-candidate-ui/README.md).
+- Boundary: the candidate is not merged or deployed. Public production remains
+  on the earlier parity release until PR CI, managed exact-SHA deployment, and
+  full public acceptance complete.
+
 ## Offline/auth isolation candidate — 2026-07-12
 
 - The modern shell now has one real auth surface per viewport and a reserved

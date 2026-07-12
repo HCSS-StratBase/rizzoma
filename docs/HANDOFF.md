@@ -1,6 +1,15 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`codex/password-recovery`; isolated candidate from combined checkpoint `c00e1711`; **not merged or deployed**). This slice adds generic password-reset requests, hashed fragment-only one-time tokens, atomic password/token/generation replacement, HTTP and Socket.IO stale-session rejection, eager Redis/MemoryStore cleanup, and request/complete UI that scrubs the bearer before auth bootstrap. Focused verification is 11 files / 79 tests, typecheck, touched-file lint, a 3,309-module build, and ten visually inspected responsive PNGs. The broader integration and deployment blockers remain unchanged. Details: [password recovery worklog](worklog-260712-password-recovery.md).
+Last Updated: 2026-07-12 (`release/preintegration-offline-upload`; audited
+application checkpoint `b3cd054f`; **not merged or deployed**). The complete
+sharing/access, authenticated collaboration, offline/auth isolation, private
+upload/ClamAV, OAuth/password-recovery, realtime/export, mention, and durable
+Task stack is integrated. Exact local gates passed at **107 files / 588 tests /
+3 skipped / 0 failed**, typecheck, full-source ESLint `--quiet`, and a
+**3,314-module** production build; the independent final audit returned GO.
+Responsive local evidence is in the
+[final candidate archive](../screenshots/260712-1928-final-candidate-ui/README.md).
+GitHub CI, managed exact-SHA deployment, and public acceptance remain open.
 
 **Deployment boundary:** nginx serves Vite `:3100` → API `:8100`; Redis backs API sessions. The public frontend is Vite's **development server**, not a compiled production frontend. The live client has parity rendering enabled and native rendering unset, so production uses the React/TipTap parity path; `NativeWaveView` remains read-only and is not the deployed architecture. The former `:3000`/`:8788` lane remains healthy for immediate rollback via `/root/rizzoma.conf.pre-pr60-20260712-052206`. Both lanes are unmanaged bare processes and share CouchDB.
 
@@ -35,7 +44,11 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active development branch: `codex/password-recovery` (2026-07-12; isolated password-recovery slice on combined integration checkpoint `c00e1711`; undeployed). Public production remains at application commit `fe6988fb` (PR #60). Always include branch name + date when summarizing status.
+- Active development branch: `release/preintegration-offline-upload`
+  (2026-07-12; audited application checkpoint `b3cd054f`; undeployed). Public
+  production remains on the earlier parity release until exact-merge CI and
+  public acceptance complete. Always include branch name + date when
+  summarizing status.
 - The "Current State" section below is refreshed for the deployed parity release; older dated entries and “native release” labels are historical until the native renderer is write-capable and actually enabled.
 
 Branching mode (private repo):
@@ -69,11 +82,30 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`codex/password-recovery` on combined checkpoint `c00e1711` @ 2026-07-12; public production still `fe6988fb`, PR #60)
-- The password-recovery candidate covers the 44 audited password accounts with a non-enumerating request flow, 30-minute hashed-only fragment bearer, revision-atomic one-time consume, and 12-character new-password floor. Reset increments a credential generation checked by all non-auth application routes and Socket.IO revalidation, while eager store/socket revocation removes old sessions immediately. Boot-time fragment scrubbing forces the reset UI even over a valid existing session. Full combined CI and live staging SMTP/session acceptance remain open.
-- The offline/auth candidate keeps production mutation replay disabled and the UI read-only offline. Queue records, Yjs documents, pending acknowledgements, and unresolved in-memory snapshots are scoped to the authenticated owner; A→logout→B and cross-tab cookie-switch regressions are covered. One accessible shell auth surface renders per viewport.
-- The attachment slice removes the public upload-directory mount, requires edit access to the canonical blip before upload, stores opaque wave-bound metadata, and rechecks current read access for every `/uploads/:id` request. The service worker makes `/api/*`, `/socket.io/*`, and `/uploads/*` network-only and purges legacy caches.
-- The sharing/access core is now integrated locally: persisted private/link/public policy, viewer/commenter/editor/owner enforcement, server-session Socket.IO identity, and live revocation coexist with offline owner partitioning and private attachments. Exact audit follow-ups and later functional slices still block release.
+Current State (`release/preintegration-offline-upload` at audited application checkpoint `b3cd054f` @ 2026-07-12; public production intentionally unchanged pending exact-merge acceptance)
+- The full application candidate is integrated locally: private/link/public
+  sharing, viewer/commenter/editor/owner enforcement, server-session Socket.IO
+  identity, live demotion, owner-partitioned offline/Yjs state, ACL-backed
+  uploads, mandatory ClamAV readiness, hardened OAuth/registration/logout,
+  password recovery, structural realtime, recursive export, mentions, and
+  durable Tasks.
+- Exact gates passed: **107/107 test files, 588 passed, 3 skipped, 0 failed**;
+  typecheck; full-source ESLint `--quiet`; and a **3,314-module** production
+  build. The focused combined matrix passed **120/120** and the independent
+  final audit returned GO.
+- Account changes remount the complete shell/topic/editor tree by owner and
+  denied loads scrub private state. Task state is server-authoritative in view
+  and edit modes, fails closed on denied refreshes, preserves generation order,
+  and recovers on reconnect/access change.
+- Final local UI evidence contains **20 Task PNGs** and **8 Share/Invite PNGs**
+  across the required desktop widths plus 390 mobile. The Task manifest has
+  zero unexpected console errors and every sharing modal remains within its
+  viewport.
+- Remaining release gates are operational: update PR #66 to this exact tree,
+  require green CI, merge the deploy-helper PR, deploy the exact merged SHA to
+  the inactive managed lane, perform a zero-overlap drain/cutover, and complete
+  public mail/scanner/restart/collaboration/role/Task/mention/export/responsive
+  acceptance.
 - The managed compiled topology is code-complete on the in-flight branch but not yet public. `deploy/systemd/` defines immutable blue/green lanes on loopback `:8101`/`:8102`; `scripts/deploy-vps.sh` now builds and starts an exact candidate SHA without touching nginx. Graceful shutdown flushes dirty Yjs documents, production refuses the development session secret, and `/api/health` includes Redis session readiness.
 - A live security preflight proved CouchDB `5984` and unauthenticated Redis `6379` were externally reachable. Redis showed active attacker replication/config activity and an SSH-key payload. Root-only evidence was preserved; all 54 untrusted keys/sessions were flushed; Redis was recreated clean. Persistent dual-stack rules now close both dependencies and every direct Rizzoma internal port while public HTTPS health remains 200. The managed cutover must use a fresh secret with no previous verifier, intentionally forcing one re-login. See `screenshots/260712-1218-redis-incident-response/`.
 - Public nginx targets Vite `:3100`, which proxies to API `:8100`; RedisStore is active. The VPS checkout is clean at documentation checkpoint `3a55155a`, while the running application code is PR #60 `fe6988fb` because the intervening files are docs/evidence only. The prior public lane on Vite `:3000` and API `:8788` remains healthy but is rollback-only.
@@ -190,13 +222,23 @@ Current State (`codex/password-recovery` on combined checkpoint `c00e1711` @ 202
 - Dependency upgrades: audit captured in `docs/DEPENDENCY_UPGRADE_AUDIT.md`; minor/patch batch applied (Playwright/Vitest/Prettier, AWS SDK, session/email libs). Major editor/tooling/server upgrades remain deferred.
 
 Current Next Work
-1. Merge and deploy the managed production-service branch, run direct candidate preflight, fully drain/stop `:3100`/`:8100`, cut both vhosts atomically, then run public Playwright acceptance. Retain the exact rollback recipe and artifacts, not a live old writer.
-2. Keep the native renderer disabled. Its runtime is read-only, omits ordinary reply trees, and drops rich content; begin with read-complete tree loading and lossless semantic round trips before any native editing work.
-3. Measure longer-window errors/latency, clean synthetic production topics, and retire the disconnected `:3000`/`:8788` legacy processes while preserving their exact restart recipe.
-4. Separate staging data from production CouchDB before further destructive acceptance testing.
-5. Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
-6. Repair/refresh BLB snapshots and test real-device iPhone Safari.
-7. Reconcile the dirty canonical checkout, automate backup cadence, triage 3 stale PRs / 7 native-port issues, and address Node/Capacitor/Action upgrades plus 6,354 lint warnings.
+1. Publish audited application checkpoint `b3cd054f` plus the current docs and
+   evidence to PR #66; require every GitHub CI gate before merge.
+2. Rebase the tested deploy-helper commits onto the new merged `master`, update
+   PR #67, require CI, and install the exact merged helper assets.
+3. Deploy the exact application merge SHA to the inactive managed lane, verify
+   direct health/assets/journal/scanner, then execute the documented
+   zero-overlap old-Vite/old-API drain and atomic both-vhost cutover.
+4. Run full public acceptance: login and restart continuity, immediate-edit
+   persistence, OAuth, two-account collaboration, Follow-the-Green `2 → 1 → 0`,
+   role/demotion/invitation, Task/mention/export/password reset, clean upload,
+   EICAR rejection, mail delivery, and inspected desktop/mobile PNGs.
+5. Record the exact production result in project docs, global `HANDOFF.md`, and
+   existing HCSS Tana node `8mGAbLRiBnne`; refresh the Git bundle only after the
+   final merged documentation checkpoint.
+6. After release, keep native rendering disabled; then address 500/1,000-blip
+   full-render sweeps, physical iPhone Safari, staging/production CouchDB
+   separation, synthetic-data cleanup, and the historical lint/dependency debt.
 
 Historical Next Work (pre-merge; superseded)
 - Branch focus (current batch): keep changes small/flagged; land perf/resilience sweeps and adapter/health/backup work in slices.

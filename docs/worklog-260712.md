@@ -172,3 +172,55 @@ This section supersedes the deployment boundary above.
 - Promoted ClamAV into application readiness: `/api/health` now performs a bounded clamd `PING`, reports the scanner check, and returns degraded in production when the scanner is missing or unreachable. The focused health/upload/scanner/cancellation run passed **30/30**, followed by a green typecheck and diff check.
 - Added a client transport regression proving the multipart request carries both canonical `blipId` and optional `waveId` before the route resolves ACLs; the upload client suite now passes **2/2**.
 - Wired the stock production Compose profile to the same mandatory scanner contract: `app-prod` now sets the internal ClamAV host/port and local ACL-backed storage mode, waits for the scanner's image health check, and persists signatures in a restart-persistent volume. A follow-up storage audit also added the shared `uploads-data` volume to development and production containers, so ACL-backed bytes survive container replacement. This prevents a nominal `docker compose --profile prod up` from starting an app whose readiness and every upload fail because `CLAMAV_HOST` is absent, or whose accepted attachments disappear with the container filesystem.
+
+## Full-functional integration and final local gate
+
+### Integration outcome
+
+- Assembled the complete application candidate on
+  `release/preintegration-offline-upload`, leaving the dirty user-owned
+  `/mnt/c/Rizzoma` checkout untouched. Audited application checkpoint:
+  `b3cd054f`.
+- Combined persisted sharing roles, authenticated Socket.IO/Yjs, offline and
+  service-worker account isolation, ACL-backed uploads with mandatory ClamAV,
+  OAuth/registration/logout hardening, password recovery, structural realtime,
+  recursive export, mentions, and durable Tasks.
+- Closed the last Task lifecycle gaps: normal parity view now hydrates from the
+  side document; view→edit writes remain ordered; stale full snapshots cannot
+  overwrite a confirmed different-task toggle; taskless editors do not issue
+  eager reads; denied refreshes revoke authority; and reconnect/access events
+  restore authority without navigation.
+- Closed the account-switch privacy gap: application, layout, topic, editor,
+  and Task state are keyed by authenticated owner. A denied refresh clears
+  loaded topic/blip/participant/draft/editor/modal state, and owner-partitioned
+  load throttles cannot let account A suppress account B's access check.
+
+### Verification
+
+- Exact full Vitest: **107 files / 588 passed / 3 skipped / 0 failed**.
+- Focused combined account/access/Task/offline/realtime/password matrix:
+  **120/120 passed**. Exact Task regressions: **14/14**. Authorization matrix:
+  **72/72**. Account-switch regressions: **2/2**.
+- TypeScript no-emit passed. Full-source ESLint `--quiet` passed. The exact
+  production build transformed **3,314 modules**; only the existing chunk-size
+  advisory remained.
+- Independent adversarial audit returned **GO** on `b3cd054f` after explicitly
+  validating stale-generation ordering, A→B/private-state removal, fail-closed
+  Task authority, and reconnect recovery.
+- Playwright captured **20 Task PNGs** across 1280/1366/1440/1600 and 390 mobile
+  plus **8 Share/Invite PNGs** across the required desktop widths. The Task
+  manifest recorded **0 unexpected console errors** and the sharing manifest
+  kept every modal inside its viewport. Final owner/public/toggle/editor
+  desktop and mobile captures were visually inspected. Evidence:
+  [`screenshots/260712-1928-final-candidate-ui/`](../screenshots/260712-1928-final-candidate-ui/).
+
+### Release boundary
+
+- No production application change was made during this integration gate.
+  Public nginx still serves the earlier parity release.
+- Remaining steps are operational and externally observable: publish the exact
+  candidate through PR #66, require green GitHub CI, refresh and merge the
+  deploy-helper PR, deploy the exact merged SHA to the inactive managed lane,
+  perform the documented zero-overlap drain/cutover, and run full public
+  acceptance including mail, ClamAV/EICAR, restart persistence, two-account
+  collaboration, sharing roles, Tasks, mentions, export, and responsive PNGs.
