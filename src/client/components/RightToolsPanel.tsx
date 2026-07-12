@@ -186,37 +186,30 @@ function RightToolsPanelContent({ user, unreadState, onNextTopic, nextTopicAvail
     }
 
     // Walk unreadIds in order until we find one that's either already
-    // rendered or findable by expanding its anchor marker. Previous
-    // impl only looked at unreadIds[0] and silently exited when that
-    // was a deeply-nested grandchild hidden behind a collapsed parent
-    // — the "clicking Next does nothing" bug from the 2026-04-14
-    // user smoke test.
-    let nextUnreadId: string | null = null;
-    let target: HTMLElement | null = null;
-    let wasInline = false;
-    for (const candidate of unreadState?.unreadIds || []) {
-      // (a) already-rendered blip element
-      const rendered = document.querySelector(
-        `[data-blip-id="${cssEscape(candidate)}"]`
-      ) as HTMLElement | null;
-      if (rendered) {
-        nextUnreadId = candidate;
-        target = rendered;
-        wasInline = false;
-        break;
-      }
-      // (b) inline child via its anchor marker
-      const marker = document.querySelector(
-        `[data-blip-thread="${cssEscape(candidate)}"]`
-      ) as HTMLElement | null;
-      if (marker) {
-        nextUnreadId = candidate;
-        wasInline = true;
+    // rendered or findable by expanding its anchor marker. Remote create
+    // events can update unread state before RizzomaTopicDetail has loaded the
+    // corresponding blip into the DOM, so a miss gets one awaited topic
+    // reload and a second lookup before we report it as unreachable.
+    const locateUnreadTarget = async (): Promise<{
+      nextUnreadId: string | null;
+      target: HTMLElement | null;
+      wasInline: boolean;
+    }> => {
+      for (const candidate of unreadState?.unreadIds || []) {
+        const rendered = document.querySelector(
+          `[data-blip-id="${cssEscape(candidate)}"]`
+        ) as HTMLElement | null;
+        if (rendered) return { nextUnreadId: candidate, target: rendered, wasInline: false };
+
+        const marker = document.querySelector(
+          `[data-blip-thread="${cssEscape(candidate)}"]`
+        ) as HTMLElement | null;
+        if (!marker) continue;
         marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
         window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
           detail: { threadId: candidate },
         }));
-        target = await new Promise<HTMLElement | null>((resolve) => {
+        const target = await new Promise<HTMLElement | null>((resolve) => {
           let attempts = 0;
           const check = () => {
             attempts++;
@@ -229,10 +222,21 @@ function RightToolsPanelContent({ user, unreadState, onNextTopic, nextTopicAvail
           };
           requestAnimationFrame(check);
         });
-        if (target) break;
+        if (target) return { nextUnreadId: candidate, target, wasInline: true };
       }
-      // (c) not findable — try the next unread candidate instead of
-      // silently dead-ending on a grandchild.
+      return { nextUnreadId: null, target: null, wasInline: false };
+    };
+
+    let { nextUnreadId, target, wasInline } = await locateUnreadTarget();
+    if (!target || !nextUnreadId) {
+      const reload = (window as unknown as { __rizzomaTopicReload?: () => Promise<void> }).__rizzomaTopicReload;
+      if (typeof reload === 'function') {
+        await reload();
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        });
+        ({ nextUnreadId, target, wasInline } = await locateUnreadTarget());
+      }
     }
 
     if (!target || !nextUnreadId) {
