@@ -80,3 +80,49 @@ restart without the parity flag. nginx dev vhost backup:
 - Test fixture topic `0b997d49bf636cdd371819e13601e7ce` ("Try", account
   `try-owner+try-1783562412806@example.com`) contains a depth-10 spine + a few
   empty children created by test runs — safe to trash.
+
+---
+
+# ADDENDUM (same day, after SDS's manual test failed) — the fix above was NOT enough
+
+SDS tried ONE flow by hand — topic root: Edit → Ctrl+Enter — and it was dead. He was
+right; the 11-gate suite had only exercised NESTED blips with synthetic events. Three
+further defects were found and fixed (commits `37ba00a1`, `bd811c4b`, `681c626c`):
+
+1. **Topic editor outside the single-active model** — `topicEditor` (RizzomaTopicDetail)
+   could stay editable while a child edited (two toolbars). New `EditSurfaceActiveBridge`
+   claims the slot under `topic-editor:<id>` while `isEditingTopic`.
+2. **Bridge released against a stale claim** — effects observe the committing render's
+   context, so the first post-edit commit still carried the previous active id and the
+   bridge closed the edit it had just opened. Fixed with a claimed-observation guard.
+3. **THE BUG SDS HIT: clicking inside the topic editor killed its own edit session.**
+   The click bubbles to the topic-root blip container → `handleBlipClick` claims the
+   ROOT's id → bridge saw a "foreign" claim → `finishEditingTopic()` → the ProseMirror
+   blurred → every subsequent keystroke (typing, Ctrl+Enter) went to `<body>`. Diagnosed
+   via a focus timeline (focusin at Edit-click +103ms, focusout at content-click). Fix:
+   the bridge knows its `hostBlipId` and reasserts its claim instead of releasing.
+   Also: the topic-flow Ctrl+Enter child now re-drives expand+edit-entry until its
+   editor is editable (its first mount lives in the topic editor's BlipThreadNode
+   portal, which unmounts when the topic edit closes).
+
+## Verification of the ACTUAL user flow (real clicks + real keystrokes, live)
+
+- Edit (real click) → click into content (focus RETAINED, verified via activeElement)
+  → Ctrl+Enter → `POST /api/blips 201` → child mounts in edit with ONE toolbar →
+  typed text lands in the child → **persists server-side** (verified via API readback).
+- `scripts/rizzoma_sanity_sweep.mjs` (the May 9-check harness, now env-parameterized):
+  **14/14 PASS on live** against a fresh depth-10 fixture (`0b997d49…026729`).
+- `scripts/visual-feature-sweep.mjs` (the 200-row feature matrix): **44/44 programmatic
+  gates PASS, 0 FAIL** on live (`screenshots/260709-feature-sweep/manifest.md`).
+  1 residual: the realtime cursor/typing capture timed out waiting for a blip menu to
+  be visible WITHOUT activation — an assumption the single-active model intentionally
+  invalidates (menus now require activating the blip); harness to be updated.
+- Regression: `verify_single_active_editor.mjs` 11/11 + nested Ctrl+Enter still PASS.
+
+## Lesson (recorded as memory `feedback-rizzoma-verify-the-users-flow`)
+
+Synthetic-event suites passed while the user's first real interaction failed. For any
+Rizzoma editor claim: verify with REAL Playwright clicks/keystrokes (not
+evaluate-dispatched events), on the TOPIC ROOT as well as nested blips, including
+focus retention (activeElement) and typing persistence — and run the repo's own
+sanity + feature sweeps before reporting.

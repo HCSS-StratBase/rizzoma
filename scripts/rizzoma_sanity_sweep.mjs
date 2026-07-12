@@ -21,10 +21,10 @@ import { chromium } from 'playwright';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const baseUrl = 'https://dev.138-201-62-161.nip.io';
-const topicId = '1a94345b983b3a1c78f2a2da1a02a5aa'; // Try topic with depth-10 spine
-const ownerEmail = 'try-owner+try-1777937672763@example.com';
-const ownerPassword = 'Try!Owner-try-1777937672763';
+const baseUrl = process.env.RZ_BASE || 'https://dev.138-201-62-161.nip.io';
+const topicId = process.env.RZ_TOPIC || '1a94345b983b3a1c78f2a2da1a02a5aa'; // Try topic with depth-10 spine
+const ownerEmail = process.env.RZ_EMAIL || 'try-owner+try-1777937672763@example.com';
+const ownerPassword = process.env.RZ_PASS || 'Try!Owner-try-1777937672763';
 const outDir = path.join('/mnt/c/Rizzoma/screenshots', '260505-rizzoma-sanity');
 
 const log = m => console.log(`[rizzoma-sanity] ${m}`);
