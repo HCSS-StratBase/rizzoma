@@ -410,6 +410,11 @@ async function main() {
     }
 
     // ===== CHECK 7: BUG #56 — sidebar refresh after mark-read =====
+    // Let the 300ms REST autosave for A's offline "Z" edit settle before
+    // taking the unread baseline. Otherwise that legitimate late PUT can
+    // race the mark-read request and recreate one unread item after the test
+    // has already observed zero, making a cache-control check flaky.
+    await pageA.waitForTimeout(750);
     // Use B's session (since B's reads are tracked separately from A's).
     const beforeUnread = await pageB.evaluate(async (waveId) => {
       const r = await fetch(`/api/topics?limit=5&_t=${Date.now()}`, { credentials: 'include', cache: 'no-store' });
@@ -437,6 +442,7 @@ async function main() {
       const j = await r.json();
       return j.topics?.find((topic) => topic.id === waveId)?.unreadCount === 0;
     }, topicId, { timeout: 10000, polling: 250 });
+    await pageB.waitForTimeout(350);
     const afterUnread = await pageB.evaluate(async (waveId) => {
       const r = await fetch(`/api/topics?limit=5&_t=${Date.now()}`, { credentials: 'include', cache: 'no-store' });
       const j = await r.json();
