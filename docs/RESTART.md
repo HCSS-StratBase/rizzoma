@@ -1,14 +1,13 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-12 (`release/preintegration-offline-upload` at audited
-application checkpoint `b3cd054f`; **not merged or deployed**). The complete
-authorization, offline/auth, private upload/ClamAV, OAuth/password recovery,
-collaboration/realtime/export, mention, and durable Task stack is integrated.
-Exact local gates passed at 107 files / 588 tests / 3 skipped / 0 failed,
-typecheck, full-source ESLint `--quiet`, a 3,314-module production build, final
-responsive Playwright, and an independent GO audit. Next: publish PR #66,
-require CI, merge the deploy helper, execute the exact-SHA zero-overlap cutover,
-and run public acceptance.
+Last refreshed: 2026-07-12 (`release/deploy-helper-final`; application merge
+`bacb8a50`; **not yet deployed**). PR #66 merged the complete authorization,
+offline/auth, private upload/ClamAV, OAuth/password recovery,
+collaboration/realtime/export, mention, and durable Task stack after all seven
+GitHub checks passed. The managed helper is rebased on that merge and now
+prevents npm 10's post-build prune from rewriting the immutable lockfile. Next:
+publish and merge PR #67, execute the exact-SHA zero-overlap cutover, and run
+public acceptance.
 
 Last refreshed (prior): 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — verified Playwright sign-in lands as `sdspieg@gmail.com`. Tasks #140 + #143 closed. Two Hetzner Robot firewall changes needed: opened :80 + consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to cover return traffic from MASQUERADE'd outbound. tcpdump-diagnosed.)
 
@@ -39,8 +38,8 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `release/preintegration-offline-upload` (2026-07-12), audited
-  application checkpoint `b3cd054f`; public production remains on the earlier
+- Active branch: `release/deploy-helper-final` (2026-07-12), based on merged
+  application commit `bacb8a50`; public production remains on the earlier
   parity release. Always cite branch + date when sharing status.
 - Current local gates: 107/107 Vitest files, 588 passed, 3 skipped, typecheck,
   full-source ESLint `--quiet`, 3,314 build modules, responsive local evidence,
@@ -67,7 +66,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `release/preintegration-offline-upload` worktree/branch until PR #66 contains the audited tree; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
+    - Continue in the isolated `release/deploy-helper-final` worktree/branch until PR #67 merges; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -76,12 +75,11 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Publish the exact audited candidate and docs/evidence to PR #66; require all CI jobs and merge only the green tree.
-  2) Rebase the tested deploy-helper commits onto merged master, update PR #67, require CI, and install the exact merged helper assets.
-  3) Deploy the exact application merge SHA to the inactive managed lane; verify direct health/assets/journal/ClamAV, then drain old Vite and API with zero writer overlap before switching both vhosts.
-  4) Run public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs.
-  5) Record the exact production result in project docs, global HANDOFF, and existing HCSS Tana node `8mGAbLRiBnne`; refresh the Git bundle after final docs merge.
-  6) Keep native rendering disabled; after release, address 500/1,000-blip sweeps, physical iPhone Safari, staging-data separation, synthetic-data cleanup, and dependency/lint debt.
+  1) Push the rebased deploy-helper tree to PR #67, require all CI jobs, and merge only the green tree.
+  2) Install the exact merged helper assets and deploy that exact master SHA to the inactive managed lane; verify direct health/assets/journal/ClamAV, then drain old Vite and API with zero writer overlap before switching both vhosts.
+  3) Run public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs.
+  4) Record the exact production result in project docs, global HANDOFF, and existing HCSS Tana node `8mGAbLRiBnne`; refresh the Git bundle after final docs merge.
+  5) Keep native rendering disabled; after release, address 500/1,000-blip sweeps, physical iPhone Safari, staging-data separation, synthetic-data cleanup, and dependency/lint debt.
 
   Testing/CI hygiene:
   - Keep the central sharing/access, route-role matrix, real-session Socket.IO authorization, and ShareModal tests green; production policy changes require staging evidence first.

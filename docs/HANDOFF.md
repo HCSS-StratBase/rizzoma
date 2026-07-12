@@ -1,15 +1,14 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`release/preintegration-offline-upload`; audited
-application checkpoint `b3cd054f`; **not merged or deployed**). The complete
+Last Updated: 2026-07-12 (`release/deploy-helper-final`; application merge
+`bacb8a50`; **not yet deployed**). PR
+[#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) merged the complete
 sharing/access, authenticated collaboration, offline/auth isolation, private
 upload/ClamAV, OAuth/password-recovery, realtime/export, mention, and durable
-Task stack is integrated. Exact local gates passed at **107 files / 588 tests /
-3 skipped / 0 failed**, typecheck, full-source ESLint `--quiet`, and a
-**3,314-module** production build; the independent final audit returned GO.
-Responsive local evidence is in the
-[final candidate archive](../screenshots/260712-1928-final-candidate-ui/README.md).
-GitHub CI, managed exact-SHA deployment, and public acceptance remain open.
+Task stack after all seven GitHub gates passed. The deploy-helper commits are
+rebased on that merge; a measured npm 10 lockfile-mutation blocker is fixed by
+pruning production dependencies with lockfile writes disabled. PR #67 CI,
+managed exact-SHA deployment, and public acceptance remain open.
 
 **Deployment boundary:** nginx serves Vite `:3100` → API `:8100`; Redis backs API sessions. The public frontend is Vite's **development server**, not a compiled production frontend. The live client has parity rendering enabled and native rendering unset, so production uses the React/TipTap parity path; `NativeWaveView` remains read-only and is not the deployed architecture. The former `:3000`/`:8788` lane remains healthy for immediate rollback via `/root/rizzoma.conf.pre-pr60-20260712-052206`. Both lanes are unmanaged bare processes and share CouchDB.
 
@@ -44,9 +43,9 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active development branch: `release/preintegration-offline-upload`
-  (2026-07-12; audited application checkpoint `b3cd054f`; undeployed). Public
-  production remains on the earlier parity release until exact-merge CI and
+- Active development branch: `release/deploy-helper-final` (2026-07-12), based
+  on merged application commit `bacb8a50`; public production remains on the
+  earlier parity release until deploy-helper CI, zero-overlap cutover, and
   public acceptance complete. Always include branch name + date when
   summarizing status.
 - The "Current State" section below is refreshed for the deployed parity release; older dated entries and “native release” labels are historical until the native renderer is write-capable and actually enabled.
@@ -82,8 +81,8 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`release/preintegration-offline-upload` at audited application checkpoint `b3cd054f` @ 2026-07-12; public production intentionally unchanged pending exact-merge acceptance)
-- The full application candidate is integrated locally: private/link/public
+Current State (`release/deploy-helper-final` @ 2026-07-12; application merge `bacb8a50`; public production intentionally unchanged pending managed cutover)
+- The full application stack is merged on `master` through PR #66: private/link/public
   sharing, viewer/commenter/editor/owner enforcement, server-session Socket.IO
   identity, live demotion, owner-partitioned offline/Yjs state, ACL-backed
   uploads, mandatory ClamAV readiness, hardened OAuth/registration/logout,
@@ -92,7 +91,9 @@ Current State (`release/preintegration-offline-upload` at audited application ch
 - Exact gates passed: **107/107 test files, 588 passed, 3 skipped, 0 failed**;
   typecheck; full-source ESLint `--quiet`; and a **3,314-module** production
   build. The focused combined matrix passed **120/120** and the independent
-  final audit returned GO.
+  final audit returned GO. On exact PR head `b8c9d110`, GitHub build, iOS,
+  browser smokes, performance budgets, health checks, aggregate CI gate, and
+  branch-update checks all passed before squash merge `bacb8a50`.
 - Account changes remount the complete shell/topic/editor tree by owner and
   denied loads scrub private state. Task state is server-authoritative in view
   and edit modes, fails closed on denied refreshes, preserves generation order,
@@ -101,8 +102,8 @@ Current State (`release/preintegration-offline-upload` at audited application ch
   across the required desktop widths plus 390 mobile. The Task manifest has
   zero unexpected console errors and every sharing modal remains within its
   viewport.
-- Remaining release gates are operational: update PR #66 to this exact tree,
-  require green CI, merge the deploy-helper PR, deploy the exact merged SHA to
+- Remaining release gates are operational: update PR #67 to this exact tree,
+  require green CI, merge it, deploy the exact merged SHA to
   the inactive managed lane, perform a zero-overlap drain/cutover, and complete
   public mail/scanner/restart/collaboration/role/Task/mention/export/responsive
   acceptance.

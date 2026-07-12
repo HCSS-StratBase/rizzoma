@@ -1,9 +1,9 @@
 # Rizzoma Feature Testing Status
 
-## Integrated pre-deployment release candidate — 2026-07-12
+## Integrated application merge — 2026-07-12
 
-- Branch `release/preintegration-offline-upload`; exact audited application
-  checkpoint `b3cd054f`. The candidate is not yet merged or deployed.
+- PR [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) merged as
+  `bacb8a50` from exact source head `b8c9d110`; production is not yet cut over.
 - Exact full Vitest run: **107 files / 588 passed / 3 skipped / 0 failed**.
   The focused combined authorization, account-isolation, Task, password-reset,
   offline, and realtime matrix separately passed **120/120**.
@@ -22,8 +22,11 @@
   manifest reports every modal inside its viewport. Representative final
   desktop/mobile owner, public, toggle, and editor-handoff PNGs were visually
   inspected. See the [final local candidate evidence](screenshots/260712-1928-final-candidate-ui/README.md).
-- Boundary: this is exact local candidate evidence, not public acceptance.
-  GitHub CI, exact-SHA managed deployment, real SMTP/invitation and reset-mail
+- Exact PR CI also passed all seven checks: build, iOS, health, performance,
+  browser smokes (toolbar, desktop/mobile Follow-the-Green, two-process
+  collaboration), aggregate gate, and branch update.
+- Boundary: this is merged/local evidence, not public acceptance. Exact-SHA
+  managed deployment, real SMTP/invitation and reset-mail
   checks, real ClamAV upload/EICAR checks, two-account collaboration, persisted
   restart, and public responsive Playwright acceptance still gate production.
 

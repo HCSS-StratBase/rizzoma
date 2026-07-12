@@ -1,9 +1,9 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
-## Integrated release candidate — 2026-07-12
+## Integrated application merge — 2026-07-12
 
-- `release/preintegration-offline-upload` at audited application checkpoint
-  `b3cd054f` combines persisted sharing roles, authenticated collaboration,
+- PR [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66), merged as
+  `bacb8a50`, combines persisted sharing roles, authenticated collaboration,
   owner-partitioned offline state, ACL-backed uploads with mandatory ClamAV,
   secure OAuth/password recovery, realtime structural reloads, recursive
   export, mentions, and durable Tasks on the React/TipTap parity renderer.
@@ -20,9 +20,9 @@
 - Responsive local evidence covers Task owner/public/toggle/editor-handoff at
   1280/1366/1440/1600 plus 390 mobile and Share/Invite dialogs at all four
   desktop widths. See the [candidate evidence](screenshots/260712-1928-final-candidate-ui/README.md).
-- Boundary: the candidate is not merged or deployed. Public production remains
-  on the earlier parity release until PR CI, managed exact-SHA deployment, and
-  full public acceptance complete.
+- All seven PR checks passed on exact source head `b8c9d110`. Public production
+  remains on the earlier parity release until PR #67, managed exact-SHA
+  deployment, and full public acceptance complete.
 
 ## Offline/auth isolation candidate — 2026-07-12
 
