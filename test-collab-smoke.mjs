@@ -84,6 +84,56 @@ async function ensureAuth(page, email, label) {
   log(`${label}: ${result.method} OK`);
 }
 
+async function installSocketProbe(page) {
+  // Install before the first navigation so room joins, initial sync, and any
+  // lifecycle-driven leave are visible. Attaching onAny after the editor has
+  // mounted misses exactly the events needed to distinguish "never joined"
+  // from "joined, synced, then left".
+  await page.addInitScript(() => {
+    window.__inbound = [];
+    window.__outbound = [];
+    let socketValue;
+
+    const wrapSocket = (socket) => {
+      if (!socket || socket.__rizzomaCollabProbeWrapped) return;
+      Object.defineProperty(socket, '__rizzomaCollabProbeWrapped', {
+        value: true,
+        configurable: false,
+        enumerable: false,
+      });
+      const originalEmit = socket.emit.bind(socket);
+      socket.emit = function(event, ...args) {
+        try {
+          window.__outbound.push({
+            event,
+            blipId: args[0]?.blipId || null,
+            t: Date.now(),
+          });
+        } catch {}
+        return originalEmit(event, ...args);
+      };
+      try {
+        socket.onAny((event, ...args) => {
+          window.__inbound.push({
+            ev: event,
+            blipId: args[0]?.blipId || null,
+            t: Date.now(),
+          });
+        });
+      } catch {}
+    };
+
+    Object.defineProperty(window, '__socket', {
+      configurable: true,
+      get: () => socketValue,
+      set: (value) => {
+        socketValue = value;
+        wrapSocket(value);
+      },
+    });
+  });
+}
+
 async function createTopicAndBlip(page, title) {
   const csrf = await page.evaluate(() => {
     const c = document.cookie.split('; ').find((x) => x.startsWith('XSRF-TOKEN='));
@@ -113,33 +163,6 @@ async function createTopicAndBlip(page, title) {
   return result;
 }
 
-async function instrumentSocket(page) {
-  // Wrap socket.emit to count outbound events, attach onAny for inbound.
-  await page.evaluate(() => {
-    const wait = (cond, ms = 5000) => new Promise((resolve) => {
-      const start = Date.now();
-      const tick = () => {
-        if (cond()) return resolve(true);
-        if (Date.now() - start > ms) return resolve(false);
-        setTimeout(tick, 50);
-      };
-      tick();
-    });
-    return wait(() => !!window.__socket).then(() => {
-      const s = window.__socket;
-      if (!s) return;
-      window.__inbound = [];
-      window.__outbound = [];
-      const origEmit = s.emit.bind(s);
-      s.emit = function(event, ...args) {
-        try { window.__outbound.push({ event, t: Date.now() }); } catch {}
-        return origEmit(event, ...args);
-      };
-      try { s.onAny((ev, ...args) => window.__inbound.push({ ev, t: Date.now() })); } catch {}
-    });
-  });
-}
-
 async function openTopicAndExpandBlip(page, topicId, blipId) {
   await page.goto(`${baseUrl}/?layout=rizzoma#/topic/${topicId}`, { waitUntil: 'domcontentloaded' });
   const blipLocator = page.locator(`[data-blip-id="${blipId}"]`);
@@ -156,9 +179,11 @@ async function openTopicAndExpandBlip(page, topicId, blipId) {
     window.dispatchEvent(new CustomEvent('rizzoma:activate-blip', { detail: { blipId: id } }));
     window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', { detail: { blipId: id } }));
   }, blipId);
-  // wait for the editor to mount
+  // Wait for the editor to mount in genuinely editable mode. A read-only
+  // ProseMirror can still display the saved HTML while collaboration remains
+  // disabled, which used to let this helper report false readiness.
   await page.waitForFunction(
-    (id) => !!document.querySelector(`[data-blip-id="${id}"] .ProseMirror`),
+    (id) => !!document.querySelector(`[data-blip-id="${id}"] .ProseMirror[contenteditable="true"]`),
     blipId,
     { timeout: 15000 }
   );
@@ -166,6 +191,23 @@ async function openTopicAndExpandBlip(page, topicId, blipId) {
   // client intentionally starts with an empty Y.Doc and must receive the
   // first client's seed before the test types into either side.
   await waitForEditorText(page, blipId, 'Initial blip content', 15000);
+  // Collaboration readiness includes a concrete room join and initial sync.
+  // The server deliberately does not log joins once a Y.Doc has state, so the
+  // client-side socket trace is the authoritative acceptance signal here.
+  await page.waitForFunction((id) => {
+    const outbound = window.__outbound || [];
+    const inbound = window.__inbound || [];
+    return outbound.some((entry) => entry.event === 'blip:join' && entry.blipId === id)
+      && inbound.some((entry) => entry.ev === `blip:sync:${id}`);
+  }, blipId, { timeout: 15000 });
+}
+
+async function getSocketProbe(page, blipId) {
+  return page.evaluate((id) => ({
+    connected: !!window.__socket?.connected,
+    outbound: (window.__outbound || []).filter((entry) => !entry.blipId || entry.blipId === id),
+    inbound: (window.__inbound || []).filter((entry) => entry.ev === `blip:sync:${id}` || entry.ev === `blip:update:${id}`),
+  }), blipId);
 }
 
 async function focusBlipEditor(page, blipId) {
@@ -237,6 +279,9 @@ async function main() {
   const pageA = await ctxA.newPage();
   const pageB = await ctxB.newPage();
 
+  await installSocketProbe(pageA);
+  await installSocketProbe(pageB);
+
   // Capture console errors per page
   const errorsA = [];
   const errorsB = [];
@@ -254,11 +299,9 @@ async function main() {
 
     // ----- A opens the topic and starts editing the blip -----
     await openTopicAndExpandBlip(pageA, topicId, blipId);
-    await instrumentSocket(pageA);
 
     // ----- B opens the same topic and starts editing the same blip -----
     await openTopicAndExpandBlip(pageB, topicId, blipId);
-    await instrumentSocket(pageB);
 
     // ===== CHECK 1: feature flags reachable + socket up on both sides =====
     const aSocketOk = await pageA.evaluate(() => !!(window.__socket && window.__socket.connected));
@@ -277,9 +320,15 @@ async function main() {
     recordCheck(aOutCount >= 1, `A typed → ${aOutCount} blip:update emits (BUG #57a — Y.js binding wired)`);
 
     // ===== CHECK 3: B receives the update =====
-    await pageB.waitForFunction(({ eventName, before }) => (
-      (window.__inbound || []).filter((entry) => entry.ev === eventName).length > before
-    ), { eventName: `blip:update:${blipId}`, before: bInboundBefore }, { timeout: 10000 });
+    try {
+      await pageB.waitForFunction(({ eventName, before }) => (
+        (window.__inbound || []).filter((entry) => entry.ev === eventName).length > before
+      ), { eventName: `blip:update:${blipId}`, before: bInboundBefore }, { timeout: 10000 });
+    } catch (error) {
+      console.error('[collab] A socket probe:', JSON.stringify(await getSocketProbe(pageA, blipId)));
+      console.error('[collab] B socket probe:', JSON.stringify(await getSocketProbe(pageB, blipId)));
+      throw error;
+    }
     const bInboundCount = await getInboundEventCount(pageB, `blip:update:${blipId}`);
     recordCheck(bInboundCount >= 1, `B received ${bInboundCount} blip:update relay events`);
 
