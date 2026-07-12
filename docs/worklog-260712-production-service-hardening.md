@@ -76,11 +76,21 @@ green. External retest returned CouchDB HTTP 000 and Redis closed while public
 `/api/health` returned 200. Evidence:
 `screenshots/260712-1203-database-exposure-closure/`.
 
-No Hetzner Robot firewall write occurred. Docker's all-interface publication
-declaration remains configuration debt; the host rule is the active durable
-control until the dependency containers are safely recreated on loopback. The
-one-time systemd installer now applies and persists the same narrow rule
-idempotently so the control is reproducible rather than a one-off shell fix.
+The follow-on audit confirmed active compromise: the attacker key, 1,257
+`CONFIG SET` calls, 578 `SLAVEOF` calls, and repeated full RDB synchronization.
+Root-only evidence was preserved, all 54 untrusted keys were flushed, Redis was
+recreated clean, and both dependency ports plus all Rizzoma internal ports,
+including the separately discovered legacy API at `8000`, were closed on the
+public interface for IPv4 and IPv6. Old sessions are intentionally
+invalid; the managed cutover uses a new secret with no previous verifier.
+Evidence: `screenshots/260712-1218-redis-incident-response/`.
+
+No Hetzner Robot firewall write occurred. The repository Compose declaration
+now binds every published application and dependency port to loopback, while
+the persisted host rules protect the still-running pre-change containers until
+they are safely recreated from that declaration. The one-time systemd installer
+applies the same controls idempotently so they are reproducible rather than
+one-off shell fixes.
 
 ## Boundary
 

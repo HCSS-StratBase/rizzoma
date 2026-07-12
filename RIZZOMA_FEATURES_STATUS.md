@@ -17,9 +17,11 @@
   3,298-module production build.
 - Boundary: this candidate is not public until merge, HTTPS canary, strict
   collaboration/unread/browser acceptance, and atomic nginx cutover complete.
-- Production dependency exposure was closed immediately: external CouchDB
-  `5984` and Redis `6379` are now dropped at `DOCKER-USER`, while host-local
-  service checks and public app health remain green.
+- Active Redis compromise was contained and eradicated: evidence preserved, 54
+  untrusted keys/sessions flushed, container recreated clean, and dual-stack
+  public access closed for dependencies and direct Rizzoma internal ports.
+  Public HTTPS health remains green; users must sign in once after secret
+  rotation.
 
 ## Public production checkpoint — 2026-07-12
 

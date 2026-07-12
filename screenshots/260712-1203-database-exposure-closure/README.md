@@ -12,7 +12,8 @@ Measured and corrected on the Rizzoma VPS on 2026-07-12 at 12:03 CEST.
 
 ## Change
 
-Inserted and persisted one host rule ahead of Docker forwarding:
+Inserted and persisted equivalent IPv4 and IPv6 host rules ahead of Docker
+forwarding:
 
 ```text
 -A DOCKER-USER -i enp0s31f6 -p tcp -m multiport --dports 5984,6379 -j DROP
@@ -32,3 +33,7 @@ POST was made and no other firewall rule changed.
 Boundary: Docker still declares all-interface port publications. The persistent
 host rule closes external access now; loopback-only Docker publication remains
 the cleaner configuration to adopt during a planned dependency recreation.
+
+The subsequent [incident-response audit](../260712-1218-redis-incident-response/README.md)
+confirmed active Redis manipulation, flushed all untrusted data, recreated the
+container, and added dual-stack host-input drops for direct Rizzoma ports.

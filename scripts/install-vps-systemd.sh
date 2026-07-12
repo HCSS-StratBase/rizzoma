@@ -35,9 +35,15 @@ docker update --restart unless-stopped rizzoma-redis rizzoma-couchdb >/dev/null
 public_iface="$(ip route get 1.1.1.1 | awk '{for (i=1; i<=NF; i++) if ($i == "dev") {print $(i+1); exit}}')"
 test -n "$public_iface"
 dependency_rule=(-i "$public_iface" -p tcp -m multiport --dports 5984,6379 -j DROP)
-if ! iptables -C DOCKER-USER "${dependency_rule[@]}" 2>/dev/null; then
-  iptables -I DOCKER-USER 1 "${dependency_rule[@]}"
-fi
+rizzoma_internal_rule=(-i "$public_iface" -p tcp -m multiport --dports 3000:3001,3100,8000,8100:8102,8200:8202,8788 -j DROP)
+for firewall_cmd in iptables ip6tables; do
+  if ! "$firewall_cmd" -C DOCKER-USER "${dependency_rule[@]}" 2>/dev/null; then
+    "$firewall_cmd" -I DOCKER-USER 1 "${dependency_rule[@]}"
+  fi
+  if ! "$firewall_cmd" -C INPUT "${rizzoma_internal_rule[@]}" 2>/dev/null; then
+    "$firewall_cmd" -I INPUT 1 "${rizzoma_internal_rule[@]}"
+  fi
+done
 if command -v netfilter-persistent >/dev/null 2>&1; then
   netfilter-persistent save >/dev/null
 else

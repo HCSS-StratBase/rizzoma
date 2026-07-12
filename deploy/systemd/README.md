@@ -25,12 +25,12 @@ The active layout is:
    [production.env.example](production.env.example). Whitelist only application
    settings; never copy an all-purpose dotenv containing SSH or Hetzner
    credentials. Set ownership `root:root` and mode `0600`.
-3. Use a new random `SESSION_SECRET`. During the first managed cutover only,
-   set `SESSION_SECRET_PREVIOUS=dev-secret-change-me`: the measured bare API had
-   no explicit secret and therefore signed its 51 Redis sessions with that
-   source-code fallback. The server signs new cookies with the new secret while
-   accepting those existing cookies. Remove the previous value after the
-   seven-day maximum session lifetime.
+3. Use a new random `SESSION_SECRET` and leave `SESSION_SECRET_PREVIOUS` empty
+   for the July 2026 incident cutover. The prior Redis session store was
+   internet-exposed and actively manipulated, so its sessions were flushed and
+   the known source-code fallback must not remain an accepted verifier. For a
+   future planned rotation between strong secrets, the previous-secret feature
+   can preserve sessions for the seven-day maximum lifetime.
 4. The installer sets Redis and CouchDB restart policy `unless-stopped` and
    idempotently persists the public-interface drop for host ports `5984,6379`.
    Verify external closure plus host-local dependency health after bootstrap.
@@ -76,10 +76,10 @@ only its Rizzoma `proxy_pass` from `:3100` to the candidate lane, validate with
 5. real viewport screenshots at 1280, 1366, 1440, 1600 and mobile widths
 6. zero candidate 5xx responses in `journalctl -u rizzoma@blue`
 
-For the first managed cutover, session continuity must include replaying a
-currently valid public `rizzoma.sid` through the candidate and proving
-`/api/auth/me` returns the same user identity. Counting Redis keys alone is not
-enough.
+For this incident cutover, an old public `rizzoma.sid` must *not* authenticate
+through the candidate. Acceptance instead proves a fresh login creates a new
+Redis-backed session, survives a managed restart, and returns the same identity
+after that restart.
 
 Restore the dev vhost after the canary so the former lane remains externally
 reachable as a rollback reference.

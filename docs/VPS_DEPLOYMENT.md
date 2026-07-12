@@ -15,10 +15,14 @@
 > CouchDB `5984` and Redis `6379` on all interfaces, and the Hetzner Robot
 > `5432-6543` allow rule includes both. External probes had confirmed CouchDB
 > HTTP 200 and unauthenticated Redis `PONG`. A persistent `DOCKER-USER` rule now
-> drops only those two ports on public interface `enp0s31f6`; external retest is
-> closed while host-local dependencies and public app health remain green.
-> Evidence: `screenshots/260712-1203-database-exposure-closure/`. Loopback-only
-> Docker publication remains the cleaner future recreation target.
+> drops only those two ports on public interface `enp0s31f6` for IPv4 and IPv6;
+> a dual-stack INPUT rule also closes every internal Rizzoma port, including
+> the previously missed legacy API at `8000`. The follow-on
+> audit confirmed active Redis manipulation. Root-only evidence was preserved,
+> 54 keys were flushed, and Redis was recreated clean. External dependencies
+> and direct APIs are closed while public HTTPS health remains green. Evidence:
+> `screenshots/260712-1218-redis-incident-response/`. Loopback-only Docker
+> publication remains the cleaner future recreation target.
 
 > **⚠️ CURRENT RUNTIME TRUTH — the Docker application topology below is
 > historical.** Public nginx now targets Vite `:3100`, which proxies to API
@@ -101,12 +105,12 @@ Docker-Compose stack:
 |---|---|---|---|
 | `rizzoma-app` | `rizzoma-app` (local build, **dev** target) | `8200:3000` | Vite + Express (`npm run dev`) |
 | `rizzoma-app-prod` | `rizzoma-app` (local build, **production** target) | `8201:8788` | `node dist/server/server/app.js`, USER `node`, healthy since 2026-04-22 late-night |
-| `rizzoma-couchdb` | `couchdb:3` | `5984:5984` | |
-| `rizzoma-redis` | `redis:7-alpine` | `6379:6379` | Session store (Redis-backed via `connect-redis`) |
-| `rizzoma-rabbitmq` | `rabbitmq:3-management-alpine` | `5672:5672`, `15672:15672` | |
-| `rizzoma-minio` | `minio/minio:latest` | `9000:9000`, `9001:9001` | |
-| `rizzoma-mailhog` | `mailhog/mailhog:latest` | `1025:1025`, `8025:8025` | |
-| `rizzoma-clamav` | `clamav/clamav:latest` | `3310:3310` | |
+| `rizzoma-couchdb` | `couchdb:3` | `127.0.0.1:5984:5984` | |
+| `rizzoma-redis` | `redis:7-alpine` | `127.0.0.1:6379:6379` | Session store (Redis-backed via `connect-redis`) |
+| `rizzoma-rabbitmq` | `rabbitmq:3-management-alpine` | `127.0.0.1:5672:5672`, `127.0.0.1:15672:15672` | |
+| `rizzoma-minio` | `minio/minio:latest` | `127.0.0.1:9000:9000`, `127.0.0.1:9001:9001` | |
+| `rizzoma-mailhog` | `mailhog/mailhog:latest` | `127.0.0.1:1025:1025`, `127.0.0.1:8025:8025` | |
+| `rizzoma-clamav` | `clamav/clamav:latest` | `127.0.0.1:3310:3310` | |
 
 Sphinx is **not** running — it lives behind the `search` profile and is no longer a hard dependency (issue #42 fix, 2026-04-21).
 
