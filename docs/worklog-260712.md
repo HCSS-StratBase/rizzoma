@@ -270,3 +270,24 @@ This section supersedes the deployment boundary above.
   deployment, and repeated public login proof. The broader two-user, mail,
   reset, role, collaboration, export, upload, scanner, restart, and visual
   matrix remains paused at this gate.
+
+### Public auth proof and topic-root preference follow-up
+
+- PR #69 passed all six checks and merged as `9358b9c5`. The exact green
+  candidate matched all 994 production packages and passed 10/10 private
+  login→identity→authenticated-logout loops while simulated late precache
+  requests ran concurrently. After zero-overlap handover, the same browser flow
+  passed **10/10** publicly with service workers enabled.
+- The first post-auth phase created one private acceptance topic, delivered its
+  real invitation, created a three-level hierarchy, admitted and read back a
+  clean upload, rejected EICAR, and captured the owner UI. It then stopped on
+  two unexpected 404s instead of hiding them.
+- Both 404s were synthetic-topic-root preference reads:
+  `/collapse-default` and `/inline-comments-visibility` were called with the
+  wave id, which is not a persisted blip document. Branch
+  `fix/topic-root-preference-requests` now skips blip-scoped server preference
+  sync for `renderMode="topic-root"`; real nested blips retain it.
+- Focused component verification passed **2/2**, including a new assertion that
+  neither request is made for a topic root. Typecheck and touched-file ESLint
+  at zero errors passed. Boundary: CI, exact inactive-lane deploy, cutover, and
+  resumed phase 1/2 acceptance remain open.

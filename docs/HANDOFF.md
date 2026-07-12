@@ -1,7 +1,7 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`fix/production-auth-session-race`; deployed base
-`e21afd04`). PRs [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66),
+Last Updated: 2026-07-12 (`fix/topic-root-preference-requests`; deployed base
+`9358b9c5`). PRs [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66),
 [#67](https://github.com/HCSS-StratBase/rizzoma/pull/67), and
 [#68](https://github.com/HCSS-StratBase/rizzoma/pull/68) are merged. Exact
 master `e21afd046bfed1e9b065a6caee3b0f947fd26f59` passed its private dependency,
@@ -9,16 +9,20 @@ health, asset, and journal gates and became public at 21:32 CEST through a
 zero-connection, no-snapshot-error drain. The first strict public login loop
 then exposed an intermittent session race: anonymous page/API/asset requests
 each minted a different session cookie, so a late response could overwrite a
-successful login. The current branch restricts anonymous CSRF-session creation
-to `/api/auth/csrf`; focused auth tests, server build, and ESLint at zero errors
-pass. CI, private redeploy, repeated public login, and the remaining public
-acceptance matrix are the immediate boundary.
+successful login. PR #69 restricted anonymous CSRF-session creation to
+`/api/auth/csrf`, merged as `9358b9c5`, and passed both private and public
+browser race gates at 10/10. Strict phase-1 acceptance then found two
+unnecessary 404s: the synthetic topic-root shell queried blip-scoped collapse
+and inline-comment preferences using the wave id, which has no blip document.
+The current branch skips those inapplicable requests. CI, exact private
+redeploy, zero-overlap cutover, and resumed public acceptance are the immediate
+boundary.
 
 **Deployment boundary:** both public vhosts point exactly once to the compiled,
-systemd-managed blue lane on loopback `:8101`; old listeners `:3100` and `:8100`
-are absent. `rizzoma@blue` is active/enabled at exact release `e21afd04`, with
+systemd-managed green lane on loopback `:8102`; blue and the old listeners are
+inactive. `rizzoma@green` is active/enabled at exact release `9358b9c5`, with
 Redis sessions, CouchDB, and ClamAV all healthy. The root-only rollback capture
-is `/root/rizzoma-cutover-20260712-212948`. Native rendering remains disabled;
+is `/root/rizzoma-cutover-hotfix-20260712-215643`. Native rendering remains disabled;
 production uses the React/TipTap parity path.
 
 Last Updated: 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — Playwright sign-in lands as `sdspieg@gmail.com` "Stephan De Spiegeleire" with Google avatar. Tasks #140 + #143 both closed. Required two Hetzner Robot firewall passes: (1) opened port 80 for Let's Encrypt; (2) consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to allow return traffic from MASQUERADE'd outbound — without that, server couldn't reach `oauth2.googleapis.com/token`. Diagnosed via tcpdump (SYN egressed, no SYN-ACK returned). Same fix unblocks SMTP / S3 / any container-outbound feature.)
@@ -52,9 +56,9 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active development branch: `fix/production-auth-session-race` (2026-07-12),
-  based on deployed master `e21afd04`; the hotfix remains private until CI and
-  repeated login acceptance pass. Always include branch name + date when
+- Active development branch: `fix/topic-root-preference-requests` (2026-07-12),
+  based on deployed master `9358b9c5`; the preference-request fix remains
+  private until CI and resumed console-clean acceptance pass. Always include branch name + date when
   summarizing status.
 - The "Current State" section below is refreshed for the deployed parity release; older dated entries and “native release” labels are historical until the native renderer is write-capable and actually enabled.
 
@@ -89,7 +93,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`fix/production-auth-session-race` @ 2026-07-12; deployed base `e21afd04`; public hotfix pending)
+Current State (`fix/topic-root-preference-requests` @ 2026-07-12; deployed base `9358b9c5`; public fix pending)
 - The full application stack is merged on `master` through PR #66: private/link/public
   sharing, viewer/commenter/editor/owner enforcement, server-session Socket.IO
   identity, live demotion, owner-partitioned offline/Yjs state, ACL-backed

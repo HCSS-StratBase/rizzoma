@@ -42,6 +42,7 @@ import { collaborationColorForUserId } from '../client/components/editor/collabo
 import { RizzomaTopicDetail } from '../client/components/RizzomaTopicDetail';
 import { RizzomaBlip, type BlipData } from '../client/components/blip/RizzomaBlip';
 import { BlipEditor } from '../client/components/editor/BlipEditor';
+import { api } from '../client/lib/api';
 
 describe('client: authenticated collaboration component boundaries', () => {
   let container: HTMLDivElement;
@@ -55,7 +56,33 @@ describe('client: authenticated collaboration component boundaries', () => {
     act(() => root?.unmount());
     container?.remove();
     collaborationCalls.length = 0;
+    vi.mocked(api).mockClear();
     window.__rizzomaLoadingState?.clear();
+  });
+
+  it('does not request persisted blip preferences for the synthetic topic root', () => {
+    const topicRoot: BlipData = {
+      id: 'topic-root-has-no-blip-document',
+      content: '<p>Topic root</p>',
+      authorId: 'owner',
+      authorName: 'Owner',
+      createdAt: 1,
+      updatedAt: 1,
+      isRead: true,
+      childBlips: [],
+      permissions: { canRead: true, canComment: true, canEdit: true },
+    };
+
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    act(() => {
+      root.render(<RizzomaBlip blip={topicRoot} renderMode="topic-root" />);
+    });
+
+    const requestedPaths = vi.mocked(api).mock.calls.map(([requestPath]) => String(requestPath));
+    expect(requestedPaths).not.toContain('/api/blips/topic-root-has-no-blip-document/collapse-default');
+    expect(requestedPaths).not.toContain('/api/blips/topic-root-has-no-blip-document/inline-comments-visibility');
   });
 
   it('passes the signed-in identity from each real editor surface to useCollaboration', () => {

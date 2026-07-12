@@ -5,6 +5,15 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-07-12 topic-root preference noise) After PR #69 merged as `9358b9c5`,
+  private and public auth-race loops both passed 10/10 and production moved to
+  managed green `:8102`. Phase-1 acceptance created the invitation, hierarchy,
+  and clean/EICAR uploads, then correctly stopped on two browser 404s. The
+  synthetic topic root uses the wave id and has no blip document, yet
+  `RizzomaBlip` fetched collapse and inline-comment preferences for it. Branch
+  `fix/topic-root-preference-requests` skips both inapplicable server calls;
+  focused component tests, typecheck, and touched-file lint pass. CI, private
+  deployment, cutover, and resumed acceptance remain open.
 - (2026-07-12 managed cutover and auth-race gate) PR #68 merged as `e21afd04`;
   that exact tree passed dependency/provenance gates and became public through
   a zero-overlap drain at 21:32 CEST. Strict public acceptance then reproduced

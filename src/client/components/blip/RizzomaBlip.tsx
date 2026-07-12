@@ -336,6 +336,10 @@ export function RizzomaBlip({
   const isEditingRef = useRef(false);
   useEffect(() => { isEditingRef.current = isEditing; }, [isEditing]);
   const isTopicRoot = renderMode === 'topic-root';
+  // The topic-root shell uses the wave id as its synthetic blip id. It has no
+  // corresponding blip document, so blip-scoped preference routes are not
+  // applicable and would return noisy 404s on every topic load.
+  const shouldSyncServerBlipPreferences = !isPerfMode && !isTopicRoot;
   // Root blips start expanded by default, but can be collapsed
   // Non-root blips follow the collapse preference
   const effectiveExpanded = isTopicRoot ? true : isExpanded;
@@ -1447,7 +1451,7 @@ export function RizzomaBlip({
   }, [blip.id]);
 
   useEffect(() => {
-    if (isPerfMode) return undefined;
+    if (!shouldSyncServerBlipPreferences) return undefined;
     let cancelled = false;
     const requestStartedAt = Date.now();
     const syncPreference = async () => {
@@ -1475,7 +1479,7 @@ export function RizzomaBlip({
     return () => {
       cancelled = true;
     };
-  }, [blip.id, isPerfMode]);
+  }, [blip.id, shouldSyncServerBlipPreferences]);
 
   // Handle click to make blip active (show menu). stopPropagation so the
   // DEEPEST clicked blip claims the active slot — without it the click bubbles
@@ -1518,7 +1522,8 @@ export function RizzomaBlip({
 
   useEffect(() => {
     // Skip visibility preference fetch in perf mode to avoid N+1 API calls
-    if (isPerfMode) return undefined;
+    // and for the synthetic topic root, which is not a persisted blip doc.
+    if (!shouldSyncServerBlipPreferences) return undefined;
 
     let cancelled = false;
     const requestStartedAt = Date.now();
@@ -1572,7 +1577,7 @@ export function RizzomaBlip({
     return () => {
       cancelled = true;
     };
-  }, [blip.id, isPerfMode]);
+  }, [blip.id, shouldSyncServerBlipPreferences]);
 
   // Handle Ctrl+Enter to create child blip when active (not editing)
   useEffect(() => {
