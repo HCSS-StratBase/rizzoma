@@ -148,7 +148,7 @@ export class BlipEditorHost {
    *
    * Caller responsibility:
    *   1. Pass a string `cursorMarker` that the editor inserts into the
-   *      live HTML at the current cursor position (e.g. ﻿). This
+   *      live HTML at the current cursor position (for example U+FEFF). This
    *      keeps the cursor-position math out of TipTap-specifics.
    *   2. Generate a fresh blipId via your normal allocator (this method
    *      doesn't know your id scheme).
