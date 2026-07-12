@@ -53,7 +53,10 @@ type Topic = {
 };
 
 async function loadLiveTopic(id: string): Promise<Topic & { _id: string; _rev?: string }> {
-  const doc = await getDoc<unknown>(id) as Partial<Topic> & { _rev?: unknown; deleted?: unknown } | null;
+  const doc = await getDoc<unknown>(id) as (
+    Omit<Partial<Topic>, 'type'>
+    & { type?: unknown; _rev?: unknown; deleted?: unknown }
+  ) | null;
   if (doc?.type === 'topic_tombstone' || doc?.deleted === true) throw new Error('410 topic_deleted');
   if (
     !doc
