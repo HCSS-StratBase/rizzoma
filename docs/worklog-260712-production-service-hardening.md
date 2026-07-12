@@ -124,9 +124,23 @@ one-off shell fixes.
 
 ## Boundary
 
-At this checkpoint the code and service design are locally verified but not
-yet merged or deployed. Public traffic still targets the existing
-`:3100`/`:8100` lane. Exact-SHA deployment, direct preflight, zero-overlap
-maintenance drain, both-vhost cutover, graceful-restart evidence, and public
-Playwright acceptance remain mandatory
-before the service can be called productionized.
+PR #64 has since merged and its exact SHA is running as the private blue
+candidate. Public traffic still targets the existing `:3100`/`:8100` lane.
+Zero-overlap maintenance drain, both-vhost cutover, exact edit/session restart
+evidence, and public Playwright acceptance remain mandatory before the service
+can be called productionized.
+
+## Merged candidate deployment
+
+PR #64 merged as `2595d2de`. Both dependency containers now publish only on
+host loopback. The immutable blue candidate is active under systemd and passed
+compiled-asset, old-cookie-rejection, health, and real cold-dependency restart
+checks; stopped Redis/CouchDB reached candidate readiness in 5,197 ms with no
+service retry or shutdown error. Evidence:
+`screenshots/260712-1300-managed-production-candidate/`.
+
+The first deploy attempt safely stopped at a source-repository guard because
+the VPS source is a linked worktree (`.git` file). The helper now validates via
+`git rev-parse --git-dir`, accepting both ordinary repositories and linked
+worktrees. Public nginx remains unchanged pending the zero-overlap final
+cutover and browser acceptance.

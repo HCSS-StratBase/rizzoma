@@ -96,7 +96,7 @@
 
 ## Managed-production hardening candidate — 2026-07-12
 
-- Branch `codex/production-service-hardening` adds production loopback binding,
+- Merged PR #64 (`2595d2de`) adds production loopback binding,
   non-development session-secret enforcement with previous-secret rotation,
   Redis session readiness, and graceful Socket.IO/Redis/Yjs shutdown.
 - Focused shutdown/readiness/session/Yjs suite: **31/31 passed**.
@@ -111,14 +111,18 @@
 - Docker-enabled VPS `docker compose config --quiet` passed with
   `SESSION_SECRET` unset and the inactive production profile; selecting that
   profile without a strong secret still fails closed in the server validator.
-- Boundary: these are local code/build gates, not public acceptance. Candidate
-  HTTPS browser smokes, a real graceful restart, viewport PNG inspection, and
-  public cutover verification remain required.
+- Boundary: direct candidate and real dependency restart gates passed, but this
+  is not public acceptance. Zero-overlap cutover, exact edit/session persistence,
+  collaboration/unread smokes, and viewport PNG inspection remain required.
 - Live incident response: external CouchDB/Redis and direct APIs `8000/8100/8788`
   changed from reachable to closed under persisted dual-stack rules. After
   preserving evidence, 54 untrusted Redis keys were flushed and the container
   was recreated clean as master with no modules; public HTTPS health remained
   HTTP 200.
+- Merged candidate `2595d2de` is active on loopback `:8101`: direct health and
+  compiled assets passed, an old-secret cookie was rejected, and a real
+  stopped-dependencies start reached health in **5,197 ms** with zero service
+  retries or shutdown errors. Public nginx is not yet cut over.
 
 ## Stacked sharing-authorization checkpoint — 2026-07-12 (`codex/sharing-access-control-stack`)
 

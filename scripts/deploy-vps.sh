@@ -122,7 +122,7 @@ test "$(stat -c '%a' /etc/rizzoma/production.env)" = "600"
 test -f "/etc/rizzoma/$LANE.env"
 grep -qx "PORT=$PORT" "/etc/rizzoma/$LANE.env"
 test -f /etc/systemd/system/rizzoma@.service
-test -d "$SOURCE_REPO/.git"
+git -C "$SOURCE_REPO" rev-parse --git-dir >/dev/null
 test -f "$PUBLIC_NGINX"
 
 if grep -Eq "proxy_pass[[:space:]]+http://(127\\.0\\.0\\.1|localhost):$PORT;" "$PUBLIC_NGINX"; then
@@ -209,5 +209,6 @@ REMOTE
 
 printf '%s\n' \
   '[deploy-vps] Candidate is ready, but public traffic was not changed.' \
-  '[deploy-vps] Follow the HTTPS canary, browser acceptance, and atomic nginx' \
-  '[deploy-vps] cutover gates in deploy/systemd/README.md.'
+  '[deploy-vps] Follow the direct preflight, zero-overlap maintenance drain,' \
+  '[deploy-vps] both-vhost cutover, and public acceptance gates in' \
+  '[deploy-vps] deploy/systemd/README.md.'
