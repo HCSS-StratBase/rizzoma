@@ -7,8 +7,7 @@ import { useCollaboration } from './useCollaboration';
 import { setInlineCommentsVisibility } from './inlineCommentsVisibility';
 import { insertGadget } from '../../gadgets/insert';
 import type { GadgetInsertDetail } from '../../gadgets/types';
-import { useAuth } from '../../hooks/useAuth';
-import { collaborationUserFromAuth } from './collaborationIdentity';
+import { useAuthenticatedCollaborationUser } from './useAuthenticatedCollaborationUser';
 import './BlipEditor.css';
 
 interface BlipEditorProps {
@@ -28,8 +27,7 @@ export function BlipEditor({
   ydoc,
   enableCollaboration = false,
 }: BlipEditorProps): JSX.Element {
-  const { user: authUser } = useAuth();
-  const collaborationUser = authUser ? collaborationUserFromAuth(authUser) : null;
+  const collaborationUser = useAuthenticatedCollaborationUser();
   const [localYdoc] = useState(() => ydoc || yjsDocManager.getDocument(blipId));
   const provider = useCollaboration(
     localYdoc,

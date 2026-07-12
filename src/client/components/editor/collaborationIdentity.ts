@@ -6,7 +6,7 @@ export interface CollaborationUser {
 
 export interface AuthenticatedUserIdentity {
   id: string;
-  email: string;
+  email?: string;
   name?: string;
 }
 
@@ -43,11 +43,13 @@ export function collaborationColorForUserId(userId: string): string {
 
 /** Build the awareness identity from the authenticated application user. */
 export function collaborationUserFromAuth(user: AuthenticatedUserIdentity): CollaborationUser {
-  const email = user.email.trim();
+  const email = user.email?.trim() || '';
   const rawId = String(user.id).trim();
   const id = rawId.length > 0 ? rawId : email;
   const preferredName = user.name?.trim();
-  const name = preferredName !== undefined && preferredName.length > 0 ? preferredName : email;
+  const name = preferredName !== undefined && preferredName.length > 0
+    ? preferredName
+    : (email || id || 'Anonymous');
   return {
     id,
     name,

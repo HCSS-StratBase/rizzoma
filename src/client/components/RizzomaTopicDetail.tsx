@@ -24,8 +24,7 @@ import { NativeWaveView } from './native/NativeWaveView';
 import { ActiveBlipProvider, EditSurfaceActiveBridge } from './blip/ActiveBlipContext';
 import { parseHtmlToContentArray } from '@client/native/parser';
 import type { ContentArray } from '@client/native/types';
-import { useAuth } from '../hooks/useAuth';
-import { collaborationUserFromAuth } from './editor/collaborationIdentity';
+import { useAuthenticatedCollaborationUser } from './editor/useAuthenticatedCollaborationUser';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -179,11 +178,7 @@ function formatDate(timestamp: number): string {
 }
 
 export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unreadState }: { id: string; blipPath?: string | null; isAuthed?: boolean; unreadState?: WaveUnreadState | null }) {
-  const { user: authUser } = useAuth();
-  const collaborationUser = useMemo(
-    () => authUser ? collaborationUserFromAuth(authUser) : null,
-    [authUser]
-  );
+  const collaborationUser = useAuthenticatedCollaborationUser();
   const perfRenderMode = getPerfRenderMode();
   const isPerfLite = perfRenderMode === 'lite';
   const [topic, setTopic] = useState<TopicFull | null>(null);

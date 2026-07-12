@@ -41,8 +41,7 @@ import { renderInlineHtml } from './InlineHtmlRenderer';
 import { LazyBlipSlot, LAZY_MOUNT_THRESHOLD } from './LazyBlipSlot';
 import { useCollaboration } from '../editor/useCollaboration';
 import { yjsDocManager } from '../editor/YjsDocumentManager';
-import { useAuth } from '../../hooks/useAuth';
-import { collaborationUserFromAuth } from '../editor/collaborationIdentity';
+import { useAuthenticatedCollaborationUser } from '../editor/useAuthenticatedCollaborationUser';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
 export type BlipContributor = {
@@ -466,11 +465,7 @@ export function RizzomaBlip({
   // is present from editor creation. canEdit already gates unauthenticated users.
   // authUser is converted to the provider's awareness identity synchronously,
   // before TipTap creates its collaborative-cursor extension.
-  const { user: authUser } = useAuth();
-  const collaborationUser = useMemo(
-    () => authUser ? collaborationUserFromAuth(authUser) : null,
-    [authUser]
-  );
+  const collaborationUser = useAuthenticatedCollaborationUser();
   // Skip collab for topic root — RizzomaTopicDetail.tsx owns the collab-enabled topicEditor.
   // Without this guard, both components would create SocketIOProviders for the same blipId,
   // causing duplicate socket room joins and update relay loops.

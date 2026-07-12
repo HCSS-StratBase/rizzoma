@@ -9,10 +9,13 @@
   is deterministic for the stable user ID. Anonymous test/harness surfaces use
   the honest label `Anonymous`, never an invented numbered user.
 - Cursor decorations and typing indicators resolve the same awareness identity.
-  Auth changes update in place, reconnect re-announces the current identity,
-  and provider destruction broadcasts immediate awareness removal.
-- Local gates passed: 27/27 focused tests, 64 Vitest files / 306 passed / 3
-  skipped, typecheck, and the 3,299-module production build.
+  The production shells now provide their real authenticated user; reconnect
+  waits for the server's authorized `blip:sync` before sending offline Yjs state
+  and re-announcing awareness.
+- Local gates: 23/23 focused tests (including actual topic/nested/generic
+  component boundaries), typecheck, and the 3,300-module production build. The
+  concurrent regression run passed 307 tests / skipped 3, with one unrelated
+  OAuth timeout whose complete file passed 3/3 serially.
 - Boundary: this is a follow-on draft candidate, not a public/deployed claim.
   Two real signed-in users still need Playwright and visual PNG acceptance.
 

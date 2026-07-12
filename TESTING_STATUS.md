@@ -4,14 +4,15 @@
 
 - Branch `codex/authenticated-cursor-identity` follows merged PR #64 on
   `master` at `2595d2de`.
-- Focused identity/provider/editor suite: **3 files / 27 passed / 0 failed**.
-- Full Vitest: **64 files / 306 passed / 3 skipped / 0 failed**.
-- Typecheck passed; the production build passed with **3,299 transformed
+- Focused identity/provider/real-component suite: **4 files / 23 passed / 0 failed**.
+- Regression run: **64 files / 307 passed / 3 skipped**, plus one OAuth-status
+  timeout under concurrent build load; the affected file passed serially **3/3**.
+- Typecheck passed; the production build passed with **3,300 transformed
   modules**.
 - Unit coverage proves authenticated name/email selection, deterministic
   colors for opaque IDs, no invented `User N` fallback, two named awareness
-  states, idempotent identity updates, reconnect re-announcement, and immediate
-  awareness removal on destroy.
+  states, actual topic/nested/generic component plumbing, idempotent identity
+  updates, and the post-authorization reconnect barrier.
 - Boundary: UI acceptance is still open. Run Playwright with two real signed-in
   users and inspect saved PNGs for both names/colors, typing indicators,
   reconnect recovery, and immediate leave cleanup before marking this feature
