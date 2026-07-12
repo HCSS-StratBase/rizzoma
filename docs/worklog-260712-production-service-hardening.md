@@ -63,6 +63,25 @@ sessions or dirty Yjs collaboration state.
   five were corrected. The reviewer reran 27/27 focused tests, typecheck, shell
   syntax and diff checks and issued a final **GO** for commit/CI/canary.
 
+## Immediate database exposure closure
+
+The production audit found Docker publishing CouchDB `5984` and Redis `6379`
+on all interfaces. The Hetzner Robot whitelist's accepted `5432-6543` range
+also covered both ports. External tests confirmed CouchDB HTTP 200 and an
+unauthenticated Redis `PONG`.
+
+A persistent host `DOCKER-USER` rule now drops only TCP `5984,6379` arriving on
+the public interface. Host-local CouchDB/Redis and public app health remained
+green. External retest returned CouchDB HTTP 000 and Redis closed while public
+`/api/health` returned 200. Evidence:
+`screenshots/260712-1203-database-exposure-closure/`.
+
+No Hetzner Robot firewall write occurred. Docker's all-interface publication
+declaration remains configuration debt; the host rule is the active durable
+control until the dependency containers are safely recreated on loopback. The
+one-time systemd installer now applies and persists the same narrow rule
+idempotently so the control is reproducible rather than a one-off shell fix.
+
 ## Boundary
 
 At this checkpoint the code and service design are locally verified but not

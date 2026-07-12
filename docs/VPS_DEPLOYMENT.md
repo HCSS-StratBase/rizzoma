@@ -11,6 +11,15 @@
 > Until merge, HTTPS canary, and atomic nginx cutover are complete, the runtime
 > truth immediately below remains authoritative.
 
+> **Database exposure closed 2026-07-12 12:03 CEST:** Docker still declares
+> CouchDB `5984` and Redis `6379` on all interfaces, and the Hetzner Robot
+> `5432-6543` allow rule includes both. External probes had confirmed CouchDB
+> HTTP 200 and unauthenticated Redis `PONG`. A persistent `DOCKER-USER` rule now
+> drops only those two ports on public interface `enp0s31f6`; external retest is
+> closed while host-local dependencies and public app health remain green.
+> Evidence: `screenshots/260712-1203-database-exposure-closure/`. Loopback-only
+> Docker publication remains the cleaner future recreation target.
+
 > **⚠️ CURRENT RUNTIME TRUTH — the Docker application topology below is
 > historical.** Public nginx now targets Vite `:3100`, which proxies to API
 > `:8100` from `/data/large-projects/stephan/rizzoma_merge` at exact merged

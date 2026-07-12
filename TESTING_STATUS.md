@@ -15,6 +15,10 @@
 - Boundary: these are local code/build gates, not public acceptance. Candidate
   HTTPS browser smokes, a real graceful restart, viewport PNG inspection, and
   public cutover verification remain required.
+- Live security preflight: external CouchDB changed from HTTP 200 to closed
+  (`000`) and Redis from unauthenticated `PONG` to closed after a persistent,
+  port-specific `DOCKER-USER` rule. Host-local dependencies and public app
+  health remained green (HTTP 200).
 
 ## Public production acceptance — 2026-07-12 (public runtime `fe6988fb`)
 

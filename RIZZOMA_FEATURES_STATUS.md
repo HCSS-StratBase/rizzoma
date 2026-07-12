@@ -17,6 +17,9 @@
   3,298-module production build.
 - Boundary: this candidate is not public until merge, HTTPS canary, strict
   collaboration/unread/browser acceptance, and atomic nginx cutover complete.
+- Production dependency exposure was closed immediately: external CouchDB
+  `5984` and Redis `6379` are now dropped at `DOCKER-USER`, while host-local
+  service checks and public app health remain green.
 
 ## Public production checkpoint — 2026-07-12
 

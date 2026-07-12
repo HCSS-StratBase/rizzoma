@@ -3,10 +3,11 @@
 This is the authoritative target production topology for Rizzoma. A compiled
 client and server run together from an immutable release under a systemd
 blue/green lane. Nginx is the only intended public application listener.
-CouchDB and Redis remain the existing Docker services; at the July 12 starting
-checkpoint their host ports were still published on all interfaces, so host
-firewall verification and eventual loopback-only publication remain explicit
-security gates rather than assumed facts.
+CouchDB and Redis remain the existing Docker services. Docker still declares
+their host ports on all interfaces, but a persistent `DOCKER-USER` rule now
+drops public-interface traffic to `5984,6379`; external closure and local
+health were verified on July 12. Eventual loopback-only Docker publication
+remains the cleaner target when those dependency containers are recreated.
 
 The active layout is:
 
@@ -30,7 +31,9 @@ The active layout is:
    source-code fallback. The server signs new cookies with the new secret while
    accepting those existing cookies. Remove the previous value after the
    seven-day maximum session lifetime.
-4. Confirm Redis and CouchDB have the Docker restart policy `unless-stopped`.
+4. The installer sets Redis and CouchDB restart policy `unless-stopped` and
+   idempotently persists the public-interface drop for host ports `5984,6379`.
+   Verify external closure plus host-local dependency health after bootstrap.
 
 The production process refuses to start with the development session secret,
 binds to loopback by default, reports both CouchDB and Redis session readiness,

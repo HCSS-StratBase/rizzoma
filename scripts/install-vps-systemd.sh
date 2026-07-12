@@ -27,6 +27,24 @@ printf 'PORT=8102\n' > /etc/rizzoma/green.env
 chmod 0600 /etc/rizzoma/blue.env /etc/rizzoma/green.env
 
 docker update --restart unless-stopped rizzoma-redis rizzoma-couchdb >/dev/null
+
+# Docker currently publishes CouchDB and Redis on all interfaces. Keep local
+# application access intact while deterministically blocking those ports on
+# the public interface. The rule is idempotent and deliberately narrower than
+# changing the shared Hetzner Robot firewall ruleset.
+public_iface="$(ip route get 1.1.1.1 | awk '{for (i=1; i<=NF; i++) if ($i == "dev") {print $(i+1); exit}}')"
+test -n "$public_iface"
+dependency_rule=(-i "$public_iface" -p tcp -m multiport --dports 5984,6379 -j DROP)
+if ! iptables -C DOCKER-USER "${dependency_rule[@]}" 2>/dev/null; then
+  iptables -I DOCKER-USER 1 "${dependency_rule[@]}"
+fi
+if command -v netfilter-persistent >/dev/null 2>&1; then
+  netfilter-persistent save >/dev/null
+else
+  printf 'netfilter-persistent is required to preserve the database exposure rule\n' >&2
+  exit 1
+fi
+
 systemctl daemon-reload
 
 if [[ ! -f /etc/rizzoma/production.env ]]; then
