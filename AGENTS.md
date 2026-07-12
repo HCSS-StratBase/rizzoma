@@ -76,7 +76,7 @@
   * For every backend or frontend change, cross-check behavior and UI against the legacy sources in `original-rizzoma/` and `original-rizzoma-src/`, and against the current live UI references in `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/` (PNGs + MD notes). Keep the modernized implementation functionally and visually close to the legacy GUI while upgrading “under the hood.”
 
   ## Branch Context Guardrails
-  * Active development branch: `release/preintegration-offline-upload` (2026-07-12; audited application checkpoint `b3cd054f`; undeployed). Public production remains on the earlier parity release until exact-merge acceptance. Always cite branch name + date when summarizing status.
+  * Active development branch: `fix/read-marker-conflict` (2026-07-13; based on deployed master `0553a611`). Public production runs exact PR #71 on managed green `:8102`; the concurrent read-marker hotfix remains private until CI, exact blue-lane deploy, and final public acceptance. Always cite branch name + date when summarizing status.
   * Treat any "Current State" bullets in docs as historical snapshots unless explicitly refreshed for the active branch; update them before quoting.
   * Run `npm run lint:branch-context` after touching status docs; CI/local lint will fail if the branch name is missing from `docs/HANDOFF.md` Current State.
 
@@ -95,7 +95,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `fix/lockfile-driven-production-install` worktree/branch until the deterministic production-install fix merges; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
+    - Continue in the isolated `fix/read-marker-conflict` worktree/branch until the concurrent read-marker fix merges; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -104,10 +104,10 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Publish the lockfile-driven production-install fix, require all CI jobs, and merge only the green tree.
-  2) Install the exact merged helper assets and redeploy that exact master SHA to the inactive managed lane; verify installed versions against the lock plus direct health/assets/journal/ClamAV, then drain old Vite and API with zero writer overlap before switching both vhosts.
-  3) Run public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs.
-  4) Record the exact production result in project docs, global HANDOFF, and existing HCSS Tana node `8mGAbLRiBnne`; refresh the Git bundle after final docs merge.
+  1) Publish the concurrent read-marker hotfix, require all CI jobs, and merge only the green tree.
+  2) Deploy the exact squash merge to inactive managed blue `:8101`; verify exact release/dependency provenance plus direct health/assets/journal/ClamAV, then drain green with zero writer overlap before switching both vhosts.
+  3) Rerun public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs and a zero-5xx journal check.
+  4) Record the exact production result in project docs, global HANDOFF, and HCSS Tana under the correct 2026-07-13 date; refresh the Git bundle after final docs merge.
   5) Keep native rendering disabled; after release, address 500/1,000-blip sweeps, physical iPhone Safari, staging-data separation, synthetic-data cleanup, and dependency/lint debt.
 
   Testing/CI hygiene:

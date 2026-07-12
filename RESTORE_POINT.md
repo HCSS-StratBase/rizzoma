@@ -5,6 +5,22 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-07-13 concurrent read-marker release gate) PR
+  [#71](https://github.com/HCSS-StratBase/rizzoma/pull/71) merged the complete
+  generation-safe collaboration/auth repair as exact master `0553a611`; all
+  seven GitHub checks passed and that exact tree became public on managed green
+  `:8102` through a zero-overlap handover. Resumed two-user acceptance reached
+  the final console gate and exposed one remaining production 500: two
+  simultaneous `POST .../read` requests could update the same CouchDB revision,
+  yielding one 200 and one unhandled 409-as-500. Branch
+  `fix/read-marker-conflict` now uses a deterministic-ID, direct-read,
+  bounded-retry upsert for both single and bulk read markers, preserves legacy
+  random-ID markers, and keeps `readAt` monotonic. Concurrent update and initial
+  insert regressions both pass, as do legacy reuse and non-409 propagation.
+  Exact local gates: **108 test files / 651 passed / 3 skipped / 0 failed**,
+  typecheck, full-source ESLint `--quiet`, `git diff --check`, a **3,315-module**
+  build, and an independent GO audit. CI, exact blue-lane deployment, and the
+  final clean public acceptance rerun remain open.
 - (2026-07-12 REST/Yjs coherence gate) Public production is exact merged
   `04b94622` on managed blue `:8101`; PR #70 removed the synthetic topic-root
   404s and phase 1 passed all 15 checks. Phase 2 then proved role, upload,
