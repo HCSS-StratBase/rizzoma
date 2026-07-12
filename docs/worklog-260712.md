@@ -79,3 +79,11 @@ This section supersedes the deployment boundary above.
 - Measured 395 requests / 0 5xx in the active API log after exactly 2,279 seconds of uptime. This is a short post-cutover sample only, not evidence of sustained reliability.
 - Confirmed the clean release checkout at `3a55155a` differs from running application commit `fe6988fb` only by docs/evidence. The canonical `/mnt/c/Rizzoma` tree remains a separate dirty `feature/native-fractal-port` checkout at `6e988cc` with one tracked modification and 134 untracked entries; it was left untouched.
 - Repository boundary: 3 stale PRs and 7 native-port issues remain open, CI still reports 6,354 warnings, synthetic acceptance topics remain in production, both lanes share CouchDB, and physical iPhone plus 500/1,000-blip full-render coverage remain open.
+
+## Documentation and Tana closeout
+
+- Published the eight-file correction through PR [#62](https://github.com/HCSS-StratBase/rizzoma/pull/62); it merged as `9c4fb68f` after build, browser, health, performance, aggregate, and branch-update checks all passed.
+- Created separate, top-level HCSS output `8mGAbLRiBnne` on the 2026-07-12 daily note with `#Rizzoma modernization`, `#Rizzoma`, human provenance, exact GPT-5.6 Sol / Codex CLI 0.144.1 provenance, six result/boundary bullets, and GitHub artifacts.
+- Renamed and bounded PR #60 discussion `cJolEA2G4Lvb`, cross-linked it to the new output, and clarified that zero 5xx applied to the bounded acceptance run.
+- Marked the 9 July single-active-editor precursor `74Hvd17c3Vfc` complete and added both missing Rizzoma tags so tag searches surface the detailed history.
+- Verified both 12 July entries directly on the HCSS day node, read back fields and tags, and swept the helper-created empty content placeholder while preserving field tuples. Updated the global `HANDOFF.md` to the same final state.

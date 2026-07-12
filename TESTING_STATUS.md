@@ -1,6 +1,6 @@
 # Rizzoma Feature Testing Status
 
-## Public production acceptance — 2026-07-12 (`master` @ `fe6988fb`)
+## Public production acceptance — 2026-07-12 (public runtime `fe6988fb`)
 
 - A read-only runtime audit at 05:58 CEST found **395 requests / 0 5xx** in the current API log after **2,279 seconds** of API uptime. This is a short post-cutover sample only; it is not a soak or long-term reliability result.
 - The public client is **not testing the native renderer**. The live transform exposes parity `1`, native unset, and Vite development mode; the default route therefore exercises the React/TipTap parity path. `NativeWaveView` remains read-only and additionally requires `?render=native` when its flag is enabled.
