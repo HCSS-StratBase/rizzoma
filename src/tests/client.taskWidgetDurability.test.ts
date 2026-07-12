@@ -178,12 +178,13 @@ describe('task widget durable completion', () => {
     editor.destroy();
   });
 
-  it('revokes stale editor toggle authority when a later hydration is denied', async () => {
+  it('revokes stale editor authority on denial and recovers it after reconnect', async () => {
     let byBlipCalls = 0;
+    let accessRestored = false;
     apiMocks.api.mockImplementation(async (path: string, init?: { method?: string }) => {
       if (path === '/api/tasks/by-blip/blip-private') {
         byBlipCalls += 1;
-        if (byBlipCalls === 1) {
+        if (byBlipCalls === 1 || accessRestored) {
           return {
             ok: true,
             status: 200,
@@ -210,6 +211,17 @@ describe('task widget durable completion', () => {
     expect(apiMocks.ensureCsrf).not.toHaveBeenCalled();
     expect(apiMocks.api.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(0);
     expect(taskDone(editor)).toBe(false);
+
+    accessRestored = true;
+    window.dispatchEvent(new Event('online'));
+    await vi.waitFor(() => expect(byBlipCalls).toBe(3));
+    element.querySelector<HTMLElement>('[data-task-widget]')?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, cancelable: true }),
+    );
+    await vi.waitFor(() => {
+      expect(apiMocks.api.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1);
+    });
+    await vi.waitFor(() => expect(taskDone(editor)).toBe(true));
     editor.destroy();
   });
 

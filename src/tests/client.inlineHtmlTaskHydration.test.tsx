@@ -178,12 +178,13 @@ describe('parity view task hydration', () => {
     expect(onUpdate).not.toHaveBeenCalled();
   });
 
-  it('revokes stale toggle authority when the post-failure refresh is denied', async () => {
+  it('revokes stale toggle authority on denial and recovers it after reconnect', async () => {
     let byBlipCalls = 0;
+    let accessRestored = false;
     apiMocks.api.mockImplementation(async (path: string) => {
       if (path === BY_BLIP_PATH) {
         byBlipCalls += 1;
-        if (byBlipCalls === 1) {
+        if (byBlipCalls === 1 || accessRestored) {
           return {
             ok: true,
             status: 200,
@@ -224,6 +225,26 @@ describe('parity view task hydration', () => {
 
     expect(apiMocks.api.mock.calls.filter(([path]) => path === TOGGLE_PATH)).toHaveLength(1);
     expect(apiMocks.ensureCsrf).toHaveBeenCalledTimes(1);
+
+    accessRestored = true;
+    await act(async () => {
+      window.dispatchEvent(new Event('online'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    await vi.waitFor(() => expect(byBlipCalls).toBe(3));
+    await vi.waitFor(() => {
+      expect(container.querySelector<HTMLElement>('[data-task-widget]')?.getAttribute('role')).toBe('button');
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLElement>('[data-task-widget]')!.dispatchEvent(
+        new MouseEvent('click', { bubbles: true, cancelable: true }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    await vi.waitFor(() => {
+      expect(apiMocks.api.mock.calls.filter(([path]) => path === TOGGLE_PATH)).toHaveLength(2);
+    });
   });
 
   it('renders a hydrated public task without interactive button semantics when canToggle is false', async () => {

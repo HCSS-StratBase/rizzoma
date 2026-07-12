@@ -372,6 +372,11 @@ export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
       applyTaskCompletionSnapshot(view, snapshot.completions);
     };
 
+    const revalidateAuthority = () => {
+      if (destroyed || !activeView || !taskIdsKey(activeView)) return;
+      void hydrate(activeView);
+    };
+
     return [
       Suggestion({
         editor: this.editor,
@@ -515,6 +520,8 @@ export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
         view: (view) => {
           activeView = view;
           destroyed = false;
+          window.addEventListener('online', revalidateAuthority);
+          window.addEventListener('rizzoma:access-changed', revalidateAuthority);
           lastTaskIdsKey = taskIdsKey(view);
           lastRefreshRequest = taskWidgetDurabilityKey.getState(view.state)?.refreshRequest || 0;
           // Large topics keep a TipTap editor behind every mounted blip. Only
@@ -542,6 +549,8 @@ export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
             },
             destroy: () => {
               destroyed = true;
+              window.removeEventListener('online', revalidateAuthority);
+              window.removeEventListener('rizzoma:access-changed', revalidateAuthority);
               hydrationGeneration += 1;
               hydrationController?.abort();
               hydrationController = null;

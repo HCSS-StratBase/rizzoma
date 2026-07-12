@@ -461,6 +461,21 @@ export function InlineHtmlRenderer({ taskBlipId, ...renderOptions }: InlineHtmlR
     };
   }, [hydrate, taskBlipId, taskIdsKey]);
 
+  useEffect(() => {
+    if (!taskIdsKey) return;
+    // A transient/offline refresh deliberately revokes stale authority. Give
+    // the same mounted surface a deterministic recovery edge once transport or
+    // the current wave's access policy changes; neither event necessarily
+    // changes the blip HTML or authenticated owner key.
+    const revalidateAuthority = () => hydrate();
+    window.addEventListener('online', revalidateAuthority);
+    window.addEventListener('rizzoma:access-changed', revalidateAuthority);
+    return () => {
+      window.removeEventListener('online', revalidateAuthority);
+      window.removeEventListener('rizzoma:access-changed', revalidateAuthority);
+    };
+  }, [hydrate, taskIdsKey]);
+
   const handleTaskToggle = useCallback((taskId: string) => {
     if (
       !taskId
