@@ -150,9 +150,25 @@ with Node 20.19.0 and npm 10.8.2, `npm prune --omit=dev` removed the intended
 development packages but also rewrote 59 tracked `package-lock.json` lines
 (41 additions and 18 deletions). The helper now passes
 `--package-lock=false` only to the post-build prune. A clean disposable
-worktree confirmed that development tools such as ESLint, TypeScript, Vite,
-and Vitest were removed, the production dependency tree remained valid, and
-the tracked tree stayed byte-clean for immutable validation.
+worktree initially appeared to confirm that development tools were removed and
+the tracked tree stayed byte-clean.
+
+The first private deployment of merged PR #67 exposed why that was still not
+deterministic: npm reported 59 packages added and 287 changed during the prune,
+and direct read-back measured `yjs` **13.6.31 installed versus 13.6.29 in the
+lockfile**. Disabling lockfile writes also made npm ignore the lock during
+reification and resolve current ranged versions. The corrected helper no
+longer prunes. After building, it runs a second `npm ci --omit=dev`, which
+destructively recreates the production-only tree from the reviewed lockfile.
+It then walks the installed package tree and fails on any version absent from
+or different to `package-lock.json`, followed by a full production `npm ls`.
+This makes installed dependency provenance a deployment gate instead of a
+manual post-hoc sample. An independent review then caught that the first gate
+placement covered only newly built releases; existing immutable releases could
+still bypass it because tracked-tree validation ignores `node_modules`. Both
+the version walk and production `npm ls` now run after the new-versus-reused
+branch, before any lane publication. The private candidate was never exposed
+through nginx.
 
 ## ClamAV as a managed readiness dependency
 

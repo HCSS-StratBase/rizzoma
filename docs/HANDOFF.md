@@ -1,14 +1,17 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`release/deploy-helper-final`; application merge
-`bacb8a50`; **not yet deployed**). PR
+Last Updated: 2026-07-12 (`fix/lockfile-driven-production-install`; application
+merge `bacb8a50`; helper merge `599fe025`; **not yet public**). PR
 [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) merged the complete
 sharing/access, authenticated collaboration, offline/auth isolation, private
 upload/ClamAV, OAuth/password-recovery, realtime/export, mention, and durable
-Task stack after all seven GitHub gates passed. The deploy-helper commits are
-rebased on that merge; a measured npm 10 lockfile-mutation blocker is fixed by
-pruning production dependencies with lockfile writes disabled. PR #67 CI,
-managed exact-SHA deployment, and public acceptance remain open.
+Task stack after all seven GitHub gates passed, and PR #67 merged the managed
+helper after six more green checks. Its first private deployment exposed a
+second npm 10 failure mode: disabling lockfile writes during prune installed
+`yjs` 13.6.31 although the lock requires 13.6.29. The current fix replaces
+prune with a second lockfile-driven `npm ci --omit=dev` and rejects any
+installed package version that differs from the lock. A fresh PR/CI/private
+redeploy, zero-overlap cutover, and public acceptance remain open.
 
 **Deployment boundary:** nginx serves Vite `:3100` → API `:8100`; Redis backs API sessions. The public frontend is Vite's **development server**, not a compiled production frontend. The live client has parity rendering enabled and native rendering unset, so production uses the React/TipTap parity path; `NativeWaveView` remains read-only and is not the deployed architecture. The former `:3000`/`:8788` lane remains healthy for immediate rollback via `/root/rizzoma.conf.pre-pr60-20260712-052206`. Both lanes are unmanaged bare processes and share CouchDB.
 
@@ -43,8 +46,8 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active development branch: `release/deploy-helper-final` (2026-07-12), based
-  on merged application commit `bacb8a50`; public production remains on the
+- Active development branch: `fix/lockfile-driven-production-install`
+  (2026-07-12), based on merged helper commit `599fe025`; public production remains on the
   earlier parity release until deploy-helper CI, zero-overlap cutover, and
   public acceptance complete. Always include branch name + date when
   summarizing status.
@@ -81,7 +84,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`release/deploy-helper-final` @ 2026-07-12; application merge `bacb8a50`; public production intentionally unchanged pending managed cutover)
+Current State (`fix/lockfile-driven-production-install` @ 2026-07-12; helper merge `599fe025`; public production intentionally unchanged pending deterministic managed cutover)
 - The full application stack is merged on `master` through PR #66: private/link/public
   sharing, viewer/commenter/editor/owner enforcement, server-session Socket.IO
   identity, live demotion, owner-partitioned offline/Yjs state, ACL-backed
@@ -102,7 +105,7 @@ Current State (`release/deploy-helper-final` @ 2026-07-12; application merge `ba
   across the required desktop widths plus 390 mobile. The Task manifest has
   zero unexpected console errors and every sharing modal remains within its
   viewport.
-- Remaining release gates are operational: update PR #67 to this exact tree,
+- Remaining release gates are operational: publish the production-install fix,
   require green CI, merge it, deploy the exact merged SHA to
   the inactive managed lane, perform a zero-overlap drain/cutover, and complete
   public mail/scanner/restart/collaboration/role/Task/mention/export/responsive

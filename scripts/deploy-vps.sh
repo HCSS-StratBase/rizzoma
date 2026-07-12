@@ -294,11 +294,12 @@ if [[ ! -d "$RELEASE" ]]; then
     npm run build
   test -f dist/client/index.html
   test -f dist/server/server/app.js
-  # npm 10 rewrites package-lock metadata during an omitted-dependency prune,
-  # even though the dependency graph itself is unchanged. The release tree is
-  # deliberately immutable, so prune node_modules without rewriting the
-  # reviewed lockfile; verify_release still fails closed on any tracked drift.
-  CYPRESS_INSTALL_BINARY=0 npm prune --omit=dev --package-lock=false \
+  # Re-materialize production dependencies from the reviewed lockfile. npm 10
+  # either rewrites package-lock metadata during `npm prune --omit=dev`, or,
+  # with lockfile writes disabled, re-resolves ranged packages and silently
+  # drifts installed versions. A second `npm ci` is destructive by design and
+  # leaves an exact production-only tree without either failure mode.
+  CYPRESS_INSTALL_BINARY=0 npm ci --omit=dev \
     --no-audit --no-fund --legacy-peer-deps
   install -d -m 0755 data
   rm -rf data/uploads
@@ -315,6 +316,10 @@ else
   test -f "$RELEASE/dist/client/index.html"
   test -f "$RELEASE/dist/server/server/app.js"
 fi
+# Re-run provenance on every deployment, including an existing immutable
+# release. Tracked-tree validation cannot see ignored node_modules drift.
+node "$RELEASE/scripts/verify-production-dependencies.cjs" "$RELEASE"
+npm --prefix "$RELEASE" ls --omit=dev --all >/dev/null
 if ! verify_release; then
   printf '[deploy-vps] REFUSED: release %s failed immutable-tree validation\n' "$RELEASE" >&2
   on_error 3

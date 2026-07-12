@@ -8,18 +8,19 @@
 > audited local run passed 107/107 test files (588 passed, 3 skipped),
 > typecheck, full-source ESLint `--quiet`, a 3,314-module production build,
 > responsive Playwright, and an independent GO audit. Public production remains
-> on the earlier parity release until deploy-helper PR #67 merges. The required
-> next operation is an immutable exact-master deployment to the
+> on the earlier parity release. PR #67 merged, but its first private candidate
+> revealed npm production dependency drift and was held before cutover. The
+> required next operation is a corrected immutable exact-master deployment to the
 > inactive managed lane, followed by the zero-overlap drain below and full
 > public acceptance. Do not expose a candidate lane while the old process-local
 > Yjs cache can still receive writes.
 
 > **Managed-service candidate (not yet public):** branch
-> `release/deploy-helper-final` replaces the obsolete Docker-era deploy
+> `fix/lockfile-driven-production-install` replaces the obsolete Docker-era deploy
 > helper with immutable exact-SHA releases and systemd blue/green lanes on
 > loopback `:8101`/`:8102`. It also adds graceful Yjs/Socket.IO/Redis shutdown,
 > production session-secret rotation, Redis/ClamAV readiness, fail-closed
-> rollback, and a lockfile-preserving production-dependency prune. The authoritative
+> rollback, and a second lockfile-driven production-only install after build. The authoritative
 > target procedure is the [managed VPS deployment guide](../deploy/systemd/README.md).
 > Until merge, direct preflight, zero-overlap maintenance drain, and atomic
 > both-vhost cutover are complete, the runtime

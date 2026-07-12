@@ -21,8 +21,10 @@
   1280/1366/1440/1600 plus 390 mobile and Share/Invite dialogs at all four
   desktop widths. See the [candidate evidence](screenshots/260712-1928-final-candidate-ui/README.md).
 - All seven PR checks passed on exact source head `b8c9d110`. Public production
-  remains on the earlier parity release until PR #67, managed exact-SHA
-  deployment, and full public acceptance complete.
+  remains on the earlier parity release. PR #67 merged as `599fe025`, but its
+  private candidate was held after an installed-versus-lock dependency drift;
+  the lockfile-driven production reinstall, managed exact-SHA redeploy, and
+  full public acceptance remain mandatory.
 
 ## Offline/auth isolation candidate — 2026-07-12
 
