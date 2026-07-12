@@ -1,6 +1,6 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-12 (`master` target via `codex/production-service-hardening`; base `1241428b`; public runtime code still `fe6988fb`). The in-flight branch adds compiled systemd blue/green lanes, exact-SHA releases, loopback binding, secure session-secret rotation, Redis readiness, and graceful Yjs/Socket.IO shutdown. Local gates passed: typecheck, 62 Vitest files / 292 passed / 3 skipped, and the 3,298-module production build. This is not yet deployed; public nginx remains on Vite `:3100` → API `:8100` until merge, HTTPS canary, browser acceptance, and atomic cutover. Worklog: [production service hardening](worklog-260712-production-service-hardening.md).
+Last refreshed: 2026-07-12 (`master` target via `codex/production-service-hardening`; base `1241428b`; public runtime code still `fe6988fb`). The in-flight branch adds compiled systemd blue/green lanes, exact-SHA releases, loopback binding, strong secret rotation, Redis readiness, dirty-Yjs retention, and ordered HTTP/Socket.IO/Redis shutdown. Local gates passed: typecheck, 63 Vitest files / 299 passed / 3 skipped, and the 3,298-module production build. This is not yet deployed; public nginx remains on Vite `:3100` → API `:8100` until merge, direct preflight, zero-overlap maintenance drain, both-vhost cutover, and public acceptance. Worklog: [production service hardening](worklog-260712-production-service-hardening.md).
 
 Last refreshed (prior): 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — verified Playwright sign-in lands as `sdspieg@gmail.com`. Tasks #140 + #143 closed. Two Hetzner Robot firewall changes needed: opened :80 + consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to cover return traffic from MASQUERADE'd outbound. tcpdump-diagnosed.)
 
@@ -63,9 +63,9 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Merge `codex/production-service-hardening`, install the managed unit and root-only application env, deploy exact SHA to `:8101`, then run HTTPS canary + public acceptance before atomic nginx cutover.
+  1) Merge `codex/production-service-hardening`, install the managed unit/root-only env, and deploy exact SHA to `:8101`; run direct preflight, drain/stop the old lane with zero overlap, switch both vhosts, then run full public acceptance.
   2) Keep native rendering disabled until full tree loading and lossless rich-content round trips pass; only then begin edit/reply/persistence integration.
-  3) Soak PR #60, clean synthetic production topics, separate staging from production CouchDB, then retire `:3000`/`:8788` after the rollback window.
+  3) Clean synthetic production topics, separate staging from production CouchDB, and retire disconnected `:3000`/`:8788` while preserving the exact restart recipe.
   4) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
   5) Repair/refresh BLB snapshots and test real-device iPhone Safari.
   6) Reconcile the dirty canonical checkout and automate bundle/GDrive backup cadence.

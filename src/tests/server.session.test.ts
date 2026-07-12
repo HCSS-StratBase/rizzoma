@@ -83,6 +83,31 @@ describe('session middleware storage', () => {
     process.env['NODE_ENV'] = 'test';
   });
 
+  it.each([
+    'REPLACE_WITH_A_RANDOM_SECRET',
+    'change-me',
+    'short-production-secret',
+  ])('refuses weak or placeholder production secret %s', async secret => {
+    process.env['NODE_ENV'] = 'production';
+    process.env['SESSION_STORE'] = 'memory';
+    process.env['SESSION_SECRET'] = secret;
+    const { sessionMiddleware } = await import('../server/middleware/session');
+
+    expect(() => sessionMiddleware()).toThrow(/at least 32 characters/);
+    process.env['NODE_ENV'] = 'test';
+  });
+
+  it('refuses a weak previous verifier in production', async () => {
+    process.env['NODE_ENV'] = 'production';
+    process.env['SESSION_STORE'] = 'memory';
+    process.env['SESSION_SECRET'] = 'new-production-secret-with-at-least-32-characters';
+    process.env['SESSION_SECRET_PREVIOUS'] = 'dev-secret-change-me';
+    const { sessionMiddleware } = await import('../server/middleware/session');
+
+    expect(() => sessionMiddleware()).toThrow(/SESSION_SECRET_PREVIOUS/);
+    process.env['NODE_ENV'] = 'test';
+  });
+
   it('supports a previous secret during a no-logout rotation', async () => {
     const sharedStore = new session.MemoryStore();
     process.env['SESSION_STORE'] = 'memory';
@@ -90,7 +115,7 @@ describe('session middleware storage', () => {
 
     // Create a real persisted session and cookie with the old signing secret.
     process.env['NODE_ENV'] = 'test';
-    process.env['SESSION_SECRET'] = 'old-production-secret';
+    process.env['SESSION_SECRET'] = 'old-production-secret-with-at-least-32-characters';
     const oldApp = express();
     oldApp.use(sessionMiddleware(sharedStore));
     oldApp.get('/login', (req: any, res) => {
@@ -108,8 +133,8 @@ describe('session middleware storage', () => {
     // Verify that the new primary accepts that exact old cookie through the
     // normal express-session middleware and resolves the same stored identity.
     process.env['NODE_ENV'] = 'production';
-    process.env['SESSION_SECRET'] = 'new-production-secret';
-    process.env['SESSION_SECRET_PREVIOUS'] = 'old-production-secret';
+    process.env['SESSION_SECRET'] = 'new-production-secret-with-at-least-32-characters';
+    process.env['SESSION_SECRET_PREVIOUS'] = 'old-production-secret-with-at-least-32-characters';
     const newApp = express();
     newApp.use(sessionMiddleware(sharedStore));
     newApp.get('/me', (req: any, res) => res.json({ userId: req.session.userId || null }));

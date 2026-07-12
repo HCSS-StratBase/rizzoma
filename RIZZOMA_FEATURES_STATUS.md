@@ -13,10 +13,11 @@
 - Immutable exact-SHA blue/green release assets and systemd automation live in
   `deploy/systemd/` and `scripts/deploy-vps.sh`; candidate deployment cannot
   alter public nginx.
-- Local gates passed: 62 test files, 292 passed, 3 skipped, typecheck, and the
+- Local gates passed: 63 test files, 299 passed, 3 skipped, typecheck, and the
   3,298-module production build.
-- Boundary: this candidate is not public until merge, HTTPS canary, strict
-  collaboration/unread/browser acceptance, and atomic nginx cutover complete.
+- Boundary: this candidate is not public until merge, direct preflight,
+  zero-overlap maintenance drain, both-vhost cutover, and strict public
+  collaboration/unread/browser acceptance complete.
 - Active Redis compromise was contained and eradicated: evidence preserved, 54
   untrusted keys/sessions flushed, container recreated clean, and dual-stack
   public access closed for dependencies and direct Rizzoma internal ports.

@@ -30,6 +30,22 @@ import { createClient, type RedisClientType } from 'redis';
 let cachedRedisClient: RedisClientType | null = null;
 
 const DEVELOPMENT_SESSION_SECRET = 'dev-secret-change-me';
+const MINIMUM_PRODUCTION_SECRET_LENGTH = 32;
+const INSECURE_PRODUCTION_SECRETS = new Set([
+  DEVELOPMENT_SESSION_SECRET,
+  'change-me',
+  'changeme',
+  'replace-with-a-random-secret',
+  'replace_with_a_random_secret',
+]);
+
+function assertProductionSecret(secret: string, label: string): void {
+  const normalized = secret.trim().toLowerCase();
+  if (secret.length < MINIMUM_PRODUCTION_SECRET_LENGTH
+    || INSECURE_PRODUCTION_SECRETS.has(normalized)) {
+    throw new Error(`${label} must be at least ${MINIMUM_PRODUCTION_SECRET_LENGTH} characters and must not be a placeholder in production`);
+  }
+}
 
 function sessionSecrets(): string | string[] {
   const primary = (process.env['SESSION_SECRET'] || '').trim();
@@ -38,8 +54,9 @@ function sessionSecrets(): string | string[] {
     .map(secret => secret.trim())
     .filter(Boolean);
 
-  if (process.env['NODE_ENV'] === 'production' && (!primary || primary === DEVELOPMENT_SESSION_SECRET)) {
-    throw new Error('SESSION_SECRET must be set to a non-development value in production');
+  if (process.env['NODE_ENV'] === 'production') {
+    assertProductionSecret(primary, 'SESSION_SECRET');
+    previous.forEach(secret => assertProductionSecret(secret, 'SESSION_SECRET_PREVIOUS'));
   }
 
   const secrets = [primary || DEVELOPMENT_SESSION_SECRET, ...previous]

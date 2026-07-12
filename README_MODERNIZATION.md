@@ -283,11 +283,12 @@ docker build -t rizzoma:prod --target production .
 
 # Point to your CouchDB (Docker Desktop example)
 docker run -d --name rizzoma-prod \
+  -e HOST=0.0.0.0 \
   -e COUCHDB_URL=http://admin:password@host.docker.internal:5984 \
   -e COUCHDB_DB=project_rizzoma \
   -e REDIS_URL=redis://host.docker.internal:6379 \
-  -e SESSION_SECRET=change-me \
-  -p 8788:8788 rizzoma:prod
+  -e SESSION_SECRET="$(openssl rand -base64 48)" \
+  -p 127.0.0.1:8788:8788 rizzoma:prod
 ```
 
 ### Compose production profile
@@ -295,7 +296,8 @@ docker run -d --name rizzoma-prod \
 Bring up a production-like stack with Docker Compose profiles:
 
 ```bash
-docker compose --profile prod up -d app-prod couchdb redis
+SESSION_SECRET="$(openssl rand -base64 48)" \
+  docker compose --profile prod up -d app-prod couchdb redis
 docker compose ps
 ```
 

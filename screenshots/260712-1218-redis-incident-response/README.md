@@ -49,6 +49,11 @@ Incident discovered and contained on 2026-07-12 between 12:03 and 12:18 CEST.
   has no modules or dangerous-command history, and uses restart policy
   `unless-stopped`.
 - Set CouchDB restart policy to `unless-stopped`.
+- Changed every repository Compose publication to host loopback and made the
+  Docker production profile require an explicit strong session secret.
+- Changed every legacy VPS dotenv copy from world-readable mode `0644` to
+  `0600`, then created a root-owned, mode-`0600`, application-only production
+  environment without SSH or Hetzner credentials.
 - External CouchDB, Redis, legacy API `8000`, active API `8100`, and rollback
   API `8788` now time out, while public HTTPS `/api/health` remains HTTP 200.
 

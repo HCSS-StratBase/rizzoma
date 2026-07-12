@@ -295,6 +295,25 @@ describe('server: YjsDocCache', () => {
     doc.destroy();
   });
 
+  it('never evicts dirty collaborative state during a prolonged CouchDB outage', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-07-12T10:00:00Z'));
+      const doc = new Y.Doc();
+      doc.getText('t').insert(0, 'unsaved during outage');
+      yjsDocCache.applyUpdate('wave:dirty-outage', Y.encodeStateAsUpdate(doc), 'test');
+
+      vi.setSystemTime(new Date('2026-07-12T10:06:00Z'));
+      (yjsDocCache as any).cleanup();
+
+      expect(yjsDocCache.getState('wave:dirty-outage')).not.toBeNull();
+      expect(yjsDocCache.getDirtyCount()).toBe(1);
+      doc.destroy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('destroy cleans up all docs and intervals', () => {
     yjsDocCache.getOrCreate('blip-a');
     yjsDocCache.getOrCreate('blip-b');

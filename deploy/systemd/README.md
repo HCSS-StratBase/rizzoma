@@ -34,6 +34,8 @@ The active layout is:
 4. The installer sets Redis and CouchDB restart policy `unless-stopped` and
    idempotently persists the public-interface drop for host ports `5984,6379`.
    Verify external closure plus host-local dependency health after bootstrap.
+   Each managed start gives cold Redis/CouchDB up to 50 seconds to become
+   healthy, rather than exhausting systemd's restart burst on one-shot probes.
 
 The production process refuses to start with the development session secret,
 binds to loopback by default, reports both CouchDB and Redis session readiness,
@@ -61,40 +63,47 @@ and the native renderer disabled, prunes development packages, starts
 
 The script never changes public nginx.
 
-## HTTPS canary gate
+## Pre-cutover gate
 
-Production cookies are `Secure`, so browser acceptance against plain
-`http://127.0.0.1:8101` is invalid. Back up the dev vhost, temporarily change
-only its Rizzoma `proxy_pass` from `:3100` to the candidate lane, validate with
-`nginx -t`, and reload. Run the full acceptance set through
-`https://dev.138-201-62-161.nip.io`:
+Do not point either HTTPS vhost at the candidate while the old lane can still
+receive writes. Socket.IO rooms and Yjs caches are process-local; even a short
+canary overlap can persist divergent snapshots. Before maintenance, validate
+only the candidate's local health, hashed static assets, journal cleanliness,
+and rejection of an old cookie through direct loopback requests.
 
-1. authenticated identity and session continuity
-2. Google OAuth callback shape
-3. two-browser collaboration/reconnect
-4. strict desktop and mobile Follow-the-Green `2 -> 1 -> 0`
-5. real viewport screenshots at 1280, 1366, 1440, 1600 and mobile widths
-6. zero candidate 5xx responses in `journalctl -u rizzoma@blue`
+## Maintenance drain and atomic cutover
 
-For this incident cutover, an old public `rizzoma.sid` must *not* authenticate
-through the candidate. Acceptance instead proves a fresh login creates a new
-Redis-backed session, survives a managed restart, and returns the same identity
-after that restart.
+Take a brief write-maintenance window and preserve the old nginx/process recipe:
 
-Restore the dev vhost after the canary so the former lane remains externally
-reachable as a rollback reference.
+1. back up both Rizzoma vhosts and record the exact old Vite/API commands, PIDs,
+   checkout SHA, and environment source
+2. stop the old Vite process first, making public writes unavailable and
+   severing every pre-cutover WebSocket
+3. keep the now-isolated old API alive for at least 35 seconds so its legacy
+   30-second Yjs snapshot interval can run
+4. verify zero established connections to the old API and no snapshot errors,
+   then stop the old API
+5. change both public and dev vhosts to `http://127.0.0.1:8101`, run `nginx -t`,
+   and reload nginx; only now may the managed lane receive write traffic
 
-## Atomic public cutover
+Run the complete acceptance set at the public HTTPS URL:
 
-Back up `/etc/nginx/sites-available/rizzoma.conf`, change only its Rizzoma
-`proxy_pass` to `http://127.0.0.1:8101`, run `nginx -t`, and reload nginx. Repeat
-the complete acceptance set at the public URL. Keep the former `:3100/:8100`
-lane running throughout the rollback window.
+1. an old `rizzoma.sid` does not authenticate
+2. a fresh login creates a Redis session, survives a managed restart, and
+   returns the same identity afterward
+3. a unique edit made immediately before that restart persists exactly after a
+   fresh browser reload, proving the signal-time Yjs flush
+4. Google OAuth callback shape passes
+5. two-browser collaboration/reconnect passes
+6. strict desktop and mobile Follow-the-Green moves `2 -> 1 -> 0`
+7. screenshots pass at 1280, 1366, 1440, 1600 and mobile widths
+8. candidate journal has zero 5xx, snapshot, or graceful-shutdown errors
 
-Rollback is the inverse: restore the recorded nginx backup, run `nginx -t`,
-reload, and verify public health, OAuth and an authenticated session. The data
-stores are shared, so rollback does not entail a CouchDB or Redis rollback.
+Rollback is a controlled restart recipe, not a live dual-writer. Drain and stop
+the managed lane first, start the recorded former processes locally, restore
+the nginx backup, run `nginx -t`, reload, and verify public health, OAuth and a
+fresh authenticated session. The data stores are shared, so rollback does not
+entail a CouchDB or Redis rollback.
 
-Do not stop the former API until it has no established connections and its
-graceful-shutdown release is active. Older releases without the shutdown hook
-need a 35-second quiet window for the periodic Yjs snapshot before termination.
+The rollback artifact is the exact prior SHA, environment recipe, process
+commands, and nginx backup. It is deliberately not a second live writer.

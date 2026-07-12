@@ -8,7 +8,8 @@
 > loopback `:8101`/`:8102`. It also adds graceful Yjs/Socket.IO/Redis shutdown,
 > production session-secret rotation, and Redis readiness. The authoritative
 > target procedure is the [managed VPS deployment guide](../deploy/systemd/README.md).
-> Until merge, HTTPS canary, and atomic nginx cutover are complete, the runtime
+> Until merge, direct preflight, zero-overlap maintenance drain, and atomic
+> both-vhost cutover are complete, the runtime
 > truth immediately below remains authoritative.
 
 > **Database exposure closed 2026-07-12 12:03 CEST:** Docker still declares
@@ -44,8 +45,10 @@
 > Both lanes are unmanaged bare Node/Vite processes. They share CouchDB
 > database `project_rizzoma`; only the active lane is Redis-backed for sessions.
 > The `dev.138-201-62-161.nip.io` vhost reaches the same `:3100` lane, which now
-> intentionally uses the public OAuth callback environment. Legacy listeners
-> on `:3001` and `:8000` are unrelated and must not be touched. The old
+> intentionally uses the public OAuth callback environment. The legacy
+> `:3001` Vite / `:8000` API pair was subsequently verified from process CWD
+> and command lines as an obsolete Rizzoma lane; both are now blocked only on
+> the public interface while remaining locally reachable. The old
 > `scripts/deploy-vps.sh` and Docker instructions below do not describe the live
 > deployment and must not be used until the service topology is rebuilt.
 
@@ -68,16 +71,19 @@ seconds of uptime; treat that as a short post-cutover sample, not a soak.
    origins, `FEAT_ALL=1`, `FEAT_RIZZOMA_PARITY_RENDER=1`, and the verified Redis
    URL. Load secrets from the preserved live environment file without printing
    it.
-4. Before exposure, verify direct health, the public Google OAuth callback,
-   Redis readiness, collaboration/reconnect, and strict desktop/mobile
-   Follow-the-Green `2 → 1 → 0`. Inspect medium-resolution PNGs.
-5. Back up `/etc/nginx/sites-available/rizzoma.conf`, change only the one Rizzoma
-   `proxy_pass`, run `nginx -t`, and reload nginx.
-6. Repeat the full acceptance set against the public URL. Keep the former lane
-   running until the rollback window closes.
-7. Roll back atomically by restoring the recorded nginx backup, running
-   `nginx -t`, reloading nginx, and verifying public health. Do not modify either
-   checkout during rollback.
+4. Before exposure, verify only direct candidate health, Redis readiness,
+   compiled assets, old-cookie rejection, and journal cleanliness. Never point
+   dev at the candidate while the old lane can still receive writes.
+5. Start a brief maintenance drain: back up both vhosts and the exact old
+   process recipe, stop old Vite to sever WebSockets, leave the isolated old API
+   up for at least 35 seconds, verify zero connections/no snapshot errors, then
+   stop it.
+6. Point both public and dev vhosts at the managed lane, validate nginx, reload,
+   and only then run full HTTPS acceptance: fresh login/restart continuity,
+   immediate-pre-restart edit persistence, OAuth, two-browser collaboration,
+   Follow-the-Green `2 → 1 → 0`, and inspected viewport PNGs.
+7. Never keep both lanes write-capable. Rollback means draining/stopping the
+   managed lane before restarting the exact former recipe and restoring nginx.
 
 ## Historical Docker-era server details (do not use for current deployment)
 

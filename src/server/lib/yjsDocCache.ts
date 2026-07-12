@@ -8,6 +8,7 @@ class YjsDocCache {
   private persistInterval: ReturnType<typeof setInterval> | null = null;
   private persistPromise: Promise<PersistResult> | null = null;
   private readonly TTL_MS = 5 * 60 * 1000; // 5 min idle cleanup
+  private readonly PERSIST_REQUEST_TIMEOUT_MS = 3_000;
 
   start() {
     if (this.cleanupInterval || this.persistInterval) return;
@@ -98,20 +99,32 @@ class YjsDocCache {
 
   private async persistDirtyPass(): Promise<PersistResult> {
     const result: PersistResult = { persisted: 0, failed: [] };
-    for (const blipId of Array.from(this.dirty)) {
+    // Persist independent blips concurrently. With a dedicated three-second
+    // timeout per Couch request, one pass is bounded to roughly one find plus
+    // one write instead of N serial request pairs during shutdown.
+    await Promise.all(Array.from(this.dirty).map(async blipId => {
       const entry = this.docs.get(blipId);
-      if (!entry) { this.dirty.delete(blipId); continue; }
+      if (!entry) { this.dirty.delete(blipId); return; }
       const versionAtStart = entry.version;
       try {
         const state = Y.encodeStateAsUpdate(entry.doc);
         const snapshotB64 = Buffer.from(state).toString('base64');
         const waveId = blipId.includes(':') ? blipId.split(':')[0] : blipId;
         // Try to find existing snapshot doc
-        const existing = await findOne({ type: 'yjs_snapshot', blipId });
+        const existing = await findOne(
+          { type: 'yjs_snapshot', blipId },
+          this.PERSIST_REQUEST_TIMEOUT_MS,
+        );
         if (existing) {
-          await updateDoc({ ...existing, snapshotB64, updatedAt: Date.now() });
+          await updateDoc(
+            { ...existing, snapshotB64, updatedAt: Date.now() },
+            this.PERSIST_REQUEST_TIMEOUT_MS,
+          );
         } else {
-          await insertDoc({ type: 'yjs_snapshot', waveId, blipId, snapshotB64, updatedAt: Date.now() });
+          await insertDoc(
+            { type: 'yjs_snapshot', waveId, blipId, snapshotB64, updatedAt: Date.now() },
+            this.PERSIST_REQUEST_TIMEOUT_MS,
+          );
         }
         // An update may arrive while the CouchDB write is in flight. Clear the
         // dirty bit only when the exact version we serialized is still current.
@@ -122,7 +135,7 @@ class YjsDocCache {
         console.error(`[yjsDocCache] persistDirty(${blipId}):`, err);
         result.failed.push(blipId);
       }
-    }
+    }));
     return result;
   }
 
@@ -153,10 +166,14 @@ class YjsDocCache {
   private cleanup() {
     const now = Date.now();
     for (const [blipId, entry] of this.docs) {
-      if (entry.refCount <= 0 && now - entry.lastAccess > this.TTL_MS) {
+      // Never evict a document whose last successful CouchDB snapshot lags
+      // behind its in-memory state. During a prolonged Couch outage the cache
+      // may grow, but discarding unsaved collaboration would be irreversible.
+      if (entry.refCount <= 0
+        && !this.dirty.has(blipId)
+        && now - entry.lastAccess > this.TTL_MS) {
         entry.doc.destroy();
         this.docs.delete(blipId);
-        this.dirty.delete(blipId);
       }
     }
   }

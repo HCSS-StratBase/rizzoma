@@ -5,13 +5,18 @@
 - Branch `codex/production-service-hardening` adds production loopback binding,
   non-development session-secret enforcement with previous-secret rotation,
   Redis session readiness, and graceful Socket.IO/Redis/Yjs shutdown.
-- Focused readiness/session/Yjs suite: **27/27 passed**.
-- Full Vitest: **62 files / 292 passed / 3 skipped / 0 failed**.
+- Focused shutdown/readiness/session/Yjs suite: **31/31 passed**.
+- Full Vitest: **63 files / 299 passed / 3 skipped / 0 failed**.
 - Typecheck passed; the production build passed with **3,298 transformed
   modules**.
 - The failure-path test forces CouchDB persistence to fail three times and
   verifies shutdown rejects with one dirty document instead of silently
   discarding it.
+- Additional regressions prove dirty state survives TTL cleanup, HTTP and Yjs
+  drain before Redis closes, and weak primary/previous secrets fail closed.
+- Docker-enabled VPS `docker compose config --quiet` passed with
+  `SESSION_SECRET` unset and the inactive production profile; selecting that
+  profile without a strong secret still fails closed in the server validator.
 - Boundary: these are local code/build gates, not public acceptance. Candidate
   HTTPS browser smokes, a real graceful restart, viewport PNG inspection, and
   public cutover verification remain required.

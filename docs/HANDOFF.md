@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`master` target via `codex/production-service-hardening`; base `1241428b`; public runtime code `fe6988fb`). Production-service hardening is implemented and locally green but not yet deployed: explicit loopback binding, rotating non-development session secrets, Redis readiness, graceful Socket.IO/Redis/Yjs shutdown, immutable exact-SHA releases, and systemd blue/green lanes. Local verification measured **62 files / 292 passed / 3 skipped**, a **3,298-module** production build, and typecheck success. Public traffic still targets Vite `:3100` → API `:8100` until the branch merges and completes the HTTPS canary plus public browser gates. See the [production service hardening worklog](worklog-260712-production-service-hardening.md).
+Last Updated: 2026-07-12 (`master` target via `codex/production-service-hardening`; base `1241428b`; public runtime code `fe6988fb`). Production-service hardening is implemented and locally green but not yet deployed: explicit loopback binding, strong rotating session secrets, Redis readiness, bounded dirty-Yjs retention, ordered HTTP/Socket.IO/Redis shutdown, immutable exact-SHA releases, and systemd blue/green lanes. Local verification measured **63 files / 299 passed / 3 skipped**, a **3,298-module** production build, and typecheck success. Public traffic still targets Vite `:3100` → API `:8100` until merge, direct candidate preflight, a zero-overlap maintenance drain, both-vhost cutover, and public browser acceptance. See the [production service hardening worklog](worklog-260712-production-service-hardening.md).
 
 **Deployment boundary:** nginx serves Vite `:3100` → API `:8100`; Redis backs API sessions. The public frontend is Vite's **development server**, not a compiled production frontend. The live client has parity rendering enabled and native rendering unset, so production uses the React/TipTap parity path; `NativeWaveView` remains read-only and is not the deployed architecture. The former `:3000`/`:8788` lane remains healthy for immediate rollback via `/root/rizzoma.conf.pre-pr60-20260712-052206`. Both lanes are unmanaged bare processes and share CouchDB.
 
@@ -186,9 +186,9 @@ Current State (`master` target via `codex/production-service-hardening` @ 2026-0
 - Dependency upgrades: audit captured in `docs/DEPENDENCY_UPGRADE_AUDIT.md`; minor/patch batch applied (Playwright/Vitest/Prettier, AWS SDK, session/email libs). Major editor/tooling/server upgrades remain deferred.
 
 Current Next Work
-1. Merge and deploy the managed production-service branch, run the HTTPS canary and public Playwright gates, then cut nginx atomically while retaining `:3100`/`:8100` for rollback.
+1. Merge and deploy the managed production-service branch, run direct candidate preflight, fully drain/stop `:3100`/`:8100`, cut both vhosts atomically, then run public Playwright acceptance. Retain the exact rollback recipe and artifacts, not a live old writer.
 2. Keep the native renderer disabled. Its runtime is read-only, omits ordinary reply trees, and drops rich content; begin with read-complete tree loading and lossless semantic round trips before any native editing work.
-3. Soak PR #60, measure longer-window errors/latency, clean synthetic production topics, then retire `:3000`/`:8788` after the rollback window closes.
+3. Measure longer-window errors/latency, clean synthetic production topics, and retire the disconnected `:3000`/`:8788` legacy processes while preserving their exact restart recipe.
 4. Separate staging data from production CouchDB before further destructive acceptance testing.
 5. Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
 6. Repair/refresh BLB snapshots and test real-device iPhone Safari.

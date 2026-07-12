@@ -17,6 +17,7 @@ import http from 'http';
 import { closeSocket, initSocket } from './lib/socket.js';
 import { yjsDocCache } from './lib/yjsDocCache.js';
 import { closeSessionStore } from './middleware/session.js';
+import { drainAndFlushForShutdown } from './lib/gracefulShutdown.js';
 import commentsRouter from './routes/comments.js';
 import wavesRouter from './routes/waves.js';
 import editorRouter from './routes/editor.js';
@@ -165,10 +166,12 @@ async function shutdown(signal: NodeJS.Signals) {
     const httpClosed = new Promise<void>((resolve, reject) => {
       server.close(error => error ? reject(error) : resolve());
     });
-    await closeSocket();
-    await yjsDocCache.shutdown();
-    await closeSessionStore();
-    await httpClosed;
+    await drainAndFlushForShutdown({
+      closeSocket,
+      httpClosed,
+      flushCollaborativeState: () => yjsDocCache.shutdown(),
+      closeSessionStore,
+    });
     clearTimeout(forceExit);
     // eslint-disable-next-line no-console
     console.log('[server] graceful shutdown complete');
