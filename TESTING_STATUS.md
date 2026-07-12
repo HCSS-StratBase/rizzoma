@@ -89,6 +89,7 @@
 - Read-only production inventory measured **0 files / 0 bytes** in every known legacy, active, managed-release, and persistent upload directory, so this URL/metadata transition has no legacy attachment migration.
 - Boundary: this upload slice still requires PR #66's centralized access resolver. In this isolated preintegration branch, the offline/auth-isolation service worker already makes `/api/*`, `/socket.io/*`, and `/uploads/*` network-only and purges legacy caches, but the combined sharing dependency is not present yet. Do not deploy until that dependency is integrated and the full combined gate passes.
 - Scanner/cancellation/active-content hardening follow-up passed **24/24** focused tests across `routes.uploads.edgecases`, `server.virusScan`, and `client.uploadCancellation`, followed by a green full TypeScript typecheck. Production rejects missing, empty, malformed, and unavailable ClamAV verdicts; cancellation while CSRF setup is pending does not open or send XHR; and SVG plus disguised HTML/JavaScript filenames are rejected while private storage suffixes no longer follow untrusted filenames.
+- Scanner readiness follow-up passed **30/30** across the same suites plus `server.health`: clamd must answer a bounded `PING` before production `/api/health` reports green. Typecheck and `git diff --check` passed afterward.
 
 ## Public production acceptance — 2026-07-12 (public runtime `fe6988fb`)
 

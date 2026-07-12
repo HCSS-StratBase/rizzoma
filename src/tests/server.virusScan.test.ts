@@ -75,4 +75,20 @@ describe('ClamAV streaming verdicts', () => {
     const { scanBuffer, VirusScanUnavailableError } = await import('../server/lib/virusScan');
     await expect(scanBuffer(Buffer.from('unknown'))).rejects.toBeInstanceOf(VirusScanUnavailableError);
   });
+
+  it('reports ready only after an explicit ClamAV PONG', async () => {
+    scannerResponse('PONG\0');
+    const { virusScannerHealth } = await import('../server/lib/virusScan');
+    await expect(virusScannerHealth()).resolves.toMatchObject({ status: 'ok' });
+  });
+
+  it('reports production readiness failure when ClamAV is not configured', async () => {
+    delete process.env['CLAMAV_HOST'];
+    process.env['NODE_ENV'] = 'production';
+    const { virusScannerHealth } = await import('../server/lib/virusScan');
+    await expect(virusScannerHealth()).resolves.toMatchObject({
+      status: 'error',
+      error: 'Virus scanner is not configured',
+    });
+  });
 });

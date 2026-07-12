@@ -37,6 +37,7 @@ Attachments use the same effective topic role as their containing blip:
 - `GET /uploads/:id` loads metadata and resolves current read access on every request. Logout, participant removal, or making the topic private therefore revokes a previously known URL without changing the HTML.
 - Authorized responses are streamed with `Cache-Control: private, no-store`, `Pragma: no-cache`, `X-Content-Type-Options: nosniff`, and attachment disposition for non-raster content. The upload directory is not mounted with `express.static`.
 - Upload mutation requires CSRF. In production, malware scanning is mandatory and only an explicit ClamAV `OK` verdict is accepted; a missing scanner, timeout, connection failure, empty reply, malformed reply, or malware verdict fails closed before bytes are written.
+- `/api/health` treats the production scanner as a readiness dependency and requires an explicit clamd `PONG`; a candidate cannot report green while every upload would fail closed.
 - Active same-origin document formats are not accepted as uploads: SVG and HTML/JavaScript/XML-style filenames are rejected, safe raster formats are signature/MIME bounded, and the private storage suffix is derived from the admitted type rather than the original filename. Non-raster responses remain forced downloads with `nosniff`.
 - S3/MinIO fails closed with `upload_storage_acl_unavailable`. Public object URLs and pre-signed URLs are not accepted because they remain usable after a role is revoked; object storage may return only after its bytes are proxied through the same per-request ACL.
 

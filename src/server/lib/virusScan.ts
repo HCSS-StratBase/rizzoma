@@ -4,6 +4,12 @@ const CLAM_HOST = process.env['CLAMAV_HOST'];
 const CLAM_PORT = Number(process.env['CLAMAV_PORT'] || 3310);
 const MAX_CHUNK = 64 * 1024;
 
+export type VirusScannerHealth = {
+  status: 'ok' | 'error';
+  ms: number;
+  error?: string;
+};
+
 export class VirusDetectedError extends Error {
   constructor(message = 'Virus detected') {
     super(message);
@@ -15,6 +21,49 @@ export class VirusScanUnavailableError extends Error {
   constructor(message = 'Virus scanner unavailable') {
     super(message);
     this.name = 'VirusScanUnavailableError';
+  }
+}
+
+/** Readiness probe for the production upload security dependency. */
+export async function virusScannerHealth(timeoutMs = 2_000): Promise<VirusScannerHealth> {
+  const startedAt = Date.now();
+  if (!CLAM_HOST) {
+    return process.env['NODE_ENV'] === 'production'
+      ? { status: 'error', ms: Date.now() - startedAt, error: 'Virus scanner is not configured' }
+      : { status: 'ok', ms: Date.now() - startedAt };
+  }
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const finish = (error?: Error) => {
+        if (settled) return;
+        settled = true;
+        socket.destroy();
+        if (error) reject(error);
+        else resolve();
+      };
+      const socket = net.createConnection({ host: CLAM_HOST, port: CLAM_PORT }, () => {
+        socket.write('zPING\0');
+      });
+      let response = '';
+      socket.setTimeout(timeoutMs, () => finish(new Error('Virus scanner PING timed out')));
+      socket.on('data', (data) => {
+        response += data.toString();
+        if (response.replace(/\0/g, '').trim().toUpperCase() === 'PONG') finish();
+      });
+      socket.on('error', (error) => finish(error));
+      socket.on('close', () => {
+        if (!settled) finish(new Error(response.trim() || 'Virus scanner returned no PING verdict'));
+      });
+    });
+    return { status: 'ok', ms: Date.now() - startedAt };
+  } catch (error: any) {
+    return {
+      status: 'error',
+      ms: Date.now() - startedAt,
+      error: error?.message || 'Virus scanner is unreachable',
+    };
   }
 }
 
