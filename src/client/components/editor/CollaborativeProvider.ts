@@ -6,6 +6,11 @@ import {
   encodeAwarenessUpdate,
   removeAwarenessStates,
 } from 'y-protocols/awareness';
+import {
+  anonymousCollaborationUser,
+  type CollaborationUser,
+  isCollaborationUser,
+} from './collaborationIdentity';
 
 export class SocketIOProvider {
   doc: Y.Doc;
@@ -26,14 +31,19 @@ export class SocketIOProvider {
   private localAwarenessHandler: ((change: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => void) | null = null;
   private remoteAwarenessHandler: ((data: { update?: number[]; states?: Record<string, unknown> }) => void) | null = null;
 
-  constructor(doc: Y.Doc, socket: Socket, blipId: string) {
+  constructor(
+    doc: Y.Doc,
+    socket: Socket,
+    blipId: string,
+    user: CollaborationUser | null = null,
+  ) {
     this.doc = doc;
     this.socket = socket;
     this.blipId = blipId;
     this.awareness = new Awareness(doc);
 
     this.setupListeners();
-    this.setupAwareness();
+    this.setupAwareness(user);
     this.setupReconnect();
     // Only join immediately if socket is already connected;
     // setupReconnect() handles joining on (re)connect events.
@@ -79,7 +89,7 @@ export class SocketIOProvider {
     this.socket.on(`blip:sync:${this.blipId}`, this.syncHandler);
   }
 
-  private setupAwareness() {
+  private setupAwareness(initialUser: CollaborationUser | null) {
     // Use the y-protocols wire format, including its per-client clocks. The
     // previous implementation mutated awareness.getStates() directly and
     // manually emitted `change`; yCursorPlugin reacted by publishing another
@@ -101,14 +111,10 @@ export class SocketIOProvider {
 
     // Set initial user state after the listener is attached so peers receive
     // a valid clocked awareness update even before the editor gains focus.
-    const userColors = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4'];
-    const userId = this.doc.clientID.toString();
-
-    this.awareness.setLocalStateField('user', {
-      id: userId,
-      name: `User ${userId.slice(-4)}`,
-      color: userColors[parseInt(userId) % userColors.length]
-    });
+    this.awareness.setLocalStateField(
+      'user',
+      initialUser ?? anonymousCollaborationUser(this.doc.clientID),
+    );
 
     // Receive awareness updates from remote clients
     this.remoteAwarenessHandler = (data) => {
@@ -143,6 +149,10 @@ export class SocketIOProvider {
   private setupReconnect() {
     this.reconnectHandler = () => {
       this.joinRoom();
+      // Socket.IO rooms are rebuilt after reconnect. Re-announce the current
+      // authenticated awareness identity after joining so existing peers do
+      // not wait for a cursor movement before the named collaborator returns.
+      this.reannounceLocalAwarenessState();
       // Send state vector so server returns only missing updates
       const sv = Y.encodeStateVector(this.doc);
       this.socket.emit('blip:sync:request', {
@@ -159,8 +169,33 @@ export class SocketIOProvider {
     });
   }
 
-  setUser(user: { id: string; name: string; color: string }) {
+  getUser(): CollaborationUser {
+    const current = this.awareness.getLocalState()?.['user'];
+    return isCollaborationUser(current)
+      ? current
+      : anonymousCollaborationUser(this.doc.clientID);
+  }
+
+  setUser(user: CollaborationUser) {
+    const current = this.awareness.getLocalState()?.['user'];
+    if (
+      isCollaborationUser(current)
+      && current.id === user.id
+      && current.name === user.name
+      && current.color === user.color
+    ) {
+      return;
+    }
     this.awareness.setLocalStateField('user', user);
+  }
+
+  private reannounceLocalAwarenessState() {
+    const state = this.awareness.getLocalState();
+    if (!state) return;
+    // setLocalState advances the awareness clock before the normal local
+    // update handler serializes the state. Re-sending an old clock directly
+    // would be ignored by a peer that already timed this client out.
+    this.awareness.setLocalState(state);
   }
 
   destroy() {

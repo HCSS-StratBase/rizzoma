@@ -1,4 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import * as Y from 'yjs';
+import { Awareness } from 'y-protocols/awareness';
+import { collaborationUserFromAuth } from '../client/components/editor/collaborationIdentity';
 
 describe('client: TipTap editor integration', () => {
   // Warm the EditorConfig module once up-front with a generous timeout.
@@ -56,6 +59,29 @@ describe('client: TipTap editor integration', () => {
     expect(names).toContain('tag');
     expect(names).toContain('taskWidget');
     expect(names).toContain('mention');
+  });
+
+  it('configures collaborative cursors with the authenticated provider identity', () => {
+    const doc = new Y.Doc();
+    const awareness = new Awareness(doc);
+    const alice = collaborationUserFromAuth({
+      id: 'alice-auth-id',
+      email: 'alice@example.com',
+      name: 'Alice Example',
+    });
+    awareness.setLocalStateField('user', alice);
+
+    const extensions = editorConfigModule.getEditorExtensions(doc, { awareness }, {
+      blipId: 'identity-blip',
+    });
+    const cursorExtension = extensions.find((extension: any) => extension.name === 'collaborativeCursor');
+
+    expect(cursorExtension).toBeDefined();
+    expect(cursorExtension.options.user).toEqual(alice);
+    expect(cursorExtension.options.user.name).not.toMatch(/^User \d+$/);
+
+    awareness.destroy();
+    doc.destroy();
   });
 
   it('TipTap editor resolves tag and taskWidget extensions', { timeout: 60000 }, async () => {

@@ -24,6 +24,8 @@ import { NativeWaveView } from './native/NativeWaveView';
 import { ActiveBlipProvider, EditSurfaceActiveBridge } from './blip/ActiveBlipContext';
 import { parseHtmlToContentArray } from '@client/native/parser';
 import type { ContentArray } from '@client/native/types';
+import { useAuth } from '../hooks/useAuth';
+import { collaborationUserFromAuth } from './editor/collaborationIdentity';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -177,6 +179,11 @@ function formatDate(timestamp: number): string {
 }
 
 export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unreadState }: { id: string; blipPath?: string | null; isAuthed?: boolean; unreadState?: WaveUnreadState | null }) {
+  const { user: authUser } = useAuth();
+  const collaborationUser = useMemo(
+    () => authUser ? collaborationUserFromAuth(authUser) : null,
+    [authUser]
+  );
   const perfRenderMode = getPerfRenderMode();
   const isPerfLite = perfRenderMode === 'lite';
   const [topic, setTopic] = useState<TopicFull | null>(null);
@@ -234,7 +241,12 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     () => topicCollabEnabled ? yjsDocManager.getDocument(id) : undefined,
     [id, topicCollabEnabled]
   );
-  const topicCollabProvider = useCollaboration(topicYdoc, id, topicCollabEnabled);
+  const topicCollabProvider = useCollaboration(
+    topicYdoc,
+    id,
+    topicCollabEnabled,
+    collaborationUser,
+  );
   const topicCollabActive = topicCollabEnabled && !!topicYdoc && !!topicCollabProvider;
   const seedingTopicYdocRef = useRef(false);
 
