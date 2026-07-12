@@ -4,12 +4,14 @@ import { createHash, randomBytes } from 'node:crypto';
 // Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable
 import { hash as bcryptHash, compare as bcryptCompare } from '../lib/bcrypt.js';
 import rateLimit from 'express-rate-limit';
-import { findOne, insertDoc, getDoc, updateDoc } from '../lib/couch.js';
-import { getCsrfTokenFromSession } from '../middleware/csrf.js';
+import { find, findOne, insertDoc, getDoc, updateDoc } from '../lib/couch.js';
+import { csrfProtect, getCsrfTokenFromSession } from '../middleware/csrf.js';
 import { noStore } from '../middleware/noStore.js';
 import { isSamlEnabled, getSamlInstance, extractUserFromProfile, generateMetadata } from '../lib/saml.js';
 import { logAuthEvent } from '../lib/logger.js';
 import { issueTicket, redeemTicket } from '../lib/authTickets.js';
+import { disconnectSessionSockets } from '../lib/socket.js';
+import { hashInviteToken, invitationTokenDocId } from '../lib/invitations.js';
 // import { config } from '../config.js';
 
 // Mobile OAuth handoff: Android's WebView has a Chromium bug where
@@ -22,27 +24,18 @@ import { issueTicket, redeemTicket } from '../lib/authTickets.js';
 //
 // Custom Tabs run in Chrome's cookie jar, not the WebView's, so we
 // can't set a session cookie during the callback. Instead:
-//   1. Before opening Custom Tabs, the app generates a random nonce.
-//   2. The app opens /api/auth/google?mobile=1&nonce=<nonce> in tabs.
-//   3. Backend sets state = mobile_<nonce> on the Google redirect.
-//   4. Google → callback with state.
-//   5. Backend issues an auth ticket keyed BY THE NONCE and renders
-//      a tiny HTML page that closes the tab (window.close()).
-//   6. Chrome Custom Tabs closes, Capacitor's browserFinished event
-//      fires, and the app POSTs the nonce to /api/auth/redeem-ticket
-//      through the WebView's own cookie jar — session cookie lands
-//      in the right place and /api/auth/me returns the user.
-const MOBILE_STATE_PREFIX = 'mobile_';
-const isMobileState = (state: string | undefined | null): boolean =>
-  typeof state === 'string' && state.startsWith(MOBILE_STATE_PREFIX);
-const makeMobileState = (): string => MOBILE_STATE_PREFIX + randomBytes(16).toString('base64url');
-const extractNonceFromState = (state: string): string => state.slice(MOBILE_STATE_PREFIX.length);
-
-/** HTML page shown in Chrome Custom Tabs after a successful mobile
- *  OAuth callback. Auto-closes the tab which fires browserFinished
- *  in the Capacitor app; we include a visible fallback in case the
- *  user's browser blocks window.close on same-origin navigations. */
-const OAUTH_DONE_PAGE = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Signed in</title><style>body{font-family:-apple-system,Roboto,sans-serif;background:#2c3e50;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;text-align:center}h1{margin:0 0 12px;font-size:22px}p{margin:0;opacity:.85}</style></head><body><div><h1>Signed in to Rizzoma</h1><p>You can close this tab and return to the app.</p></div><script>setTimeout(function(){try{window.close()}catch(e){}},400);</script></body></html>`;
+//   1. The app opens /api/auth/google?mobile=1 in Custom Tabs.
+//   2. Backend stores a random, single-use OAuth transaction in the Chrome
+//      session; only its random state crosses the provider.
+//   3. Provider → callback validates and consumes state once.
+//   4. Backend issues a fresh server-random auth ticket and redirects it only
+//      through the rizzoma://auth-callback deep-link channel.
+//   5. The app POSTs that ticket once to /api/auth/redeem-ticket through the
+//      WebView cookie jar, so the session lands in the right place.
+/** Return the server-random one-time ticket only through the native deep-link
+ * channel; no caller-controlled value is ever promoted into a credential. */
+const nativeTicketUrl = (ticket: string): string =>
+  `rizzoma://auth-callback?ticket=${encodeURIComponent(ticket)}`;
 
 // Use minimal bcrypt rounds in dev/test for speed; 10 in production
 // 4 rounds is still slow with bcryptjs fallback, so use 2 rounds for even faster dev/test auth
@@ -54,33 +47,172 @@ const router = Router();
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 const loginLimiter = rateLimit({ windowMs: 10 * 60 * 1000, max: 30 });
 
-const RegisterBody = z.object({ email: z.string().email(), password: z.string().min(6).max(200) });
-const LoginBody = RegisterBody;
+const RegisterBody = z.object({
+  email: z.string().email(),
+  password: z.string().min(12).max(200),
+  ownerRecoveryToken: z.string().min(32).optional(),
+  inviteToken: z.string().min(32).optional(),
+});
+// Keep legacy password login compatible while requiring stronger passwords
+// for every new invite/recovery credential.
+const LoginBody = z.object({
+  email: z.string().email(),
+  password: z.string().min(6).max(200),
+});
 
 type User = {
   _id?: string;
   type: 'user';
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
   createdAt: number;
   updatedAt: number;
   name?: string;
   avatar?: string;  // Profile picture URL from OAuth provider
+  emailVerifiedAt?: number;
+  emailVerificationProvider?: 'google' | 'facebook' | 'microsoft' | 'twitter' | 'saml' | 'invitation';
 };
 
-router.post('/register', authLimiter, async (req, res): Promise<void> => {
+type SessionIdentity = { id?: string; email: string; name?: string; avatar?: string };
+
+async function establishAuthenticatedSession(req: any, res: any, identity: SessionIdentity): Promise<void> {
+  const previous = req.session;
+  if (previous && typeof previous.regenerate === 'function') {
+    await new Promise<void>((resolve, reject) => previous.regenerate((error?: unknown) => error ? reject(error) : resolve()));
+  } else if (previous) {
+    // Test/minimal-session fallback: discard pre-auth state while retaining
+    // only store methods required by the harness.
+    for (const key of Object.keys(previous)) {
+      if (!['destroy', 'regenerate', 'reload', 'save', 'touch', 'cookie'].includes(key)) delete previous[key];
+    }
+  }
+  req.session.userId = identity.id;
+  req.session.userEmail = identity.email;
+  req.session.userName = identity.name;
+  req.session.userAvatar = identity.avatar;
+  // Session regeneration intentionally invalidates every pre-auth session
+  // value, including the old CSRF secret. Mint and return a fresh pair now so
+  // the first authenticated mutation works without relying on a page reload.
+  req.session.csrfToken = randomBytes(16).toString('hex');
+  if (typeof req.session.save === 'function') {
+    await new Promise<void>((resolve, reject) => req.session.save((error?: unknown) => error ? reject(error) : resolve()));
+  }
+  res.cookie('XSRF-TOKEN', req.session.csrfToken, {
+    httpOnly: false,
+    sameSite: 'lax',
+    secure: process.env['NODE_ENV'] === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+}
+
+async function hasValidInvitationClaim(token: string | undefined, email: string): Promise<boolean> {
+  if (!token) return false;
+  const tokenHash = hashInviteToken(token);
+  const tokenDoc = await getDoc<any>(invitationTokenDocId(tokenHash)).catch(() => null);
+  if (tokenDoc) {
+    return tokenDoc.type === 'invitation_token'
+      && ['sent', 'pending_delivery'].includes(String(tokenDoc.status || ''))
+      && Number(tokenDoc.expiresAt || 0) > Date.now()
+      && String(tokenDoc.email || '').trim().toLowerCase() === email;
+  }
+  const legacy = await find<any>({ type: 'participant', inviteTokenHash: tokenHash }, { limit: 2 })
+    .catch(() => ({ docs: [] as any[] }));
+  return (legacy.docs || []).some((participant: any) => (
+    participant.status === 'pending'
+    && Number(participant.inviteExpiresAt || 0) > Date.now()
+    && String(participant.email || '').trim().toLowerCase() === email
+  ));
+}
+
+router.post('/register', authLimiter, csrfProtect(), async (req, res): Promise<void> => {
   try {
-    const { email, password } = RegisterBody.parse(req.body ?? {});
+    const { email, password, ownerRecoveryToken, inviteToken } = RegisterBody.parse(req.body ?? {});
     const normalized = email.trim().toLowerCase();
     const existing = await findOne<User>({ type: 'user', email: normalized });
-    if (existing) { res.status(409).json({ error: 'email_in_use', requestId: (req as any)?.id }); return; }
+    const invitationVerified = await hasValidInvitationClaim(inviteToken, normalized);
+    // Never let an unauthenticated password signup claim a credential-less
+    // invite/owner placeholder merely by knowing its email address. Existing
+    // placeholders require a one-time invite/owner-recovery token or a
+    // provider-verified OAuth login.
+    let recoveryDoc: any = null;
+    if (existing && ownerRecoveryToken) {
+      if (existing.passwordHash !== undefined) {
+        res.status(409).json({ error: 'email_in_use', requestId: (req as any)?.id });
+        return;
+      }
+      const recovery = await find<any>({
+        type: 'owner_recovery',
+        tokenHash: hashInviteToken(ownerRecoveryToken),
+      }, { limit: 2 }).catch(() => ({ docs: [] as any[] }));
+      recoveryDoc = recovery.docs?.[0];
+      if (
+        !recoveryDoc
+        || recoveryDoc.status !== 'pending'
+        || recoveryDoc.placeholderUserId !== existing._id
+        || String(recoveryDoc.email || '').trim().toLowerCase() !== normalized
+        || Number(recoveryDoc.expiresAt || 0) <= Date.now()
+      ) {
+        res.status(403).json({ error: 'invalid_owner_recovery', requestId: (req as any)?.id });
+        return;
+      }
+    } else if (existing && existing.passwordHash !== undefined) {
+      // An invitation proves mailbox access but is not a password-reset token.
+      // Never overwrite an existing credentialed account before the invite is
+      // redeemed; explicit recovery/linking is a separate flow.
+      res.status(409).json({ error: 'email_in_use', requestId: (req as any)?.id });
+      return;
+    } else if (existing && !invitationVerified) {
+      res.status(409).json({ error: 'email_in_use', requestId: (req as any)?.id });
+      return;
+    } else if (!existing && !invitationVerified) {
+      // New password accounts must prove mailbox control. Existing legacy
+      // password accounts continue to log in unchanged; new users can use an
+      // emailed invitation or a verified OAuth/SAML provider.
+      res.status(403).json({ error: 'email_verification_required', requestId: (req as any)?.id });
+      return;
+    }
     const passwordHash = await bcryptHash(password, BCRYPT_ROUNDS);
     const now = Date.now();
-    const doc: User = { type: 'user', email: normalized, passwordHash, createdAt: now, updatedAt: now };
-    const r = await insertDoc(doc);
-    const session = req.session as unknown as (typeof req.session & { userId?: string; userEmail?: string; userName?: string });
-    session.userId = r.id;
-    res.status(201).json({ id: r.id });
+    const doc: User = existing
+      ? {
+          ...existing,
+          passwordHash,
+          ...(invitationVerified ? { emailVerifiedAt: now, emailVerificationProvider: 'invitation' as const } : {}),
+          updatedAt: now,
+        }
+      : {
+          _id: canonicalUserIdForEmail(normalized),
+          type: 'user',
+          email: normalized,
+          passwordHash,
+          emailVerifiedAt: now,
+          emailVerificationProvider: 'invitation',
+          createdAt: now,
+          updatedAt: now,
+        };
+    let r: { id: string; rev?: string };
+    try {
+      r = existing ? await updateDoc(doc) : await insertDoc(doc);
+    } catch (error: any) {
+      if (!existing && String(error?.message || '').startsWith('409')) {
+        res.status(409).json({ error: 'email_in_use', requestId: (req as any)?.id });
+        return;
+      }
+      throw error;
+    }
+    const userId = existing?._id || r.id;
+    if (recoveryDoc) {
+      await updateDoc({
+        ...recoveryDoc,
+        status: 'used',
+        usedAt: now,
+        usedBy: userId,
+        tokenHash: undefined,
+      });
+    }
+    const sessionName = doc.name || normalized.split('@')[0];
+    await establishAuthenticatedSession(req, res, { id: userId, email: normalized, name: sessionName });
+    res.status(201).json({ id: userId, email: normalized, name: sessionName });
     return;
   } catch (e: any) {
     if (e?.issues) { res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id }); return; }
@@ -89,19 +221,16 @@ router.post('/register', authLimiter, async (req, res): Promise<void> => {
   }
 });
 
-router.post('/login', loginLimiter, async (req, res): Promise<void> => {
+router.post('/login', loginLimiter, csrfProtect(), async (req, res): Promise<void> => {
   try {
     const { email, password } = LoginBody.parse(req.body ?? {});
     const normalized = email.trim().toLowerCase();
     const user = await findOne<User>({ type: 'user', email: normalized });
     if (!user) { res.status(401).json({ error: 'invalid_credentials', requestId: (req as any)?.id }); return; }
+    if (!user.passwordHash) { res.status(401).json({ error: 'invalid_credentials', requestId: (req as any)?.id }); return; }
     const ok = await bcryptCompare(password, user.passwordHash);
     if (!ok) { res.status(401).json({ error: 'invalid_credentials', requestId: (req as any)?.id }); return; }
-    const session = req.session as unknown as (typeof req.session & { userId?: string; userEmail?: string; userName?: string; userAvatar?: string });
-    session.userId = user._id;
-    session.userEmail = user.email;
-    session.userName = user.name;
-    session.userAvatar = user.avatar;
+    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
     res.json({ id: user._id, email: user.email });
     return;
   } catch (e: any) {
@@ -111,10 +240,25 @@ router.post('/login', loginLimiter, async (req, res): Promise<void> => {
   }
 });
 
-router.post('/logout', async (req, res): Promise<void> => {
-  if (req.session) req.session.destroy(() => {});
+router.post('/logout', csrfProtect(), async (req, res): Promise<void> => {
+  disconnectSessionSockets(String((req as any).sessionID || ''));
+  if (!req.session) {
+    res.json({ ok: true, requestId: (req as any)?.id });
+    return;
+  }
+  const destroyError = await new Promise<unknown>((resolve) => req.session.destroy((error) => resolve(error)));
+  res.clearCookie('rizzoma.sid', {
+    path: '/',
+    httpOnly: true,
+    secure: process.env['NODE_ENV'] === 'production',
+    sameSite: 'lax',
+  });
+  if (destroyError) {
+    console.error('[auth] session revocation failed', { requestId: (req as any)?.id, error: String((destroyError as any)?.message || destroyError) });
+    res.status(503).json({ error: 'revocation_failed', requestId: (req as any)?.id });
+    return;
+  }
   res.json({ ok: true, requestId: (req as any)?.id });
-  return;
 });
 
 // Redeem a one-time ticket issued by a mobile OAuth callback. This
@@ -124,21 +268,18 @@ router.post('/logout', async (req, res): Promise<void> => {
 router.post('/redeem-ticket', authLimiter, async (req, res): Promise<void> => {
   const body = req.body as { ticket?: unknown } | undefined;
   const ticket = typeof body?.ticket === 'string' ? body.ticket : '';
+  const verifier = typeof (body as any)?.verifier === 'string' ? (body as any).verifier : undefined;
   if (!ticket) {
     res.status(400).json({ error: 'missing_ticket', requestId: (req as any)?.id });
     return;
   }
-  const payload = redeemTicket(ticket);
+  const payload = redeemTicket(ticket, verifier);
   if (!payload) {
     logAuthEvent(req, { provider: 'ticket', ok: false, reason: 'invalid_or_expired' });
     res.status(401).json({ error: 'invalid_or_expired_ticket', requestId: (req as any)?.id });
     return;
   }
-  const session = req.session as unknown as (typeof req.session & { userId?: string; userEmail?: string; userName?: string; userAvatar?: string });
-  session.userId = payload.userId;
-  session.userEmail = payload.email;
-  session.userName = payload.name;
-  session.userAvatar = payload.avatar;
+  await establishAuthenticatedSession(req, res, { id: payload.userId, email: payload.email, name: payload.name, avatar: payload.avatar });
   logAuthEvent(req, { provider: 'ticket', ok: true, email: payload.email });
   res.json({ id: payload.userId, email: payload.email, name: payload.name, avatar: payload.avatar });
 });
@@ -204,6 +345,183 @@ const getClientUrl = (): string => {
 const base64Url = (buffer: Buffer): string =>
   buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 
+type CorrelatedProvider = 'google' | 'facebook' | 'microsoft' | 'twitter';
+const OAUTH_TRANSACTION_TTL_MS = 10 * 60 * 1000;
+const SAML_CORRELATION_COOKIE = 'rizzoma.saml';
+type SamlTransaction = { state: string; correlationId: string; callbackUrl: string; createdAt: number };
+const samlTransactions = new Map<string, SamlTransaction>();
+
+function beginOAuthTransaction(req: any, provider: CorrelatedProvider, mobileChallenge?: string, codeVerifier?: string): string {
+  const state = base64Url(randomBytes(32));
+  const now = Date.now();
+  const current = Object.values(req.session.oauthTransactions || {})
+    .filter((entry: any) => now - Number(entry?.createdAt || 0) <= OAUTH_TRANSACTION_TTL_MS)
+    .sort((a: any, b: any) => Number(b?.createdAt || 0) - Number(a?.createdAt || 0))
+    .slice(0, 11);
+  req.session.oauthTransactions = Object.fromEntries(current.map((entry: any) => [entry.state, entry]));
+  req.session.oauthTransactions[state] = {
+    provider,
+    state,
+    createdAt: now,
+    ...(mobileChallenge ? { mobileChallenge } : {}),
+    ...(codeVerifier ? { codeVerifier } : {}),
+  };
+  return state;
+}
+
+function consumeOAuthTransaction(
+  req: any,
+  provider: CorrelatedProvider,
+  receivedState: unknown,
+): { mobileChallenge?: string; codeVerifier?: string } | null {
+  if (typeof receivedState !== 'string') return null;
+  const transaction = req.session?.oauthTransactions?.[receivedState];
+  if (req.session?.oauthTransactions) delete req.session.oauthTransactions[receivedState];
+  if (
+    !transaction
+    || transaction.provider !== provider
+    || receivedState !== transaction.state
+    || Date.now() - Number(transaction.createdAt || 0) > OAUTH_TRANSACTION_TTL_MS
+  ) return null;
+  return {
+    ...(transaction.mobileChallenge ? { mobileChallenge: transaction.mobileChallenge } : {}),
+    ...(transaction.codeVerifier ? { codeVerifier: transaction.codeVerifier } : {}),
+  };
+}
+
+function pruneSamlTransactions(now = Date.now()): void {
+  for (const [state, transaction] of samlTransactions) {
+    if (now - transaction.createdAt > OAUTH_TRANSACTION_TTL_MS) samlTransactions.delete(state);
+  }
+  if (samlTransactions.size <= 5_000) return;
+  const oldest = [...samlTransactions.values()]
+    .sort((left, right) => left.createdAt - right.createdAt)
+    .slice(0, samlTransactions.size - 5_000);
+  for (const transaction of oldest) samlTransactions.delete(transaction.state);
+}
+
+function samlCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none' as const,
+    path: '/api/auth/saml',
+    maxAge: OAUTH_TRANSACTION_TTL_MS,
+  };
+}
+
+/** SAML POST bindings are cross-site and omit the main SameSite=Lax session
+ * cookie. Bind RelayState to a separate short-lived, opaque browser cookie
+ * and a bounded server-side transaction without weakening the main session. */
+function beginSamlTransaction(req: any, res: any, callbackUrl: string): string {
+  const now = Date.now();
+  pruneSamlTransactions(now);
+  const suppliedCorrelation = String(req.cookies?.[SAML_CORRELATION_COOKIE] || '');
+  const correlationId = /^[A-Za-z0-9_-]{43}$/.test(suppliedCorrelation)
+    ? suppliedCorrelation
+    : base64Url(randomBytes(32));
+  const prior = [...samlTransactions.values()]
+    .filter((transaction) => transaction.correlationId === correlationId)
+    .sort((left, right) => right.createdAt - left.createdAt);
+  for (const transaction of prior.slice(11)) samlTransactions.delete(transaction.state);
+  const state = base64Url(randomBytes(32));
+  samlTransactions.set(state, { state, correlationId, callbackUrl, createdAt: now });
+  res.cookie(SAML_CORRELATION_COOKIE, correlationId, samlCookieOptions());
+  return state;
+}
+
+function consumeSamlTransaction(req: any, res: any, receivedState: unknown, callbackUrl: string): boolean {
+  pruneSamlTransactions();
+  if (typeof receivedState !== 'string') return false;
+  const correlationId = String(req.cookies?.[SAML_CORRELATION_COOKIE] || '');
+  const transaction = samlTransactions.get(receivedState);
+  if (
+    !transaction
+    || transaction.state !== receivedState
+    || transaction.correlationId !== correlationId
+    || transaction.callbackUrl !== callbackUrl
+    || Date.now() - transaction.createdAt > OAUTH_TRANSACTION_TTL_MS
+  ) return false;
+  samlTransactions.delete(receivedState);
+  if (![...samlTransactions.values()].some((candidate) => candidate.correlationId === correlationId)) {
+    res.clearCookie(SAML_CORRELATION_COOKIE, { ...samlCookieOptions(), maxAge: undefined });
+  }
+  return true;
+}
+
+const canonicalUserIdForEmail = (email: string): string =>
+  `user:email:${createHash('sha256').update(email.trim().toLowerCase(), 'utf8').digest('hex')}`;
+
+async function revokePendingOwnerRecoveries(userId: string, email: string, reason: string): Promise<void> {
+  const result = await find<any>({ type: 'owner_recovery', placeholderUserId: userId, status: 'pending' }, { limit: 500 })
+    .catch(() => ({ docs: [] as any[] }));
+  const now = Date.now();
+  for (const recovery of result.docs || []) {
+    const { tokenHash: _tokenHash, ...withoutToken } = recovery;
+    await updateDoc({ ...withoutToken, email, status: 'revoked', revokedAt: now, revokedReason: reason } as any)
+      .catch(() => undefined);
+  }
+}
+
+async function findOrCreateVerifiedUser(input: {
+  email: string;
+  name?: string;
+  avatar?: string;
+  provider: User['emailVerificationProvider'];
+}): Promise<User> {
+  const email = input.email.trim().toLowerCase();
+  const now = Date.now();
+  let user = await findOne<User>({ type: 'user', email });
+  let created = false;
+  if (user?.passwordHash && !user.emailVerifiedAt) {
+    // Do not silently merge a provider-authenticated mailbox owner into an
+    // unverified password account that may have pre-registered that address.
+    // Existing legacy password login remains available; provider linking
+    // requires a separate, explicit account-link flow.
+    throw new Error('oauth_link_required');
+  }
+  if (!user) {
+    const doc: User = {
+      _id: canonicalUserIdForEmail(email),
+      type: 'user',
+      email,
+      passwordHash: '',
+      name: input.name,
+      avatar: input.avatar,
+      emailVerifiedAt: now,
+      emailVerificationProvider: input.provider,
+      createdAt: now,
+      updatedAt: now,
+    };
+    try {
+      const result = await insertDoc(doc);
+      user = { ...doc, _id: result.id };
+      created = true;
+    } catch (error: any) {
+      if (!String(error?.message || '').startsWith('409')) throw error;
+      user = await getDoc<User>(doc._id!);
+      if (user.email.trim().toLowerCase() !== email) throw new Error('canonical_email_conflict');
+    }
+  }
+
+  if (created) return user;
+
+  const wasCredentiallessPlaceholder = user.passwordHash === undefined;
+  const next: User = {
+    ...user,
+    name: input.name || user.name,
+    avatar: input.avatar || user.avatar,
+    emailVerifiedAt: now,
+    emailVerificationProvider: input.provider,
+    updatedAt: now,
+  };
+  await updateDoc(next as User & { _id: string; _rev?: string });
+  if (wasCredentiallessPlaceholder && next._id) {
+    await revokePendingOwnerRecoveries(next._id, email, `${input.provider}_verified_login`);
+  }
+  return next;
+}
+
 // Google OAuth
 router.get('/google', (req, res) => {
   if (!GOOGLE_CLIENT_ID) {
@@ -212,6 +530,13 @@ router.get('/google', (req, res) => {
   }
   const baseUrl = getBaseUrl(req);
   const redirectUri = `${baseUrl}/api/auth/google/callback`;
+  const mobile = req.query['mobile'] === '1';
+  const mobileChallenge = mobile ? String(req.query['challenge'] || '') : undefined;
+  if (mobile && !/^[A-Za-z0-9_-]{43}$/.test(mobileChallenge || '')) {
+    res.status(400).json({ error: 'invalid_native_challenge' });
+    return;
+  }
+  const state = beginOAuthTransaction(req, 'google', mobileChallenge);
   const scope = 'openid email profile';
   const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   authUrl.searchParams.set('client_id', GOOGLE_CLIENT_ID);
@@ -219,9 +544,8 @@ router.get('/google', (req, res) => {
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('scope', scope);
   authUrl.searchParams.set('access_type', 'offline');
-  if (req.query['mobile'] === '1') {
-    const nonce = typeof req.query['nonce'] === 'string' ? req.query['nonce'] : '';
-    authUrl.searchParams.set('state', nonce ? MOBILE_STATE_PREFIX + nonce : makeMobileState());
+  authUrl.searchParams.set('state', state);
+  if (mobile) {
     authUrl.searchParams.set('prompt', 'select_account');
   }
   res.redirect(authUrl.toString());
@@ -232,8 +556,9 @@ router.get('/google/callback', async (req, res): Promise<void> => {
     res.status(501).json({ error: 'google_oauth_not_configured' });
     return;
   }
-  const code = req.query['code'] as string;
-  if (!code) {
+  const code = req.query['code'] as string | undefined;
+  const transaction = consumeOAuthTransaction(req, 'google', req.query['state']);
+  if (!code || !transaction) {
     logAuthEvent(req, { provider: 'google', ok: false, reason: 'missing_code' });
     res.redirect('/?error=google_auth_failed');
     return;
@@ -275,56 +600,31 @@ router.get('/google/callback', async (req, res): Promise<void> => {
       return;
     }
 
-    // Find or create user
-    let user = await findOne<User>({ type: 'user', email: userData.email.toLowerCase() });
-    if (!user) {
-      const now = Date.now();
-      const doc: User = {
-        type: 'user',
-        email: userData.email.toLowerCase(),
-        passwordHash: '', // OAuth users don't have password
-        name: userData.name,
-        avatar: userData.picture,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const r = await insertDoc(doc);
-      user = { ...doc, _id: r.id };
-    } else if (userData.picture && user.avatar !== userData.picture) {
-      // Update avatar in CouchDB
-      user.avatar = userData.picture;
-      user.updatedAt = Date.now();
-      try {
-        await updateDoc(user as User & { _id: string; _rev?: string });
-      } catch (e) {
-        console.error('[auth] Failed to update user avatar:', e);
-      }
-    }
+    const user = await findOrCreateVerifiedUser({
+      email: userData.email,
+      name: userData.name,
+      avatar: userData.picture,
+      provider: 'google',
+    });
 
     // Mobile native handoff — see comments at the top of this file.
-    // The state carries the nonce the app generated before opening
-    // Chrome Custom Tabs; we use it as the ticket ID so the app can
-    // redeem it after the tab closes without a deep link round-trip.
-    const state = req.query['state'] as string | undefined;
-    if (isMobileState(state) && user._id) {
-      const nonce = extractNonceFromState(state as string);
-      issueTicket({
+    // Bind the server-random deep-link ticket to the WebView-held verifier.
+    // An app that intercepts the custom scheme sees the ticket but cannot
+    // redeem it without the verifier whose SHA-256 challenge was correlated.
+    if (transaction.mobileChallenge && user._id) {
+      const ticket = issueTicket({
         userId: user._id,
         email: user.email,
         name: user.name,
         avatar: user.avatar,
-      }, nonce);
+      }, transaction.mobileChallenge);
       logAuthEvent(req, { provider: 'google', ok: true, email: user.email, reason: 'mobile_ticket' });
-      res.status(200).type('html').send(OAUTH_DONE_PAGE);
+      res.redirect(nativeTicketUrl(ticket));
       return;
     }
 
     // Set session
-    const session = req.session as unknown as (typeof req.session & { userId?: string; userEmail?: string; userName?: string; userAvatar?: string });
-    session.userId = user._id;
-    session.userEmail = user.email;
-    session.userName = user.name;
-    session.userAvatar = user.avatar;
+    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
 
     logAuthEvent(req, { provider: 'google', ok: true, email: user.email });
     const clientUrl = getClientUrl();
@@ -344,16 +644,20 @@ router.get('/facebook', (req, res) => {
   }
   const baseUrl = getBaseUrl(req);
   const redirectUri = `${baseUrl}/api/auth/facebook/callback`;
+  const mobile = req.query['mobile'] === '1';
+  const mobileChallenge = mobile ? String(req.query['challenge'] || '') : undefined;
+  if (mobile && !/^[A-Za-z0-9_-]{43}$/.test(mobileChallenge || '')) {
+    res.status(400).json({ error: 'invalid_native_challenge' });
+    return;
+  }
+  const state = beginOAuthTransaction(req, 'facebook', mobileChallenge);
   const scope = 'email,public_profile';
   const authUrl = new URL('https://www.facebook.com/v18.0/dialog/oauth');
   authUrl.searchParams.set('client_id', FACEBOOK_APP_ID);
   authUrl.searchParams.set('redirect_uri', redirectUri);
   authUrl.searchParams.set('scope', scope);
   authUrl.searchParams.set('response_type', 'code');
-  if (req.query['mobile'] === '1') {
-    const nonce = typeof req.query['nonce'] === 'string' ? req.query['nonce'] : '';
-    authUrl.searchParams.set('state', nonce ? MOBILE_STATE_PREFIX + nonce : makeMobileState());
-  }
+  authUrl.searchParams.set('state', state);
   res.redirect(authUrl.toString());
 });
 
@@ -362,8 +666,9 @@ router.get('/facebook/callback', async (req, res): Promise<void> => {
     res.status(501).json({ error: 'facebook_oauth_not_configured' });
     return;
   }
-  const code = req.query['code'] as string;
-  if (!code) {
+  const code = req.query['code'] as string | undefined;
+  const transaction = consumeOAuthTransaction(req, 'facebook', req.query['state']);
+  if (!code || !transaction) {
     res.redirect('/?error=facebook_auth_failed');
     return;
   }
@@ -407,53 +712,28 @@ router.get('/facebook/callback', async (req, res): Promise<void> => {
     // Extract picture URL from Facebook's nested structure
     const pictureUrl = userData.picture?.data?.url;
 
-    // Find or create user
-    let user = await findOne<User>({ type: 'user', email: userData.email.toLowerCase() });
-    if (!user) {
-      const now = Date.now();
-      const doc: User = {
-        type: 'user',
-        email: userData.email.toLowerCase(),
-        passwordHash: '', // OAuth users don't have password
-        name: userData.name,
-        avatar: pictureUrl,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const r = await insertDoc(doc);
-      user = { ...doc, _id: r.id };
-    } else if (pictureUrl && user.avatar !== pictureUrl) {
-      // Update avatar in CouchDB
-      user.avatar = pictureUrl;
-      user.updatedAt = Date.now();
-      try {
-        await updateDoc(user as User & { _id: string; _rev?: string });
-      } catch (e) {
-        console.error('[auth] Failed to update user avatar:', e);
-      }
-    }
+    const user = await findOrCreateVerifiedUser({
+      email: userData.email,
+      name: userData.name,
+      avatar: pictureUrl,
+      provider: 'facebook',
+    });
 
     // Mobile native handoff — see top-of-file comment
-    const fbState = req.query['state'] as string | undefined;
-    if (isMobileState(fbState) && user._id) {
-      const nonce = extractNonceFromState(fbState as string);
-      issueTicket({
+    if (transaction.mobileChallenge && user._id) {
+      const ticket = issueTicket({
         userId: user._id,
         email: user.email,
         name: user.name,
         avatar: user.avatar,
-      }, nonce);
+      }, transaction.mobileChallenge);
       logAuthEvent(req, { provider: 'facebook', ok: true, email: user.email, reason: 'mobile_ticket' });
-      res.status(200).type('html').send(OAUTH_DONE_PAGE);
+      res.redirect(nativeTicketUrl(ticket));
       return;
     }
 
     // Set session
-    const session = req.session as unknown as (typeof req.session & { userId?: string; userEmail?: string; userName?: string; userAvatar?: string });
-    session.userId = user._id;
-    session.userEmail = user.email;
-    session.userName = user.name;
-    session.userAvatar = user.avatar;
+    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
 
     const clientUrl = getClientUrl();
     res.redirect(clientUrl ? `${clientUrl}/?layout=rizzoma` : '/?layout=rizzoma');
@@ -471,6 +751,13 @@ router.get('/microsoft', (req, res) => {
   }
   const baseUrl = getBaseUrl(req);
   const redirectUri = `${baseUrl}/api/auth/microsoft/callback`;
+  const mobile = req.query['mobile'] === '1';
+  const mobileChallenge = mobile ? String(req.query['challenge'] || '') : undefined;
+  if (mobile && !/^[A-Za-z0-9_-]{43}$/.test(mobileChallenge || '')) {
+    res.status(400).json({ error: 'invalid_native_challenge' });
+    return;
+  }
+  const state = beginOAuthTransaction(req, 'microsoft', mobileChallenge);
   const scope = 'openid email profile User.Read';
   const authUrl = new URL(`https://login.microsoftonline.com/${MICROSOFT_TENANT}/oauth2/v2.0/authorize`);
   authUrl.searchParams.set('client_id', MICROSOFT_CLIENT_ID);
@@ -478,10 +765,7 @@ router.get('/microsoft', (req, res) => {
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('scope', scope);
   authUrl.searchParams.set('response_mode', 'query');
-  if (req.query['mobile'] === '1') {
-    const nonce = typeof req.query['nonce'] === 'string' ? req.query['nonce'] : '';
-    authUrl.searchParams.set('state', nonce ? MOBILE_STATE_PREFIX + nonce : makeMobileState());
-  }
+  authUrl.searchParams.set('state', state);
   res.redirect(authUrl.toString());
 });
 
@@ -490,8 +774,9 @@ router.get('/microsoft/callback', async (req, res): Promise<void> => {
     res.status(501).json({ error: 'microsoft_oauth_not_configured' });
     return;
   }
-  const code = req.query['code'] as string;
-  if (!code) {
+  const code = req.query['code'] as string | undefined;
+  const transaction = consumeOAuthTransaction(req, 'microsoft', req.query['state']);
+  if (!code || !transaction) {
     res.redirect('/?error=microsoft_auth_failed');
     return;
   }
@@ -552,44 +837,28 @@ router.get('/microsoft/callback', async (req, res): Promise<void> => {
       // Photo not available, that's fine
     }
 
-    // Find or create user
-    let user = await findOne<User>({ type: 'user', email: email.toLowerCase() });
-    if (!user) {
-      const now = Date.now();
-      const doc: User = {
-        type: 'user',
-        email: email.toLowerCase(),
-        passwordHash: '', // OAuth users don't have password
-        name: userData.displayName,
-        avatar: avatarUrl,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const r = await insertDoc(doc);
-      user = { ...doc, _id: r.id };
-    }
+    const user = await findOrCreateVerifiedUser({
+      email,
+      name: userData.displayName,
+      avatar: avatarUrl,
+      provider: 'microsoft',
+    });
 
     // Mobile native handoff — see top-of-file comment
-    const msState = req.query['state'] as string | undefined;
-    if (isMobileState(msState) && user._id) {
-      const nonce = extractNonceFromState(msState as string);
-      issueTicket({
+    if (transaction.mobileChallenge && user._id) {
+      const ticket = issueTicket({
         userId: user._id,
         email: user.email,
         name: user.name,
         avatar: user.avatar,
-      }, nonce);
+      }, transaction.mobileChallenge);
       logAuthEvent(req, { provider: 'microsoft', ok: true, email: user.email, reason: 'mobile_ticket' });
-      res.status(200).type('html').send(OAUTH_DONE_PAGE);
+      res.redirect(nativeTicketUrl(ticket));
       return;
     }
 
     // Set session
-    const session = req.session as unknown as (typeof req.session & { userId?: string; userEmail?: string; userName?: string; userAvatar?: string });
-    session.userId = user._id;
-    session.userEmail = user.email;
-    session.userName = user.name;
-    session.userAvatar = user.avatar;
+    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
 
     const clientUrl = getClientUrl();
     res.redirect(clientUrl ? `${clientUrl}/?layout=rizzoma` : '/?layout=rizzoma');
@@ -605,11 +874,9 @@ router.get('/twitter', (req, res) => {
     res.status(501).json({ error: 'twitter_oauth_not_configured' });
     return;
   }
-  const state = base64Url(randomBytes(24));
   const codeVerifier = base64Url(randomBytes(48));
+  const state = beginOAuthTransaction(req, 'twitter', undefined, codeVerifier);
   const codeChallenge = base64Url(createHash('sha256').update(codeVerifier).digest());
-  req.session.twitterOAuthState = state;
-  req.session.twitterCodeVerifier = codeVerifier;
 
   const baseUrl = getBaseUrl(req);
   const redirectUri = `${baseUrl}/api/auth/twitter/callback`;
@@ -631,12 +898,10 @@ router.get('/twitter/callback', async (req, res): Promise<void> => {
   }
   const code = req.query['code'] as string | undefined;
   const state = req.query['state'] as string | undefined;
-  const expectedState = req.session.twitterOAuthState;
-  const codeVerifier = req.session.twitterCodeVerifier;
-  delete req.session.twitterOAuthState;
-  delete req.session.twitterCodeVerifier;
+  const transaction = consumeOAuthTransaction(req, 'twitter', state);
+  const codeVerifier = transaction?.codeVerifier;
 
-  if (!code || !state || !expectedState || state !== expectedState || !codeVerifier) {
+  if (!code || !transaction || !codeVerifier) {
     res.redirect('/?error=twitter_auth_failed');
     return;
   }
@@ -679,34 +944,14 @@ router.get('/twitter/callback', async (req, res): Promise<void> => {
     }
 
     const email = `twitter-${twitterUser.id}@twitter.local`;
-    let user = await findOne<User>({ type: 'user', email });
-    if (!user) {
-      const now = Date.now();
-      const doc: User = {
-        type: 'user',
-        email,
-        passwordHash: '',
-        name: twitterUser.name || twitterUser.username,
-        avatar: twitterUser.profile_image_url,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const r = await insertDoc(doc);
-      user = { ...doc, _id: r.id };
-    } else if (twitterUser.profile_image_url && user.avatar !== twitterUser.profile_image_url) {
-      user.avatar = twitterUser.profile_image_url;
-      user.updatedAt = Date.now();
-      try {
-        await updateDoc(user as User & { _id: string; _rev?: string });
-      } catch (e) {
-        console.error('[auth] Failed to update Twitter user avatar:', e);
-      }
-    }
+    const user = await findOrCreateVerifiedUser({
+      email,
+      name: twitterUser.name || twitterUser.username,
+      avatar: twitterUser.profile_image_url,
+      provider: 'twitter',
+    });
 
-    req.session.userId = user._id;
-    req.session.userEmail = user.email;
-    req.session.userName = user.name;
-    req.session.userAvatar = user.avatar;
+    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
 
     const clientUrl = getClientUrl();
     res.redirect(clientUrl ? `${clientUrl}/?layout=rizzoma` : '/?layout=rizzoma');
@@ -741,7 +986,8 @@ router.get('/saml', (req, res) => {
   try {
     const saml = getSamlInstance(callbackUrl);
     const host = req.get('host');
-    saml.getAuthorizeUrlAsync('', host, {})
+    const relayState = beginSamlTransaction(req, res, callbackUrl);
+    saml.getAuthorizeUrlAsync(relayState, host, {})
       .then((loginUrl: string) => {
         res.redirect(loginUrl);
       })
@@ -764,6 +1010,10 @@ router.post('/saml/callback', async (req, res): Promise<void> => {
 
   const baseUrl = getBaseUrl(req);
   const callbackUrl = `${baseUrl}/api/auth/saml/callback`;
+  if (!consumeSamlTransaction(req, res, req.body?.RelayState, callbackUrl)) {
+    res.redirect('/?error=saml_state_failed');
+    return;
+  }
 
   try {
     const saml = getSamlInstance(callbackUrl);
@@ -789,28 +1039,14 @@ router.post('/saml/callback', async (req, res): Promise<void> => {
       return;
     }
 
-    // Find or create user
-    let user = await findOne<User>({ type: 'user', email: userInfo.email });
-    if (!user) {
-      const now = Date.now();
-      const doc: User = {
-        type: 'user',
-        email: userInfo.email,
-        passwordHash: '', // SAML users don't have password
-        name: userInfo.name,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const r = await insertDoc(doc);
-      user = { ...doc, _id: r.id };
-    }
+    const user = await findOrCreateVerifiedUser({
+      email: userInfo.email,
+      name: userInfo.name,
+      provider: 'saml',
+    });
 
     // Set session
-    const session = req.session as unknown as (typeof req.session & { userId?: string; userEmail?: string; userName?: string; userAvatar?: string });
-    session.userId = user._id;
-    session.userEmail = user.email;
-    session.userName = user.name;
-    session.userAvatar = user.avatar;
+    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
 
     const clientUrl = getClientUrl();
     res.redirect(clientUrl ? `${clientUrl}/?layout=rizzoma` : '/?layout=rizzoma');

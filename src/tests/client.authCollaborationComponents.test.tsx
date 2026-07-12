@@ -94,15 +94,21 @@ describe('client: authenticated collaboration component boundaries', () => {
       name: user.name,
       color: collaborationColorForUserId(user.id),
     };
-    for (const blipId of [
-      'topic-component-boundary',
-      'nested-component-boundary',
-      'generic-component-boundary',
-    ]) {
+    for (const blipId of ['nested-component-boundary', 'generic-component-boundary']) {
       const call = collaborationCalls.find((candidate) => candidate.blipId === blipId);
       expect(call, `missing collaboration call for ${blipId}`).toBeDefined();
       expect(call?.enabled).toBe(true);
       expect(call?.user).toEqual(expectedUser);
     }
+
+    // Topic collaboration is intentionally held closed until the
+    // access-checked topic response grants canEdit. The mocked request never
+    // resolves, so an authenticated identity alone must not open the room.
+    const topicCall = collaborationCalls.find(
+      (candidate) => candidate.blipId === 'topic-component-boundary',
+    );
+    expect(topicCall).toBeDefined();
+    expect(topicCall?.enabled).toBe(false);
+    expect(topicCall?.user).toEqual(expectedUser);
   });
 });

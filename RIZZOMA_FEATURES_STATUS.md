@@ -60,6 +60,15 @@
   Public HTTPS health remains green; users must sign in once after secret
   rotation.
 
+## Stacked sharing-authorization checkpoint — 2026-07-12
+
+- `codex/sharing-access-control-stack`, rebased onto merged hardening commit `2595d2de` (tree-identical to source head `dda4d1d5`), persists private/link/public policy and implements viewer/commenter/editor/owner roles through one server resolver.
+- Topic/wave listing and reads, topic/blip/comment/link/editor writes, participants/invitations, and Socket.IO collaboration rooms now enforce the same capabilities. Live demotion removes Yjs/awareness write authority immediately.
+- Share settings load their saved value and fail closed on load error. Invite UI can assign viewer, commenter, or editor.
+- New topics are explicitly private. Legacy documents missing both policy shapes remain discoverable **read-only**; no unaffiliated legacy edit/comment/socket write is preserved.
+- Stacked verification is green at 67 files / 361 passed / 3 skipped, with build/typecheck, ESLint at **0 errors / 6,684 warnings**, and the required four-width UI sweep. See the [sharing and authorization reference](docs/SHARING_AUTHORIZATION.md).
+- Production inventory measured **26 topic metadata documents: 0 explicit policies, 26 missing-policy legacy documents, and 0 malformed policies**. All 26 therefore use the public-read-only outsider fallback; owners retain management. Boundary: this stacked branch is not merged or deployed.
+
 ## Public production checkpoint — 2026-07-12
 
 - **Runtime correction:** public production is the React/TipTap parity implementation, not the native fractal renderer. The live client has `FEAT_RIZZOMA_PARITY_RENDER=1` and `FEAT_RIZZOMA_NATIVE_RENDER` unset; `NativeWaveView` is still an opt-in, read-only path and cannot replace the editing UI. The Express API runs in production mode, while the public frontend is served as source modules by Vite in development mode.
@@ -216,9 +225,11 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
   - `RizzomaTopicDetail.tsx` - Dispatches EDIT_MODE_EVENT + handles insert events with topicEditor
 
 ### Permissions & Auth
-- `requireAuth` now guards topic/blip write endpoints, logs denied operations, and respects actual author IDs.
+- `requireAuth` guards authenticated mutations; centralized wave access additionally enforces viewer/commenter/editor/owner capabilities across REST and Socket.IO.
+- Sharing policy is persisted through owner-only `GET/PATCH /api/waves/:id/sharing`; participant roles and public comment/edit flags are effective, not display-only.
+- Legacy missing-policy topics remain public read-only until explicitly stamped; `npm run sharing:count-legacy` measures the remaining inventory without writing it.
 - Rizzoma layout login flow uses the real `AuthPanel` modal instead of demo users.
-- New Vitest coverage exercises unauthenticated, unauthorized, and authorized flows.
+- The route matrix and Socket.IO integration coverage exercise anonymous, outsider, viewer, commenter, editor, owner, identity spoofing, and live demotion flows.
 
 ## Still pending
 - **App runtime expansion**: The first persistence-critical sandboxed app bug is now fixed. Root cause was rogue topic-root `PUT /api/blips/:topicId` writes overwriting the correct topic PATCH after `Done`; fresh verification on `http://127.0.0.1:4192` now shows the saved planner payload keeps `Ship preview (delayed)` at `16:30` and no rogue writes remain (`screenshots/260330-app-runtime/live-topic-planner-debug-saved-topic.json`, `.../live-topic-planner-debug-mutation-traffic.json`, `.../topic-patch-log.ndjson`). Next work is broader app-frame/host-API expansion, not basic correctness repair.

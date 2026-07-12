@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { deleteDoc, find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
-import { emitEvent } from '../lib/socket.js';
+import { disconnectWaveSockets, emitEvent } from '../lib/socket.js';
 import { csrfProtect } from '../middleware/csrf.js';
 import { noStore } from '../middleware/noStore.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -9,6 +9,15 @@ import { stampInitialAttribution, diffAndStampAttribution } from '../lib/section
 import { computeWaveUnreadCounts } from '../lib/unread.js';
 import { sendInviteEmail } from '../services/email.js';
 import type { WaveParticipant } from '../schemas/wave.js';
+import {
+  buildAccessibleTopicSelector,
+  identityFromRequest,
+  isDeletedWave,
+  normalizeSharingPolicy,
+  requireWaveAccess,
+} from '../lib/access.js';
+import { buildInviteUrl, createInviteToken, invitationTokenDocId, resolveInviteBaseUrl } from '../lib/invitations.js';
+import { inviteRateLimit } from '../middleware/inviteRateLimit.js';
 
 // User type for lookups
 type User = {
@@ -39,7 +48,36 @@ type Topic = {
   createdAt: number; // epoch millis
   updatedAt: number; // epoch millis
   sectionAttribution?: Record<string, SectionAttributionEntry>;
+  shareLevel?: 'private' | 'link' | 'public';
+  allowComments?: boolean;
+  allowEdits?: boolean;
 };
+
+type TopicTombstone = Omit<Topic, 'type'> & {
+  type: 'topic_tombstone';
+  _id: string;
+  _rev: string;
+  deleted: true;
+  deletedAt: number;
+  deletedBy: string;
+};
+
+async function cascadeDeletedTopicBlips(topicId: string, userId: string, deletedAt: number): Promise<number> {
+  const result = await find<any>({ type: 'blip', waveId: topicId }, { limit: 20000 });
+  let updated = 0;
+  for (const blip of result.docs || []) {
+    if (!blip?._id || blip.deleted) continue;
+    await updateDoc({
+      ...blip,
+      deleted: true,
+      deletedAt,
+      deletedBy: userId,
+      updatedAt: Math.max(Number(blip.updatedAt || 0), deletedAt),
+    });
+    updated += 1;
+  }
+  return updated;
+}
 
 type TopicFollow = {
   _id?: string;
@@ -154,9 +192,8 @@ router.get('/', noStore, async (req, res): Promise<void> => {
 
   try {
     // Prefer modern topics docs via Mango query; create minimal index for sort
-    const sessUser = (req as any).session?.userId as string | undefined;
-    const selector: any = { type: 'topic' };
-    if (myOnly && sessUser) selector.authorId = sessUser;
+    const identity = identityFromRequest(req);
+    const selector: any = await buildAccessibleTopicSelector(identity, myOnly);
 
     let topics: Array<{ id: string | undefined; title: string; createdAt: number; updatedAt?: number }> = [];
     let hasMore = false;
@@ -239,10 +276,16 @@ router.get('/', noStore, async (req, res): Promise<void> => {
 });
 
 // POST /api/topics
-router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
+router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
     const parsed = CreateTopicSchema.parse(req.body ?? {});
+    const participantEmails = [...new Set<string>(parsed.participants || [])];
+    const ownerEmail = String(req.user?.email || '').trim().toLowerCase();
+    if (ownerEmail && participantEmails.includes(ownerEmail)) {
+      res.status(400).json({ error: 'owner_already_participant' });
+      return;
+    }
     const now = Date.now();
     // Seed initial sectionAttribution so a freshly-created topic
     // already has per-block author entries. First edit after create
@@ -255,6 +298,9 @@ router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => 
       title: parsed.title,
       content: parsed.content,
       authorId: userId,
+      shareLevel: 'private',
+      allowComments: false,
+      allowEdits: false,
       createdAt: now,
       updatedAt: now,
       sectionAttribution: initialAttribution,
@@ -262,12 +308,22 @@ router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => 
     const r = await insertDoc(doc);
     const topicId = r.id;
 
-    // Handle participants if provided
-    const participantEmails = Array.isArray((req.body as any)?.participants)
-      ? (req.body as any).participants
-          .map((e: string) => String(e).trim().toLowerCase())
-          .filter((e: string) => e.length > 0 && e.includes('@'))
-      : [];
+    // Every topic has an explicit owner participant, even when the creator
+    // did not invite anyone during creation. Authorization must not depend on
+    // whether the optional participants input happened to be non-empty.
+    const ownerParticipantId = `participant:wave:${topicId}:user:${userId}`;
+    const ownerParticipant: WaveParticipant = {
+      _id: ownerParticipantId,
+      type: 'participant',
+      waveId: topicId,
+      userId,
+      email: req.user?.email || '',
+      role: 'owner',
+      invitedAt: now,
+      acceptedAt: now,
+      status: 'accepted',
+    };
+    await insertDoc(ownerParticipant as any).catch(() => undefined);
 
     let invitedCount = 0;
     if (participantEmails.length > 0) {
@@ -277,71 +333,63 @@ router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => 
       const inviterName = inviterUser?.name || inviterUser?.email?.split('@')[0] || 'Someone';
       const inviterEmail = inviterUser?.email || '';
 
-      const baseUrl = process.env['APP_BASE_URL'] || `${req.protocol}://${req.headers.host}`;
-      const topicUrl = `${baseUrl}/#/topic/${topicId}`;
-
-      // Create owner participant record for the creator
-      const ownerParticipantId = `participant:wave:${topicId}:user:${userId}`;
-      const ownerParticipant: WaveParticipant = {
-        _id: ownerParticipantId,
-        type: 'participant',
-        waveId: topicId,
-        userId: userId,
-        email: inviterEmail,
-        role: 'owner',
-        invitedAt: now,
-        acceptedAt: now,
-        status: 'accepted',
-      };
-      await insertDoc(ownerParticipant as any).catch(() => undefined);
-
+      const baseUrl = resolveInviteBaseUrl(req);
       // Invite each participant
       for (const email of participantEmails) {
         try {
-          // Find or create user
-          let user = await findOne<User>({ type: 'user', email }).catch(() => null);
-          let newUser = false;
-
-          if (!user) {
-            const newUserDoc: User = {
-              type: 'user',
-              email,
-              name: email.split('@')[0],
-              createdAt: now,
-              updatedAt: now,
-            };
-            const userResult = await insertDoc(newUserDoc as any);
-            user = { ...newUserDoc, _id: userResult.id };
-            newUser = true;
-          }
+          // Resolve an existing account when possible. Do not create a
+          // credential-less `type:user` placeholder: that used to block the
+          // invitee's later registration with `email_in_use`.
+          const user = await findOne<User>({ type: 'user', email }).catch(() => null);
+          const targetUserId = user?._id || `invite:${email}`;
+          const invite = createInviteToken(now);
+          const topicUrl = buildInviteUrl(baseUrl, topicId, invite.token);
 
           // Create participant record
-          const participantId = `participant:wave:${topicId}:user:${user._id}`;
+          const participantId = `participant:wave:${topicId}:user:${targetUserId}`;
           const participant: WaveParticipant = {
             _id: participantId,
             type: 'participant',
             waveId: topicId,
-            userId: user._id!,
+            userId: targetUserId,
             email,
             role: 'editor',
             invitedBy: userId,
             invitedAt: now,
-            status: newUser ? 'pending' : 'accepted',
-            acceptedAt: newUser ? undefined : now,
+            status: 'pending',
+            inviteTokenHash: invite.tokenHash,
+            inviteExpiresAt: invite.expiresAt,
           };
-          await insertDoc(participant as any);
 
-          // Send invite email
-          await sendInviteEmail({
+          await insertDoc(participant as any);
+          const tokenDoc: any = {
+            _id: invitationTokenDocId(invite.tokenHash),
+            type: 'invitation_token',
+            tokenHash: invite.tokenHash,
+            participantId,
+            waveId: topicId,
+            email,
+            status: 'pending_delivery',
+            createdAt: now,
+            expiresAt: invite.expiresAt,
+          };
+          const tokenInsert = await insertDoc(tokenDoc);
+          tokenDoc._rev = tokenInsert.rev;
+
+          const delivery = await sendInviteEmail({
             inviterName,
             inviterEmail,
             topicTitle: doc.title,
             topicUrl,
             recipientEmail: email,
-            recipientName: user.name || undefined,
-          }).catch((err) => {
-            console.warn('[topics] invite email failed', { email, error: err?.message });
-          });
+            recipientName: user?.name || undefined,
+          }).catch((err) => ({ success: false, error: err?.message }));
+          if (!delivery.success) {
+            await updateDoc({ ...tokenDoc, status: 'failed', failedAt: Date.now() } as any).catch(() => undefined);
+            console.warn('[topics] invite email failed', { email, error: delivery.error });
+            continue;
+          }
+          await updateDoc({ ...tokenDoc, status: 'sent', deliveredAt: Date.now() } as any).catch(() => undefined);
 
           invitedCount++;
         } catch (err: any) {
@@ -368,6 +416,12 @@ router.get('/:id', async (req, res): Promise<void> => {
   try {
     const id = req.params['id'] as string;
     const doc = await getDoc<Topic>(id);
+    if (isDeletedWave(doc)) {
+      res.status(410).json({ error: 'topic_deleted', requestId: (req as any)?.id });
+      return;
+    }
+    const access = await requireWaveAccess(req, res, id, 'read', doc);
+    if (!access) return;
     let authorName: string | undefined;
     let authorAvatar: string | undefined;
     if (doc.authorId) {
@@ -422,23 +476,35 @@ router.get('/:id', async (req, res): Promise<void> => {
       authorName,
       authorAvatar,
       sectionAttribution: sectionAttributionHydrated,
+      sharing: normalizeSharingPolicy(doc),
+      permissions: {
+        role: access.role,
+        canRead: access.canRead,
+        canComment: access.canComment,
+        canEdit: access.canEdit,
+        canManage: access.canManage,
+      },
     });
     return;
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
-    res.status(500).json({ error: e?.message || 'couch_error', requestId: (req as any)?.id });
+    res.status(500).json({ error: e?.message || 'topic_read_error', requestId: (req as any)?.id });
     return;
   }
 });
 
 // POST /api/topics/:id/follow
-router.post('/:id/follow', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
+router.post('/:id/follow', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const topicId = req.params['id'] as string;
   try {
-    await getDoc<Topic>(topicId);
+    const topic = await getDoc<Topic>(topicId);
+    const access = await requireWaveAccess(req, res, topicId, 'read', topic);
+    if (!access) return;
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
+    res.status(500).json({ error: e?.message || 'follow_access_error', requestId: (req as any)?.id });
+    return;
   }
 
   const followId = `topic_follow:${userId}:${topicId}`;
@@ -472,12 +538,15 @@ router.post('/:id/follow', csrfProtect(), requireAuth, async (req, res): Promise
 });
 
 // POST /api/topics/:id/unfollow
-router.post('/:id/unfollow', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
+router.post('/:id/unfollow', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const topicId = req.params['id'] as string;
   const followId = `topic_follow:${userId}:${topicId}`;
 
   try {
+    const topic = await getDoc<Topic>(topicId);
+    const access = await requireWaveAccess(req, res, topicId, 'read', topic);
+    if (!access) return;
     const existing = await getDoc<TopicFollow & { _rev?: string }>(followId).catch(() => null);
     if (!existing || !existing._rev) {
       res.json({ ok: true, topicId, isFollowed: false });
@@ -497,20 +566,18 @@ router.post('/:id/unfollow', csrfProtect(), requireAuth, async (req, res): Promi
 });
 
 // PATCH /api/topics/:id
-router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
+router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   try {
     const id = req.params['id'] as string;
     const payload = UpdateTopicSchema.parse(req.body ?? {});
     const existing = await getDoc<Topic & { _rev: string }>(id);
-    // All authenticated users can edit topics (collaborative editing, like original Rizzoma)
+    const access = await requireWaveAccess(req, res, id, 'edit', existing);
+    if (!access) return;
     const nowPatch = Date.now();
-    // If the client sent its own sectionAttribution, trust it (the
-    // client diff'd against the local lastSavedContent). Otherwise
-    // compute a fresh diff server-side so attribution stays accurate
-    // even when the client-side stamping path isn't taken (e.g.,
-    // direct API edits via a script or an older client).
-    let nextSectionAttribution = payload.sectionAttribution ?? existing.sectionAttribution;
-    if (!payload.sectionAttribution && payload.content !== undefined && payload.content !== existing.content) {
+    // Authorship is server authority. Ignore any unknown client sidecar and
+    // derive changed blocks from the stored old/new content plus this session.
+    let nextSectionAttribution = existing.sectionAttribution;
+    if (payload.content !== undefined && payload.content !== existing.content) {
       nextSectionAttribution = diffAndStampAttribution({
         prevAttribution: existing.sectionAttribution,
         oldHtml: existing.content || '',
@@ -539,19 +606,41 @@ router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void>
 });
 
 // DELETE /api/topics/:id
-router.delete('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
-  const userId = req.user!.id;
+router.delete('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   try {
     const id = req.params['id'] as string;
     const doc = await getDoc<{ _rev: string } & Topic>(id);
-    if ((doc as any).authorId && (doc as any).authorId !== userId) {
-      console.warn('[topics] forbidden delete', { topicId: id, userId, ownerId: (doc as any).authorId, requestId: (req as any)?.id });
-      res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
-      return;
-    }
-    const r = await deleteDoc(id, (doc as any)._rev);
-    res.json({ id: r['id'], rev: r['rev'] });
-    try { emitEvent('topic:deleted', { id: r['id'] }); } catch {}
+    const access = await requireWaveAccess(req, res, id, 'manage', doc);
+    if (!access) return;
+    const deletedAt = Date.now();
+    // Do not physically delete the metadata document. `resolveWaveAccess`
+    // intentionally maps a missing wave document to legacy public-read-only;
+    // retaining this explicit private tombstone prevents surviving blips from
+    // ever crossing that compatibility boundary after deletion.
+    const tombstone: TopicTombstone = {
+      ...(doc as any),
+      _id: id,
+      _rev: (doc as any)._rev,
+      type: 'topic_tombstone',
+      deleted: true,
+      deletedAt,
+      deletedBy: req.user!.id,
+      title: '',
+      content: '',
+      sectionAttribution: undefined,
+      shareLevel: 'private',
+      allowComments: false,
+      allowEdits: false,
+      updatedAt: deletedAt,
+    };
+    const r = await updateDoc(tombstone as any);
+    disconnectWaveSockets(id);
+    // The tombstone is the security boundary. Cascade after it has landed so
+    // even an interrupted cleanup cannot expose a leftover blip. A failed
+    // cascade is surfaced as an error, while the topic remains inaccessible.
+    const deletedBlips = await cascadeDeletedTopicBlips(id, req.user!.id, deletedAt);
+    res.json({ id: r['id'], rev: r['rev'], deleted: true, deletedBlips });
+    try { emitEvent('topic:deleted', { id: r['id'], deletedAt }); } catch {}
     return;
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }

@@ -9,7 +9,7 @@ describe('routes: inline comments threading', () => {
   app.use(cookieParser());
   app.use(requestId());
   app.use((req: any, _res, next) => {
-    req.session = { userId: 'inline-user', userName: 'Inline Tester' };
+    req.session = { userId: 'inline-user', userName: 'Inline Tester', csrfToken: 'token' };
     next();
   });
 
@@ -70,6 +70,12 @@ describe('routes: inline comments threading', () => {
 
       if (method === 'GET' && /\/[^/]+$/.test(path)) {
         const id = decodeURIComponent(path.split('/').pop() || '');
+        if (id === 'b1') {
+          return okResp({ _id: 'b1', type: 'blip', waveId: 'w1', content: '<p>hello</p>', createdAt: 1, updatedAt: 1 });
+        }
+        if (id === 'w1') {
+          return okResp({ _id: 'w1', type: 'wave', title: 'Wave', authorId: 'inline-user', createdAt: 1, updatedAt: 1 });
+        }
         const found = inlineDocs.find((doc) => doc._id === id);
         if (found) return okResp(found);
         return okResp({}, 404);
@@ -104,7 +110,7 @@ describe('routes: inline comments threading', () => {
 
     const rootResp = await fetch(`http://127.0.0.1:${port}/api/comments`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' },
       body: JSON.stringify({ blipId: 'b1', content: 'Root', range: baseRange }),
     });
     const rootBody = await rootResp.json();
@@ -112,7 +118,7 @@ describe('routes: inline comments threading', () => {
 
     const replyResp = await fetch(`http://127.0.0.1:${port}/api/comments`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' },
       body: JSON.stringify({ blipId: 'b1', content: 'Child', range: baseRange, parentId: root.id }),
     });
     const replyBody = await replyResp.json();
@@ -130,7 +136,7 @@ describe('routes: inline comments threading', () => {
 
     const resolveResp = await fetch(`http://127.0.0.1:${port}/api/comments/${encodeURIComponent(root.id)}/resolve`, {
       method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' },
       body: JSON.stringify({ resolved: true }),
     });
     expect(resolveResp.status).toBe(200);
@@ -141,13 +147,59 @@ describe('routes: inline comments threading', () => {
 
     const reopenResp = await fetch(`http://127.0.0.1:${port}/api/comments/${encodeURIComponent(root.id)}/resolve`, {
       method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' },
       body: JSON.stringify({ resolved: false }),
     });
     expect(reopenResp.status).toBe(200);
     const afterReopen = inlineDocs.find((doc) => doc._id === root.id);
     expect(afterReopen?.resolved).toBe(false);
     expect(afterReopen?.resolvedAt).toBeNull();
+
+    server.close();
+  });
+
+  it('rejects non-comment documents as parents or mutation targets', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const task = {
+      _id: 'task:confused-target',
+      _rev: '1-task',
+      type: 'task',
+      blipId: 'b1',
+      waveId: 'w1',
+      userId: 'inline-user',
+      content: 'Task content',
+      range: { start: 0, end: 5, text: 'hello' },
+      resolved: false,
+    };
+    inlineDocs.push(task);
+
+    const headers = { 'content-type': 'application/json', 'x-csrf-token': 'token' };
+    const asParent = await fetch(`http://127.0.0.1:${port}/api/comments`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        blipId: 'b1',
+        content: 'Must not attach',
+        range: { start: 0, end: 5, text: 'hello' },
+        parentId: task._id,
+      }),
+    });
+    expect(asParent.status).toBe(400);
+
+    const resolve = await fetch(`http://127.0.0.1:${port}/api/comments/${encodeURIComponent(task._id)}/resolve`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ resolved: true }),
+    });
+    expect(resolve.status).toBe(404);
+
+    const remove = await fetch(`http://127.0.0.1:${port}/api/comments/${encodeURIComponent(task._id)}`, {
+      method: 'DELETE',
+      headers,
+    });
+    expect(remove.status).toBe(404);
+    expect(inlineDocs.find((doc) => doc._id === task._id)).toEqual(task);
 
     server.close();
   });

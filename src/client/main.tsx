@@ -1,7 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import { useEffect, useState } from 'react';
-import { api } from './lib/api';
+import { api, ensureCsrf } from './lib/api';
 import { AuthPanel } from './components/AuthPanel';
+import { AnonymousTopicRoute } from './components/AnonymousTopicRoute';
 import { TopicsList } from './components/TopicsList';
 import { WavesList } from './components/WavesList';
 import { WaveView } from './components/WaveView';
@@ -30,47 +31,7 @@ import { useServiceWorker, useInstallPrompt } from './hooks/useServiceWorker';
 import { useOfflineToast } from './hooks/useOfflineStatus';
 import { setupBlipThreadClickHandler } from './components/editor/extensions/BlipThreadNode';
 import { initCapacitorNativeShell } from './lib/capacitor-native';
-import { announceAuthChange } from './lib/authSessionSignal';
 import { resetSocketForAuthTransition } from './lib/socket';
-
-// Mobile OAuth handoff: when the native Capacitor shell (or even a
-// plain browser) comes back from an OAuth callback, the backend has
-// redirected to /?mobileAuthTicket=<id>. Redeem the ticket synchronously
-// for a session cookie, then strip the query param from the URL so
-// React never sees it. This must run BEFORE createRoot so the very
-// first render sees the authenticated state. 2026-04-14 task #40.
-(() => {
-  if (typeof window === 'undefined') return;
-  const params = new URLSearchParams(window.location.search);
-  const ticket = params.get('mobileAuthTicket');
-  if (!ticket) return;
-  // Remove the ticket from the URL immediately so reload/back doesn't
-  // try to re-redeem an already-spent ticket.
-  params.delete('mobileAuthTicket');
-  const cleaned = window.location.pathname + (params.toString() ? `?${params}` : '') + (window.location.hash || '');
-  window.history.replaceState(null, '', cleaned);
-  // Fire-and-forget redemption; on success the session cookie is set
-  // and the subsequent api('/api/auth/me') bootstrap call in <App />
-  // will pick up the authed user.
-  void api('/api/auth/redeem-ticket', {
-    method: 'POST',
-    queueable: false,
-    body: JSON.stringify({ ticket }),
-  })
-    .then((res) => {
-      if (!res.ok) {
-        console.warn('[mobile-auth] ticket redemption failed', res.status);
-        return;
-      }
-      announceAuthChange();
-      // Force a reload so React's auth bootstrap re-runs with the new
-      // session cookie in place (simpler than threading state through).
-      window.location.replace('/?layout=rizzoma');
-    })
-    .catch((err) => {
-      console.warn('[mobile-auth] ticket redemption error', err);
-    });
-})();
 
 // Initialize Capacitor native shell (status bar, splash, back button,
 // app state listeners). No-op when running in a browser / PWA — the
@@ -82,6 +43,27 @@ initCapacitorNativeShell().catch((err) => {
 import './RizzomaApp.css';
 import './styles/breakpoints.css';
 import './styles/view-transitions.css';
+import {
+  clearPendingInvite,
+  readPendingInvite,
+  scrubInviteFragment,
+  scrubOwnerRecoveryFragment,
+} from './lib/fragmentSecrets';
+
+// OAuth callbacks return to the app without the original fragment. Restore a
+// pending invite in this tab before React derives its initial route; fragment
+// data never reaches the OAuth provider or web-server logs.
+const pendingInviteAtBoot = scrubInviteFragment();
+scrubOwnerRecoveryFragment();
+const oauthErrorAtBoot = new URLSearchParams(window.location.search).has('error');
+if (oauthErrorAtBoot) clearPendingInvite();
+else if (pendingInviteAtBoot && !window.location.hash.startsWith('#/topic/')) {
+  window.history.replaceState(
+    null,
+    '',
+    `${window.location.pathname}${window.location.search}#/topic/${encodeURIComponent(pendingInviteAtBoot.waveId)}`,
+  );
+}
 
 const PERF_SKIP_KEY = 'rizzoma:perf:skipSidebarTopics';
 const PERF_AUTO_EXPAND_KEY = 'rizzoma:perf:autoExpandRoot';
@@ -240,6 +222,61 @@ export function App() {
     }
   }, [route]);
 
+  // Invitation links carry a one-time token in the URL fragment.
+  // Redeem only after authentication; a pending participant grants no access
+  // until this succeeds and binds the invitation to the signed-in user id.
+  useEffect(() => {
+    const pendingInvite = readPendingInvite();
+    if (!me || !currentId || !pendingInvite || pendingInvite.waveId !== currentId) return;
+    let cancelled = false;
+    void (async () => {
+      const csrfToken = await ensureCsrf();
+      let response: { ok: boolean; status: number; data?: unknown };
+      try {
+        // Bearer redemption is deliberately direct/online-only. The generic
+        // API helper may queue mutations while offline; persisting this raw
+        // token in an offline queue would turn a tab-scoped secret into a
+        // durable localStorage credential and could report a synthetic 202 as
+        // acceptance.
+        const result = await fetch('/api/waves/invitations/accept', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'content-type': 'application/json',
+            ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+          },
+          body: JSON.stringify({ token: pendingInvite.token }),
+        });
+        const text = await result.text();
+        let data: unknown = text;
+        try { data = text ? JSON.parse(text) : null; } catch {}
+        response = { ok: result.ok, status: result.status, data };
+      } catch {
+        response = { ok: false, status: 0 };
+      }
+      if (cancelled) return;
+      if (response.ok) {
+        clearPendingInvite();
+        window.dispatchEvent(new CustomEvent('rizzoma:access-changed', { detail: { waveId: currentId } }));
+      } else {
+        if ([400, 404, 410].includes(response.status)) {
+          clearPendingInvite();
+        }
+        window.dispatchEvent(new CustomEvent('toast', {
+          detail: {
+            message: response.status === 403
+              ? 'This invitation belongs to another email address. Sign out and switch to the invited account to try again.'
+              : [400, 404, 410].includes(response.status)
+              ? 'This invitation is invalid, expired, or belongs to another account.'
+              : 'The invitation could not be accepted yet. It remains available for another try.',
+            type: 'error',
+          },
+        }));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [me, currentId]);
+
   // parse hash for list filters and pass as initial props
   const parseListParams = () => {
     const m = (route || '#/').match(/^#\/\/?(.*)$/);
@@ -255,36 +292,47 @@ export function App() {
   const listParams = parseListParams();
 
   const forceRizzomaLayout = useRizzomaLayoutParam || route.startsWith('#/topic/') || route.startsWith('#/wave/');
+  const anonymousTopicRoute = !me && currentId && route.startsWith('#/topic/');
 
   // Always render the modern Rizzoma shell for topic/wave routes or explicit layout flag
   if (forceRizzomaLayout) {
     return (
       <AuthProvider user={me} loading={checkingAuth} onUserChange={setMe}>
-        <div className="rizzoma-app">
-          {FEATURES.FOLLOW_GREEN && showCalendarBanner && (
-            <div className="notification-bar">
-              <span className="notification-bar-text">
-                Have your Rizzoma Tasks copied to your Google Calendar automatically.{' '}
-                <a href="#">Disable extension</a>
-              </span>
-              <button
-                type="button"
-                className="notification-bar-dismiss"
-                aria-label="Dismiss calendar banner"
-                title="Dismiss"
-                onClick={dismissCalendarBanner}
-              >
-                ×
-              </button>
-            </div>
-          )}
-          {checkingAuth ? (
-            <div className="rizzoma-loading">Loading…</div>
-          ) : (
-            <RizzomaLayout isAuthed={!!me} user={me} />
-          )}
-          <Toast />
-        </div>
+      <div className="rizzoma-app">
+        {FEATURES.FOLLOW_GREEN && showCalendarBanner && (
+          <div className="notification-bar">
+            <span className="notification-bar-text">
+              Have your Rizzoma Tasks copied to your Google Calendar automatically.{' '}
+              <a href="#">Disable extension</a>
+            </span>
+            <button
+              type="button"
+              className="notification-bar-dismiss"
+              aria-label="Dismiss calendar banner"
+              title="Dismiss"
+              onClick={dismissCalendarBanner}
+            >
+              ×
+            </button>
+          </div>
+        )}
+        {checkingAuth ? (
+          <div className="rizzoma-loading">Loading…</div>
+        ) : anonymousTopicRoute ? (
+          <AnonymousTopicRoute
+            topicId={currentId}
+            blipPath={currentBlipPath}
+            onSignedIn={(u) => setMe(u)}
+          />
+        ) : !me ? (
+          <div className="rizzoma-auth-overlay">
+            <AuthPanel onSignedIn={(u) => setMe(u)} />
+          </div>
+        ) : (
+          <RizzomaLayout isAuthed={!!me} user={me} />
+        )}
+        <Toast />
+      </div>
       </AuthProvider>
     );
   }

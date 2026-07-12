@@ -29,13 +29,26 @@ class YjsDocCache {
   }
 
   addRef(blipId: string) {
-    const entry = this.docs.get(blipId);
-    if (entry) entry.refCount++;
+    // Joining is the operation that establishes the first live reference.
+    // Create the cache entry here so addRef-before-loadFromDb cannot silently
+    // leave refCount at zero and allow cleanup to evict a still-joined doc.
+    this.getOrCreate(blipId);
+    const entry = this.docs.get(blipId)!;
+    entry.refCount++;
   }
 
   removeRef(blipId: string) {
     const entry = this.docs.get(blipId);
     if (entry) entry.refCount = Math.max(0, entry.refCount - 1);
+  }
+
+  /** Permanently discard collaborative state for a tombstoned blip. Deleted
+   * content must never be flushed later by the periodic snapshot writer. */
+  discard(blipId: string): void {
+    const entry = this.docs.get(blipId);
+    entry?.doc.destroy();
+    this.docs.delete(blipId);
+    this.dirty.delete(blipId);
   }
 
   getState(blipId: string): Uint8Array | null {

@@ -8,6 +8,8 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { noStore } from '../middleware/noStore.js';
 import { find, updateDoc, getDoc, getDocsById } from '../lib/couch.js';
+import { csrfProtect } from '../middleware/csrf.js';
+import { identityFromRequest, resolveWaveAccess } from '../lib/access.js';
 
 const router = Router();
 
@@ -57,17 +59,28 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
         : 'idx_mention_user_createdAt',
     });
 
+    const identity = identityFromRequest(req);
+    const accessByTopic = new Map<string, Promise<boolean>>();
+    const canReadTopic = (topicId: string) => {
+      if (!accessByTopic.has(topicId)) {
+        accessByTopic.set(topicId, resolveWaveAccess(topicId, identity).then((access) => access.canRead).catch(() => false));
+      }
+      return accessByTopic.get(topicId)!;
+    };
+    const visibleFlags = await Promise.all(result.docs.map((doc) => canReadTopic(doc.topicId)));
+    const visibleDocs = result.docs.filter((_, index) => visibleFlags[index]);
+
     // Batch-fetch topic titles in a single _all_docs request instead
     // of N serial GETs (the N+1 bug the Loading mentions... spinner
     // hung on — 2026-04-14 task #39).
-    const topicIds = [...new Set(result.docs.map(d => d.topicId))];
+    const topicIds = [...new Set(visibleDocs.map(d => d.topicId))];
     const topicDocs = await getDocsById<{ title?: string }>(topicIds);
     const topicTitles: Record<string, string> = {};
     for (const id of topicIds) {
       topicTitles[id] = topicDocs[id]?.title || 'Untitled Topic';
     }
 
-    const mentions = result.docs.map(doc => ({
+    const mentions = visibleDocs.map(doc => ({
       id: doc._id,
       topicId: doc.topicId,
       topicTitle: topicTitles[doc.topicId],
@@ -91,6 +104,10 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
       { type: 'mention', mentionedUserId: userId, isRead: false },
       { limit: COUNT_CAP, use_index: 'idx_mention_user_isRead' },
     );
+    const unreadVisibleFlags = await Promise.all(
+      (unreadCountResult.docs as Array<{ _id: string; topicId?: string }>).map((doc) => canReadTopic(String(doc.topicId || ''))),
+    );
+    const unreadCount = unreadCountResult.docs.filter((_, index) => unreadVisibleFlags[index]).length;
 
     res.json({
       mentions,
@@ -98,8 +115,8 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
       // there are more pages, but we don't pay for a full scan to
       // produce an exact "how many total mentions" figure (callers
       // that need paging can use offset + hasMore).
-      total: result.docs.length + offset + (result.docs.length === limit ? 1 : 0),
-      unreadCount: unreadCountResult.docs.length,
+      total: visibleDocs.length + offset + (result.docs.length === limit ? 1 : 0),
+      unreadCount,
       hasMore: result.docs.length === limit,
     });
   } catch (e: any) {
@@ -109,7 +126,7 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
 });
 
 // POST /api/mentions/:id/read - Mark mention as read
-router.post('/:id/read', requireAuth, async (req, res): Promise<void> => {
+router.post('/:id/read', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const mentionId = req.params['id'];
 
@@ -123,6 +140,11 @@ router.post('/:id/read', requireAuth, async (req, res): Promise<void> => {
 
     if (doc.mentionedUserId !== userId) {
       res.status(403).json({ error: 'not_authorized' });
+      return;
+    }
+    const access = await resolveWaveAccess(doc.topicId, identityFromRequest(req));
+    if (!access.canRead) {
+      res.status(403).json({ error: 'forbidden' });
       return;
     }
 
@@ -139,7 +161,7 @@ router.post('/:id/read', requireAuth, async (req, res): Promise<void> => {
 });
 
 // POST /api/mentions/read-all - Mark all mentions as read
-router.post('/read-all', requireAuth, async (req, res): Promise<void> => {
+router.post('/read-all', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
 
   try {
@@ -149,12 +171,16 @@ router.post('/read-all', requireAuth, async (req, res): Promise<void> => {
       isRead: false,
     }, { limit: 1000 });
 
+    let updated = 0;
     for (const doc of result.docs) {
+      const access = await resolveWaveAccess(doc.topicId, identityFromRequest(req)).catch(() => null);
+      if (!access?.canRead) continue;
       doc.isRead = true;
       await updateDoc(doc as any);
+      updated += 1;
     }
 
-    res.json({ success: true, count: result.docs.length });
+    res.json({ success: true, count: updated });
   } catch (e: any) {
     console.error('[mentions] mark all read error', e);
     res.status(500).json({ error: e?.message || 'mark_all_read_error' });

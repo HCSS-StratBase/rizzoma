@@ -75,10 +75,25 @@ function getSocket(): Socket {
     });
     socket.on('connect', () => console.log('[socket] connected', socket?.id));
     socket.on('connect_error', (err) => console.error('[socket] connect_error', err));
+    socket.on('access:changed', (payload: { waveId?: string }) => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('rizzoma:access-changed', { detail: payload }));
+      }
+    });
     // Expose for debugging
     if (typeof window !== 'undefined') (window as any).__socket = socket;
   }
   return socket;
+}
+
+/** Re-handshake the singleton against the current session cookie. Socket.IO
+ * middleware binds identity at connection time, so in-place login/logout must
+ * reconnect instead of reusing an anonymous or revoked transport. */
+export function refreshSocketSession(): Socket {
+  const current = getSocket();
+  if (current.connected) current.disconnect();
+  current.connect();
+  return current;
 }
 
 export function subscribeTopicsRefresh(onRefresh: () => void): () => void {
@@ -87,10 +102,12 @@ export function subscribeTopicsRefresh(onRefresh: () => void): () => void {
   s.on('topic:created', handler);
   s.on('topic:updated', handler);
   s.on('topic:deleted', handler);
+  s.on('access:changed', handler);
   return () => {
     s.off('topic:created', handler);
     s.off('topic:updated', handler);
     s.off('topic:deleted', handler);
+    s.off('access:changed', handler);
   };
 }
 

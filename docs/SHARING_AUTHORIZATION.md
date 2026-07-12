@@ -1,6 +1,6 @@
 # Sharing and Authorization
 
-Status: required integration contract. PR #66 implements and locally verifies the centralized sharing resolver on `codex/sharing-access-control-stack`; this isolated `release/preintegration-offline-upload` branch does **not** contain that resolver and must not deploy standalone. The attachment and offline slices below are being preintegrated only so their direct conflicts can be removed before PR #66 lands.
+Status: sharing core, offline/auth isolation, and ACL-backed attachments are integrated on `release/preintegration-offline-upload` (2026-07-12). The branch is not merged or deployed; later realtime/tasks/mentions/export/UI work and the full combined acceptance gate still block release.
 
 ## Persisted policy
 
@@ -74,7 +74,7 @@ The command pages through this Mango condition without changing documents:
 
 The read-only production inventory measured **26 total topic metadata documents: 0 explicit policies, 26 missing-policy legacy documents, and 0 malformed policies**. All 26 existing topics therefore use the public-read-only outsider fallback; their owners retain management. This branch deliberately does not infer or write policy for existing documents.
 
-## Source-slice verification (not a standalone preintegration verdict)
+## Source-slice verification
 
 - PR #66's source slice reported full stacked Vitest at 67 files, 361 passed, 3 skipped, 0 failed before this preintegration branch was assembled.
 - Focused authorization gates: 62 passed, covering the anonymous/outsider/viewer/commenter/editor/owner route matrix, legacy behavior, sharing persistence, alternate invitations, client fail-closed loading, session-backed Socket.IO identity spoofing, read-only viewer sync, and live editor demotion.
@@ -85,6 +85,6 @@ The read-only production inventory measured **26 total topic metadata documents:
 ## Remaining boundary
 
 - The inventory is a read-only count; no policy-stamping migration or production policy mutation was performed.
-- No deployment was performed. This preintegration branch is expected to fail typecheck or focused upload tests until PR #66's access APIs are integrated; public role/socket acceptance remains a post-merge gate after the managed-runtime base lands.
-- The service-worker cache purge/network-only rule for `/uploads/*` lands in the sharing/cache integration branch. This isolated slice deliberately does not edit `public/sw.js`; it must not deploy without that companion cache change because a previously cached response could otherwise survive logout.
-- User-scoped mention/task notification documents are handled in the sharing route-ACL slice rather than this attachment patch.
+- No deployment was performed. Public role/socket acceptance remains a post-merge gate after the managed-runtime base lands.
+- Service-worker v2 makes `/api`, `/socket.io`, and `/uploads` network-only and purges the prior dynamic cache; full combined verification must prove that policy survives all later merges.
+- User-scoped mention/task wiring, structural realtime, large-wave pagination, sanitizer/export hardening, and final UI acceptance remain in the next checkpoint.

@@ -110,6 +110,7 @@ async function invokeUploads(
     body: opts.body || {},
     params: opts.params || {},
     session: (opts.session ?? makeSession()) as Session & Partial<SessionData> & Record<string, unknown>,
+    headers: { 'x-csrf-token': 'test-csrf' },
     file: opts.file
       ? {
           fieldname: 'file',
@@ -125,11 +126,7 @@ async function invokeUploads(
         }
       : undefined,
   };
-  req.get = ((name: string) => (
-    name.toLowerCase() === 'x-csrf-token'
-      ? String((req.session as any).csrfToken || '')
-      : undefined
-  )) as Request['get'];
+  (req as any).get = (name: string) => (req.headers as Record<string, string> | undefined)?.[name.toLowerCase()];
   const res: Partial<Response> & {
     statusCode: number;
     body: any;
@@ -181,7 +178,7 @@ const makeSession = (overrides: Record<string, unknown> = {}) =>
     reload: vi.fn(),
     save: vi.fn(),
     touch: vi.fn(),
-    csrfToken: 'test-csrf-token',
+    csrfToken: 'test-csrf',
     ...overrides,
   }) as unknown as Session & Partial<SessionData> & Record<string, unknown>;
 

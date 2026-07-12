@@ -139,7 +139,7 @@ describe('routes: /api/topics', () => {
     const body = await resp.json();
     server.close();
     expect(resp.status).toBe(200);
-    expect(body.rev).toBe('3-c');
+    expect(body).toMatchObject({ rev: '2-b', deleted: true });
   });
 
   it('returns empty list when no modern docs (legacy fallback may be disabled)', async () => {

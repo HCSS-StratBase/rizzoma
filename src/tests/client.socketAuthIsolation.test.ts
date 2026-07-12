@@ -92,6 +92,14 @@ describe('client: Socket.IO auth isolation', () => {
       'shared-blip',
       { id: 'alice', name: 'Alice', color: '#111111' },
     );
+    const aliceJoin = socketHarness.emitted.find(([event]) => event === 'blip:join');
+    const acknowledgeAlice = aliceJoin?.[2] as ((result: Record<string, unknown>) => void) | undefined;
+    acknowledgeAlice?.({
+      ok: true,
+      waveId: 'wave-1',
+      canEdit: true,
+      user: { id: 'alice', name: 'Alice', color: '#111111' },
+    });
     socketHarness.trigger('blip:sync:shared-blip', {
       state: [],
       shouldSeed: false,
@@ -129,6 +137,15 @@ describe('client: Socket.IO auth isolation', () => {
     expect(socketHarness.fake.connectCalls).toBe(1);
     expect(socketHarness.emitted.map(([event]) => event)).toEqual(['blip:join']);
     expect(socketHarness.fake.sendBuffer).toHaveLength(0);
+
+    const bobJoin = socketHarness.emitted.find(([event]) => event === 'blip:join');
+    const acknowledgeBob = bobJoin?.[2] as ((result: Record<string, unknown>) => void) | undefined;
+    acknowledgeBob?.({
+      ok: true,
+      waveId: 'wave-1',
+      canEdit: true,
+      user: { id: 'bob', name: 'Bob', color: '#222222' },
+    });
 
     socketHarness.trigger('blip:sync:shared-blip', {
       state: [],

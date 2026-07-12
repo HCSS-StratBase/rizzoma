@@ -9,9 +9,38 @@ import {
 } from '../client/lib/collaborationPending';
 
 /** Create a minimal mock socket that mimics Socket.IO client behavior */
-function createMockSocket(connected = true, autoAcknowledge = true) {
+function createMockSocket(
+  connected = true,
+  options: {
+    autoJoinAck?: boolean;
+    autoUpdateAck?: boolean;
+    joinUser?: { id: string; name: string; color: string };
+  } = {},
+) {
+  const {
+    autoJoinAck = true,
+    autoUpdateAck = true,
+    joinUser = { id: 'user-1', name: 'User One', color: '#123456' },
+  } = options;
   type SocketHandler = (...args: unknown[]) => void;
   const handlers = new Map<string, Set<SocketHandler>>();
+  const pendingJoinAcks: Array<(result: any) => void> = [];
+  const emit = vi.fn((event: string, ...args: any[]) => {
+    const callback = args.at(-1);
+    if (event === 'blip:join' && typeof callback === 'function') {
+      if (autoJoinAck) {
+        callback({
+          ok: true,
+          waveId: 'wave-1',
+          canEdit: true,
+          user: joinUser,
+        });
+      } else {
+        pendingJoinAcks.push(callback);
+      }
+    }
+    if (event === 'blip:update' && autoUpdateAck && typeof callback === 'function') callback({ ok: true });
+  });
   const socket = {
     connected,
     on(event: string, handler: SocketHandler) {
@@ -25,13 +54,15 @@ function createMockSocket(connected = true, autoAcknowledge = true) {
         handlers.delete(event);
       }
     },
-    emit: vi.fn((...args: any[]) => {
-      const [event, , acknowledge] = args as [string, unknown, ((result: { ok: boolean }) => void) | undefined];
-      if (event === 'blip:update' && autoAcknowledge) acknowledge?.({ ok: true });
-    }),
+    emit,
     // Test helper: simulate server sending an event to this client
     _receive(event: string, data: any) {
       handlers.get(event)?.forEach(fn => fn(data));
+    },
+    _ackNextJoin(result: any) {
+      const ack = pendingJoinAcks.shift();
+      if (!ack) throw new Error('No pending blip:join acknowledgement');
+      ack(result);
     },
   };
   return socket;
@@ -54,7 +85,9 @@ describe('client: CollaborativeProvider', () => {
 
   it('joins room on construction when socket is connected', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-1');
-    expect(socket.emit).toHaveBeenCalledWith('blip:join', { blipId: 'blip-1' });
+    expect(socket.emit.mock.calls.some(([event, payload]) => (
+      event === 'blip:join' && payload.blipId === 'blip-1'
+    ))).toBe(true);
     expect(socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update')).toHaveLength(0);
     provider.destroy();
   });
@@ -82,6 +115,63 @@ describe('client: CollaborativeProvider', () => {
     expect(updateCalls[0][1].blipId).toBe('blip-3');
     expect(Array.isArray(updateCalls[0][1].update)).toBe(true);
 
+    provider.destroy();
+  });
+
+  it('holds document, awareness, and diff traffic until join authorization succeeds', () => {
+    socket = createMockSocket(true, { autoJoinAck: false });
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-delayed');
+    socket.emit.mockClear();
+
+    doc.getText('default').insert(0, 'edited while authorization is pending');
+    provider.setUser({ id: 'local-user', name: 'Local User', color: '#abcdef' });
+
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:update')).toHaveLength(0);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update')).toHaveLength(0);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:sync:request')).toHaveLength(0);
+
+    socket._ackNextJoin({
+      ok: true,
+      waveId: 'wave-1',
+      canEdit: true,
+      user: { id: 'server-user', name: 'Server User', color: '#123456' },
+    });
+
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:sync:request')).toHaveLength(1);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:update')).toHaveLength(0);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update')).toHaveLength(0);
+    expect(provider.awareness.getLocalState()?.['user']).toEqual({
+      id: 'server-user', name: 'Server User', color: '#123456',
+    });
+
+    socket._receive('blip:sync:blip-delayed', {
+      state: [],
+      shouldSeed: false,
+      canEdit: true,
+      user: { id: 'server-user' },
+    });
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:update')).toHaveLength(1);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update')).toHaveLength(1);
+
+    provider.destroy();
+  });
+
+  it('keeps collaboration paused and reports a denied join', () => {
+    socket = createMockSocket(true, { autoJoinAck: false });
+    const toast = vi.fn();
+    window.addEventListener('toast', toast);
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-denied');
+    socket.emit.mockClear();
+    doc.getText('default').insert(0, 'must not leave this client');
+
+    socket._ackNextJoin({ ok: false, error: 'unauthenticated' });
+
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:update')).toHaveLength(0);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update')).toHaveLength(0);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:sync:request')).toHaveLength(0);
+    expect(toast).toHaveBeenCalledTimes(1);
+
+    window.removeEventListener('toast', toast);
     provider.destroy();
   });
 
@@ -175,7 +265,7 @@ describe('client: CollaborativeProvider', () => {
     const syncCalls = socket.emit.mock.calls.filter(([ev]: any) => ev === 'blip:sync:request');
     const awarenessCalls = socket.emit.mock.calls.filter(([ev]: any) => ev === 'awareness:update');
     expect(joinCalls).toHaveLength(1);
-    expect(syncCalls).toHaveLength(0);
+    expect(syncCalls).toHaveLength(1);
     expect(awarenessCalls).toHaveLength(0);
 
     // The server emits sync only after its async authorization and room join.
@@ -198,7 +288,7 @@ describe('client: CollaborativeProvider', () => {
   });
 
   it('retains an offline Yjs edit until the reconnect diff is acknowledged', () => {
-    socket = createMockSocket(true, false);
+    socket = createMockSocket(true, { autoUpdateAck: false });
     const provider = new SocketIOProvider(doc, socket as any, 'blip-offline-pending');
     socket._receive('blip:sync:blip-offline-pending', { state: [], shouldSeed: true });
     socket._receive('disconnect', 'transport close');
@@ -220,15 +310,17 @@ describe('client: CollaborativeProvider', () => {
 
   it('refuses to release an A-owned document when the server session is B', () => {
     const alice = collaborationUserFromAuth({ id: 'alice', name: 'Alice' });
+    socket = createMockSocket(true, { autoJoinAck: false });
     const provider = new SocketIOProvider(doc, socket as any, 'cross-tab-blip', alice);
     const mismatch = vi.fn();
     window.addEventListener('rizzoma:auth-session-mismatch', mismatch);
     doc.getText('default').insert(0, 'A pending');
     expect(getPendingCollaborationCount()).toBe(1);
 
-    socket._receive('blip:sync:cross-tab-blip', {
-      state: [],
-      shouldSeed: false,
+    socket._ackNextJoin({
+      ok: true,
+      waveId: 'wave-1',
+      canEdit: true,
       user: { id: 'bob' },
     });
 
@@ -258,6 +350,10 @@ describe('client: CollaborativeProvider', () => {
   });
 
   it('uses Anonymous rather than a numbered-user identity without auth', () => {
+    // A real unauthenticated socket is never admitted to a collaboration
+    // room. Hold the mock acknowledgement so this harness assertion observes
+    // the provider's local fallback instead of an invented server identity.
+    socket = createMockSocket(true, { autoJoinAck: false });
     const provider = new SocketIOProvider(doc, socket as any, 'blip-anonymous');
     expect(provider.getUser().name).toBe('Anonymous');
     expect(provider.getUser().name).not.toMatch(/^User \d+$/);
@@ -270,6 +366,7 @@ describe('client: CollaborativeProvider', () => {
       email: 'alice@example.com',
       name: 'Alice',
     });
+    socket = createMockSocket(true, { joinUser: alice });
     const provider = new SocketIOProvider(doc, socket as any, 'blip-idempotent', alice);
     socket.emit.mockClear();
 
@@ -283,8 +380,6 @@ describe('client: CollaborativeProvider', () => {
   it('shares two authenticated names without a numbered-user fallback', () => {
     const aliceDoc = new Y.Doc();
     const bobDoc = new Y.Doc();
-    const aliceSocket = createMockSocket(true);
-    const bobSocket = createMockSocket(true);
     const alice = collaborationUserFromAuth({
       id: 'alice-id',
       email: 'alice@example.com',
@@ -295,6 +390,8 @@ describe('client: CollaborativeProvider', () => {
       email: 'bob@example.com',
       name: 'Bob Example',
     });
+    const aliceSocket = createMockSocket(true, { joinUser: alice });
+    const bobSocket = createMockSocket(true, { joinUser: bob });
     const aliceProvider = new SocketIOProvider(aliceDoc, aliceSocket as any, 'shared-names', alice);
     const bobProvider = new SocketIOProvider(bobDoc, bobSocket as any, 'shared-names', bob);
 

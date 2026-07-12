@@ -34,6 +34,9 @@ describe('routes: /api/topics/:id/comments', () => {
           { _id: 'c2', type: 'comment', topicId: 't1', authorId: 'u2', content: 'world', createdAt: 2, updatedAt: 2 },
         ] });
       }
+      if (method === 'GET' && /\/[^/]+$/.test(path)) {
+        return okResp({ _id: 't1', type: 'topic', title: 'Topic', authorId: 'u1', createdAt: 1, updatedAt: 1 });
+      }
       if (method === 'POST' && path.match(/\/[^/]+$/)) {
         // insertDoc
         return okResp({ ok: true, id: 'c1', rev: '1-abc' }, 201);

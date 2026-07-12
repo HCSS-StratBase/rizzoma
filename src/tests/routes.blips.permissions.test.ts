@@ -81,16 +81,17 @@ describe('routes: blips permissions', () => {
     expect(couch.updateDoc).not.toHaveBeenCalled();
   });
 
-  it('allows any authenticated user to update a blip (collaborative editing)', async () => {
+  it('denies an authenticated outsider from updating a blip', async () => {
     couch.getDoc.mockResolvedValue({ _id: 'b1', type: 'blip', waveId: 'w1', authorId: 'owner', content: '<p>old</p>' });
     couch.updateDoc.mockResolvedValue({ ok: true, id: 'b1', rev: '2-x' });
     const res = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
       body: { content: '<p>new</p>' },
-      session: { userId: 'other' },
+      session: { userId: 'other', csrfToken: 'tok' },
+      headers: { 'x-csrf-token': 'tok' },
     });
-    expect(res.statusCode).toBe(200);
-    expect(couch.updateDoc).toHaveBeenCalledTimes(1);
+    expect(res.statusCode).toBe(403);
+    expect(couch.updateDoc).not.toHaveBeenCalled();
   });
 
   it('allows the author to update a blip', async () => {
@@ -99,7 +100,8 @@ describe('routes: blips permissions', () => {
     const res = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
       body: { content: '<p>new</p>' },
-      session: { userId: 'author' },
+      session: { userId: 'author', csrfToken: 'tok' },
+      headers: { 'x-csrf-token': 'tok' },
     });
     expect(res.statusCode).toBe(200);
     expect(couch.updateDoc).toHaveBeenCalledTimes(1);

@@ -1,22 +1,6 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-12 (integration branch
-`codex/offline-auth-isolation`; PR #65 source base `5a376119`; public runtime
-code still `fe6988fb`). Production replay is disabled; REST and Yjs recovery
-state is owner-partitioned; auth changes propagate across tabs; and the shell
-is visibly read-only offline. Service-worker v2 keeps `/api`, `/socket.io`, and
-`/uploads` network-only and purges the former v1 dynamic cache. Auth changes disconnect
-Socket.IO, empty both packet buffers, and reconnect only after identity cleanup.
-Targeted tests passed 60/60, full Vitest passed 343 with 3 skipped, typecheck
-and the 3,306-module build passed, and 24
-desktop/mobile PNGs were visually inspected with 0 unexpected console errors.
-Before deployment, integrate PR #66 and verify that its socket
-session/access/revocation/authoritative-user checks and network-only transport
-policy coexist with this branch's acknowledgement/owner checks and v2 purge.
-No VPS change belongs to this branch. Worklog:
-[offline/auth isolation](worklog-260712-offline-auth-isolation.md).
-
-Base branch state: PR #64 merged production-service hardening to `master` as `2595d2de`. This branch changes no service/deployment files and makes no new rollout claim. Worklog: [production service hardening](worklog-260712-production-service-hardening.md).
+Last refreshed: 2026-07-12 (`release/preintegration-offline-upload`; sharing core `df3e189a`, offline/auth isolation, and private ACL-backed uploads integrated on merged `master` `6687f99d`; **not merged or deployed**). The combined branch preserves owner-partitioned offline/Yjs state, network-only private transports, persisted sharing roles, session-authorized Socket.IO, and revocable attachment access. Exact-core audit follow-ups and the sanitizer/realtime/large-wave/tasks/mentions/export/UI checkpoint still block the full combined gate. See the [sharing and authorization reference](SHARING_AUTHORIZATION.md).
 
 Last refreshed (prior): 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — verified Playwright sign-in lands as `sdspieg@gmail.com`. Tasks #140 + #143 closed. Two Hetzner Robot firewall changes needed: opened :80 + consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to cover return traffic from MASQUERADE'd outbound. tcpdump-diagnosed.)
 
@@ -47,7 +31,7 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `codex/authenticated-cursor-identity` (2026-07-12), based on merged PR #64 `master` at `2595d2de`; public production remains `fe6988fb` from PR #60. Always cite branch + date when sharing status.
+- Active branch: `release/preintegration-offline-upload` (2026-07-12), integrating sharing, offline isolation, cursor identity, and private uploads on merged `master` `6687f99d`; public production remains `fe6988fb` from PR #60. Always cite branch + date when sharing status.
 - Final release gates: 62 Vitest files / 284 passed / 3 skipped; production build 3,298 modules; public collaboration 10/10 with 39 ms relay and zero receiving-client REST PUTs; strict public desktop/mobile Follow-the-Green `2 → 1 → 0`; RedisStore active; zero API 5xx during acceptance.
 - Latest inspected production evidence is under `screenshots/260712-0530-pr60-production-final/`, including command logs, real-control before/after captures, and the required desktop viewport sweep.
 - Deployment boundary: nginx targets the exact merge through Vite `:3100` → API `:8100`; the old `:3000`/`:8788` lane remains healthy for immediate rollback. Both lanes are unmanaged bare processes and share CouchDB.
@@ -70,7 +54,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Run "git checkout master" immediately - that is the currently active branch we're working in.
+    - Continue in the isolated `codex/sharing-access-control-stack` worktree/branch; do not switch this worktree to `master` or modify another checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -80,14 +64,15 @@ codex exec '
 
   Priority focus (current backlog):
   1) Merge `codex/production-service-hardening`, install the managed unit/root-only env, and deploy exact SHA to `:8101`; run direct preflight, drain/stop the old lane with zero overlap, switch both vhosts, then run full public acceptance.
-  2) Keep native rendering disabled until full tree loading and lossless rich-content round trips pass; only then begin edit/reply/persistence integration.
-  3) Clean synthetic production topics, separate staging from production CouchDB, and retire disconnected `:3000`/`:8788` while preserving the exact restart recipe.
-  4) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
-  5) Repair/refresh BLB snapshots and test real-device iPhone Safari.
-  6) Reconcile the dirty canonical checkout and automate bundle/GDrive backup cadence.
-  7) Triage 3 stale PRs / 7 native-port issues; address Node 22, Capacitor CLI 8, GitHub Action majors, 6,354 lint warnings, and legacy assets.
+  2) Review the stacked sharing authorization PR through normal CI, then run the anonymous/outsider/viewer/commenter/editor/owner matrix and live socket-demotion checks against an isolated staging database before any public cutover. Production inventory is already measured at 26 missing-policy legacy topics out of 26 total, with 0 malformed.
+  3) Keep native rendering disabled until full tree loading and lossless rich-content round trips pass; only then begin edit/reply/persistence integration.
+  4) Clean synthetic production topics, separate staging from production CouchDB, and retire disconnected `:3000`/`:8788` while preserving the exact restart recipe.
+  5) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
+  6) Repair/refresh BLB snapshots and test real-device iPhone Safari.
+  7) Reconcile the dirty canonical checkout, automate bundle/GDrive backup cadence, and triage native/dependency/lint debt.
 
   Testing/CI hygiene:
+  - Keep the central sharing/access, route-role matrix, real-session Socket.IO authorization, and ShareModal tests green; production policy changes require staging evidence first.
   - Keep `npm run test:toolbar-inline`, `npm run test:follow-green`, and `npm run test:collab` green; snapshots live under `snapshots/<feature>/` and are uploaded as Actions artifacts.
   - Follow-the-Green acceptance must fail on any non-2xx or malformed unread response and must prove the real desktop and mobile Next control persists `2 -> 1 -> 0`; DOM mutation, debug hooks, direct-API fallbacks, missing-button success, and swallowed errors are forbidden.
   - Keep the enforced 120-blip full-render perf gate green: exact 120/120 rendering, required lazy slots, no timeout, stage duration under 3 seconds, and heap under 100 MB.

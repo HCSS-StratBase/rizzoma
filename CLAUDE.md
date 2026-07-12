@@ -1,6 +1,6 @@
 # Rizzoma Project Status (`release/preintegration-offline-upload`)
 
-> **2026-07-12 preintegration checkpoint:** This isolated branch combines the offline/auth-isolation slice with the private-upload slice on merged `master` `6687f99d`. The upload implementation still depends on PR #66's centralized sharing resolver and must not be treated as standalone until that dependency is integrated and verified. See the [sharing and authorization reference](docs/SHARING_AUTHORIZATION.md).
+> **2026-07-12 integration checkpoint:** This isolated branch combines merged `master` `6687f99d`, offline/auth isolation, private ACL-backed uploads, and audited sharing/auth/socket core `df3e189a`. It is not merged or deployed; the remaining sanitizer, realtime, large-wave, tasks, mentions, export, and UI checkpoint plus full combined gates still block release. See the [sharing and authorization reference](docs/SHARING_AUTHORIZATION.md).
 
 > **Session Continuity**: Read `CLAUDE_SESSION.md` first for detailed context from the last working session (recent fixes, test status, gotchas, key files).
 

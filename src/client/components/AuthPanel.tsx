@@ -1,23 +1,40 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/api';
+import { api, ensureCsrf } from '../lib/api';
 import { isNative, launchNativeOAuth } from '../lib/capacitor-native';
+import {
+  clearOwnerRecoveryToken,
+  readPendingInvite,
+  readOwnerRecoveryToken,
+  scrubOwnerRecoveryFragment,
+} from '../lib/fragmentSecrets';
 import { toast } from './Toast';
 import { announceAuthChange } from '../lib/authSessionSignal';
+import { refreshSocketSession } from '../lib/socket';
 import './AuthPanel.css';
 
-type AuthUser = { id?: string; email?: string };
+export type AuthUser = { id?: string; email?: string };
 type OAuthStatus = { google: boolean; facebook: boolean; microsoft: boolean; twitter: boolean; saml: boolean };
 
 export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void }): JSX.Element {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [recoveryMode, setRecoveryMode] = useState(() => Boolean(readOwnerRecoveryToken()));
+  const [inviteRegistration] = useState(() => Boolean(readPendingInvite()));
+  const [mode, setMode] = useState<'login' | 'register'>(() => (readOwnerRecoveryToken() || readPendingInvite()) ? 'register' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [oauthStatus, setOauthStatus] = useState<OAuthStatus>({ google: false, facebook: false, microsoft: false, twitter: false, saml: false });
+  const canRegister = recoveryMode || inviteRegistration;
 
   // Check OAuth availability
+  useEffect(() => {
+    if (scrubOwnerRecoveryFragment()) {
+      setRecoveryMode(true);
+      setMode('register');
+    }
+  }, []);
+
   useEffect(() => {
     api<OAuthStatus>('/api/auth/oauth-status').then(res => {
       if (res.ok && res.data && typeof res.data === 'object') {
@@ -81,24 +98,54 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
 
   const act = async (kind: 'login' | 'register'): Promise<void> => {
     setError(null);
-    if (!email.includes('@') || password.length < 6) {
-      setError('Enter a valid email and 6+ char password');
+    const minimumPasswordLength = kind === 'register' ? 12 : 6;
+    if (!email.includes('@') || password.length < minimumPasswordLength) {
+      setError(`Enter a valid email and ${minimumPasswordLength}+ char password`);
       return;
     }
     setBusy(true);
-    const r = await api(`/api/auth/${kind}`, { method: 'POST', body: JSON.stringify({ email, password }) });
-    setBusy(false);
-    if (!r.ok) {
-      const serverMsg = typeof r.data === 'object' && r.data && 'error' in r.data ? String((r.data as any).error) : '';
-      const detail = serverMsg ? ` [${serverMsg}]` : ` [HTTP ${r.status}]`;
-      setError(kind === 'login' ? `Invalid email or password${detail}` : `Registration failed${detail}`);
-      const reqId = (r as unknown as { requestId?: string | undefined }).requestId;
-      const idTag = (reqId !== undefined && reqId !== '') ? ` (${reqId})` : '';
-      toast(`${kind === 'login' ? 'Login' : 'Register'} failed${detail}${idTag}`, 'error');
-    } else {
-      announceAuthChange();
-      onSignedIn(r.data as AuthUser);
-      toast(kind === 'login' ? 'Welcome back!' : 'Account created!', 'info');
+    const ownerRecoveryToken = readOwnerRecoveryToken();
+    try {
+      await ensureCsrf();
+      const inviteToken = readPendingInvite()?.token;
+      const r = await api(`/api/auth/${kind}`, {
+        method: 'POST',
+        body: JSON.stringify({
+          email,
+          password,
+          ...(kind === 'register' && ownerRecoveryToken ? { ownerRecoveryToken } : {}),
+          ...(kind === 'register' && inviteToken ? { inviteToken } : {}),
+        }),
+      });
+      if (!r.ok) {
+        const serverMsg = typeof r.data === 'object' && r.data && 'error' in r.data ? String((r.data as any).error) : '';
+        const detail = serverMsg ? ` [${serverMsg}]` : ` [HTTP ${r.status}]`;
+        setError(kind === 'login' ? `Invalid email or password${detail}` : `Registration failed${detail}`);
+        const reqId = (r as unknown as { requestId?: string | undefined }).requestId;
+        const idTag = (reqId !== undefined && reqId !== '') ? ` (${reqId})` : '';
+        toast(`${kind === 'login' ? 'Login' : 'Register'} failed${detail}${idTag}`, 'error');
+        if (kind === 'register' && ownerRecoveryToken && [400, 403, 404, 409, 410].includes(r.status)) {
+          clearOwnerRecoveryToken();
+          setRecoveryMode(false);
+        }
+      } else {
+        if (kind === 'register' && ownerRecoveryToken) {
+          clearOwnerRecoveryToken();
+          setRecoveryMode(false);
+        }
+        // Socket.IO authorizes identity at connection time. Reconnect after an
+        // in-place password login so an anonymous topic socket cannot retain
+        // its old authorization for the new account.
+        announceAuthChange();
+        refreshSocketSession();
+        onSignedIn(r.data as AuthUser);
+        toast(kind === 'login' ? 'Welcome back!' : 'Account created!', 'info');
+      }
+    } catch {
+      setError('Authentication service is temporarily unreachable. Please try again.');
+      toast('Authentication request failed. Please try again.', 'error');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -110,9 +157,10 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
 
   return (
     <div className="auth-panel">
-      <h3 className="auth-title">{mode === 'login' ? 'Sign in to continue' : 'Create an account'}</h3>
+      <h3 className="auth-title">{recoveryMode ? 'Recover your owner account' : mode === 'login' ? 'Sign in to continue' : 'Create an account'}</h3>
 
       {/* OAuth buttons */}
+      {!recoveryMode && <>
       <button
         className="oauth-btn google-btn"
         disabled={!oauthStatus.google}
@@ -140,7 +188,7 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
         <span className="oauth-icon">M</span>
         Sign in with Microsoft
       </button>
-      <button
+      {!isNative && !inviteRegistration && <button
         className="oauth-btn twitter-auth-btn"
         disabled={!oauthStatus.twitter}
         title={oauthStatus.twitter ? 'Sign in with X/Twitter' : 'X/Twitter sign-in not configured'}
@@ -148,8 +196,8 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
       >
         <span className="oauth-icon">X</span>
         Sign in with X/Twitter
-      </button>
-      {oauthStatus.saml && (
+      </button>}
+      {!isNative && oauthStatus.saml && (
         <button
           className="oauth-btn saml-btn"
           onClick={handleSamlSignIn}
@@ -159,8 +207,17 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
           Sign in with SSO
         </button>
       )}
+      {isNative && (oauthStatus.twitter || oauthStatus.saml) && (
+        <p className="auth-provider-note">X/Twitter and organization SSO are currently available in the web app only.</p>
+      )}
+      {inviteRegistration && oauthStatus.twitter && (
+        <p className="auth-provider-note">X/Twitter cannot verify the email address on this invitation. Use the invited email and password, or an email-bearing provider.</p>
+      )}
 
-      <div className="or-divider">{mode === 'login' ? 'or sign in with email' : 'or sign up with email'}</div>
+      </>}
+
+      {!recoveryMode && <div className="or-divider">{mode === 'login' ? 'or sign in with email' : 'or sign up with email'}</div>}
+      {recoveryMode && <p className="auth-recovery-note">Use the exact owner email address and choose a new password. This one-time recovery link cannot be used with social sign-in.</p>}
 
       <div className="login-form">
         <input
@@ -195,9 +252,9 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
         </button>
       </div>
 
-      <div className="login-footer">
+      {!recoveryMode && <div className="login-footer">
         {mode === 'login' ? (
-          <>
+          canRegister ? <>
             <span>Don't have an account? </span>
             <a
               href="#"
@@ -210,7 +267,7 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
             >
               Sign up
             </a>
-          </>
+          </> : <span>New email/password accounts require an invitation. Sign in with an existing password or an available provider.</span>
         ) : (
           <>
             <span>Already have an account? </span>
@@ -227,7 +284,7 @@ export function AuthPanel({ onSignedIn }: { onSignedIn: (u: AuthUser) => void })
             </a>
           </>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
