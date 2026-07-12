@@ -62,4 +62,47 @@ describe('client: authenticated Yjs isolation', () => {
     expect(manager.getDocument('unmounted-blip', 'bob').getText('default').toString()).toBe('');
     expect(manager.getDocument('unmounted-blip', 'alice').getText('default').toString()).toBe('retain on unmount');
   });
+
+  it('never merges a retained old generation into an externally replaced document', () => {
+    const manager = new YjsDocumentManager();
+    managers.push(manager);
+    const getGenerationDocument = manager.getDocument.bind(manager) as unknown as (
+      blipId: string,
+      ownerId: string,
+      yjsGeneration: number,
+    ) => import('yjs').Doc;
+
+    const generationOne = getGenerationDocument('generation-blip', 'alice', 1);
+    generationOne.getText('default').insert(0, 'superseded task history');
+
+    const generationTwo = getGenerationDocument('generation-blip', 'alice', 2);
+    expect(generationTwo).not.toBe(generationOne);
+    expect(generationTwo.getText('default').toString()).toBe('');
+  });
+
+  it('keys pending quarantines by generation as well as owner and blip', () => {
+    const manager = new YjsDocumentManager();
+    managers.push(manager);
+    const getGenerationDocument = manager.getDocument.bind(manager) as unknown as (
+      blipId: string,
+      ownerId: string,
+      yjsGeneration: number,
+    ) => import('yjs').Doc;
+    const removeGenerationDocument = manager.removeDocument.bind(manager) as unknown as (
+      blipId: string,
+      ownerId: string,
+      yjsGeneration: number,
+    ) => void;
+
+    getGenerationDocument('quarantined-generation', 'alice', 1)
+      .getText('default')
+      .insert(0, 'generation one pending');
+    markCollaborationUpdatePending('alice', 'quarantined-generation');
+    removeGenerationDocument('quarantined-generation', 'alice', 1);
+
+    expect(getGenerationDocument('quarantined-generation', 'alice', 2)
+      .getText('default').toString()).toBe('');
+    expect(getGenerationDocument('quarantined-generation', 'alice', 1)
+      .getText('default').toString()).toBe('generation one pending');
+  });
 });

@@ -1,29 +1,40 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`fix/topic-root-preference-requests`; deployed base
-`9358b9c5`). PRs [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66),
-[#67](https://github.com/HCSS-StratBase/rizzoma/pull/67), and
-[#68](https://github.com/HCSS-StratBase/rizzoma/pull/68) are merged. Exact
-master `e21afd046bfed1e9b065a6caee3b0f947fd26f59` passed its private dependency,
-health, asset, and journal gates and became public at 21:32 CEST through a
-zero-connection, no-snapshot-error drain. The first strict public login loop
-then exposed an intermittent session race: anonymous page/API/asset requests
-each minted a different session cookie, so a late response could overwrite a
-successful login. PR #69 restricted anonymous CSRF-session creation to
-`/api/auth/csrf`, merged as `9358b9c5`, and passed both private and public
-browser race gates at 10/10. Strict phase-1 acceptance then found two
-unnecessary 404s: the synthetic topic-root shell queried blip-scoped collapse
-and inline-comment preferences using the wave id, which has no blip document.
-The current branch skips those inapplicable requests. CI, exact private
-redeploy, zero-overlap cutover, and resumed public acceptance are the immediate
-boundary.
+Last Updated: 2026-07-12 (`fix/rest-yjs-content-coherence`; deployed base
+`04b9462244832c0567bf3741da07f0c18c10d1bb`). PRs
+[#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) through
+[#70](https://github.com/HCSS-StratBase/rizzoma/pull/70) are merged and public.
+The strict acceptance gate passed login-race proof, phase-1 restart/OAuth-shape/
+hierarchy/upload/scanner checks, invitation acceptance, role enforcement,
+two-browser collaboration/reconnect, Follow-the-Green `2 -> 1 -> 0`, recursive
+exports, public/private ACLs, and revocation. It then exposed a real
+dual-authority defect: an out-of-band REST blip replacement left an older Yjs
+cache/snapshot live, and a later collaborative edit restored the stale HTML and
+deleted its derived Task side-document. The current branch replaces that dual
+authority with a durable per-blip `yjsGeneration`: external REST replacements
+advance the generation; browser documents, cache entries, snapshots, updates,
+and socket leases are generation-bound; and collaborative projections require
+the matching writable session, generation, and SHA-256 digest of the full Yjs
+state. Every mutation is serialized, acknowledged dirty state cannot be
+overwritten, the exact snapshot is persisted before HTML materialization,
+seeding has one socket-owned claimant, and the legacy editor uses an isolated
+snapshot namespace. Queued demotion/deletion races and the final native-auth
+ticket/preclaim/logout edges are regression-covered. Per-wave policy epochs
+also invalidate every pending room/join across demotion or deletion, and
+failure-safe route cleanup refreshes live authority after partial access-policy
+writes. Snapshot reads fail closed: storage/decode errors publish no room,
+reference, or seed, and the client retries with bounded backoff. Local full
+gates pass at 108 files / 647 tests / 3 skipped, typecheck,
+full-source ESLint `--quiet`, and
+a 3,315-module build. GitHub CI, private deployment, and resumed acceptance
+remain open.
 
 **Deployment boundary:** both public vhosts point exactly once to the compiled,
-systemd-managed green lane on loopback `:8102`; blue and the old listeners are
-inactive. `rizzoma@green` is active/enabled at exact release `9358b9c5`, with
-Redis sessions, CouchDB, and ClamAV all healthy. The root-only rollback capture
-is `/root/rizzoma-cutover-hotfix-20260712-215643`. Native rendering remains disabled;
-production uses the React/TipTap parity path.
+systemd-managed blue lane on loopback `:8101`; green and the old listeners are
+inactive. `rizzoma@blue` is active/enabled at exact release `04b94622`, with
+Redis sessions, CouchDB, and ClamAV healthy. The root-only rollback capture is
+`/root/rizzoma-cutover-topic-root-20260712-221536`. Native rendering remains
+disabled; production uses the React/TipTap parity path.
 
 Last Updated: 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — Playwright sign-in lands as `sdspieg@gmail.com` "Stephan De Spiegeleire" with Google avatar. Tasks #140 + #143 both closed. Required two Hetzner Robot firewall passes: (1) opened port 80 for Let's Encrypt; (2) consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to allow return traffic from MASQUERADE'd outbound — without that, server couldn't reach `oauth2.googleapis.com/token`. Diagnosed via tcpdump (SYN egressed, no SYN-ACK returned). Same fix unblocks SMTP / S3 / any container-outbound feature.)
 
@@ -56,9 +67,9 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active development branch: `fix/topic-root-preference-requests` (2026-07-12),
-  based on deployed master `9358b9c5`; the preference-request fix remains
-  private until CI and resumed console-clean acceptance pass. Always include branch name + date when
+- Active development branch: `fix/rest-yjs-content-coherence` (2026-07-12),
+  based on deployed master `04b94622`; the coherence fix remains private until
+  CI, exact-lane deployment, and resumed console-clean acceptance pass. Always include branch name + date when
   summarizing status.
 - The "Current State" section below is refreshed for the deployed parity release; older dated entries and “native release” labels are historical until the native renderer is write-capable and actually enabled.
 
@@ -93,7 +104,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`fix/topic-root-preference-requests` @ 2026-07-12; deployed base `9358b9c5`; public fix pending)
+Current State (`fix/rest-yjs-content-coherence` @ 2026-07-12; deployed base `04b94622`; coherence fix pending)
 - The full application stack is merged on `master` through PR #66: private/link/public
   sharing, viewer/commenter/editor/owner enforcement, server-session Socket.IO
   identity, live demotion, owner-partitioned offline/Yjs state, ACL-backed
@@ -114,12 +125,13 @@ Current State (`fix/topic-root-preference-requests` @ 2026-07-12; deployed base 
   across the required desktop widths plus 390 mobile. The Task manifest has
   zero unexpected console errors and every sharing modal remains within its
   viewport.
-- Remaining release gates: merge the session-race hotfix only after green CI,
-  deploy it to the inactive managed lane, switch with zero writer overlap, and
-  complete public mail/scanner/restart/collaboration/role/Task/mention/export/
-  reset/responsive acceptance.
+- Remaining release gates: publish/merge only after green CI, deploy the exact
+  merge to the inactive managed lane, switch with zero writer overlap, then
+  resume the same acceptance topic through Task/mention survival, password
+  reset, restart durability, Google OAuth, responsive/mobile screenshots, and
+  final journal/health inspection.
 - The managed compiled blue lane is public on `:8101`; the inactive green lane
-  remains the private hotfix target. Graceful shutdown flushes dirty Yjs
+  remains the private coherence-fix target. Graceful shutdown flushes dirty Yjs
   documents, production refuses the development session secret, and
   `/api/health` includes Redis and ClamAV readiness.
 - A live security preflight proved CouchDB `5984` and unauthenticated Redis `6379` were externally reachable. Redis showed active attacker replication/config activity and an SSH-key payload. Root-only evidence was preserved; all 54 untrusted keys/sessions were flushed; Redis was recreated clean. Persistent dual-stack rules now close both dependencies and every direct Rizzoma internal port while public HTTPS health remains 200. The managed cutover must use a fresh secret with no previous verifier, intentionally forcing one re-login. See `screenshots/260712-1218-redis-incident-response/`.

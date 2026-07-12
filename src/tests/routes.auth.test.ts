@@ -101,6 +101,7 @@ describe('routes: /api/auth', () => {
         csrfToken: 'test-csrf-token',
         destroy: (cb: (error?: Error) => void) => {
           logoutState.events.push('destroy');
+          if (req.get('x-test-destroy-throw') === '1') throw new Error('store threw');
           cb(req.get('x-test-destroy-fail') === '1' ? new Error('store unavailable') : undefined);
         },
       };
@@ -182,6 +183,23 @@ describe('routes: /api/auth', () => {
     });
     const body = await resp.json();
     server.close();
+    expect(resp.status).toBe(503);
+    expect(body.error).toBe('revocation_failed');
+    expect(resp.headers.get('set-cookie')).toBeNull();
+    expect(logoutState.disconnectSessionSockets).not.toHaveBeenCalled();
+    expect(logoutState.events).toEqual(['destroy']);
+  });
+
+  it('reports a synchronously thrown session-store revocation failure', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as import('net').AddressInfo).port;
+    const resp = await fetch(`http://127.0.0.1:${port}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'test-csrf-token', 'x-test-destroy-throw': '1' },
+    });
+    const body = await resp.json();
+    server.close();
+
     expect(resp.status).toBe(503);
     expect(body.error).toBe('revocation_failed');
     expect(resp.headers.get('set-cookie')).toBeNull();

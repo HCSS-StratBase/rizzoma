@@ -21,6 +21,7 @@ describe('routes: /api/editor search', () => {
   type FindResponse = { docs: any[]; bookmark?: string };
   let findQueue: FindResponse[] = [];
   let findBodies: any[] = [];
+  const blipGenerations = new Map<string, number>();
 
   beforeAll(async () => {
     process.env['EDITOR_ENABLE'] = '1';
@@ -42,6 +43,21 @@ describe('routes: /api/editor search', () => {
         const resp = findQueue.shift() || { docs: [] };
         return ok(resp);
       }
+      if (method === 'GET' && /\/project_rizzoma\/(w1|w2)$/.test(path)) {
+        const id = decodeURIComponent(path.split('/').pop() || '');
+        return ok({ _id: id, type: 'wave', title: id, shareLevel: 'public', createdAt: 1, updatedAt: 1 });
+      }
+      if (method === 'GET' && /\/project_rizzoma\/(b1|b2)$/.test(path)) {
+        const id = decodeURIComponent(path.split('/').pop() || '');
+        return ok({
+          _id: id,
+          type: 'blip',
+          waveId: id === 'b2' ? 'w2' : 'w1',
+          yjsGeneration: blipGenerations.get(id) ?? 0,
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      }
       return ok({}, 404);
     }) as typeof global.fetch;
     const router = (await import('../server/routes/editor')).default;
@@ -51,6 +67,9 @@ describe('routes: /api/editor search', () => {
   beforeEach(() => {
     findQueue = [];
     findBodies = [];
+    blipGenerations.clear();
+    blipGenerations.set('b1', 4);
+    blipGenerations.set('b2', 2);
   });
 
   afterAll(() => {
@@ -62,8 +81,8 @@ describe('routes: /api/editor search', () => {
     const text = 'Hello world this is a search snippet example';
     findQueue.push({
       docs: [
-        { waveId: 'w1', blipId: 'b1', updatedAt: 123, text },
-        { waveId: 'w1', blipId: 'b2', updatedAt: 100, text: 'extra' },
+        { waveId: 'w1', blipId: 'b1', yjsGeneration: 4, updatedAt: 123, text },
+        { waveId: 'w2', blipId: 'b2', yjsGeneration: 2, updatedAt: 100, text: 'extra' },
       ],
       bookmark: 'bm1',
     });
@@ -76,11 +95,13 @@ describe('routes: /api/editor search', () => {
     expect(Array.isArray(body.results)).toBe(true);
     expect(body.results[0]?.snippet).toContain('search');
     expect(body.nextBookmark).toBe('bm1');
+    expect(findBodies[0]?.selector?.type).toBe('editor_yjs_snapshot');
+    expect(findBodies[0]?.selector?.blipId).toEqual({ $exists: true });
   });
 
   it('passes bookmark for pagination', async () => {
-    findQueue.push({ docs: [{ waveId: 'w1', text: 'start' }], bookmark: 'bmA' });
-    findQueue.push({ docs: [{ waveId: 'w2', text: 'next' }], bookmark: 'bmB' });
+    findQueue.push({ docs: [{ waveId: 'w1', blipId: 'b1', yjsGeneration: 4, text: 'start' }], bookmark: 'bmA' });
+    findQueue.push({ docs: [{ waveId: 'w2', blipId: 'b2', yjsGeneration: 2, text: 'next' }], bookmark: 'bmB' });
     const server = startServer();
     const addr = server.address();
     const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
@@ -89,6 +110,39 @@ describe('routes: /api/editor search', () => {
     const second = await fetch(`http://127.0.0.1:${port}/api/editor/search?q=start&limit=1&bookmark=bmA`);
     expect(second.status).toBe(200);
     expect(findBodies[1]?.bookmark).toBe('bmA');
+  });
+
+  it('does not return removed text from an older blip generation', async () => {
+    blipGenerations.set('b1', 9);
+    findQueue.push({
+      docs: [
+        {
+          waveId: 'w1',
+          blipId: 'b1',
+          yjsGeneration: 8,
+          updatedAt: 100,
+          text: 'obsolete needle removed by external replacement',
+        },
+        {
+          waveId: 'w1',
+          blipId: 'b1',
+          yjsGeneration: 9,
+          updatedAt: 200,
+          text: 'fresh needle retained in the current generation',
+        },
+      ],
+    });
+    const server = startServer();
+    const addr = server.address();
+    const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
+    const resp = await fetch(`http://127.0.0.1:${port}/api/editor/search?q=needle&limit=10`);
+    const body = await resp.json();
+
+    expect(resp.status).toBe(200);
+    expect(body.results).toHaveLength(1);
+    expect(body.results[0]).toMatchObject({ waveId: 'w1', blipId: 'b1', updatedAt: 200 });
+    expect(body.results[0].snippet).toContain('fresh needle');
+    expect(body.results[0].snippet).not.toContain('obsolete needle');
   });
 
   it('rejects overly long queries', async () => {

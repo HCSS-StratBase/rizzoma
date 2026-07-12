@@ -9,12 +9,12 @@ export class YjsDocumentManager {
     return ownerId?.trim() || 'guest';
   }
 
-  private documentKey(blipId: string, ownerId?: string | null): string {
-    return `${encodeURIComponent(this.ownerKey(ownerId))}:${encodeURIComponent(blipId)}`;
+  private documentKey(blipId: string, ownerId?: string | null, generation = 0): string {
+    return `${encodeURIComponent(this.ownerKey(ownerId))}:${generation}:${encodeURIComponent(blipId)}`;
   }
   
-  getDocument(blipId: string, ownerId?: string | null): Y.Doc {
-    const key = this.documentKey(blipId, ownerId);
+  getDocument(blipId: string, ownerId?: string | null, generation = 0): Y.Doc {
+    const key = this.documentKey(blipId, ownerId, generation);
     if (!this.documents.has(key)) {
       const doc = new Y.Doc();
       const quarantined = this.quarantinedDocuments.get(key);
@@ -27,8 +27,8 @@ export class YjsDocumentManager {
     return this.documents.get(key)!;
   }
   
-  removeDocument(blipId: string, ownerId?: string | null): void {
-    const key = this.documentKey(blipId, ownerId);
+  removeDocument(blipId: string, ownerId?: string | null, generation = 0): void {
+    const key = this.documentKey(blipId, ownerId, generation);
     const doc = this.documents.get(key);
     if (doc) {
       if (hasPendingCollaborationChangesFor(ownerId ?? null, blipId)) {
@@ -49,7 +49,9 @@ export class YjsDocumentManager {
     const ownerPrefix = `${encodeURIComponent(this.ownerKey(ownerId))}:`;
     for (const [key, doc] of this.documents) {
       if (!key.startsWith(ownerPrefix)) continue;
-      const encodedBlip = key.slice(ownerPrefix.length);
+      const generationSeparator = key.indexOf(':', ownerPrefix.length);
+      if (generationSeparator < 0) continue;
+      const encodedBlip = key.slice(generationSeparator + 1);
       const blipId = decodeURIComponent(encodedBlip);
       if (hasPendingCollaborationChangesFor(ownerId, blipId)) {
         this.quarantinedDocuments.set(key, Y.encodeStateAsUpdate(doc));
@@ -59,29 +61,29 @@ export class YjsDocumentManager {
     }
   }
 
-  hasLiveDocument(blipId: string, ownerId?: string | null): boolean {
-    return this.documents.has(this.documentKey(blipId, ownerId));
+  hasLiveDocument(blipId: string, ownerId?: string | null, generation = 0): boolean {
+    return this.documents.has(this.documentKey(blipId, ownerId, generation));
   }
 
-  hasQuarantinedDocument(blipId: string, ownerId?: string | null): boolean {
-    return this.quarantinedDocuments.has(this.documentKey(blipId, ownerId));
+  hasQuarantinedDocument(blipId: string, ownerId?: string | null, generation = 0): boolean {
+    return this.quarantinedDocuments.has(this.documentKey(blipId, ownerId, generation));
   }
   
-  syncDocument(blipId: string, ownerId?: string | null): void {
-    const doc = this.getDocument(blipId, ownerId);
+  syncDocument(blipId: string, ownerId?: string | null, generation = 0): void {
+    const doc = this.getDocument(blipId, ownerId, generation);
     doc.transact(() => {
       const xmlFragment = doc.getXmlFragment('prosemirror');
       xmlFragment.delete(0, xmlFragment.length);
     });
   }
   
-  getDocumentState(blipId: string, ownerId?: string | null): Uint8Array {
-    const doc = this.getDocument(blipId, ownerId);
+  getDocumentState(blipId: string, ownerId?: string | null, generation = 0): Uint8Array {
+    const doc = this.getDocument(blipId, ownerId, generation);
     return Y.encodeStateAsUpdate(doc);
   }
   
-  applyUpdate(blipId: string, update: Uint8Array, ownerId?: string | null): void {
-    const doc = this.getDocument(blipId, ownerId);
+  applyUpdate(blipId: string, update: Uint8Array, ownerId?: string | null, generation = 0): void {
+    const doc = this.getDocument(blipId, ownerId, generation);
     Y.applyUpdate(doc, update);
   }
   

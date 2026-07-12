@@ -32,7 +32,12 @@ let presenceManager: EditorPresenceManager | undefined;
 // last client disconnects from the blip so a subsequent revisit can
 // re-seed from the current blip HTML if the in-memory doc was reaped
 // or never persisted. Task #57 (2026-04-15).
-const seedAuthorityClaimed = new Set<string>();
+// The seed lease belongs to one concrete socket, not merely to the blip. A
+// non-seeding peer leaving an empty room must not release somebody else's
+// authority: the original seeder can still act on its earlier shouldSeed=true
+// response until it receives a retry event, and electing a second seeder in
+// that window would create divergent CRDT histories.
+const seedAuthorityOwnerByBlip = new Map<string, string>();
 
 type AwarenessEntry = { clientId: number; clock: number; state: Record<string, unknown> | null };
 
@@ -102,6 +107,27 @@ function waveUnreadRoom(waveId: string, userId?: string) {
 // (with an acknowledgement) before the transport terminates the connection.
 const MAX_COLLAB_UPDATE_BYTES = 256 * 1024;
 const revokedCollabBlips = new Set<string>();
+// Policy mutations advance this epoch synchronously, before the live-socket
+// sweep does any asynchronous access lookup. A pending collaboration join is
+// not yet present in authorizedWaveIds/collabWaveByBlip, so the sweep cannot
+// revoke it directly. Binding the join to the wave epoch after its first
+// lookup and checking it around the final lookup prevents a stale captured
+// participant role from being published as writable room authority.
+const wavePolicyEpochById = new Map<string, number>();
+
+function wavePolicyEpoch(waveId: string): number {
+  return wavePolicyEpochById.get(waveId) || 0;
+}
+
+function advanceWavePolicyEpoch(waveId: string): number {
+  const next = wavePolicyEpoch(waveId) + 1;
+  wavePolicyEpochById.set(waveId, next);
+  return next;
+}
+
+function yjsGenerationOf(value: unknown): number {
+  return Number.isSafeInteger(value) && Number(value) >= 0 ? Number(value) : 0;
+}
 
 export function initSocket(server: HttpServer, allowedOrigins: string[], sharedSessionMiddleware?: RequestHandler) {
   io = new Server(server, {
@@ -133,6 +159,11 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
     const collabBlips = new Set<string>();
     const writableCollabBlips = new Set<string>();
     const collabWaveByBlip = new Map<string, string>();
+    // Joins capture the current leave epoch. Multiple duplicate joins may all
+    // complete, but any leave/revoke/disconnect invalidates every queued join
+    // without letting one request cancel another merely by starting later.
+    const collabLeaveEpoch = new Map<string, number>();
+    const collabGenerationByBlip = new Map<string, number>();
     const awarenessClientsByBlip = new Map<string, Map<number, number>>();
     (socket.data as any).accessIdentity = identity;
     (socket.data as any).accessSessionId = accessSessionId;
@@ -140,6 +171,24 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
     (socket.data as any).collabBlips = collabBlips;
     (socket.data as any).writableCollabBlips = writableCollabBlips;
     (socket.data as any).collabWaveByBlip = collabWaveByBlip;
+    (socket.data as any).collabGenerationByBlip = collabGenerationByBlip;
+
+    const cancelPendingJoin = (blipId: string) => {
+      collabLeaveEpoch.set(blipId, (collabLeaveEpoch.get(blipId) || 0) + 1);
+    };
+
+    const releaseSeedAuthority = (blipId: string) => {
+      if (seedAuthorityOwnerByBlip.get(blipId) !== socket.id) return;
+      if (!yjsDocCache.isEmpty(blipId)) {
+        seedAuthorityOwnerByBlip.delete(blipId);
+        return;
+      }
+      seedAuthorityOwnerByBlip.delete(blipId);
+      if (revokedCollabBlips.has(blipId)) return;
+      io?.to(`collab:blip:${blipId}`).emit(`blip:seed:retry:${blipId}`, {
+        yjsGeneration: yjsDocCache.getGeneration(blipId) ?? 0,
+      });
+    };
 
     let sessionValidationInFlight = false;
     const validateSession = async (): Promise<boolean> => {
@@ -215,26 +264,33 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
 
       for (const [blipId, mappedWaveId] of [...collabWaveByBlip.entries()]) {
         if (mappedWaveId !== waveId) continue;
+        cancelPendingJoin(blipId);
         removeSocketAwareness(blipId);
         socket.leave(`collab:blip:${blipId}`);
-        collabBlips.delete(blipId);
+        const wasJoined = collabBlips.delete(blipId);
         writableCollabBlips.delete(blipId);
         collabWaveByBlip.delete(blipId);
-        yjsDocCache.removeRef(blipId);
-        if (yjsDocCache.isEmpty(blipId)) seedAuthorityClaimed.delete(blipId);
+        collabGenerationByBlip.delete(blipId);
+        if (wasJoined) yjsDocCache.removeRef(blipId);
+        releaseSeedAuthority(blipId);
       }
+      // A permission revocation can arrive while resolveBlipAccess is still in
+      // flight and before the pending join has populated collabWaveByBlip.
+      for (const blipId of collabLeaveEpoch.keys()) cancelPendingJoin(blipId);
     };
     (socket.data as any).revokeWaveAccess = revokeWaveAccess;
 
     const revokeBlipAccess = (blipId: string) => {
+      cancelPendingJoin(blipId);
       const waveId = collabWaveByBlip.get(blipId);
       removeSocketAwareness(blipId);
       socket.leave(`collab:blip:${blipId}`);
-      collabBlips.delete(blipId);
+      const wasJoined = collabBlips.delete(blipId);
       writableCollabBlips.delete(blipId);
       collabWaveByBlip.delete(blipId);
-      yjsDocCache.removeRef(blipId);
-      seedAuthorityClaimed.delete(blipId);
+      collabGenerationByBlip.delete(blipId);
+      if (wasJoined) yjsDocCache.removeRef(blipId);
+      releaseSeedAuthority(blipId);
       if (waveId) {
         const presenceRoom = roomForBlip(waveId, blipId);
         socket.leave(presenceRoom);
@@ -254,8 +310,10 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
 
     const authorizeWave = async (event: string, waveId: string, permission: WavePermission) => {
       try {
+        const policyEpoch = wavePolicyEpoch(waveId);
         if (!(await validateSession())) return null;
         const access = await resolveWaveAccess(waveId, identity);
+        if (wavePolicyEpoch(waveId) !== policyEpoch) return null;
         if (!hasWavePermission(access, permission)) {
           reject(event, waveId, permission);
           return null;
@@ -277,8 +335,13 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
         if (!waveId) return;
         let access = null;
         if (blipId) {
+          const policyEpoch = wavePolicyEpoch(waveId);
           const resolved = await resolveBlipAccess(blipId, identity);
-          if (String(resolved.blip.waveId) !== waveId || !resolved.access.canRead) {
+          if (
+            wavePolicyEpoch(waveId) !== policyEpoch
+            || String(resolved.blip.waveId) !== waveId
+            || !resolved.access.canRead
+          ) {
             reject('editor:join', waveId, 'read');
             return;
           }
@@ -337,63 +400,161 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
       try {
         const blipId = String(p?.blipId || '').trim();
         if (!blipId) return;
+        const joinGeneration = collabLeaveEpoch.get(blipId) || 0;
+        if (!collabLeaveEpoch.has(blipId)) collabLeaveEpoch.set(blipId, joinGeneration);
+        const joinStillCurrent = () => socket.connected
+          && collabLeaveEpoch.get(blipId) === joinGeneration;
         if (!(await validateSession())) {
           acknowledge?.({ ok: false, error: 'unauthenticated' });
           return;
         }
-        const { blip, access } = await resolveBlipAccess(blipId, identity);
-        if (!access.canRead) {
-          reject('blip:join', String(blip.waveId), 'read');
-          acknowledge?.({ ok: false, error: identity.id ? 'forbidden' : 'unauthenticated' });
-          return;
-        }
-        authorizedWaveIds.add(String(blip.waveId));
-        socket.join(`collab:blip:${blipId}`);
-        collabBlips.add(blipId);
-        collabWaveByBlip.set(blipId, String(blip.waveId));
-        if (access.canEdit) writableCollabBlips.add(blipId);
-        yjsDocCache.addRef(blipId);
-        // Load from CouchDB if this is a fresh Y.Doc
-        await yjsDocCache.loadFromDb(blipId);
-        const state = yjsDocCache.getState(blipId);
-        const stateArr = (state && state.length > 2) ? Array.from(state) : [];
-        // Seed authority: if the server's Y.Doc has no prior state AND
-        // no client has yet claimed seed authority for this blip in the
-        // current process, the FIRST joiner gets shouldSeed=true and is
-        // responsible for populating the Y.Doc from the blip's HTML.
-        // Every subsequent joiner (or any joiner once state exists) gets
-        // shouldSeed=false and must wait for Y.js updates to arrive.
-        // This avoids the race where both tabs join simultaneously, both
-        // receive an empty state, and both seed their local Y.Doc from
-        // HTML — producing divergent CRDTs that can't merge cleanly.
-        // Task #57 (2026-04-15).
-        let shouldSeed = false;
-        if (access.canEdit && stateArr.length === 0) {
-          if (!seedAuthorityClaimed.has(blipId)) {
-            seedAuthorityClaimed.add(blipId);
-            shouldSeed = true;
-            console.log(`[socket] blip:join blipId=${blipId.slice(-8)} (seed authority granted)`);
-          } else {
-            console.log(`[socket] blip:join blipId=${blipId.slice(-8)} (empty state, no seed authority)`);
+        if (!joinStillCurrent()) return;
+        await yjsDocCache.runExclusive(blipId, async () => {
+          if (!joinStillCurrent()) return;
+          if (revokedCollabBlips.has(blipId)) {
+            acknowledge?.({ ok: false, error: 'not_found' });
+            return;
           }
-        }
-        const syncUser = authoritativeAwarenessUser(identity);
-        // The acknowledgement is the protocol boundary: a compatible client
-        // waits for this server-authorized result before publishing awareness
-        // or requesting a reconnect diff. Emit it before the initial sync.
-        acknowledge?.({
-          ok: true,
-          waveId: String(blip.waveId),
-          canEdit: access.canEdit,
-          user: syncUser,
-        });
-        socket.emit(`blip:sync:${blipId}`, {
-          ok: true,
-          waveId: String(blip.waveId),
-          state: stateArr,
-          shouldSeed,
-          canEdit: access.canEdit,
-          user: syncUser,
+          // Resolve inside the same lock as replacement, snapshot load, and
+          // update. A queued join must never seed from content read before an
+          // external replacement completed.
+          const initial = await resolveBlipAccess(blipId, identity);
+          if (!joinStillCurrent()) return;
+          if (revokedCollabBlips.has(blipId)) {
+            acknowledge?.({ ok: false, error: 'not_found' });
+            return;
+          }
+          if (!initial.access.canRead) {
+            reject('blip:join', String(initial.blip.waveId), 'read');
+            acknowledge?.({ ok: false, error: identity.id ? 'forbidden' : 'unauthenticated' });
+            return;
+          }
+          const joinedWaveId = String(initial.blip.waveId);
+          const joinPolicyEpoch = wavePolicyEpoch(joinedWaveId);
+          // Load before publishing membership/refcount. If leave/unmount wins
+          // while CouchDB is pending, the generation check below cancels the
+          // join instead of leaking a live ref with no client handlers.
+          const loadGeneration = yjsGenerationOf((initial.blip as any).yjsGeneration);
+          if (yjsGenerationOf(p?.yjsGeneration) !== loadGeneration) {
+            acknowledge?.({
+              ok: false,
+              error: 'generation_mismatch',
+              yjsGeneration: loadGeneration,
+            });
+            return;
+          }
+          try {
+            await yjsDocCache.loadFromDb(blipId, loadGeneration);
+          } catch (error) {
+            // A snapshot lookup failure must never be interpreted as an empty
+            // collaborative history. Ask the client to retry without joining
+            // the room or granting seed authority from potentially stale HTML.
+            acknowledge?.({
+              ok: false,
+              error: 'collaboration_storage_unavailable',
+              retryable: true,
+            });
+            console.error('[socket] blip:join snapshot load failed:', error);
+            return;
+          }
+          if (!joinStillCurrent()) return;
+          if (revokedCollabBlips.has(blipId)) {
+            acknowledge?.({ ok: false, error: 'not_found' });
+            return;
+          }
+          if (!(await validateSession())) {
+            acknowledge?.({ ok: false, error: 'unauthenticated' });
+            return;
+          }
+          if (!joinStillCurrent()) return;
+          if (wavePolicyEpoch(joinedWaveId) !== joinPolicyEpoch) {
+            acknowledge?.({ ok: false, error: 'access_changed' });
+            return;
+          }
+
+          // Snapshot loading yields to CouchDB. Permissions or the durable
+          // blip itself can change during that wait, while this socket is not
+          // yet represented in collabBlips and therefore cannot be reached by
+          // the normal live-room refresh/revoke sweep. Resolve again after the
+          // load and make the final revoked/read/generation checks immediately
+          // before publishing membership, refcounts, seed authority, or write
+          // capability.
+          const current = await resolveBlipAccess(blipId, identity);
+          if (!joinStillCurrent()) return;
+          if (
+            String(current.blip.waveId) !== joinedWaveId
+            || wavePolicyEpoch(joinedWaveId) !== joinPolicyEpoch
+          ) {
+            acknowledge?.({ ok: false, error: 'access_changed' });
+            return;
+          }
+          if (revokedCollabBlips.has(blipId)) {
+            acknowledge?.({ ok: false, error: 'not_found' });
+            return;
+          }
+          if (!current.access.canRead) {
+            reject('blip:join', String(current.blip.waveId), 'read');
+            acknowledge?.({ ok: false, error: identity.id ? 'forbidden' : 'unauthenticated' });
+            return;
+          }
+          const blip = current.blip;
+          const access = current.access;
+          const yjsGeneration = yjsGenerationOf((blip as any).yjsGeneration);
+          if (yjsGeneration !== loadGeneration || yjsGenerationOf(p?.yjsGeneration) !== yjsGeneration) {
+            acknowledge?.({
+              ok: false,
+              error: 'generation_mismatch',
+              yjsGeneration,
+            });
+            return;
+          }
+          authorizedWaveIds.add(String(blip.waveId));
+          socket.join(`collab:blip:${blipId}`);
+          const alreadyJoined = collabBlips.has(blipId);
+          collabBlips.add(blipId);
+          collabWaveByBlip.set(blipId, String(blip.waveId));
+          collabGenerationByBlip.set(blipId, yjsGeneration);
+          if (access.canEdit) writableCollabBlips.add(blipId);
+          else writableCollabBlips.delete(blipId);
+          if (!alreadyJoined) yjsDocCache.addRef(blipId, yjsGeneration);
+          const state = yjsDocCache.getState(blipId);
+          const stateArr = (state && state.length > 2) ? Array.from(state) : [];
+          if (stateArr.length > 0) seedAuthorityOwnerByBlip.delete(blipId);
+          // Seed authority: if the server's Y.Doc has no prior state AND
+          // no client has yet claimed seed authority for this blip in the
+          // current process, the FIRST joiner gets shouldSeed=true and is
+          // responsible for populating the Y.Doc from the blip's HTML.
+          let shouldSeed = false;
+          if (access.canEdit && stateArr.length === 0) {
+            if (!seedAuthorityOwnerByBlip.has(blipId)) {
+              seedAuthorityOwnerByBlip.set(blipId, socket.id);
+              shouldSeed = true;
+              console.log(`[socket] blip:join blipId=${blipId.slice(-8)} (seed authority granted)`);
+            } else {
+              console.log(`[socket] blip:join blipId=${blipId.slice(-8)} (empty state, no seed authority)`);
+            }
+          }
+          const syncUser = authoritativeAwarenessUser(identity);
+          // The acknowledgement is the protocol boundary: a compatible client
+          // waits for this server-authorized result before publishing awareness
+          // or requesting a reconnect diff. Emit it before the initial sync.
+          acknowledge?.({
+            ok: true,
+            waveId: String(blip.waveId),
+            canEdit: access.canEdit,
+            yjsGeneration,
+            user: syncUser,
+          });
+          socket.emit(`blip:sync:${blipId}`, {
+            ok: true,
+            waveId: String(blip.waveId),
+            state: stateArr,
+            shouldSeed,
+            seedContent: shouldSeed ? String(blip.content || '') : undefined,
+            canEdit: access.canEdit,
+            yjsGeneration,
+            user: syncUser,
+          });
         });
       } catch (err) {
         acknowledge?.({ ok: false, error: 'not_found' });
@@ -405,19 +566,21 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
       try {
         const blipId = String(p?.blipId || '').trim();
         if (!blipId) return;
+        cancelPendingJoin(blipId);
         removeSocketAwareness(blipId);
         socket.leave(`collab:blip:${blipId}`);
-        collabBlips.delete(blipId);
+        const wasJoined = collabBlips.delete(blipId);
         writableCollabBlips.delete(blipId);
         collabWaveByBlip.delete(blipId);
-        yjsDocCache.removeRef(blipId);
+        collabGenerationByBlip.delete(blipId);
+        if (wasJoined) yjsDocCache.removeRef(blipId);
         // If the seeder bailed before populating the Y.Doc, release
         // seed authority so the next joiner can seed. Task #57.
-        if (yjsDocCache.isEmpty(blipId)) seedAuthorityClaimed.delete(blipId);
+        releaseSeedAuthority(blipId);
       } catch {}
     });
 
-    socket.on('blip:update', (p: any, acknowledge?: (result: { ok: boolean; error?: string; blipId?: string }) => void) => {
+    socket.on('blip:update', async (p: any, acknowledge?: (result: { ok: boolean; error?: string; blipId?: string }) => void) => {
       try {
         const blipId = String(p?.blipId || '').trim();
         if (!blipId || !Array.isArray(p?.update)) {
@@ -429,6 +592,15 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
           acknowledge?.({ ok: false, error: 'forbidden', blipId });
           return;
         }
+        const joinedGeneration = collabGenerationByBlip.get(blipId);
+        if (
+          joinedGeneration === undefined
+          || yjsGenerationOf(p?.yjsGeneration) !== joinedGeneration
+          || yjsDocCache.getGeneration(blipId) !== joinedGeneration
+        ) {
+          acknowledge?.({ ok: false, error: 'generation_mismatch', blipId });
+          return;
+        }
         if (
           p.update.length === 0
           || p.update.length > MAX_COLLAB_UPDATE_BYTES
@@ -437,19 +609,48 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
           acknowledge?.({ ok: false, error: p.update.length > MAX_COLLAB_UPDATE_BYTES ? 'update_too_large' : 'invalid_update', blipId });
           return;
         }
-        const update = new Uint8Array(p.update);
-        // Decode against a disposable document first. Malformed Yjs payloads
-        // never reach the authoritative cache or another participant.
-        const probe = new Y.Doc();
-        const current = yjsDocCache.getState(blipId);
-        if (current) Y.applyUpdate(probe, current, 'validation-base');
-        Y.applyUpdate(probe, update, 'validation-candidate');
-        probe.destroy();
-        yjsDocCache.applyUpdate(blipId, update, 'remote');
-        const roomName = `collab:blip:${blipId}`;
-        // Broadcast only after the server cache accepted the update.
-        socket.to(roomName).emit(`blip:update:${blipId}`, { update: p.update });
-        acknowledge?.({ ok: true, blipId });
+        await yjsDocCache.runExclusive(blipId, () => {
+          // Authorization can change while this update is queued behind a
+          // snapshot/replacement operation. Revalidate at the mutation point,
+          // not only before waiting for the per-blip lock.
+          if (
+            revokedCollabBlips.has(blipId)
+            || !socket.connected
+            || !collabBlips.has(blipId)
+            || !writableCollabBlips.has(blipId)
+          ) {
+            reject('blip:update', collabWaveByBlip.get(blipId) || '', 'edit');
+            acknowledge?.({ ok: false, error: 'forbidden', blipId });
+            return;
+          }
+          const currentJoinedGeneration = collabGenerationByBlip.get(blipId);
+          if (
+            currentJoinedGeneration === undefined
+            || currentJoinedGeneration !== joinedGeneration
+            || yjsGenerationOf(p?.yjsGeneration) !== currentJoinedGeneration
+            || yjsDocCache.getGeneration(blipId) !== currentJoinedGeneration
+          ) {
+            acknowledge?.({ ok: false, error: 'generation_mismatch', blipId });
+            return;
+          }
+          const update = new Uint8Array(p.update);
+          // Decode against a disposable document first. Malformed Yjs payloads
+          // never reach the authoritative cache or another participant.
+          const probe = new Y.Doc();
+          const current = yjsDocCache.getState(blipId);
+          if (current) Y.applyUpdate(probe, current, 'validation-base');
+          Y.applyUpdate(probe, update, 'validation-candidate');
+          probe.destroy();
+          yjsDocCache.applyUpdate(blipId, update, 'remote', currentJoinedGeneration);
+          if (!yjsDocCache.isEmpty(blipId)) seedAuthorityOwnerByBlip.delete(blipId);
+          const roomName = `collab:blip:${blipId}`;
+          // Broadcast only after the server cache accepted the update.
+          socket.to(roomName).emit(`blip:update:${blipId}`, {
+            update: p.update,
+            yjsGeneration: currentJoinedGeneration,
+          });
+          acknowledge?.({ ok: true, blipId });
+        });
       } catch (err) {
         console.error('[socket] blip:update error:', err);
         acknowledge?.({ ok: false, error: 'invalid_update' });
@@ -461,6 +662,8 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
         const blipId = String(p?.blipId || '').trim();
         if (!blipId || !Array.isArray(p.stateVector)) return;
         if (!collabBlips.has(blipId)) return;
+        const joinedGeneration = collabGenerationByBlip.get(blipId);
+        if (joinedGeneration === undefined || yjsGenerationOf(p?.yjsGeneration) !== joinedGeneration) return;
         const sv = new Uint8Array(p.stateVector);
         const diff = yjsDocCache.encodeDiffUpdate(blipId, sv);
         if (diff && diff.length > 2) {
@@ -469,6 +672,7 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
             waveId: collabWaveByBlip.get(blipId),
             state: Array.from(diff),
             canEdit: writableCollabBlips.has(blipId),
+            yjsGeneration: joinedGeneration,
             user: authoritativeAwarenessUser(identity),
           });
         }
@@ -550,17 +754,20 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
 
     socket.on('disconnect', () => {
       if (sessionValidationTimer) clearInterval(sessionValidationTimer);
+      for (const blipId of collabLeaveEpoch.keys()) cancelPendingJoin(blipId);
       manager.disconnect(socket.id);
       for (const blipId of collabBlips) {
         removeSocketAwareness(blipId);
         yjsDocCache.removeRef(blipId);
         // Release seed authority if the disconnecting client was the
         // seeder and never populated the Y.Doc. Task #57.
-        if (yjsDocCache.isEmpty(blipId)) seedAuthorityClaimed.delete(blipId);
+        releaseSeedAuthority(blipId);
       }
       collabBlips.clear();
       writableCollabBlips.clear();
       collabWaveByBlip.clear();
+      collabGenerationByBlip.clear();
+      collabLeaveEpoch.clear();
       awarenessClientsByBlip.clear();
       authorizedWaveIds.clear();
     });
@@ -574,10 +781,42 @@ export async function closeSocket(): Promise<void> {
   io = undefined;
   if (!current) {
     awarenessOwnersByBlip.clear();
+    wavePolicyEpochById.clear();
     return;
   }
   await new Promise<void>((resolve) => current.close(() => resolve()));
   awarenessOwnersByBlip.clear();
+  wavePolicyEpochById.clear();
+}
+
+/** True only when this exact HTTP session owns a currently authorized writable
+ * collaboration room for the blip. Routes use this to distinguish a normal
+ * Yjs materialization save from an out-of-band full HTML replacement. */
+export function hasWritableBlipSocket(
+  blipId: string,
+  sessionId: string,
+  yjsGeneration?: number,
+): boolean {
+  if (!io || !sessionId) return false;
+  for (const socket of io.sockets.sockets.values()) {
+    if (String((socket.data as any)?.accessSessionId || '') !== sessionId) continue;
+    const writable = (socket.data as any)?.writableCollabBlips;
+    const generationByBlip = (socket.data as any)?.collabGenerationByBlip;
+    if (!(writable instanceof Set) || !writable.has(blipId)) continue;
+    if (
+      yjsGeneration !== undefined
+      && (!(generationByBlip instanceof Map) || generationByBlip.get(blipId) !== yjsGeneration)
+    ) continue;
+    return true;
+  }
+  return false;
+}
+
+/** A quiescent external replacement removes the old seed claim together with
+ * its cache/snapshot. Otherwise an empty Y.Doc can strand every next joiner
+ * with shouldSeed=false. */
+export function clearBlipSeedAuthority(blipId: string): void {
+  seedAuthorityOwnerByBlip.delete(blipId);
 }
 
 /**
@@ -643,6 +882,9 @@ export function emitEvent(event: string, payload: unknown) {
  * legacy public-read-only wave to the compatibility layer.
  */
 export function disconnectWaveSockets(waveId: string): number {
+  // Topic deletion must invalidate not-yet-authorized joins too; those joins
+  // cannot be found by the live-room sweep below.
+  advanceWavePolicyEpoch(waveId);
   if (!io) return 0;
   let revoked = 0;
   for (const socket of io.sockets.sockets.values()) {
@@ -659,26 +901,34 @@ export function disconnectWaveSockets(waveId: string): number {
 
 /** Revoke live CRDT/presence authority for tombstoned blips while leaving the
  * rest of the wave connected. Descendants are supplied by the delete route. */
-export function revokeBlipSockets(blipIds: string[]): number {
+export async function revokeBlipSockets(blipIds: string[]): Promise<number> {
   const unique = [...new Set(blipIds.filter(Boolean))];
   if (unique.length === 0) return 0;
   for (const blipId of unique) {
     revokedCollabBlips.add(blipId);
-    yjsDocCache.discard(blipId);
+    seedAuthorityOwnerByBlip.delete(blipId);
   }
-  if (!io) return 0;
   let revoked = 0;
-  for (const socket of io.sockets.sockets.values()) {
-    const collabBlips = (socket.data as any)?.collabBlips;
-    const revoke = (socket.data as any)?.revokeBlipAccess;
-    if (!(collabBlips instanceof Set) || typeof revoke !== 'function') continue;
-    for (const blipId of unique) {
-      if (!collabBlips.has(blipId)) continue;
-      socket.emit('access:changed', { blipId, deleted: true, canRead: false, canEdit: false });
-      revoke(blipId);
-      revoked += 1;
+  if (io) {
+    for (const socket of io.sockets.sockets.values()) {
+      const collabBlips = (socket.data as any)?.collabBlips;
+      const revoke = (socket.data as any)?.revokeBlipAccess;
+      if (!(collabBlips instanceof Set) || typeof revoke !== 'function') continue;
+      for (const blipId of unique) {
+        if (!collabBlips.has(blipId)) continue;
+        socket.emit('access:changed', { blipId, deleted: true, canRead: false, canEdit: false });
+        revoke(blipId);
+        revoked += 1;
+      }
     }
   }
+  // revokedCollabBlips is set synchronously above, before a queued update can
+  // acquire this lock. The in-lock update recheck rejects it; discard therefore
+  // runs after every earlier mutation and cannot be followed by a stale cache
+  // recreation from an already-authorized handler.
+  await Promise.all(unique.map((blipId) => yjsDocCache.runExclusive(blipId, () => {
+    yjsDocCache.discard(blipId);
+  })));
   return revoked;
 }
 
@@ -688,6 +938,9 @@ export function revokeBlipSockets(blipIds: string[]): number {
  * authority, and users who lost read access are removed from every wave room.
  */
 export async function refreshWaveSocketAccess(waveId: string): Promise<number> {
+  // Invalidate pending joins before yielding. They are deliberately absent
+  // from authorizedWaveIds until their final access result is safe to publish.
+  const refreshPolicyEpoch = advanceWavePolicyEpoch(waveId);
   if (!io) return 0;
   let refreshed = 0;
   for (const socket of io.sockets.sockets.values()) {
@@ -698,6 +951,9 @@ export async function refreshWaveSocketAccess(waveId: string): Promise<number> {
     try {
       access = await resolveWaveAccess(waveId, identity);
     } catch {}
+    // A newer policy mutation owns the final authority decision. Never let an
+    // older, slower refresh re-grant rooms or write access from stale data.
+    if (wavePolicyEpoch(waveId) !== refreshPolicyEpoch) continue;
     const writable = (socket.data as any)?.writableCollabBlips;
     const waveByBlip = (socket.data as any)?.collabWaveByBlip;
     if (access?.canRead) {

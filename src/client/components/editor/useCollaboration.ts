@@ -21,6 +21,7 @@ export function useCollaboration(
   blipId: string,
   enabled: boolean,
   user: CollaborationUser | null = null,
+  yjsGeneration = 0,
 ): SocketIOProvider | null {
   const socket = useSocket();
   const providerRef = useRef<SocketIOProvider | null>(null);
@@ -29,7 +30,7 @@ export function useCollaboration(
 
   // Include concrete document and owner identity. Boolean doc/socket presence
   // let an A→B account switch reuse A's provider over B's document.
-  const currentDepsKey = `${enabled}|${blipId}|${doc?.clientID ?? 'no-doc'}|${!!socket}|${user?.id ?? 'guest'}`;
+  const currentDepsKey = `${enabled}|${blipId}|${yjsGeneration}|${doc?.clientID ?? 'no-doc'}|${!!socket}|${user?.id ?? 'guest'}`;
 
   if (currentDepsKey !== depsKeyRef.current) {
     // Deps changed — destroy old provider, potentially create new one
@@ -39,7 +40,7 @@ export function useCollaboration(
     }
     depsKeyRef.current = currentDepsKey;
     if (enabled && socket && doc) {
-      providerRef.current = new SocketIOProvider(doc, socket, blipId, user);
+      providerRef.current = new SocketIOProvider(doc, socket, blipId, user, yjsGeneration);
     }
   }
 

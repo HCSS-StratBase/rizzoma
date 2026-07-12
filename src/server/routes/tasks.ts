@@ -225,6 +225,10 @@ router.post('/:id/toggle', requireAuth, csrfProtect(), async (req, res): Promise
     });
   } catch (e: any) {
     console.error('[tasks] toggle error', e);
+    if (String(e?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'task_not_found' });
+      return;
+    }
     res.status(500).json({ error: e?.message || 'toggle_task_error' });
   }
 });
@@ -271,6 +275,10 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
     res.json({ success: true });
   } catch (e: any) {
     console.error('[tasks] update error', e);
+    if (String(e?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'task_not_found' });
+      return;
+    }
     res.status(500).json({ error: e?.message || 'update_task_error' });
   }
 });

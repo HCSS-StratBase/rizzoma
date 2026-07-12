@@ -46,6 +46,7 @@ import { useCollaboration } from '../editor/useCollaboration';
 import { yjsDocManager } from '../editor/YjsDocumentManager';
 import { useAuthenticatedCollaborationUser } from '../editor/useAuthenticatedCollaborationUser';
 import { requestTaskCompletionHydration } from '../editor/extensions/TaskWidget';
+import { collaborationProjectionHeaders } from '../../lib/collaborationProjection';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
 export type BlipContributor = {
@@ -65,6 +66,7 @@ export interface BlipData {
   authorAvatar?: string;
   createdAt: number;
   updatedAt: number;
+  yjsGeneration?: number;
   isRead: boolean;
   deletedAt?: number;
   deleted?: boolean;
@@ -433,18 +435,32 @@ export function RizzomaBlip({
   const pendingInsertRef = useRef<string | null>(null);
   const pendingGadgetDetailRef = useRef<GadgetInsertDetail | null>(null);
   const inlineEditorRef = useRef<Editor | null>(null);
+  const projectionActiveRef = useRef(true);
+  const yjsGeneration = blip.yjsGeneration ?? 0;
+  const projectionIdentity = `${blip.id}:${yjsGeneration}`;
+  const projectionIdentityRef = useRef(projectionIdentity);
+  if (projectionIdentityRef.current !== projectionIdentity) {
+    projectionIdentityRef.current = projectionIdentity;
+  }
 
   // Auto-save blip content (debounced, silent)
-  const autoSaveBlip = useCallback(async (content: string) => {
-    if (content === lastSavedContentRef.current) return;
+  const autoSaveBlip = useCallback(async (
+    content: string,
+    headers?: Record<string, string>,
+  ): Promise<'saved' | 'retry' | 'failed'> => {
+    if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return 'failed';
+    if (content === lastSavedContentRef.current) return 'saved';
     try {
       await ensureCsrf();
+      if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return 'failed';
       const response = await api(`/api/blips/${encodeURIComponent(blip.id)}`, {
         method: 'PUT',
         queueable: false,
+        headers,
         body: JSON.stringify({ content }),
       });
       if (response.ok) {
+        if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return 'saved';
         lastSavedContentRef.current = content;
         onBlipUpdate?.(blip.id, content);
         // Task side-documents are derived only after this durable save. A
@@ -452,11 +468,22 @@ export function RizzomaBlip({
         // hydration, so refresh its server-provided completion/permission now.
         requestTaskCompletionHydration(inlineEditorRef.current);
         // No toast - auto-save is silent for real-time experience
+        return 'saved';
       }
+      if (
+        response.status === 408
+        || response.status === 409
+        || response.status === 425
+        || response.status === 429
+        || response.status >= 500
+      ) return 'retry';
+      return 'failed';
     } catch {
-      // Silent fail for auto-save
+      return projectionActiveRef.current && projectionIdentityRef.current === projectionIdentity
+        ? 'retry'
+        : 'failed';
     }
-  }, [blip.id, onBlipUpdate]);
+  }, [blip.id, onBlipUpdate, projectionIdentity]);
 
   // Ref to suppress auto-save during Y.Doc seeding (setContent triggers onUpdate)
   const seedingYdocRef = useRef(false);
@@ -492,16 +519,56 @@ export function RizzomaBlip({
   // set; late `setOptions()` calls do not reliably install ySyncPlugin.
   const collabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && blip.permissions.canEdit && !isTopicRoot);
   const ydoc = useMemo(
-    () => collabEnabled ? yjsDocManager.getDocument(blip.id, collaborationUser?.id) : undefined,
-    [blip.id, collabEnabled, collaborationUser?.id]
+    () => collabEnabled
+      ? yjsDocManager.getDocument(blip.id, collaborationUser?.id, yjsGeneration)
+      : undefined,
+    [blip.id, collabEnabled, collaborationUser?.id, yjsGeneration]
   );
-  const collabProvider = useCollaboration(ydoc, blip.id, collabEnabled, collaborationUser);
+  const collabProvider = useCollaboration(
+    ydoc,
+    blip.id,
+    collabEnabled,
+    collaborationUser,
+    yjsGeneration,
+  );
 
   // collabActive = all collab deps are ready (enabled + ydoc + provider).
   // Used as useEditor dep to force editor recreation with the Collaboration extension.
   // Without this, useEditor's setOptions() doesn't properly reinitialize ProseMirror
   // plugins, leaving the visible editor without ySyncPlugin.
   const collabActive = collabEnabled && !!ydoc && !!collabProvider;
+
+  const persistLatestProjection = useCallback(async (
+    fallbackContent: string,
+    attempt = 0,
+  ): Promise<void> => {
+    if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return;
+    const currentEditor = inlineEditorRef.current;
+    const latestContent = currentEditor && !(currentEditor as any).isDestroyed
+      ? currentEditor.getHTML()
+      : fallbackContent;
+    const headers = collabActive
+      ? await collaborationProjectionHeaders(ydoc, yjsGeneration)
+      : undefined;
+    if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return;
+    const result = await autoSaveBlip(
+      latestContent,
+      headers,
+    );
+    // Another collaborator may advance the server Y.Doc while this HTTP
+    // projection is in flight. Re-read both HTML and the full-state digest before a
+    // bounded retry; never commit the transaction's older captured HTML.
+    if (
+      projectionActiveRef.current
+      && projectionIdentityRef.current === projectionIdentity
+      && result === 'retry'
+      && attempt < 8
+    ) {
+      autoSaveTimeoutRef.current = setTimeout(() => {
+        void persistLatestProjection(fallbackContent, attempt + 1);
+      }, Math.min(2_000, 150 * (2 ** attempt)));
+    }
+  }, [autoSaveBlip, collabActive, projectionIdentity, ydoc, yjsGeneration]);
 
   // Stabilize onToggleInlineComments callback for extensions memoization
   const stableToggleInlineComments = useCallback(
@@ -550,35 +617,34 @@ export function RizzomaBlip({
         // Skip auto-save during Y.Doc seeding (setContent triggers onUpdate)
         if (seedingYdocRef.current) return;
 
-        // Critical: skip auto-save when NOT in edit mode. Programmatic
+        // Critical: skip non-collaborative updates when NOT in edit mode. Programmatic
         // setContent calls (e.g. on mount, on blip-id change at line ~617,
         // on handleStartEdit at line ~997) trigger onUpdate even though
         // the user isn't typing. If we autosave from those calls AND
         // TipTap's parser falls back to <p></p> for unrecognized markup,
-        // we silently overwrite the saved content with empty. This was
+        // we silently overwrite the saved content with empty. Authorized remote
+        // Yjs updates are the exception: materializing them keeps Couch HTML and
+        // task/mention side-documents current even if the originating tab closes
+        // before its debounce fires. This was
         // Task #190's root cause for the gate-036 spine[1] empty render.
-        if (!isEditingRef.current) return;
+        const remoteCollaborationChange = isChangeOrigin(transaction);
+        if (!isEditingRef.current && !remoteCollaborationChange) return;
 
         const html = editor.getHTML();
         setEditedContent(html);
 
-        // When collab is active, only auto-save for local edits. ProseMirror
-        // transactions do not expose a public `transaction.origin`; Y.js marks
-        // remote sync through ySyncPlugin metadata. The old property check was
-        // always false, so every remote keystroke caused a redundant REST PUT
-        // from every collaborator.
-        if (isChangeOrigin(transaction)) return;
-
-        // Debounced auto-save (300ms delay)
+        // Materialize both local and remote convergence. The server validates
+        // the accompanying full-state Yjs digest, so a delayed pre-merge HTML save
+        // cannot become the durable API/task/mention projection.
         if (autoSaveTimeoutRef.current) {
           clearTimeout(autoSaveTimeoutRef.current);
         }
         autoSaveTimeoutRef.current = setTimeout(() => {
-          autoSaveBlip(html);
+          void persistLatestProjection(html);
         }, 300);
       },
     },
-    [blip.id, collabActive, collabProvider]
+    [blip.id, collabActive, collabProvider, persistLatestProjection]
   );
 
   // Keep editor ref updated for use in callbacks
@@ -622,12 +688,11 @@ export function RizzomaBlip({
     const trySeed = () => {
       if ((inlineEditor as any).isDestroyed) return;
       if (!collabProvider.shouldSeed) return;
-      const frag = ydoc.getXmlFragment('default');
-      if (frag.length === 0 && safeBlipContent) {
-        seedingYdocRef.current = true;
-        inlineEditor.commands.setContent(safeBlipContent);
-        seedingYdocRef.current = false;
-      }
+      if (ydoc.getXmlFragment('default').length > 0) return;
+      const authoritativeSeed = sanitizeRichHtml(collabProvider.seedContent ?? safeBlipContent);
+      seedingYdocRef.current = true;
+      inlineEditor.commands.setContent(authoritativeSeed);
+      seedingYdocRef.current = false;
     };
 
     if (collabProvider.synced) {
@@ -653,7 +718,9 @@ export function RizzomaBlip({
 
   // Cleanup auto-save timeout on unmount to prevent stale saves to wrong topic
   useEffect(() => {
+    projectionActiveRef.current = true;
     return () => {
+      projectionActiveRef.current = false;
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
         autoSaveTimeoutRef.current = null;
@@ -1081,13 +1148,13 @@ export function RizzomaBlip({
     // Final save if content changed
     const currentContent = inlineEditor?.getHTML() || editedContent;
     if (currentContent !== lastSavedContentRef.current) {
-      autoSaveBlip(currentContent);
+      void persistLatestProjection(currentContent);
     }
     setIsEditing(false);
     if (inlineEditor) {
       inlineEditor.setEditable(false);
     }
-  }, [autoSaveBlip, editedContent, inlineEditor]);
+  }, [editedContent, inlineEditor, persistLatestProjection]);
 
   const handleCreateInlineChildAtCursor = useCallback(() => {
     const editor = inlineEditorRef.current || inlineEditor;

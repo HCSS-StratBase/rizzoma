@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { getDoc, updateDoc, insertDoc, find } from '../lib/couch.js';
-import { emitEvent, revokeBlipSockets } from '../lib/socket.js';
+import {
+  clearBlipSeedAuthority,
+  emitEvent,
+  hasWritableBlipSocket,
+  revokeBlipSockets,
+} from '../lib/socket.js';
 import { requireAuth } from '../middleware/auth.js';
 import { noStore } from '../middleware/noStore.js';
 import { invalidateUnreadCacheForWave } from '../lib/unread.js';
@@ -12,6 +17,8 @@ import {
   reconcileStoredContentReferences,
   validateStoredContentReferences,
 } from '../lib/contentReferences.js';
+import { readCollaborationProjection } from '../lib/collaborationProjection.js';
+import { yjsDocCache } from '../lib/yjsDocCache.js';
 
 const CONTENT_REFERENCE_ERRORS = new Set([
   'invalid_mention_target',
@@ -19,6 +26,10 @@ const CONTENT_REFERENCE_ERRORS = new Set([
   'invalid_task_reference',
   'task_reference_conflict',
 ]);
+
+function yjsGenerationOf(value: unknown): number {
+  return Number.isSafeInteger(value) && Number(value) >= 0 ? Number(value) : 0;
+}
 
 type LinkDoc = {
   _id?: string;
@@ -318,6 +329,7 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
       content,
       createdAt: now,
       updatedAt: now,
+      yjsGeneration: 0,
       authorId: userId,
       authorName: fallbackName,
       deleted: false,
@@ -373,39 +385,84 @@ router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> =
   try {
     const id = req.params['id'] as string;
     const { content } = req.body || {};
+    const collaborationProjection = readCollaborationProjection(req);
     
     if (!content) {
       res.status(400).json({ error: 'missing_content', requestId: (req as any)?.id });
       return;
     }
 
-    const blip = await loadBlipDoc(id);
-    if (blip.deleted) {
+    const accessBlip = await loadBlipDoc(id);
+    if (accessBlip.deleted) {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;
     }
-    const access = await requireWaveAccess(req, res, blip.waveId, 'edit');
+    const access = await requireWaveAccess(req, res, accessBlip.waveId, 'edit');
     if (!access) return;
-    const references = await validateStoredContentReferences(blip.waveId, id, String(content));
+    const result = await yjsDocCache.runExclusive(id, async () => {
+      // Re-read under the same per-blip boundary used by joins, Yjs updates,
+      // and snapshot persistence so the Couch revision and reference diff are
+      // the exact state this projection/replacement supersedes.
+      const blip = await loadBlipDoc(id);
+      if (blip.deleted) throw new Error('410 deleted');
+      const references = await validateStoredContentReferences(blip.waveId, id, String(content));
+      const currentGeneration = yjsGenerationOf(blip.yjsGeneration);
+      const liveProjection = collaborationProjection !== null
+        && hasWritableBlipSocket(id, String((req as any).sessionID || ''), currentGeneration);
+      let nextGeneration = currentGeneration;
+      if (collaborationProjection !== null && !liveProjection) {
+        throw new Error('collaboration_projection_session_missing');
+      } else if (collaborationProjection !== null) {
+        if (collaborationProjection.generation !== currentGeneration) {
+          throw new Error('collaboration_generation_mismatch');
+        }
+        if (!yjsDocCache.matchesStateDigest(
+          id,
+          collaborationProjection.digest,
+          currentGeneration,
+        )) {
+          throw new Error('collaboration_projection_stale');
+        }
+        // Snapshot the exact accepted CRDT before materializing its HTML. A
+        // restart must not recreate this same generation with fresh item IDs.
+        await yjsDocCache.persistCurrentLocked(id, currentGeneration);
+      } else {
+        await yjsDocCache.clearForExternalReplacement(id);
+        clearBlipSeedAuthority(id);
+        nextGeneration = currentGeneration + 1;
+      }
 
-    const updatedBlip: Blip & { _id: string; _rev?: string } = {
-      ...blip,
-      _id: blip._id || id,
-      content,
-      updatedAt: Date.now()
-    };
+      const contentChanged = String(content) !== String(blip.content || '');
+      const generationChanged = nextGeneration !== currentGeneration;
+      if (!contentChanged && !generationChanged) {
+        // Reconciliation is independently durable. A prior Couch write may
+        // have succeeded before task/mention side-document creation failed;
+        // an identical retry must self-heal that partial commit.
+        await reconcileStoredContentReferences(blip.waveId, id, references, req.user!);
+        return { r: { id: blip._id || id, rev: blip._rev }, blip, updatedBlip: blip, changed: false };
+      }
 
-    const r = await updateDoc(updatedBlip as any);
-    await reconcileStoredContentReferences(blip.waveId, id, references, req.user!);
-    invalidateUnreadCacheForWave(blip.waveId);
-    if (!isPerfRequest(req)) {
-      void touchTopic(blip.waveId);
+      const updatedBlip: Blip & { _id: string; _rev?: string } = {
+        ...blip,
+        _id: blip._id || id,
+        content,
+        yjsGeneration: nextGeneration,
+        updatedAt: Date.now()
+      };
+      const r = await updateDoc(updatedBlip as any);
+      await reconcileStoredContentReferences(blip.waveId, id, references, req.user!);
+      return { r, blip, updatedBlip, changed: contentChanged };
+    });
+    const { r, blip, updatedBlip, changed } = result;
+    if (changed) {
+      invalidateUnreadCacheForWave(blip.waveId);
+      if (!isPerfRequest(req)) {
+        void touchTopic(blip.waveId);
+        const actorName = (req.user?.name && req.user.name.trim()) ? req.user.name : (req.user?.email || 'Unknown');
+        void recordBlipHistory(updatedBlip, 'update', userId, actorName);
+      }
+      try { emitEvent('blip:updated', { waveId: blip.waveId, blipId: blip._id, updatedAt: updatedBlip.updatedAt, userId }); } catch {}
     }
-    if (!isPerfRequest(req)) {
-      const actorName = (req.user?.name && req.user.name.trim()) ? req.user.name : (req.user?.email || 'Unknown');
-      void recordBlipHistory(updatedBlip, 'update', userId, actorName);
-    }
-    try { emitEvent('blip:updated', { waveId: blip.waveId, blipId: blip._id, updatedAt: updatedBlip.updatedAt, userId }); } catch {}
     res.json({ 
       id: r['id'], 
       rev: r['rev'],
@@ -421,6 +478,23 @@ router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> =
       }
     });
   } catch (e: any) {
+    if (
+      String(e?.message) === 'invalid_collaboration_state_digest'
+      || String(e?.message) === 'invalid_collaboration_generation'
+    ) {
+      res.status(400).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
+    if (
+      String(e?.message) === 'collaboration_active'
+      || String(e?.message) === 'collaboration_pending_projection'
+      || String(e?.message) === 'collaboration_projection_stale'
+      || String(e?.message) === 'collaboration_projection_session_missing'
+      || String(e?.message) === 'collaboration_generation_mismatch'
+    ) {
+      res.status(409).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
     if (CONTENT_REFERENCE_ERRORS.has(String(e?.message || ''))) {
       res.status(400).json({ error: e.message, requestId: (req as any)?.id });
       return;
@@ -488,6 +562,9 @@ router.delete('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void
     }
 
     const deletedBlipIds = await markBlipAndDescendantsDeleted(blip, userId, access.canManage || access.canEdit);
+    // Revoke live collaboration immediately after the durable tombstones land,
+    // before best-effort derived-reference cleanup can yield to another update.
+    await revokeBlipSockets(deletedBlipIds);
     const referenceCleanup = await Promise.allSettled(
       deletedBlipIds.map((deletedId) => reconcileStoredContentReferences(
         blip.waveId,
@@ -499,7 +576,6 @@ router.delete('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void
     if (referenceCleanup.some((result) => result.status === 'rejected')) {
       console.error('[blips] failed to remove one or more deleted blip references', { waveId: blip.waveId, deletedBlipIds });
     }
-    revokeBlipSockets(deletedBlipIds);
     invalidateUnreadCacheForWave(blip.waveId);
     void touchTopic(blip.waveId);
     try { emitEvent('blip:deleted', { waveId: blip.waveId, blipId: blip._id, descendantIds: deletedBlipIds.slice(1), userId, deletedAt: Date.now() }); } catch {}

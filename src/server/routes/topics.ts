@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { deleteDoc, find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
-import { disconnectWaveSockets, emitEvent } from '../lib/socket.js';
+import {
+  clearBlipSeedAuthority,
+  disconnectWaveSockets,
+  emitEvent,
+  hasWritableBlipSocket,
+} from '../lib/socket.js';
 import { csrfProtect } from '../middleware/csrf.js';
 import { noStore } from '../middleware/noStore.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -21,6 +26,8 @@ import {
   reconcileStoredContentReferences,
   validateStoredContentReferences,
 } from '../lib/contentReferences.js';
+import { readCollaborationProjection } from '../lib/collaborationProjection.js';
+import { yjsDocCache } from '../lib/yjsDocCache.js';
 
 const CONTENT_REFERENCE_ERRORS = new Set([
   'invalid_mention_target',
@@ -28,6 +35,10 @@ const CONTENT_REFERENCE_ERRORS = new Set([
   'invalid_task_reference',
   'task_reference_conflict',
 ]);
+
+function yjsGenerationOf(value: unknown): number {
+  return Number.isSafeInteger(value) && Number(value) >= 0 ? Number(value) : 0;
+}
 
 // User type for lookups
 type User = {
@@ -57,6 +68,7 @@ type Topic = {
   authorId?: string;
   createdAt: number; // epoch millis
   updatedAt: number; // epoch millis
+  yjsGeneration?: number;
   sectionAttribution?: Record<string, SectionAttributionEntry>;
   shareLevel?: 'private' | 'link' | 'public';
   allowComments?: boolean;
@@ -345,6 +357,7 @@ router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): 
       allowEdits: false,
       createdAt: now,
       updatedAt: now,
+      yjsGeneration: 0,
       sectionAttribution: initialAttribution,
     };
     const r = await insertDoc(doc);
@@ -519,6 +532,7 @@ router.get('/:id', async (req, res): Promise<void> => {
       content: doc.content,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
+      yjsGeneration: yjsGenerationOf(doc.yjsGeneration),
       authorId: doc.authorId,
       authorName,
       authorAvatar,
@@ -614,38 +628,100 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
   try {
     const id = req.params['id'] as string;
     const payload = UpdateTopicSchema.parse(req.body ?? {});
-    const existing = await loadLiveTopic(id);
-    const access = await requireWaveAccess(req, res, id, 'edit', existing);
-    if (!access) return;
-    const references = payload.content !== undefined
-      ? await validateStoredContentReferences(id, id, payload.content)
+    const collaborationProjection = payload.content !== undefined
+      ? readCollaborationProjection(req)
       : null;
-    const nowPatch = Date.now();
-    // Authorship is server authority. Ignore any unknown client sidecar and
-    // derive changed blocks from the stored old/new content plus this session.
-    let nextSectionAttribution = existing.sectionAttribution;
-    if (payload.content !== undefined && payload.content !== existing.content) {
-      nextSectionAttribution = diffAndStampAttribution({
-        prevAttribution: existing.sectionAttribution,
-        oldHtml: existing.content || '',
-        newHtml: payload.content,
-        currentUserId: req.user!.id,
-        now: nowPatch,
-      });
-    }
-    const next: Topic & { _rev?: string } = {
-      ...existing,
-      title: payload.title ?? existing.title,
-      content: payload.content ?? existing.content,
-      sectionAttribution: nextSectionAttribution,
-      updatedAt: nowPatch,
-    };
-    const r = await updateDoc(next as any);
-    if (references) await reconcileStoredContentReferences(id, id, references, req.user!);
+    const accessTopic = await loadLiveTopic(id);
+    const access = await requireWaveAccess(req, res, id, 'edit', accessTopic);
+    if (!access) return;
+    const result = await yjsDocCache.runExclusive(id, async () => {
+      const existing = await loadLiveTopic(id);
+      const references = payload.content !== undefined
+        ? await validateStoredContentReferences(id, id, payload.content)
+        : null;
+      const currentGeneration = yjsGenerationOf(existing.yjsGeneration);
+      let nextGeneration = currentGeneration;
+      if (payload.content !== undefined) {
+        const liveProjection = collaborationProjection !== null
+          && hasWritableBlipSocket(id, String((req as any).sessionID || ''), currentGeneration);
+        if (collaborationProjection !== null && !liveProjection) {
+          throw new Error('collaboration_projection_session_missing');
+        } else if (collaborationProjection !== null) {
+          if (collaborationProjection.generation !== currentGeneration) {
+            throw new Error('collaboration_generation_mismatch');
+          }
+          if (!yjsDocCache.matchesStateDigest(
+            id,
+            collaborationProjection.digest,
+            currentGeneration,
+          )) {
+            throw new Error('collaboration_projection_stale');
+          }
+          await yjsDocCache.persistCurrentLocked(id, currentGeneration);
+        } else {
+          await yjsDocCache.clearForExternalReplacement(id);
+          clearBlipSeedAuthority(id);
+          nextGeneration = currentGeneration + 1;
+        }
+      }
+      const nextTitle = payload.title ?? existing.title;
+      const nextContent = payload.content ?? existing.content;
+      const contentChanged = nextContent !== existing.content;
+      const titleChanged = nextTitle !== existing.title;
+      const generationChanged = nextGeneration !== currentGeneration;
+      if (!titleChanged && !contentChanged && !generationChanged) {
+        if (references) await reconcileStoredContentReferences(id, id, references, req.user!);
+        return { r: { id: existing._id, rev: existing._rev }, next: existing, changed: false };
+      }
+      const nowPatch = Date.now();
+      // Authorship is server authority. Ignore any unknown client sidecar and
+      // derive changed blocks from the stored old/new content plus this session.
+      let nextSectionAttribution = existing.sectionAttribution;
+      if (payload.content !== undefined && payload.content !== existing.content) {
+        nextSectionAttribution = diffAndStampAttribution({
+          prevAttribution: existing.sectionAttribution,
+          oldHtml: existing.content || '',
+          newHtml: payload.content,
+          currentUserId: req.user!.id,
+          now: nowPatch,
+        });
+      }
+      const next: Topic & { _rev?: string } = {
+        ...existing,
+        title: nextTitle,
+        content: nextContent,
+        yjsGeneration: nextGeneration,
+        sectionAttribution: nextSectionAttribution,
+        updatedAt: nowPatch,
+      };
+      const r = await updateDoc(next as any);
+      if (references) await reconcileStoredContentReferences(id, id, references, req.user!);
+      return { r, next, changed: titleChanged || contentChanged };
+    });
+    const { r, next, changed } = result;
     res.json({ id: r['id'], rev: r['rev'] });
-    try { emitEvent('topic:updated', { id: r['id'], title: next.title, updatedAt: next.updatedAt }); } catch {}
+    if (changed) {
+      try { emitEvent('topic:updated', { id: r['id'], title: next.title, updatedAt: next.updatedAt }); } catch {}
+    }
     return;
   } catch (e: any) {
+    if (
+      String(e?.message) === 'invalid_collaboration_state_digest'
+      || String(e?.message) === 'invalid_collaboration_generation'
+    ) {
+      res.status(400).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
+    if (
+      String(e?.message) === 'collaboration_active'
+      || String(e?.message) === 'collaboration_pending_projection'
+      || String(e?.message) === 'collaboration_projection_stale'
+      || String(e?.message) === 'collaboration_projection_session_missing'
+      || String(e?.message) === 'collaboration_generation_mismatch'
+    ) {
+      res.status(409).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
     if (e?.issues) { res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id }); return; }
     if (CONTENT_REFERENCE_ERRORS.has(String(e?.message || ''))) {
       res.status(400).json({ error: e.message, requestId: (req as any)?.id });

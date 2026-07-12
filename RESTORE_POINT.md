@@ -5,6 +5,30 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-07-12 REST/Yjs coherence gate) Public production is exact merged
+  `04b94622` on managed blue `:8101`; PR #70 removed the synthetic topic-root
+  404s and phase 1 passed all 15 checks. Phase 2 then proved role, upload,
+  two-browser relay/reconnect, Follow-the-Green `2 -> 1 -> 0`, exports, ACLs,
+  and revocation before a deleted Task side-document surfaced as HTTP 500.
+  The measured cause was older Yjs state overwriting a newer out-of-band REST
+  replacement. Branch `fix/rest-yjs-content-coherence` now uses durable
+  per-blip generations, SHA-256 full-state/session-bound projections, one lock
+  for REST/socket/snapshot mutation, dirty-state overwrite protection, exact
+  snapshot persistence before HTML materialization, socket-owned single-seeder
+  authority, in-lock authorization rechecks, and an isolated legacy-editor Yjs
+  namespace. It also closes native-ticket verifier, OAuth preclaim, and logout
+  failure edges. The final independent audit additionally forced post-load join
+  reauthorization and live-generation filtering for legacy search results.
+  Per-wave policy epochs now invalidate all pending joins across policy refresh
+  or topic deletion; the client performs a bounded authoritative retry; and
+  access-changing routes refresh live authority even after a partial multi-doc
+  write failure. Snapshot lookup/decode failures can no longer masquerade as a
+  successfully empty history or seed stale HTML; the browser remains paused
+  and retries twice. Corrupt snapshot bytes decode in a disposable Y.Doc and
+  can never poison the authoritative cache. Full local gates pass at 108 files
+  / 647 tests / 3 skipped,
+  typecheck, lint, and a 3,315-module build; CI/deploy/resumed public acceptance
+  remain open.
 - (2026-07-12 topic-root preference noise) After PR #69 merged as `9358b9c5`,
   private and public auth-race loops both passed 10/10 and production moved to
   managed green `:8102`. Phase-1 acceptance created the invitation, hierarchy,

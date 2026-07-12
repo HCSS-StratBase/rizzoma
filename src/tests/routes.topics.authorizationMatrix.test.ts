@@ -53,7 +53,9 @@ vi.mock('../server/lib/couch.js', () => ({
 }));
 
 vi.mock('../server/lib/socket.js', () => ({
+  clearBlipSeedAuthority: vi.fn(),
   emitEvent: vi.fn(),
+  hasWritableBlipSocket: vi.fn(() => false),
   disconnectWaveSockets: vi.fn(() => 0),
   revokeBlipSockets: vi.fn(() => 0),
   refreshWaveSocketAccess: vi.fn(async () => 0),
@@ -74,7 +76,7 @@ import mentionsRouter from '../server/routes/mentions.js';
 import { hashInviteToken } from '../server/lib/invitations.js';
 import { sendInviteEmail } from '../server/services/email.js';
 import { find, insertDoc, updateDoc } from '../server/lib/couch.js';
-import { revokeBlipSockets } from '../server/lib/socket.js';
+import { refreshWaveSocketAccess, revokeBlipSockets } from '../server/lib/socket.js';
 
 type IdentityName = 'anonymous' | 'outsider' | 'viewer' | 'commenter' | 'editor' | 'owner';
 
@@ -604,6 +606,135 @@ describe('authorization route matrix', () => {
     expect(state.docs.get('participant-outsider-b')?.['status']).toBe('declined');
   });
 
+  it('refreshes live access after a sharing write persists but reports a storage failure', async () => {
+    const originalUpdate = vi.mocked(updateDoc).getMockImplementation()!;
+    vi.mocked(updateDoc).mockImplementation(async (doc: any) => {
+      const result = await originalUpdate(doc);
+      if (doc._id === 'topic-private') throw new Error('uncertain_sharing_write_failure');
+      return result;
+    });
+    try {
+      const response = await invokeRoute(wavesRouter, 'patch', '/:id/sharing', {
+        identity: 'owner',
+        params: { id: 'topic-private' },
+        body: { shareLevel: 'public', allowComments: true, allowEdits: false },
+      });
+
+      expect(response.statusCode).toBe(500);
+      expect(response.body).toMatchObject({ error: 'uncertain_sharing_write_failure' });
+      expect(state.docs.get('topic-private')).toMatchObject({ shareLevel: 'public', allowComments: true });
+      expect(vi.mocked(refreshWaveSocketAccess)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(refreshWaveSocketAccess)).toHaveBeenCalledWith('topic-private');
+    } finally {
+      vi.mocked(updateDoc).mockImplementation(originalUpdate);
+    }
+  });
+
+  it.each([
+    ['patch', 'role', { role: 'viewer' }],
+    ['delete', 'status', {}],
+  ] as const)('refreshes live access when a duplicate participant %s only partially persists', async (method, changedField, body) => {
+    state.docs.set('participant-outsider-a', {
+      _id: 'participant-outsider-a', _rev: '1-a', type: 'participant', waveId: 'topic-private',
+      userId: 'outsider', email: 'outsider@example.test', role: 'editor', status: 'accepted', invitedAt: 1,
+    });
+    state.docs.set('participant-outsider-b', {
+      _id: 'participant-outsider-b', _rev: '1-b', type: 'participant', waveId: 'topic-private',
+      userId: 'outsider', email: 'outsider@example.test', role: 'editor', status: 'accepted', invitedAt: 2,
+    });
+    const originalUpdate = vi.mocked(updateDoc).getMockImplementation()!;
+    let participantWrites = 0;
+    vi.mocked(updateDoc).mockImplementation(async (doc: any) => {
+      if (doc.type === 'participant' && doc.userId === 'outsider') {
+        participantWrites += 1;
+        if (participantWrites === 2) throw new Error('partial_participant_write_failure');
+      }
+      return originalUpdate(doc);
+    });
+    try {
+      const response = await invokeRoute(wavesRouter, method, '/:id/participants/:participantId', {
+        identity: 'owner',
+        params: { id: 'topic-private', participantId: 'participant-outsider-a' },
+        body,
+      });
+
+      expect(response.statusCode).toBe(500);
+      expect(response.body).toMatchObject({ error: 'partial_participant_write_failure' });
+      expect(state.docs.get('participant-outsider-a')?.[changedField]).toBe(method === 'patch' ? 'viewer' : 'declined');
+      expect(state.docs.get('participant-outsider-b')?.[changedField]).toBe(method === 'patch' ? 'editor' : 'accepted');
+      expect(vi.mocked(refreshWaveSocketAccess)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(refreshWaveSocketAccess)).toHaveBeenCalledWith('topic-private');
+    } finally {
+      vi.mocked(updateDoc).mockImplementation(originalUpdate);
+    }
+  });
+
+  it('refreshes live access when invitation acceptance fails after granting the canonical participant', async () => {
+    const token = 'partial-acceptance-token-abcdefghijklmnopqrstuvwxyz';
+    const tokenHash = hashInviteToken(token);
+    state.docs.set('participant-outsider-a', {
+      _id: 'participant-outsider-a', _rev: '1-a', type: 'participant', waveId: 'topic-private',
+      userId: 'invite:outsider@example.test', email: 'outsider@example.test', role: 'viewer', status: 'pending',
+      invitedAt: 2, inviteTokenHash: tokenHash, inviteExpiresAt: Date.now() + 60_000,
+    });
+    state.docs.set('participant-outsider-b', {
+      _id: 'participant-outsider-b', _rev: '1-b', type: 'participant', waveId: 'topic-private',
+      userId: 'invite:outsider@example.test', email: 'outsider@example.test', role: 'viewer', status: 'pending',
+      invitedAt: 1, inviteTokenHash: tokenHash, inviteExpiresAt: Date.now() + 60_000,
+    });
+    const originalUpdate = vi.mocked(updateDoc).getMockImplementation()!;
+    let participantWrites = 0;
+    vi.mocked(updateDoc).mockImplementation(async (doc: any) => {
+      if (doc.type === 'participant' && doc.email === 'outsider@example.test') {
+        participantWrites += 1;
+        if (participantWrites === 2) throw new Error('partial_acceptance_write_failure');
+      }
+      return originalUpdate(doc);
+    });
+    try {
+      const response = await invokeRoute(wavesRouter, 'post', '/invitations/accept', {
+        identity: 'outsider',
+        body: { token },
+      });
+
+      expect(response.statusCode).toBe(500);
+      expect(response.body).toMatchObject({ error: 'partial_acceptance_write_failure' });
+      expect(state.docs.get('participant-outsider-a')).toMatchObject({ userId: 'outsider', status: 'accepted' });
+      expect(state.docs.get('participant-outsider-b')).toMatchObject({ status: 'pending' });
+      expect(vi.mocked(refreshWaveSocketAccess)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(refreshWaveSocketAccess)).toHaveBeenCalledWith('topic-private');
+    } finally {
+      vi.mocked(updateDoc).mockImplementation(originalUpdate);
+    }
+  });
+
+  it('refreshes live access when the alternate invite endpoint fails after its participant write', async () => {
+    const originalInsert = vi.mocked(insertDoc).getMockImplementation()!;
+    vi.mocked(insertDoc).mockImplementation(async (doc: any) => {
+      if (doc.type === 'invitation_token') throw new Error('partial_alternate_invite_write_failure');
+      return originalInsert(doc);
+    });
+    try {
+      const response = await invokeRoute(notificationsRouter, 'post', '/invite', {
+        identity: 'owner',
+        body: { topicId: 'topic-private', recipientEmail: 'partial-invite@example.test' },
+      });
+
+      expect(response.statusCode).toBe(500);
+      expect(response.body).toMatchObject({ error: 'partial_alternate_invite_write_failure' });
+      expect([...state.docs.values()]).toContainEqual(expect.objectContaining({
+        type: 'participant',
+        waveId: 'topic-private',
+        email: 'partial-invite@example.test',
+        status: 'pending',
+      }));
+      expect(vi.mocked(refreshWaveSocketAccess)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(refreshWaveSocketAccess)).toHaveBeenCalledWith('topic-private');
+    } finally {
+      vi.mocked(insertDoc).mockImplementation(originalInsert);
+    }
+  });
+
   it('rejects an owner self-invite before creating a duplicate grant', async () => {
     state.docs.set('owner', { _id: 'owner', type: 'user', email: 'owner@example.test', name: 'Owner' });
     const response = await invokeRoute(wavesRouter, 'post', '/:id/participants', {
@@ -1040,6 +1171,60 @@ describe('authorization route matrix', () => {
     expect([...state.docs.values()].some((doc) => doc['type'] === 'mention' && doc['blipId'] === 'blip-private')).toBe(false);
   });
 
+  it.each([
+    {
+      label: 'nested blip',
+      router: blipsRouter,
+      method: 'put',
+      targetId: 'blip-private',
+      taskId: 'task:55555555-5555-4555-8555-555555555555',
+      content: '<p>Repair nested task <span data-task-widget="" data-task-id="task:55555555-5555-4555-8555-555555555555" data-assignee-id="viewer" data-assignee="Viewer"></span></p>',
+    },
+    {
+      label: 'topic root',
+      router: topicsRouter,
+      method: 'patch',
+      targetId: 'topic-private',
+      taskId: 'task:66666666-6666-4666-8666-666666666666',
+      content: '<h1>Private topic</h1><p>Repair root task <span data-task-widget="" data-task-id="task:66666666-6666-4666-8666-666666666666" data-assignee-id="viewer" data-assignee="Viewer"></span></p>',
+    },
+  ])('self-heals a missing task side-document on an identical $label save', async ({
+    router,
+    method,
+    targetId,
+    taskId,
+    content,
+  }) => {
+    const first = await invokeRoute(router, method, '/:id', {
+      identity: 'editor',
+      params: { id: targetId },
+      body: { content },
+    });
+    expect(first.statusCode).toBe(200);
+    expect(state.docs.get(taskId)).toMatchObject({
+      type: 'task',
+      blipId: targetId,
+      assigneeId: 'viewer',
+    });
+
+    // Model a partial previous failure or a legacy damaged row: durable HTML
+    // still references the task, but the derived side-document is absent.
+    state.docs.delete(taskId);
+    expect(state.docs.get(targetId)?.['content']).toBe(content);
+
+    const retry = await invokeRoute(router, method, '/:id', {
+      identity: 'editor',
+      params: { id: targetId },
+      body: { content },
+    });
+    expect(retry.statusCode).toBe(200);
+    expect(state.docs.get(taskId)).toMatchObject({
+      type: 'task',
+      blipId: targetId,
+      assigneeId: 'viewer',
+    });
+  });
+
   it('keeps task completion authoritative across stale blip saves and authorized hydration', async () => {
     const taskId = 'task:44444444-4444-4444-8444-444444444444';
     const uncheckedContent = `<p>Durable task <span data-task-widget="" data-task-id="${taskId}" data-assignee-id="viewer" data-assignee="Viewer"></span></p>`;
@@ -1081,6 +1266,23 @@ describe('authorization route matrix', () => {
       params: { blipId: 'blip-private' },
     });
     expect(outsider.statusCode).toBe(403);
+  });
+
+  it('returns task_not_found instead of a server error for a deleted task side-document', async () => {
+    const toggled = await invokeRoute(tasksRouter, 'post', '/:id/toggle', {
+      identity: 'viewer',
+      params: { id: 'task:missing' },
+    });
+    expect(toggled.statusCode).toBe(404);
+    expect(toggled.body).toMatchObject({ error: 'task_not_found' });
+
+    const patched = await invokeRoute(tasksRouter, 'patch', '/:id', {
+      identity: 'viewer',
+      params: { id: 'task:missing' },
+      body: { isCompleted: true },
+    });
+    expect(patched.statusCode).toBe(404);
+    expect(patched.body).toMatchObject({ error: 'task_not_found' });
   });
 
   it.each(['public', 'link'] as const)(

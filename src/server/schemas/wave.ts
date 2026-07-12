@@ -25,6 +25,9 @@ export type Blip = {
   authorName?: string;
   createdAt: number;
   updatedAt: number;
+  /** Durable CRDT epoch. External full-content replacement increments it so
+   * retained clients and snapshots from an older history cannot merge back. */
+  yjsGeneration?: number;
   deleted?: boolean;
   deletedAt?: number;
   deletedBy?: string;

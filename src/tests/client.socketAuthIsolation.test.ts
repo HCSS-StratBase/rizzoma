@@ -98,11 +98,13 @@ describe('client: Socket.IO auth isolation', () => {
       ok: true,
       waveId: 'wave-1',
       canEdit: true,
+      yjsGeneration: 0,
       user: { id: 'alice', name: 'Alice', color: '#111111' },
     });
     socketHarness.trigger('blip:sync:shared-blip', {
       state: [],
       shouldSeed: false,
+      yjsGeneration: 0,
       user: { id: 'alice' },
     });
     aliceDoc.getText('default').insert(0, 'A live');
@@ -144,12 +146,14 @@ describe('client: Socket.IO auth isolation', () => {
       ok: true,
       waveId: 'wave-1',
       canEdit: true,
+      yjsGeneration: 0,
       user: { id: 'bob', name: 'Bob', color: '#222222' },
     });
 
     socketHarness.trigger('blip:sync:shared-blip', {
       state: [],
       shouldSeed: false,
+      yjsGeneration: 0,
       user: { id: 'bob' },
     });
     bobDoc.getText('default').insert(0, 'B live');

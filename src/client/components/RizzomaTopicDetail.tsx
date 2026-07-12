@@ -15,7 +15,6 @@ import { RizzomaBlip, type BlipData, type BlipContributor } from './blip/Rizzoma
 import { injectInlineMarkers } from './blip/inlineMarkers';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
-import { isChangeOrigin } from '@tiptap/extension-collaboration';
 import { getEditorExtensions, defaultEditorProps } from './editor/EditorConfig';
 import { EDIT_MODE_EVENT, INSERT_EVENTS } from './RightToolsPanel';
 import { useCollaboration } from './editor/useCollaboration';
@@ -30,6 +29,7 @@ import { useAuth } from '../hooks/useAuth';
 import { requestTaskCompletionHydration } from './editor/extensions/TaskWidget';
 import { collectBlipPages } from '../lib/blipPagination';
 import { subscribeBlipEvents, subscribeTopicDetail } from '../lib/socket';
+import { collaborationProjectionHeaders } from '../lib/collaborationProjection';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -106,6 +106,7 @@ type TopicFull = {
   content?: string;
   createdAt: number;
   updatedAt: number;
+  yjsGeneration?: number;
   authorId: string;
   authorName: string;
   permissions?: {
@@ -313,7 +314,14 @@ function RizzomaTopicDetailState({
   const [isEditingTopic, setIsEditingTopic] = useState(false);
   const [topicContent, setTopicContent] = useState('');
   const topicSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const topicProjectionActiveRef = useRef(true);
   const lastSavedContentRef = useRef<string>('');
+  const topicYjsGeneration = topic?.yjsGeneration ?? 0;
+  const topicProjectionIdentity = `${id}:${topicYjsGeneration}`;
+  const topicProjectionIdentityRef = useRef(topicProjectionIdentity);
+  if (topicProjectionIdentityRef.current !== topicProjectionIdentity) {
+    topicProjectionIdentityRef.current = topicProjectionIdentity;
+  }
 
   // Ref-based callback for creating inline child blips
   // Using a ref so the TipTap extension always gets the latest version
@@ -332,14 +340,17 @@ function RizzomaTopicDetailState({
   // RizzomaBlip skips collab for topic root (isTopicRoot), so this is the sole owner.
   const topicCollabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && topicCanEdit);
   const topicYdoc = useMemo(
-    () => topicCollabEnabled ? yjsDocManager.getDocument(id, collaborationUser?.id) : undefined,
-    [collaborationUser?.id, id, topicCollabEnabled]
+    () => topicCollabEnabled
+      ? yjsDocManager.getDocument(id, collaborationUser?.id, topicYjsGeneration)
+      : undefined,
+    [collaborationUser?.id, id, topicCollabEnabled, topicYjsGeneration]
   );
   const topicCollabProvider = useCollaboration(
     topicYdoc,
     id,
     topicCollabEnabled,
     collaborationUser,
+    topicYjsGeneration,
   );
   const topicCollabActive = topicCollabEnabled && !!topicYdoc && !!topicCollabProvider;
   const seedingTopicYdocRef = useRef(false);
@@ -372,23 +383,22 @@ function RizzomaTopicDetailState({
     content: '',
     editable: false,
     editorProps: defaultEditorProps,
-    onUpdate: ({ editor, transaction }: { editor: Editor; transaction: any }) => {
+    onUpdate: ({ editor }: { editor: Editor }) => {
       // Skip auto-save during Y.Doc seeding
       if (seedingTopicYdocRef.current) return;
 
       const html = editor.getHTML();
       setTopicContent(html);
 
-      // Skip REST persistence for remote Y.Doc sync. The authoritative remote
-      // marker lives in ySyncPlugin metadata, not `transaction.origin`.
-      if (isChangeOrigin(transaction)) return;
-
-      // Debounced auto-save (300ms delay)
+      // Materialize both local and remote convergence. The callback reads the
+      // latest editor HTML and full-state Yjs digest when the timer fires, and the
+      // server rejects a projection that raced a newer CRDT update.
       if (topicSaveTimeoutRef.current) {
         clearTimeout(topicSaveTimeoutRef.current);
       }
       topicSaveTimeoutRef.current = setTimeout(() => {
-        autoSaveTopicContent(html);
+        const latestHtml = topicEditorRef.current?.getHTML() || html;
+        void autoSaveTopicContent(latestHtml);
       }, 300);
     },
   }, [id, topicCollabActive, topicYdoc, topicCollabProvider, stableCreateInlineChildBlip, collaborationUser?.id, collaborationUser?.name, topicRosterKey]);
@@ -486,10 +496,14 @@ function RizzomaTopicDetailState({
         hasSetInitialContentRef.current = true;
         topicCollabProvider.onSynced(() => {
           if ((topicEditor as any).isDestroyed) return;
-          const frag = topicYdoc!.getXmlFragment('default');
-          if (frag.length === 0) {
+          if (topicCollabProvider.shouldSeed) {
+            if (topicYdoc.getXmlFragment('default').length > 0) {
+              setContentAndFocus();
+              return;
+            }
+            const authoritativeSeed = sanitizeRichHtml(topicCollabProvider.seedContent ?? topicContent);
             seedingTopicYdocRef.current = true;
-            topicEditor.commands.setContent(topicContent);
+            topicEditor.commands.setContent(authoritativeSeed);
             seedingTopicYdocRef.current = false;
           }
           setContentAndFocus();
@@ -678,6 +692,7 @@ function RizzomaTopicDetailState({
               authorName: raw.authorName || 'Unknown',
               createdAt: raw.createdAt || Date.now(),
               updatedAt: raw.updatedAt || raw.createdAt || Date.now(),
+              yjsGeneration: raw.yjsGeneration ?? 0,
               isRead: !unreadSet.has(rawId),
               parentBlipId: raw.parentId || null,
               childBlips: [],
@@ -879,6 +894,7 @@ function RizzomaTopicDetailState({
               authorName: newBlip.authorName || 'Anonymous',
               createdAt: newBlip.createdAt || Date.now(),
               updatedAt: newBlip.updatedAt || Date.now(),
+              yjsGeneration: 0,
               isRead: true,
               parentBlipId: undefined,
               childBlips: [],
@@ -1268,31 +1284,88 @@ function RizzomaTopicDetailState({
   };
 
   // Auto-save topic content (BLB: extracts title from first H1/line)
-  const autoSaveTopicContent = useCallback(async (content: string) => {
-    if (content === lastSavedContentRef.current) {
-      return;
-    }
+  const autoSaveTopicContent = useCallback(async (
+    content: string,
+    attempt = 0,
+  ): Promise<void> => {
+    if (
+      !topicProjectionActiveRef.current
+      || topicProjectionIdentityRef.current !== topicProjectionIdentity
+    ) return;
     try {
-      const extractedTitle = extractTitleFromContent(content);
-      if (!extractedTitle) return;
-
       await ensureCsrf();
+      if (
+        !topicProjectionActiveRef.current
+        || topicProjectionIdentityRef.current !== topicProjectionIdentity
+      ) return;
+      const latestContent = topicEditorRef.current?.getHTML() || content;
+      if (latestContent === lastSavedContentRef.current) return;
+      const extractedTitle = extractTitleFromContent(latestContent);
+      if (!extractedTitle) return;
+      const headers = topicCollabActive
+        ? await collaborationProjectionHeaders(topicYdoc, topicYjsGeneration)
+        : undefined;
+      if (
+        !topicProjectionActiveRef.current
+        || topicProjectionIdentityRef.current !== topicProjectionIdentity
+      ) return;
       const response = await api(`/api/topics/${encodeURIComponent(id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({ title: extractedTitle, content: content })
+        headers,
+        body: JSON.stringify({ title: extractedTitle, content: latestContent })
       });
       if (response.ok) {
-        lastSavedContentRef.current = content;
-        setTopic(prev => prev ? { ...prev, title: extractedTitle, content: content } : prev);
+        if (
+          !topicProjectionActiveRef.current
+          || topicProjectionIdentityRef.current !== topicProjectionIdentity
+        ) return;
+        lastSavedContentRef.current = latestContent;
+        setTopic(prev => prev ? { ...prev, title: extractedTitle, content: latestContent } : prev);
         // Topic-root task side-documents are derived by this successful save,
         // never by the client. Refresh so a newly inserted task becomes
         // interactable in the same edit session when canToggle permits it.
         requestTaskCompletionHydration(topicEditorRef.current);
         // No toast for auto-save - it's real-time
+      } else if (
+        topicProjectionActiveRef.current
+        && topicProjectionIdentityRef.current === topicProjectionIdentity
+        && (
+          response.status === 408
+          || response.status === 409
+          || response.status === 425
+          || response.status === 429
+          || response.status >= 500
+        )
+        && attempt < 8
+      ) {
+        topicSaveTimeoutRef.current = setTimeout(() => {
+          const latestContent = topicEditorRef.current?.getHTML() || content;
+          void autoSaveTopicContent(latestContent, attempt + 1);
+        }, Math.min(2_000, 150 * (2 ** attempt)));
       }
     } catch {
-      // Silent fail for auto-save - will retry on next change
+      if (
+        topicProjectionActiveRef.current
+        && topicProjectionIdentityRef.current === topicProjectionIdentity
+        && attempt < 8
+      ) {
+        topicSaveTimeoutRef.current = setTimeout(() => {
+          const latestContent = topicEditorRef.current?.getHTML() || content;
+          void autoSaveTopicContent(latestContent, attempt + 1);
+        }, Math.min(2_000, 150 * (2 ** attempt)));
+      }
     }
+  }, [id, topicCollabActive, topicProjectionIdentity, topicYdoc, topicYjsGeneration]);
+
+  useEffect(() => {
+    topicProjectionActiveRef.current = true;
+    return () => {
+      topicProjectionActiveRef.current = false;
+      if (topicSaveTimeoutRef.current) {
+        clearTimeout(topicSaveTimeoutRef.current);
+        topicSaveTimeoutRef.current = null;
+      }
+    };
   }, [id]);
 
   // Start editing topic (BLB: topic is meta-blip)
@@ -1350,13 +1423,13 @@ function RizzomaTopicDetailState({
     // Final save if content changed
     const currentContent = topicEditor?.getHTML() || topicContent;
     if (currentContent !== lastSavedContentRef.current) {
-      autoSaveTopicContent(currentContent);
+      void autoSaveTopicContent(currentContent);
     }
     setIsEditingTopic(false);
     if (topicEditor) {
       topicEditor.setEditable(false);
     }
-  }, [autoSaveTopicContent, topicContent, topicEditor]);
+  }, [autoSaveTopicContent, topicCollabActive, topicContent, topicEditor, topicYdoc]);
 
   if (error) {
     return (
@@ -1438,6 +1511,7 @@ function RizzomaTopicDetailState({
     authorName: topic.authorName,
     createdAt: topic.createdAt,
     updatedAt: topic.updatedAt,
+    yjsGeneration: topicYjsGeneration,
     isRead: true,
     permissions: {
       canEdit: topicCanEdit,
