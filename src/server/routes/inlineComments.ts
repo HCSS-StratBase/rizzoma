@@ -10,6 +10,28 @@ import { csrfProtect } from '../middleware/csrf.js';
 
 const router = Router();
 
+async function loadLiveBlip(blipId: string): Promise<Blip> {
+  const doc = await getDoc<unknown>(blipId) as Partial<Blip> | null;
+  if (!doc || doc.type !== 'blip' || typeof doc.waveId !== 'string' || !doc.waveId) {
+    throw new Error('404 not_a_blip');
+  }
+  if (doc.deleted) throw new Error('410 blip_deleted');
+  return doc as Blip;
+}
+
+function respondToBlipLookupFailure(error: unknown, res: any): boolean {
+  const message = String((error as any)?.message || '');
+  if (message.startsWith('404')) {
+    res.status(404).json({ error: 'blip_not_found' });
+    return true;
+  }
+  if (message.startsWith('410')) {
+    res.status(410).json({ error: 'blip_deleted' });
+    return true;
+  }
+  return false;
+}
+
 // Schema for comment creation
 const inlineCommentRangeSchema = z.object({
   start: z.number().int().min(0),
@@ -57,7 +79,7 @@ router.get('/blip/:blipId/comments', async (req, res): Promise<void> => {
     }
 
     const blipId = req.params['blipId'] as string;
-    const blip = await getDoc<Blip>(blipId);
+    const blip = await loadLiveBlip(blipId);
     const access = await requireWaveAccess(req, res, blip.waveId, 'read');
     if (!access) return;
 
@@ -75,6 +97,7 @@ router.get('/blip/:blipId/comments', async (req, res): Promise<void> => {
 
     res.json({ comments });
   } catch (error) {
+    if (respondToBlipLookupFailure(error, res)) return;
     console.error('Error in comments route:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -89,7 +112,7 @@ router.post('/comments', requireAuth, csrfProtect(), async (req, res): Promise<v
     }
 
     const { blipId, content, range, parentId } = createCommentSchema.parse(req.body);
-    const blip = await getDoc<Blip>(blipId);
+    const blip = await loadLiveBlip(blipId);
     const access = await requireWaveAccess(req, res, blip.waveId, 'comment');
     if (!access) return;
     const userId = req.user!.id;
@@ -141,6 +164,7 @@ router.post('/comments', requireAuth, csrfProtect(), async (req, res): Promise<v
     
     res.json({ comment });
   } catch (error) {
+    if (respondToBlipLookupFailure(error, res)) return;
     console.error('Error creating comment:', error);
     res.status(500).json({ error: 'Failed to create comment' });
   }
@@ -163,7 +187,7 @@ router.patch('/comments/:commentId/resolve', requireAuth, csrfProtect(), async (
       return;
     }
     const doc = parsed.data;
-    const blip = await getDoc<Blip>(doc.blipId);
+    const blip = await loadLiveBlip(doc.blipId);
     const access = await requireWaveAccess(req, res, blip.waveId, 'comment');
     if (!access) return;
     if (doc.userId !== req.user!.id && !access.canEdit) {
@@ -179,6 +203,7 @@ router.patch('/comments/:commentId/resolve', requireAuth, csrfProtect(), async (
     
     res.json({ success: true });
   } catch (error) {
+    if (respondToBlipLookupFailure(error, res)) return;
     console.error('Error updating comment:', error);
     res.status(500).json({ error: 'Failed to update comment' });
   }
@@ -201,7 +226,7 @@ router.delete('/comments/:commentId', requireAuth, csrfProtect(), async (req, re
       return;
     }
     const doc = parsed.data;
-    const blip = await getDoc<Blip>(doc.blipId);
+    const blip = await loadLiveBlip(doc.blipId);
     const access = await requireWaveAccess(req, res, blip.waveId, 'comment');
     if (!access) return;
     if (doc.userId !== userId && !access.canEdit) {
@@ -217,6 +242,7 @@ router.delete('/comments/:commentId', requireAuth, csrfProtect(), async (req, re
     
     res.json({ success: true });
   } catch (error) {
+    if (respondToBlipLookupFailure(error, res)) return;
     console.error('Error deleting comment:', error);
     res.status(500).json({ error: 'Failed to delete comment' });
   }
