@@ -455,7 +455,7 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
 
       {/* Right Tools Panel - Far Right */}
       <div
-        className={`right-tools-container ${rightPaneCollapsed ? 'collapsed' : ''}`}
+        className={`right-tools-container ${rightPaneCollapsed && !isMobile ? 'collapsed' : ''}`}
         style={!isMobile && !rightPaneCollapsed ? { width: rightPaneWidth, minWidth: rightPaneWidth } : undefined}
       >
         {/* Left-edge drag handle for the right pane (inside-facing
@@ -482,7 +482,7 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
         >
           {rightPaneCollapsed ? '◀' : '▶'}
         </button>
-        {!rightPaneCollapsed && (
+        {(!rightPaneCollapsed || isMobile) && (
           <RightToolsPanel
             isAuthed={isAuthed}
             user={user}
