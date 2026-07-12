@@ -2,22 +2,24 @@
 
 **Last updated**: 2026-07-12 (integrated candidate pre-cutover checkpoint)
 
-> **Exact candidate ready locally, not yet public:**
-> `release/preintegration-offline-upload` application checkpoint `b3cd054f`
-> passed 107/107 test files (588 passed, 3 skipped), typecheck, full-source
-> ESLint `--quiet`, a 3,314-module production build, responsive local
-> Playwright, and an independent GO audit. Public production remains on the
-> earlier parity release until the application and deploy-helper PRs merge.
-> The required next operation is an immutable exact-merge deployment to the
+> **Application merged, not yet public:** PR
+> [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) merged as `bacb8a50`
+> after all seven GitHub checks passed on source head `b8c9d110`; the underlying
+> audited local run passed 107/107 test files (588 passed, 3 skipped),
+> typecheck, full-source ESLint `--quiet`, a 3,314-module production build,
+> responsive Playwright, and an independent GO audit. Public production remains
+> on the earlier parity release until deploy-helper PR #67 merges. The required
+> next operation is an immutable exact-master deployment to the
 > inactive managed lane, followed by the zero-overlap drain below and full
 > public acceptance. Do not expose a candidate lane while the old process-local
 > Yjs cache can still receive writes.
 
 > **Managed-service candidate (not yet public):** branch
-> `codex/production-service-hardening` replaces the obsolete Docker-era deploy
+> `release/deploy-helper-final` replaces the obsolete Docker-era deploy
 > helper with immutable exact-SHA releases and systemd blue/green lanes on
 > loopback `:8101`/`:8102`. It also adds graceful Yjs/Socket.IO/Redis shutdown,
-> production session-secret rotation, and Redis readiness. The authoritative
+> production session-secret rotation, Redis/ClamAV readiness, fail-closed
+> rollback, and a lockfile-preserving production-dependency prune. The authoritative
 > target procedure is the [managed VPS deployment guide](../deploy/systemd/README.md).
 > Until merge, direct preflight, zero-overlap maintenance drain, and atomic
 > both-vhost cutover are complete, the runtime

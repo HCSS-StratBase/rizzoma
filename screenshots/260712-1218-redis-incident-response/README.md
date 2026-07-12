@@ -41,6 +41,9 @@ Incident discovered and contained on 2026-07-12 between 12:03 and 12:18 CEST.
   `3000-3001,3100,8000,8100-8102,8200-8202,8788`.
 - Preserved the compromised RDB, Redis log, and attacker public key under the
   root-only local directory `/root/redis-incident-20260712/` on the VPS.
+- Copied the same three files off-host to the local-only, mode-`0700` directory
+  `/home/stephan/.local/share/rizzoma-incident-20260712/`; both recorded hashes
+  match exactly.
 - Evidence hashes:
   - compromised RDB: `0fd577d3f3b185cd905f0283ad172569a7dfef1ae40aac3267ec678255bd734a`
   - Redis log: `9c33c81c8150497d912e65690636be7434f7b0e450a59fc70a2674cc77a12601`

@@ -5,18 +5,17 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
-- (2026-07-12 integrated release candidate) Branch
-  `release/preintegration-offline-upload` combines the full authorization,
-  offline/auth isolation, private upload/ClamAV, OAuth/password recovery,
-  collaboration/realtime/export, mentions, and durable Task stack at audited
-  application checkpoint `b3cd054f`. The exact full run passed **107 files / 588
-  tests / 3 skipped / 0 failed**; typecheck, full-source ESLint `--quiet`, and
-  the **3,314-module** production build passed. An independent final audit is
-  GO after the Task parity, account-switch privacy, fail-closed authority, and
-  reconnect recovery fixes. Local responsive evidence is archived under
-  [`screenshots/260712-1928-final-candidate-ui/`](screenshots/260712-1928-final-candidate-ui/).
-  The branch is not merged or deployed; GitHub CI, managed zero-overlap cutover,
-  and public acceptance remain the release boundary.
+- (2026-07-12 integrated release merge) PR
+  [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) merged the full
+  authorization, offline/auth isolation, private upload/ClamAV,
+  OAuth/password recovery, collaboration/realtime/export, mentions, and
+  durable Task stack as `bacb8a50`. Exact local gates passed at **107 files /
+  588 tests / 3 skipped / 0 failed**, typecheck, full-source ESLint `--quiet`,
+  and a **3,314-module** build; all seven GitHub checks passed on source head
+  `b8c9d110`. Branch `release/deploy-helper-final` rebases the managed helper
+  onto that merge and fixes npm 10's measured post-build lockfile rewrite.
+  PR #67 CI, zero-overlap cutover, and public acceptance remain the release
+  boundary.
 - (2026-07-12 password recovery candidate) Branch
   `codex/password-recovery` is based on combined integration checkpoint
   `c00e1711`. It adds generic non-enumerating reset requests, 32-byte one-time

@@ -100,8 +100,8 @@ session secrets. Docker's production profile now listens on its container
 interface behind a loopback-only host mapping and requires an explicit strong
 secret.
 
-Cold-boot supervision now starts both Docker dependencies and retries their
-real Redis/CouchDB readiness for up to 50 seconds inside one systemd start,
+Cold-boot supervision now starts all Docker dependencies and retries their
+real Redis/CouchDB/ClamAV readiness for up to 180 seconds inside one systemd start,
 instead of consuming the five-start rate limit during a slow Couch recovery.
 
 The cutover procedure now forbids any live dual-writer overlap, including the
@@ -124,9 +124,81 @@ one-off shell fixes.
 
 ## Boundary
 
-At this checkpoint the code and service design are locally verified but not
-yet merged or deployed. Public traffic still targets the existing
-`:3100`/`:8100` lane. Exact-SHA deployment, direct preflight, zero-overlap
-maintenance drain, both-vhost cutover, graceful-restart evidence, and public
-Playwright acceptance remain mandatory
-before the service can be called productionized.
+PR #64 has since merged and its exact SHA is running as the private blue
+candidate. Public traffic still targets the existing `:3100`/`:8100` lane.
+Zero-overlap maintenance drain, both-vhost cutover, exact edit/session restart
+evidence, and public Playwright acceptance remain mandatory before the service
+can be called productionized.
+
+## Merged candidate deployment
+
+PR #64 merged as `2595d2de`. Both dependency containers now publish only on
+host loopback. The immutable blue candidate is active under systemd and passed
+compiled-asset, old-cookie-rejection, health, and real cold-dependency restart
+checks; stopped Redis/CouchDB reached candidate readiness in 5,197 ms with no
+service retry or shutdown error. Evidence:
+`screenshots/260712-1300-managed-production-candidate/`.
+
+The first deploy attempt safely stopped at a source-repository guard because
+the VPS source is a linked worktree (`.git` file). The helper now validates via
+`git rev-parse --git-dir`, accepting both ordinary repositories and linked
+worktrees. Public nginx remains unchanged pending the zero-overlap final
+cutover and browser acceptance.
+
+A later immutable-release preflight reproduced a second deterministic stop:
+with Node 20.19.0 and npm 10.8.2, `npm prune --omit=dev` removed the intended
+development packages but also rewrote 59 tracked `package-lock.json` lines
+(41 additions and 18 deletions). The helper now passes
+`--package-lock=false` only to the post-build prune. A clean disposable
+worktree confirmed that development tools such as ESLint, TypeScript, Vite,
+and Vitest were removed, the production dependency tree remained valid, and
+the tracked tree stayed byte-clean for immutable validation.
+
+## ClamAV as a managed readiness dependency
+
+- Extended the topology so malware scanning is not an ad-hoc sidecar: the installer creates or adopts `rizzoma-clamav` with a persistent signature volume, 4 GiB memory ceiling, restart policy, and loopback-only `127.0.0.1:3310` publication.
+- The systemd lane starts Redis, CouchDB, and ClamAV together and waits up to 180 seconds for all three; ClamAV must report Docker health `healthy` before the app starts. The wider start timeout covers cold signature initialization without consuming the restart burst.
+- Added `UPLOADS_STORAGE=local`, `CLAMAV_HOST=127.0.0.1`, and `CLAMAV_PORT=3310` to the non-secret environment template, plus a defense-in-depth public-interface drop for port 3310.
+- Candidate/public acceptance now requires ClamAV readiness and a real clean-versus-EICAR upload result through the ACL-backed route. Shell syntax and `git diff --check` passed; local `systemd-analyze verify` reached the expected WSL-only missing `docker.service` and `/usr/bin/node` dependencies, so the installed VPS unit remains the authoritative runtime verification surface.
+
+The independent deploy review then found seven determinism gaps and held this
+follow-up at **NO-GO**: a drifted pre-existing scanner could be blindly adopted;
+port 3310 was defended in the wrong firewall chain; only one direct nginx file
+was checked for the active lane; rollback restarted lanes that had previously
+been stopped; production environment ownership and required local values were
+not fully asserted; deployment weakened the private upload-directory mode; and
+candidate health did not explicitly require the ClamAV check. The deploy helper
+also accepted a stale globally installed systemd unit.
+
+The corrected implementation now recreates a scanner on any image, binding, or
+mount drift; protects 3310 in `DOCKER-USER`; scans all effective nginx config
+twice; preserves target, active state, and enabled state on rollback; enforces
+root ownership plus exact non-secret environment invariants; retains
+`rizzoma:rizzoma` mode `0750` uploads; byte-compares the candidate unit; and
+parses readiness JSON for CouchDB, sessions, and ClamAV. Deployment is serialized
+with a host lock, staging and probe paths are unpredictable, and lane symlinks
+are published atomically.
+
+A second adversarial review still held the helper at **NO-GO**: Bash disables
+`errexit` inside functions invoked by `if !`, so a failed rollback symlink move
+could fall through to a successful assignment; service restoration swallowed
+every systemd error while claiming success; Docker-DNATed application ports
+were protected only in `INPUT`; and an effective systemd drop-in could override
+the byte-matched main unit. The final correction gives every transactional link
+step an explicit failure return, verifies restored enabled/active state, stops
+the lane and preserves candidate artifacts when restoration cannot be proven,
+mirrors all application-port drops into `DOCKER-USER`, and refuses any effective
+drop-in. Reused releases now also require the exact Git HEAD, clean tracked tree,
+root ownership, read-only files/directories, and the exact persistent-upload
+symlink before a restart is allowed. Bash syntax, ShellCheck, branch-context,
+and diff checks pass; faithful function harnesses now prove both atomic-link
+success and propagation of injected link-move and systemd-restart failures.
+
+During review, invoking the installer with `--help` exposed that it silently
+ignored arguments and ran its idempotent bootstrap. That accidental invocation
+did not restart Rizzoma or change nginx. An immediate read-only production
+recheck measured public health HTTP 200, nginx active with a valid configuration,
+the existing blue candidate active and green inactive, the old public listener
+set unchanged, `production.env` still `root:root` mode `0600`, and ClamAV healthy
+on loopback with its persistent volume. The installer now has a harmless help
+path and rejects every unexpected argument before any network action.

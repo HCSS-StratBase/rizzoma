@@ -86,23 +86,29 @@ Run this in bash to start the next batch of work:
 
 ```
 codex exec '
+  Only edit files inside this repo; no external network/browsers unless via gh.
+
+  Always-On Loop:
+    - Treat every prompt as permission to continue the full Analyze -> Execute -> Verify -> Commit -> Document cycle.
+    - Do not stop between tasks unless blocked by a critical permission error or an unresolvable logical impasse.
+    - After each commit/push, immediately select the next smallest scoped task and repeat.
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `release/preintegration-offline-upload` worktree/branch until PR #66 contains the audited tree; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
-    - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md (plus any Markdown touched in the last 31 days); capture drift into RESTORE_POINT.md + handoff/restart docs.
+    - Continue in the isolated `release/deploy-helper-final` worktree/branch until PR #67 merges; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
+    - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
-    - Run "npm run lint:branch-context" to verify docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
+    - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
   Step 0.2:
     - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`). Ensure `http://localhost:3000/` is reachable before Playwright.
+    - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Publish the exact audited candidate and docs/evidence to PR #66; require all CI jobs and merge only the green tree.
-  2) Rebase the tested deploy-helper commits onto merged master, update PR #67, require CI, and install the exact merged helper assets.
-  3) Deploy the exact application merge SHA to the inactive managed lane; verify direct health/assets/journal/ClamAV, then drain old Vite and API with zero writer overlap before switching both vhosts.
-  4) Run public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs.
-  5) Record the exact production result in project docs, global HANDOFF, and existing HCSS Tana node `8mGAbLRiBnne`; refresh the Git bundle after final docs merge.
-  6) Keep native rendering disabled; after release, address 500/1,000-blip sweeps, physical iPhone Safari, staging-data separation, synthetic-data cleanup, and dependency/lint debt.
+  1) Push the rebased deploy-helper tree to PR #67, require all CI jobs, and merge only the green tree.
+  2) Install the exact merged helper assets and deploy that exact master SHA to the inactive managed lane; verify direct health/assets/journal/ClamAV, then drain old Vite and API with zero writer overlap before switching both vhosts.
+  3) Run public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs.
+  4) Record the exact production result in project docs, global HANDOFF, and existing HCSS Tana node `8mGAbLRiBnne`; refresh the Git bundle after final docs merge.
+  5) Keep native rendering disabled; after release, address 500/1,000-blip sweeps, physical iPhone Safari, staging-data separation, synthetic-data cleanup, and dependency/lint debt.
 
   Testing/CI hygiene:
   - Keep the central sharing/access, route-role matrix, real-session Socket.IO authorization, and ShareModal tests green; production policy changes require staging evidence first.
@@ -111,9 +117,9 @@ codex exec '
   - Keep the enforced 120-blip full-render perf gate green: exact 120/120 rendering, required lazy slots, no timeout, stage duration under 3 seconds, and heap under 100 MB.
   - Keep repo screenshot artifacts under `screenshots/YYMMDD-HHMM[-SS]-purpose-label/`; read `screenshots/README.md` before adding new visual artifacts, and do not leave loose PNG/JSON/HTML files at `screenshots/` root.
   - Update TESTING_STATUS.md and RIZZOMA_FEATURES_STATUS.md after targeted runs; call out gaps. For visual sweeps use `RIZZOMA_SWEEP_STAMP=<YYMMDD-HHMMSS> npm run visual:sweep` followed by `RIZZOMA_SWEEP_DIR=<folder> npm run visual:coverage`; for custom perf artifact folders, run `PERF_SNAPSHOT_DIR=<dir> node scripts/perf-budget.mjs`.
-  - If you need fresh screenshots locally without rerunning Playwright, run: npm run snapshots:pull
+  - If you need fresh screenshots without rerunning Playwright locally, run: npm run snapshots:pull
 
-  Stop after this batch, refresh RESTORE_POINT.md to mark completions and the new checkpoint timestamp, and rewrite this Codex exec block (plus the mirror in docs/RESTART.md if it changed) with the next batch starting steps before exiting to bash.'
+  Stop after this batch, refresh RESTORE_POINT.md to mark completions and the new checkpoint timestamp, and rewrite the Codex exec block in AGENTS.md (plus this mirror snippet if it changed) with the next batch's starting steps before exiting to bash.'
 ```
 
   ## Codex exec (restart codex)
