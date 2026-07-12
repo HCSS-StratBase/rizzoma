@@ -74,8 +74,13 @@ export interface DigestEmailData {
 }
 
 function cleanText(value: unknown, maxLength: number): string {
-  return String(value ?? '')
-    .replace(/[\u0000-\u001f\u007f-\u009f]+/g, ' ')
+  const withoutControls = Array.from(String(value ?? ''), (character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    return codePoint <= 0x1f || (codePoint >= 0x7f && codePoint <= 0x9f)
+      ? ' '
+      : character;
+  }).join('');
+  return withoutControls
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, maxLength);
