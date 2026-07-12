@@ -386,6 +386,7 @@ async function main() {
 
       let unreadState = await waitForUnreadIds(observerPage, waveId, blipIds);
       await waitForUnreadButton(observerPage, blipIds.length);
+      await captureSnapshot(observerPage, `${profile.name}-two-unread`);
 
       for (let remaining = blipIds.length; remaining > 0; remaining -= 1) {
         const nextId = String(unreadState.unread[0]);
