@@ -1083,6 +1083,95 @@ describe('authorization route matrix', () => {
     expect(outsider.statusCode).toBe(403);
   });
 
+  it.each(['public', 'link'] as const)(
+    'hydrates current task completion for an anonymous reader of a %s wave without granting toggle access',
+    async (shareLevel) => {
+      const taskId = `task:anonymous-${shareLevel}`;
+      state.docs.set('topic-private', {
+        ...state.docs.get('topic-private')!,
+        shareLevel,
+      });
+      state.docs.set(taskId, {
+        _id: taskId,
+        _rev: '1-task',
+        type: 'task',
+        waveId: 'topic-private',
+        topicId: 'topic-private',
+        blipId: 'blip-private',
+        taskText: 'Visible completed task',
+        assigneeId: 'viewer',
+        assigneeName: 'Viewer',
+        authorId: 'editor',
+        authorName: 'Editor',
+        isCompleted: true,
+        completedAt: 2,
+        createdAt: 1,
+        updatedAt: 2,
+      });
+
+      const response = await invokeRoute(tasksRouter, 'get', '/by-blip/:blipId', {
+        identity: 'anonymous',
+        params: { blipId: 'blip-private' },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['cache-control']).toBe('no-store');
+      expect(response.body.tasks).toContainEqual(expect.objectContaining({
+        id: taskId,
+        isCompleted: true,
+        canToggle: false,
+      }));
+    },
+  );
+
+  it.each([
+    ['anonymous', 401, 'unauthenticated'],
+    ['outsider', 403, 'forbidden'],
+  ] as const)('fails closed for a private task read by %s', async (identity, expectedStatus, error) => {
+    const response = await invokeRoute(tasksRouter, 'get', '/by-blip/:blipId', {
+      identity,
+      params: { blipId: 'blip-private' },
+    });
+
+    expect(response.statusCode).toBe(expectedStatus);
+    expect(response.body).toMatchObject({ error, permission: 'read' });
+  });
+
+  it.each([
+    ['viewer', true],
+    ['editor', true],
+    ['commenter', false],
+  ] as const)('reports server-derived task toggle authority for %s', async (identity, canToggle) => {
+    const taskId = 'task:toggle-authority';
+    state.docs.set(taskId, {
+      _id: taskId,
+      _rev: '1-task',
+      type: 'task',
+      waveId: 'topic-private',
+      topicId: 'topic-private',
+      blipId: 'blip-private',
+      taskText: 'Role-scoped task',
+      assigneeId: 'viewer',
+      assigneeName: 'Viewer',
+      authorId: 'editor',
+      authorName: 'Editor',
+      isCompleted: false,
+      createdAt: 1,
+      updatedAt: 1,
+    });
+
+    const response = await invokeRoute(tasksRouter, 'get', '/by-blip/:blipId', {
+      identity,
+      params: { blipId: 'blip-private' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.tasks).toContainEqual(expect.objectContaining({
+      id: taskId,
+      canToggle,
+    }));
+  });
+
   it('rejects spoofed nonparticipant references and direct phantom task creation', async () => {
     const originalContent = state.docs.get('blip-private')?.['content'];
     const forgedMention = await invokeRoute(blipsRouter, 'put', '/:id', {

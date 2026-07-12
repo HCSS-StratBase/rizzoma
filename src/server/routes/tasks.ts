@@ -10,7 +10,12 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { noStore } from '../middleware/noStore.js';
 import { find, updateDoc, getDoc, getDocsById } from '../lib/couch.js';
-import { identityFromRequest, resolveBlipAccess, resolveWaveAccess } from '../lib/access.js';
+import {
+  identityFromRequest,
+  resolveBlipAccess,
+  resolveWaveAccess,
+  sendAccessDenied,
+} from '../lib/access.js';
 import { csrfProtect } from '../middleware/csrf.js';
 
 const router = Router();
@@ -137,16 +142,13 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
 // GET /api/tasks/by-blip/:blipId - List tasks anchored to a specific blip.
 // Used by the TaskWidget node view to hydrate current completion state for
 // every task the blip's content references.
-router.get('/by-blip/:blipId', noStore, requireAuth, async (req, res): Promise<void> => {
+router.get('/by-blip/:blipId', noStore, async (req, res): Promise<void> => {
   const blipId = String(req.params['blipId']);
   try {
-    const resolved = await resolveBlipAccess(blipId, {
-      id: req.user!.id,
-      email: req.user!.email,
-      name: req.user!.name,
-    });
+    const identity = identityFromRequest(req);
+    const resolved = await resolveBlipAccess(blipId, identity);
     if (!resolved.access.canRead) {
-      res.status(403).json({ error: 'forbidden' });
+      sendAccessDenied(res, identity, 'read', (req as any)?.id);
       return;
     }
     const result = await find<TaskDoc>(
@@ -166,6 +168,10 @@ router.get('/by-blip/:blipId', noStore, requireAuth, async (req, res): Promise<v
         assigneeName: doc.assigneeName,
         dueDate: doc.dueDate ? new Date(doc.dueDate).toISOString() : undefined,
         isCompleted: doc.isCompleted,
+        canToggle: Boolean(
+          identity.id
+          && (doc.assigneeId === identity.id || doc.authorId === identity.id),
+        ),
       })),
     });
   } catch (e: any) {
