@@ -166,3 +166,4 @@ This section supersedes the deployment boundary above.
 - Added CSRF to the multipart upload route and restricted declared image MIME types to the existing allowlist instead of accepting every `image/*` subtype.
 - Closed the preflight cancellation race in `createUploadTask`: canceling while CSRF setup is pending now rejects as `upload_aborted` without opening or sending the XHR.
 - Verification: **20/20** focused tests passed across upload authorization, scanner protocol verdicts, and pre-CSRF cancellation; full TypeScript typecheck and `git diff --check` passed.
+- Production dependency preflight then started a restart-persistent, loopback-only ClamAV container. Docker reported `healthy`; a raw INSTREAM clean probe returned `OK` and EICAR returned `FOUND`. Evidence is in [`screenshots/260712-1449-clamav-preflight/`](../screenshots/260712-1449-clamav-preflight/). The app is not yet wired to it until final candidate deployment.
