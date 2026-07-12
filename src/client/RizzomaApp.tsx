@@ -3,9 +3,10 @@ import { api } from './lib/api';
 import { RizzomaLayout } from './components/RizzomaLayout';
 import { Toast } from './components/Toast';
 import { FEATURES } from '@shared/featureFlags';
+import { AuthProvider, type User } from './hooks/useAuth';
 import './RizzomaApp.css';
 
-type AuthedUser = { id: string; email?: string } | null;
+type AuthedUser = User | null;
 
 const CALENDAR_BANNER_DISMISSED_KEY = 'rizzoma:calendarBannerDismissed';
 
@@ -53,31 +54,33 @@ export function RizzomaApp(): JSX.Element {
   }
 
   return (
-    <div className="rizzoma-app">
-      {/* Yellow notification bar like real Rizzoma — now with a
-          persistent dismiss (×) button mirroring the Install /
-          Notifications toast affordance. Dismissal stored in
-          localStorage so it sticks across reloads. */}
-      {FEATURES.FOLLOW_GREEN && showCalendarBanner && (
-        <div className="notification-bar">
-          <span className="notification-bar-text">
-            Have your Rizzoma Tasks copied to your Google Calendar automatically.{' '}
-            <a href="#">Disable extension</a>
-          </span>
-          <button
-            type="button"
-            className="notification-bar-dismiss"
-            aria-label="Dismiss calendar banner"
-            title="Dismiss"
-            onClick={dismissCalendarBanner}
-          >
-            ×
-          </button>
-        </div>
-      )}
+    <AuthProvider user={me} onUserChange={setMe}>
+      <div className="rizzoma-app">
+        {/* Yellow notification bar like real Rizzoma — now with a
+            persistent dismiss (×) button mirroring the Install /
+            Notifications toast affordance. Dismissal stored in
+            localStorage so it sticks across reloads. */}
+        {FEATURES.FOLLOW_GREEN && showCalendarBanner && (
+          <div className="notification-bar">
+            <span className="notification-bar-text">
+              Have your Rizzoma Tasks copied to your Google Calendar automatically.{' '}
+              <a href="#">Disable extension</a>
+            </span>
+            <button
+              type="button"
+              className="notification-bar-dismiss"
+              aria-label="Dismiss calendar banner"
+              title="Dismiss"
+              onClick={dismissCalendarBanner}
+            >
+              ×
+            </button>
+          </div>
+        )}
 
-      <RizzomaLayout isAuthed={!!me} />
-      <Toast />
-    </div>
+        <RizzomaLayout isAuthed={!!me} user={me} />
+        <Toast />
+      </div>
+    </AuthProvider>
   );
 }

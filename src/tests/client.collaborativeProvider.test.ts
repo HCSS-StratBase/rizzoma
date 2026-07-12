@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as Y from 'yjs';
-import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
+import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { SocketIOProvider } from '../client/components/editor/CollaborativeProvider';
+import { collaborationUserFromAuth } from '../client/components/editor/collaborationIdentity';
 
 /** Create a minimal mock socket that mimics Socket.IO client behavior */
 function createMockSocket(connected = true) {
@@ -45,20 +46,24 @@ describe('client: CollaborativeProvider', () => {
   it('joins room on construction when socket is connected', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-1');
     expect(socket.emit).toHaveBeenCalledWith('blip:join', { blipId: 'blip-1' });
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update')).toHaveLength(0);
     provider.destroy();
   });
 
   it('does not join room if socket is disconnected on construction', () => {
     socket.connected = false;
     const provider = new SocketIOProvider(doc, socket as any, 'blip-2');
-    // Only the awareness setup emits, not blip:join
+    // Neither room join nor awareness may be emitted while disconnected.
     const joinCalls = socket.emit.mock.calls.filter(([ev]: any) => ev === 'blip:join');
+    const awarenessCalls = socket.emit.mock.calls.filter(([ev]: any) => ev === 'awareness:update');
     expect(joinCalls).toHaveLength(0);
+    expect(awarenessCalls).toHaveLength(0);
     provider.destroy();
   });
 
   it('sends local Y.Doc updates to server', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-3');
+    socket._receive('blip:sync:blip-3', { state: [] });
     socket.emit.mockClear();
 
     doc.getText('default').insert(0, 'Hello');
@@ -141,11 +146,17 @@ describe('client: CollaborativeProvider', () => {
     provider.destroy();
   });
 
-  it('reconnects by re-joining and sending state vector', () => {
+  it('reconnects by waiting for authorized sync before document or awareness writes', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-7');
 
-    // Insert local data so state vector is non-trivial
+    // Complete the initial authorized join, then start from a clean call log.
+    socket._receive('blip:sync:blip-7', { state: [], shouldSeed: true });
+
+    // Disconnect closes the room gate before local/offline edits occur.
+    socket._receive('disconnect', 'transport close');
+    socket.emit.mockClear();
     doc.getText('default').insert(0, 'local data');
+    expect(socket.emit.mock.calls.filter(([ev]: any) => ev === 'blip:update')).toHaveLength(0);
     socket.emit.mockClear();
 
     // Simulate reconnection
@@ -153,16 +164,33 @@ describe('client: CollaborativeProvider', () => {
 
     const joinCalls = socket.emit.mock.calls.filter(([ev]: any) => ev === 'blip:join');
     const syncCalls = socket.emit.mock.calls.filter(([ev]: any) => ev === 'blip:sync:request');
+    const awarenessCalls = socket.emit.mock.calls.filter(([ev]: any) => ev === 'awareness:update');
     expect(joinCalls).toHaveLength(1);
-    expect(syncCalls).toHaveLength(1);
-    expect(syncCalls[0][1].blipId).toBe('blip-7');
-    expect(Array.isArray(syncCalls[0][1].stateVector)).toBe(true);
+    expect(syncCalls).toHaveLength(0);
+    expect(awarenessCalls).toHaveLength(0);
+
+    // The server emits sync only after its async authorization and room join.
+    // That event is the admission acknowledgement which releases buffered
+    // local state and the named awareness announcement in this order.
+    socket._receive('blip:sync:blip-7', { state: [], shouldSeed: false });
+    const postSyncUpdates = socket.emit.mock.calls.filter(([ev]: any) => ev === 'blip:update');
+    const postSyncAwareness = socket.emit.mock.calls.filter(([ev]: any) => ev === 'awareness:update');
+    expect(postSyncUpdates).toHaveLength(1);
+    expect(postSyncUpdates[0][1].blipId).toBe('blip-7');
+    expect(postSyncAwareness).toHaveLength(1);
+    expect(postSyncAwareness[0][1].blipId).toBe('blip-7');
+    expect(Array.isArray(postSyncAwareness[0][1].update)).toBe(true);
+    expect(socket.emit.mock.calls.findIndex(([ev]: any) => ev === 'blip:join'))
+      .toBeLessThan(socket.emit.mock.calls.findIndex(([ev]: any) => ev === 'blip:update'));
+    expect(socket.emit.mock.calls.findIndex(([ev]: any) => ev === 'blip:update'))
+      .toBeLessThan(socket.emit.mock.calls.findIndex(([ev]: any) => ev === 'awareness:update'));
 
     provider.destroy();
   });
 
   it('setUser updates awareness state', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-8');
+    socket._receive('blip:sync:blip-8', { state: [] });
     socket.emit.mockClear();
 
     provider.setUser({ id: 'u1', name: 'Alice', color: '#ff0000' });
@@ -174,6 +202,77 @@ describe('client: CollaborativeProvider', () => {
     expect(Array.isArray(awarenessCalls[0][1].update)).toBe(true);
 
     provider.destroy();
+  });
+
+  it('uses Anonymous rather than a numbered-user identity without auth', () => {
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-anonymous');
+    expect(provider.getUser().name).toBe('Anonymous');
+    expect(provider.getUser().name).not.toMatch(/^User \d+$/);
+    provider.destroy();
+  });
+
+  it('does not re-emit an unchanged authenticated identity', () => {
+    const alice = collaborationUserFromAuth({
+      id: 'alice-id',
+      email: 'alice@example.com',
+      name: 'Alice',
+    });
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-idempotent', alice);
+    socket.emit.mockClear();
+
+    provider.setUser({ ...alice });
+
+    const awarenessCalls = socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update');
+    expect(awarenessCalls).toHaveLength(0);
+    provider.destroy();
+  });
+
+  it('shares two authenticated names without a numbered-user fallback', () => {
+    const aliceDoc = new Y.Doc();
+    const bobDoc = new Y.Doc();
+    const aliceSocket = createMockSocket(true);
+    const bobSocket = createMockSocket(true);
+    const alice = collaborationUserFromAuth({
+      id: 'alice-id',
+      email: 'alice@example.com',
+      name: 'Alice Example',
+    });
+    const bob = collaborationUserFromAuth({
+      id: 'bob-id',
+      email: 'bob@example.com',
+      name: 'Bob Example',
+    });
+    const aliceProvider = new SocketIOProvider(aliceDoc, aliceSocket as any, 'shared-names', alice);
+    const bobProvider = new SocketIOProvider(bobDoc, bobSocket as any, 'shared-names', bob);
+
+    const aliceUpdate = encodeAwarenessUpdate(
+      aliceProvider.awareness,
+      [aliceProvider.awareness.clientID],
+    );
+    const bobUpdate = encodeAwarenessUpdate(
+      bobProvider.awareness,
+      [bobProvider.awareness.clientID],
+    );
+    bobSocket._receive('awareness:update:shared-names', { update: Array.from(aliceUpdate) });
+    aliceSocket._receive('awareness:update:shared-names', { update: Array.from(bobUpdate) });
+
+    const aliceView = Array.from(aliceProvider.awareness.getStates().values())
+      .map((state: any) => state.user?.name)
+      .filter(Boolean)
+      .sort();
+    const bobView = Array.from(bobProvider.awareness.getStates().values())
+      .map((state: any) => state.user?.name)
+      .filter(Boolean)
+      .sort();
+
+    expect(aliceView).toEqual(['Alice Example', 'Bob Example']);
+    expect(bobView).toEqual(['Alice Example', 'Bob Example']);
+    expect([...aliceView, ...bobView].every(name => !/^User \d+$/.test(name))).toBe(true);
+
+    aliceProvider.destroy();
+    bobProvider.destroy();
+    aliceDoc.destroy();
+    bobDoc.destroy();
   });
 
   it('applies clocked remote awareness without echoing it', () => {
@@ -218,13 +317,41 @@ describe('client: CollaborativeProvider', () => {
     provider.destroy();
   });
 
-  it('destroy cleans up listeners and leaves room', () => {
+  it('destroy broadcasts awareness removal, cleans up listeners, and leaves room', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-9');
+    const remoteDoc = new Y.Doc();
+    const remoteAwareness = new Awareness(remoteDoc);
+    socket._receive('blip:sync:blip-9', { state: [] });
+    const initialCall = socket.emit.mock.calls
+      .filter(([event]: any) => event === 'awareness:update')
+      .at(-1);
+    applyAwarenessUpdate(
+      remoteAwareness,
+      new Uint8Array(initialCall![1].update),
+      'test-initial',
+    );
+    expect(remoteAwareness.getStates().has(provider.awareness.clientID)).toBe(true);
+    socket.emit.mockClear();
+
     provider.destroy();
 
     const leaveCalls = socket.emit.mock.calls.filter(([ev]: any) => ev === 'blip:leave');
+    const awarenessCalls = socket.emit.mock.calls.filter(([ev]: any) => ev === 'awareness:update');
     expect(leaveCalls).toHaveLength(1);
     expect(leaveCalls[0][1]).toEqual({ blipId: 'blip-9' });
+    expect(awarenessCalls).toHaveLength(1);
+    applyAwarenessUpdate(
+      remoteAwareness,
+      new Uint8Array(awarenessCalls[0][1].update),
+      'test-removal',
+    );
+    expect(remoteAwareness.getStates().has(provider.awareness.clientID)).toBe(false);
+
+    socket.emit.mockClear();
+    socket._receive('connect', undefined);
+    expect(socket.emit).not.toHaveBeenCalled();
+    remoteAwareness.destroy();
+    remoteDoc.destroy();
   });
 
   it('destroy removes the Y.Doc update listener', () => {

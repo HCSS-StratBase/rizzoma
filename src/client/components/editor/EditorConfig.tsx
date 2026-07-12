@@ -24,6 +24,10 @@ import { TagNode } from './extensions/TagNode';
 import { TaskWidgetNode, installTaskWidgetToggleHandler } from './extensions/TaskWidget';
 import { CodeBlockView } from './extensions/CodeBlockView';
 import { FEATURES } from '@shared/featureFlags';
+import {
+  anonymousCollaborationUser,
+  isCollaborationUser,
+} from './collaborationIdentity';
 import './extensions/CodeBlockView.css';
 
 const lowlight = createLowlight(common);
@@ -252,27 +256,20 @@ export const getEditorExtensions = (
 
   // Add collaborative cursors if enabled and provider exists
   if (FEATURES.LIVE_CURSORS && provider) {
+    const awarenessUser = provider.awareness?.getLocalState?.()?.['user'];
+    const cursorUser = isCollaborationUser(awarenessUser)
+      ? awarenessUser
+      : anonymousCollaborationUser(provider.awareness?.clientID ?? 'editor');
     extensions.push(
       CollaborativeCursor.configure({
         provider,
-        user: {
-          // In production, get from auth context
-          id: Math.random().toString(),
-          name: 'User ' + Math.floor(Math.random() * 100),
-          color: cursorColors[Math.floor(Math.random() * cursorColors.length)]
-        }
+        user: cursorUser,
       })
     );
   }
 
   return extensions;
 };
-
-const cursorColors = [
-  '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', 
-  '#2196f3', '#00bcd4', '#009688', '#4caf50',
-  '#ff9800', '#ff5722', '#795548', '#607d8b'
-];
 
 export const defaultEditorProps = {
   attributes: {

@@ -6,6 +6,11 @@ import {
   encodeAwarenessUpdate,
   removeAwarenessStates,
 } from 'y-protocols/awareness';
+import {
+  anonymousCollaborationUser,
+  type CollaborationUser,
+  isCollaborationUser,
+} from './collaborationIdentity';
 
 export class SocketIOProvider {
   doc: Y.Doc;
@@ -18,22 +23,35 @@ export class SocketIOProvider {
    *  from blip HTML on first join (only the first client to join a fresh
    *  blip gets this authority — see task #57 comment in src/server/lib/socket.ts). */
   shouldSeed = false;
+  /**
+   * True only after the server has admitted this socket to the collaboration
+   * room and answered with `blip:sync`. Client writes are held behind this
+   * barrier so an async authorization check cannot race awareness or Yjs
+   * updates on initial connect/reconnect.
+   */
+  private roomReady = false;
   private syncCallbacks: Array<() => void> = [];
   private reconnectHandler: (() => void) | null = null;
+  private disconnectHandler: (() => void) | null = null;
   private docUpdateHandler: ((update: Uint8Array, origin: unknown) => void) | null = null;
   private remoteUpdateHandler: ((data: { update: number[] }) => void) | null = null;
   private syncHandler: ((data: { state: number[]; shouldSeed?: boolean }) => void) | null = null;
   private localAwarenessHandler: ((change: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => void) | null = null;
   private remoteAwarenessHandler: ((data: { update?: number[]; states?: Record<string, unknown> }) => void) | null = null;
 
-  constructor(doc: Y.Doc, socket: Socket, blipId: string) {
+  constructor(
+    doc: Y.Doc,
+    socket: Socket,
+    blipId: string,
+    user: CollaborationUser | null = null,
+  ) {
     this.doc = doc;
     this.socket = socket;
     this.blipId = blipId;
     this.awareness = new Awareness(doc);
 
     this.setupListeners();
-    this.setupAwareness();
+    this.setupAwareness(user);
     this.setupReconnect();
     // Only join immediately if socket is already connected;
     // setupReconnect() handles joining on (re)connect events.
@@ -50,7 +68,7 @@ export class SocketIOProvider {
 
   private setupListeners() {
     this.docUpdateHandler = (update: Uint8Array, origin: unknown) => {
-      if (origin !== this) {
+      if (origin !== this && this.roomReady) {
         this.socket.emit('blip:update', {
           blipId: this.blipId,
           update: Array.from(update)
@@ -67,19 +85,41 @@ export class SocketIOProvider {
     this.socket.on(eventName, this.remoteUpdateHandler);
 
     this.syncHandler = (data: { state: number[]; shouldSeed?: boolean }) => {
+      // A blip:sync response is the server's authorized-join acknowledgement:
+      // the server sends it only after room membership and role checks finish.
+      const completesJoin = !this.roomReady;
+      const serverDoc = new Y.Doc();
       if (data.state.length > 0) {
         const state = new Uint8Array(data.state);
+        Y.applyUpdate(serverDoc, state);
         Y.applyUpdate(this.doc, state, this);
       }
+      const serverStateVector = Y.encodeStateVector(serverDoc);
+      serverDoc.destroy();
       this.shouldSeed = Boolean(data.shouldSeed);
+      this.roomReady = true;
       this.synced = true;
+
+      if (completesJoin) {
+        // Local edits made while offline or while authorization was pending
+        // were intentionally not emitted. Send only what the just-synced
+        // server state is missing, then announce the authenticated identity.
+        const localDiff = Y.encodeStateAsUpdate(this.doc, serverStateVector);
+        if (localDiff.length > 2) {
+          this.socket.emit('blip:update', {
+            blipId: this.blipId,
+            update: Array.from(localDiff),
+          });
+        }
+        this.reannounceLocalAwarenessState();
+      }
       this.syncCallbacks.forEach(cb => cb());
       this.syncCallbacks = [];
     };
     this.socket.on(`blip:sync:${this.blipId}`, this.syncHandler);
   }
 
-  private setupAwareness() {
+  private setupAwareness(initialUser: CollaborationUser | null) {
     // Use the y-protocols wire format, including its per-client clocks. The
     // previous implementation mutated awareness.getStates() directly and
     // manually emitted `change`; yCursorPlugin reacted by publishing another
@@ -89,6 +129,7 @@ export class SocketIOProvider {
       // applyAwarenessUpdate marks remote changes with this provider as their
       // origin. Never send those changes back to the server.
       if (origin === this) return;
+      if (!this.roomReady) return;
       const changedClients = added.concat(updated).concat(removed);
       if (changedClients.length === 0) return;
       const update = encodeAwarenessUpdate(this.awareness, changedClients);
@@ -101,14 +142,10 @@ export class SocketIOProvider {
 
     // Set initial user state after the listener is attached so peers receive
     // a valid clocked awareness update even before the editor gains focus.
-    const userColors = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4'];
-    const userId = this.doc.clientID.toString();
-
-    this.awareness.setLocalStateField('user', {
-      id: userId,
-      name: `User ${userId.slice(-4)}`,
-      color: userColors[parseInt(userId) % userColors.length]
-    });
+    this.awareness.setLocalStateField(
+      'user',
+      initialUser ?? anonymousCollaborationUser(this.doc.clientID),
+    );
 
     // Receive awareness updates from remote clients
     this.remoteAwarenessHandler = (data) => {
@@ -141,26 +178,57 @@ export class SocketIOProvider {
   }
 
   private setupReconnect() {
+    this.disconnectHandler = () => {
+      // Socket.IO buffers emits while offline. Close the room gate immediately
+      // so offline edits stay in the Y.Doc and are diffed only after the next
+      // authorized join, rather than replaying ahead of authorization.
+      this.roomReady = false;
+      this.synced = false;
+      this.shouldSeed = false;
+    };
     this.reconnectHandler = () => {
       this.joinRoom();
-      // Send state vector so server returns only missing updates
-      const sv = Y.encodeStateVector(this.doc);
-      this.socket.emit('blip:sync:request', {
-        blipId: this.blipId,
-        stateVector: Array.from(sv)
-      });
     };
+    this.socket.on('disconnect', this.disconnectHandler);
     this.socket.on('connect', this.reconnectHandler);
   }
 
   private joinRoom() {
+    this.roomReady = false;
+    this.synced = false;
+    this.shouldSeed = false;
     this.socket.emit('blip:join', {
       blipId: this.blipId
     });
   }
 
-  setUser(user: { id: string; name: string; color: string }) {
+  getUser(): CollaborationUser {
+    const current = this.awareness.getLocalState()?.['user'];
+    return isCollaborationUser(current)
+      ? current
+      : anonymousCollaborationUser(this.doc.clientID);
+  }
+
+  setUser(user: CollaborationUser) {
+    const current = this.awareness.getLocalState()?.['user'];
+    if (
+      isCollaborationUser(current)
+      && current.id === user.id
+      && current.name === user.name
+      && current.color === user.color
+    ) {
+      return;
+    }
     this.awareness.setLocalStateField('user', user);
+  }
+
+  private reannounceLocalAwarenessState() {
+    const state = this.awareness.getLocalState();
+    if (!state) return;
+    // setLocalState advances the awareness clock before the normal local
+    // update handler serializes the state. Re-sending an old clock directly
+    // would be ignored by a peer that already timed this client out.
+    this.awareness.setLocalState(state);
   }
 
   destroy() {
@@ -193,6 +261,10 @@ export class SocketIOProvider {
     if (this.reconnectHandler) {
       this.socket.off('connect', this.reconnectHandler);
       this.reconnectHandler = null;
+    }
+    if (this.disconnectHandler) {
+      this.socket.off('disconnect', this.disconnectHandler);
+      this.disconnectHandler = null;
     }
     this.awareness.destroy();
   }

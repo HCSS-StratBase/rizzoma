@@ -2,6 +2,10 @@ import { useEffect, useRef } from 'react';
 import * as Y from 'yjs';
 import { useSocket } from '../../hooks/useSocket';
 import { SocketIOProvider } from './CollaborativeProvider';
+import {
+  anonymousCollaborationUser,
+  type CollaborationUser,
+} from './collaborationIdentity';
 
 /**
  * Hook to create a SocketIOProvider for real-time collaboration.
@@ -12,7 +16,12 @@ import { SocketIOProvider } from './CollaborativeProvider';
  * the Collaboration extension won't be included and the editor must be
  * recreated (which TipTap's useEditor doesn't handle well via setOptions).
  */
-export function useCollaboration(doc: Y.Doc | undefined, blipId: string, enabled: boolean): SocketIOProvider | null {
+export function useCollaboration(
+  doc: Y.Doc | undefined,
+  blipId: string,
+  enabled: boolean,
+  user: CollaborationUser | null = null,
+): SocketIOProvider | null {
   const socket = useSocket();
   const providerRef = useRef<SocketIOProvider | null>(null);
   // Track deps to detect changes and recreate the provider
@@ -28,8 +37,17 @@ export function useCollaboration(doc: Y.Doc | undefined, blipId: string, enabled
     }
     depsKeyRef.current = currentDepsKey;
     if (enabled && socket && doc) {
-      providerRef.current = new SocketIOProvider(doc, socket, blipId);
+      providerRef.current = new SocketIOProvider(doc, socket, blipId, user);
     }
+  }
+
+  // Auth can resolve after the provider was created. Update the existing
+  // awareness state in place rather than destroying/rejoining the room.
+  // setUser is idempotent, so ordinary React renders do not emit duplicates.
+  if (providerRef.current) {
+    providerRef.current.setUser(
+      user ?? anonymousCollaborationUser(providerRef.current.awareness.clientID),
+    );
   }
 
   // Cleanup on unmount

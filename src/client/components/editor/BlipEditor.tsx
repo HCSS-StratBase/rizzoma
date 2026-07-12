@@ -7,6 +7,7 @@ import { useCollaboration } from './useCollaboration';
 import { setInlineCommentsVisibility } from './inlineCommentsVisibility';
 import { insertGadget } from '../../gadgets/insert';
 import type { GadgetInsertDetail } from '../../gadgets/types';
+import { useAuthenticatedCollaborationUser } from './useAuthenticatedCollaborationUser';
 import './BlipEditor.css';
 
 interface BlipEditorProps {
@@ -26,8 +27,14 @@ export function BlipEditor({
   ydoc,
   enableCollaboration = false,
 }: BlipEditorProps): JSX.Element {
+  const collaborationUser = useAuthenticatedCollaborationUser();
   const [localYdoc] = useState(() => ydoc || yjsDocManager.getDocument(blipId));
-  const provider = useCollaboration(localYdoc, blipId, enableCollaboration && !isReadOnly);
+  const provider = useCollaboration(
+    localYdoc,
+    blipId,
+    enableCollaboration && !isReadOnly,
+    collaborationUser,
+  );
 
   const editor = useEditor({
     extensions: getEditorExtensions(localYdoc, provider, {

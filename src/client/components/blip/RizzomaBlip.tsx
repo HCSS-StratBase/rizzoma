@@ -41,7 +41,7 @@ import { renderInlineHtml } from './InlineHtmlRenderer';
 import { LazyBlipSlot, LAZY_MOUNT_THRESHOLD } from './LazyBlipSlot';
 import { useCollaboration } from '../editor/useCollaboration';
 import { yjsDocManager } from '../editor/YjsDocumentManager';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthenticatedCollaborationUser } from '../editor/useAuthenticatedCollaborationUser';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
 export type BlipContributor = {
@@ -463,8 +463,9 @@ export function RizzomaBlip({
   // --- Real-time collaboration (awareness + document sync) ---
   // Activate based on canEdit (NOT isEditing or authUser) so the Collaboration extension
   // is present from editor creation. canEdit already gates unauthenticated users.
-  // authUser is only needed for setUser() which updates cursor name/color later.
-  const { user: authUser } = useAuth();
+  // authUser is converted to the provider's awareness identity synchronously,
+  // before TipTap creates its collaborative-cursor extension.
+  const collaborationUser = useAuthenticatedCollaborationUser();
   // Skip collab for topic root — RizzomaTopicDetail.tsx owns the collab-enabled topicEditor.
   // Without this guard, both components would create SocketIOProviders for the same blipId,
   // causing duplicate socket room joins and update relay loops.
@@ -478,25 +479,13 @@ export function RizzomaBlip({
     () => collabEnabled ? yjsDocManager.getDocument(blip.id) : undefined,
     [blip.id, collabEnabled]
   );
-  const collabProvider = useCollaboration(ydoc, blip.id, collabEnabled);
+  const collabProvider = useCollaboration(ydoc, blip.id, collabEnabled, collaborationUser);
 
   // collabActive = all collab deps are ready (enabled + ydoc + provider).
   // Used as useEditor dep to force editor recreation with the Collaboration extension.
   // Without this, useEditor's setOptions() doesn't properly reinitialize ProseMirror
   // plugins, leaving the visible editor without ySyncPlugin.
   const collabActive = collabEnabled && !!ydoc && !!collabProvider;
-
-  // Set real user info on the collaboration provider
-  useEffect(() => {
-    if (collabProvider && authUser) {
-      const colors = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4'];
-      collabProvider.setUser({
-        id: authUser.id,
-        name: authUser.name || authUser.email,
-        color: colors[parseInt(authUser.id, 36) % colors.length]
-      });
-    }
-  }, [collabProvider, authUser]);
 
   // Stabilize onToggleInlineComments callback for extensions memoization
   const stableToggleInlineComments = useCallback(

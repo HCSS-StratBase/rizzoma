@@ -14,6 +14,7 @@ import { GreenNavigation } from './components/GreenNavigation';
 import { RizzomaLayout } from './components/RizzomaLayout';
 import { FEATURES } from '@shared/featureFlags';
 import { MobileProvider } from './contexts/MobileContext';
+import { AuthProvider } from './hooks/useAuth';
 import { MantineProvider, createTheme } from '@mantine/core';
 import '@mantine/core/styles.css';
 import '@mantine/charts/styles.css';
@@ -251,90 +252,94 @@ export function App() {
   // Always render the modern Rizzoma shell for topic/wave routes or explicit layout flag
   if (forceRizzomaLayout) {
     return (
-      <div className="rizzoma-app">
-        {FEATURES.FOLLOW_GREEN && showCalendarBanner && (
-          <div className="notification-bar">
-            <span className="notification-bar-text">
-              Have your Rizzoma Tasks copied to your Google Calendar automatically.{' '}
-              <a href="#">Disable extension</a>
-            </span>
-            <button
-              type="button"
-              className="notification-bar-dismiss"
-              aria-label="Dismiss calendar banner"
-              title="Dismiss"
-              onClick={dismissCalendarBanner}
-            >
-              ×
-            </button>
-          </div>
-        )}
-        {checkingAuth ? (
-          <div className="rizzoma-loading">Loading…</div>
-        ) : !me ? (
-          <div className="rizzoma-auth-overlay">
-            <AuthPanel onSignedIn={(u) => setMe(u)} />
-          </div>
-        ) : (
-          <RizzomaLayout isAuthed={!!me} user={me} />
-        )}
-        <Toast />
-      </div>
+      <AuthProvider user={me} onUserChange={setMe}>
+        <div className="rizzoma-app">
+          {FEATURES.FOLLOW_GREEN && showCalendarBanner && (
+            <div className="notification-bar">
+              <span className="notification-bar-text">
+                Have your Rizzoma Tasks copied to your Google Calendar automatically.{' '}
+                <a href="#">Disable extension</a>
+              </span>
+              <button
+                type="button"
+                className="notification-bar-dismiss"
+                aria-label="Dismiss calendar banner"
+                title="Dismiss"
+                onClick={dismissCalendarBanner}
+              >
+                ×
+              </button>
+            </div>
+          )}
+          {checkingAuth ? (
+            <div className="rizzoma-loading">Loading…</div>
+          ) : !me ? (
+            <div className="rizzoma-auth-overlay">
+              <AuthPanel onSignedIn={(u) => setMe(u)} />
+            </div>
+          ) : (
+            <RizzomaLayout isAuthed={!!me} user={me} />
+          )}
+          <Toast />
+        </div>
+      </AuthProvider>
     );
   }
 
   // Default layout
   return (
-    <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 720 }}>
-      <h1>Rizzoma (Modern)</h1>
-      <nav style={{ marginBottom: 12 }}>
-        <a href="#/">Topics</a> | <a href="#/waves">Waves</a> | <a href="#/editor/search">Editor search</a> | <a href="#/editor/admin">Editor admin</a>
-      </nav>
-      <p>
-        API health: <a href="/api/health" target="_blank" rel="noreferrer">/api/health</a>
-      </p>
-      <section style={{ marginBottom: 24 }}>
-        {!me ? (
-          <AuthPanel onSignedIn={(u) => setMe(u)} />
-        ) : (
-          <div style={{ marginTop: 8 }}>
-            Signed in as {me.email || me.id}
-            {' '}
-            <button
-              onClick={async () => {
-                if (!window.confirm('Logout?')) return;
-                setBusy(true);
-                await api('/api/auth/logout', { method: 'POST' });
-                setBusy(false);
-                setMe(null);
-                window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Logged out', type: 'info' } }));
-              }}
-              disabled={busy}
-            >
-              Logout
-            </button>
-          </div>
-        )}
-        {error ? <div style={{ color: 'red', marginTop: 8 }}>{error}</div> : null}
-      </section>
+    <AuthProvider user={me} onUserChange={setMe}>
+      <div style={{ fontFamily: 'sans-serif', padding: 16, maxWidth: 720 }}>
+        <h1>Rizzoma (Modern)</h1>
+        <nav style={{ marginBottom: 12 }}>
+          <a href="#/">Topics</a> | <a href="#/waves">Waves</a> | <a href="#/editor/search">Editor search</a> | <a href="#/editor/admin">Editor admin</a>
+        </nav>
+        <p>
+          API health: <a href="/api/health" target="_blank" rel="noreferrer">/api/health</a>
+        </p>
+        <section style={{ marginBottom: 24 }}>
+          {!me ? (
+            <AuthPanel onSignedIn={(u) => setMe(u)} />
+          ) : (
+            <div style={{ marginTop: 8 }}>
+              Signed in as {me.email || me.id}
+              {' '}
+              <button
+                onClick={async () => {
+                  if (!window.confirm('Logout?')) return;
+                  setBusy(true);
+                  await api('/api/auth/logout', { method: 'POST' });
+                  setBusy(false);
+                  setMe(null);
+                  window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Logged out', type: 'info' } }));
+                }}
+                disabled={busy}
+              >
+                Logout
+              </button>
+            </div>
+          )}
+          {error ? <div style={{ color: 'red', marginTop: 8 }}>{error}</div> : null}
+        </section>
 
-      {route.startsWith('#/editor/admin') ? (
-        <EditorAdmin />
-      ) : route.startsWith('#/editor/search') ? (
-        <EditorSearch />
-      ) : route.startsWith('#/waves') && !currentId ? (
-        <WavesList />
-      ) : route.startsWith('#/wave/') && currentId ? (
-        <WaveView id={currentId} />
-      ) : route.startsWith('#/topic/') && currentId ? (
-        <RizzomaTopicDetail id={currentId} blipPath={currentBlipPath} isAuthed={!!me} />
-      ) : (
-        <TopicsList isAuthed={!!me} initialMy={listParams.my} initialLimit={listParams.limit} initialOffset={listParams.offset} initialQuery={listParams.q} />
-      )}
-      <StatusBar me={me} />
-      <Toast />
-      {FEATURES.FOLLOW_GREEN && <GreenNavigation />}
-    </div>
+        {route.startsWith('#/editor/admin') ? (
+          <EditorAdmin />
+        ) : route.startsWith('#/editor/search') ? (
+          <EditorSearch />
+        ) : route.startsWith('#/waves') && !currentId ? (
+          <WavesList />
+        ) : route.startsWith('#/wave/') && currentId ? (
+          <WaveView id={currentId} />
+        ) : route.startsWith('#/topic/') && currentId ? (
+          <RizzomaTopicDetail id={currentId} blipPath={currentBlipPath} isAuthed={!!me} />
+        ) : (
+          <TopicsList isAuthed={!!me} initialMy={listParams.my} initialLimit={listParams.limit} initialOffset={listParams.offset} initialQuery={listParams.q} />
+        )}
+        <StatusBar me={me} />
+        <Toast />
+        {FEATURES.FOLLOW_GREEN && <GreenNavigation />}
+      </div>
+    </AuthProvider>
   );
 }
 

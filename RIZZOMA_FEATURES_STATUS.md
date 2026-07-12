@@ -1,5 +1,24 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
+## Authenticated cursor identity candidate — 2026-07-12
+
+- Topic-root, nested-blip, and generic editor collaboration now seed Yjs
+  awareness from the authenticated account before TipTap creates its cursor
+  extension.
+- The display name uses the account name with email fallback; the cursor color
+  is deterministic for the stable user ID. Anonymous test/harness surfaces use
+  the honest label `Anonymous`, never an invented numbered user.
+- Cursor decorations and typing indicators resolve the same awareness identity.
+  The production shells now provide their real authenticated user; reconnect
+  waits for the server's authorized `blip:sync` before sending offline Yjs state
+  and re-announcing awareness.
+- Local gates: 23/23 focused tests (including actual topic/nested/generic
+  component boundaries), typecheck, and the 3,300-module production build. The
+  concurrent regression run passed 307 tests / skipped 3, with one unrelated
+  OAuth timeout whose complete file passed 3/3 serially.
+- Boundary: this is a follow-on draft candidate, not a public/deployed claim.
+  Two real signed-in users still need Playwright and visual PNG acceptance.
+
 ## Production-service hardening candidate — 2026-07-12
 
 - The accepted parity application can now run as one compiled Express service
