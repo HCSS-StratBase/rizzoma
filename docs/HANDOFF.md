@@ -1,8 +1,8 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`master` @ `fe6988fb`). PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60) is merged and public-live after a blue/green cutover. Its fully green [CI 29177833541](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833541) measured **62 files / 284 passed / 3 skipped**, a **3,298-module** production build, lint at **0 errors / 6,354 warnings**, strict desktop/mobile Follow-the-Green `2 → 1 → 0`, and collaboration **10/10**; [iOS 29177833560](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833560) also passed. Public acceptance then measured collaboration **10/10** with a **39 ms** relay and **0** receiving-client REST PUTs, real-control unread drain **2 → 1 → 0** on desktop and emulated Pixel 5 mobile, health/OAuth success, RedisStore active, and **0** API 5xx responses. The visually inspected evidence and required desktop viewport sweep are under `screenshots/260712-0530-pr60-production-final/`.
+Last Updated: 2026-07-12 (`master` documentation checkpoint `3a55155a`; public runtime code `fe6988fb`). PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60) is merged and public-live after a blue/green cutover. Its fully green [CI 29177833541](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833541) measured **62 files / 284 passed / 3 skipped**, a **3,298-module** production build, lint at **0 errors / 6,354 warnings**, strict desktop/mobile Follow-the-Green `2 → 1 → 0`, and collaboration **10/10**; [iOS 29177833560](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833560) also passed. Public acceptance measured collaboration **10/10** with a **39 ms** relay and **0** receiving-client REST PUTs, real-control unread drain **2 → 1 → 0** on desktop and emulated Pixel 5 mobile, health/OAuth success, and RedisStore active. A later 05:58 CEST audit measured **395 requests / 0 5xx** in the current API log after **2,279 seconds** of uptime; that short window is not long-term reliability evidence. The inspected evidence and required desktop viewport sweep are under `screenshots/260712-0530-pr60-production-final/`.
 
-**Deployment boundary:** nginx now serves the exact merge tree through Vite `:3100` → API `:8100`; Redis backs sessions. The former `:3000`/`:8788` public lane remains healthy for immediate rollback via `/root/rizzoma.conf.pre-pr60-20260712-052206`. Both lanes are still unmanaged bare processes, share CouchDB, and need supervised-service hardening before the rollback lane is retired.
+**Deployment boundary:** nginx serves Vite `:3100` → API `:8100`; Redis backs API sessions. The public frontend is Vite's **development server**, not a compiled production frontend. The live client has parity rendering enabled and native rendering unset, so production uses the React/TipTap parity path; `NativeWaveView` remains read-only and is not the deployed architecture. The former `:3000`/`:8788` lane remains healthy for immediate rollback via `/root/rizzoma.conf.pre-pr60-20260712-052206`. Both lanes are unmanaged bare processes and share CouchDB.
 
 Last Updated: 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — Playwright sign-in lands as `sdspieg@gmail.com` "Stephan De Spiegeleire" with Google avatar. Tasks #140 + #143 both closed. Required two Hetzner Robot firewall passes: (1) opened port 80 for Let's Encrypt; (2) consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to allow return traffic from MASQUERADE'd outbound — without that, server couldn't reach `oauth2.googleapis.com/token`. Diagnosed via tcpdump (SYN egressed, no SYN-ACK returned). Same fix unblocks SMTP / S3 / any container-outbound feature.)
 
@@ -36,7 +36,7 @@ Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle acce
 
 Branch context guardrails:
 - Active branch: `master` (2026-07-12; public production checkpoint `fe6988fb`, PR #60). Always include branch name + date when summarizing status.
-- The "Current State" section below is refreshed for the merged native-fractal release; older dated entries are historical evidence only.
+- The "Current State" section below is refreshed for the deployed parity release; older dated entries and “native release” labels are historical until the native renderer is write-capable and actually enabled.
 
 Branching mode (private repo):
 - Direct development on `master` is acceptable in this private/solo setup.
@@ -70,7 +70,9 @@ PR Ops (CLI)
 - After merges, refresh the GDrive bundle (commands below).
 
 Current State (`master` @ 2026-07-12; public production `fe6988fb`, PR #60)
-- Public nginx targets Vite `:3100`, which proxies to API `:8100` from `/data/large-projects/stephan/rizzoma_merge` at exact merge `fe6988fb`; RedisStore is active. The prior public lane on Vite `:3000` and API `:8788` remains healthy but is rollback-only.
+- Public nginx targets Vite `:3100`, which proxies to API `:8100`; RedisStore is active. The VPS checkout is clean at documentation checkpoint `3a55155a`, while the running application code is PR #60 `fe6988fb` because the intervening files are docs/evidence only. The prior public lane on Vite `:3000` and API `:8788` remains healthy but is rollback-only.
+- Public Vite reports `MODE=development`, `DEV=true`, and serves checkout source modules. Its live flags are `FEAT_ALL=1`, `FEAT_RIZZOMA_PARITY_RENDER=1`, and native unset. The API alone runs with `NODE_ENV=production`.
+- `/mnt/c/Rizzoma` is not the release checkout: it remains on `feature/native-fractal-port` at `6e988cc` with one tracked modification and 134 untracked entries. Preserve those user-owned changes; use the clean release checkout for release work until reconciled.
 - FEAT_ALL required: start both server (:8788, the reserved Rizzoma backend port — see CLAUDE.md "Reserved Ports") and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Docker Desktop WSL integration was re-enabled on 2026-03-29; `docker compose up -d couchdb redis` works again from WSL for local live-app verification.
 - Express 5 SPA fallback: `src/server/app.ts` uses `app.get('/{*path}', ...)` which is the canonical path-to-regexp v8 syntax under Express 5 (bare `*` was dropped in v8). This was documented as a "workaround" in earlier snapshots but is actually the correct form. Cleaned up in Hard Gap #29 (2026-04-13): the `/uploads` static handler is now mounted BEFORE the SPA catch-all so the catch-all only has to skip `/api` paths, and the code comment explains the syntax is canonical.
@@ -182,13 +184,13 @@ Current State (`master` @ 2026-07-12; public production `fe6988fb`, PR #60)
 - Dependency upgrades: audit captured in `docs/DEPENDENCY_UPGRADE_AUDIT.md`; minor/patch batch applied (Playwright/Vitest/Prettier, AWS SDK, session/email libs). Major editor/tooling/server upgrades remain deferred.
 
 Current Next Work
-1. Replace the active and rollback bare Node/Vite processes with managed services; preserve the verified Redis session configuration and exact-SHA rollback procedure.
-2. Soak the PR #60 production lane, then retire `:3000`/`:8788` only after the rollback window closes.
-3. Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
-4. Repair/refresh BLB snapshots and continue inline-marker, toolbar, and unread parity.
-5. Test real-device iPhone Safari; Pixel 9 Pro XL / Android Chrome and emulated Pixel 5 are already evidenced.
-6. Automate bundle/GDrive backup cadence.
-7. Address Node 22, Capacitor CLI 8, GitHub Action majors, 6,363 lint warnings, and legacy assets.
+1. Replace the public Vite development server plus both lanes' bare root-owned processes with managed production services; preserve Redis sessions and the exact-SHA rollback procedure.
+2. Decide and document the native-render path honestly: either finish write/edit/reply support and gate a cutover, or retain the React/TipTap parity architecture and stop calling the release native.
+3. Soak PR #60, measure longer-window errors/latency, clean synthetic production topics, then retire `:3000`/`:8788` after the rollback window closes.
+4. Separate staging data from production CouchDB before further destructive acceptance testing.
+5. Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
+6. Repair/refresh BLB snapshots and test real-device iPhone Safari.
+7. Reconcile the dirty canonical checkout, automate backup cadence, triage 3 stale PRs / 7 native-port issues, and address Node/Capacitor/Action upgrades plus 6,354 lint warnings.
 
 Historical Next Work (pre-merge; superseded)
 - Branch focus (current batch): keep changes small/flagged; land perf/resilience sweeps and adapter/health/backup work in slices.

@@ -1,6 +1,6 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-12 (`master` @ `fe6988fb`; PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60) merged and is public-live. [CI 29177833541](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833541) and [iOS 29177833560](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833560) passed. Public acceptance passed health/OAuth, collaboration 10/10 at 39 ms, strict real-control Follow-the-Green `2 → 1 → 0` on desktop and emulated Pixel 5 mobile, zero API 5xx, RedisStore, and the 1280/1366/1440/1600 visual sweep. Evidence: `screenshots/260712-0530-pr60-production-final/`.)
+Last refreshed: 2026-07-12 (`master` documentation checkpoint `3a55155a`; public runtime code `fe6988fb`). PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60) is public-live and passed health/OAuth, collaboration 10/10 at 39 ms, strict real-control Follow-the-Green `2 → 1 → 0`, RedisStore, and the viewport sweep. Reality-audit correction: public Vite runs in development mode with parity `1` and native unset, so this is the React/TipTap parity release, not a native-render cutover. API audit snapshot: 395 requests / 0 5xx after 2,279 seconds, which is not a soak. Both lanes remain unmanaged and share CouchDB. Evidence: `screenshots/260712-0530-pr60-production-final/`.)
 
 Last refreshed (prior): 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — verified Playwright sign-in lands as `sdspieg@gmail.com`. Tasks #140 + #143 closed. Two Hetzner Robot firewall changes needed: opened :80 + consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to cover return traffic from MASQUERADE'd outbound. tcpdump-diagnosed.)
 
@@ -63,13 +63,13 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Replace the active and rollback bare Node/Vite processes with managed services; preserve the verified Redis session configuration and exact-SHA rollback procedure.
-  2) Soak the PR #60 production lane, then retire `:3000`/`:8788` only after the rollback window closes.
-  3) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
-  4) Repair/refresh BLB snapshots and continue inline-marker, toolbar, and unread parity.
-  5) Test real-device iPhone Safari; Pixel 9 Pro XL / Android Chrome and emulated Pixel 5 are already evidenced.
-  6) Automate bundle/GDrive backup cadence.
-  7) Address Node 22, Capacitor CLI 8, GitHub Action majors, 6,354 lint warnings, and legacy assets.
+  1) Replace the public Vite development server and both lanes' bare root-owned processes with managed production services; preserve Redis sessions and exact-SHA rollback.
+  2) Decide the native-render direction: finish write/edit/reply support and gate a real cutover, or retain the React/TipTap parity path and correct the release naming.
+  3) Soak PR #60, clean synthetic production topics, separate staging from production CouchDB, then retire `:3000`/`:8788` after the rollback window.
+  4) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
+  5) Repair/refresh BLB snapshots and test real-device iPhone Safari.
+  6) Reconcile the dirty canonical checkout and automate bundle/GDrive backup cadence.
+  7) Triage 3 stale PRs / 7 native-port issues; address Node 22, Capacitor CLI 8, GitHub Action majors, 6,354 lint warnings, and legacy assets.
 
   Testing/CI hygiene:
   - Keep `npm run test:toolbar-inline`, `npm run test:follow-green`, and `npm run test:collab` green; snapshots live under `snapshots/<feature>/` and are uploaded as Actions artifacts.
