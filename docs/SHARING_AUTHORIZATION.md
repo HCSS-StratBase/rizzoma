@@ -38,6 +38,7 @@ Attachments use the same effective topic role as their containing blip:
 - Authorized responses are streamed with `Cache-Control: private, no-store`, `Pragma: no-cache`, `X-Content-Type-Options: nosniff`, and attachment disposition for non-raster content. The upload directory is not mounted with `express.static`.
 - Upload mutation requires CSRF. In production, malware scanning is mandatory and only an explicit ClamAV `OK` verdict is accepted; a missing scanner, timeout, connection failure, empty reply, malformed reply, or malware verdict fails closed before bytes are written.
 - `/api/health` treats the production scanner as a readiness dependency and requires an explicit clamd `PONG`; a candidate cannot report green while every upload would fail closed.
+- The stock `app-prod` Compose profile sets `CLAMAV_HOST=clamav`, waits for the scanner health check, and persists the signature database; the managed systemd topology uses the equivalent loopback host contract.
 - Active same-origin document formats are not accepted as uploads: SVG and HTML/JavaScript/XML-style filenames are rejected, safe raster formats are signature/MIME bounded, and the private storage suffix is derived from the admitted type rather than the original filename. Non-raster responses remain forced downloads with `nosniff`.
 - S3/MinIO fails closed with `upload_storage_acl_unavailable`. Public object URLs and pre-signed URLs are not accepted because they remain usable after a role is revoked; object storage may return only after its bytes are proxied through the same per-request ACL.
 
