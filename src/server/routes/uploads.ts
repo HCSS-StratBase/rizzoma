@@ -28,9 +28,14 @@ const documentMimes = new Set([
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'text/plain',
 ]);
-const imageMimes = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']);
+// SVG is active XML content, not a passive raster image. Keep upload previews
+// limited to formats browsers render in an <img> without script execution.
+const imageMimes = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 const allowedMimeTypes = new Set([...documentMimes, ...imageMimes]);
-const blockedExtensions = new Set(['.exe', '.bat', '.cmd', '.sh', '.msi']);
+const blockedExtensions = new Set([
+  '.exe', '.bat', '.cmd', '.sh', '.msi',
+  '.html', '.htm', '.xhtml', '.js', '.mjs', '.cjs', '.svg', '.xml',
+]);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -81,6 +86,9 @@ function sniffMime(buffer: Buffer): SniffedType | null {
   if (header === '%PDF') {
     return { mime: 'application/pdf', ext: 'pdf' };
   }
+  if (header === 'RIFF' && buffer.length >= 12 && buffer.slice(8, 12).toString('ascii') === 'WEBP') {
+    return { mime: 'image/webp', ext: 'webp' };
+  }
   const zipSignature = buffer.readUInt32BE(0);
   if (zipSignature === 0x504b0304 || zipSignature === 0x504b0506 || zipSignature === 0x504b0708) {
     return { mime: 'application/zip', ext: 'zip' };
@@ -98,9 +106,23 @@ function localUploadPath(storageKey: string): string | null {
   return path.dirname(resolved) === uploadRoot ? resolved : null;
 }
 
-function storageExtension(originalName: string, sniffed: SniffedType | null): string {
-  const raw = sniffed?.ext ? `.${sniffed.ext}` : path.extname(originalName);
-  return raw.replace(/[^.a-zA-Z0-9]/g, '').slice(0, 16);
+function storageExtension(mimeType: string, sniffed: SniffedType | null): string {
+  const fixedByMime: Record<string, string> = {
+    'application/pdf': 'pdf',
+    'application/zip': 'zip',
+    'application/json': 'json',
+    'application/msword': 'doc',
+    'application/vnd.ms-excel': 'xls',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+    'text/plain': 'txt',
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+  };
+  const extension = sniffed?.ext || fixedByMime[mimeType] || 'bin';
+  return `.${extension}`;
 }
 
 function contentDisposition(originalName: string, inline: boolean): string {
@@ -175,7 +197,7 @@ uploadsRouter.post('/', requireAuth, csrfProtect(), upload.single('file'), async
 
     const opaqueId = randomUUID();
     const uploadId = `upload:${opaqueId}`;
-    const storageKey = `${opaqueId}${storageExtension(file.originalname, sniffed)}`;
+    const storageKey = `${opaqueId}${storageExtension(mimeType, sniffed)}`;
     const storagePath = localUploadPath(storageKey);
     if (!storagePath) throw new Error('invalid_upload_storage_key');
 

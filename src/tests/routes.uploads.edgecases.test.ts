@@ -152,9 +152,9 @@ async function invokeUploads(
       this.headers[name.toLowerCase()] = String(value);
       return this as any;
     },
-    sendFile(filePath: string, options?: any, callback?: (error?: Error) => void) {
+    sendFile(filePath: string, options?: any, callback?: (error: Error) => void) {
       this.sentFile = { filePath, options: options || {} };
-      callback?.();
+      if (callback) (callback as unknown as () => void)();
       return this as any;
     },
   };
@@ -356,6 +356,39 @@ describe('routes: access-controlled uploads', () => {
     });
     expect(res.statusCode).toBe(400);
     expect(res.body).toMatchObject({ error: 'invalid_file_type' });
+  });
+
+  it.each([
+    ['payload.html', 'text/plain', '<script src="/uploads/payload.js"></script>'],
+    ['payload.js', 'text/plain', 'alert(document.cookie)'],
+    ['payload.svg', 'image/svg+xml', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'],
+  ])('rejects active-content filename %s even when the declared MIME is otherwise plausible', async (originalname, mimetype, content) => {
+    const { uploadsRouter } = await loadUploadsModule();
+    const buffer = Buffer.from(content);
+    const res = await invokeUploads(uploadsRouter, 'post', '/', {
+      session: makeSession({ userId: 'owner-1' }),
+      body: { blipId: blip._id },
+      file: { originalname, mimetype, size: buffer.length, buffer },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ error: 'invalid_file_type' });
+    expect(writeFileSpy).not.toHaveBeenCalled();
+  });
+
+  it('never derives the private storage extension from an untrusted original filename', async () => {
+    const { uploadsRouter } = await loadUploadsModule();
+    const buffer = Buffer.from('plain attachment');
+    const res = await invokeUploads(uploadsRouter, 'post', '/', {
+      session: makeSession({ userId: 'owner-1' }),
+      body: { blipId: blip._id },
+      file: { originalname: 'notes.weird', mimetype: 'text/plain', size: buffer.length, buffer },
+    });
+    expect(res.statusCode).toBe(201);
+    expect(writeFileSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/[0-9a-f-]{36}\.txt$/),
+      expect.any(Buffer),
+      { flag: 'wx', mode: 0o600 },
+    );
   });
 
   it('rejects uploads when virus scan fails', async () => {
