@@ -4,7 +4,7 @@ This guide provides step-by-step instructions for modernizing the Rizzoma codeba
 
 For live project status and the restart checklist, see `docs/HANDOFF.md` and `docs/RESTART.md`.
 
-## Current Branch Notes (master, last refreshed 2026-04-13)
+## Current Branch Notes (master target, last refreshed 2026-07-12)
 
 This document includes historical phase language and legacy shortcuts. For the active branch, treat the following as authoritative:
 - Status and backlog: `RIZZOMA_FEATURES_STATUS.md`
@@ -12,10 +12,19 @@ This document includes historical phase language and legacy shortcuts. For the a
 - Reserved ports and grep checklist: `CLAUDE.md` "Reserved Ports" section
 
 Operational reality for this branch:
-- Active branch is `master`. The 2026-02-03 reference to `master` was retired when work moved back to master.
+- The production-service hardening candidate is isolated on
+  `codex/production-service-hardening` for merge back to `master`; see the
+  [managed deployment guide](deploy/systemd/README.md). Public traffic remains
+  on Vite `:3100` → API `:8100` until the candidate passes HTTPS and public
+  browser acceptance.
 - Demo-mode shortcuts are removed; sign-in flows route through the real `AuthPanel`.
 - Run the stack with `FEAT_ALL=1` and `EDITOR_ENABLE=1` for parity checks and Playwright smokes.
-- Use `npm run dev` (server :8788, client :3000) — port 8788 is the reserved Rizzoma backend port (avoids the :8788 collision with `google_workspace_mcp` and other dev services). Do not rely on historical `start:all` guidance.
+- Use `npm run dev` (server :8788, client :3000) — port 8788 is the
+  reserved Rizzoma backend port (avoids the `:8000`/`:8001` services used by
+  other local applications). Do not rely on historical `start:all` guidance.
+- Public production uses the React/TipTap parity renderer. The native renderer
+  remains opt-in and read-only; do not enable it against production data until
+  full tree loading and lossless rich-content round trips are proven.
 
 ## Prerequisites
 
@@ -274,11 +283,12 @@ docker build -t rizzoma:prod --target production .
 
 # Point to your CouchDB (Docker Desktop example)
 docker run -d --name rizzoma-prod \
+  -e HOST=0.0.0.0 \
   -e COUCHDB_URL=http://admin:password@host.docker.internal:5984 \
   -e COUCHDB_DB=project_rizzoma \
   -e REDIS_URL=redis://host.docker.internal:6379 \
-  -e SESSION_SECRET=change-me \
-  -p 8788:8788 rizzoma:prod
+  -e SESSION_SECRET="$(openssl rand -base64 48)" \
+  -p 127.0.0.1:8788:8788 rizzoma:prod
 ```
 
 ### Compose production profile
@@ -286,7 +296,8 @@ docker run -d --name rizzoma-prod \
 Bring up a production-like stack with Docker Compose profiles:
 
 ```bash
-docker compose --profile prod up -d app-prod couchdb redis
+SESSION_SECRET="$(openssl rand -base64 48)" \
+  docker compose --profile prod up -d app-prod couchdb redis
 docker compose ps
 ```
 

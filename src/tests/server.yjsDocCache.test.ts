@@ -236,6 +236,84 @@ describe('server: YjsDocCache', () => {
     doc.destroy();
   });
 
+  it('keeps a document dirty when an update arrives during persistence', async () => {
+    vi.mocked(findOne).mockResolvedValue(null);
+    let releaseFirstWrite: (() => void) | undefined;
+    let firstWriteStarted: (() => void) | undefined;
+    const writeStarted = new Promise<void>(resolve => { firstWriteStarted = resolve; });
+    vi.mocked(insertDoc)
+      .mockImplementationOnce(() => new Promise(resolve => {
+        firstWriteStarted?.();
+        releaseFirstWrite = () => resolve({ ok: true, id: 'first', rev: '1' });
+      }))
+      .mockResolvedValueOnce({ ok: true, id: 'second', rev: '2' });
+
+    const firstDoc = new Y.Doc();
+    firstDoc.getText('t').insert(0, 'first');
+    yjsDocCache.applyUpdate('wave:concurrent', Y.encodeStateAsUpdate(firstDoc), 'first');
+
+    const firstPersist = yjsDocCache.persistDirty();
+    await writeStarted;
+    const secondDoc = new Y.Doc();
+    secondDoc.getText('t').insert(0, 'second');
+    yjsDocCache.applyUpdate('wave:concurrent', Y.encodeStateAsUpdate(secondDoc), 'second');
+    releaseFirstWrite?.();
+    await firstPersist;
+
+    expect(yjsDocCache.getDirtyCount()).toBe(1);
+    await yjsDocCache.persistDirty();
+    expect(insertDoc).toHaveBeenCalledTimes(2);
+    expect(yjsDocCache.getDirtyCount()).toBe(0);
+
+    firstDoc.destroy();
+    secondDoc.destroy();
+  });
+
+  it('shutdown flushes dirty collaborative state before destroying docs', async () => {
+    vi.mocked(findOne).mockResolvedValue(null);
+    const doc = new Y.Doc();
+    doc.getText('t').insert(0, 'last edit before restart');
+    yjsDocCache.applyUpdate('wave:shutdown-blip', Y.encodeStateAsUpdate(doc), 'test');
+
+    expect(yjsDocCache.getDirtyCount()).toBe(1);
+    await yjsDocCache.shutdown();
+
+    expect(insertDoc).toHaveBeenCalledTimes(1);
+    expect(yjsDocCache.getDirtyCount()).toBe(0);
+    expect(yjsDocCache.getState('wave:shutdown-blip')).toBeNull();
+    doc.destroy();
+  });
+
+  it('shutdown fails rather than silently discarding an unpersisted document', async () => {
+    vi.mocked(findOne).mockRejectedValue(new Error('CouchDB unavailable'));
+    const doc = new Y.Doc();
+    doc.getText('t').insert(0, 'must survive');
+    yjsDocCache.applyUpdate('wave:failed-shutdown', Y.encodeStateAsUpdate(doc), 'test');
+
+    await expect(yjsDocCache.shutdown()).rejects.toThrow(/Failed to persist 1 dirty/);
+    expect(yjsDocCache.getDirtyCount()).toBe(1);
+    doc.destroy();
+  });
+
+  it('never evicts dirty collaborative state during a prolonged CouchDB outage', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-07-12T10:00:00Z'));
+      const doc = new Y.Doc();
+      doc.getText('t').insert(0, 'unsaved during outage');
+      yjsDocCache.applyUpdate('wave:dirty-outage', Y.encodeStateAsUpdate(doc), 'test');
+
+      vi.setSystemTime(new Date('2026-07-12T10:06:00Z'));
+      (yjsDocCache as any).cleanup();
+
+      expect(yjsDocCache.getState('wave:dirty-outage')).not.toBeNull();
+      expect(yjsDocCache.getDirtyCount()).toBe(1);
+      doc.destroy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('destroy cleans up all docs and intervals', () => {
     yjsDocCache.getOrCreate('blip-a');
     yjsDocCache.getOrCreate('blip-b');

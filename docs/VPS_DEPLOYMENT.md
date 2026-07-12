@@ -2,6 +2,29 @@
 
 **Last updated**: 2026-07-12 (PR #60 cutover + 05:58 CEST runtime reality audit)
 
+> **Managed-service candidate (not yet public):** branch
+> `codex/production-service-hardening` replaces the obsolete Docker-era deploy
+> helper with immutable exact-SHA releases and systemd blue/green lanes on
+> loopback `:8101`/`:8102`. It also adds graceful Yjs/Socket.IO/Redis shutdown,
+> production session-secret rotation, and Redis readiness. The authoritative
+> target procedure is the [managed VPS deployment guide](../deploy/systemd/README.md).
+> Until merge, direct preflight, zero-overlap maintenance drain, and atomic
+> both-vhost cutover are complete, the runtime
+> truth immediately below remains authoritative.
+
+> **Database exposure closed 2026-07-12 12:03 CEST:** Docker still declares
+> CouchDB `5984` and Redis `6379` on all interfaces, and the Hetzner Robot
+> `5432-6543` allow rule includes both. External probes had confirmed CouchDB
+> HTTP 200 and unauthenticated Redis `PONG`. A persistent `DOCKER-USER` rule now
+> drops only those two ports on public interface `enp0s31f6` for IPv4 and IPv6;
+> a dual-stack INPUT rule also closes every internal Rizzoma port, including
+> the previously missed legacy API at `8000`. The follow-on
+> audit confirmed active Redis manipulation. Root-only evidence was preserved,
+> 54 keys were flushed, and Redis was recreated clean. External dependencies
+> and direct APIs are closed while public HTTPS health remains green. Evidence:
+> `screenshots/260712-1218-redis-incident-response/`. Loopback-only Docker
+> publication remains the cleaner future recreation target.
+
 > **⚠️ CURRENT RUNTIME TRUTH — the Docker application topology below is
 > historical.** Public nginx now targets Vite `:3100`, which proxies to API
 > `:8100` from `/data/large-projects/stephan/rizzoma_merge` at exact merged
@@ -22,8 +45,10 @@
 > Both lanes are unmanaged bare Node/Vite processes. They share CouchDB
 > database `project_rizzoma`; only the active lane is Redis-backed for sessions.
 > The `dev.138-201-62-161.nip.io` vhost reaches the same `:3100` lane, which now
-> intentionally uses the public OAuth callback environment. Legacy listeners
-> on `:3001` and `:8000` are unrelated and must not be touched. The old
+> intentionally uses the public OAuth callback environment. The legacy
+> `:3001` Vite / `:8000` API pair was subsequently verified from process CWD
+> and command lines as an obsolete Rizzoma lane; both are now blocked only on
+> the public interface while remaining locally reachable. The old
 > `scripts/deploy-vps.sh` and Docker instructions below do not describe the live
 > deployment and must not be used until the service topology is rebuilt.
 
@@ -46,16 +71,19 @@ seconds of uptime; treat that as a short post-cutover sample, not a soak.
    origins, `FEAT_ALL=1`, `FEAT_RIZZOMA_PARITY_RENDER=1`, and the verified Redis
    URL. Load secrets from the preserved live environment file without printing
    it.
-4. Before exposure, verify direct health, the public Google OAuth callback,
-   Redis readiness, collaboration/reconnect, and strict desktop/mobile
-   Follow-the-Green `2 → 1 → 0`. Inspect medium-resolution PNGs.
-5. Back up `/etc/nginx/sites-available/rizzoma.conf`, change only the one Rizzoma
-   `proxy_pass`, run `nginx -t`, and reload nginx.
-6. Repeat the full acceptance set against the public URL. Keep the former lane
-   running until the rollback window closes.
-7. Roll back atomically by restoring the recorded nginx backup, running
-   `nginx -t`, reloading nginx, and verifying public health. Do not modify either
-   checkout during rollback.
+4. Before exposure, verify only direct candidate health, Redis readiness,
+   compiled assets, old-cookie rejection, and journal cleanliness. Never point
+   dev at the candidate while the old lane can still receive writes.
+5. Start a brief maintenance drain: back up both vhosts and the exact old
+   process recipe, stop old Vite to sever WebSockets, leave the isolated old API
+   up for at least 35 seconds, verify zero connections/no snapshot errors, then
+   stop it.
+6. Point both public and dev vhosts at the managed lane, validate nginx, reload,
+   and only then run full HTTPS acceptance: fresh login/restart continuity,
+   immediate-pre-restart edit persistence, OAuth, two-browser collaboration,
+   Follow-the-Green `2 → 1 → 0`, and inspected viewport PNGs.
+7. Never keep both lanes write-capable. Rollback means draining/stopping the
+   managed lane before restarting the exact former recipe and restoring nginx.
 
 ## Historical Docker-era server details (do not use for current deployment)
 
@@ -83,12 +111,12 @@ Docker-Compose stack:
 |---|---|---|---|
 | `rizzoma-app` | `rizzoma-app` (local build, **dev** target) | `8200:3000` | Vite + Express (`npm run dev`) |
 | `rizzoma-app-prod` | `rizzoma-app` (local build, **production** target) | `8201:8788` | `node dist/server/server/app.js`, USER `node`, healthy since 2026-04-22 late-night |
-| `rizzoma-couchdb` | `couchdb:3` | `5984:5984` | |
-| `rizzoma-redis` | `redis:7-alpine` | `6379:6379` | Session store (Redis-backed via `connect-redis`) |
-| `rizzoma-rabbitmq` | `rabbitmq:3-management-alpine` | `5672:5672`, `15672:15672` | |
-| `rizzoma-minio` | `minio/minio:latest` | `9000:9000`, `9001:9001` | |
-| `rizzoma-mailhog` | `mailhog/mailhog:latest` | `1025:1025`, `8025:8025` | |
-| `rizzoma-clamav` | `clamav/clamav:latest` | `3310:3310` | |
+| `rizzoma-couchdb` | `couchdb:3` | `127.0.0.1:5984:5984` | |
+| `rizzoma-redis` | `redis:7-alpine` | `127.0.0.1:6379:6379` | Session store (Redis-backed via `connect-redis`) |
+| `rizzoma-rabbitmq` | `rabbitmq:3-management-alpine` | `127.0.0.1:5672:5672`, `127.0.0.1:15672:15672` | |
+| `rizzoma-minio` | `minio/minio:latest` | `127.0.0.1:9000:9000`, `127.0.0.1:9001:9001` | |
+| `rizzoma-mailhog` | `mailhog/mailhog:latest` | `127.0.0.1:1025:1025`, `127.0.0.1:8025:8025` | |
+| `rizzoma-clamav` | `clamav/clamav:latest` | `127.0.0.1:3310:3310` | |
 
 Sphinx is **not** running — it lives behind the `search` profile and is no longer a hard dependency (issue #42 fix, 2026-04-21).
 

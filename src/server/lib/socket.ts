@@ -4,6 +4,7 @@ import { EditorPresenceManager, type PresenceIdentity, type PresenceEmitPayload 
 import { yjsDocCache } from './yjsDocCache.js';
 
 let io: Server | undefined;
+let presenceManager: EditorPresenceManager | undefined;
 
 // Per-blip seed authority lock. When a client calls blip:join on a
 // fresh Y.Doc (no state in memory, no snapshot in CouchDB), the FIRST
@@ -44,10 +45,11 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
     },
   });
 
-  const presenceManager = new EditorPresenceManager((payload: PresenceEmitPayload) => {
+  const manager = new EditorPresenceManager((payload: PresenceEmitPayload) => {
     io?.to(payload.room).emit('editor:presence', payload);
   });
-  presenceManager.startCleanupTimer();
+  presenceManager = manager;
+  manager.startCleanupTimer();
   yjsDocCache.start();
 
   io.on('connection', (socket) => {
@@ -62,7 +64,7 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
         if (!waveId) return;
         const rooms = buildRooms(waveId, blipId);
         rooms.forEach(meta => socket.join(meta.room));
-        presenceManager.joinRooms(socket.id, rooms, { userId, name } satisfies PresenceIdentity);
+        manager.joinRooms(socket.id, rooms, { userId, name } satisfies PresenceIdentity);
       } catch {}
     });
 
@@ -73,7 +75,7 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
         if (!waveId) return;
         const rooms = buildRooms(waveId, blipId);
         rooms.forEach(meta => socket.leave(meta.room));
-        presenceManager.leaveRooms(socket.id, rooms);
+        manager.leaveRooms(socket.id, rooms);
       } catch {}
     });
 
@@ -98,7 +100,7 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
     });
 
     socket.on('editor:presence:heartbeat', () => {
-      presenceManager.heartbeat(socket.id);
+      manager.heartbeat(socket.id);
     });
 
     // --- Real-time collaboration rooms (awareness + document sync) ---
@@ -190,7 +192,7 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
     });
 
     socket.on('disconnect', () => {
-      presenceManager.disconnect(socket.id);
+      manager.disconnect(socket.id);
       for (const blipId of collabBlips) {
         yjsDocCache.removeRef(blipId);
         // Release seed authority if the disconnecting client was the
@@ -200,6 +202,15 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
       collabBlips.clear();
     });
   });
+}
+
+export async function closeSocket(): Promise<void> {
+  presenceManager?.stopCleanupTimer();
+  presenceManager = undefined;
+  const current = io;
+  io = undefined;
+  if (!current) return;
+  await new Promise<void>((resolve) => current.close(() => resolve()));
 }
 
 export function emitEvent(event: string, payload: unknown) {

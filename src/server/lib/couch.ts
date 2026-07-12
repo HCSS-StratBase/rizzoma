@@ -11,9 +11,22 @@ function buildAuth(urlString: string): { base: string; header?: string } {
   return { base: urlString.replace(/\/$/, ''), header: undefined };
 }
 
-async function httpJson<T>(method: string, url: string, body?: unknown, authHeader?: string): Promise<T> {
+function requestTimeoutMs(override?: number): number {
+  if (override !== undefined) return override;
+  const configured = Number(process.env['COUCHDB_REQUEST_TIMEOUT_MS'] || 30_000);
+  return Number.isFinite(configured) && configured > 0 ? configured : 30_000;
+}
+
+async function httpJson<T>(
+  method: string,
+  url: string,
+  body?: unknown,
+  authHeader?: string,
+  timeoutMs?: number,
+): Promise<T> {
   const res = await fetch(url, {
     method,
+    signal: AbortSignal.timeout(requestTimeoutMs(timeoutMs)),
     headers: {
       'content-type': 'application/json',
       ...(authHeader ? { Authorization: authHeader } : {}),
@@ -35,10 +48,10 @@ export async function couchDbInfo() {
   return httpJson<any>('GET', base, undefined, header);
 }
 
-export async function couchDatabaseInfo() {
+export async function couchDatabaseInfo(timeoutMs?: number) {
   const { base, header } = buildAuth(config.couchDbUrl);
   const url = `${base}/${encodeURIComponent(config.couchDbName)}`;
-  return httpJson<{ db_name?: string }>('GET', url, undefined, header);
+  return httpJson<{ db_name?: string }>('GET', url, undefined, header, timeoutMs);
 }
 
 export async function view<T = any>(design: string, viewName: string, params?: Record<string, string | number | boolean>) {
@@ -50,15 +63,16 @@ export async function view<T = any>(design: string, viewName: string, params?: R
   return httpJson<{ rows: Array<{ id: string; key: any; value: any; doc?: T }> }>('GET', url, undefined, header);
 }
 
-export async function insertDoc<T extends Record<string, any>>(doc: T) {
+export async function insertDoc<T extends Record<string, any>>(doc: T, timeoutMs?: number) {
   const { base, header } = buildAuth(config.couchDbUrl);
   const url = `${base}/${encodeURIComponent(config.couchDbName)}`;
-  return httpJson<{ ok: boolean; id: string; rev: string }>('POST', url, doc, header);
+  return httpJson<{ ok: boolean; id: string; rev: string }>('POST', url, doc, header, timeoutMs);
 }
 
 export async function find<T = any>(
   selector: Record<string, any>,
-  options?: { limit?: number; skip?: number; sort?: Array<Record<string, 'asc' | 'desc'>>; bookmark?: string; use_index?: string | [string, string] }
+  options?: { limit?: number; skip?: number; sort?: Array<Record<string, 'asc' | 'desc'>>; bookmark?: string; use_index?: string | [string, string] },
+  timeoutMs?: number,
 ) {
   const { base, header } = buildAuth(config.couchDbUrl);
   const url = `${base}/${encodeURIComponent(config.couchDbName)}/_find`;
@@ -68,7 +82,7 @@ export async function find<T = any>(
   if (options?.sort) body.sort = options.sort;
   if (options?.bookmark) body.bookmark = options.bookmark;
   if (options?.use_index) body.use_index = options.use_index;
-  return httpJson<{ docs: T[]; bookmark?: string }>('POST', url, body, header);
+  return httpJson<{ docs: T[]; bookmark?: string }>('POST', url, body, header, timeoutMs);
 }
 
 export async function createIndex(fields: string[], name?: string) {
@@ -144,16 +158,16 @@ export async function getDocsById<T = any>(ids: string[]): Promise<Record<string
   return out;
 }
 
-export async function findOne<T = any>(selector: Record<string, any>) {
-  const r = await find<T>(selector, { limit: 1 });
+export async function findOne<T = any>(selector: Record<string, any>, timeoutMs?: number) {
+  const r = await find<T>(selector, { limit: 1 }, timeoutMs);
   return r.docs[0] || null;
 }
 
-export async function updateDoc<T extends { _id?: string; _rev?: string }>(doc: T) {
+export async function updateDoc<T extends { _id?: string; _rev?: string }>(doc: T, timeoutMs?: number) {
   if (!doc._id) throw new Error('missing _id');
   const { base, header } = buildAuth(config.couchDbUrl);
   const url = `${base}/${encodeURIComponent(config.couchDbName)}/${encodeURIComponent(doc._id)}`;
-  return httpJson<{ ok: boolean; id: string; rev: string }>('PUT', url, doc, header);
+  return httpJson<{ ok: boolean; id: string; rev: string }>('PUT', url, doc, header, timeoutMs);
 }
 
 export async function deleteDoc(id: string, rev: string) {

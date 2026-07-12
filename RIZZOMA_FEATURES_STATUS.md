@@ -1,5 +1,29 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
+## Production-service hardening candidate — 2026-07-12
+
+- The accepted parity application can now run as one compiled Express service
+  serving hashed client assets, rather than a public Vite development server
+  plus a tsx API process.
+- Production defaults to loopback, requires a non-development session secret,
+  accepts a bounded previous secret for no-logout rotation, and treats Redis
+  session persistence as readiness-critical.
+- SIGTERM/SIGINT now drain Socket.IO and HTTP, flush version-aware dirty Yjs
+  snapshots with retries, close Redis, and only then exit.
+- Immutable exact-SHA blue/green release assets and systemd automation live in
+  `deploy/systemd/` and `scripts/deploy-vps.sh`; candidate deployment cannot
+  alter public nginx.
+- Local gates passed: 63 test files, 299 passed, 3 skipped, typecheck, and the
+  3,298-module production build.
+- Boundary: this candidate is not public until merge, direct preflight,
+  zero-overlap maintenance drain, both-vhost cutover, and strict public
+  collaboration/unread/browser acceptance complete.
+- Active Redis compromise was contained and eradicated: evidence preserved, 54
+  untrusted keys/sessions flushed, container recreated clean, and dual-stack
+  public access closed for dependencies and direct Rizzoma internal ports.
+  Public HTTPS health remains green; users must sign in once after secret
+  rotation.
+
 ## Public production checkpoint — 2026-07-12
 
 - **Runtime correction:** public production is the React/TipTap parity implementation, not the native fractal renderer. The live client has `FEAT_RIZZOMA_PARITY_RENDER=1` and `FEAT_RIZZOMA_NATIVE_RENDER` unset; `NativeWaveView` is still an opt-in, read-only path and cannot replace the editing UI. The Express API runs in production mode, while the public frontend is served as source modules by Vite in development mode.

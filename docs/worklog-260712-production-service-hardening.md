@@ -1,0 +1,132 @@
+# Production service hardening worklog (2026-07-12)
+
+## Scope
+
+Move the accepted React/TipTap parity release from an unmanaged Vite/tsx pair
+to a compiled, supervised, reversible production service. Preserve dirty Yjs
+collaboration state while intentionally invalidating the exposed Redis sessions.
+
+## Measured starting state
+
+- Public nginx targeted Vite `:3100`, which proxied to the tsx API on `:8100`.
+- Both active processes were root-owned, bare processes with no systemd unit.
+- The rollback Vite/API lane remained on `:3000`/`:8788`.
+- Redis and CouchDB containers were healthy but had Docker restart policy `no`.
+- The public API had 51 Redis session keys, but no explicit
+  `SESSION_SECRET`; it therefore used the known development fallback.
+- Yjs dirty documents were persisted every 30 seconds with no signal-time
+  flush. An ordinary process stop could lose the final edit interval.
+- The public client used the working parity renderer. The native renderer was
+  confirmed to be an opt-in, read-only prototype with lossy rich-content
+  parsing; it was deliberately kept disabled.
+
+## Implementation
+
+- Added production loopback binding through `HOST`, defaulting to
+  `127.0.0.1` in production and preserving LAN-friendly development binding.
+- Added strict production session-secret validation and no-logout rotation via
+  `SESSION_SECRET_PREVIOUS`.
+- Extended `/api/health` so Redis-backed session persistence is a readiness
+  dependency alongside CouchDB.
+- Added Socket.IO shutdown, Redis client shutdown, and a signal handler that
+  drains HTTP/WebSocket connections and flushes Yjs state before exit.
+- Made Yjs persistence single-flight and version-aware, so an update arriving
+  during a snapshot write cannot be incorrectly marked clean.
+- Added three-attempt shutdown flushing; remaining dirty documents make the
+  shutdown fail loudly instead of being discarded silently.
+- Added an immutable blue/green systemd topology under `deploy/systemd/`, a
+  one-time installer, and a candidate-only deployment helper. The helper
+  intentionally cannot change public nginx.
+- Replaced the obsolete Docker-era `scripts/deploy-vps.sh` behavior with exact
+  SHA releases, compiled assets, lane ports `8101`/`8102`, and health/static
+  gates.
+- Removed a March planner-debug append from the live topic PATCH route. It was
+  writing every production edit into a tracked screenshot artifact, dirtied
+  every full test run, and conflicted with immutable release permissions.
+
+## Verification before deployment
+
+- `npm run typecheck`: passed.
+- Focused shutdown/readiness/session/Yjs tests: 31/31 passed.
+- Full Vitest: 63 files, 299 passed, 3 skipped, 0 failed.
+- Production build: passed; 3,298 modules transformed.
+- Compiled lifecycle probe: built client returned HTTP 200 on loopback, then a
+  real `SIGTERM` completed the graceful path and exited 0. Evidence:
+  `screenshots/260712-1152-production-service-candidate/`.
+- Shell syntax checks for both deployment scripts: passed.
+- `git diff --check`: passed.
+- Repository-wide lint remained 0 errors with 6,365 warnings; the warning
+  backlog predates this batch and lint remains non-blocking in CI.
+- Independent production review repeatedly held the deploy at **NO-GO** until
+  dependency retries, active-lane refusal, partial-build cleanup, SHA
+  provenance, session invalidation, dirty-document retention, shutdown order,
+  Docker binding, weak-secret rejection, upload continuity, and split-brain
+  draining were explicit and tested. Final review remains a gate before merge.
+
+## Immediate database exposure closure
+
+The production audit found Docker publishing CouchDB `5984` and Redis `6379`
+on all interfaces. The Hetzner Robot whitelist's accepted `5432-6543` range
+also covered both ports. External tests confirmed CouchDB HTTP 200 and an
+unauthenticated Redis `PONG`.
+
+A persistent host `DOCKER-USER` rule now drops only TCP `5984,6379` arriving on
+the public interface. Host-local CouchDB/Redis and public app health remained
+green. External retest returned CouchDB HTTP 000 and Redis closed while public
+`/api/health` returned 200. Evidence:
+`screenshots/260712-1203-database-exposure-closure/`.
+
+The follow-on audit confirmed active compromise: the attacker key, 1,257
+`CONFIG SET` calls, 578 `SLAVEOF` calls, and repeated full RDB synchronization.
+Root-only evidence was preserved, all 54 untrusted keys were flushed, Redis was
+recreated clean, and both dependency ports plus all Rizzoma internal ports,
+including the separately discovered legacy API at `8000`, were closed on the
+public interface for IPv4 and IPv6. Old sessions are intentionally
+invalid; the managed cutover uses a new secret with no previous verifier.
+Evidence: `screenshots/260712-1218-redis-incident-response/`.
+
+Process CWD and command-line inspection corrected an older deployment note:
+`:3001` is a Rizzoma Vite process and `:8000` is its Rizzoma tsx API, both from
+`/data/large-projects/stephan/rizzoma_260612`. They are obsolete internal
+listeners, not unrelated services, so public-interface containment does not
+break another application contract.
+
+The final review also closed four durability gaps before merge: dirty Yjs
+documents are never TTL-evicted until CouchDB persistence succeeds; Yjs
+snapshot requests use bounded three-second calls and independent blips persist
+concurrently; HTTP requests and collaborative state fully drain before Redis
+sessions close; and production rejects placeholder, short, or weak previous
+session secrets. Docker's production profile now listens on its container
+interface behind a loopback-only host mapping and requires an explicit strong
+secret.
+
+Cold-boot supervision now starts both Docker dependencies and retries their
+real Redis/CouchDB readiness for up to 50 seconds inside one systemd start,
+instead of consuming the five-start rate limit during a slow Couch recovery.
+
+The cutover procedure now forbids any live dual-writer overlap, including the
+usual dev-vhost canary. Because Socket.IO rooms and Yjs caches are process-local,
+old Vite/WebSockets stop first, the isolated old API receives a 35-second
+snapshot window, and reaches zero connections before both vhosts switch to the
+candidate. Full HTTPS write acceptance runs only after that atomic transition.
+Rollback retains exact artifacts and commands, not live clients.
+
+Upload continuity was measured before cutover: both legacy checkout upload
+directories and `/var/lib/rizzoma/uploads` contain exactly **0 files / 0
+bytes**, so no payload migration is required for this cutover.
+
+No Hetzner Robot firewall write occurred. The repository Compose declaration
+now binds every published application and dependency port to loopback, while
+the persisted host rules protect the still-running pre-change containers until
+they are safely recreated from that declaration. The one-time systemd installer
+applies the same controls idempotently so they are reproducible rather than
+one-off shell fixes.
+
+## Boundary
+
+At this checkpoint the code and service design are locally verified but not
+yet merged or deployed. Public traffic still targets the existing
+`:3100`/`:8100` lane. Exact-SHA deployment, direct preflight, zero-overlap
+maintenance drain, both-vhost cutover, graceful-restart evidence, and public
+Playwright acceptance remain mandatory
+before the service can be called productionized.

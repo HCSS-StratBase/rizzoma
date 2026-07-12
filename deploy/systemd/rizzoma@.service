@@ -1,0 +1,47 @@
+[Unit]
+Description=Rizzoma production lane %i
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=rizzoma
+Group=rizzoma
+WorkingDirectory=/srv/rizzoma/lanes/%i
+Environment=HOME=/var/lib/rizzoma
+Environment=NODE_OPTIONS=--enable-source-maps
+EnvironmentFile=/etc/rizzoma/production.env
+EnvironmentFile=/etc/rizzoma/%i.env
+ExecStartPre=/usr/bin/test -f /srv/rizzoma/lanes/%i/dist/client/index.html
+ExecStartPre=/usr/bin/test -f /srv/rizzoma/lanes/%i/dist/server/server/app.js
+ExecStartPre=+/usr/bin/docker start rizzoma-redis rizzoma-couchdb
+ExecStartPre=+/srv/rizzoma/lanes/%i/deploy/systemd/wait-for-dependencies.sh
+ExecStart=/usr/bin/node dist/server/server/app.js
+Restart=always
+RestartSec=3s
+TimeoutStartSec=60s
+TimeoutStopSec=45s
+KillSignal=SIGTERM
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/rizzoma/uploads
+StandardOutput=journal
+StandardError=journal
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

@@ -14,7 +14,10 @@ import { requestId } from './middleware/requestId.js';
 import { csrfInit } from './middleware/csrf.js';
 import { sessionMiddleware } from './middleware/session.js';
 import http from 'http';
-import { initSocket } from './lib/socket.js';
+import { closeSocket, initSocket } from './lib/socket.js';
+import { yjsDocCache } from './lib/yjsDocCache.js';
+import { closeSessionStore } from './middleware/session.js';
+import { drainAndFlushForShutdown } from './lib/gracefulShutdown.js';
 import commentsRouter from './routes/comments.js';
 import wavesRouter from './routes/waves.js';
 import editorRouter from './routes/editor.js';
@@ -138,12 +141,51 @@ const server = http.createServer(app);
 // Initialize socket.io with same CORS policy as HTTP
 initSocket(server, allowedOrigins);
 
-server.listen(config.port, () => {
+server.listen(config.port, config.host, () => {
   // eslint-disable-next-line no-console
-  console.log(`[server] listening on http://localhost:${config.port}`);
+  console.log(`[server] listening on http://${config.host}:${config.port}`);
   // Ensure CouchDB indexes exist (non-blocking, logged)
   ensureAllIndexes().catch(() => {});
 });
+
+let shuttingDown = false;
+async function shutdown(signal: NodeJS.Signals) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  // eslint-disable-next-line no-console
+  console.log(`[server] ${signal} received; draining connections and flushing collaborative state`);
+
+  const forceExit = setTimeout(() => {
+    // eslint-disable-next-line no-console
+    console.error('[server] graceful shutdown timed out');
+    process.exit(1);
+  }, 40_000);
+  forceExit.unref();
+
+  try {
+    const httpClosed = new Promise<void>((resolve, reject) => {
+      server.close(error => error ? reject(error) : resolve());
+    });
+    await drainAndFlushForShutdown({
+      closeSocket,
+      httpClosed,
+      flushCollaborativeState: () => yjsDocCache.shutdown(),
+      closeSessionStore,
+    });
+    clearTimeout(forceExit);
+    // eslint-disable-next-line no-console
+    console.log('[server] graceful shutdown complete');
+    process.exit(0);
+  } catch (error) {
+    clearTimeout(forceExit);
+    // eslint-disable-next-line no-console
+    console.error('[server] graceful shutdown failed:', error);
+    process.exit(1);
+  }
+}
+
+process.once('SIGTERM', () => { void shutdown('SIGTERM'); });
+process.once('SIGINT', () => { void shutdown('SIGINT'); });
 
 // Error handler must be last
 app.use(errorHandler);
