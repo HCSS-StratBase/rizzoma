@@ -148,10 +148,13 @@ async function openTopicAndExpandBlip(page, topicId, blipId) {
   // reliably trigger the React onClick that toggles `isExpanded`.
   await blipLocator.click();
   await page.waitForTimeout(300);
-  // Then dispatch start-editing-blip to put the editor into edit mode.
+  // Then dispatch the current external edit-mode event. The app replaced the
+  // old `rizzoma:start-editing-blip` name with `rizzoma:enter-edit-blip` when
+  // single-active-editor ownership was introduced; using the retired event
+  // leaves the blip active but never mounts its ProseMirror surface.
   await page.evaluate((id) => {
     window.dispatchEvent(new CustomEvent('rizzoma:activate-blip', { detail: { blipId: id } }));
-    window.dispatchEvent(new CustomEvent('rizzoma:start-editing-blip', { detail: { blipId: id } }));
+    window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', { detail: { blipId: id } }));
   }, blipId);
   // wait for the editor to mount
   await page.waitForFunction(
