@@ -3,11 +3,13 @@
 This is the authoritative target production topology for Rizzoma. A compiled
 client and server run together from an immutable release under a systemd
 blue/green lane. Nginx is the only intended public application listener.
-CouchDB, Redis, and the loopback-only ClamAV scanner remain Docker services. Docker still declares
-their host ports on all interfaces, but a persistent `DOCKER-USER` rule now
-drops public-interface traffic to `5984,6379`; external closure and local
-health were verified on July 12. Eventual loopback-only Docker publication
-remains the cleaner target when those dependency containers are recreated.
+CouchDB, Redis, and the loopback-only ClamAV scanner remain Docker services.
+Docker still declares the database host ports on all interfaces, but persistent
+`DOCKER-USER` rules drop public-interface traffic to `5984`, `6379`, defensively
+`3310`, and every Docker-published Rizzoma application port; matching `INPUT`
+rules protect bare host listeners. External database closure and local health
+were verified on July 12. Eventual loopback-only Docker publication remains the
+cleaner target when those database containers are recreated.
 
 The active layout is:
 
@@ -18,9 +20,13 @@ The active layout is:
 - `/etc/rizzoma/production.env`: root-only production configuration
 - `/etc/systemd/system/rizzoma@.service`: managed service template
 
-## One-time bootstrap
+## Bootstrap and topology reconciliation
 
-1. Run `scripts/install-vps-systemd.sh` from a clean repository checkout.
+1. Run `scripts/install-vps-systemd.sh` from the exact clean candidate checkout.
+   Re-run it whenever the candidate changes `deploy/systemd/rizzoma@.service`;
+   the deploy helper refuses a candidate whose unit does not byte-match the
+   globally installed unit. `--help` is read-only and all other arguments are
+   rejected.
 2. Create `/etc/rizzoma/production.env` from
    [production.env.example](production.env.example). Whitelist only application
    settings; never copy an all-purpose dotenv containing SSH or Hetzner
@@ -32,9 +38,15 @@ The active layout is:
    future planned rotation between strong secrets, the previous-secret feature
    can preserve sessions for the seven-day maximum lifetime.
 4. The installer sets Redis and CouchDB restart policy `unless-stopped`, creates
-   or adopts a restart-persistent ClamAV container on `127.0.0.1:3310`, and
-   persists its signature database in `rizzoma-clamav-db`. It also
-   idempotently persists the public-interface drop for host ports `5984,6379`.
+   or adopts a restart-persistent ClamAV container only when its image,
+   `127.0.0.1:3310` publication, and `rizzoma-clamav-db` signature mount exactly
+   match the declared topology; otherwise it replaces the container while
+   preserving the volume. It also normalizes the five non-secret production
+   invariants (`NODE_ENV`, `HOST`, local upload mode, and ClamAV host/port) and
+   idempotently persists the public-interface drops for `5984`, `6379`, `3310`,
+   and Rizzoma application ports in the Docker-aware chain. It refuses
+   effective systemd drop-ins rather than allowing an operator override to
+   bypass the reviewed unit.
    Verify external closure plus host-local dependency health after bootstrap.
    Each managed start gives cold Redis/CouchDB/ClamAV up to 180 seconds to become
    healthy, rather than exhausting systemd's restart burst on one-shot probes.
@@ -51,12 +63,19 @@ Deploy a full commit SHA already merged into remote `master`:
 scripts/deploy-vps.sh --sha <full-sha> --lane blue
 ```
 
-The script verifies the SHA is an ancestor of `origin/master`, refuses the
-publicly active lane, builds in a disposable staging worktree, publishes the
-release atomically, and restores the prior lane link if startup or health
-fails. It installs exact dependencies, builds with the parity renderer enabled
-and the native renderer disabled, prunes development packages, starts
-`rizzoma@blue`, and verifies:
+The script takes a global deployment lock, verifies the SHA is an ancestor of
+`origin/master`, checks root-only environment ownership and exact non-secret
+runtime invariants, and requires the installed service unit to match the
+candidate with no effective drop-ins. Existing releases are reused only after
+their Git HEAD, tracked tree, ownership, read-only mode, and persistent-upload
+symlink are revalidated. It scans all effective nginx configuration before and immediately
+after the build, refusing any lane referenced by a loaded public or dev vhost,
+including indirect upstream definitions. It then builds in a private disposable
+staging worktree, publishes the release symlink atomically, and restores both
+the prior lane target and its active/inactive plus enabled/disabled state if
+startup or health fails. It installs exact dependencies, builds with the parity
+renderer enabled and the native renderer disabled, prunes development packages,
+starts `rizzoma@blue`, and verifies:
 
 - service active
 - `/api/health` green, including Redis sessions
