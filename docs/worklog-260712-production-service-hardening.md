@@ -100,8 +100,8 @@ session secrets. Docker's production profile now listens on its container
 interface behind a loopback-only host mapping and requires an explicit strong
 secret.
 
-Cold-boot supervision now starts both Docker dependencies and retries their
-real Redis/CouchDB readiness for up to 50 seconds inside one systemd start,
+Cold-boot supervision now starts all Docker dependencies and retries their
+real Redis/CouchDB/ClamAV readiness for up to 180 seconds inside one systemd start,
 instead of consuming the five-start rate limit during a slow Couch recovery.
 
 The cutover procedure now forbids any live dual-writer overlap, including the
@@ -144,3 +144,10 @@ the VPS source is a linked worktree (`.git` file). The helper now validates via
 `git rev-parse --git-dir`, accepting both ordinary repositories and linked
 worktrees. Public nginx remains unchanged pending the zero-overlap final
 cutover and browser acceptance.
+
+## ClamAV as a managed readiness dependency
+
+- Extended the topology so malware scanning is not an ad-hoc sidecar: the installer creates or adopts `rizzoma-clamav` with a persistent signature volume, 4 GiB memory ceiling, restart policy, and loopback-only `127.0.0.1:3310` publication.
+- The systemd lane starts Redis, CouchDB, and ClamAV together and waits up to 180 seconds for all three; ClamAV must report Docker health `healthy` before the app starts. The wider start timeout covers cold signature initialization without consuming the restart burst.
+- Added `UPLOADS_STORAGE=local`, `CLAMAV_HOST=127.0.0.1`, and `CLAMAV_PORT=3310` to the non-secret environment template, plus a defense-in-depth public-interface drop for port 3310.
+- Candidate/public acceptance now requires ClamAV readiness and a real clean-versus-EICAR upload result through the ACL-backed route. Shell syntax and `git diff --check` passed; local `systemd-analyze verify` reached the expected WSL-only missing `docker.service` and `/usr/bin/node` dependencies, so the installed VPS unit remains the authoritative runtime verification surface.

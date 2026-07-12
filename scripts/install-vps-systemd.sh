@@ -28,6 +28,22 @@ chmod 0600 /etc/rizzoma/blue.env /etc/rizzoma/green.env
 
 docker update --restart unless-stopped rizzoma-redis rizzoma-couchdb >/dev/null
 
+# Upload admission is fail-closed in production, so ClamAV is a managed
+# dependency rather than an optional sidecar. Publish clamd only on loopback;
+# its signature database persists across container replacement.
+if ! docker container inspect rizzoma-clamav >/dev/null 2>&1; then
+  docker volume create rizzoma-clamav-db >/dev/null
+  docker run -d \
+    --name rizzoma-clamav \
+    --restart unless-stopped \
+    --memory 4g \
+    -p 127.0.0.1:3310:3310 \
+    -v rizzoma-clamav-db:/var/lib/clamav \
+    clamav/clamav:stable >/dev/null
+else
+  docker update --restart unless-stopped --memory 4g rizzoma-clamav >/dev/null
+fi
+
 # Docker currently publishes CouchDB and Redis on all interfaces. Keep local
 # application access intact while deterministically blocking those ports on
 # the public interface. The rule is idempotent and deliberately narrower than
@@ -36,12 +52,16 @@ public_iface="$(ip route get 1.1.1.1 | awk '{for (i=1; i<=NF; i++) if ($i == "de
 test -n "$public_iface"
 dependency_rule=(-i "$public_iface" -p tcp -m multiport --dports 5984,6379 -j DROP)
 rizzoma_internal_rule=(-i "$public_iface" -p tcp -m multiport --dports 3000:3001,3100,8000,8100:8102,8200:8202,8788 -j DROP)
+clamav_rule=(-i "$public_iface" -p tcp --dport 3310 -j DROP)
 for firewall_cmd in iptables ip6tables; do
   if ! "$firewall_cmd" -C DOCKER-USER "${dependency_rule[@]}" 2>/dev/null; then
     "$firewall_cmd" -I DOCKER-USER 1 "${dependency_rule[@]}"
   fi
   if ! "$firewall_cmd" -C INPUT "${rizzoma_internal_rule[@]}" 2>/dev/null; then
     "$firewall_cmd" -I INPUT 1 "${rizzoma_internal_rule[@]}"
+  fi
+  if ! "$firewall_cmd" -C INPUT "${clamav_rule[@]}" 2>/dev/null; then
+    "$firewall_cmd" -I INPUT 1 "${clamav_rule[@]}"
   fi
 done
 if command -v netfilter-persistent >/dev/null 2>&1; then

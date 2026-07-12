@@ -3,7 +3,7 @@
 This is the authoritative target production topology for Rizzoma. A compiled
 client and server run together from an immutable release under a systemd
 blue/green lane. Nginx is the only intended public application listener.
-CouchDB and Redis remain the existing Docker services. Docker still declares
+CouchDB, Redis, and the loopback-only ClamAV scanner remain Docker services. Docker still declares
 their host ports on all interfaces, but a persistent `DOCKER-USER` rule now
 drops public-interface traffic to `5984,6379`; external closure and local
 health were verified on July 12. Eventual loopback-only Docker publication
@@ -31,10 +31,12 @@ The active layout is:
    the known source-code fallback must not remain an accepted verifier. For a
    future planned rotation between strong secrets, the previous-secret feature
    can preserve sessions for the seven-day maximum lifetime.
-4. The installer sets Redis and CouchDB restart policy `unless-stopped` and
+4. The installer sets Redis and CouchDB restart policy `unless-stopped`, creates
+   or adopts a restart-persistent ClamAV container on `127.0.0.1:3310`, and
+   persists its signature database in `rizzoma-clamav-db`. It also
    idempotently persists the public-interface drop for host ports `5984,6379`.
    Verify external closure plus host-local dependency health after bootstrap.
-   Each managed start gives cold Redis/CouchDB up to 50 seconds to become
+   Each managed start gives cold Redis/CouchDB/ClamAV up to 180 seconds to become
    healthy, rather than exhausting systemd's restart burst on one-shot probes.
 
 The production process refuses to start with the development session secret,
@@ -58,6 +60,7 @@ and the native renderer disabled, prunes development packages, starts
 
 - service active
 - `/api/health` green, including Redis sessions
+- ClamAV healthy and included in `/api/health` readiness
 - compiled hashed assets present
 - no Vite development client in the served HTML
 
@@ -98,6 +101,7 @@ Run the complete acceptance set at the public HTTPS URL:
 6. strict desktop and mobile Follow-the-Green moves `2 -> 1 -> 0`
 7. screenshots pass at 1280, 1366, 1440, 1600 and mobile widths
 8. candidate journal has zero 5xx, snapshot, or graceful-shutdown errors
+9. a clean upload succeeds and an EICAR upload is rejected through the real ACL-backed route
 
 Rollback is a controlled restart recipe, not a live dual-writer. Drain and stop
 the managed lane first, start the recorded former processes locally, restore
