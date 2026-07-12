@@ -1,7 +1,15 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
+## Merged release checkpoint — 2026-07-12
+
+- PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) merged to `master` as `8840f552` from source `daa3f2f3`; final-head CI and iOS workflows passed.
+- Vitest passed **283 tests across 62 files** with 3 skipped; typecheck, production build, health checks, and lint at 0 errors also passed.
+- Two-browser-process collaboration passed **10/10** with **1 ms** relay, **0** remote REST PUTs, bidirectional convergence, reconnect catch-up, and stable unread drain.
+- The release-blocking full-render gate passed **120/120** with **101** lazy slots, **394.3 ms** landing, **595.6 ms** expanded, and **36 MB** heap.
+- Boundary: merged source is not yet deployed. Production verification, managed-service/Redis topology, 500/1,000 full-render sweeps, physical iPhone Safari, backup automation, and the 6,363-warning lint backlog remain open.
+
 ## Summary
-Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests. Follow-the-Green now has deterministic Vitest coverage (CTA happy/degraded paths), a multi-user Playwright smoke (multi unread + forced mark-read failure + mobile viewport), and CI gating via the `browser-smokes` GitHub job (with snapshots/artifacts). Uploads run through MIME sniffing + optional ClamAV, optionally stream to S3/MinIO, and the client surfaces cancel/retry/preview UI. A perf harness (`npm run perf:harness`) seeds 5k-blip waves and captures time-to-first-render screenshots/metrics under `snapshots/perf/`. Health/inline-comments/uploads checks now run in CI via the `health-checks` job (`npm run test:health`). **BLB implementation fix (2026-01-19)**: Audited and fixed BLB (Bullet-Label-Blip) functionality in RizzomaTopicDetail - Fold button now properly wired with localStorage + server persistence, expand icons changed from +/- to □, duplicate toolbar buttons removed. See `docs/BLB_LOGIC_AND_PHILOSOPHY.md` for methodology. **Mobile modernization (2026-01-18)**: Implemented complete mobile PWA infrastructure with zero new dependencies - responsive breakpoints, MobileContext, BottomSheet component, PWA manifest/SW/icons, gesture hooks (swipe, pull-to-refresh), View Transitions API, offline mutation queue with retry logic, and mobile view switching in RizzomaLayout. **Recent performance fixes (2026-01-17)**: Blips API query optimized by adding sort clause to force CouchDB index usage (18s → 29ms, 600x improvement); bcrypt rounds reduced to 2 in dev/test mode for faster auth (~6s → ~100ms per hash). **Perf harness fixes (2026-01-18)**: N+1 API calls eliminated in perf mode (20+ individual `/inline-comments-visibility` calls → 0); timing fix ensures all labels render before counting; CI `perf-budgets` job added with optional budget enforcement. Mobile device validation on iPhone Safari/Chrome Android remains outstanding.
+Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests. Follow-the-Green now has deterministic Vitest coverage, multi-user Playwright coverage, and CI gating. Uploads run through MIME sniffing + optional ClamAV, optionally stream to S3/MinIO, and the client surfaces cancel/retry/preview UI. The performance harness continuously gates the 120-blip full-render/lazy path, while larger 500/1,000 full-render sweeps remain scale work. Health/inline-comments/uploads checks run in CI. Pixel 9 Pro XL / Android Chrome evidence exists; physical iPhone Safari remains outstanding.
 
 ## ✅ Implemented Features
 
@@ -44,17 +52,17 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
   - `FollowTheGreen.tsx` / `RightToolsPanel.tsx` - Rizzoma layout Follow-the-Green CTA and tools panel.
   - `FollowGreen.css` / `FollowTheGreen.css` - Green visual styling.
 
-### Track D: Real-time Collaboration (VERIFIED 2026-02-09)
+### Track D: Real-time Collaboration (VERIFIED 2026-07-12)
 - **Y.js + TipTap + Socket.IO** - Full CRDT-based real-time document sync
-- **Cross-tab sync verified** - Socket.IO room-based relay delivers Y.js updates between tabs; content syncs via both Y.js CRDT merge and API refresh
+- **Two-process sync verified** - Socket.IO room-based relay delivers Y.js updates between separate browser processes; final CI passed 10/10 with 1 ms relay and zero receiving-client REST PUTs.
 - **Persistence round-trip verified** - Y.Doc state persisted to CouchDB via server-side yjsDocCache, restored on reconnection
 - **Relay-first architecture** - Server relays `blip:update` to room members BEFORE applying to local cache, ensuring cache errors don't block delivery
 - **Live cursors** - See where others are typing
 - **Collaborative selection** - See what others have selected
 - **Typing indicators** - "User is typing..." display
-- **Presence awareness** - Full Yjs awareness protocol with loop prevention (`applyingRemoteAwareness` flag)
+- **Presence awareness** - Canonical Yjs `encodeAwarenessUpdate`, `applyAwarenessUpdate`, and `removeAwarenessStates`, with remote-origin suppression so relayed awareness is not echoed back.
 - **User colors** - Each user gets a unique color
-- **Reconnection handling** - `setupReconnect` re-joins rooms and sends state vector on reconnect; server sends diff update
+- **Reconnection handling** - `setupReconnect` re-joins rooms and sends a state vector; final CI verified disconnect, reconnect, and catch-up convergence.
 - **Feature flags** - Gated by `REALTIME_COLLAB` + `LIVE_CURSORS` (both enabled by `FEAT_ALL=1`)
 - **Files:**
   - `CollaborativeProvider.ts` - SocketIOProvider with Y.Doc sync, awareness, reconnection
@@ -70,8 +78,8 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - **WaveView toolbar** - Inline unread counter, next/prev/first/last controls, keyboard shortcuts (j/k/g/G) plus optimistic mark-read + rollback on failure.
 - **Follow-the-Green** - `useWaveUnread` hydrates per-wave unread sets, `RizzomaTopicDetail` decorates blips with `isRead`/`unread` classes, and `RightToolsPanel` + `FollowTheGreen` expose the CTA, inline status messages, and count; the older `GreenNavigation`/`useChangeTracking` pair remains a test harness only.
 - **PresenceIndicator** - Shared component shows avatars/initials, loading/error text, and overflow counts in both `WaveView` and `Editor`.
-- **Tests** - `routes.waves.unread.test.ts`, `client.followGreenNavigation.test.tsx`, `client.RightToolsPanel.followGreen.test.tsx`, `client.useWaveUnread.test.tsx`, `routes.uploads.edgecases.test.ts`, `server.editorPresence.test.ts`, `client.PresenceIndicator.test.tsx`, and `routes.blips.permissions.test.ts` cover the persistence + UI states. Playwright smokes `test-toolbar-inline-smoke.mjs` and `test-follow-green-smoke.mjs` exercise inline toolbar parity and multi-user Follow-the-Green flows respectively (additional CI gating still pending).
-- **Automation** - The `browser-smokes` GitHub job runs both Playwright suites, captures `snapshots/toolbar-inline/` + `snapshots/follow-the-green/`, and uploads dev logs/artifacts whenever the toolbar or Follow-the-Green flows regress.
+- **Tests** - Persistence/UI suites plus toolbar-inline, Follow-the-Green, and two-process collaboration Playwright smokes cover the current release contract.
+- **Automation** - The `browser-smokes` GitHub job runs all three Playwright flows, captures `snapshots/<feature>/`, and uploads dev logs/artifacts on regressions.
   - The job now runs even when the main build fails so snapshots/artifacts are always available for triage; fetch them locally with `npm run snapshots:pull` if you need the latest screenshots without rerunning Playwright.
 
 ### Uploads & gadget nodes
@@ -150,8 +158,8 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 ## Still pending
 - **App runtime expansion**: The first persistence-critical sandboxed app bug is now fixed. Root cause was rogue topic-root `PUT /api/blips/:topicId` writes overwriting the correct topic PATCH after `Done`; fresh verification on `http://127.0.0.1:4192` now shows the saved planner payload keeps `Ship preview (delayed)` at `16:30` and no rogue writes remain (`screenshots/260330-app-runtime/live-topic-planner-debug-saved-topic.json`, `.../live-topic-planner-debug-mutation-traffic.json`, `.../topic-patch-log.ndjson`). Next work is broader app-frame/host-API expansion, not basic correctness repair.
 - **Shared app shell**: Kanban and Planner now use the same browser-side bootstrap (`public/gadgets/apps/app-shell.js`), and a third preview app (`Focus Timer`) is mounted on the same pattern. The generalized shell itself is accepted via the dedicated runtime harness (`src/client/test-app-runtime.html`) with fresh Playwright artifacts under `screenshots/260330-app-runtime/runtime-harness-*.{png,html}`. The fresh localhost authenticated topic-app verifier was unstable during that same pass, so the harness is the current source of truth for shell/bridge reuse.
-- **Perf/resilience sweeps**: large waves/blips stress testing, inline comments under load, realtime updates at scale; run `npm run perf:harness` regularly, document thresholds/limits, add alerts/budgets.
-- **Mobile device validation**: PWA infrastructure is complete, but real-device testing on iPhone Safari / Chrome Android remains.
+- **Perf/resilience sweeps**: the 120-blip full-render/lazy path is release-gated; 500/1,000 full-render stress, inline comments under load, and realtime updates at scale remain.
+- **Mobile device validation**: Pixel 9 Pro XL / Android Chrome is evidenced; physical iPhone Safari remains.
 - **Legacy reference disposition**: All active code is TypeScript (zero CoffeeScript in `src/`). The `original-rizzoma-src/` and `original-rizzoma/` directories contain legacy reference code — decide whether to keep, archive, or remove.
 - **Gadget iframe rendering**: Modernized to **Interactive React Nodes** via **Mantine v7** and **Lucide React**. Selected gadgets (Poll Gadget) now render as live, collaborative React components with distinguished teal/slate aesthetics.
 - **~~Playback timeline~~**: DONE — `WavePlaybackModal.tsx` provides wave-level playback with split pane, color-coded timeline dots, date jump, per-blip diff, cluster fast-forward, and keyboard shortcuts. Per-blip playback also available via `BlipHistoryModal.tsx`.
@@ -426,9 +434,10 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Functionality | Status | Original Rizzoma | New Rizzoma |
 |---|---|---|---|
 | Test framework (Vitest v4) | Done | — | — |
-| Unit tests: 134 across 44 files | Done | ~10 tests | 134 tests |
+| Unit/integration tests: 283 across 62 files, 3 skipped | Done | ~10 tests | 283 tests |
 | E2E: toolbar inline smoke (Playwright) | Done | — | — |
 | E2E: follow-the-green multi-user smoke | Done | — | — |
+| E2E: two-browser-process collaboration smoke | Done | — | — |
 | Health checks CI job (`npm run test:health`) | Done | — | — |
 | Browser smokes CI job (snapshots + artifacts) | Done | — | — |
 
@@ -441,8 +450,8 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Unread counts (N+1 → batch query, ~20x) | Done | — | — |
 | Inline visibility (20+ calls → perf mode skip) | Done | — | — |
 | Bcrypt (10 → 2 rounds in dev, ~60x) | Done | — | — |
-| Perf harness (5k-blip seed, metrics, screenshots) | Done | — | — |
-| CI perf budgets (`RIZZOMA_PERF_ENFORCE_BUDGETS=1`) | Done | — | — |
+| Perf harness (metrics + screenshots; configurable scale) | Done | — | — |
+| CI perf budgets (120 full-render blips + lazy-slot gate) | Done, release-blocking | — | — |
 | Bundle size (~5MB → ~500KB, 90% reduction) | Done | — | — |
 
 ### 20. DevOps & Deployment
@@ -482,7 +491,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Keyboard shortcuts panel | Bottom of nav panel — missing | LOW |
 | [+] green for unread | Root-topic read mode now uses the same gray/green inline marker language as editor and collapsed blips, and a richer BLB unread probe now passes with a real server-backed mix of green unread markers, gray read markers, and child-driven unread collapsed rows; broader parity against richer legacy/live cases still needs expansion | LOW |
 | Nested inline expansion | Live BLB probe for root-inline plus nested-inline expansion now passes on `master`, a mixed inline/list-thread probe now also passes, and a dedicated toolbar-state probe now proves the expanded-vs-collapsed toolbar contract on live threaded replies; broader parity against richer legacy threaded cases still needs expansion | LOW |
-| Mobile device validation | PWA infrastructure done; dense BLB live-scenario mobile verification now passes on `master` (`screenshots/260331-blb-live-scenario-mobile/`), but real-device testing still remains | MEDIUM |
+| Mobile device validation | PWA infrastructure and Pixel 9 Pro XL / Android Chrome evidence exist; physical iPhone Safari remains | MEDIUM |
 | Backup automation | Bundle script exists, GDrive cadence missing | LOW |
 | Legacy assets | jQuery-era static in `original-rizzoma-src` — disposition pending | LOW |
 
@@ -512,6 +521,7 @@ FEAT_ALL=1
 - `@tiptap/extension-link` - Hyperlinks
 - `tippy.js` - Dropdown positioning
 - `y-protocols` - Yjs awareness for cursors
+- `y-prosemirror` - Direct TipTap/Yjs collaboration peer for portable installs
 
 ## 🔧 Integration Points
 
@@ -528,8 +538,8 @@ FEAT_ALL=1
    - A larger numbered live workflow audit still documents those regressions at `screenshots/260331-complex-workflow/`, but the worst root-topic breakage from that audit is now fixed on a fresh rebuilt client: `screenshots/260331-complex-workflow-pass14/` proves that topic edit mode preserves the root body, gadget insertion happens inside that body, and done mode persists the poll without erasing the original topic text. A follow-up polish pass at `screenshots/260331-complex-workflow-pass15/` improves toolbar salience and gadget-palette anchoring while keeping that repaired root-topic flow intact, and the latest nested-readability pass at `screenshots/260331-complex-workflow-pass19/` makes the active nested reply area denser, less washed out, and less dominated by degraded-state warnings on a fresh `:4198` client.
 2. **Testing** - Start services with `docker compose up -d couchdb redis`, then run `FEAT_ALL=1 EDITOR_ENABLE=1 SESSION_STORE=memory REDIS_URL=memory:// npm run dev` (real auth only).
 3. **Polish** - Fine-tune UI/UX based on testing.
-4. **Performance** - Optimize for large documents (beyond `perfRender=lite`).
-5. **Mobile** - Validate unread/navigation/toolbar ergonomics on device.
+4. **Performance** - Extend the release-gated 120-blip full-render path to 500/1,000-blip resilience sweeps.
+5. **Mobile** - Validate unread/navigation/toolbar ergonomics on physical iPhone Safari.
 6. **Documentation** - Update user guides and remove demo-mode language.
 
 ## 🎯 What You Can Do Now
@@ -542,6 +552,6 @@ With `FEAT_ALL=1` + real auth enabled:
 4. **Comments** - `Ctrl+Enter` now creates anchored inline-comment/subblip markers again in the live topic workflow, clicking `[+]` drills into the subblip URL, typed subblip content survives into read mode after `Done`, and `Hide` returns to the parent topic in read mode with the marker still visible (`screenshots/260401-inline-comment-audit-pass44/`). The older annotation-style `Inline comments / All / Open / Resolved` product surface has been removed from the live editor workflow. The remaining gap is the weak visual treatment of the subblip page itself compared with original Rizzoma.
 5. **Follow Green** - Navigate through unread changes in WaveView and the Rizzoma layout; some multi-session/large-wave edge cases still rely on manual testing.
 6. **Live Collaboration** - See other users' cursors.
-7. **Real-time Updates** - Core realtime flows are active; perf/CI hardening is still in progress.
+7. **Real-time Updates** - Core realtime flows and current release CI gates are active; production deployment verification and larger-scale performance remain.
 
 Most of the core Rizzoma experience is available; see **Still pending** for remaining gaps.

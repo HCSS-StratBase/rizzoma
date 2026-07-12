@@ -1,22 +1,16 @@
 # Rizzoma Feature Testing Status
 
-## Release audit — 2026-07-12 (`fix/single-active-editor`)
+## Merged release — 2026-07-12 (`master` @ `8840f552`)
 
-### CI-remediation rerun
-
-- PASS: complete local Vitest suite, **61 files / 275 passed / 3 skipped / 0 failed**, completed in 177.16 seconds.
-- PASS: production server/client build after declaring `y-prosemirror` directly and restoring the portable Vite backend default to `:8788`.
-- PASS: GitHub workflow YAML parsing for both `ci.yml` and `ios-build.yml`.
-- CI root causes fixed: Linux jobs no longer omit Rollup's required optional native package; macOS now uses the lockfile and direct collaboration dependency; readiness probes traverse Vite's `/api/health` proxy; PRs now run the production build.
-- Remote verification: pending the fresh PR #57 workflow runs triggered by the remediation commit.
-
-- PASS: `npm run lint:branch-context`.
-- PASS: `npm run typecheck`.
-- PASS: `npm run build`; server declaration emission and Vite client build completed, transforming 3,297 modules.
-- PASS: focused `src/tests/server.authOauth.test.ts`, 3/3 after giving its slow module-import integration path a scoped 15-second timeout.
-- SUPERSEDED: the earlier serialized run exceeded 600 seconds. The subsequent normal parallel rerun completed green at 61 files / 275 passed / 3 skipped.
-- Existing visual evidence from 2026-07-09 remains the current browser acceptance set: 11/11 single-active-editor gates on live/staging, Ctrl+Enter PASS, 1280/1366/1440/1600 viewport sweep, and 44 feature-sweep screenshots.
-- Release decision: local gates are green; keep `master` deferred until PR #57's Linux and macOS workflows confirm the cross-platform fixes.
+- Source head `daa3f2f3` merged through PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57).
+- Final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401): PASS across build, browser smokes, performance budgets, health checks, and aggregate gate.
+- Final-head [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404): PASS for the unsigned simulator build at deployment target 15.0.
+- Vitest: **62 files / 283 passed / 3 skipped / 0 failed**; typecheck and production build passed; Vite transformed **3,298 modules**.
+- Lint: **0 errors**; 6,363 warnings remain a measured maintenance backlog.
+- Two-browser-process collaboration: **10/10**, **1 ms** A-to-B relay, **0** remote REST PUTs, bidirectional convergence, reconnect catch-up, stable unread drain, and no-store topic reads.
+- Enforced full-render performance: **120/120** labels and blips, **101** lazy slots, **394.3 ms** landing, **595.6 ms** expanded, and **36 MB** heap.
+- Inspected artifacts from the immediately preceding complete green run are under `screenshots/260712-0313-pr57-release-gates/`: 393.1 ms landing, 612.1 ms expanded, 36 MB, and the same 120/120 + 101-lazy structural verdict.
+- Boundary: merged source is not yet deployed. Production verification, full-render 500/1,000-blip sweeps, and physical iPhone Safari remain open.
 
 ## 🟢 Current Status
 - **Full Vitest run (2026-02-10)**: 44 test files passed, 146 tests passed, 3 skipped, **0 failures**. All 9 pre-existing failures fixed (permission-model mismatches, BlipMenu selector drift, feature flags missing in test env, inline comment visibility default, timeout tuning).
@@ -36,7 +30,7 @@
 - **Perf harness E2E (2026-01-18)**: N+1 fix verified - no individual `/inline-comments-visibility` API calls. Load time 298ms for 20 blips.
 - **Browser smokes `test:toolbar-inline` (2026-01-17)**: Chromium passes; Firefox/WebKit may timeout in CI due to browser startup delays.
 - **Browser smokes `test:follow-green` (2026-01-17)**: Desktop profile passes. Auto-navigation feature now works correctly.
-- Browser smokes (`npm run test:toolbar-inline`, `npm run test:follow-green`) are CI-required and upload snapshots even when the build fails. Keep them green.
+- Browser smokes (`npm run test:toolbar-inline`, `npm run test:follow-green`, `npm run test:collab`) are CI-required and upload snapshots even when the build fails. Keep them green.
 - `TESTING_STATUS.md` is a log, not a guarantee—always rerun targeted suites before merges.
 
 ## Recent fixes (2026-01-18)
@@ -63,7 +57,7 @@
 - **Mobile CI smoke tests**: Added mobile profile to `browser-smokes` job (`RIZZOMA_E2E_PROFILES=mobile`); mobile snapshots uploaded as `follow-the-green-mobile/`.
 - **N+1 API calls eliminated in perf mode**: Added `isPerfMode` check to visibility preference useEffect in `RizzomaBlip.tsx`. Eliminated 20+ individual `/inline-comments-visibility` API calls per page load.
 - **Perf harness timing fix**: Added `waitForFunction` to wait for all labels before counting. Now correctly reports all rendered blips.
-- **CI perf budgets job**: Added `perf-budgets` job to `.github/workflows/ci.yml`. Uses `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to optionally fail CI on budget violations.
+- **CI perf budgets job**: `perf-budgets` is release-blocking with `RIZZOMA_PERF_ENFORCE_BUDGETS=1`, 120 full-render blips, required lazy slots, exact counts, no timeout, a 3-second stage ceiling, and a 100 MB heap ceiling.
 - **perf=full mode**: Added support for `perf=full` URL param to load all blips (vs `perf=1` lean mode which only renders stubs). Perf runs can now pass `perfLimit=N` to raise the `/api/blips` limit in `RizzomaTopicDetail`.
 - **Perf harness windowed metrics**: Perf harness now logs time-to-first-200 labels/blips, uses `x-rizzoma-perf=1` to skip blip history writes during perf seeding, and treats `perf=full` as perf so unread/sidebar fetches are skipped. `perfRender=lite` enables lightweight rows and **virtualized list rendering** (32px fixed row height) for large-wave perf runs.
 - **Deferred Rendering Optimization**: `RizzomaBlip` now defers `BlipMenu`, `BlipContributorsStack`, and `Yjs` collaboration activation until hovered/active in `isPerfLite` mode to minimize render and memory overhead for large waves.
@@ -77,9 +71,9 @@
 - Fixed unit tests: useWaveUnread socket mocks, InlineComments plugins guard, GadgetNodes JSON parsing, BlipMenu clipboard setup, routes.auth Vitest mocks, and relaxed RightToolsPanel auto-navigate assertions.
 
 ## Latest recorded runs (historical)
-- `browser-smokes` CI job is configured to run `npm run test:toolbar-inline` and `npm run test:follow-green` across Chromium/Firefox/WebKit + mobile viewport, upload `snapshots/<feature>/`, and publish `dev.log` on failure. Pull artifacts via `npm run snapshots:pull` when needed. Re-run to get current results.
+- `browser-smokes` runs toolbar-inline across Chromium/Firefox/WebKit, Follow-the-Green desktop/mobile, and the two-process collaboration smoke; it uploads `snapshots/<feature>/` and logs on failure.
 - `npm run test -- --run src/tests/client.RightToolsPanel.followGreen.test.tsx src/tests/client.useWaveUnread.test.tsx` (use `--pool=forks --poolOptions.forks.singleFork=true` if workers are killed) covers Follow-the-Green CTA happy/degraded paths, repeated mark-read failures, and large-wave unread sets; rerun for fresh status.
-- `npm run perf:harness` seeds blips (default 5k, set `RIZZOMA_PERF_BLIPS=N` to customize), drives Playwright for time-to-first-render, and stores metrics/screenshots under `snapshots/perf/`. CI-gated via `perf-budgets` job with 50 blips; set `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to fail on budget violations.
+- `npm run perf:harness` seeds blips, drives Playwright, and stores metrics/screenshots under `snapshots/perf/`. CI uses an enforced 120-blip full-render run so the `>100` lazy-mount path is always exercised; 500/1,000 full-render runs remain scale follow-ups.
 - `npm test -- --run src/tests/client.getUserMediaAdapter.test.ts` covers constraint normalization, permission/device helpers, and display media detection for the adapter.
 
 ## Historical runs (Dec 2025 and earlier)
@@ -245,7 +239,7 @@
 - `npm test -- --run src/tests/client.editor.GadgetNodes.test.ts` is still intermittently hanging after the Vitest `RUN` banner in this environment; keep fresh Playwright/browser artifacts as the acceptance signal when that happens.
 - Rerun typecheck + focused Vitest + browser smokes before shipping changes; document outcomes here with dates.
 - CI gating for `/api/health`, inline comments health checks, and upload probes is now in place via the `health-checks` job (`npm run test:health`).
-- CI gating for perf budgets is now in place via the `perf-budgets` job. Currently warn-only; set `RIZZOMA_PERF_ENFORCE_BUDGETS=1` to block on failures.
+- CI gating for performance is release-blocking via `perf-budgets` with `RIZZOMA_PERF_ENFORCE_BUDGETS=1`.
 - Mobile viewport validation is now CI-gated via `browser-smokes` job with `RIZZOMA_E2E_PROFILES=mobile`; check `follow-the-green-mobile/` snapshots for visual verification.
 - Legacy CoffeeScript/asset cleanup and dependency upgrades need coverage once refactored.
 - BLB dense live toolbar-focus verification was refreshed on 2026-03-31 from a clean forced client at `http://127.0.0.1:4197`:
