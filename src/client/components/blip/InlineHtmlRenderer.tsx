@@ -11,7 +11,7 @@ import {
 import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
 import {
   formatTaskDate,
-  loadTaskCompletions,
+  loadTaskCompletionSnapshot,
   toggleTaskOnServer,
 } from '../editor/extensions/TaskWidget';
 
@@ -108,6 +108,8 @@ export interface InlineHtmlRenderOptions {
   renderInlineChild: (childId: string) => ReactNode;
   /** Authoritative completion state for task widgets in this saved HTML. */
   taskCompletions?: ReadonlyMap<string, boolean> | null;
+  /** Task IDs the access-checked API allows this reader to toggle. */
+  toggleableTaskIds?: ReadonlySet<string>;
   /** Task IDs with a server mutation already in flight. */
   pendingTaskIds?: ReadonlySet<string>;
   /** Server-authoritative, non-optimistic task toggle. */
@@ -132,6 +134,7 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     everMountedSet,
     renderInlineChild,
     taskCompletions,
+    toggleableTaskIds,
     pendingTaskIds,
     onTaskToggle,
   } = opts;
@@ -225,23 +228,27 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
         ? `${assignee}${dueDate ? ` ${formatTaskDate(dueDate)}` : ''}`.trim()
         : savedLabel;
       const props = elementToProps(el);
+      const canToggle = Boolean(taskId && toggleableTaskIds?.has(taskId) && onTaskToggle);
+      classNames.delete('task-interactive');
+      classNames.delete('task-readonly');
+      classNames.add(canToggle ? 'task-interactive' : 'task-readonly');
       props['key'] = nextKey();
       props['className'] = [...classNames].join(' ');
-      props['aria-pressed'] = isCompleted;
-      if (pendingTaskIds?.has(taskId)) props['aria-busy'] = true;
-      if (taskId && onTaskToggle) {
+      if (canToggle) {
+        props['aria-pressed'] = isCompleted;
+        if (pendingTaskIds?.has(taskId)) props['aria-busy'] = true;
         props['role'] = 'button';
         props['tabIndex'] = 0;
         props['onClick'] = (event: ReactMouseEvent<HTMLElement>) => {
           event.preventDefault();
           event.stopPropagation();
-          onTaskToggle(taskId);
+          onTaskToggle?.(taskId);
         };
         props['onKeyDown'] = (event: { key: string; preventDefault: () => void; stopPropagation: () => void }) => {
           if (event.key !== 'Enter' && event.key !== ' ') return;
           event.preventDefault();
           event.stopPropagation();
-          onTaskToggle(taskId);
+          onTaskToggle?.(taskId);
         };
       }
       return createElement('span', props, `${isCompleted ? '\u2611' : '\u2610'}${label ? ` ${label}` : ''}`);
@@ -371,7 +378,7 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
 
 export interface InlineHtmlRendererProps extends Omit<
   InlineHtmlRenderOptions,
-  'taskCompletions' | 'pendingTaskIds' | 'onTaskToggle'
+  'taskCompletions' | 'toggleableTaskIds' | 'pendingTaskIds' | 'onTaskToggle'
 > {
   /** Blip ID used by the task side-doc API; for topic roots this is topic.id. */
   taskBlipId: string;
@@ -384,12 +391,13 @@ export interface InlineHtmlRendererProps extends Omit<
  */
 export function InlineHtmlRenderer({ taskBlipId, ...renderOptions }: InlineHtmlRendererProps) {
   const [taskCompletions, setTaskCompletions] = useState<ReadonlyMap<string, boolean> | null>(null);
+  const [toggleableTaskIds, setToggleableTaskIds] = useState<ReadonlySet<string>>(() => new Set());
   const [pendingTaskIds, setPendingTaskIds] = useState<ReadonlySet<string>>(() => new Set());
   const pendingTaskIdsRef = useRef(new Set<string>());
   const hydrationGenerationRef = useRef(0);
   const hydrationControllerRef = useRef<AbortController | null>(null);
-  const toggleControllersRef = useRef(new Map<string, AbortController>());
   const activeBlipIdRef = useRef(taskBlipId);
+  const mountedRef = useRef(true);
 
   // Rehydrate if the set of task references changes while this view remains
   // mounted (for example after a realtime content update).
@@ -411,20 +419,32 @@ export function InlineHtmlRenderer({ taskBlipId, ...renderOptions }: InlineHtmlR
     hydrationControllerRef.current = controller;
     const requestedBlipId = taskBlipId;
 
-    void loadTaskCompletions(requestedBlipId, controller.signal).then((completions) => {
+    void loadTaskCompletionSnapshot(requestedBlipId, controller.signal).then((snapshot) => {
       if (
-        controller.signal.aborted
+        !mountedRef.current
+        || controller.signal.aborted
         || generation !== hydrationGenerationRef.current
         || activeBlipIdRef.current !== requestedBlipId
-        || !completions
+        || !snapshot
       ) return;
-      setTaskCompletions(completions);
+      setTaskCompletions(snapshot.completions);
+      setToggleableTaskIds(snapshot.toggleableTaskIds);
     });
   }, [taskBlipId]);
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     activeBlipIdRef.current = taskBlipId;
     setTaskCompletions(null);
+    setToggleableTaskIds(new Set());
+    pendingTaskIdsRef.current.clear();
+    setPendingTaskIds(new Set());
     // Most blips do not contain tasks. Do not turn a large topic into one
     // by-blip request per visible blip when there is nothing to hydrate.
     if (taskIdsKey) hydrate();
@@ -435,14 +455,12 @@ export function InlineHtmlRenderer({ taskBlipId, ...renderOptions }: InlineHtmlR
     };
   }, [hydrate, taskBlipId, taskIdsKey]);
 
-  useEffect(() => () => {
-    for (const controller of toggleControllersRef.current.values()) controller.abort();
-    toggleControllersRef.current.clear();
-    pendingTaskIdsRef.current.clear();
-  }, [taskBlipId]);
-
   const handleTaskToggle = useCallback((taskId: string) => {
-    if (!taskId || pendingTaskIdsRef.current.has(taskId)) return;
+    if (
+      !taskId
+      || !toggleableTaskIds.has(taskId)
+      || pendingTaskIdsRef.current.has(taskId)
+    ) return;
     pendingTaskIdsRef.current.add(taskId);
     setPendingTaskIds(new Set(pendingTaskIdsRef.current));
 
@@ -450,34 +468,36 @@ export function InlineHtmlRenderer({ taskBlipId, ...renderOptions }: InlineHtmlR
     // response. The POST is nonqueued and the visible state is not optimistic.
     hydrationGenerationRef.current += 1;
     hydrationControllerRef.current?.abort();
-    const controller = new AbortController();
-    toggleControllersRef.current.set(taskId, controller);
     const requestedBlipId = taskBlipId;
 
-    void toggleTaskOnServer(taskId, controller.signal).then((isCompleted) => {
-      if (controller.signal.aborted || activeBlipIdRef.current !== requestedBlipId) return;
+    // Deliberately do not attach the renderer's AbortSignal to this POST. Once
+    // sent, aborting on view -> editor unmount would make its commit ambiguous.
+    void toggleTaskOnServer(taskId, requestedBlipId).then((isCompleted) => {
+      if (!mountedRef.current || activeBlipIdRef.current !== requestedBlipId) return;
       if (isCompleted === null) {
         hydrate();
         return;
       }
+      // A full hydrate started by a failed different task may have captured a
+      // pre-write snapshot. Confirmed writes always invalidate it first.
+      hydrationGenerationRef.current += 1;
+      hydrationControllerRef.current?.abort();
       setTaskCompletions((current) => {
         const next = new Map(current || []);
         next.set(taskId, isCompleted);
         return next;
       });
     }).finally(() => {
-      if (toggleControllersRef.current.get(taskId) === controller) {
-        toggleControllersRef.current.delete(taskId);
-      }
-      if (controller.signal.aborted || activeBlipIdRef.current !== requestedBlipId) return;
+      if (!mountedRef.current || activeBlipIdRef.current !== requestedBlipId) return;
       pendingTaskIdsRef.current.delete(taskId);
       setPendingTaskIds(new Set(pendingTaskIdsRef.current));
     });
-  }, [hydrate, taskBlipId]);
+  }, [hydrate, taskBlipId, toggleableTaskIds]);
 
   return createElement(Fragment, null, renderInlineHtml({
     ...renderOptions,
     taskCompletions,
+    toggleableTaskIds,
     pendingTaskIds,
     onTaskToggle: handleTaskToggle,
   }));

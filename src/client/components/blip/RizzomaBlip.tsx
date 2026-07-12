@@ -45,6 +45,7 @@ import { LazyBlipSlot, LAZY_MOUNT_THRESHOLD } from './LazyBlipSlot';
 import { useCollaboration } from '../editor/useCollaboration';
 import { yjsDocManager } from '../editor/YjsDocumentManager';
 import { useAuthenticatedCollaborationUser } from '../editor/useAuthenticatedCollaborationUser';
+import { requestTaskCompletionHydration } from '../editor/extensions/TaskWidget';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
 export type BlipContributor = {
@@ -427,6 +428,7 @@ export function RizzomaBlip({
   const readOnlySelectionWarned = useRef(false);
   const pendingInsertRef = useRef<string | null>(null);
   const pendingGadgetDetailRef = useRef<GadgetInsertDetail | null>(null);
+  const inlineEditorRef = useRef<Editor | null>(null);
 
   // Auto-save blip content (debounced, silent)
   const autoSaveBlip = useCallback(async (content: string) => {
@@ -441,6 +443,10 @@ export function RizzomaBlip({
       if (response.ok) {
         lastSavedContentRef.current = content;
         onBlipUpdate?.(blip.id, content);
+        // Task side-documents are derived only after this durable save. A
+        // freshly inserted task may have been absent from the earlier
+        // hydration, so refresh its server-provided completion/permission now.
+        requestTaskCompletionHydration(inlineEditorRef.current);
         // No toast - auto-save is silent for real-time experience
       }
     } catch {
@@ -453,7 +459,6 @@ export function RizzomaBlip({
 
   // Refs to hold current editor and callback (avoids stale closures in useEditor)
   const createChildBlipRef = useRef<(anchorPosition: number) => Promise<void>>();
-  const inlineEditorRef = useRef<Editor | null>(null);
 
   // Stable callback that reads from ref (never goes stale)
   const stableCreateInlineChildBlip = useCallback((anchorPosition: number) => {
@@ -929,6 +934,7 @@ export function RizzomaBlip({
       if (targetId !== blip.id) return;
       claimActive();
       if (blip.permissions.canEdit) {
+        requestTaskCompletionHydration(inlineEditorRef.current);
         setIsEditing(true);
         // Bug A perf fix (2026-05-11): single RAF instead of two. The
         // setIsEditing's effect commits + the inlineEditor's
@@ -1047,6 +1053,10 @@ export function RizzomaBlip({
     console.log('handleStartEdit called for blip:', blip.id, 'canEdit:', blip.permissions.canEdit);
     if (blip.permissions.canEdit) {
       const nextContent = injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline);
+      // Revalidate the hidden editor before replacing its content. Existing
+      // task IDs refresh after a parity-view toggle; a new task signature is
+      // detected by the durability plugin's setContent lifecycle update.
+      requestTaskCompletionHydration(inlineEditor);
       setEditedContent(nextContent);
       setIsEditing(true);
       claimActive();

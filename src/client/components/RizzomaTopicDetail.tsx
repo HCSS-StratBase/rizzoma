@@ -26,6 +26,7 @@ import { ActiveBlipProvider, EditSurfaceActiveBridge } from './blip/ActiveBlipCo
 import { parseHtmlToContentArray } from '@client/native/parser';
 import type { ContentArray } from '@client/native/types';
 import { useAuthenticatedCollaborationUser } from './editor/useAuthenticatedCollaborationUser';
+import { requestTaskCompletionHydration } from './editor/extensions/TaskWidget';
 import { collectBlipPages } from '../lib/blipPagination';
 import { subscribeBlipEvents, subscribeTopicDetail } from '../lib/socket';
 
@@ -1202,6 +1203,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       if (response.ok) {
         lastSavedContentRef.current = content;
         setTopic(prev => prev ? { ...prev, title: extractedTitle, content: content } : prev);
+        // Topic-root task side-documents are derived by this successful save,
+        // never by the client. Refresh so a newly inserted task becomes
+        // interactable in the same edit session when canToggle permits it.
+        requestTaskCompletionHydration(topicEditorRef.current);
         // No toast for auto-save - it's real-time
       }
     } catch {
@@ -1245,9 +1250,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     const nextContent = injectInlineMarkers(initialContent, inlineRootBlips);
     setTopicContent(nextContent);
     lastSavedContentRef.current = nextContent;
+    // The topic editor is created empty and survives view mode. Requesting
+    // before setContent is intentionally request-free on first entry; the
+    // plugin hydrates when task nodes arrive. Later entries refresh existing
+    // task IDs after any confirmed parity-view toggle.
+    requestTaskCompletionHydration(topicEditor);
     setIsEditingTopic(true);
     // The useEffect will handle syncing the editor content when isEditingTopic changes
-  }, [isAuthed, topicCanEdit, topic?.title, topic?.content, blips]);
+  }, [isAuthed, topicCanEdit, topic?.title, topic?.content, blips, topicEditor]);
 
   // Finish editing topic
   const finishEditingTopic = useCallback(() => {

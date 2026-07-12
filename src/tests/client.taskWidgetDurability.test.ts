@@ -1,7 +1,10 @@
 import StarterKit from '@tiptap/starter-kit';
 import { Editor } from '@tiptap/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TaskWidgetNode } from '../client/components/editor/extensions/TaskWidget';
+import {
+  requestTaskCompletionHydration,
+  TaskWidgetNode,
+} from '../client/components/editor/extensions/TaskWidget';
 
 const apiMocks = vi.hoisted(() => ({
   api: vi.fn(),
@@ -66,7 +69,7 @@ describe('task widget durable completion', () => {
     apiMocks.api.mockResolvedValue({
       ok: true,
       status: 200,
-      data: { tasks: [{ id: TASK_ID, isCompleted: true }] },
+      data: { tasks: [{ id: TASK_ID, isCompleted: true, canToggle: true }] },
     });
     const onUpdate = vi.fn();
     const { editor, element } = createTaskEditor(UNCHECKED_HTML, onUpdate);
@@ -88,7 +91,7 @@ describe('task widget durable completion', () => {
     let authoritativeState = false;
     apiMocks.api.mockImplementation(async (path: string, init?: { method?: string }) => {
       if (path === '/api/tasks/by-blip/blip-private') {
-        return { ok: true, status: 200, data: { tasks: [{ id: TASK_ID, isCompleted: authoritativeState }] } };
+        return { ok: true, status: 200, data: { tasks: [{ id: TASK_ID, isCompleted: authoritativeState, canToggle: true }] } };
       }
       if (path === `/api/tasks/${encodeURIComponent(TASK_ID)}/toggle` && init?.method === 'POST') {
         authoritativeState = !authoritativeState;
@@ -99,7 +102,10 @@ describe('task widget durable completion', () => {
 
     const onUpdate = vi.fn();
     const first = createTaskEditor(UNCHECKED_HTML, onUpdate);
-    await vi.waitFor(() => expect(taskDone(first.editor)).toBe(false));
+    await vi.waitFor(() => {
+      expect(taskDone(first.editor)).toBe(false);
+      expect(apiMocks.api.mock.calls.filter(([path]) => path === '/api/tasks/by-blip/blip-private')).toHaveLength(1);
+    });
     first.element.querySelector<HTMLElement>('[data-task-widget]')?.dispatchEvent(
       new MouseEvent('click', { bubbles: true, cancelable: true }),
     );
@@ -120,5 +126,98 @@ describe('task widget durable completion', () => {
     await vi.waitFor(() => expect(taskDone(reloaded.editor)).toBe(true));
     expect(reloaded.element.querySelector('[data-task-widget]')?.textContent).toContain('\u2611');
     reloaded.editor.destroy();
+  });
+
+  it('does not request a by-blip snapshot for a taskless editor', async () => {
+    const { editor } = createTaskEditor('<p>No task widgets here</p>');
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(apiMocks.api).not.toHaveBeenCalled();
+    requestTaskCompletionHydration(editor);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(apiMocks.api).not.toHaveBeenCalled();
+    editor.destroy();
+  });
+
+  it('hydrates task content loaded after the topic-root editor was created empty', async () => {
+    apiMocks.api.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { tasks: [{ id: TASK_ID, isCompleted: true, canToggle: true }] },
+    });
+    const { editor, element } = createTaskEditor('<p></p>');
+
+    requestTaskCompletionHydration(editor);
+    expect(apiMocks.api).not.toHaveBeenCalled();
+    editor.commands.setContent(UNCHECKED_HTML);
+
+    await vi.waitFor(() => expect(taskDone(editor)).toBe(true));
+    expect(apiMocks.api.mock.calls.filter(([path]) => path === '/api/tasks/by-blip/blip-private')).toHaveLength(1);
+    expect(element.querySelector('[data-task-widget]')?.textContent).toContain('\u2611');
+    editor.destroy();
+  });
+
+  it('does not send a toggle when the access snapshot marks the task read-only', async () => {
+    apiMocks.api.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { tasks: [{ id: TASK_ID, isCompleted: false, canToggle: false }] },
+    });
+    const { editor, element } = createTaskEditor();
+    await vi.waitFor(() => expect(apiMocks.api).toHaveBeenCalledTimes(1));
+
+    element.querySelector<HTMLElement>('[data-task-widget]')?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, cancelable: true }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(apiMocks.ensureCsrf).not.toHaveBeenCalled();
+    expect(apiMocks.api.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(0);
+    expect(taskDone(editor)).toBe(false);
+    editor.destroy();
+  });
+
+  it('makes a newly inserted task toggleable after its durable save refreshes side-doc authority', async () => {
+    let saved = false;
+    apiMocks.api.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path === '/api/tasks/by-blip/blip-private') {
+        return {
+          ok: true,
+          status: 200,
+          data: { tasks: saved ? [{ id: TASK_ID, isCompleted: false, canToggle: true }] : [] },
+        };
+      }
+      if (path === `/api/tasks/${encodeURIComponent(TASK_ID)}/toggle` && init?.method === 'POST') {
+        return { ok: true, status: 200, data: { isCompleted: true } };
+      }
+      throw new Error(`Unexpected API request: ${path}`);
+    });
+    const { editor, element } = createTaskEditor('<p></p>');
+
+    editor.commands.setContent(UNCHECKED_HTML);
+    await vi.waitFor(() => {
+      expect(apiMocks.api.mock.calls.filter(([path]) => path === '/api/tasks/by-blip/blip-private')).toHaveLength(1);
+    });
+    element.querySelector<HTMLElement>('[data-task-widget]')?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, cancelable: true }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(apiMocks.api.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(0);
+
+    // Mirrors RizzomaBlip/RizzomaTopicDetail after their successful durable
+    // content save. The side document now exists and grants canToggle.
+    saved = true;
+    requestTaskCompletionHydration(editor);
+    await vi.waitFor(() => {
+      expect(apiMocks.api.mock.calls.filter(([path]) => path === '/api/tasks/by-blip/blip-private')).toHaveLength(2);
+    });
+    element.querySelector<HTMLElement>('[data-task-widget]')?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, cancelable: true }),
+    );
+
+    await vi.waitFor(() => expect(taskDone(editor)).toBe(true));
+    expect(apiMocks.api.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1);
+    editor.destroy();
   });
 });
