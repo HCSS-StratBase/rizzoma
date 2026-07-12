@@ -260,9 +260,12 @@ This section supersedes the deployment boundary above.
   login cookie.
 - Hotfix branch `fix/production-auth-session-race` now allows only the dedicated
   `/api/auth/csrf` request to mint anonymous CSRF/session state. Ordinary page,
-  API, and asset requests remain session-neutral; existing tokens are still
-  reissued. Focused verification passed **25/25** auth/CSRF/reset tests, the
-  production server build, and ESLint with zero errors.
+  API, and asset requests remain session-neutral; existing tokens are reissued
+  only by the dedicated endpoint. Ordinary late responses also cannot overwrite
+  the fresh post-login XSRF cookie. Focused verification passed **27/27**
+  auth/CSRF/reset tests, including a real express-session destroyed-SID
+  regression, plus typecheck, the production server build, and touched-file
+  ESLint with zero errors.
 - Boundary: the hotfix is not public until green GitHub CI, exact private-lane
   deployment, and repeated public login proof. The broader two-user, mail,
   reset, role, collaboration, export, upload, scanner, restart, and visual
