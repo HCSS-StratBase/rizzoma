@@ -2,36 +2,38 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-// Feature flag forwarding. Without the FEAT_ALL default below, the
-// featureFlags module sees `import.meta.env.FEAT_ALL === undefined`,
-// tree-shakes every feature guard to false, and the APK / vite
-// preview silently run without realtime collab, live cursors,
-// follow-the-green, inline comments, etc. That bug shipped for weeks
-// before being caught on 2026-04-15 (task #58). For production
-// builds we default FEAT_ALL to '1' so the shipped bundle has every
-// Track-A..E feature on; callers who need a pared-down build (CI
-// perf runs, feature-flag tests) can still override with FEAT_ALL=0.
-export default defineConfig(({ command }) => {
-  const isProdBuild = command === 'build';
-  const env = (key: string, prodDefault: string = '') =>
-    JSON.stringify(process.env[key] ?? (isProdBuild ? prodDefault : ''));
+export default defineConfig(({ command, mode }) => {
+  const featAll = process.env.FEAT_ALL || (command === 'build' || mode === 'production' ? '1' : '');
+
   return {
-  plugins: [react()],
-  define: {
-    'import.meta.env.FEAT_ALL': env('FEAT_ALL', '1'),
-    'import.meta.env.FEAT_INLINE_COMMENTS': env('FEAT_INLINE_COMMENTS'),
-    'import.meta.env.FEAT_RICH_TOOLBAR': env('FEAT_RICH_TOOLBAR'),
-    'import.meta.env.FEAT_MENTIONS': env('FEAT_MENTIONS'),
-    'import.meta.env.FEAT_TASK_LISTS': env('FEAT_TASK_LISTS'),
-    'import.meta.env.FEAT_FOLLOW_GREEN': env('FEAT_FOLLOW_GREEN'),
-    'import.meta.env.FEAT_VISUAL_DIFF': env('FEAT_VISUAL_DIFF'),
-    'import.meta.env.FEAT_LIVE_CURSORS': env('FEAT_LIVE_CURSORS'),
-    'import.meta.env.FEAT_TYPING_INDICATORS': env('FEAT_TYPING_INDICATORS'),
-    'import.meta.env.FEAT_REALTIME_COLLAB': env('FEAT_REALTIME_COLLAB'),
-    'import.meta.env.FEAT_WAVE_PLAYBACK': env('FEAT_WAVE_PLAYBACK'),
-    'import.meta.env.FEAT_TASKS': env('FEAT_TASKS'),
-    'import.meta.env.BUSINESS_ACCOUNT': env('BUSINESS_ACCOUNT'),
-  },
+    plugins: [react()],
+    define: {
+      // Pass feature flags to the browser bundle. Production builds default to
+      // full parity unless explicitly overridden by the deploy environment.
+      'import.meta.env.FEAT_ALL': JSON.stringify(featAll),
+      'import.meta.env.FEAT_INLINE_COMMENTS': JSON.stringify(process.env.FEAT_INLINE_COMMENTS || ''),
+      'import.meta.env.FEAT_RICH_TOOLBAR': JSON.stringify(process.env.FEAT_RICH_TOOLBAR || ''),
+      'import.meta.env.FEAT_MENTIONS': JSON.stringify(process.env.FEAT_MENTIONS || ''),
+      'import.meta.env.FEAT_TASK_LISTS': JSON.stringify(process.env.FEAT_TASK_LISTS || ''),
+      'import.meta.env.FEAT_FOLLOW_GREEN': JSON.stringify(process.env.FEAT_FOLLOW_GREEN || ''),
+      'import.meta.env.FEAT_VISUAL_DIFF': JSON.stringify(process.env.FEAT_VISUAL_DIFF || ''),
+      'import.meta.env.FEAT_LIVE_CURSORS': JSON.stringify(process.env.FEAT_LIVE_CURSORS || ''),
+      'import.meta.env.FEAT_TYPING_INDICATORS': JSON.stringify(process.env.FEAT_TYPING_INDICATORS || ''),
+      'import.meta.env.FEAT_REALTIME_COLLAB': JSON.stringify(process.env.FEAT_REALTIME_COLLAB || ''),
+      'import.meta.env.FEAT_WAVE_PLAYBACK': JSON.stringify(process.env.FEAT_WAVE_PLAYBACK || ''),
+      'import.meta.env.FEAT_TASKS': JSON.stringify(process.env.FEAT_TASKS || ''),
+      'import.meta.env.BUSINESS_ACCOUNT': JSON.stringify(process.env.BUSINESS_ACCOUNT || ''),
+      // Track F: visual parity with original rizzoma.com (B1 reskin + B2 inline render).
+      // OFF by default — opt in via FEAT_RIZZOMA_PARITY_RENDER=1. Without this define,
+      // the client's import.meta.env.FEAT_RIZZOMA_PARITY_RENDER is undefined and the
+      // FEATURES.RIZZOMA_PARITY_RENDER flag stays false even when the server-side env
+      // is set — which is what was happening on the dev VPS through 2026-05-05.
+      'import.meta.env.FEAT_RIZZOMA_PARITY_RENDER': JSON.stringify(process.env.FEAT_RIZZOMA_PARITY_RENDER || ''),
+      // Track G: native fractal-render port. Same trap-avoidance comment as above —
+      // without this define, the client's flag stays undefined no matter what the
+      // server-side env says. See docs/NATIVE_RENDER_PORT_PLAN.md and GH #50–#56.
+      'import.meta.env.FEAT_RIZZOMA_NATIVE_RENDER': JSON.stringify(process.env.FEAT_RIZZOMA_NATIVE_RENDER || ''),
+    },
   root: './src/client',
   publicDir: '../../public',
   build: {
@@ -42,7 +44,6 @@ export default defineConfig(({ command }) => {
       input: {
         main: path.resolve(__dirname, 'src/client/index.html'),
         settings: path.resolve(__dirname, 'src/client/settings.html'),
-        testEditor: path.resolve(__dirname, 'src/client/test-editor.html'),
       },
     },
   },
@@ -55,26 +56,18 @@ export default defineConfig(({ command }) => {
   },
   server: {
     host: true,
-    port: 3000,
+    // Overridable so a second instance (e.g. a dev deployment next to the
+    // live one) can run on its own ports: VITE_PORT + VITE_API_TARGET.
+    port: Number(process.env.VITE_PORT || 3000),
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8788',
+        target: process.env.VITE_API_TARGET || 'http://localhost:8788',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://localhost:8788',
+        target: process.env.VITE_API_TARGET || 'http://localhost:8788',
         ws: true,
-      },
-      // Forward uploaded files to Express's express.static('/uploads') mount.
-      // Without this, dev-mode requests for /uploads/<file> fall through to
-      // the SPA catch-all and return index.html instead of the PNG/file —
-      // so images uploaded via the editor's 🖼️ button (which save fine to
-      // disk on the VPS) don't actually display in the browser. Discovered
-      // 2026-04-22 during the depth-feature audit on the VPS.
-      '/uploads': {
-        target: 'http://localhost:8788',
-        changeOrigin: true,
       },
     },
   },

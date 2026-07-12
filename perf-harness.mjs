@@ -16,13 +16,25 @@ const perfQuery = `?layout=rizzoma&perf=full&perfRender=${renderMode}&perfLimit=
 const perfHeaders = { 'x-rizzoma-perf': '1' };
 const snapshotDir = process.env.RIZZOMA_SNAPSHOT_DIR || path.resolve('snapshots', 'perf');
 const timestamp = Date.now();
+const childBlipSelector = '.rizzoma-blip:not(.topic-root)';
+const collapsedChildSelector = `${childBlipSelector} > .blip-collapsed-row`;
+// Mirrors LAZY_MOUNT_THRESHOLD in src/client/components/blip/LazyBlipSlot.tsx.
+// Keep this fixture-side boundary explicit so CI proves the lazy branch is live.
+const lazyMountThreshold = 100;
+const stageDurationTargetMs = 3000;
+const memoryTargetMb = 100;
 
 const log = (msg) => console.log(`➡️  [perf] ${msg}`);
 
 const metricsStages = [
   { name: 'landing-labels', selector: '.blip-collapsed-row' },
-  // In perf mode we render a stub root for visibility; prefer the stub, fall back to the real blip/anchor
-  { name: 'expanded-root', selector: '.perf-root-stub-blip, .perf-blip-anchor, .rizzoma-blip' },
+  // Lite mode intentionally renders non-interactive rows, so it has no honest
+  // expansion stage. Full mode must exercise a real RizzomaBlip interaction;
+  // the retired `.blip-expand-btn` selector made the old "expanded-root"
+  // stage a no-op whose screenshot was byte-identical to landing.
+  ...(renderMode === 'full'
+    ? [{ name: 'expanded-first-blip', selector: '.rizzoma-blip:not(.topic-root) > .blip-collapsed-row' }]
+    : []),
 ];
 
 async function gotoApp(page) {
@@ -173,7 +185,7 @@ async function captureMetrics(waveId, creds) {
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   await ensureAuth(page, creds.email, creds.password);
   const url = `${baseUrl}#/topic/${encodeURIComponent(waveId)}${perfQuery}`;
-  log(`Capturing TTF render for ${url}`);
+  log(`Capturing topic render stages for ${url}`);
   page.on('console', (msg) => {
     const text = msg.text();
     if (text.includes('[api]') || text.includes('[topic]')) {
@@ -198,11 +210,11 @@ async function captureMetrics(waveId, creds) {
           const check = () => {
             const count = document.querySelectorAll(selector).length;
             if (count >= target) {
-              resolve({ elapsed: performance.now(), count, timedOut: false });
+              resolve({ elapsedMs: performance.now() - start, count, timedOut: false });
               return;
             }
             if (performance.now() >= deadline) {
-              resolve({ elapsed: performance.now(), count, timedOut: true });
+              resolve({ elapsedMs: performance.now() - start, count, timedOut: true });
               return;
             }
             requestAnimationFrame(check);
@@ -228,87 +240,116 @@ async function captureMetrics(waveId, creds) {
     // For landing-labels stage, wait for blips to fully load before counting
     if (stage.name === 'landing-labels') {
       const windowTarget = Math.min(blipTarget, 200);
-      windowed = await measureWindowedCount('.blip-collapsed-row', windowTarget, 60000);
+      windowed = await measureWindowedCount(collapsedChildSelector, windowTarget, 60000);
 
-      // Wait for expected number of collapsed rows (blipTarget + 1 for root)
-      // or timeout after 30s if something is wrong
+      // Wait for the exact number of collapsed child rows. The topic root is
+      // deliberately excluded from both the selector and the acceptance count.
       const expectedLabels = blipTarget;
       try {
         await page.waitForFunction(
-          (expected) => document.querySelectorAll('.blip-collapsed-row').length >= expected,
-          expectedLabels,
+          ({ selector, expected }) => document.querySelectorAll(selector).length >= expected,
+          { selector: collapsedChildSelector, expected: expectedLabels },
           { timeout: 60000 }
         );
         log(`All ${expectedLabels} labels loaded`);
       } catch {
-        const actualLabels = await page.evaluate(() => document.querySelectorAll('.blip-collapsed-row').length);
+        const actualLabels = await page.evaluate(
+          (selector) => document.querySelectorAll(selector).length,
+          collapsedChildSelector,
+        );
         log(`Warning: Only ${actualLabels}/${expectedLabels} labels loaded after 60s`);
       }
     }
 
-    if (stage.name === 'expanded-root') {
-      const expandBtn = await page.$('.blip-expand-btn');
-      if (expandBtn) {
-        await expandBtn.click();
+    let expandedBlipId = null;
+    if (stage.name === 'expanded-first-blip') {
+      const firstCollapsed = page.locator(collapsedChildSelector).first();
+      expandedBlipId = await firstCollapsed.evaluate((node) => node.parentElement?.dataset.blipId || null);
+      if (!expandedBlipId) {
+        throw new Error('Full-render perf stage could not resolve the first collapsed blip id');
       }
+      await firstCollapsed.click();
+      await page.waitForFunction((blipId) => {
+        const blip = document.querySelector(`[data-blip-id="${blipId}"]`);
+        return blip?.classList.contains('expanded')
+          && blip.querySelector('.blip-content[data-expanded="1"]') !== null;
+      }, expandedBlipId, { timeout: 15000 });
       const windowTarget = Math.min(blipTarget, 200);
-      windowed = await measureWindowedCount('.rizzoma-blip', windowTarget, 60000);
-      await page.waitForSelector('.rizzoma-blip', { timeout: 180000, state: 'attached' });
+      windowed = await measureWindowedCount(childBlipSelector, windowTarget, 60000);
+      await page.waitForSelector(childBlipSelector, { timeout: 180000, state: 'attached' });
       await page.waitForTimeout(500); // allow layout to settle
     }
 
-    const perfData = await page.evaluate(() => {
+    const perfData = await page.evaluate(({ childBlipSelector, collapsedChildSelector }) => {
       try {
         localStorage.setItem('rizzoma:perf:skipSidebarTopics', '1');
       } catch {}
-      const paintMetrics = performance.getEntriesByType('paint');
-      const navMetrics = performance.getEntriesByType('navigation')[0];
-      
       const appMetrics = window.PerformanceMonitor ? window.PerformanceMonitor.getMetrics() : {};
-      
+
       return {
-        timeToFirstRender: performance.now(),
-        firstPaint: paintMetrics.find(m => m.name === 'first-paint')?.startTime || 0,
-        firstContentfulPaint: paintMetrics.find(m => m.name === 'first-contentful-paint')?.startTime || 0,
-        domComplete: navMetrics?.domComplete || 0,
-        loadComplete: navMetrics?.loadEventEnd || 0,
+        measurementClockMs: performance.now(),
         memoryUsage: performance.memory ? {
           used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024),
           total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024),
         } : null,
         appMetrics,
-        labelCount: document.querySelectorAll('.blip-collapsed-row').length,
-        blipCount: document.querySelectorAll('.rizzoma-blip').length,
+        labelCount: document.querySelectorAll(collapsedChildSelector).length,
+        childBlipCount: document.querySelectorAll(childBlipSelector).length,
+        domBlipCount: document.querySelectorAll('.rizzoma-blip').length,
+        lazySlotCount: document.querySelectorAll('[data-testid="lazy-blip-slot"]').length,
+        expandedBlipCount: document.querySelectorAll('.rizzoma-blip.expanded:not(.topic-root)').length,
       };
-    });
+    }, { childBlipSelector, collapsedChildSelector });
+
+    if (stage.name === 'expanded-first-blip' && perfData.expandedBlipCount < 1) {
+      throw new Error('Full-render perf stage did not leave a real child blip expanded');
+    }
 
     const stageTimestamp = `${timestamp}-${stage.name}`;
     const screenshotPath = path.join(snapshotDir, `render-${stageTimestamp}.png`);
     await page.screenshot({ path: screenshotPath, fullPage: true });
     
-    const stageDurationMs = Number((perfData.timeToFirstRender - stageStartPerf).toFixed(2));
+    const stageDurationMs = Number((perfData.measurementClockMs - stageStartPerf).toFixed(2));
+    const windowTarget = Math.min(blipTarget, 200);
+    const expectedLabels = stage.name === 'expanded-first-blip'
+      ? Math.max(0, blipTarget - 1)
+      : blipTarget;
+    const durationPassed = Number.isFinite(stageDurationMs) && stageDurationMs < stageDurationTargetMs;
+    const memoryTelemetryAvailable = Number.isFinite(perfData.memoryUsage?.used);
+    const memoryPassed = memoryTelemetryAvailable && perfData.memoryUsage.used < memoryTargetMb;
+    const childCountPassed = perfData.childBlipCount === blipTarget;
+    const labelCountPassed = perfData.labelCount === expectedLabels;
+    const lazySlotsRequired = renderMode === 'full' && blipTarget > lazyMountThreshold;
+    const lazySlotsPassed = !lazySlotsRequired || perfData.lazySlotCount > 0;
+    const windowPassed = windowed !== null
+      && windowed.timedOut === false
+      && windowed.count >= windowTarget;
     const metrics = {
       timestamp: stageTimestamp,
       waveId,
       expectedBlips: blipTarget,
-      actualBlips: stage.name === 'landing-labels' ? perfData.labelCount : perfData.blipCount,
+      actualBlips: perfData.childBlipCount,
       labelsVisible: perfData.labelCount,
-      blipsRendered: perfData.blipCount,
-      renderMode: stage.name,
+      expectedLabels,
+      blipsRendered: perfData.childBlipCount,
+      domBlipsIncludingTopicRoot: perfData.domBlipCount,
+      lazySlots: perfData.lazySlotCount,
+      lazyMountThreshold,
+      expandedBlips: perfData.expandedBlipCount,
+      expandedBlipId,
+      stage: stage.name,
+      renderProfile: stage.name,
+      renderMode,
       windowed: windowed
         ? {
-            target: Math.min(blipTarget, 200),
-            elapsedMs: Number(windowed.elapsed.toFixed(2)),
+            target: windowTarget,
+            elapsedMs: Number(windowed.elapsedMs.toFixed(2)),
             count: windowed.count,
             timedOut: windowed.timedOut,
           }
         : null,
       performance: {
-        timeToFirstRender: Number(perfData.timeToFirstRender.toFixed(2)),
         stageDurationMs,
-        firstContentfulPaint: Number(perfData.firstContentfulPaint.toFixed(2)),
-        domComplete: Number(perfData.domComplete.toFixed(2)),
-        loadComplete: Number(perfData.loadComplete.toFixed(2)),
         memoryUsage: perfData.memoryUsage,
         appMetrics: perfData.appMetrics
       },
@@ -316,9 +357,36 @@ async function captureMetrics(waveId, creds) {
       screenshot: screenshotPath,
       startedAt: start,
       benchmarks: {
-        firstRenderTarget: 3000,
-        memoryTarget: 100,
-        passed: stageDurationMs < 3000 && (perfData.memoryUsage?.used || 0) < 100
+        stageDurationTargetMs,
+        memoryTargetMb,
+        checks: {
+          duration: { actualMs: stageDurationMs, passed: durationPassed },
+          memory: {
+            actualMb: perfData.memoryUsage?.used ?? null,
+            telemetryAvailable: memoryTelemetryAvailable,
+            passed: memoryPassed,
+          },
+          childCount: { expected: blipTarget, actual: perfData.childBlipCount, passed: childCountPassed },
+          labelCount: { expected: expectedLabels, actual: perfData.labelCount, passed: labelCountPassed },
+          lazySlots: {
+            required: lazySlotsRequired,
+            threshold: lazyMountThreshold,
+            actual: perfData.lazySlotCount,
+            passed: lazySlotsPassed,
+          },
+          windowedCount: {
+            expected: windowTarget,
+            actual: windowed?.count ?? null,
+            timedOut: windowed?.timedOut ?? null,
+            passed: windowPassed,
+          },
+        },
+        passed: durationPassed
+          && memoryPassed
+          && childCountPassed
+          && labelCountPassed
+          && lazySlotsPassed
+          && windowPassed,
       }
     };
     const metricsPath = path.join(snapshotDir, `metrics-${stageTimestamp}.json`);
@@ -326,12 +394,11 @@ async function captureMetrics(waveId, creds) {
 
     const perf = metrics.performance;
     log(`📊 [${stage.name}] Results:`);
-    log(`  Time to First Render: ${perf.timeToFirstRender}ms`);
-    log(`  Stage Duration: ${perf.stageDurationMs}ms`);
-    log(`  First Contentful Paint: ${perf.firstContentfulPaint}ms`);
-    log(`  Memory Usage: ${perf.memoryUsage?.used || 'N/A'}MB`);
-    log(`  Labels Visible: ${metrics.labelsVisible}`);
+    log(`  Topic Stage Duration: ${perf.stageDurationMs}ms`);
+    log(`  Memory Usage: ${perf.memoryUsage?.used ?? 'unavailable'}MB`);
+    log(`  Labels Visible: ${metrics.labelsVisible}/${metrics.expectedLabels}`);
     log(`  Blips Rendered: ${metrics.blipsRendered}/${metrics.expectedBlips}`);
+    log(`  Lazy Slots: ${metrics.lazySlots}${lazySlotsRequired ? ' (required)' : ''}`);
     if (metrics.windowed) {
       log(`  Windowed ${metrics.windowed.target}: ${metrics.windowed.elapsedMs}ms (${metrics.windowed.count}${metrics.windowed.timedOut ? ', timed out' : ''})`);
     }

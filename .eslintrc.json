@@ -57,7 +57,17 @@
       "version": "detect"
     }
   },
-  "ignorePatterns": ["dist", "build", "coverage", "node_modules", "*.js"],
+  "ignorePatterns": [
+    "dist",
+    "build",
+    "coverage",
+    "node_modules",
+    "*.js",
+    "src/client/lib/performance.d.ts",
+    "src/shared/constants/textFormatting.d.ts",
+    "src/shared/types/blips.d.ts",
+    "src/shared/types/comments.d.ts"
+  ],
   "overrides": [
     {
       "files": ["src/tests/**/*.ts"],

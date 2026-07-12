@@ -2,6 +2,7 @@ import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { DecorationSet, Decoration } from '@tiptap/pm/view';
 import { Awareness } from 'y-protocols/awareness';
+import { useEffect, useState } from 'react';
 import { FEATURES } from '@shared/featureFlags';
 import './CollaborativeCursors.css';
 
@@ -107,14 +108,17 @@ export const CollaborativeCursor = Extension.create({
         
         view: (view) => {
           const awareness: Awareness = provider.awareness;
-          
+          let isTyping = false;
+          let typingTimeout: ReturnType<typeof setTimeout> | null = null;
+
           const updateCursor = () => {
             const state = view.state;
             const { from, to } = state.selection;
             
             awareness.setLocalStateField('cursor', {
               user,
-              selection: { from, to }
+              selection: { from, to },
+              isTyping
             });
           };
           
@@ -131,8 +135,19 @@ export const CollaborativeCursor = Extension.create({
           awareness.on('change', handleChange);
           
           return {
-            update: updateCursor,
+            update: (view, prevState) => {
+              if (!prevState.doc.eq(view.state.doc)) {
+                isTyping = true;
+                if (typingTimeout) clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                  isTyping = false;
+                  updateCursor();
+                }, 1600);
+              }
+              updateCursor();
+            },
             destroy: () => {
+              if (typingTimeout) clearTimeout(typingTimeout);
               awareness.off('change', handleChange);
               awareness.setLocalStateField('cursor', null);
             }
@@ -145,22 +160,42 @@ export const CollaborativeCursor = Extension.create({
 
 // Typing indicator component
 export function TypingIndicator({ provider }: { provider: any }) {
-  if (!FEATURES.TYPING_INDICATORS || !provider) return null;
-  
-  const awareness: Awareness = provider.awareness;
-  const states = awareness.getStates();
-  const clientId = awareness.clientID;
-  
-  const typingUsers: CursorUser[] = [];
-  
-  states.forEach((state, stateClientId) => {
-    if (stateClientId === clientId) return;
-    
-    const cursor = (state as any)?.cursor;
-    if (cursor && cursor.user && cursor.isTyping) {
-      typingUsers.push(cursor.user);
+  const [typingUsers, setTypingUsers] = useState<CursorUser[]>([]);
+
+  useEffect(() => {
+    if (!FEATURES.TYPING_INDICATORS || !provider) {
+      setTypingUsers([]);
+      return;
     }
-  });
+
+    const awareness: Awareness = provider.awareness;
+    const updateTypingUsers = () => {
+      const nextUsers: CursorUser[] = [];
+      const states = awareness.getStates();
+      const clientId = awareness.clientID;
+
+      states.forEach((state, stateClientId) => {
+        if (stateClientId === clientId) return;
+
+        const cursor = (state as any)?.cursor;
+        if (cursor?.user && cursor.isTyping) {
+          nextUsers.push(cursor.user);
+        }
+      });
+
+      setTypingUsers(nextUsers);
+    };
+
+    updateTypingUsers();
+    awareness.on('change', updateTypingUsers);
+    awareness.on('update', updateTypingUsers);
+    return () => {
+      awareness.off('change', updateTypingUsers);
+      awareness.off('update', updateTypingUsers);
+    };
+  }, [provider]);
+
+  if (!FEATURES.TYPING_INDICATORS || !provider) return null;
   
   if (typingUsers.length === 0) return null;
   

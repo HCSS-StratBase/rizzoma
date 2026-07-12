@@ -1,0 +1,31 @@
+{
+  "topicId": "1a94345b983b3a1c78f2a2da1a02a5aa",
+  "testTime": "2026-05-10T23:17:58.476Z",
+  "bugA": {
+    "description": "First Ctrl+Enter latency (depth 1 mount)",
+    "elapsedMs": 322,
+    "expectedAfterFix": "~300-400ms (was 1434ms)",
+    "status": "PASS"
+  },
+  "bugB": {
+    "description": "Second Ctrl+Enter latency (depth 2 nested mount)",
+    "elapsedMs": 320,
+    "expectedAfterFix": "mounts new editor (was: failed silently)",
+    "status": "PASS"
+  },
+  "finalEditors": 3,
+  "editorContents": [
+    {
+      "idx": 0,
+      "text": "Try\n\nFirst label by Claude+++S1a+S2a+S3a+S4a+S5a+S6a+S7a+S8a+S9a+S10a\n\nS10b\n\nS10c\n\nS9b\n\nS9c\n\nS8b\n\nS8"
+    },
+    {
+      "idx": 1,
+      "text": "VERIFY-DEPTH1+\nDone\n↶\n↷\n🔗\n😀\n📎\n🖼️\n💬+\nB\nI\nU\nS\n🎨\n❌\n•\n1.\n⚙️\n\nVERIFY-DEPTH2\n\n\n"
+    },
+    {
+      "idx": 2,
+      "text": "VERIFY-DEPTH2"
+    }
+  ]
+}

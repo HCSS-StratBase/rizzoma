@@ -4,7 +4,6 @@ import './UserPresence.css';
 interface User {
   id: string;
   name: string;
-  avatarUrl?: string;
   isOnline: boolean;
 }
 
@@ -22,19 +21,16 @@ export function UserPresence({ position = 'top-right' }: UserPresenceProps) {
       { 
         id: '1', 
         name: 'Current User', 
-        avatarUrl: 'https://ui-avatars.com/api/?name=CU&size=32&background=4285f4',
         isOnline: true 
       },
       { 
         id: '2', 
         name: 'John Doe', 
-        avatarUrl: 'https://ui-avatars.com/api/?name=JD&size=32&background=34a853',
         isOnline: true 
       },
       { 
         id: '3', 
         name: 'Jane Smith', 
-        avatarUrl: 'https://ui-avatars.com/api/?name=JS&size=32&background=ea4335',
         isOnline: false 
       }
     ]);
@@ -48,7 +44,9 @@ export function UserPresence({ position = 'top-right' }: UserPresenceProps) {
           className={`user-avatar ${user.isOnline ? 'online' : 'offline'}`}
           title={`${user.name} ${user.isOnline ? '(online)' : '(offline)'}`}
         >
-          <img src={user.avatarUrl} alt={user.name} />
+          <span className="user-avatar-initials" aria-label={user.name}>
+            {user.name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()}
+          </span>
           {user.isOnline && <span className="online-indicator" />}
         </div>
       ))}

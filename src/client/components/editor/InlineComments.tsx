@@ -50,8 +50,13 @@ export function InlineComments({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadErrorType, setLoadErrorType] = useState<'auth' | 'network' | null>(null);
   const [isFetchingComments, setIsFetchingComments] = useState(false);
-  const [reloadToken] = useState(0);
+  const [reloadToken, setReloadToken] = useState(0);
+  const [navigationFilter, setNavigationFilter] = useState<'all' | 'open' | 'resolved'>('all');
+  const [navigationCursor, setNavigationCursor] = useState<string | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
+  const readOnlyBannerMessage = !canComment && !loadError
+    ? 'Selection annotations are read-only for this blip.'
+    : null;
 
   const groupedComments = useMemo(() => {
     const map = new Map<string, { range: InlineComment['range']; comments: ThreadedComment[] }>();
@@ -86,6 +91,24 @@ export function InlineComments({
   useEffect(() => {
     groupedRef.current = groupedComments;
   }, [groupedComments]);
+
+  const rangeOrder = useMemo(
+    () => Array.from(groupedComments.entries())
+      .sort((a, b) => a[1].range.start - b[1].range.start)
+      .map(([key]) => key),
+    [groupedComments]
+  );
+
+  const filteredRangeKeys = useMemo(() => {
+    if (navigationFilter === 'all') return rangeOrder;
+    const filtered = Array.from(groupedComments.entries())
+      .filter(([_, value]) => navigationFilter === 'resolved'
+        ? value.comments.every((comment) => comment.resolved)
+        : value.comments.some((comment) => !comment.resolved))
+      .sort((a, b) => a[1].range.start - b[1].range.start)
+      .map(([key]) => key);
+    return filtered;
+  }, [groupedComments, navigationFilter, rangeOrder]);
 
   // Add comment button when text is selected
   useEffect(() => {
@@ -129,6 +152,18 @@ export function InlineComments({
       y: rect.top + window.scrollY,
     });
   }, []);
+
+  const focusRangeByKey = useCallback((rangeKey: string) => {
+    if (!editor) return;
+    const element = (editor.view as any)?.dom?.querySelector(
+      `.commented-text[data-comment-range="${rangeKey}"]`
+    ) as HTMLElement | null;
+    if (!element) return;
+    setPinnedRangeKey(rangeKey);
+    setHoveredRangeKey(rangeKey);
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    updateAnchorFromElement(element);
+  }, [editor, updateAnchorFromElement]);
 
   useEffect(() => {
     if (!editor || !FEATURES.INLINE_COMMENTS) return;
@@ -197,8 +232,8 @@ export function InlineComments({
           if (!cancelled) {
             const isAuthError = response.status === 401 || response.status === 403;
             const message = isAuthError
-              ? 'Sign in to view inline comments'
-              : 'Inline comments are temporarily unavailable';
+              ? 'Sign in to view selection annotations'
+              : 'Selection annotations are temporarily unavailable';
             setComments([]);
             setLoadError(message);
             setLoadErrorType(isAuthError ? 'auth' : 'network');
@@ -219,9 +254,9 @@ export function InlineComments({
         }
       } catch (error) {
         if (!cancelled) {
-          console.error('Failed to load inline comments:', error);
+          console.error('Failed to load selection annotations:', error);
           setComments([]);
-          setLoadError('Inline comments are temporarily unavailable');
+          setLoadError('Selection annotations are temporarily unavailable');
           setLoadErrorType('network');
         }
       } finally {
@@ -367,8 +402,8 @@ export function InlineComments({
           );
         }
       } catch (error) {
-        console.error('Failed to save inline comment:', error);
-        toast('Failed to save inline comment', 'error');
+        console.error('Failed to save selection annotation:', error);
+        toast('Failed to save selection annotation', 'error');
         setComments((prev) => prev.filter((comment) => comment.id !== optimisticId));
       }
     };
@@ -481,7 +516,7 @@ export function InlineComments({
       }
     } catch (error) {
       console.error('Failed to save inline reply:', error);
-      toast('Failed to save inline comment', 'error');
+      toast('Failed to save selection annotation', 'error');
       setComments((prev) => prev.filter((c) => c.id !== optimisticId));
       setReplyDrafts((prev) => ({ ...prev, [comment.id]: draft }));
     } finally {
@@ -493,9 +528,37 @@ export function InlineComments({
     }
   }, [blipId, replyDrafts, canComment, loadError]);
 
+  const openCount = comments.filter((comment) => !comment.resolved).length;
+  const resolvedCount = comments.length - openCount;
   const activeRangeKey = pinnedRangeKey ?? hoveredRangeKey;
   const activeGroup = activeRangeKey ? groupedComments.get(activeRangeKey) : undefined;
   const interactionDisabled = !canComment || !!loadError;
+  const navDisabled = !!loadError;
+  const handleRetryLoad = useCallback(() => {
+    if (isFetchingComments) return;
+    setReloadToken((token) => token + 1);
+  }, [isFetchingComments]);
+
+  useEffect(() => {
+    if (!isVisible || navDisabled) return;
+    const handleNavShortcut = (event: KeyboardEvent) => {
+      if (!(event.altKey && (event.key === 'ArrowDown' || event.key === 'ArrowUp'))) return;
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (filteredRangeKeys.length === 0) return;
+      event.preventDefault();
+      const activeKey = pinnedRangeKey || navigationCursor || filteredRangeKeys[0];
+      const currentIndex = Math.max(0, filteredRangeKeys.indexOf(activeKey));
+      const nextIndex = event.key === 'ArrowDown'
+        ? (currentIndex + 1) % filteredRangeKeys.length
+        : (currentIndex - 1 + filteredRangeKeys.length) % filteredRangeKeys.length;
+      const nextKey = filteredRangeKeys[nextIndex];
+      setNavigationCursor(nextKey);
+      focusRangeByKey(nextKey);
+    };
+    window.addEventListener('keydown', handleNavShortcut);
+    return () => window.removeEventListener('keydown', handleNavShortcut);
+  }, [filteredRangeKeys, focusRangeByKey, isVisible, navDisabled, navigationCursor, pinnedRangeKey]);
 
   const renderCommentThread = (comment: ThreadedComment, depth = 0) => {
     const replyDraft = replyDrafts[comment.id];
@@ -619,7 +682,107 @@ export function InlineComments({
 
   return (
     <>
-      {/* Comment button for selected text */}
+      {loadError && (
+        <div
+          className="inline-comments-banner persistent"
+          role="status"
+          data-testid="inline-comments-error"
+        >
+          <span>{loadError}</span>
+          {loadErrorType !== 'auth' && (
+            <button
+              type="button"
+              onClick={handleRetryLoad}
+              disabled={isFetchingComments}
+              data-testid="inline-comments-retry"
+            >
+              {isFetchingComments ? 'Retrying…' : 'Retry'}
+            </button>
+          )}
+        </div>
+      )}
+      {!loadError && isFetchingComments && (
+        <div
+          className="inline-comments-banner loading"
+          role="status"
+          data-testid="inline-comments-loading"
+        >
+          Loading selection annotations…
+        </div>
+      )}
+
+      <div
+        className="inline-comment-nav"
+        aria-label="Selection annotation navigation"
+        data-testid="inline-comment-nav"
+      >
+        <div className="inline-comment-nav-header">
+          <span>Selection annotations</span>
+          <span className="inline-comment-nav-shortcuts">Alt+↑ / Alt+↓</span>
+        </div>
+        {readOnlyBannerMessage && (
+          <div className="inline-comments-banner" role="status" data-testid="inline-comments-readonly">
+            {readOnlyBannerMessage}
+          </div>
+        )}
+        <div className="inline-comment-nav-filters">
+          <button
+            type="button"
+            className={navigationFilter === 'all' ? 'active' : ''}
+            onClick={() => setNavigationFilter('all')}
+            data-testid="inline-comment-filter-all"
+          >
+            All ({rangeOrder.length})
+          </button>
+          <button
+            type="button"
+            className={navigationFilter === 'open' ? 'active' : ''}
+            onClick={() => setNavigationFilter('open')}
+            data-testid="inline-comment-filter-open"
+          >
+            Open ({openCount})
+          </button>
+          <button
+            type="button"
+            className={navigationFilter === 'resolved' ? 'active' : ''}
+            onClick={() => setNavigationFilter('resolved')}
+            data-testid="inline-comment-filter-resolved"
+          >
+            Resolved ({resolvedCount})
+          </button>
+        </div>
+        <ul className="inline-comment-nav-list">
+          {filteredRangeKeys.map((key) => {
+            const group = groupedComments.get(key);
+            if (!group) return null;
+            const isActive = key === (pinnedRangeKey ?? hoveredRangeKey);
+            const snippet = group.range.text.length > 50
+              ? `${group.range.text.substring(0, 50)}…`
+              : group.range.text;
+            return (
+              <li key={key}>
+                <button
+                  type="button"
+                  className={`inline-comment-nav-item ${isActive ? 'active' : ''}`}
+                  onClick={() => focusRangeByKey(key)}
+                  disabled={navDisabled}
+                >
+                  <span className="inline-comment-nav-snippet">{snippet}</span>
+                  <span className="inline-comment-nav-meta">
+                    {group.comments.length} {group.comments.length === 1 ? 'comment' : 'comments'}
+                    {group.comments.every((c) => c.resolved) ? ' • resolved' : ''}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+          {filteredRangeKeys.length === 0 && (
+            <li className="inline-comment-nav-empty">No selection annotations yet</li>
+          )}
+        </ul>
+      </div>
+
+      {/* Annotation button for selected text */}
       {selectedRange && !showCommentForm && !interactionDisabled && (
         <button
           className="add-comment-button"
@@ -630,23 +793,23 @@ export function InlineComments({
             top: '0',
             right: '-40px',
           }}
-          title="Add comment to selection"
+          title="Annotate selection"
         >
           💬
         </button>
       )}
 
-      {/* Comment form */}
+      {/* Annotation form */}
       {showCommentForm && selectedRange && (
         <div className="inline-comment-form" data-testid="inline-comments-form">
           <div className="comment-form-header">
-            <span>Comment on: "{selectedRange.text.substring(0, 30)}..."</span>
+            <span>Annotate: "{selectedRange.text.substring(0, 30)}..."</span>
             <button onClick={() => setShowCommentForm(false)}>✕</button>
           </div>
           <textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Add your comment..."
+            placeholder="Add your annotation..."
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.ctrlKey) {
@@ -662,7 +825,7 @@ export function InlineComments({
               disabled={!commentText.trim() || interactionDisabled}
               className="primary"
             >
-              Add Comment
+              Add annotation
             </button>
           </div>
         </div>
@@ -712,7 +875,7 @@ export function InlineComments({
           </div>
           {(loadError || !canComment) && (
             <div className="inline-comments-banner" role="status">
-              {loadError ?? 'Inline comments are read-only for this blip.'}
+              {loadError ?? 'Selection annotations are read-only for this blip.'}
             </div>
           )}
           {activeGroup.comments.map((comment) => renderCommentThread(comment))}

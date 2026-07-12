@@ -182,9 +182,10 @@ export function initSocket(server: HttpServer, allowedOrigins: string[]) {
       try {
         const blipId = String(p?.blipId || '').trim();
         if (!blipId) return;
-        socket.to(`collab:blip:${blipId}`).emit(`awareness:update:${blipId}`, {
-          states: p.states || {}
-        });
+        const payload = Array.isArray(p?.update)
+          ? { update: p.update }
+          : { states: p?.states || {} }; // rolling compatibility with stale clients
+        socket.to(`collab:blip:${blipId}`).emit(`awareness:update:${blipId}`, payload);
       } catch {}
     });
 

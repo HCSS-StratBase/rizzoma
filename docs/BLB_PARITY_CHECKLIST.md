@@ -3,7 +3,7 @@
 Branch: `feature/rizzoma-core-features`  
 Date: 2026-02-03
 
-Use this checklist to verify BLB (Bullet‑Label‑Blip) parity with the legacy CoffeeScript UI and behavior. Each item should be validated against legacy sources (`original-rizzoma-src`) and the reference screenshots under `screenshots/rizzoma-live/feature/rizzoma-core-features/`.
+Use this checklist to verify BLB (Bullet‑Label‑Blip) parity with the legacy CoffeeScript UI and behavior. Each item should be validated against legacy sources (`original-rizzoma-src`) and the reference screenshots under `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/`.
 
 ## 1) Core Data Model
 - [x] `isFoldedByDefault` is a **shared blip property** (not per-user). All users see the same “Hidden” state.

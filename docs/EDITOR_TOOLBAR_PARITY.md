@@ -128,6 +128,7 @@ Current state: Toolbar visibility matches legacy (only the expanded/focused blip
 ### Reply vs Inline Comment (HIGH PRIORITY - Two Types of Child Blips!)
 - [x] **Reply (blip UNDER)**: Created via "Write a reply..." at bottom, comments on ENTIRE parent
 - [x] **Inline Comment (blip IN)**: Created via Ctrl+Enter at cursor, comments on THAT SPECIFIC SPOT
+- [x] **Mobile cursor action**: In edit mode, the phone bottom sheet exposes `Insert inline comment`, which creates the same cursor-position child blip as Ctrl+Enter.
 - [x] **anchorPosition field**: Add to blip data model to distinguish inline comments (has anchor) from replies (no anchor)
 - [x] **Render inline comments at anchor**: Inline comments appear within parent content via inline `[+]` marker
 - [x] **Render replies at bottom**: Replies appear AFTER content, BEFORE "Write a reply..."
@@ -150,6 +151,7 @@ Note: Inline marker clicks currently navigate into subblip views (no inline expa
 - [x] Surface inline color picker UI in BlipMenu (mirrors global toolbar)
 - [x] Support comment visibility toggle shortcuts (Ctrl+Shift+Up/Down) via keymap
 - [x] Consolidate legacy inline toolbar icon assets into a single sprite/gradient set and restore the folded-by-default control styling from the CoffeeScript UI.
+- [x] Rename selected-text floating action to `Annotate` so it is not confused with cursor-position BLB inline comments.
 
 We will update this list as each legacy capability is restored.
 

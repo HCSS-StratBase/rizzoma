@@ -175,3 +175,64 @@
   font-family: 'Times New Roman', serif;
   font-size: 13px;
 }
+
+@media (max-width: 640px) {
+  .editor-toolbar {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    overflow-x: auto;
+    overflow-y: visible;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .editor-toolbar::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .editor-toolbar::-webkit-scrollbar-thumb {
+    background: rgba(78, 160, 241, 0.45);
+    border-radius: 999px;
+  }
+
+  .toolbar-group {
+    flex: 0 0 auto;
+    gap: 3px;
+    padding-right: 6px;
+    scroll-snap-align: start;
+  }
+
+  .editor-toolbar button {
+    min-width: 34px;
+    min-height: 34px;
+    padding: 5px 7px;
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .dropdown-menu,
+  .color-picker,
+  .emoji-picker {
+    position: fixed;
+    top: auto;
+    right: 12px;
+    bottom: 16px;
+    left: 12px;
+    max-width: none;
+    width: auto;
+    max-height: 48vh;
+    overflow-y: auto;
+  }
+
+  .color-picker {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .emoji-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}

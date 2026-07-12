@@ -22,12 +22,9 @@
 }
 
 .rizzoma-blip.nested-blip {
-  /* Hard Gap #13 (2026-04-13): the indent rail is the structural cue for
-     "this is a nested reply under the parent." Tightened margin so siblings
-     sit closer together (reads as a list, not a stack of cards). */
-  border-left: 2px solid rgba(136, 155, 177, 0.34);
-  padding-left: 14px;
-  margin-top: 4px;
+  border-left: 1px solid #e0e0e0;
+  padding-left: 10px;
+  margin-top: 8px;
 }
 
 .blip-expander {
@@ -136,14 +133,8 @@
 /* Blip Content */
 .blip-content {
   position: relative;
-  padding: 10px 14px 8px;
+  padding: 4px 0;
   min-height: 24px;
-  border-radius: 14px;
-  background:
-    radial-gradient(circle at top right, rgba(92,170,247,0.06), transparent 22%),
-    linear-gradient(180deg, rgba(255,255,255,0.992), rgba(248,251,253,0.972));
-  border: 1px solid rgba(156, 175, 196, 0.32);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.055);
 }
 
 .blip-content.collapsed {
@@ -156,12 +147,87 @@
 }
 
 .blip-text {
-  line-height: 1.7;
-  color: #203447;
-  padding: 4px 8px;
-  border-radius: 8px;
+  line-height: 1.5;
+  color: #333;
+  padding: 4px;
+  border-radius: 3px;
   min-height: 24px;
   user-select: text;
+}
+
+/*
+ * View-mode list styling MUST mirror the edit-mode (.ProseMirror) rules
+ * because RizzomaApp.css has a global `* { padding: 0 }` reset. Without
+ * these, saved <ul>/<ol>/<li> render as flat unindented lines with no disc
+ * markers — the editor looks right while editing, then collapses to flat
+ * on save. Reported by Hryhorii 2026-05-04.
+ */
+.blip-text ul,
+.blip-text ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+  list-style-position: outside;
+}
+
+.blip-text ul {
+  list-style-type: disc;
+}
+
+.blip-text ol {
+  list-style-type: decimal;
+}
+
+.blip-text li {
+  margin: 0.25em 0;
+}
+
+.blip-text li p {
+  display: inline;
+  margin: 0;
+}
+
+.blip-text ul ul,
+.blip-text ol ol,
+.blip-text ul ol,
+.blip-text ol ul {
+  margin: 0.25em 0;
+  padding-left: 1.5em;
+}
+
+/*
+ * B1 PARITY (2026-05-05): Match Rizzoma's bulleted-type0 convention —
+ * disc bullet at every nesting level (NOT the browser cascade
+ * disc→circle→square→disc-again at depth 4+ which breaks at deep
+ * fractals). Indentation is via margin-left:22px per LI, exactly like
+ * the original's `<li class="bulleted bulleted-type0" margin-left:22px>`.
+ * The browser-cascade rules above stay in place so projects that don't
+ * opt into parity rendering still get the disc/circle/square hierarchy;
+ * the parity overrides only fire when .rizzoma-parity is on the layout
+ * root (set by FEAT_RIZZOMA_PARITY_RENDER).
+ */
+.rizzoma-parity .blip-text ul,
+.rizzoma-parity .blip-text ul ul,
+.rizzoma-parity .blip-text ul ul ul,
+.rizzoma-parity .blip-text ul ul ul ul {
+  list-style-type: disc;
+  padding-left: 0;
+  margin-left: 0;
+}
+
+.rizzoma-parity .blip-text li {
+  margin-left: 22px;
+  margin-top: 0;
+  margin-bottom: 0;
+  list-style-position: outside;
+}
+
+/* NON-parity defaults (existing browser-cascade behavior) */
+.blip-text ul ul {
+  list-style-type: circle;
+}
+
+.blip-text ul ul ul {
+  list-style-type: square;
 }
 
 /* Inline comment button */
@@ -256,7 +322,7 @@
 .blip-content-row {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -264,7 +330,7 @@
 .blip-bullet {
   font-size: 14px;
   line-height: 1.4;
-  color: #586b7f;
+  color: #444;
   flex-shrink: 0;
 }
 
@@ -293,7 +359,7 @@
 
 .blip-author-date {
   font-size: 11px;
-  color: #7b8ca0;
+  color: #888;
   white-space: nowrap;
 }
 
@@ -302,68 +368,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
   margin-left: auto;
   padding-left: 12px;
-}
-
-/* Parity fix (2026-04-14): the collapsed reply-row author column
-   must visually match the topic-body per-section author column so
-   the whole right gutter reads as one consistent strip. Key rules:
-     - flex-direction: column so avatar sits above the date
-     - align-items: flex-end so both elements share the same right
-       edge (otherwise the 22px avatar looks offset from the wider
-       date text)
-     - compact 40px width matching .topic-section-author
-     - push flush-right via margin-left:auto with zero horizontal
-       padding so the column sits at the card edge. The parent
-       `.topic-blip-children` padding-right (22px by default) is
-       zeroed out below so collapsed reply rows extend to the
-       same right edge as the topic body. */
-.blip-contributors-info-collapsed {
-  flex-direction: column;
-  /* Center the 22px avatar and the "Apr 2026" date on the same
-     vertical center axis — matches .topic-section-author so the
-     right gutter reads as a single consistent column. */
-  align-items: center;
-  gap: 1px;
-  padding-left: 0;
-  padding-right: 0;
-  margin-left: auto;
-  margin-right: 0;
-  width: 40px;
-  flex: 0 0 auto;
-}
-
-.blip-contributors-info-collapsed .blip-author-date {
-  font-size: 9px;
-  color: #8a9aad;
-  white-space: nowrap;
-  line-height: 1;
-}
-
-/* Shrink the avatar inside collapsed reply rows to match the
-   topic-body per-section avatar (22×22) so the right gutter reads
-   as one consistent column across topic body + replies. */
-.blip-contributors-info-collapsed .blip-contributors-stack {
-  width: 22px;
-  height: 22px;
-}
-
-.blip-contributors-info-collapsed .blip-contributor-avatar {
-  width: 22px;
-  height: 22px;
-  border-width: 1px;
-  border-radius: 50%;
-}
-
-/* The .blip-collapsed-row is already a flex container (bullet + label +
-   expand-icon); adding the contributors column on the right relies on
-   margin-left:auto from .blip-contributors-info to push it to the edge. */
-.blip-collapsed-row {
-  display: flex;
-  align-items: center;
 }
 
 .blip-contributors-stack {
@@ -390,61 +398,16 @@
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
-@media (max-width: 500px) {
-  .blip-content-row {
-    gap: 8px;
-  }
-
-  .blip-author-info,
-  .blip-contributors-info {
-    gap: 2px;
-    padding-left: 8px;
-  }
-
-  .blip-author-avatar {
-    width: 24px;
-    height: 24px;
-  }
-
-  .blip-contributors-stack {
-    width: 28px;
-    height: 28px;
-  }
-
-  .blip-contributor-avatar {
-    width: 20px;
-    height: 20px;
-    border-width: 1px;
-  }
-
-  .blip-author-date {
-    max-width: 48px;
-    font-size: 10px;
-    line-height: 1.1;
-    white-space: normal;
-    text-align: right;
-  }
-
-  .blip-container.expanded {
-    margin-bottom: 10px;
-    padding-left: 2px;
-  }
-
-  .blip-collapsed-row {
-    padding: 5px 6px;
-  }
-
-  .blip-collapsed-label-text {
-    font-size: 13px;
-  }
-
-  .blip-container.inline-child .blip-content-row {
-    gap: 6px;
-  }
-
-  .blip-container.inline-child .blip-text {
-    padding: 2px 2px 2px 0;
-  }
+.blip-contributor-avatar.fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #4EA0F1, #2f7ac1);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
 }
 
 /* Stacked mode - avatars positioned absolutely */
@@ -600,53 +563,45 @@
 
 .blip-toolbar-simple {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 4px;
+  right: 4px;
   opacity: 0;
   transition: opacity 0.2s ease;
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  max-width: 72%;
 }
 
 .btn-edit {
-  padding: 5px 10px;
-  background: rgba(255,255,255,0.98);
-  border: 1px solid rgba(132, 148, 166, 0.24);
-  border-radius: 999px;
+  padding: 4px 8px;
+  background: linear-gradient(to bottom, #f8f8f8, #e8e8e8);
+  border: 1px solid #ccc;
+  border-radius: 3px;
   font-size: 12px;
-  color: #405469;
+  color: #333;
   cursor: pointer;
-  font-weight: 600;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
 }
 
 .btn-edit:hover {
-  background: #ffffff;
-  border-color: rgba(92, 170, 247, 0.34);
+  background: linear-gradient(to bottom, #fff, #f0f0f0);
+  border-color: #999;
 }
 
 /* Editor Container */
 .blip-editor-container {
-  margin: 8px 0 0;
+  margin: 4px 0;
 }
 
 /* TipTap ProseMirror editor styling for inline blip editor */
 .blip-editor-container .ProseMirror {
   outline: none;
   min-height: 1.5rem;
-  padding: 12px 14px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.995), rgba(248,251,254,0.985));
-  border: 1px solid rgba(93, 151, 211, 0.72);
-  border-radius: 12px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.88);
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #4285f4;
+  border-radius: 4px;
 }
 
 .blip-editor-container .ProseMirror:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.14);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
 }
 
 .blip-editor-container .ProseMirror p {
@@ -656,6 +611,48 @@
 .blip-editor-container .ProseMirror p:last-child {
   margin-bottom: 0;
 }
+
+/*
+ * List styling for ANY TipTap editor in the app.
+ * The previous rules below only matched .blip-editor-container (nested blips),
+ * NOT the topic root (which lives in .topic-content-edit). The global
+ * `* { padding: 0 }` reset stripped browser-default UL padding everywhere,
+ * so the disc bullets fell outside the visible UL area in the topic root —
+ * the user saw "unbulleted" labels in topic-root edit mode.
+ *
+ * Catch every TipTap editor via .tiptap.ProseMirror so the topic root and
+ * any future editor placement gets bullets back without needing a wrapper-
+ * class-specific rule.
+ *
+ * The .rizzoma-parity-prefixed variants exist to OUT-SPECIFY the
+ * .rizzoma-parity .blip-text ul rule below (which strips padding for
+ * view-mode bullet positioning). When an inner blip enters edit mode, its
+ * UL lives DEEP inside an outer parent's .blip-text — without the parity-
+ * prefixed editor rule, the outer parent's .rizzoma-parity .blip-text ul
+ * (specificity 0,2,1) wins over .tiptap.ProseMirror ul (also 0,2,1, but
+ * declared earlier) and zeroes padding → bullets fall outside the editor.
+ * The 0,3,1 parity-prefixed rule below wins for parity-active sessions.
+ */
+.tiptap.ProseMirror ul,
+.tiptap.ProseMirror ol,
+.rizzoma-parity .tiptap.ProseMirror ul,
+.rizzoma-parity .tiptap.ProseMirror ol {
+  padding-left: 1.5em !important;
+  margin: 0.5em 0;
+  list-style-position: outside;
+}
+.tiptap.ProseMirror ul,
+.rizzoma-parity .tiptap.ProseMirror ul { list-style-type: disc; }
+.tiptap.ProseMirror ol,
+.rizzoma-parity .tiptap.ProseMirror ol { list-style-type: decimal; }
+.tiptap.ProseMirror ul ul,
+.rizzoma-parity .tiptap.ProseMirror ul ul { list-style-type: circle; padding-left: 1.5em !important; }
+.tiptap.ProseMirror ul ul ul,
+.rizzoma-parity .tiptap.ProseMirror ul ul ul { list-style-type: square; }
+.tiptap.ProseMirror li,
+.rizzoma-parity .tiptap.ProseMirror li { margin: 0.25em 0; }
+.tiptap.ProseMirror li p,
+.rizzoma-parity .tiptap.ProseMirror li p { display: inline; margin: 0; }
 
 /* List styling in editor */
 .blip-editor-container .ProseMirror ul,
@@ -774,23 +771,21 @@
   transform: scaleX(-1);
 }
 
-/* Reply Input - Original Rizzoma style
-   Tightened margin-top from 14px→4px to close the gap between parent
-   content and the "Write a reply..." input (issue #41). */
+/* Reply Input - Original Rizzoma style */
 .blip-reply-inline {
-  margin-top: 4px;
+  margin-top: 8px;
   display: flex;
   align-items: flex-start;
 }
 
 .reply-placeholder-input {
   flex: 1;
-  padding: 9px 12px;
-  border: 1px solid rgba(179, 194, 210, 0.88);
-  border-radius: 9px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
   font-size: 13px;
-  color: #7a8794;
-  background: linear-gradient(180deg, rgba(251,253,254,0.98), rgba(245,249,252,0.98));
+  color: #999;
+  background: #fafafa;
   cursor: text;
 }
 
@@ -810,8 +805,8 @@
 
 /* Reply Form */
 .blip-reply-form {
-  margin-top: 4px;
-  padding: 8px;
+  margin-top: 8px;
+  padding: 12px;
   background-color: #f8f9fa;
   border-radius: 4px;
   border: 1px solid #e0e0e0;
@@ -875,17 +870,12 @@
   background-color: #e0e0e0;
 }
 
-/* Child Blips
-   Hard Gap #13 (2026-04-13): the child-blips container is the indent rail
-   that visually subordinates a thread to its parent. Tightened margin-top
-   so the first child sits one line below the parent body, not behind a gap.
-   Issue #41 (2026-04-17): further tightened to close the visual gap
-   between parent content and reply children. */
+/* Child Blips */
 .child-blips {
-  margin-top: 2px;
-  margin-left: 18px;
-  border-left: 2px solid rgba(131, 151, 173, 0.32);
-  padding-left: 14px;
+  margin-top: 8px;
+  margin-left: 16px;
+  border-left: 2px solid #e0e0e0;
+  padding-left: 12px;
 }
 
 .rizzoma-blip.topic-root .child-blips {
@@ -896,71 +886,37 @@
 
 /* Child blip wrapper */
 .child-blip-wrapper {
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
-/* Nested child blips (depth > 0) should NOT be cards at all.
-   Original Rizzoma renders nested replies as flat indented text
-   under the parent's indent rail — no border, no shadow, no
-   background, no rounded corners. The indent rail (.child-blips
-   border-left) provides all the visual hierarchy needed.
-   Issue #41: stripped all card styling from nested blips. */
-.child-blips .blip-content {
-  border-radius: 0;
-  box-shadow: none;
-  background: transparent;
-  border: none;
-  padding: 2px 4px 2px 0;
-  min-height: 0;
-}
-
-/* Collapsed child blip row - inline like original Rizzoma: • Label [+]
-   Hard Gap #13 (2026-04-13): the collapsed nested reply must read as a
-   list item under the parent's indent rail, NOT as a floating padded card.
-   Original Rizzoma renders nested replies as flat bulleted rows that
-   inherit their structural subordination from the parent's indent rail
-   (.child-blips border-left), not from a per-row card with its own border
-   and shadow. */
+/* Collapsed child blip row - inline like original Rizzoma: • Label [+] */
 .child-blip-collapsed {
-  padding: 3px 0 3px 0;
+  padding: 3px 8px;
   cursor: pointer;
+  border-radius: 4px;
   transition: background-color 0.15s ease;
   font-size: 14px;
   line-height: 1.5;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
 }
 
 .child-blip-collapsed .blip-bullet {
   font-size: 14px;
-  color: #6b7c8f;
+  color: #666;
   margin-right: 6px;
 }
 
 .child-blip-collapsed:hover {
-  background-color: rgba(239, 247, 253, 0.6);
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
 .child-blip-collapsed.has-unread {
-  background: transparent;
-  box-shadow: inset 2px 0 0 #2e8b57;
-  border: none;
-  padding-left: 6px;
-}
-
-.child-blip-collapsed.has-unread .blip-bullet {
-  color: #2e8b57;
-}
-
-.child-blip-collapsed.has-unread .blip-label-text {
-  color: #1f4733;
-  font-weight: 600;
+  background-color: transparent;
+  border-left: none;
+  padding-left: 8px;
 }
 
 .child-blip-collapsed .blip-label-text {
-  color: #31465c;
+  color: #333;
   font-size: 14px;
 }
 
@@ -1042,28 +998,8 @@
 }
 
 .root-blip .blip-text {
-  font-size: 16px;
-  padding: 10px 12px;
-}
-
-.root-blip .blip-text.topic-content-view figure[data-gadget-type="app-frame"] {
-  margin: 20px 0 0;
-}
-
-.root-blip .blip-text.topic-content-view figure[data-gadget-type="app-frame"] .gadget-header,
-.root-blip .blip-text.topic-content-view figure[data-gadget-type="app-frame"] .gadget-preview {
-  display: none;
-}
-
-.root-blip .blip-text.topic-content-view figure[data-gadget-type="app-frame"] .gadget-body {
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-
-.root-blip .blip-text.topic-content-view figure[data-gadget-type="app-frame"] iframe {
-  display: block;
-  width: 100%;
+  font-size: 15px;
+  padding: 8px;
 }
 
 /* Animations */
@@ -1079,24 +1015,9 @@
 /* Active blip styling (when clicked/selected) - only for expanded blips */
 /* Collapsed blips should look like simple list items without any active styling */
 .blip-container.active.expanded {
-  border: 1px solid rgba(111, 136, 161, 0.34);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.988), rgba(244,248,251,0.972));
-  box-shadow:
-    0 12px 26px rgba(15, 23, 42, 0.055),
-    0 0 0 2px rgba(89, 145, 195, 0.075);
-}
-
-.blip-container.inline-child.active.expanded {
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.blip-container.inline-child.unread > .blip-content {
-  background: linear-gradient(180deg, rgba(234, 247, 239, 0.72), rgba(255,255,255,0.64));
-  border-radius: 14px;
+  border: 2px solid #57AAD9;
+  border-radius: 4px;
+  background-color: rgba(87, 170, 217, 0.02);
 }
 
 /* Collapsed blips never get active styling - they're just list items */
@@ -1106,23 +1027,7 @@
 }
 
 .blip-container.active .blip-text {
-  background-color: rgba(92, 170, 247, 0.075);
-}
-
-.blip-container[data-active-blip="false"] .blip-menu-container {
-  opacity: 0 !important;
-  transform: translateY(-2px) !important;
-  pointer-events: none;
-}
-
-.blip-container[data-active-blip="false"] .blip-text {
-  background-color: transparent !important;
-}
-
-.blip-container[data-active-blip="true"] .blip-menu-container {
-  opacity: 1 !important;
-  transform: translateY(0) !important;
-  pointer-events: auto;
+  background-color: rgba(87, 170, 217, 0.05);
 }
 
 /* Ensure menu appears when blip is active */
@@ -1221,20 +1126,12 @@
 ======================================== */
 
 /* Collapsed row - shows only bullet + label + [+] icon inline like live Rizzoma */
-/* Hard Gap #13 (2026-04-13): the collapsed nested reply must read as a
-   list item under the parent's indent rail, NOT as a floating padded card.
-   Original Rizzoma renders nested replies as flat bulleted rows that
-   inherit their structural subordination from the parent's indent rail
-   (.child-blips border-left), not from a per-row card with its own
-   background, border, and rounded corners. */
 .blip-collapsed-row {
   padding: 3px 0;
   cursor: pointer;
+  border-radius: 4px;
   transition: background-color 0.15s ease;
   line-height: 1.5;
-  background: transparent;
-  border: none;
-  border-radius: 0;
 }
 
 .blip-collapsed-row .blip-bullet {
@@ -1242,13 +1139,13 @@
 }
 
 .blip-collapsed-row:hover {
-  background-color: rgba(234, 244, 252, 0.55);
+  background-color: rgba(0, 0, 0, 0.02);
+  /* Subtle hover - no card effect */
 }
 
 .blip-collapsed-label-text {
   font-size: 14px;
-  color: #264056;
-  font-weight: 500;
+  color: #333;
 }
 
 /* [+] inline icon - matches original Rizzoma gray rounded square style */
@@ -1300,15 +1197,7 @@
 
 /* Expanded state - show full content with toolbar */
 .blip-container.expanded {
-  margin-bottom: 14px;
-  padding-left: 4px;
-}
-
-.blip-container.expanded:not(.active):not(.inline-child) > .blip-content {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.985), rgba(248,250,252,0.968));
-  border-color: rgba(154, 171, 189, 0.28);
-  box-shadow: 0 9px 20px rgba(15, 23, 42, 0.035);
+  /* No special border for expanded - the toolbar provides visual distinction */
 }
 
 .blip-container.collapsed {
@@ -1323,7 +1212,7 @@
 /* Root blips when expanded need the expander positioned correctly */
 .blip-container.root-blip.expanded > .blip-expander {
   left: -24px;
-  top: 16px;
+  top: 40px; /* Below the BlipMenu toolbar */
 }
 
 /* Nested blip indentation */
@@ -1342,7 +1231,7 @@
 .blip-container.expanded .blip-expander {
   position: absolute;
   left: -20px;
-  top: 18px;
+  top: 40px; /* Below the toolbar */
 }
 
 .blip-expander-icon {
@@ -1363,7 +1252,7 @@
 /* Active collapsed row - minimal indication like live Rizzoma */
 /* Just a subtle background on hover, no border */
 .blip-container.collapsed.active .blip-collapsed-row {
-  background-color: rgba(92, 170, 247, 0.1);
+  background-color: rgba(0, 0, 0, 0.04);
   /* No border - collapsed blips are simple list items */
 }
 
@@ -1375,19 +1264,53 @@
 
 /* Inline-expanded child blips (BLB: [+] expands inline, not navigates) */
 .inline-child-expanded {
-  margin-left: 14px;
-  border-left: 1px solid rgba(125, 145, 170, 0.22);
+  margin-left: 22px;
+  border-left: 2px solid #ddd;
   padding-left: 8px;
-  margin-top: 6px;
-  margin-bottom: 6px;
-  background: transparent;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  background: #fafafa;
+  border-radius: 0 3px 3px 0;
+}
+
+/*
+ * B1 PARITY (2026-05-05): Match Rizzoma's "thin guide-line, no card
+ * background" subtree look — instead of the lavender card-stack panels
+ * we currently render. Closes ~70% of the visual gap vs original
+ * rizzoma.com (see screenshots/260505-rizzoma-com-vs-mine/).
+ *
+ * The .rizzoma-parity class is set on the layout root by the FEAT_RIZZOMA_PARITY_RENDER
+ * feature flag, so the existing card-stack look stays the default until
+ * we're confident the parity skin is right.
+ */
+.rizzoma-parity .inline-child-expanded {
+  margin-left: 22px;
+  border-left: 1px solid #e0e0e0;  /* thin guide line, not 2px card border */
+  padding: 0 0 0 8px;
+  margin-top: 0;
+  margin-bottom: 0;
+  background: transparent !important;  /* drop the lavender panel */
   border-radius: 0;
+}
+
+/*
+ * B2 refinement (2026-05-05): preserve-subtree-on-fold.
+ * When a child has been expanded once, it stays mounted in the React tree even
+ * after the user collapses it again — so React state (draft input, scroll
+ * position, focus, in-progress reply) survives the fold. The hide is CSS-only,
+ * matching original Rizzoma's blip_thread.coffee where fold/unfold is just a
+ * `folded` class toggle on a persistent DOM node. The wrapper carries
+ * data-collapsed="true" / class .inline-child-collapsed when not in the
+ * expanded set; we hide the entire subtree without unmounting.
+ */
+.inline-child-expanded.inline-child-collapsed {
+  display: none !important;
 }
 
 /* Minimal styling for inline children — no toolbar, clean content display */
 .inline-child-expanded > .blip-container {
   margin-left: 0 !important;
-  padding: 2px 0;
+  padding: 4px 0;
 }
 
 .inline-child-expanded > .blip-container > .blip-content {
@@ -1395,51 +1318,67 @@
   min-height: 0 !important;
 }
 
-.blip-container.inline-child.expanded {
-  margin-bottom: 2px;
+/*
+ * B1 PARITY (2026-05-05): Tighten per-blip chrome from ~80px to ~24px.
+ * Original Rizzoma renders a child blip as ~16px avatar + 8-char minute
+ * timestamp + nothing else when not actively being edited. Reply form
+ * shows ONLY when this specific blip is in edit mode.
+ */
+.rizzoma-parity .blip-container.nested-blip {
+  padding: 0 !important;
+  min-height: 0 !important;
+}
+.rizzoma-parity .blip-container.nested-blip .blip-content {
+  margin-top: 0 !important;
+  min-height: 0 !important;
+}
+.rizzoma-parity .blip-container.nested-blip .blip-author-date {
+  font-size: 10px;
+  line-height: 14px;
+  margin: 0;
+}
+.rizzoma-parity .blip-container.nested-blip .blip-contributors-info {
+  --avatar-size: 16px;
+  padding-left: 4px;
+  gap: 0;
+}
+.rizzoma-parity .blip-container.nested-blip .blip-contributors-stack {
+  width: 16px;
+  height: 16px;
+}
+/* Hide reply form on inactive nested blips (only show when actively editing) */
+.rizzoma-parity .blip-container.nested-blip:not(.edit-mode) .reply-form,
+.rizzoma-parity .blip-container.nested-blip:not(.edit-mode) .blip-reply-button {
+  display: none !important;
 }
 
-.blip-container.inline-child > .blip-content {
-  padding: 2px 4px 4px;
-  border-radius: 0;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-}
-
-.blip-container.inline-child .blip-content-row {
-  gap: 8px;
-}
-
-.blip-container.inline-child .blip-text {
-  padding: 2px 4px;
-  line-height: 1.55;
-}
-
-.blip-container.inline-child .blip-contributors-info {
-  opacity: 0.7;
-}
-
-.blip-container.inline-child .child-blips {
-  margin-top: 4px;
-}
-
-.blip-container.inline-child .write-reply-section {
-  margin-top: 4px;
-}
-
-.blip-container.inline-child .write-reply-input {
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.72);
-  border-color: rgba(132, 148, 166, 0.18);
-  box-shadow: none;
+/*
+ * Wrapper rendered by BlipThreadNode in the editor: holds the [+] marker
+ * AND a sibling .inline-child-portal anchor. `display: contents` makes the
+ * host vanish from layout so the marker stays inline at its insertion point
+ * (inside <p>/<li>) and the portal anchor lays out as a block-level sibling
+ * of the marker. The host is contenteditable=false so ProseMirror treats
+ * the whole atom as non-editable. Without `display: contents` the wrapper
+ * would create an inline-formatting-context box that breaks `[+]`'s
+ * position in the surrounding text. (Used 2026-05-04 to unify view-mode
+ * and edit-mode inline-child rendering — see issue #47.)
+ */
+.blip-thread-host {
+  display: contents;
 }
 
 /* Portal container for inline children rendered at marker positions */
 .inline-child-portal {
   display: block;
   list-style: none;
+}
+
+/* When the portal has no expanded child, suppress block-level whitespace
+   so the bare [+] marker doesn't introduce a phantom blank line. React
+   only renders into the portal when localExpandedInline contains the
+   child id — when collapsed, the .inline-child-portal stays empty. */
+.inline-child-portal:empty {
+  display: none;
 }
 
 /* Orphaned markers (referencing non-existent children) - hide completely */

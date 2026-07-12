@@ -1,5 +1,23 @@
 # Rizzoma Feature Testing Status
 
+## Release audit — 2026-07-12 (`fix/single-active-editor`)
+
+### CI-remediation rerun
+
+- PASS: complete local Vitest suite, **61 files / 275 passed / 3 skipped / 0 failed**, completed in 177.16 seconds.
+- PASS: production server/client build after declaring `y-prosemirror` directly and restoring the portable Vite backend default to `:8788`.
+- PASS: GitHub workflow YAML parsing for both `ci.yml` and `ios-build.yml`.
+- CI root causes fixed: Linux jobs no longer omit Rollup's required optional native package; macOS now uses the lockfile and direct collaboration dependency; readiness probes traverse Vite's `/api/health` proxy; PRs now run the production build.
+- Remote verification: pending the fresh PR #57 workflow runs triggered by the remediation commit.
+
+- PASS: `npm run lint:branch-context`.
+- PASS: `npm run typecheck`.
+- PASS: `npm run build`; server declaration emission and Vite client build completed, transforming 3,297 modules.
+- PASS: focused `src/tests/server.authOauth.test.ts`, 3/3 after giving its slow module-import integration path a scoped 15-second timeout.
+- SUPERSEDED: the earlier serialized run exceeded 600 seconds. The subsequent normal parallel rerun completed green at 61 files / 275 passed / 3 skipped.
+- Existing visual evidence from 2026-07-09 remains the current browser acceptance set: 11/11 single-active-editor gates on live/staging, Ctrl+Enter PASS, 1280/1366/1440/1600 viewport sweep, and 44 feature-sweep screenshots.
+- Release decision: local gates are green; keep `master` deferred until PR #57's Linux and macOS workflows confirm the cross-platform fixes.
+
 ## 🟢 Current Status
 - **Full Vitest run (2026-02-10)**: 44 test files passed, 146 tests passed, 3 skipped, **0 failures**. All 9 pre-existing failures fixed (permission-model mismatches, BlipMenu selector drift, feature flags missing in test env, inline comment visibility default, timeout tuning).
 - **Health checks (2026-02-03)**: `npm run test:health` pass (server health, inline comments health, upload edge cases).

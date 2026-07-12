@@ -21,19 +21,28 @@
   height: 32px;
 }
 
-.user-avatar img {
+.user-avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 100%;
   border-radius: 3px;
   border: 2px solid transparent;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #4EA0F1, #2f7ac1);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   transition: all 0.2s;
 }
 
-.user-avatar.online img {
+.user-avatar.online .user-avatar-initials {
   border-color: #4caf50;
 }
 
-.user-avatar.offline img {
+.user-avatar.offline .user-avatar-initials {
   opacity: 0.6;
   filter: grayscale(50%);
 }

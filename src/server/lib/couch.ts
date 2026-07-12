@@ -35,6 +35,12 @@ export async function couchDbInfo() {
   return httpJson<any>('GET', base, undefined, header);
 }
 
+export async function couchDatabaseInfo() {
+  const { base, header } = buildAuth(config.couchDbUrl);
+  const url = `${base}/${encodeURIComponent(config.couchDbName)}`;
+  return httpJson<{ db_name?: string }>('GET', url, undefined, header);
+}
+
 export async function view<T = any>(design: string, viewName: string, params?: Record<string, string | number | boolean>) {
   const { base, header } = buildAuth(config.couchDbUrl);
   const qp = params

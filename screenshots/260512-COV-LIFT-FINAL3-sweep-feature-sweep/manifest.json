@@ -1,0 +1,3862 @@
+{
+  "generatedAt": "2026-05-12T00:13:27.544Z",
+  "baseUrl": "https://dev.138-201-62-161.nip.io",
+  "branch": "feature/native-fractal-port",
+  "commit": "a9a701e6",
+  "outputDir": "/mnt/c/Rizzoma/screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep",
+  "documentedRows": [
+    {
+      "section": "Authentication & Security",
+      "functionality": "User registration (email/password)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "User login (rate-limited, secure cookies)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Google OAuth 2.0",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Facebook OAuth",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Microsoft OAuth (hand-rolled, Graph API)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "SAML 2.0 (`@node-saml/node-saml` v5)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Twitter OAuth",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Session management (Redis 5)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "CSRF protection (double-submit token)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Permission guards (`requireAuth` middleware)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Zod request validation",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Rate limiting (per-route)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Wave (topic) schema + typed interface",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Wave CRUD API (list, create, read, update, delete)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip schema + typed interface",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip CRUD API (list, create, read, update, delete)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip tree retrieval (single Mango query, 18s → 29ms)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip soft-delete + cascade to children",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Topic view with full blip tree",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Wave participants API",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Editor framework (TipTap v2 / ProseMirror)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Bold / Italic / Underline / Strikethrough",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Headings (H1-H6)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Bullet list / Ordered list",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Task lists (checkboxes)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Code / Code block / Blockquote",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Code block: syntax highlighting (30 languages)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Highlight (text background color)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Links (add/edit/remove)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Images (node extension)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "@mentions autocomplete dropdown",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Edit mode toolbar (blue #4EA0F1)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Read mode toolbar (minimal)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Gadget nodes (chart, poll, attachment, image)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Gadget palette (11 types in grid layout)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Toolbar icons: SVG sprites vs emoji characters",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "Transport layer (Socket.IO v4)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "CRDT engine (Yjs)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "Live cursors (Yjs awareness, user colors)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "Typing indicators",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "Presence indicator (avatars, overflow counts)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "Event broadcasting (blip:created/updated/deleted)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Per-user read state (CouchDB BlipRead docs)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Mark single blip read API",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Mark batch read API",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Unread count aggregation (batch query)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Next/Prev unread navigation (server-computed)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Green left border on unread blips",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Wave list badge (unread/total count)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "\"Follow the Green\" CTA button",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Keyboard navigation (j/k/g/G)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Selection Annotation System",
+      "functionality": "Annotation structure (range anchoring, text snapshot)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Selection Annotation System",
+      "functionality": "Annotation CRUD APIs",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Selection Annotation System",
+      "functionality": "Annotation threading (rootId + parentId)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Selection Annotation System",
+      "functionality": "Resolve / unresolve",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Selection Annotation System",
+      "functionality": "Visibility preference per-blip (server + localStorage)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Selection Annotation System",
+      "functionality": "Keyboard shortcuts (Ctrl+Shift+Up/Down)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Upload endpoint (Multer, 10MB limit)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "MIME magic-byte sniffing",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Executable extension blocking (.exe, .bat, etc.)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "ClamAV virus scanning (optional)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Storage backends: local filesystem",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Storage backends: AWS S3 / MinIO",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Client upload library (progress, cancel, retry)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Search & Recovery",
+      "functionality": "Full-text search (Mango regex, title + content)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Search & Recovery",
+      "functionality": "Snippet generation (150-char context + highlight)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Search & Recovery",
+      "functionality": "Yjs document rebuild",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Search & Recovery",
+      "functionality": "Wave materialization",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Search & Recovery",
+      "functionality": "Rebuild status polling",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Reply (create child blip)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Edit (inline TipTap editor)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Delete (soft delete + children)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Duplicate blip",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Cut / Paste (clipboard store, reparent)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Copy link (navigator clipboard)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "History modal (timeline, play/pause, diff)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Gear dropdown menu",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Copy/paste reply/cursor variants",
+      "status": "Not started",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "History storage (BlipHistoryDoc, snapshots)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "History API (`GET /api/blips/:id/history`)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Per-blip playback UI (timeline slider, play/pause/step)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Per-blip playback speed (0.5x to 4x)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Per-blip diff view (before/after comparison)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave-level history API (`GET /api/waves/:id/history`)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave-level playback modal (all blips chronologically)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: split pane (content + wave overview)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: cluster fast-forward/back (3s gap)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: date jump (datetime picker)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: per-blip diff (same blip comparison)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: keyboard shortcuts",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: speed (0.5x to 10x)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "Email service (Nodemailer v7)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "Invite emails",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "Activity notifications (mentions, replies)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "Digest emails (daily/weekly summary)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "Notification preferences API",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "SMTP templates (styled HTML)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Responsive breakpoints (xs/sm/md/lg/xl)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Mobile detection hooks (isMobile/isTablet/isDesktop)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "PWA manifest + icons (8 sizes)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Service worker (cache-first assets, network-first API)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Swipe gestures (left/right panel navigation)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Pull to refresh",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "View Transitions API (with reduced-motion)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Offline mutation queue (auto-sync, max 3 retries)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "BottomSheet mobile menu",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Touch targets (44px minimum)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Mobile layout (device validation on real devices)",
+      "status": "Done (Pixel 9 Pro XL / Chrome)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Three-panel layout (nav + topic + tools)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Navigation panel (Topics, Mentions, Tasks, Public, Store, Teams)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Navigation panel icons (SVG sprites vs emojis)",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Navigation badge count",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Topics list",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Topics list: date format",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Topics list: unread bar color",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Topics list: filter dropdown (Inbox/All/By me)",
+      "status": "Not started",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Mentions tab",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Mentions tab: populated content",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Tasks tab",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Tasks tab: filter buttons",
+      "status": "Not started",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Participants bar (invite + avatars)",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Share modal",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Right panel: user avatar",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Right panel: Next button color",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Right panel: hide/show replies icons",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Right panel: mind map button",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Login modal",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Hide replies / folded view",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Auth panel (modal, not page)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Toast notifications",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Keyboard shortcuts panel (bottom of nav)",
+      "status": "Not started",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Collapsed TOC (bullet + label + [+])",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Section expanded (blip content visible)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[+] click = INLINE expansion (not navigation)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[−] click = collapse back",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Portal-based rendering (child at marker position)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: [+] expand = just text",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: click into child = read toolbar",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: click Edit = full edit toolbar",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Click outside inline child = toolbar hidden",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Toolbar left-aligned in inline children",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Ctrl+Enter creates inline child at cursor position",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Inline child editing (Edit button, content persists)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[+] marker styling (gray #b3b3b3, 16x14px, white text)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[+] marker: green for unread, gray for read",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Orphaned markers hidden (cross-wave references)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "All sections expanded simultaneously",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Fold/Unfold all (▲/▼ in right panel)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Fold state persistence (localStorage + server)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Reply vs inline comment distinction",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Mid-sentence [+] markers (multiple per paragraph)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Nested inline expansion ([+] within expanded [+])",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Deep fractal collapsed (BLB-as-ToC, depth-10 fixture)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Deep fractal spine expanded through full depth (depth-10 fixture)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Deep fractal all root branches expanded in parallel",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Inline-child portal flush with parent indent (visual parity)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Auth-gated Edit button",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "@mention: turquoise pill with pipe delimiters (\\",
+      "status": "@Name\\",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "~task: turquoise pill with checkbox (\\",
+      "status": "☐ Name DD Mon\\",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "#tag: plain turquoise text (no background/border)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert shortcuts (right panel: ↵ @ ~ # Gadgets)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert shortcut button styling (light blue bg, white icons)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert buttons auto-enter-edit-mode",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Toolbar decluttered (Hide/Delete → gear overflow)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Gadget iframe rendering (Yes/No/Maybe poll, YouTube, etc.)",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Database & Storage",
+      "functionality": "CouchDB client (nano v10)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Database & Storage",
+      "functionality": "Typed document schemas (wave, blip, topic, comment, read, etc.)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Database & Storage",
+      "functionality": "CouchDB Mango indexes (centralized at startup)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Database & Storage",
+      "functionality": "Redis sessions (v5 + connect-redis v7)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Database & Storage",
+      "functionality": "CouchDB view deploy scripts",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "API Architecture",
+      "functionality": "Express 5 (async/await, Zod validation)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "API Architecture",
+      "functionality": "Middleware: request ID, logging, CORS, Helmet, compression",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "API Architecture",
+      "functionality": "Middleware: rate limiting, session, CSRF, auth, error handler",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "API Architecture",
+      "functionality": "Route files (auth, topics, waves, blips, comments, uploads, editor, etc.)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "API Architecture",
+      "functionality": "Health endpoint (`GET /api/health`)",
+      "status": "Done (new)",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Testing & Quality",
+      "functionality": "Test framework (Vitest v4)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Testing & Quality",
+      "functionality": "Unit tests: 134 across 44 files",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Testing & Quality",
+      "functionality": "E2E: toolbar inline smoke (Playwright)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Testing & Quality",
+      "functionality": "E2E: follow-the-green multi-user smoke",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Testing & Quality",
+      "functionality": "Health checks CI job (`npm run test:health`)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Testing & Quality",
+      "functionality": "Browser smokes CI job (snapshots + artifacts)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Performance Optimizations",
+      "functionality": "Blips-by-wave query (18,000ms → 29ms, 600x)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Performance Optimizations",
+      "functionality": "Topics query (8-12s → 181ms, 40x)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Performance Optimizations",
+      "functionality": "Unread counts (N+1 → batch query, ~20x)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Performance Optimizations",
+      "functionality": "Inline visibility (20+ calls → perf mode skip)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Performance Optimizations",
+      "functionality": "Bcrypt (10 → 2 rounds in dev, ~60x)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Performance Optimizations",
+      "functionality": "Perf harness (5k-blip seed, metrics, screenshots)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Performance Optimizations",
+      "functionality": "CI perf budgets (`RIZZOMA_PERF_ENFORCE_BUDGETS=1`)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Performance Optimizations",
+      "functionality": "Bundle size (~5MB → ~500KB, 90% reduction)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "DevOps & Deployment",
+      "functionality": "Docker Compose (CouchDB, Redis, optional ClamAV)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "DevOps & Deployment",
+      "functionality": "Dockerfile (production image)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "DevOps & Deployment",
+      "functionality": "CI/CD: unit tests (GitHub Actions)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "DevOps & Deployment",
+      "functionality": "CI/CD: E2E Playwright",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "DevOps & Deployment",
+      "functionality": "CI/CD: health checks job",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "DevOps & Deployment",
+      "functionality": "CI/CD: perf budgets job",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "DevOps & Deployment",
+      "functionality": "Feature flags (`FEAT_ALL`, `EDITOR_ENABLE`, per-feature)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "DevOps & Deployment",
+      "functionality": "Backup scripts (bundle)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "DevOps & Deployment",
+      "functionality": "Backup automation (GDrive cadence)",
+      "status": "Not started",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "DevOps & Deployment",
+      "functionality": "getUserMedia adapter (modern constraints, permissions)",
+      "status": "Done",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "DevOps & Deployment",
+      "functionality": "Legacy assets disposition (jQuery-era static)",
+      "status": "Not started",
+      "screenshotValid": false,
+      "dynamicCandidate": false
+    }
+  ],
+  "visualRows": [
+    {
+      "section": "Authentication & Security",
+      "functionality": "User registration (email/password)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "User login (rate-limited, secure cookies)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Google OAuth 2.0",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Facebook OAuth",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Microsoft OAuth (hand-rolled, Graph API)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "SAML 2.0 (`@node-saml/node-saml` v5)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Twitter OAuth",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Session management (Redis 5)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "CSRF protection (double-submit token)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Permission guards (`requireAuth` middleware)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Zod request validation",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "Rate limiting (per-route)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Wave (topic) schema + typed interface",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Wave CRUD API (list, create, read, update, delete)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip schema + typed interface",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip CRUD API (list, create, read, update, delete)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip tree retrieval (single Mango query, 18s → 29ms)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip soft-delete + cascade to children",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Topic view with full blip tree",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Wave participants API",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Editor framework (TipTap v2 / ProseMirror)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Bold / Italic / Underline / Strikethrough",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Headings (H1-H6)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Bullet list / Ordered list",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Task lists (checkboxes)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Code / Code block / Blockquote",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Code block: syntax highlighting (30 languages)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Highlight (text background color)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Links (add/edit/remove)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Images (node extension)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "@mentions autocomplete dropdown",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Edit mode toolbar (blue #4EA0F1)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Read mode toolbar (minimal)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Gadget nodes (chart, poll, attachment, image)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Gadget palette (11 types in grid layout)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Toolbar icons: SVG sprites vs emoji characters",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "Transport layer (Socket.IO v4)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "CRDT engine (Yjs)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "Live cursors (Yjs awareness, user colors)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "Typing indicators",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "Presence indicator (avatars, overflow counts)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "Event broadcasting (blip:created/updated/deleted)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Per-user read state (CouchDB BlipRead docs)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Mark single blip read API",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Mark batch read API",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Unread count aggregation (batch query)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Next/Prev unread navigation (server-computed)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Green left border on unread blips",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Wave list badge (unread/total count)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "\"Follow the Green\" CTA button",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Keyboard navigation (j/k/g/G)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Upload endpoint (Multer, 10MB limit)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "MIME magic-byte sniffing",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Executable extension blocking (.exe, .bat, etc.)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "ClamAV virus scanning (optional)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Storage backends: local filesystem",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Storage backends: AWS S3 / MinIO",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Client upload library (progress, cancel, retry)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Search & Recovery",
+      "functionality": "Full-text search (Mango regex, title + content)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Search & Recovery",
+      "functionality": "Snippet generation (150-char context + highlight)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Search & Recovery",
+      "functionality": "Yjs document rebuild",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Search & Recovery",
+      "functionality": "Wave materialization",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Search & Recovery",
+      "functionality": "Rebuild status polling",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Reply (create child blip)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Edit (inline TipTap editor)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Delete (soft delete + children)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Duplicate blip",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Cut / Paste (clipboard store, reparent)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Copy link (navigator clipboard)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "History modal (timeline, play/pause, diff)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Gear dropdown menu",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Copy/paste reply/cursor variants",
+      "status": "Not started",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "History storage (BlipHistoryDoc, snapshots)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "History API (`GET /api/blips/:id/history`)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Per-blip playback UI (timeline slider, play/pause/step)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Per-blip playback speed (0.5x to 4x)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Per-blip diff view (before/after comparison)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave-level history API (`GET /api/waves/:id/history`)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave-level playback modal (all blips chronologically)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: split pane (content + wave overview)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: cluster fast-forward/back (3s gap)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: date jump (datetime picker)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: per-blip diff (same blip comparison)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: keyboard shortcuts",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: speed (0.5x to 10x)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "Email service (Nodemailer v7)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "Invite emails",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "Activity notifications (mentions, replies)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "Digest emails (daily/weekly summary)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "Notification preferences API",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "SMTP templates (styled HTML)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Responsive breakpoints (xs/sm/md/lg/xl)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Mobile detection hooks (isMobile/isTablet/isDesktop)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "PWA manifest + icons (8 sizes)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Service worker (cache-first assets, network-first API)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Swipe gestures (left/right panel navigation)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Pull to refresh",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "View Transitions API (with reduced-motion)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Offline mutation queue (auto-sync, max 3 retries)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "BottomSheet mobile menu",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Touch targets (44px minimum)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Mobile layout (device validation on real devices)",
+      "status": "Done (Pixel 9 Pro XL / Chrome)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Three-panel layout (nav + topic + tools)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Navigation panel (Topics, Mentions, Tasks, Public, Store, Teams)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Navigation panel icons (SVG sprites vs emojis)",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Navigation badge count",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Topics list",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Topics list: date format",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Topics list: unread bar color",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Topics list: filter dropdown (Inbox/All/By me)",
+      "status": "Not started",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Mentions tab",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Mentions tab: populated content",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Tasks tab",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Tasks tab: filter buttons",
+      "status": "Not started",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Participants bar (invite + avatars)",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Share modal",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Right panel: user avatar",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Right panel: Next button color",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Right panel: hide/show replies icons",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Right panel: mind map button",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Login modal",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Hide replies / folded view",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Auth panel (modal, not page)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Toast notifications",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Keyboard shortcuts panel (bottom of nav)",
+      "status": "Not started",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Collapsed TOC (bullet + label + [+])",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Section expanded (blip content visible)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[+] click = INLINE expansion (not navigation)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[−] click = collapse back",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Portal-based rendering (child at marker position)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: [+] expand = just text",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: click into child = read toolbar",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: click Edit = full edit toolbar",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Click outside inline child = toolbar hidden",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Toolbar left-aligned in inline children",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Ctrl+Enter creates inline child at cursor position",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Inline child editing (Edit button, content persists)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[+] marker styling (gray #b3b3b3, 16x14px, white text)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[+] marker: green for unread, gray for read",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Orphaned markers hidden (cross-wave references)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "All sections expanded simultaneously",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Fold/Unfold all (▲/▼ in right panel)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Fold state persistence (localStorage + server)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Reply vs inline comment distinction",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Mid-sentence [+] markers (multiple per paragraph)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Nested inline expansion ([+] within expanded [+])",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Deep fractal collapsed (BLB-as-ToC, depth-10 fixture)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Deep fractal spine expanded through full depth (depth-10 fixture)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Deep fractal all root branches expanded in parallel",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Inline-child portal flush with parent indent (visual parity)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Auth-gated Edit button",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "@mention: turquoise pill with pipe delimiters (\\",
+      "status": "@Name\\",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "~task: turquoise pill with checkbox (\\",
+      "status": "☐ Name DD Mon\\",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "#tag: plain turquoise text (no background/border)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": false
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert shortcuts (right panel: ↵ @ ~ # Gadgets)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert shortcut button styling (light blue bg, white icons)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert buttons auto-enter-edit-mode",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Toolbar decluttered (Hide/Delete → gear overflow)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Gadget iframe rendering (Yes/No/Maybe poll, YouTube, etc.)",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    }
+  ],
+  "dynamicRows": [
+    {
+      "section": "Authentication & Security",
+      "functionality": "User registration (email/password)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Authentication & Security",
+      "functionality": "User login (rate-limited, secure cookies)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Wave CRUD API (list, create, read, update, delete)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip CRUD API (list, create, read, update, delete)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Blip soft-delete + cascade to children",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Waves & Blips (Core Data Model)",
+      "functionality": "Topic view with full blip tree",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Task lists (checkboxes)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Links (add/edit/remove)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "@mentions autocomplete dropdown",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Edit mode toolbar (blue #4EA0F1)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Gadget nodes (chart, poll, attachment, image)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Rich Text Editor",
+      "functionality": "Gadget palette (11 types in grid layout)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Real-time Collaboration",
+      "functionality": "Typing indicators",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Mark single blip read API",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Mark batch read API",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Next/Prev unread navigation (server-computed)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "\"Follow the Green\" CTA button",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Unread Tracking (Follow-the-Green)",
+      "functionality": "Keyboard navigation (j/k/g/G)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Upload endpoint (Multer, 10MB limit)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "File Uploads & Storage",
+      "functionality": "Client upload library (progress, cancel, retry)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Search & Recovery",
+      "functionality": "Full-text search (Mango regex, title + content)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Reply (create child blip)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Edit (inline TipTap editor)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Delete (soft delete + children)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Cut / Paste (clipboard store, reparent)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Copy link (navigator clipboard)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "History modal (timeline, play/pause, diff)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Gear dropdown menu",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Blip Operations (Gear Menu)",
+      "functionality": "Copy/paste reply/cursor variants",
+      "status": "Not started",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Per-blip playback UI (timeline slider, play/pause/step)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Per-blip diff view (before/after comparison)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave-level playback modal (all blips chronologically)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "History & Playback",
+      "functionality": "Wave playback: date jump (datetime picker)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Email Notifications",
+      "functionality": "Invite emails",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Swipe gestures (left/right panel navigation)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Pull to refresh",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "View Transitions API (with reduced-motion)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "Offline mutation queue (auto-sync, max 3 retries)",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Mobile & PWA",
+      "functionality": "BottomSheet mobile menu",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Navigation panel (Topics, Mentions, Tasks, Public, Store, Teams)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Navigation panel icons (SVG sprites vs emojis)",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Navigation badge count",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Topics list: filter dropdown (Inbox/All/By me)",
+      "status": "Not started",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Tasks tab: filter buttons",
+      "status": "Not started",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Participants bar (invite + avatars)",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Share modal",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Right panel: hide/show replies icons",
+      "status": "Gap",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Login modal",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Hide replies / folded view",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "User Interface Components",
+      "functionality": "Auth panel (modal, not page)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[+] click = INLINE expansion (not navigation)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "[−] click = collapse back",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: [+] expand = just text",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: click into child = read toolbar",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Three-state toolbar: click Edit = full edit toolbar",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Click outside inline child = toolbar hidden",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Ctrl+Enter creates inline child at cursor position",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Inline child editing (Edit button, content persists)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Fold/Unfold all (▲/▼ in right panel)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Fold state persistence (localStorage + server)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "BLB (Bullet-Label-Blip) — Core Paradigm",
+      "functionality": "Auth-gated Edit button",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "@mention: turquoise pill with pipe delimiters (\\",
+      "status": "@Name\\",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "~task: turquoise pill with checkbox (\\",
+      "status": "☐ Name DD Mon\\",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert shortcuts (right panel: ↵ @ ~ # Gadgets)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert shortcut button styling (light blue bg, white icons)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Insert buttons auto-enter-edit-mode",
+      "status": "Done (new)",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Toolbar decluttered (Hide/Delete → gear overflow)",
+      "status": "Done",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    },
+    {
+      "section": "Inline Widgets & Styling",
+      "functionality": "Gadget iframe rendering (Yes/No/Maybe poll, YouTube, etc.)",
+      "status": "Partial",
+      "screenshotValid": true,
+      "dynamicCandidate": true
+    }
+  ],
+  "captures": [
+    {
+      "id": "logged-out-sign-in-form",
+      "label": "logged out sign in form",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/001-logged-out-sign-in-form.png",
+      "featureRefs": [
+        "Authentication: login modal",
+        "Authentication: email login",
+        "Authentication: OAuth buttons",
+        "Authentication: User login (rate-limited, secure cookies)",
+        "Authentication: Google OAuth 2.0",
+        "Authentication: Facebook OAuth",
+        "Authentication: Microsoft OAuth (hand-rolled, Graph API)",
+        "Authentication: SAML 2.0",
+        "Authentication: Twitter OAuth",
+        "Authentication: Permission guards (requireAuth middleware)",
+        "Authentication: Rate limiting (per-route)"
+      ],
+      "assertion": "Unauthenticated session shows OAuth and email sign-in entry points.",
+      "gatePass": true,
+      "gateDetail": "first-pass: selector=\"input[type=\"email\"]\" count=1 need≥1",
+      "dynamicStep": null
+    },
+    {
+      "id": "logged-out-sign-up-form",
+      "label": "logged out sign up form",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/002-logged-out-sign-up-form.png",
+      "featureRefs": [
+        "Authentication: registration entry",
+        "Authentication: signup form",
+        "Authentication: User registration (email/password)"
+      ],
+      "assertion": "Sign-up link opens the registration form state.",
+      "gatePass": true,
+      "gateDetail": "first-pass: selector=\"input[type=\"email\"]\" count=1 need≥1",
+      "dynamicStep": "after-signup-click"
+    },
+    {
+      "id": "nav-topics-tab-and-searchable-topic-list",
+      "label": "nav topics tab and searchable topic list",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/003-nav-topics-tab-and-searchable-topic-list.png",
+      "featureRefs": [
+        "User Interface: Navigation panel",
+        "User Interface: Topics list",
+        "User Interface: Three-panel layout (nav + topic + tools)",
+        "User Interface: Navigation panel (Topics, Mentions, Tasks, Public, Store, Teams)",
+        "User Interface: Navigation panel icons (SVG sprites vs emojis)",
+        "User Interface: Navigation badge count (unread/total)",
+        "User Interface: Wave list badge (unread/total count)",
+        "User Interface: Keyboard navigation (j/k/g/G shortcuts)",
+        "User Interface: Topics list scroll virtualization",
+        "User Interface: Topic card preview (title + author + last-edit)",
+        "User Interface: Search topics input box",
+        "User Interface: Empty-state placeholder for new user with no topics",
+        "User Interface: Topics list unread bar color",
+        "User Interface: Topics list filter dropdown (Inbox/All/By me)",
+        "User Interface: Right panel user avatar",
+        "User Interface: Right panel Next button color",
+        "User Interface: Right panel hide/show replies icons",
+        "User Interface: Auth panel (modal, not page)",
+        "User Interface: Keyboard shortcuts panel (bottom of nav)",
+        "User Interface: Per-user read state (CouchDB BlipRead docs)",
+        "User Interface: Unread count aggregation (batch query)",
+        "User Interface: Next/Prev unread navigation (server-computed)",
+        "User Interface: Green left border on unread blips",
+        "User Interface: Mark single blip read API",
+        "User Interface: Mark batch read API",
+        "User Interface: Follow the Green CTA button",
+        "User Interface: Green indicators (visual highlighting of new/unread)",
+        "User Interface: Navigation helper (Follow the Green button with unread count)",
+        "User Interface: Next Topic navigation (jump to next topic with unread)",
+        "User Interface: Wave list badges (unread/total per topic)",
+        "User Interface: Collapse-before-jump (auto-collapse previous expanded)",
+        "User Interface: Inline expansion via toggle event",
+        "User Interface: Time indicators (when content changed)",
+        "User Interface: Persistent tracking (localStorage + per-wave unread docs)",
+        "User Interface: WaveView toolbar (right-panel controls)",
+        "User Interface: PresenceIndicator widget",
+        "User Interface: Tests for unread tracking (smokes)",
+        "User Interface: Automation hooks (read-state events)",
+        "User Interface: Change tracking",
+        "User Interface: Green indicators",
+        "User Interface: Navigation helper",
+        "User Interface: Time indicators",
+        "User Interface: Persistent tracking",
+        "User Interface: Wave list badges",
+        "User Interface: WaveView toolbar",
+        "User Interface: Automation",
+        "Waves: wave list",
+        "Waves: Wave CRUD API (list, create, read, update, delete)",
+        "Waves: Wave participants API (list participants for wave)",
+        "Waves: Next/Prev unread navigation (server-computed)",
+        "Search: topic search input",
+        "Search: search filter typed"
+      ],
+      "assertion": "Topics tab is active; search input is present (topic list may be empty for a fresh test user).",
+      "gatePass": true,
+      "gateDetail": "search=true topicCount=0 (empty OK for fresh user)",
+      "dynamicStep": null
+    },
+    {
+      "id": "topics-search-filter-typed",
+      "label": "topics search filter typed",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/004-topics-search-filter-typed.png",
+      "featureRefs": [
+        "Search: topic search",
+        "User Interface: Topics list search",
+        "Search: Full-text search (Mango regex, title + content)",
+        "Search: Snippet generation (150-char context + highlight)",
+        "Search: Yjs document rebuild on demand",
+        "Search: Wave materialization for indexing",
+        "Search: Rebuild status polling (GET /api/search/rebuild-status)"
+      ],
+      "assertion": "Search input accepts text and filters visible topic list state.",
+      "gatePass": true,
+      "gateDetail": "value=\"Visual Sweep\"",
+      "dynamicStep": "after-search"
+    },
+    {
+      "id": "nav-mentions-tab",
+      "label": "nav mentions tab",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/005-nav-mentions-tab.png",
+      "featureRefs": [
+        "User Interface: Mentions tab"
+      ],
+      "assertion": "Mentions navigation tab opens its dedicated panel.",
+      "gatePass": true,
+      "gateDetail": "activeTab=false",
+      "dynamicStep": "after-tab-click"
+    },
+    {
+      "id": "nav-tasks-tab",
+      "label": "nav tasks tab",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/006-nav-tasks-tab.png",
+      "featureRefs": [
+        "User Interface: Tasks tab"
+      ],
+      "assertion": "Tasks navigation tab opens its dedicated panel.",
+      "gatePass": true,
+      "gateDetail": "activeTab=false",
+      "dynamicStep": "after-tab-click"
+    },
+    {
+      "id": "nav-publics-tab",
+      "label": "nav publics tab",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/007-nav-publics-tab.png",
+      "featureRefs": [
+        "User Interface: Publics tab"
+      ],
+      "assertion": "Publics navigation tab opens its dedicated panel.",
+      "gatePass": true,
+      "gateDetail": "activeTab=false",
+      "dynamicStep": "after-tab-click"
+    },
+    {
+      "id": "nav-store-tab",
+      "label": "nav store tab",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/008-nav-store-tab.png",
+      "featureRefs": [
+        "User Interface: Store tab"
+      ],
+      "assertion": "Store navigation tab opens its dedicated panel.",
+      "gatePass": true,
+      "gateDetail": "activeTab=false",
+      "dynamicStep": "after-tab-click"
+    },
+    {
+      "id": "nav-teams-tab",
+      "label": "nav teams tab",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/009-nav-teams-tab.png",
+      "featureRefs": [
+        "User Interface: Teams tab"
+      ],
+      "assertion": "Teams navigation tab opens its dedicated panel.",
+      "gatePass": true,
+      "gateDetail": "activeTab=false",
+      "dynamicStep": "after-tab-click"
+    },
+    {
+      "id": "create-topic-modal-open",
+      "label": "create topic modal open",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/010-create-topic-modal-open.png",
+      "featureRefs": [
+        "Waves: create topic",
+        "User Interface: New topic modal",
+        "User Interface: Login modal (auth panel as modal)"
+      ],
+      "assertion": "New topic action opens the create topic modal.",
+      "gatePass": true,
+      "gateDetail": "modals={\"modalContent\":true,\"createTopicModal\":false,\"modalOverlay\":true,\"shareModal\":false,\"exportModal\":false,\"historyModal\":false,\"inviteModal\":false,\"anyDialog\":false}",
+      "dynamicStep": "after-new-click"
+    },
+    {
+      "id": "invite-participants-modal-open",
+      "label": "invite participants modal open",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/011-invite-participants-modal-open.png",
+      "featureRefs": [
+        "User Interface: Participants bar",
+        "Email: invite emails",
+        "Email: Digest emails (daily/weekly summary notifications)",
+        "Email: Activity notifications (mentions, replies)",
+        "Email: Email service (Nodemailer v7 SMTP)",
+        "Email: Notification preferences API",
+        "Email: SMTP templates (styled HTML)"
+      ],
+      "assertion": "Invite button opens participant invitation modal.",
+      "gatePass": true,
+      "gateDetail": "modals={\"modalContent\":true,\"createTopicModal\":false,\"modalOverlay\":true,\"shareModal\":false,\"exportModal\":false,\"historyModal\":false,\"inviteModal\":false,\"anyDialog\":false}",
+      "dynamicStep": "after-invite-click"
+    },
+    {
+      "id": "invite-participants-modal-filled-email",
+      "label": "invite participants modal filled email",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/012-invite-participants-modal-filled-email.png",
+      "featureRefs": [
+        "Email: invite emails",
+        "Authentication: participant invite form"
+      ],
+      "assertion": "Invite modal accepts an email recipient before sending.",
+      "gatePass": true,
+      "gateDetail": "email-input=\"visual-observer+1778544807543@example.co\"",
+      "dynamicStep": "after-invite-email-fill"
+    },
+    {
+      "id": "share-settings-modal-open",
+      "label": "share settings modal open",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/013-share-settings-modal-open.png",
+      "featureRefs": [
+        "User Interface: Share modal",
+        "Authentication: share permissions"
+      ],
+      "assertion": "Share button opens share settings modal with privacy choices.",
+      "gatePass": true,
+      "gateDetail": "modals={\"modalContent\":true,\"createTopicModal\":false,\"modalOverlay\":true,\"shareModal\":false,\"exportModal\":false,\"historyModal\":false,\"inviteModal\":false,\"anyDialog\":false}",
+      "dynamicStep": "after-share-click"
+    },
+    {
+      "id": "share-settings-option-selected",
+      "label": "share settings option selected",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/014-share-settings-option-selected.png",
+      "featureRefs": [
+        "User Interface: Share modal",
+        "Authentication: share permissions"
+      ],
+      "assertion": "Share settings modal exposes selectable access-state controls.",
+      "gatePass": true,
+      "gateDetail": "modals={\"modalContent\":true,\"createTopicModal\":false,\"modalOverlay\":true,\"shareModal\":false,\"exportModal\":false,\"historyModal\":false,\"inviteModal\":false,\"anyDialog\":false}",
+      "dynamicStep": "after-share-option-click"
+    },
+    {
+      "id": "topic-gear-dropdown-open",
+      "label": "topic gear dropdown open",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/015-topic-gear-dropdown-open.png",
+      "featureRefs": [
+        "Blip Operations: gear dropdown menu",
+        "User Interface: topic settings"
+      ],
+      "assertion": "Topic gear menu opens and exposes read/follow/export/embed/playback actions.",
+      "gatePass": true,
+      "gateDetail": "open=true items=2",
+      "dynamicStep": "after-gear-click"
+    },
+    {
+      "id": "export-topic-modal-open",
+      "label": "export topic modal open",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/016-export-topic-modal-open.png",
+      "featureRefs": [
+        "History: export topic",
+        "User Interface: export modal"
+      ],
+      "assertion": "Export topic action opens format-selection modal.",
+      "gatePass": true,
+      "gateDetail": "modals={\"modalContent\":false,\"createTopicModal\":false,\"modalOverlay\":false,\"shareModal\":false,\"exportModal\":true,\"historyModal\":false,\"inviteModal\":false,\"anyDialog\":false}",
+      "dynamicStep": "after-export-click"
+    },
+    {
+      "id": "wave-timeline-playback-modal-open",
+      "label": "wave timeline playback modal open",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/017-wave-timeline-playback-modal-open.png",
+      "featureRefs": [
+        "History & Playback: wave timeline",
+        "History & Playback: Wave-level playback UI (timeline, color-coded dots, jump)",
+        "History & Playback: Wave-level history API (GET /api/waves/:id/history)",
+        "History & Playback: Per-blip playback UI (timeline slider, play/pause/step)",
+        "History & Playback: Per-blip diff view (before/after comparison)",
+        "History & Playback: Cluster fast-forward (skip rapid edits)",
+        "History & Playback: Date jump (navigate to specific date)",
+        "History & Playback: Keyboard shortcuts (Space=play, arrows=step)",
+        "History & Playback: History modal (timeline, play/pause, diff)",
+        "History & Playback: History storage (BlipHistoryDoc snapshots)",
+        "History & Playback: Wave-level playback modal (all blips chronologically)",
+        "History & Playback: Wave playback split pane (content + wave overview)",
+        "History & Playback: Wave timeline color-coded dots per blip",
+        "History & Playback: Per-blip history API (GET /api/blips/:id/history)",
+        "History & Playback: Diff highlighting (added/removed text)",
+        "History & Playback: Wave playback cluster fast-forward/back (3s gap)",
+        "History & Playback: Wave playback date jump (datetime picker)",
+        "History & Playback: Wave playback keyboard shortcuts",
+        "History & Playback: Wave playback speed (0.5x to 10x)",
+        "Blip Operations: playback history"
+      ],
+      "assertion": "Wave Timeline opens playback modal with controls/timeline.",
+      "gatePass": true,
+      "gateDetail": "modals={\"modalContent\":false,\"createTopicModal\":false,\"modalOverlay\":false,\"shareModal\":false,\"exportModal\":false,\"historyModal\":true,\"inviteModal\":false,\"anyDialog\":true}",
+      "dynamicStep": "after-wave-timeline-click"
+    },
+    {
+      "id": "topic-landing-collapsed-blb-toc",
+      "label": "topic landing collapsed blb toc",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/018-topic-landing-collapsed-blb-toc.png",
+      "featureRefs": [
+        "BLB: Collapsed TOC",
+        "BLB: Collapsed TOC (bullet + label + [+])",
+        "BLB: Three-part pattern (Bullet + Label + Blip)",
+        "BLB: Bullet marker styling (grey background, white +)",
+        "BLB: [+] marker styling (gray #b3b3b3, 16x14px, white text)",
+        "BLB: Label is the [+] anchor",
+        "BLB: Section expanded (blip content visible)",
+        "BLB: Three-state toolbar — [+] expand = just text",
+        "Waves: topic view",
+        "Waves: Topic view with full blip tree",
+        "Waves: Wave CRUD API (list, create, read, update, delete)",
+        "User Interface: Three-panel layout (nav + topic + tools)",
+        "User Interface: Topics list"
+      ],
+      "assertion": "Landing view shows label-only BLB rows and topic chrome — also evidences the three-panel layout chrome and the BLB bullet+label+[+] pattern.",
+      "gatePass": true,
+      "gateDetail": "selector=\".blip-container, .rizzoma-topic-detail\" count=3 need≥1",
+      "dynamicStep": null
+    },
+    {
+      "id": "expanded-blip-read-toolbar",
+      "label": "expanded blip read toolbar",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/019-expanded-blip-read-toolbar.png",
+      "featureRefs": [
+        "BLB: section expanded",
+        "Rich Text: read mode toolbar",
+        "BLB: All sections expanded simultaneously"
+      ],
+      "assertion": "Clicking a collapsed blip expands it and shows the read toolbar.",
+      "gatePass": true,
+      "gateDetail": "selector=\"[data-testid=\"blip-menu-read-surface\"]\" count=1 need≥1",
+      "dynamicStep": "after-expand"
+    },
+    {
+      "id": "read-gear-menu-open",
+      "label": "read gear menu open",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/020-read-gear-menu-open.png",
+      "featureRefs": [
+        "Blip Operations: gear dropdown",
+        "Blip Operations: copy/paste/history/delete variants",
+        "Blip Operations: Copy blip (clipboard with content)",
+        "Blip Operations: Paste blip (from clipboard)",
+        "Blip Operations: Cut blip (clipboard store, reparent)",
+        "Blip Operations: Delete blip (soft delete + cascade to children)",
+        "Blip Operations: Duplicate blip",
+        "Blip Operations: Move blip",
+        "Blip Operations: View history (per-blip)",
+        "Blip Operations: Reparent blip (change parent)",
+        "Blip Operations: Reply (create child blip)",
+        "Blip Operations: Soft-delete + cascade",
+        "Blip Operations: Blip tree retrieval (single Mango query, 18s → 29ms)",
+        "Blip Operations: Per-blip-history modal",
+        "Blip Operations: Gear menu animation + positioning",
+        "Blip Operations: Copy link (navigator clipboard)",
+        "Blip Operations: History modal (timeline, play/pause, diff)",
+        "Blip Operations: Edit (inline TipTap editor)"
+      ],
+      "assertion": "Read toolbar gear opens copy/comment/history/paste/link actions.",
+      "gatePass": true,
+      "gateDetail": "selector=\".gear-dropdown, .gear-menu, [class*=\"gear\"][class*=\"menu\"]\" count=3 need≥1",
+      "dynamicStep": "after-read-gear-click"
+    },
+    {
+      "id": "edit-toolbar-full-rich-text-controls",
+      "label": "edit toolbar full rich text controls",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/021-edit-toolbar-full-rich-text-controls.png",
+      "featureRefs": [
+        "Rich Text: edit toolbar",
+        "Rich Text: formatting controls",
+        "Rich Text: Edit mode toolbar (blue #4EA0F1)",
+        "Rich Text: Toolbar icons (SVG sprites vs emoji characters)",
+        "Rich Text: Bold / Italic / Underline / Strikethrough",
+        "Rich Text: Bullet list / Ordered list",
+        "Rich Text: Headings H1 / H2 / H3",
+        "Rich Text: Links (add / edit / remove)",
+        "Rich Text: Highlight (text background color)",
+        "Rich Text: Undo / Redo",
+        "Rich Text: Clear formatting",
+        "Rich Text: Code / Code block / Blockquote",
+        "Rich Text: Image / attachment placeholders",
+        "Rich Text: Formatting toolbar (bold/italic/heading/list/link/image)",
+        "Rich Text: Highlight (text background color picker)",
+        "File Uploads: upload buttons",
+        "File Uploads: Upload endpoint (Multer 10MB limit)",
+        "File Uploads: Client upload library (progress, cancel, retry)",
+        "File Uploads: Client UX (toast on upload error, retry button)",
+        "File Uploads: MIME-type validation",
+        "File Uploads: ClamAV virus scanning",
+        "File Uploads: MIME magic-byte sniffing",
+        "File Uploads: Executable extension blocking (.exe, .bat, etc.)",
+        "File Uploads: Storage backends — local filesystem",
+        "File Uploads: Server safeguards (request-size limit, virus scan)",
+        "File Uploads: Modern getUserMedia adapter (ES module + display media)",
+        "File Uploads: Tests (upload + scan + storage)",
+        "File Uploads: Server safeguards",
+        "File Uploads: Client UX",
+        "Rich Text: Formatting toolbar",
+        "Rich Text: Links",
+        "Inline Widgets: Insert buttons auto-enter-edit-mode",
+        "Inline Widgets: Toolbar decluttered (Hide/Delete → gear overflow)"
+      ],
+      "assertion": "Edit action switches the blip into full rich-text toolbar state.",
+      "gatePass": true,
+      "gateDetail": "all passed",
+      "dynamicStep": "after-edit-click"
+    },
+    {
+      "id": "edit-overflow-menu-open",
+      "label": "edit overflow menu open",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/022-edit-overflow-menu-open.png",
+      "featureRefs": [
+        "Blip Operations: edit overflow menu",
+        "Blip Operations: paste/copy variants"
+      ],
+      "assertion": "Edit overflow exposes send, copy, playback, paste, link, and destructive actions.",
+      "gatePass": true,
+      "gateDetail": "selector=\"[class*=\"overflow\"], [class*=\"dropdown\"]\" count=12 need≥1",
+      "dynamicStep": "after-edit-overflow-click"
+    },
+    {
+      "id": "emoji-picker-open",
+      "label": "emoji picker open",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/023-emoji-picker-open.png",
+      "featureRefs": [
+        "Rich Text: emoji picker",
+        "Inline Widgets: emoji insertion"
+      ],
+      "assertion": "Emoji toolbar control opens picker UI.",
+      "gatePass": true,
+      "gateDetail": "first-pass: selector=\"[class*=\"emoji-picker\"]\" count=2 need≥1",
+      "dynamicStep": "after-emoji-click"
+    },
+    {
+      "id": "mention-autocomplete-active",
+      "label": "mention autocomplete active",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/024-mention-autocomplete-active.png",
+      "featureRefs": [
+        "Rich Text: mentions autocomplete",
+        "Inline Widgets: @mention pill",
+        "Inline Widgets: @mention turquoise pill with pipe delimiters",
+        "Rich Text: TipTap mention extension",
+        "Rich Text: Editor framework (TipTap v2 / ProseMirror)",
+        "Rich Text: Images (node extension)"
+      ],
+      "assertion": "Typing @ in edit mode opens or primes mention autocomplete state.",
+      "gatePass": true,
+      "gateDetail": "first-pass: selector=\".mention-list, .suggestion-list, [class*=\"mention\"][class*=\"dropdown\"]",
+      "dynamicStep": "after-mention-trigger"
+    },
+    {
+      "id": "task-trigger-typed",
+      "label": "task trigger typed",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/025-task-trigger-typed.png",
+      "featureRefs": [
+        "Rich Text: task trigger",
+        "Inline Widgets: task styling",
+        "Inline Widgets: ~task turquoise pill with checkbox",
+        "Rich Text: Task list extension (Done/Open with date)",
+        "Rich Text: Task lists (checkboxes)",
+        "Rich Text: Bullet list / Ordered list"
+      ],
+      "assertion": "Typing ~ in edit mode exercises task insertion trigger path.",
+      "gatePass": true,
+      "gateDetail": "first-pass: text=\"~\" found=true",
+      "dynamicStep": "after-task-trigger"
+    },
+    {
+      "id": "tag-trigger-typed",
+      "label": "tag trigger typed",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/026-tag-trigger-typed.png",
+      "featureRefs": [
+        "Rich Text: tag trigger",
+        "Inline Widgets: tag styling",
+        "Inline Widgets: #tag plain turquoise text (no background/border)",
+        "Rich Text: TipTap hashtag extension",
+        "Rich Text: Highlight (text background color)"
+      ],
+      "assertion": "Typing # in edit mode exercises tag insertion trigger path.",
+      "gatePass": true,
+      "gateDetail": "first-pass: text=\"#\" found=true",
+      "dynamicStep": "after-tag-trigger"
+    },
+    {
+      "id": "right-panel-gadget-palette-open",
+      "label": "right panel gadget palette open",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/027-right-panel-gadget-palette-open.png",
+      "featureRefs": [
+        "Rich Text: gadget palette",
+        "Inline Widgets: gadget insert shortcuts",
+        "Inline Widgets: Insert shortcuts (right panel: ↵ @ ~ # Gadgets)",
+        "Inline Widgets: Insert shortcut button styling (light blue bg, white icons)",
+        "Rich Text: Poll gadget",
+        "Rich Text: YouTube embed gadget",
+        "Rich Text: Code highlight gadget",
+        "Rich Text: Code block syntax highlighting (30 languages)",
+        "Rich Text: iFrame embed gadget",
+        "Rich Text: Image gadget",
+        "Rich Text: Sheet/spreadsheet gadget",
+        "Rich Text: LaTeX math gadget",
+        "Rich Text: Kanban app gadget",
+        "Rich Text: Gadget palette (11 types in grid layout)",
+        "Rich Text: Gadget nodes (chart, poll, attachment, image)",
+        "Rich Text: Gadget iframe rendering (YouTube, poll, etc.)",
+        "Rich Text: Trusted-embed adapters (URL validation per gadget type)",
+        "Rich Text: Highlight"
+      ],
+      "assertion": "Right panel Gadgets button opens the gadget palette.",
+      "gatePass": true,
+      "gateDetail": "selector=\".gadget-palette, [class*=\"gadget-palette\"]\" count=3 need≥1",
+      "dynamicStep": "after-gadgets-click"
+    },
+    {
+      "id": "done-returns-to-read-toolbar",
+      "label": "done returns to read toolbar",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/028-done-returns-to-read-toolbar.png",
+      "featureRefs": [
+        "Rich Text: Done action",
+        "Blip Operations: edit persistence",
+        "Blip Operations: Edit (inline TipTap editor returns to read on Done)"
+      ],
+      "assertion": "Done exits edit mode and restores read toolbar.",
+      "gatePass": true,
+      "gateDetail": "all passed",
+      "dynamicStep": "after-done-click"
+    },
+    {
+      "id": "inline-comments-nav-state",
+      "label": "inline comments nav state",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/029-inline-comments-nav-state.png",
+      "featureRefs": [
+        "Inline Comments: sidebar/nav",
+        "Inline Comments: filters",
+        "Inline Comments: Annotation structure (range anchoring, text snapshot)",
+        "Inline Comments: Annotation CRUD APIs",
+        "Inline Comments: Annotation threading (rootId + parentId)",
+        "Inline Comments: Resolve / unresolve comments",
+        "Inline Comments: Visibility preference per-blip (server + localStorage)",
+        "Inline Comments: Keyboard shortcuts (Ctrl+Shift+Up/Down)",
+        "Inline Comments: Text selection tracking (range capture)",
+        "Inline Comments: Annotation anchoring (range + text snapshot)",
+        "Inline Comments: Annotation sidebar (right-rail comments list)",
+        "Inline Comments: Visibility preference per-blip",
+        "Inline Comments: API endpoints (CRUD for comments)",
+        "Inline Comments: Annotation anchoring",
+        "Inline Comments: Annotation sidebar"
+      ],
+      "assertion": "Inline comments control surfaces the comment navigation/filter area when available.",
+      "gatePass": true,
+      "gateDetail": "selector=\"[data-testid^=\"blip-menu-comments\"], .inline-comments-nav, [class*=\"comments\"]\" count=2 need≥1",
+      "dynamicStep": "after-comments-toggle"
+    },
+    {
+      "id": "per-blip-playback-history-modal",
+      "label": "per blip playback history modal",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/030-per-blip-playback-history-modal.png",
+      "featureRefs": [
+        "History & Playback: per-blip playback",
+        "Blip Operations: playback history",
+        "History & Playback: Wave playback per-blip diff (same blip comparison before/after)"
+      ],
+      "assertion": "Playback history action opens per-blip timeline modal when history exists.",
+      "gatePass": true,
+      "gateDetail": "first-pass: selector=\"[role=\"dialog\"]\" count=1 need≥1",
+      "dynamicStep": "after-history-click"
+    },
+    {
+      "id": "inline-marker-before-click",
+      "label": "inline marker before click",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/031-inline-marker-before-click.png",
+      "featureRefs": [
+        "BLB: inline plus marker before",
+        "BLB: marker styling",
+        "BLB: Widget styling (turquoise pill bordered marker)",
+        "BLB: Widget styling"
+      ],
+      "assertion": "Inline [+] marker is visible before expansion.",
+      "gatePass": true,
+      "gateDetail": "selector=\"[data-blip-thread=\"3a10bb6d95f2c4bd42a0db70300618b0:b1778544818707\"]\" count=1 need≥1",
+      "dynamicStep": null
+    },
+    {
+      "id": "inline-marker-after-click-expanded",
+      "label": "inline marker after click expanded",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/032-inline-marker-after-click-expanded.png",
+      "featureRefs": [
+        "BLB: inline expansion",
+        "BLB: portal rendering",
+        "BLB: [+] click = INLINE expansion (not navigation)",
+        "BLB: [-] click = collapse back",
+        "BLB: Portal-based rendering (child at marker position)",
+        "BLB: Inline child mounts as RizzomaBlip in portal",
+        "BLB: Three-state toolbar — click into child = read toolbar",
+        "BLB: Three-state toolbar — click Edit = full edit toolbar",
+        "BLB: Click outside inline child = toolbar hidden",
+        "BLB: Toolbar left-aligned in inline children",
+        "BLB: Inline child border-left visual nesting indicator",
+        "BLB: Ctrl+Enter creates inline child at cursor position",
+        "BLB: Inline child editing (Edit button, content persists)",
+        "BLB: Orphaned markers hidden (cross-wave references)",
+        "BLB: Reply vs inline comment distinction",
+        "BLB: Auth-gated Edit button",
+        "BLB: Mid-sentence [+] markers (multiple per paragraph)",
+        "BLB: Visual indicators (border-left, bullet sprite, [+] background)",
+        "BLB: Visual indicators",
+        "BLB: Toolbar decluttered (Hide/Delete moved to gear menu overflow)",
+        "BLB: Toolbar decluttered"
+      ],
+      "assertion": "Clicking inline marker expands the inline child at the marker position.",
+      "gatePass": true,
+      "gateDetail": "selector=\".inline-child-expanded\" count=1 need≥1",
+      "dynamicStep": "after-inline-plus-click"
+    },
+    {
+      "id": "fold-all-after-hide-replies",
+      "label": "fold all after hide replies",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/033-fold-all-after-hide-replies.png",
+      "featureRefs": [
+        "BLB: fold all",
+        "BLB: hide replies",
+        "BLB: Fold/Unfold all (▲/▼ in right panel)",
+        "BLB: Fold state persistence (localStorage + server)",
+        "BLB: Persistence of folded state across navigation",
+        "BLB: Right panel insert shortcuts (↵ @ ~ # Gadgets)"
+      ],
+      "assertion": "Fold control collapses/hides reply bodies.",
+      "gatePass": true,
+      "gateDetail": "selector=\".fold-btn\" count=2 need≥1",
+      "dynamicStep": "after-fold-click"
+    },
+    {
+      "id": "unfold-all-after-show-replies",
+      "label": "unfold all after show replies",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/034-unfold-all-after-show-replies.png",
+      "featureRefs": [
+        "BLB: unfold all",
+        "BLB: show replies"
+      ],
+      "assertion": "Unfold control restores reply visibility.",
+      "gatePass": true,
+      "gateDetail": "selector=\".fold-btn\" count=2 need≥1",
+      "dynamicStep": "after-unfold-click"
+    },
+    {
+      "id": "blb-fractal-collapsed-toc",
+      "label": "blb fractal collapsed toc",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/035-blb-fractal-collapsed-toc.png",
+      "featureRefs": [
+        "BLB: Collapsed TOC",
+        "BLB: deep fractal collapsed",
+        "BLB: Nested inline expansion",
+        "BLB: Deep fractal collapsed (BLB-as-ToC, depth-10 fixture)",
+        "BLB: [+] marker green for unread, gray for read"
+      ],
+      "assertion": "Depth-10 fractal topic in collapsed view: 3 root labels each with their own [+] marker, no children expanded.",
+      "gatePass": true,
+      "gateDetail": "all passed",
+      "dynamicStep": null
+    },
+    {
+      "id": "blb-fractal-spine-expanded-depth10",
+      "label": "blb fractal spine expanded depth10",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/036-blb-fractal-spine-expanded-depth10.png",
+      "featureRefs": [
+        "BLB: deep fractal spine expanded",
+        "BLB: Nested inline expansion",
+        "BLB: portal rendering"
+      ],
+      "assertion": "Depth-10 fractal topic with the Spine branch expanded through all 10 levels.",
+      "gatePass": true,
+      "gateDetail": "inline-expanded=9 need≥9",
+      "dynamicStep": "after-deep-expand"
+    },
+    {
+      "id": "blb-fractal-all-branches-expanded",
+      "label": "blb fractal all branches expanded",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/037-blb-fractal-all-branches-expanded.png",
+      "featureRefs": [
+        "BLB: deep fractal all-branches",
+        "BLB: portal flush with parent indent",
+        "BLB: Nested inline expansion"
+      ],
+      "assertion": "Depth-10 fractal topic with all 3 root branches expanded — visual parity check vs original Rizzoma deep BLB.",
+      "gatePass": true,
+      "gateDetail": "inline-expanded=3 need≥3 (3 root branches)",
+      "dynamicStep": "after-all-branches-expand"
+    },
+    {
+      "id": "right-panel-text-view-selected",
+      "label": "right panel text view selected",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/038-right-panel-text-view-selected.png",
+      "featureRefs": [
+        "User Interface: Text view toggle",
+        "User Interface: Hide replies / folded view toggle"
+      ],
+      "assertion": "Text view is selected in the right tools panel.",
+      "gatePass": true,
+      "gateDetail": "selector=\".view-btn[title=\"Text view\"]\" found=true active=true",
+      "dynamicStep": "after-text-view-click"
+    },
+    {
+      "id": "right-panel-mind-map-selected",
+      "label": "right panel mind map selected",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/039-right-panel-mind-map-selected.png",
+      "featureRefs": [
+        "User Interface: Mind map toggle",
+        "User Interface: Right panel mind map button"
+      ],
+      "assertion": "Mind map button can be selected in the right tools panel.",
+      "gatePass": true,
+      "gateDetail": "selector=\".view-btn[title=\"Mind map\"]\" found=true active=true",
+      "dynamicStep": "after-mindmap-click"
+    },
+    {
+      "id": "right-panel-short-mode-selected",
+      "label": "right panel short mode selected",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/040-right-panel-short-mode-selected.png",
+      "featureRefs": [
+        "User Interface: short display mode"
+      ],
+      "assertion": "Short display mode toggle activates.",
+      "gatePass": true,
+      "gateDetail": "selector=\".display-btn[title=\"Short view\"]\" found=true active=true",
+      "dynamicStep": "after-short-click"
+    },
+    {
+      "id": "right-panel-expanded-mode-selected",
+      "label": "right panel expanded mode selected",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/041-right-panel-expanded-mode-selected.png",
+      "featureRefs": [
+        "User Interface: expanded display mode"
+      ],
+      "assertion": "Expanded display mode toggle activates.",
+      "gatePass": true,
+      "gateDetail": "selector=\".display-btn[title=\"Expanded view\"]\" found=true active=true",
+      "dynamicStep": "after-expanded-click"
+    },
+    {
+      "id": "mobile-authenticated-topic-navigation",
+      "label": "mobile authenticated topic navigation",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/042-mobile-authenticated-topic-navigation.png",
+      "featureRefs": [
+        "Mobile & PWA: responsive layout",
+        "Mobile & PWA: mobile navigation",
+        "Mobile & PWA: Responsive breakpoints (xs/sm/md/lg/xl)",
+        "Mobile & PWA: Mobile detection hooks (isMobile/isTablet/isDesktop)",
+        "Mobile & PWA: PWA manifest + icons (8 sizes)",
+        "Mobile & PWA: Service worker (cache-first assets, network-first API)",
+        "Mobile & PWA: Touch-friendly targets (44px min)",
+        "Mobile & PWA: 100dvh dynamic viewport height",
+        "Mobile & PWA: Mobile address-bar handling",
+        "Mobile & PWA: Swipe gestures (left/right panel navigation)",
+        "Mobile & PWA: BottomSheet mobile menu",
+        "Mobile & PWA: Pull-to-refresh",
+        "Mobile & PWA: iOS zoom prevention (font-size: 16px on inputs)",
+        "Mobile & PWA: Offline mutation queue (auto-sync, max 3 retries)",
+        "Mobile & PWA: Mobile context provider (isMobile/isTablet/isDesktop hooks)",
+        "Mobile & PWA: BottomSheet component (mobile-style modal)",
+        "Mobile & PWA: PWA installability (install prompt + manifest)",
+        "Mobile & PWA: Gesture hooks (useSwipe, usePullToRefresh)",
+        "Mobile & PWA: Offline support (service worker + offline queue)",
+        "Mobile & PWA: Mobile layout (touch-optimized targets)",
+        "Mobile & PWA: Touch optimization (44px targets, no hover, font-size 16px)",
+        "Mobile & PWA: Zero new dependencies (pure CSS + native APIs)",
+        "Mobile & PWA: Mobile tests (BlipMenu touch + mobilePwa suite)",
+        "Mobile & PWA: Zero new dependencies",
+        "Mobile & PWA: Mobile context",
+        "Mobile & PWA: BottomSheet component",
+        "Mobile & PWA: PWA installability",
+        "Mobile & PWA: Offline support",
+        "Mobile & PWA: Mobile layout",
+        "Mobile & PWA: Touch optimization"
+      ],
+      "assertion": "Mobile viewport renders the authenticated navigation shell and topic area without horizontal overflow.",
+      "gatePass": true,
+      "gateDetail": "first-pass: selector=\".rizzoma-layout\" count=1 need≥1",
+      "dynamicStep": null
+    },
+    {
+      "id": "mobile-topic-content-view",
+      "label": "mobile topic content view",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/043-mobile-topic-content-view.png",
+      "featureRefs": [
+        "Mobile & PWA: responsive layout",
+        "Mobile & PWA: mobile topic view",
+        "Mobile & PWA: View Transitions API (with reduced-motion)",
+        "Mobile & PWA: View Transitions"
+      ],
+      "assertion": "Mobile viewport renders topic content without horizontal overflow and uses mobile layout classes.",
+      "gatePass": true,
+      "gateDetail": "first-pass: selector=\".mobile-view-content .rizzoma-topic-detail\" count=1 need≥1",
+      "dynamicStep": null
+    },
+    {
+      "id": "toast-notification-component-visible",
+      "label": "toast notification component visible",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/044-toast-notification-component-visible.png",
+      "featureRefs": [
+        "User Interface: Toast notifications"
+      ],
+      "assertion": "Toast component renders a visible status notification when the app emits a toast event.",
+      "gatePass": true,
+      "gateDetail": "selector=\"[data-testid=\"toast\"], .toast, [role=\"status\"], [aria-live=\"polite\"]\" count=1 need≥1",
+      "dynamicStep": "after-toast-event"
+    },
+    {
+      "id": "real-time-cursor-and-typing-indicator-visible",
+      "label": "real time cursor and typing indicator visible",
+      "file": "screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep/045-real-time-cursor-and-typing-indicator-visible.png",
+      "featureRefs": [
+        "Real-time Collaboration: live cursors",
+        "Real-time Collaboration: typing indicators",
+        "Real-time Collaboration: Live cursors (Yjs awareness, user colors)",
+        "Real-time Collaboration: Yjs CRDT document sync",
+        "Real-time Collaboration: TipTap Collaboration extension",
+        "Real-time Collaboration: Socket.IO room-based relay",
+        "Real-time Collaboration: Y.Doc seeding on first client",
+        "Real-time Collaboration: Awareness loop prevention (applyingRemoteAwareness flag)",
+        "Real-time Collaboration: Reconnection handling (state vector diff)",
+        "Real-time Collaboration: User color assignment",
+        "Real-time Collaboration: Collaborative selection (see what others highlighted)",
+        "Real-time Collaboration: Transport layer (Socket.IO v4)",
+        "Real-time Collaboration: CRDT engine (Yjs)",
+        "Real-time Collaboration: Presence indicator (avatars, overflow counts)",
+        "Real-time Collaboration: Event broadcasting (blip:created/updated/deleted)",
+        "Real-time Collaboration: Y.js + TipTap + Socket.IO integration",
+        "Real-time Collaboration: Cross-tab sync verified (multi-tab editing)",
+        "Real-time Collaboration: Relay-first architecture (server relays before applying)",
+        "Real-time Collaboration: Collaborative selection highlight",
+        "Real-time Collaboration: Presence awareness (Yjs awareness protocol)",
+        "Real-time Collaboration: User colors (per-participant color)",
+        "Real-time Collaboration: Reconnection handling (re-join rooms + state vector)",
+        "Real-time Collaboration: Persistence round-trip verified (Y.Doc to CouchDB)",
+        "Real-time Collaboration: Screenshot evidence in sweep manifest",
+        "Real-time Collaboration: Feature flags (REALTIME_COLLAB + LIVE_CURSORS)",
+        "Real-time Collaboration: Relay-first architecture",
+        "Real-time Collaboration: User colors",
+        "Real-time Collaboration: Reconnection handling"
+      ],
+      "assertion": "A second authenticated editor produces remote cursor/typing UI in the owner editor.",
+      "gatePass": true,
+      "gateDetail": "first-pass: selector=\".collaboration-cursor\" count=1 need≥1",
+      "dynamicStep": "after-second-client-typing"
+    }
+  ],
+  "assertions": [
+    "Parsed 159 screenshot-valid rows and 68 dynamic candidates from RIZZOMA_FEATURES_STATUS.md.",
+    "Captured 45 fresh screenshots in /mnt/c/Rizzoma/screenshots/260512-COV-LIFT-FINAL3-sweep-feature-sweep."
+  ],
+  "residuals": []
+}
