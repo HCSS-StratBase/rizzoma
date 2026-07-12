@@ -1,17 +1,25 @@
 # VPS Deployment — Rizzoma on 138.201.62.161
 
-**Last updated**: 2026-07-12 (PR #60 blue/green production cutover)
+**Last updated**: 2026-07-12 (PR #60 cutover + 05:58 CEST runtime reality audit)
 
 > **⚠️ CURRENT RUNTIME TRUTH — the Docker application topology below is
 > historical.** Public nginx now targets Vite `:3100`, which proxies to API
 > `:8100` from `/data/large-projects/stephan/rizzoma_merge` at exact merged
-> commit `fe6988fb`. That API uses RedisStore at the local Redis container.
+> commit `fe6988fb`. The checkout later advanced cleanly to docs/evidence commit
+> `3a55155a`; running application code did not change. The API uses RedisStore
+> and `NODE_ENV=production`.
 > The former public lane remains healthy for immediate rollback: Vite `:3000`
 > plus API `:8788` from `/data/large-projects/stephan/rizzoma_260612` at
 > `daa3f2f3`. Nginx rollback backup:
 > `/root/rizzoma.conf.pre-pr60-20260712-052206`.
 >
-> Both lanes are still unmanaged bare Node/Vite processes. They share CouchDB
+> The public frontend is **Vite's development server**, serving source modules
+> with `MODE=development`; it is not a compiled production frontend. Its live
+> flags are `FEAT_ALL=1`, `FEAT_RIZZOMA_PARITY_RENDER=1`, and
+> `FEAT_RIZZOMA_NATIVE_RENDER` unset. Production therefore uses the React/TipTap
+> parity path. `NativeWaveView` is still read-only and is not publicly enabled.
+>
+> Both lanes are unmanaged bare Node/Vite processes. They share CouchDB
 > database `project_rizzoma`; only the active lane is Redis-backed for sessions.
 > The `dev.138-201-62-161.nip.io` vhost reaches the same `:3100` lane, which now
 > intentionally uses the public OAuth callback environment. Legacy listeners
@@ -23,7 +31,9 @@ Production acceptance for PR [#60](https://github.com/HCSS-StratBase/rizzoma/pul
 is preserved under `screenshots/260712-0530-pr60-production-final/`: health and
 OAuth passed, public collaboration passed 10/10, strict desktop/mobile unread
 navigation persisted `2 → 1 → 0`, the API recorded zero 5xx responses, and the
-required 1280/1366/1440/1600 visual sweep was inspected.
+required 1280/1366/1440/1600 visual sweep was inspected. A later 05:58 CEST
+snapshot measured 395 requests / 0 5xx in the current API log after 2,279
+seconds of uptime; treat that as a short post-cutover sample, not a soak.
 
 ## Current blue/green deployment and rollback
 

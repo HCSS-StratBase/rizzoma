@@ -97,13 +97,13 @@ codex exec '
     - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`). Ensure `http://localhost:3000/` is reachable before Playwright.
 
   Priority focus (current backlog):
-  1) Replace the active and rollback bare Node/Vite processes with managed services; preserve the verified Redis session configuration and exact-SHA rollback procedure.
-  2) Soak the PR #60 production lane, then retire `:3000`/`:8788` only after the rollback window closes.
-  3) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
-  4) Repair/refresh BLB snapshots and continue inline-marker, toolbar, and unread parity.
-  5) Test real-device iPhone Safari; Pixel 9 Pro XL / Android Chrome and emulated Pixel 5 are already evidenced.
-  6) Automate bundle/GDrive backup cadence.
-  7) Address Node 22, Capacitor CLI 8, GitHub Action majors, 6,354 lint warnings, and legacy assets.
+  1) Replace the public Vite development server and both lanes' bare root-owned processes with managed production services; preserve Redis sessions and exact-SHA rollback.
+  2) Decide the native-render direction: finish write/edit/reply support and gate a real cutover, or retain the React/TipTap parity path and correct the release naming.
+  3) Soak PR #60, clean synthetic production topics, separate staging from production CouchDB, then retire `:3000`/`:8788` after the rollback window.
+  4) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
+  5) Repair/refresh BLB snapshots and test real-device iPhone Safari.
+  6) Reconcile the dirty canonical checkout and automate bundle/GDrive backup cadence.
+  7) Triage 3 stale PRs / 7 native-port issues; address Node 22, Capacitor CLI 8, GitHub Action majors, 6,354 lint warnings, and legacy assets.
 
   Testing/CI hygiene:
   - Keep `npm run test:toolbar-inline`, `npm run test:follow-green`, and `npm run test:collab` green; snapshots live under `snapshots/<feature>/` and are uploaded as Actions artifacts.

@@ -70,3 +70,12 @@ This section supersedes the deployment boundary above.
 - Public collaboration passed 10/10 with a 39 ms A-to-B relay, zero receiving-client REST PUTs, bidirectional convergence, reconnect catch-up, unread drain, and no-store topic reads.
 - Public Follow-the-Green passed on desktop and emulated Pixel 5 mobile. The real Next control and endpoint state moved `2 → 1 → 0`; unread reads returned HTTP 200 and individual mark-read writes returned HTTP 201. The visually inspected public evidence, including the 1280/1366/1440/1600 desktop sweep, is under `screenshots/260712-0530-pr60-production-final/`.
 - Remaining boundary: the active Node/Vite processes are not supervised services, the old lane is intentionally retained for rollback, live and staging share CouchDB, physical iPhone Safari remains untested, and 500/1,000-blip full-render sweeps remain open.
+
+## Runtime reality audit and release-label correction
+
+- Rechecked the public URL, health/OAuth, nginx target, active process environments, Vite-transformed feature flags, source checkout, Redis, current API log, GitHub state, and native-render executable path at 05:58 CEST.
+- Corrected the central release claim: public production is the React/TipTap parity path. The live client exposes parity `1` and native unset; `RizzomaTopicDetail` additionally requires `?render=native`, while `NativeWaveView` remains read-only without persistence, edit toolbar, or reply support.
+- Confirmed the API runs with `NODE_ENV=production`, but the public frontend is Vite's development server (`MODE=development`, `DEV=true`) serving source modules. Node and Vite remain bare root-owned processes with no restart supervisor.
+- Measured 395 requests / 0 5xx in the active API log after exactly 2,279 seconds of uptime. This is a short post-cutover sample only, not evidence of sustained reliability.
+- Confirmed the clean release checkout at `3a55155a` differs from running application commit `fe6988fb` only by docs/evidence. The canonical `/mnt/c/Rizzoma` tree remains a separate dirty `feature/native-fractal-port` checkout at `6e988cc` with one tracked modification and 134 untracked entries; it was left untouched.
+- Repository boundary: 3 stale PRs and 7 native-port issues remain open, CI still reports 6,354 warnings, synthetic acceptance topics remain in production, both lanes share CouchDB, and physical iPhone plus 500/1,000-blip full-render coverage remain open.

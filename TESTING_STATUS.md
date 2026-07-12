@@ -2,12 +2,14 @@
 
 ## Public production acceptance — 2026-07-12 (`master` @ `fe6988fb`)
 
+- A read-only runtime audit at 05:58 CEST found **395 requests / 0 5xx** in the current API log after **2,279 seconds** of API uptime. This is a short post-cutover sample only; it is not a soak or long-term reliability result.
+- The public client is **not testing the native renderer**. The live transform exposes parity `1`, native unset, and Vite development mode; the default route therefore exercises the React/TipTap parity path. `NativeWaveView` remains read-only and additionally requires `?render=native` when its flag is enabled.
 - PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60) merged and is public-live through nginx → Vite `:3100` → API `:8100`; the merge tree exactly matched the accepted staging tree.
 - [CI 29177833541](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833541) passed build, browser smokes, performance, health, and aggregate gates; [iOS 29177833560](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833560) passed. Vitest measured **62 files / 284 passed / 3 skipped / 0 failed**, typecheck passed, lint measured **0 errors / 6,354 warnings**, and the production build transformed **3,298 modules**.
 - The strict public Follow-the-Green smoke passed on desktop and emulated Pixel 5 mobile through the real Next control: endpoint IDs and persisted state both moved **2 → 1 → 0**, unread reads returned HTTP 200, and individual mark-read writes returned HTTP 201.
 - Public two-process collaboration passed **10/10** with a measured **39 ms** A-to-B relay, **0** receiving-client REST PUTs, bidirectional convergence, reconnect catch-up, unread drain, and no-store topic reads.
 - Public health and Google OAuth callback passed; the active API used RedisStore and logged **0** 5xx responses across acceptance. The inspected public evidence and required 1280/1366/1440/1600 viewport sweep are under `screenshots/260712-0530-pr60-production-final/`.
-- Boundary: the active Node/Vite processes remain unsupervised, the previous public lane is retained for immediate rollback, physical iPhone Safari is untested, and full-render 500/1,000-blip sweeps remain open.
+- Boundary: the active Node/Vite processes remain unsupervised, the frontend is Vite's development server, the previous public lane is retained for immediate rollback, both lanes share CouchDB, synthetic acceptance topics remain in the production topic list, physical iPhone Safari is untested, and full-render 500/1,000-blip sweeps remain open.
 
 ## Merged release — 2026-07-12 (`master`; release code checkpoint `8840f552`)
 
