@@ -4,9 +4,26 @@ import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { SocketIOProvider } from '../client/components/editor/CollaborativeProvider';
 
 /** Create a minimal mock socket that mimics Socket.IO client behavior */
-function createMockSocket(connected = true) {
+function createMockSocket(connected = true, autoJoinAck = true) {
   type SocketHandler = (...args: unknown[]) => void;
   const handlers = new Map<string, Set<SocketHandler>>();
+  const pendingJoinAcks: Array<(result: any) => void> = [];
+  const emit = vi.fn((event: string, ...args: any[]) => {
+    const callback = args.at(-1);
+    if (event === 'blip:join' && typeof callback === 'function') {
+      if (autoJoinAck) {
+        callback({
+          ok: true,
+          waveId: 'wave-1',
+          canEdit: true,
+          user: { id: 'user-1', name: 'User One', color: '#123456' },
+        });
+      } else {
+        pendingJoinAcks.push(callback);
+      }
+    }
+    if (event === 'blip:update' && typeof callback === 'function') callback({ ok: true });
+  });
   const socket = {
     connected,
     on(event: string, handler: SocketHandler) {
@@ -20,10 +37,15 @@ function createMockSocket(connected = true) {
         handlers.delete(event);
       }
     },
-    emit: vi.fn(),
+    emit,
     // Test helper: simulate server sending an event to this client
     _receive(event: string, data: any) {
       handlers.get(event)?.forEach(fn => fn(data));
+    },
+    _ackNextJoin(result: any) {
+      const ack = pendingJoinAcks.shift();
+      if (!ack) throw new Error('No pending blip:join acknowledgement');
+      ack(result);
     },
   };
   return socket;
@@ -44,7 +66,9 @@ describe('client: CollaborativeProvider', () => {
 
   it('joins room on construction when socket is connected', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-1');
-    expect(socket.emit).toHaveBeenCalledWith('blip:join', { blipId: 'blip-1' });
+    expect(socket.emit.mock.calls.some(([event, payload]) => (
+      event === 'blip:join' && payload.blipId === 'blip-1'
+    ))).toBe(true);
     provider.destroy();
   });
 
@@ -68,6 +92,54 @@ describe('client: CollaborativeProvider', () => {
     expect(updateCalls[0][1].blipId).toBe('blip-3');
     expect(Array.isArray(updateCalls[0][1].update)).toBe(true);
 
+    provider.destroy();
+  });
+
+  it('holds document, awareness, and diff traffic until join authorization succeeds', () => {
+    socket = createMockSocket(true, false);
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-delayed');
+    socket.emit.mockClear();
+
+    doc.getText('default').insert(0, 'edited while authorization is pending');
+    provider.setUser({ id: 'local-user', name: 'Local User', color: '#abcdef' });
+
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:update')).toHaveLength(0);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update')).toHaveLength(0);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:sync:request')).toHaveLength(0);
+
+    socket._ackNextJoin({
+      ok: true,
+      waveId: 'wave-1',
+      canEdit: true,
+      user: { id: 'server-user', name: 'Server User', color: '#123456' },
+    });
+
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:update')).toHaveLength(1);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update')).toHaveLength(1);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:sync:request')).toHaveLength(1);
+    expect(provider.awareness.getLocalState()?.['user']).toEqual({
+      id: 'server-user', name: 'Server User', color: '#123456',
+    });
+
+    provider.destroy();
+  });
+
+  it('keeps collaboration paused and reports a denied join', () => {
+    socket = createMockSocket(true, false);
+    const toast = vi.fn();
+    window.addEventListener('toast', toast);
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-denied');
+    socket.emit.mockClear();
+    doc.getText('default').insert(0, 'must not leave this client');
+
+    socket._ackNextJoin({ ok: false, error: 'unauthenticated' });
+
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:update')).toHaveLength(0);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update')).toHaveLength(0);
+    expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:sync:request')).toHaveLength(0);
+    expect(toast).toHaveBeenCalledTimes(1);
+
+    window.removeEventListener('toast', toast);
     provider.destroy();
   });
 

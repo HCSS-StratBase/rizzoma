@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { find, getDoc } from './couch.js';
+import { sortParticipantCandidates } from './invitations.js';
 
 export type ShareLevel = 'private' | 'link' | 'public';
 export type WaveRole = 'outsider' | 'viewer' | 'commenter' | 'editor' | 'owner';
@@ -21,6 +22,8 @@ export type AccessControlledWave = {
   _id?: string;
   type?: string;
   authorId?: string;
+  deleted?: boolean;
+  deletedAt?: number;
   shareLevel?: ShareLevel;
   allowComments?: boolean;
   allowEdits?: boolean;
@@ -47,6 +50,11 @@ type ParticipantDoc = {
   email?: string;
   role: 'owner' | 'editor' | 'commenter' | 'viewer';
   status?: 'pending' | 'accepted' | 'declined';
+  inviteTokenHash?: string;
+  inviteExpiresAt?: number;
+  invitedAt?: number;
+  acceptedAt?: number;
+  updatedAt?: number;
 };
 
 export const DEFAULT_SHARING_POLICY: SharingPolicy = {
@@ -72,6 +80,16 @@ function normalizeEmail(value?: string): string {
 
 function normalizeShareLevel(value: unknown): ShareLevel {
   return value === 'link' || value === 'public' ? value : 'private';
+}
+
+/**
+ * Topic deletion is represented by a durable document rather than a CouchDB
+ * `_deleted` revision.  A missing metadata document is deliberately treated
+ * as a legacy public-read-only wave, so physically deleting the topic while
+ * leaving any blip behind would otherwise make the deleted content public.
+ */
+export function isDeletedWave(wave?: AccessControlledWave | null): boolean {
+  return Boolean(wave?.deleted || wave?.type === 'topic_tombstone');
 }
 
 export function normalizeSharingPolicy(wave?: AccessControlledWave | null): SharingPolicy {
@@ -105,7 +123,10 @@ export function identityFromSocketRequest(request: unknown): AccessIdentity {
 }
 
 function roleFromParticipant(participant?: ParticipantDoc | null): WaveRole | null {
-  if (!participant || participant.status === 'declined') return null;
+  // Pending email invitations prove nothing about the current session's
+  // control of that address. Only a redeemed/accepted participant grants
+  // access; legacy records with no status remain accepted for compatibility.
+  if (!participant || participant.status === 'pending' || participant.status === 'declined') return null;
   if (participant.role === 'owner') return 'owner';
   if (participant.role === 'editor') return 'editor';
   if (participant.role === 'commenter') return 'commenter';
@@ -149,17 +170,10 @@ async function findParticipant(waveId: string, identity: AccessIdentity): Promis
       .catch(() => ({ docs: [] as ParticipantDoc[] }));
     candidates.push(...(result.docs || []));
   }
-  const email = normalizeEmail(identity.email);
-  if (email) {
-    const selector = { type: 'participant', waveId, email };
-    const result = await find<ParticipantDoc>(selector, { limit: 5, use_index: 'idx_participant_wave_email' })
-      .catch(() => find<ParticipantDoc>(selector, { limit: 5 }))
-      .catch(() => ({ docs: [] as ParticipantDoc[] }));
-    candidates.push(...(result.docs || []));
-  }
-  return candidates
-    .filter((candidate) => candidate.status !== 'declined')
-    .sort((a, b) => ROLE_RANK[roleFromParticipant(b) || 'outsider'] - ROLE_RANK[roleFromParticipant(a) || 'outsider'])[0] || null;
+  return sortParticipantCandidates(
+    candidates.filter((candidate) => candidate.status !== 'pending' && candidate.status !== 'declined'),
+    identity.id,
+  )[0] || null;
 }
 
 export async function resolveWaveAccess(
@@ -185,11 +199,23 @@ export async function resolveWaveAccess(
   }
   const policy = normalizeSharingPolicy(wave);
 
+  // Deleted topics are never eligible for the legacy compatibility fallback,
+  // including for their former owner or participants.  Keeping the tombstone
+  // at the original wave id makes this decision durable across restarts.
+  if (isDeletedWave(wave)) {
+    return buildAccess(
+      waveId,
+      identity,
+      { shareLevel: 'private', allowComments: false, allowEdits: false },
+      'outsider',
+    );
+  }
+
   if (identity.id && wave?.authorId === identity.id) {
     return buildAccess(waveId, identity, policy, 'owner');
   }
 
-  const participant = identity.id || identity.email
+  const participant = identity.id
     ? await findParticipant(waveId, identity)
     : null;
   const participantRole = roleFromParticipant(participant);
@@ -240,6 +266,9 @@ export async function resolveBlipAccess(
   identity: AccessIdentity,
 ): Promise<{ blip: any; access: WaveAccess }> {
   const blip = await getDoc<any>(blipId);
+  if (blip?.deleted) {
+    throw new Error('410 blip_deleted');
+  }
   if (blip?.type === 'topic') {
     const waveId = String(blip._id || blipId);
     const access = await resolveWaveAccess(waveId, identity, blip);
@@ -260,17 +289,7 @@ export async function listParticipantWaveIds(identity: AccessIdentity): Promise<
       .catch(() => find<ParticipantDoc>(selector, { limit: 5000 }))
       .catch(() => ({ docs: [] as ParticipantDoc[] }));
     for (const doc of result.docs || []) {
-      if (doc.status !== 'declined' && doc.waveId) waveIds.add(doc.waveId);
-    }
-  }
-  const email = normalizeEmail(identity.email);
-  if (email) {
-    const selector = { type: 'participant', email };
-    const result = await find<ParticipantDoc>(selector, { limit: 5000, use_index: 'idx_participant_email_wave' })
-      .catch(() => find<ParticipantDoc>(selector, { limit: 5000 }))
-      .catch(() => ({ docs: [] as ParticipantDoc[] }));
-    for (const doc of result.docs || []) {
-      if (doc.status !== 'declined' && doc.waveId) waveIds.add(doc.waveId);
+      if (doc.status !== 'pending' && doc.status !== 'declined' && doc.waveId) waveIds.add(doc.waveId);
     }
   }
   return [...waveIds];

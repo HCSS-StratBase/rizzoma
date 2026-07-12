@@ -10,7 +10,7 @@ describe('routes: /api/editor rebuild snapshot', () => {
   app.use(express.json());
   app.use(cookieParser());
   app.use((req: any, _res, next) => {
-    req.session = { userId: 'editor-owner', userName: 'Editor Owner' };
+    req.session = { userId: 'editor-owner', userName: 'Editor Owner', csrfToken: 'token' };
     next();
   });
   let failSnapshotSave = false;
@@ -61,6 +61,9 @@ describe('routes: /api/editor rebuild snapshot', () => {
       if (method === 'GET' && /\/project_rizzoma\/w1$/.test(path)) {
         return ok({ _id: 'w1', type: 'wave', title: 'Wave', authorId: 'editor-owner', createdAt: 1, updatedAt: 1 });
       }
+      if (method === 'GET' && /\/project_rizzoma\/b1$/.test(path)) {
+        return ok({ _id: 'b1', _rev: '1-blip', type: 'blip', waveId: 'w1', createdAt: 1, updatedAt: 1 });
+      }
       return ok({}, 404);
     }) as typeof global.fetch;
 
@@ -102,7 +105,7 @@ describe('routes: /api/editor rebuild snapshot', () => {
     const server = startServer();
     const addr = server.address();
     const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
-    const post = await fetch(`http://127.0.0.1:${port}/api/editor/w1/rebuild`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({}) });
+    const post = await fetch(`http://127.0.0.1:${port}/api/editor/w1/rebuild`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' }, body: JSON.stringify({}) });
     expect(post.status).toBe(202);
     const body = await waitForStatus(port, (b) => b.status === 'complete');
     expect(body.status).toBe('complete');
@@ -117,7 +120,7 @@ describe('routes: /api/editor rebuild snapshot', () => {
     const server = startServer();
     const addr = server.address();
     const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
-    const resp = await fetch(`http://127.0.0.1:${port}/api/editor/w1/rebuild`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ blipId: 'b1' }) });
+    const resp = await fetch(`http://127.0.0.1:${port}/api/editor/w1/rebuild`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' }, body: JSON.stringify({ blipId: 'b1' }) });
     expect(resp.status).toBe(202);
     const body = await waitForStatus(port, (b) => b.status === 'error', 6000, 'b1');
     expect(body.status).toBe('error');

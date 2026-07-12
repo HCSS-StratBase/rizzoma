@@ -28,8 +28,8 @@ describe('routes: /api/waves unread/next', () => {
       params,
       query,
       body,
-      session: { userId: 'u1' },
-      headers: { host: 'localhost' },
+      session: { userId: 'u1', csrfToken: 'token' },
+      headers: { host: 'localhost', 'x-csrf-token': 'token' },
       protocol: 'http',
       get(header: string) { return (this.headers || {})[header.toLowerCase()]; },
     };

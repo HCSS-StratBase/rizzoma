@@ -53,5 +53,13 @@ export type WaveParticipant = {
   invitedBy?: string;
   invitedAt: number;
   acceptedAt?: number;
+  declinedAt?: number;
+  declinedBy?: string;
   status: 'pending' | 'accepted' | 'declined';
+  /** SHA-256 only; the raw one-time token is sent to the invitee. */
+  inviteTokenHash?: string;
+  inviteExpiresAt?: number;
+  /** Retained hash permits an idempotent retry by the same account only. */
+  acceptedInviteTokenHash?: string;
+  acceptedInviteExpiresAt?: number;
 };

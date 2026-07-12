@@ -133,7 +133,7 @@ describe('central wave authorization policy', () => {
     expect((await resolveWaveAccess('wave-private', identities['owner']!)).role).toBe('owner');
   });
 
-  it('matches invitations by normalized email and ignores declined participants', async () => {
+  it('never grants a participant role by self-asserted email and ignores declined participants', async () => {
     state.docs.set('participant-email', {
       _id: 'participant-email',
       type: 'participant',
@@ -143,7 +143,19 @@ describe('central wave authorization policy', () => {
       role: 'commenter',
       status: 'pending',
     });
-    expect((await resolveWaveAccess('wave-private', { id: 'real-user', email: 'GUEST@EXAMPLE.TEST' })).role).toBe('commenter');
+    expect((await resolveWaveAccess('wave-private', { id: 'real-user', email: 'GUEST@EXAMPLE.TEST' })).role).toBe('outsider');
+
+    state.docs.set('participant-email', {
+      ...state.docs.get('participant-email')!,
+      status: 'accepted',
+    });
+    expect((await resolveWaveAccess('wave-private', { id: 'real-user', email: 'GUEST@EXAMPLE.TEST' })).role).toBe('outsider');
+
+    state.docs.set('participant-email', {
+      ...state.docs.get('participant-email')!,
+      userId: 'real-user',
+    });
+    expect((await resolveWaveAccess('wave-private', { id: 'real-user', email: 'different@example.test' })).role).toBe('commenter');
 
     state.docs.set('participant-email', {
       ...state.docs.get('participant-email')!,

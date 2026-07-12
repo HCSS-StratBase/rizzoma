@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { noStore } from '../middleware/noStore.js';
 import { getDoc, insertDoc, updateDoc } from '../lib/couch.js';
+import { csrfProtect } from '../middleware/csrf.js';
 
 const router = Router();
 
@@ -62,7 +63,7 @@ router.get('/preferences', noStore, requireAuth, async (req, res): Promise<void>
   }
 });
 
-router.patch('/preferences', requireAuth, async (req, res): Promise<void> => {
+router.patch('/preferences', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const installedAppIds = req.body?.reset === true
     ? [...PREVIEW_APP_IDS]

@@ -87,7 +87,8 @@ describe('routes: blips permissions', () => {
     const res = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
       body: { content: '<p>new</p>' },
-      session: { userId: 'other' },
+      session: { userId: 'other', csrfToken: 'tok' },
+      headers: { 'x-csrf-token': 'tok' },
     });
     expect(res.statusCode).toBe(403);
     expect(couch.updateDoc).not.toHaveBeenCalled();
@@ -99,7 +100,8 @@ describe('routes: blips permissions', () => {
     const res = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
       body: { content: '<p>new</p>' },
-      session: { userId: 'author' },
+      session: { userId: 'author', csrfToken: 'tok' },
+      headers: { 'x-csrf-token': 'tok' },
     });
     expect(res.statusCode).toBe(200);
     expect(couch.updateDoc).toHaveBeenCalledTimes(1);

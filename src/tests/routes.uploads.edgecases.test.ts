@@ -108,6 +108,7 @@ async function invokeUploads(
   } = {
     method: method.toUpperCase() as any,
     session: (opts.session ?? makeSession()) as Session & Partial<SessionData> & Record<string, unknown>,
+    headers: { 'x-csrf-token': 'test-csrf' },
     file: opts.file
       ? {
           fieldname: 'file',
@@ -123,6 +124,7 @@ async function invokeUploads(
         }
       : undefined,
   };
+  (req as any).get = (name: string) => (req.headers as Record<string, string> | undefined)?.[name.toLowerCase()];
   const res: Partial<Response> & {
     statusCode: number;
     body: any;
@@ -161,6 +163,7 @@ const makeSession = (overrides: Record<string, unknown> = {}) =>
     reload: vi.fn(),
     save: vi.fn(),
     touch: vi.fn(),
+    csrfToken: 'test-csrf',
     ...overrides,
   }) as unknown as Session & Partial<SessionData> & Record<string, unknown>;
 

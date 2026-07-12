@@ -1,6 +1,7 @@
 import { chromium, devices } from 'playwright';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { seedAcceptedParticipant, seedVerifiedE2EAccount } from './scripts/lib/e2e-sharing-fixtures.mjs';
 
 const baseUrl = process.env.RIZZOMA_BASE_URL || 'http://localhost:3000';
 const headed = process.env.RIZZOMA_E2E_HEADED === '1';
@@ -89,32 +90,12 @@ async function ensureAuth(page, email, pwd, label) {
       body: JSON.stringify({ email, password }),
     });
 
-    if (loginResp.ok) {
-      return { success: true, method: 'login' };
-    }
-
-    // If login fails, try register
-    const registerResp = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers,
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (registerResp.ok) {
-      return { success: true, method: 'register' };
-    }
-
-    const error = await registerResp.text();
-    return { success: false, error, status: registerResp.status };
+    if (loginResp.ok) return { success: true, method: 'login' };
+    return { success: false, error: await loginResp.text(), status: loginResp.status };
   }, { email, password: pwd });
 
   if (!authResult.success) {
     throw new Error(`Auth failed for ${label}: ${authResult.error} (status: ${authResult.status})`);
-  }
-
-  if (authResult.method === 'register') {
-    log(`${label}: registered new account for ${email}`);
   }
 
   // Reload page to pick up new session (use domcontentloaded instead of networkidle due to WebSocket)
@@ -342,6 +323,8 @@ async function main() {
     log(`Running profile: ${profile.name}`);
     const ownerEmail = ownerEmailBase || `follow-owner+${profile.name}+${timestamp}@example.com`;
     const observerEmail = observerEmailBase || `follow-observer+${profile.name}+${timestamp}@example.com`;
+    const ownerFixture = await seedVerifiedE2EAccount(ownerEmail, password);
+    await seedVerifiedE2EAccount(observerEmail, password);
     const ownerContext = await browser.newContext(profile.contextOptions);
     const observerContext = await browser.newContext(profile.contextOptions);
     const ownerPage = await ownerContext.newPage();
@@ -371,6 +354,15 @@ async function main() {
       await openWave(ownerPage, waveId, rootBlipId);
 
       await ensureAuth(observerPage, observerEmail, password, `[${profile.name}] Observer`);
+      await seedAcceptedParticipant(waveId, observerEmail, 'viewer', ownerFixture._id);
+      const viewerAccess = await observerPage.evaluate(async (id) => {
+        const response = await fetch(`/api/topics/${encodeURIComponent(id)}`, { credentials: 'include' });
+        const data = await response.json().catch(() => null);
+        return { status: response.status, role: data?.permissions?.role, canRead: data?.permissions?.canRead, canEdit: data?.permissions?.canEdit };
+      }, waveId);
+      if (viewerAccess.status !== 200 || viewerAccess.role !== 'viewer' || !viewerAccess.canRead || viewerAccess.canEdit) {
+        throw new Error(`Observer viewer policy mismatch: ${JSON.stringify(viewerAccess)}`);
+      }
       await openWave(observerPage, waveId, rootBlipId);
 
       await markWaveRead(ownerPage, waveId, 'owner');

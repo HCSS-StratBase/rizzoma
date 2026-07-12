@@ -20,6 +20,19 @@ type Comment = {
 const router = Router();
 // Schemas moved to ../schemas/comment
 
+function isCommentDoc(value: unknown): value is Comment & { _id: string; _rev: string } {
+  const doc = value as Partial<Comment> | null;
+  return Boolean(
+    doc
+      && doc.type === 'comment'
+      && typeof doc._id === 'string'
+      && typeof doc._rev === 'string'
+      && typeof doc.topicId === 'string'
+      && typeof doc.authorId === 'string'
+      && typeof doc.content === 'string',
+  );
+}
+
 // GET /api/topics/:id/comments
 router.get('/topics/:id/comments', async (req, res): Promise<void> => {
   try {
@@ -75,7 +88,11 @@ router.patch('/comments/:id', requireAuth, csrfProtect(), async (req, res): Prom
   const userId = req.user!.id;
   try {
     const id = String(req.params['id'] || '');
-    const existing = await getDoc<Comment>(id);
+    const existing = await getDoc<unknown>(id);
+    if (!isCommentDoc(existing)) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
     const access = await requireWaveAccess(req, res, existing.topicId, 'comment');
     if (!access) return;
     if (existing.authorId !== userId) { res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id }); return; }
@@ -98,7 +115,11 @@ router.delete('/comments/:id', requireAuth, csrfProtect(), async (req, res): Pro
   const userId = req.user!.id;
   try {
     const id = String(req.params['id'] || '');
-    const existing = await getDoc<Comment>(id);
+    const existing = await getDoc<unknown>(id);
+    if (!isCommentDoc(existing)) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
     const access = await requireWaveAccess(req, res, existing.topicId, 'comment');
     if (!access) return;
     if (existing.authorId !== userId) { res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id }); return; }

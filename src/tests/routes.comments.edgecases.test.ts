@@ -4,6 +4,7 @@ import commentsRouter from '../server/routes/comments';
 import { requestId } from '../server/middleware/requestId';
 
 describe('routes: comments edge cases', () => {
+  let destructiveWrites = 0;
   function makeApp(session: any) {
     const app = express();
     app.use(express.json());
@@ -15,6 +16,7 @@ describe('routes: comments edge cases', () => {
   }
 
   beforeEach(() => {
+    destructiveWrites = 0;
     const realFetch = global.fetch as any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     global.fetch = (async (url: any, init?: any) => {
@@ -36,12 +38,20 @@ describe('routes: comments edge cases', () => {
       if (method === 'GET' && /\/[^/]+$/.test(path)) {
         // getDoc
         if (path.endsWith('/c404')) return notFound();
+        if (path.endsWith('/task-confusion')) {
+          return okResp({
+            _id: 'task-confusion', _rev: '1-task', type: 'task', topicId: 't1',
+            authorId: 'owner', content: 'must survive', createdAt: 1, updatedAt: 1,
+          });
+        }
         return okResp({ _id: 'c1', type: 'comment', topicId: 't1', authorId: 'owner', content: 'y', createdAt: 1, updatedAt: 1, _rev: '1-a' });
       }
       if (method === 'PUT' && /\/[^/]+$/.test(path)) {
+        destructiveWrites += 1;
         return okResp({ ok: true, id: 'c1', rev: '2-b' });
       }
       if (method === 'DELETE' && /\/[^/]+$/.test(path)) {
+        destructiveWrites += 1;
         return okResp({ ok: true, id: 'c1', rev: '3-c' });
       }
       return okResp({}, 404);
@@ -79,5 +89,24 @@ describe('routes: comments edge cases', () => {
     server.close();
     expect(resp.status).toBe(404);
     expect(body.error).toBe('not_found');
+  });
+
+  it('cannot mutate or delete a task through comment routes', async () => {
+    const app = makeApp({ userId: 'owner', csrfToken: 't' });
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const headers = { 'content-type': 'application/json', 'x-csrf-token': 't' };
+
+    const update = await fetch(`http://127.0.0.1:${port}/api/comments/task-confusion`, {
+      method: 'PATCH', headers, body: JSON.stringify({ content: 'destroyed' }),
+    });
+    const remove = await fetch(`http://127.0.0.1:${port}/api/comments/task-confusion`, {
+      method: 'DELETE', headers,
+    });
+
+    server.close();
+    expect(update.status).toBe(404);
+    expect(remove.status).toBe(404);
+    expect(destructiveWrites).toBe(0);
   });
 });

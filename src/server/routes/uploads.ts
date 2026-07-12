@@ -5,6 +5,7 @@ import multer from 'multer';
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { csrfProtect } from '../middleware/csrf.js';
 import { scanBuffer } from '../lib/virusScan.js';
 
 // AWS SDK v3 - optional, loaded dynamically when S3 storage is enabled
@@ -167,7 +168,7 @@ async function persistS3File(filename: string, buffer: Buffer, mimeType: string)
   return await getSignedUrl(s3Client, getCommand, { expiresIn: s3SignedUrlTtl });
 }
 
-uploadsRouter.post('/', requireAuth, upload.single('file'), async (req, res) => {
+uploadsRouter.post('/', requireAuth, csrfProtect(), upload.single('file'), async (req, res) => {
   try {
     const file = req.file as Express.Multer.File | undefined;
     if (!file || !file.buffer) {

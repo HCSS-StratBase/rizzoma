@@ -1,7 +1,9 @@
 import { Router } from 'express';
-import { findOne, insertDoc, updateDoc } from '../lib/couch.js';
+import { findOne, getDoc, insertDoc, updateDoc } from '../lib/couch.js';
 import { emitEvent, emitEditorUpdate } from '../lib/socket.js';
 import { identityFromRequest, requireWaveAccess, resolveWaveAccess } from '../lib/access.js';
+import { csrfProtect } from '../middleware/csrf.js';
+import type { Blip } from '../schemas/wave.js';
 
 // Feature flag: set EDITOR_ENABLE=1 to enable endpoints
 const ENABLED = process.env['EDITOR_ENABLE'] === '1';
@@ -54,6 +56,38 @@ if (!ENABLED) {
   const rebuildJobs = new Map<string, RebuildJobState>();
   const jobKey = (waveId: string, blipId?: string) => `${waveId}::${blipId || ''}`;
   const CLEANUP_AFTER_MS = 5 * 60 * 1000;
+
+  const normalizedBlipId = (value: unknown): string | undefined => {
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim();
+    return trimmed || undefined;
+  };
+
+  const validateEditorBlip = async (
+    res: any,
+    waveId: string,
+    blipId: string | undefined,
+  ): Promise<boolean> => {
+    if (!blipId) return true;
+    if (blipId.length > 500) {
+      res.status(400).json({ error: 'invalid_blip' });
+      return false;
+    }
+    try {
+      const blip = await getDoc<Blip & { _id: string }>(blipId);
+      if (blip.type !== 'blip' || blip.deleted || String(blip.waveId) !== waveId) {
+        res.status(400).json({ error: 'invalid_blip' });
+        return false;
+      }
+      return true;
+    } catch (error: any) {
+      if (String(error?.message || '').startsWith('404')) {
+        res.status(404).json({ error: 'blip_not_found' });
+        return false;
+      }
+      throw error;
+    }
+  };
 
   const addLog = (job: RebuildJobState, message: string, level: 'info' | 'error' = 'info') => {
     job.logs.push({ at: Date.now(), message, level });
@@ -155,21 +189,25 @@ if (!ENABLED) {
   // GET /api/editor/:waveId/snapshot — latest snapshot + next seq
   router.get('/:waveId/snapshot', async (req, res) => {
     const waveId = req.params.waveId;
-    const blipId = ((req.query as any)?.blipId ? String((req.query as any).blipId).trim() : '') || undefined;
+    const blipId = normalizedBlipId((req.query as any)?.blipId);
     try {
       const access = await requireWaveAccess(req, res, waveId, 'read');
       if (!access) return;
+      if (!(await validateEditorBlip(res, waveId, blipId))) return;
       // Prefer a blip-specific snapshot when requested; otherwise fall back to wave-level
       let snap: YDocSnapshot | null = null;
       if (blipId) {
         try { snap = await findOne<YDocSnapshot>({ type: 'yjs_snapshot', waveId, blipId }); } catch {}
       }
-      if (!snap) {
+      if (!snap && !blipId) {
         try { snap = await findOne<YDocSnapshot>({ type: 'yjs_snapshot', waveId }); } catch {}
       }
       // next seq based on latest update
       let nextSeq = 1;
-      const u = await findOne<YDocUpdate>({ type: 'yjs_update', waveId });
+      const updateSelector: any = blipId
+        ? { type: 'yjs_update', waveId, blipId }
+        : { type: 'yjs_update', waveId, blipId: { $exists: false } };
+      const u = await findOne<YDocUpdate>(updateSelector);
       // Note: findOne has no sort; in real impl we’d query by max seq. Keep it simple for dev.
       if (u && typeof (u as any).seq === 'number') nextSeq = (u as any).seq + 1;
       res.json({ snapshotB64: snap?.snapshotB64 || null, nextSeq });
@@ -179,15 +217,16 @@ if (!ENABLED) {
   });
 
   // POST /api/editor/:waveId/snapshot { snapshotB64 }
-  router.post('/:waveId/snapshot', async (req, res) => {
+  router.post('/:waveId/snapshot', csrfProtect(), async (req, res) => {
     const waveId = req.params.waveId;
     const snapshotB64 = String((req.body || {}).snapshotB64 || '');
     const text = typeof (req.body || {}).text === 'string' ? String((req.body as any).text) : undefined;
-    const blipIdVal = (req.body && typeof (req.body as any).blipId === 'string') ? String((req.body as any).blipId) : undefined;
+    const blipIdVal = normalizedBlipId((req.body as any)?.blipId);
     if (!snapshotB64) { res.status(400).json({ error: 'missing_snapshot' }); return; }
     try {
       const access = await requireWaveAccess(req, res, waveId, 'edit');
       if (!access) return;
+      if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
       const selector: any = blipIdVal ? { type: 'yjs_snapshot', waveId, blipId: blipIdVal } : { type: 'yjs_snapshot', waveId };
       const existing = await findOne<YDocSnapshot>(selector);
       const doc: YDocSnapshot = existing
@@ -202,16 +241,17 @@ if (!ENABLED) {
   });
 
   // POST /api/editor/:waveId/updates { seq, updateB64, blipId? }
-  router.post('/:waveId/updates', async (req, res) => {
+  router.post('/:waveId/updates', csrfProtect(), async (req, res) => {
     const waveId = req.params.waveId;
     const seq = Number((req.body || {}).seq);
     const updateB64 = String((req.body || {}).updateB64 || '');
-    const blipIdVal = (req.body && typeof (req.body as any).blipId === 'string') ? String((req.body as any).blipId) : undefined;
+    const blipIdVal = normalizedBlipId((req.body as any)?.blipId);
     if (!Number.isFinite(seq) || seq < 1 || !updateB64) { res.status(400).json({ error: 'invalid_payload' }); return; }
     try {
       const access = await requireWaveAccess(req, res, waveId, 'edit');
       if (!access) return;
-      const id = `yupd:${waveId}:${seq}`;
+      if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
+      const id = `yupd:${waveId}:${encodeURIComponent(blipIdVal || '__wave__')}:${seq}`;
       const doc: YDocUpdate = { _id: id, type: 'yjs_update', waveId, blipId: blipIdVal, seq, updateB64, createdAt: Date.now() };
       const r = await insertDoc(doc as any);
       res.status(201).json({ ok: true, id: r.id, rev: r.rev });
@@ -226,19 +266,19 @@ if (!ENABLED) {
     const waveId = req.params.waveId;
     const access = await requireWaveAccess(req, res, waveId, 'read');
     if (!access) return;
-    const blipIdVal = typeof (req.query as any)?.blipId === 'string' && String((req.query as any).blipId).trim()
-      ? String((req.query as any).blipId).trim()
-      : undefined;
+    const blipIdVal = normalizedBlipId((req.query as any)?.blipId);
+    if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
     const job = rebuildJobs.get(jobKey(waveId, blipIdVal));
     res.json(serializeJob(job));
   });
 
   // POST /api/editor/:waveId/rebuild — enqueue rebuild snapshot job
-  router.post('/:waveId/rebuild', async (req, res) => {
+  router.post('/:waveId/rebuild', csrfProtect(), async (req, res) => {
     const waveId = req.params.waveId;
     const access = await requireWaveAccess(req, res, waveId, 'edit');
     if (!access) return;
-    const blipIdVal = (req.body && typeof (req.body as any).blipId === 'string') ? String((req.body as any).blipId) : undefined;
+    const blipIdVal = normalizedBlipId((req.body as any)?.blipId);
+    if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
     const key = jobKey(waveId, blipIdVal);
     const existing = rebuildJobs.get(key);
     if (existing && (existing.status === 'queued' || existing.status === 'running')) {

@@ -8,16 +8,60 @@ import { noStore } from '../middleware/noStore.js';
 import { requireAuth } from '../middleware/auth.js';
 import { csrfProtect } from '../middleware/csrf.js';
 import { z } from 'zod';
+import { inviteRateLimit } from '../middleware/inviteRateLimit.js';
 import {
   buildAccessibleTopicSelector,
   identityFromRequest,
+  isDeletedWave,
   normalizeSharingPolicy,
   requireWaveAccess,
   resolveWaveAccess,
 } from '../lib/access.js';
+import {
+  buildInviteUrl,
+  createInviteToken,
+  hashInviteToken,
+  invitationTokenDocId,
+  resolveInviteBaseUrl,
+  sortParticipantCandidates,
+} from '../lib/invitations.js';
 
 const router = Router();
 type FlatBlip = { id: string; updatedAt: number; createdAt?: number; content?: string; children?: FlatBlip[] };
+
+const participantEmail = (participant: Partial<WaveParticipant>) => String(participant.email || '').trim().toLowerCase();
+
+type InvitationTokenDoc = {
+  _id: string;
+  _rev?: string;
+  type: 'invitation_token';
+  tokenHash: string;
+  participantId: string;
+  waveId: string;
+  email: string;
+  status: 'pending_delivery' | 'sent' | 'failed' | 'used' | 'revoked';
+  createdAt: number;
+  expiresAt: number;
+  deliveredAt?: number;
+  failedAt?: number;
+  usedAt?: number;
+  usedBy?: string;
+};
+const sameParticipantIdentity = (left: Partial<WaveParticipant>, right: Partial<WaveParticipant>) => (
+  Boolean(left.userId && right.userId && left.userId === right.userId)
+  || Boolean(participantEmail(left) && participantEmail(left) === participantEmail(right))
+);
+
+async function participantDuplicates(
+  waveId: string,
+  participant: Partial<WaveParticipant>,
+): Promise<Array<WaveParticipant & { _id: string; _rev?: string }>> {
+  const result = await find<WaveParticipant & { _id: string; _rev?: string }>(
+    { type: 'participant', waveId },
+    { limit: 500 },
+  ).catch(() => ({ docs: [] as Array<WaveParticipant & { _id: string; _rev?: string }> }));
+  return (result.docs || []).filter((candidate) => sameParticipantIdentity(candidate, participant));
+}
 
 const sharingPolicySchema = z.object({
   shareLevel: z.enum(['private', 'link', 'public']),
@@ -254,9 +298,17 @@ router.get('/:id', async (req, res) => {
       // ignore 404; treat as legacy-only wave id
       if (!String(e?.message || '').startsWith('404')) throw e;
     }
+    if (isDeletedWave(wave)) {
+      res.status(410).json({ error: 'wave_deleted', requestId: (req as any)?.id });
+      return;
+    }
     const access = await requireWaveAccess(req, res, id, 'read', wave);
     if (!access) return;
     const { blips, roots } = await loadWaveBlipTree(id);
+    if (!wave && blips.length === 0) {
+      res.status(404).json({ error: 'wave_not_found', requestId: (req as any)?.id });
+      return;
+    }
     const title = wave?.title || `(legacy) wave ${id.slice(0, 6)}`;
     const createdAt = wave?.createdAt || (blips[0]?.createdAt || Date.now());
     res.json({ id, title, createdAt, blips: roots });
@@ -357,7 +409,7 @@ router.get('/:id/prev', noStore, async (req, res) => {
   }
 });
 // POST /api/waves/:waveId/blips/:blipId/read — mark one blip as read
-router.post('/:waveId/blips/:blipId/read', async (req, res) => {
+router.post('/:waveId/blips/:blipId/read', csrfProtect(), async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
@@ -403,7 +455,7 @@ router.post('/:waveId/blips/:blipId/read', async (req, res) => {
   });
 
 // POST /api/waves/:id/read — mark multiple blips as read { blipIds: [] }
-router.post('/:id/read', async (req, res) => {
+router.post('/:id/read', csrfProtect(), async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
@@ -473,17 +525,42 @@ router.get('/:id/participants', async (req, res) => {
       { type: 'participant', waveId: id },
       { limit: 200, use_index: 'idx_participant_wave_user' },
     );
-    const participants = (r.docs || []).map(p => ({
-      id: p._id,
-      userId: p.userId,
-      ...(access.canManage ? { email: p.email } : {}),
-      role: p.role,
-      status: p.status,
+    const visible = access.canManage
+      ? (r.docs || [])
+      : (r.docs || []).filter((participant) => (
+          (participant.status === 'accepted' || participant.status === undefined)
+          && !String(participant.userId || '').startsWith('invite:')
+        ));
+    const participants = await Promise.all(visible.map(async (participant) => {
+      if (access.canManage) {
+        return {
+          id: participant._id,
+          userId: participant.userId,
+          email: participant.email,
+          role: participant.role,
+          status: participant.status,
+        };
+      }
+      const user = await getDoc<any>(participant.userId).catch(() => null);
+      return {
+        id: participant._id,
+        userId: participant.userId,
+        name: user?.name || undefined,
+        avatar: user?.avatar || undefined,
+        role: participant.role,
+        status: participant.status,
+      };
     }));
     res.json({ participants });
-  } catch {
-    // No participants found — return empty list
-    res.json({ participants: [] });
+  } catch (error: any) {
+    const message = String(error?.message || '');
+    if (message.startsWith('404')) {
+      res.status(404).json({ error: 'wave_not_found', requestId: (req as any)?.id });
+      return;
+    }
+    // Fail closed: a storage outage is not an empty roster. Owners must not
+    // make access decisions from a fabricated successful response.
+    res.status(500).json({ error: 'participants_load_error', requestId: (req as any)?.id });
   }
 });
 
@@ -505,10 +582,16 @@ router.patch('/:id/participants/:participantId', requireAuth, csrfProtect(), asy
       res.status(400).json({ error: 'owner_role_immutable' });
       return;
     }
-    const next = { ...participant, role: payload.role };
-    const result = await updateDoc(next);
+    const duplicates = await participantDuplicates(waveId, participant);
+    const mutable = duplicates.filter((candidate) => candidate.role !== 'owner');
+    if (duplicates.some((candidate) => candidate.role === 'owner')) {
+      res.status(400).json({ error: 'owner_role_immutable' });
+      return;
+    }
+    const updates = await Promise.all(mutable.map((candidate) => updateDoc({ ...candidate, role: payload.role } as any)));
+    const result = updates.find((entry) => entry.id === participantId) || updates[0];
     await refreshWaveSocketAccess(waveId);
-    res.json({ id: result.id, rev: result.rev, role: payload.role });
+    res.json({ id: result?.id || participantId, rev: result?.rev, role: payload.role, updated: mutable.length });
   } catch (e: any) {
     if (e?.issues) {
       res.status(400).json({ error: 'validation_error', issues: e.issues });
@@ -522,31 +605,238 @@ router.patch('/:id/participants/:participantId', requireAuth, csrfProtect(), asy
   }
 });
 
+router.delete('/:id/participants/:participantId', requireAuth, csrfProtect(), async (req, res) => {
+  const waveId = String(req.params['id'] || '');
+  const participantId = String(req.params['participantId'] || '');
+  try {
+    const access = await requireWaveAccess(req, res, waveId, 'manage');
+    if (!access) return;
+    const participant = await getDoc<WaveParticipant & { _id: string; _rev: string }>(participantId);
+    if (participant.type !== 'participant' || participant.waveId !== waveId) {
+      res.status(404).json({ error: 'participant_not_found' });
+      return;
+    }
+    if (participant.role === 'owner') {
+      res.status(400).json({ error: 'owner_removal_forbidden' });
+      return;
+    }
+    const duplicates = await participantDuplicates(waveId, participant);
+    if (duplicates.some((candidate) => candidate.role === 'owner')) {
+      res.status(400).json({ error: 'owner_removal_forbidden' });
+      return;
+    }
+    const now = Date.now();
+    const updates = await Promise.all(duplicates.map((candidate) => updateDoc({
+        ...candidate,
+        status: 'declined',
+        declinedAt: now,
+        declinedBy: req.user!.id,
+        inviteTokenHash: undefined,
+        inviteExpiresAt: undefined,
+        acceptedInviteTokenHash: undefined,
+        acceptedInviteExpiresAt: undefined,
+      } as any)));
+    const result = updates.find((entry) => entry.id === participantId) || updates[0];
+    const tokens = await find<InvitationTokenDoc>({
+      type: 'invitation_token',
+      waveId,
+      email: participantEmail(participant),
+    }, { limit: 500 }).catch(() => ({ docs: [] as InvitationTokenDoc[] }));
+    await Promise.all((tokens.docs || [])
+      .filter((token) => token.status !== 'used' && token.status !== 'revoked')
+      .map((token) => updateDoc({ ...token, status: 'revoked', revokedAt: now } as any)));
+    await refreshWaveSocketAccess(waveId);
+    res.json({ id: result?.id || participantId, rev: result?.rev, removed: true, status: 'declined', updated: duplicates.length });
+  } catch (e: any) {
+    if (String(e?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'participant_not_found' });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'participant_remove_error' });
+  }
+});
+
+// Redeem a one-time invitation after authentication. The token proves access
+// to the invitation email; merely registering the guessed address never does.
+router.post('/invitations/accept', requireAuth, csrfProtect(), async (req, res) => {
+  const token = String((req.body || {}).token || '').trim();
+  if (token.length < 32) {
+    res.status(400).json({ error: 'invalid_invite_token' });
+    return;
+  }
+  const tokenHash = hashInviteToken(token);
+  try {
+    const tokenDoc = await getDoc<InvitationTokenDoc>(invitationTokenDocId(tokenHash)).catch(() => null);
+    if (tokenDoc) {
+      if (Number(tokenDoc.expiresAt || 0) <= Date.now()) {
+        res.status(410).json({ error: 'invite_expired' });
+        return;
+      }
+      const sessionEmail = String(req.user?.email || '').trim().toLowerCase();
+      if (!sessionEmail || sessionEmail !== tokenDoc.email.trim().toLowerCase()) {
+        res.status(403).json({ error: 'invite_email_mismatch' });
+        return;
+      }
+      if (tokenDoc.status === 'used') {
+        if (tokenDoc.usedBy === req.user!.id) {
+          res.json({ id: tokenDoc.participantId, waveId: tokenDoc.waveId, accepted: true, alreadyAccepted: true });
+          return;
+        }
+        res.status(403).json({ error: 'invite_email_mismatch' });
+        return;
+      }
+      if (tokenDoc.status === 'failed' || tokenDoc.status === 'revoked') {
+        res.status(404).json({ error: 'invite_not_found' });
+        return;
+      }
+    }
+
+    const pendingResult = tokenDoc ? null : await find<WaveParticipant & {
+      _id: string;
+      _rev: string;
+      inviteTokenHash?: string;
+      inviteExpiresAt?: number;
+      email?: string;
+    }>({ type: 'participant', inviteTokenHash: tokenHash }, { limit: 2 });
+    let participant = tokenDoc
+      ? await getDoc<WaveParticipant & { _id: string; _rev: string }>(tokenDoc.participantId).catch(() => null)
+      : pendingResult?.docs?.[0];
+    if (!participant) {
+      const acceptedResult = tokenDoc ? { docs: [] as Array<WaveParticipant & { _id: string; _rev: string; acceptedInviteExpiresAt?: number }> } : await find<WaveParticipant & { _id: string; _rev: string; acceptedInviteExpiresAt?: number }>(
+        { type: 'participant', acceptedInviteTokenHash: tokenHash },
+        { limit: 2 },
+      ).catch(() => ({ docs: [] as Array<WaveParticipant & { _id: string; _rev: string; acceptedInviteExpiresAt?: number }> }));
+      const accepted = acceptedResult.docs?.[0];
+      const sameAccount = accepted?.status === 'accepted'
+        && accepted.userId === req.user!.id
+        && participantEmail(accepted) === String(req.user?.email || '').trim().toLowerCase()
+        && Number(accepted.acceptedInviteExpiresAt || 0) > Date.now();
+      if (accepted && !sameAccount) {
+        res.status(403).json({ error: 'invite_email_mismatch' });
+        return;
+      }
+      if (sameAccount) {
+        res.json({ id: accepted!._id, waveId: accepted!.waveId, role: accepted!.role, accepted: true, alreadyAccepted: true });
+        return;
+      }
+      res.status(404).json({ error: 'invite_not_found' });
+      return;
+    }
+    if (
+      tokenDoc
+      && participant.status === 'accepted'
+      && participant.userId === req.user!.id
+      && participantEmail(participant) === String(req.user?.email || '').trim().toLowerCase()
+    ) {
+      await updateDoc({ ...tokenDoc, status: 'used', usedAt: Date.now(), usedBy: req.user!.id } as any).catch(() => undefined);
+      res.json({ id: participant._id, waveId: participant.waveId, role: participant.role, accepted: true, alreadyAccepted: true });
+      return;
+    }
+    if (participant.status !== 'pending') {
+      res.status(404).json({ error: 'invite_not_found' });
+      return;
+    }
+    if (Number(tokenDoc?.expiresAt || participant.inviteExpiresAt || 0) <= Date.now()) {
+      res.status(410).json({ error: 'invite_expired' });
+      return;
+    }
+    const sessionEmail = String(req.user?.email || '').trim().toLowerCase();
+    if (!sessionEmail || sessionEmail !== String(participant.email || '').trim().toLowerCase()) {
+      res.status(403).json({ error: 'invite_email_mismatch' });
+      return;
+    }
+    const now = Date.now();
+    const originalExpiry = Number(tokenDoc?.expiresAt || participant.inviteExpiresAt || 0);
+    const {
+      inviteTokenHash: _usedInviteTokenHash,
+      inviteExpiresAt: _usedInviteExpiresAt,
+      ...participantWithoutToken
+    } = participant;
+    const next = {
+      ...participantWithoutToken,
+      userId: req.user!.id,
+      status: 'accepted' as const,
+      acceptedAt: now,
+      acceptedInviteTokenHash: tokenHash,
+      acceptedInviteExpiresAt: originalExpiry,
+    };
+    const duplicates = await participantDuplicates(participant.waveId, next);
+    const canonicalCandidates = sortParticipantCandidates(
+      [...duplicates.filter((candidate) => candidate._id !== participant!._id), next as any],
+      req.user!.id,
+    );
+    const canonical = canonicalCandidates[0] as WaveParticipant & { _id: string; _rev?: string };
+    const {
+      inviteTokenHash: _canonicalInviteTokenHash,
+      inviteExpiresAt: _canonicalInviteExpiresAt,
+      ...canonicalWithoutActiveToken
+    } = canonical;
+    const canonicalNext = {
+      ...canonicalWithoutActiveToken,
+      userId: req.user!.id,
+      email: participant.email,
+      status: 'accepted' as const,
+      acceptedAt: canonical.acceptedAt || now,
+      acceptedInviteTokenHash: tokenHash,
+      acceptedInviteExpiresAt: originalExpiry,
+    };
+    const updated = await updateDoc(canonicalNext as any);
+    for (const duplicate of canonicalCandidates.slice(1)) {
+      await updateDoc({
+        ...duplicate,
+        status: 'declined',
+        declinedAt: now,
+        declinedBy: req.user!.id,
+        inviteTokenHash: undefined,
+        inviteExpiresAt: undefined,
+        acceptedInviteTokenHash: undefined,
+        acceptedInviteExpiresAt: undefined,
+      } as any);
+    }
+    if (tokenDoc) {
+      await updateDoc({ ...tokenDoc, status: 'used', usedAt: now, usedBy: req.user!.id } as any);
+      const siblingTokens = await find<InvitationTokenDoc>({
+        type: 'invitation_token',
+        waveId: participant.waveId,
+        email: participantEmail(participant),
+      }, { limit: 500 }).catch(() => ({ docs: [] as InvitationTokenDoc[] }));
+      for (const sibling of siblingTokens.docs || []) {
+        if (sibling._id === tokenDoc._id || sibling.status === 'used' || sibling.status === 'revoked') continue;
+        await updateDoc({ ...sibling, status: 'revoked', revokedAt: now } as any);
+      }
+    }
+    await refreshWaveSocketAccess(participant.waveId);
+    res.json({
+      id: updated.id,
+      rev: updated.rev,
+      waveId: participant.waveId,
+      role: canonicalNext.role,
+      accepted: true,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'invite_accept_error' });
+  }
+});
+
 // POST /api/waves/:id/participants — invite participants by email
-router.post('/:id/participants', requireAuth, csrfProtect(), async (req, res) => {
+router.post('/:id/participants', requireAuth, csrfProtect(), inviteRateLimit, async (req, res) => {
   const userId = req.user!.id;
   const waveId = String(req.params['id'] || '');
-  const { emails, message, role = 'editor' } = req.body as { emails?: string[]; message?: string; role?: WaveParticipant['role'] };
+  const parsedInvite = z.object({
+    emails: z.array(z.string().trim().email().max(320).transform((email) => email.toLowerCase())).min(1).max(20),
+    message: z.string().max(2_000).optional(),
+    role: z.enum(['editor', 'commenter', 'viewer']).default('editor'),
+  }).safeParse(req.body || {});
+  if (!parsedInvite.success) {
+    res.status(400).json({ error: 'invalid_invite_request', issues: parsedInvite.error.issues });
+    return;
+  }
+  const { emails, message, role } = parsedInvite.data;
 
   const access = await requireWaveAccess(req, res, waveId, 'manage');
   if (!access) return;
 
-  if (!['editor', 'commenter', 'viewer'].includes(role)) {
-    res.status(400).json({ error: 'invalid_role' });
-    return;
-  }
-
-  if (!emails || !Array.isArray(emails) || emails.length === 0) {
-    res.status(400).json({ error: 'emails array required' });
-    return;
-  }
-  const normalizedEmails = [...new Set(
-    emails.map((email) => String(email || '').trim().toLowerCase()).filter((email) => email.includes('@')),
-  )];
-  if (normalizedEmails.length === 0) {
-    res.status(400).json({ error: 'valid email required' });
-    return;
-  }
+  const normalizedEmails = [...new Set(emails)];
 
   // Look up inviter info
   let inviterName = 'A Rizzoma user';
@@ -557,6 +847,11 @@ router.post('/:id/participants', requireAuth, csrfProtect(), async (req, res) =>
     inviterEmail = inviter.email || '';
   } catch {}
 
+  if (inviterEmail && normalizedEmails.includes(inviterEmail.trim().toLowerCase())) {
+    res.status(400).json({ error: 'owner_already_participant' });
+    return;
+  }
+
   // Look up topic title from the wave doc
   let topicTitle = 'Untitled Topic';
   try {
@@ -564,10 +859,15 @@ router.post('/:id/participants', requireAuth, csrfProtect(), async (req, res) =>
     topicTitle = wave.title || topicTitle;
   } catch {}
 
-  const baseUrl = process.env['APP_BASE_URL'] || 'http://localhost:3000';
-  const topicUrl = `${baseUrl}/#/topic/${waveId}`;
+  let baseUrl: string;
+  try {
+    baseUrl = resolveInviteBaseUrl(req);
+  } catch (error: any) {
+    res.status(500).json({ error: error?.message || 'invite_url_configuration_error' });
+    return;
+  }
   const now = Date.now();
-  const results: { email: string; ok: boolean; error?: string }[] = [];
+  const results: { email: string; ok: boolean; error?: string; status: 'accepted' | 'pending' | 'delivery_failed' | 'error' }[] = [];
 
   for (const email of normalizedEmails) {
     try {
@@ -580,17 +880,35 @@ router.post('/:id/participants', requireAuth, csrfProtect(), async (req, res) =>
         }
       } catch {}
 
-      // Check if participant already exists
-      const participantId = `participant:wave:${waveId}:user:${targetUserId}`;
-      let alreadyExists = false;
-      try {
-        await getDoc<WaveParticipant>(participantId);
-        alreadyExists = true;
-      } catch {}
+      // Reuse a prior email-only invitation after it has been redeemed and its
+      // userId changed. Keying only by the newly-resolved user id would create
+      // a duplicate participant with competing role precedence.
+      const participantCandidates = await find<WaveParticipant & { _id: string; _rev?: string }>(
+        { type: 'participant', waveId },
+        { limit: 500 },
+      ).catch(() => ({ docs: [] as Array<WaveParticipant & { _id: string; _rev?: string }> }));
+      const allMatchingParticipants = (participantCandidates.docs || []).filter((candidate) => (
+        candidate.userId === targetUserId || String(candidate.email || '').trim().toLowerCase() === email
+      ));
+      if (allMatchingParticipants.some((candidate) => candidate.role === 'owner')) {
+        results.push({ email, ok: false, error: 'owner_already_participant', status: 'error' });
+        continue;
+      }
+      const matchingParticipants = sortParticipantCandidates(
+        allMatchingParticipants.filter((candidate) => candidate.role !== 'owner'),
+        targetUserId,
+      );
+      const reusableParticipant = matchingParticipants[0];
+      const participantId = reusableParticipant?._id || `participant:wave:${waveId}:user:${targetUserId}`;
+      if (reusableParticipant?.status === 'accepted') {
+        results.push({ email, ok: true, status: 'accepted' });
+        continue;
+      }
+      const invite = createInviteToken(now);
+      const alreadyExists = Boolean(reusableParticipant);
 
-      if (!alreadyExists) {
-        // Create participant record
-        await insertDoc({
+      const nextParticipant = !alreadyExists
+        ? {
           _id: participantId,
           type: 'participant',
           waveId,
@@ -599,27 +917,77 @@ router.post('/:id/participants', requireAuth, csrfProtect(), async (req, res) =>
           role,
           invitedBy: userId,
           invitedAt: now,
-          status: 'pending',
-        } as WaveParticipant);
+          status: 'pending' as const,
+          inviteTokenHash: invite.tokenHash,
+          inviteExpiresAt: invite.expiresAt,
+        }
+        : {
+            ...reusableParticipant!,
+            userId: targetUserId,
+            email,
+            role,
+            status: 'pending' as const,
+            acceptedAt: undefined,
+            inviteTokenHash: invite.tokenHash,
+            inviteExpiresAt: invite.expiresAt,
+          };
+
+      // Persist a non-authorizing pending participant plus a token outbox doc
+      // before SMTP. If mail succeeds but the final status write fails, the
+      // delivered token is still redeemable; older token docs remain valid
+      // until one is consumed or the participant is revoked.
+      if (alreadyExists) await updateDoc(nextParticipant as any);
+      else await insertDoc(nextParticipant as WaveParticipant);
+      const tokenDoc: InvitationTokenDoc = {
+        _id: invitationTokenDocId(invite.tokenHash),
+        type: 'invitation_token',
+        tokenHash: invite.tokenHash,
+        participantId,
+        waveId,
+        email,
+        status: 'pending_delivery',
+        createdAt: now,
+        expiresAt: invite.expiresAt,
+      };
+      const tokenInsert = await insertDoc(tokenDoc as any);
+      tokenDoc._rev = tokenInsert.rev;
+      for (const duplicate of matchingParticipants.slice(1)) {
+        await updateDoc({
+          ...duplicate,
+          status: 'declined',
+          declinedAt: now,
+          declinedBy: userId,
+          inviteTokenHash: undefined,
+          inviteExpiresAt: undefined,
+          acceptedInviteTokenHash: undefined,
+          acceptedInviteExpiresAt: undefined,
+        } as any);
       }
 
-      // Send invite email
+      const inviteUrl = buildInviteUrl(baseUrl, waveId, invite.token);
       const emailResult = await sendInviteEmail({
         inviterName,
         inviterEmail,
         topicTitle,
-        topicUrl,
+        topicUrl: inviteUrl,
         recipientEmail: email,
         message: message || undefined,
       });
+      if (!emailResult.success) {
+        await updateDoc({ ...tokenDoc, status: 'failed', failedAt: Date.now() } as any).catch(() => undefined);
+        results.push({ email, ok: false, error: emailResult.error, status: 'delivery_failed' });
+        continue;
+      }
+      await updateDoc({ ...tokenDoc, status: 'sent', deliveredAt: Date.now() } as any).catch(() => undefined);
 
-      results.push({ email, ok: emailResult.success, error: emailResult.error });
+      results.push({ email, ok: true, status: 'pending' });
     } catch (err: any) {
       console.error('[waves] invite participant failed', { email, error: err.message });
-      results.push({ email, ok: false, error: err.message });
+      results.push({ email, ok: false, error: err.message, status: 'error' });
     }
   }
 
+  await refreshWaveSocketAccess(waveId);
   res.json({ ok: true, invited: results });
 });
 
@@ -628,7 +996,7 @@ export default router;
 // Dev-only materialization endpoints
 if (process.env['NODE_ENV'] !== 'production') {
   // POST /api/waves/materialize/:id — create minimal wave doc if missing (title + createdAt)
-  router.post('/materialize/:id', async (req, res) => {
+  router.post('/materialize/:id', csrfProtect(), async (req, res) => {
     const id = req.params.id;
     try {
       // check if exists
@@ -648,7 +1016,7 @@ if (process.env['NODE_ENV'] !== 'production') {
     }
   });
   // POST /api/waves/materialize — bulk-create minimal wave docs for recent legacy waves
-  router.post('/materialize', async (req, res) => {
+  router.post('/materialize', csrfProtect(), async (req, res) => {
     const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 500);
     try {
       const legacy = await view<any>('waves_by_creation_date', 'get', { descending: true as any, limit });
@@ -679,7 +1047,7 @@ if (process.env['NODE_ENV'] !== 'production') {
   });
 
   // POST /api/waves/seed_sample?depth=2&breadth=2 — create a demo wave with nested blips (dev only)
-  router.post('/seed_sample', async (req, res) => {
+  router.post('/seed_sample', csrfProtect(), async (req, res) => {
     try {
       const depth = Math.min(Math.max(parseInt(String((req.query as any).depth ?? '2'), 10) || 2, 1), 5);
       const breadth = Math.min(Math.max(parseInt(String((req.query as any).breadth ?? '2'), 10) || 2, 1), 5);

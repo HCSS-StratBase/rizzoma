@@ -5,6 +5,7 @@ type Doc = Record<string, any> & { _id: string; _rev?: string };
 describe('routes: /api/topics follow + list enrichment', () => {
   const docs = new Map<string, Doc>();
   let revCounter = 1;
+  let failGetId: string | null = null;
 
   const findRoute = (method: string, path: string) => {
     return (topicsRouter as any).stack.find((layer: any) => layer.route?.path === path && layer.route?.methods?.[method.toLowerCase()]);
@@ -70,6 +71,7 @@ describe('routes: /api/topics follow + list enrichment', () => {
   beforeEach(() => {
     docs.clear();
     revCounter = 1;
+    failGetId = null;
   });
 
   beforeAll(() => {
@@ -106,6 +108,7 @@ describe('routes: /api/topics follow + list enrichment', () => {
 
       if (method === 'GET' && path.includes('/project_rizzoma/')) {
         const id = decodeURIComponent(path.split('/project_rizzoma/')[1] || '');
+        if (id === failGetId) return okResp({ error: 'database_unavailable' }, 503);
         const doc = docs.get(id);
         if (!doc) return okResp({ error: 'not_found' }, 404);
         return okResp(doc);
@@ -180,5 +183,13 @@ describe('routes: /api/topics follow + list enrichment', () => {
     expect(topic?.authorAvatar).toBe('https://example.com/a.png');
     expect(topic?.snippet).toBe('Hello world');
     expect(topic?.isFollowed).toBe(true);
+  });
+
+  it('fails closed when topic access lookup errors', async () => {
+    failGetId = 't-error';
+    const response = await runRoute('POST', '/:id/follow', { params: { id: 't-error' } });
+    expect(response.statusCode).toBe(500);
+    expect(response.body?.error).toContain('503');
+    expect(docs.has('topic_follow:u1:t-error')).toBe(false);
   });
 });

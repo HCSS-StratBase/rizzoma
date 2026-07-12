@@ -18,8 +18,16 @@ export class SocketIOProvider {
    *  from blip HTML on first join (only the first client to join a fresh
    *  blip gets this authority — see task #57 comment in src/server/lib/socket.ts). */
   shouldSeed = false;
+  /** Server-authorized room membership. No local CRDT or awareness traffic is
+   * published until the blip:join acknowledgement grants this membership. */
+  private joined = false;
+  private canEdit = false;
+  private destroyed = false;
+  private joinAttempt = 0;
+  private pendingLocalUpdates: Uint8Array[] = [];
   private syncCallbacks: Array<() => void> = [];
   private reconnectHandler: (() => void) | null = null;
+  private disconnectHandler: (() => void) | null = null;
   private docUpdateHandler: ((update: Uint8Array, origin: unknown) => void) | null = null;
   private remoteUpdateHandler: ((data: { update: number[] }) => void) | null = null;
   private syncHandler: ((data: { state: number[]; shouldSeed?: boolean }) => void) | null = null;
@@ -51,10 +59,11 @@ export class SocketIOProvider {
   private setupListeners() {
     this.docUpdateHandler = (update: Uint8Array, origin: unknown) => {
       if (origin !== this) {
-        this.socket.emit('blip:update', {
-          blipId: this.blipId,
-          update: Array.from(update)
-        });
+        if (!this.joined) {
+          this.pendingLocalUpdates.push(update.slice());
+          return;
+        }
+        if (this.canEdit) this.publishDocumentUpdate(update);
       }
     };
     this.doc.on('update', this.docUpdateHandler);
@@ -67,6 +76,7 @@ export class SocketIOProvider {
     this.socket.on(eventName, this.remoteUpdateHandler);
 
     this.syncHandler = (data: { state: number[]; shouldSeed?: boolean }) => {
+      if (!this.joined) return;
       if (data.state.length > 0) {
         const state = new Uint8Array(data.state);
         Y.applyUpdate(this.doc, state, this);
@@ -91,6 +101,7 @@ export class SocketIOProvider {
       if (origin === this) return;
       const changedClients = added.concat(updated).concat(removed);
       if (changedClients.length === 0) return;
+      if (!this.joined) return;
       const update = encodeAwarenessUpdate(this.awareness, changedClients);
       this.socket.emit('awareness:update', {
         blipId: this.blipId,
@@ -143,20 +154,95 @@ export class SocketIOProvider {
   private setupReconnect() {
     this.reconnectHandler = () => {
       this.joinRoom();
-      // Send state vector so server returns only missing updates
+    };
+    this.socket.on('connect', this.reconnectHandler);
+    this.disconnectHandler = () => {
+      this.joined = false;
+      this.canEdit = false;
+      this.synced = false;
+      this.joinAttempt += 1;
+    };
+    this.socket.on('disconnect', this.disconnectHandler);
+  }
+
+  private joinRoom() {
+    const attempt = ++this.joinAttempt;
+    this.joined = false;
+    this.canEdit = false;
+    this.synced = false;
+    this.socket.emit('blip:join', {
+      blipId: this.blipId
+    }, (result: { ok?: boolean; error?: string; canEdit?: boolean; user?: { id: string; name: string; color: string } }) => {
+      if (this.destroyed || attempt !== this.joinAttempt) return;
+      if (!result?.ok) {
+        this.reportAuthorizationFailure(result?.error || 'forbidden');
+        return;
+      }
+      this.joined = true;
+      this.canEdit = Boolean(result.canEdit);
+
+      // The server returns the authenticated identity. Setting it now emits
+      // the first awareness packet only after membership has been granted.
+      if (result.user) {
+        this.awareness.setLocalStateField('user', result.user);
+      } else {
+        this.publishCurrentAwareness();
+      }
+
+      // Reconnect diffs and any edits made during the short authorization
+      // window are likewise released only after the acknowledgement.
       const sv = Y.encodeStateVector(this.doc);
       this.socket.emit('blip:sync:request', {
         blipId: this.blipId,
         stateVector: Array.from(sv)
       });
-    };
-    this.socket.on('connect', this.reconnectHandler);
+      if (this.canEdit) {
+        const queued = this.pendingLocalUpdates.splice(0);
+        queued.forEach((update) => this.publishDocumentUpdate(update));
+      } else {
+        this.pendingLocalUpdates = [];
+      }
+    });
   }
 
-  private joinRoom() {
-    this.socket.emit('blip:join', {
-      blipId: this.blipId
+  private publishCurrentAwareness() {
+    const state = this.awareness.getLocalState();
+    if (!this.joined || !state) return;
+    const update = encodeAwarenessUpdate(this.awareness, [this.awareness.clientID]);
+    this.socket.emit('awareness:update', {
+      blipId: this.blipId,
+      update: Array.from(update),
     });
+  }
+
+  private publishDocumentUpdate(update: Uint8Array) {
+    this.socket.emit('blip:update', {
+      blipId: this.blipId,
+      update: Array.from(update),
+    }, (result: { ok?: boolean; error?: string }) => {
+      if (result?.ok !== false) return;
+      if (result.error === 'forbidden' || result.error === 'unauthenticated') {
+        this.joined = false;
+        this.canEdit = false;
+        this.reportAuthorizationFailure(result.error);
+      }
+    });
+  }
+
+  private reportAuthorizationFailure(error: string) {
+    if (typeof window === 'undefined') return;
+    const sessionEnded = error === 'unauthenticated';
+    window.dispatchEvent(new CustomEvent('toast', {
+      detail: {
+        type: 'error',
+        message: sessionEnded
+          ? 'Your collaboration session ended. Sign in again to continue editing.'
+          : 'Your access to this blip changed. Local collaboration updates are paused.',
+      },
+    }));
+    window.dispatchEvent(new CustomEvent('rizzoma:access-changed', {
+      detail: { blipId: this.blipId, error },
+    }));
   }
 
   setUser(user: { id: string; name: string; color: string }) {
@@ -164,6 +250,8 @@ export class SocketIOProvider {
   }
 
   destroy() {
+    this.destroyed = true;
+    this.joinAttempt += 1;
     // Tell peers immediately that this cursor left instead of waiting for the
     // awareness protocol's 30-second stale-client timeout.
     removeAwarenessStates(this.awareness, [this.awareness.clientID], 'local-destroy');
@@ -194,6 +282,11 @@ export class SocketIOProvider {
       this.socket.off('connect', this.reconnectHandler);
       this.reconnectHandler = null;
     }
+    if (this.disconnectHandler) {
+      this.socket.off('disconnect', this.disconnectHandler);
+      this.disconnectHandler = null;
+    }
+    this.pendingLocalUpdates = [];
     this.awareness.destroy();
   }
 }

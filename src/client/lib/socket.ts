@@ -37,6 +37,16 @@ function getSocket(): Socket {
   return socket;
 }
 
+/** Re-handshake the singleton against the current session cookie. Socket.IO
+ * middleware binds identity at connection time, so in-place login/logout must
+ * reconnect instead of reusing an anonymous or revoked transport. */
+export function refreshSocketSession(): Socket {
+  const current = getSocket();
+  if (current.connected) current.disconnect();
+  current.connect();
+  return current;
+}
+
 export function subscribeTopicsRefresh(onRefresh: () => void): () => void {
   const s = getSocket();
   const handler = () => onRefresh();

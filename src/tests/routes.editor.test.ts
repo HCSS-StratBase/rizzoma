@@ -10,9 +10,10 @@ describe('routes: /api/editor (realtime + search)', () => {
   app.use(express.json());
   app.use(cookieParser());
   app.use((req: any, _res, next) => {
-    req.session = { userId: 'editor-owner', userName: 'Editor Owner' };
+    req.session = { userId: 'editor-owner', userName: 'Editor Owner', csrfToken: 'token' };
     next();
   });
+  const insertedDocs: any[] = [];
 
   beforeAll(async () => {
     process.env['EDITOR_ENABLE'] = '1';
@@ -37,7 +38,9 @@ describe('routes: /api/editor (realtime + search)', () => {
       }
       if (method === 'POST' && /\/project_rizzoma\/?$/.test(path)) {
         // insertDoc (snapshots/updates)
-        return ok({ ok: true, id: 'x', rev: '1-x' }, 201);
+        const doc = JSON.parse((init?.body as string) || '{}');
+        insertedDocs.push(doc);
+        return ok({ ok: true, id: doc._id || 'x', rev: '1-x' }, 201);
       }
       if (method === 'GET' && /\/project_rizzoma\/?$/.test(path)) {
         // couchDbInfo
@@ -45,6 +48,13 @@ describe('routes: /api/editor (realtime + search)', () => {
       }
       if (method === 'GET' && /\/project_rizzoma\/w1$/.test(path)) {
         return ok({ _id: 'w1', type: 'wave', title: 'Wave', authorId: 'editor-owner', createdAt: 1, updatedAt: 1 });
+      }
+      if (method === 'GET' && /\/project_rizzoma\/(b1|b2)$/.test(path)) {
+        const id = decodeURIComponent(path.split('/').pop() || '');
+        return ok({ _id: id, _rev: '1-blip', type: 'blip', waveId: 'w1', createdAt: 1, updatedAt: 1 });
+      }
+      if (method === 'GET' && /\/project_rizzoma\/cross-wave$/.test(path)) {
+        return ok({ _id: 'cross-wave', _rev: '1-blip', type: 'blip', waveId: 'w2', createdAt: 1, updatedAt: 1 });
       }
       return ok({}, 404);
     }) as typeof global.fetch;
@@ -57,9 +67,34 @@ describe('routes: /api/editor (realtime + search)', () => {
     const server = app.listen(0);
     const addr = server.address();
     const port = typeof addr === 'string' ? 0 : (addr as import('net').AddressInfo).port;
-    const resp = await fetch(`http://127.0.0.1:${port}/api/editor/w1/updates`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ seq: 1, updateB64: Buffer.from(new Uint8Array([1,2,3])).toString('base64'), blipId: 'b1' }) });
+    const resp = await fetch(`http://127.0.0.1:${port}/api/editor/w1/updates`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' }, body: JSON.stringify({ seq: 1, updateB64: Buffer.from(new Uint8Array([1,2,3])).toString('base64'), blipId: 'b1' }) });
     server.close();
     expect(resp.status).toBe(201);
+  });
+
+  it('scopes update ids by blip and rejects cross-wave blip ids', async () => {
+    insertedDocs.length = 0;
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const headers = { 'content-type': 'application/json', 'x-csrf-token': 'token' };
+    const updateB64 = Buffer.from(new Uint8Array([1, 2, 3])).toString('base64');
+    const first = await fetch(`http://127.0.0.1:${port}/api/editor/w1/updates`, {
+      method: 'POST', headers, body: JSON.stringify({ seq: 1, updateB64, blipId: 'b1' }),
+    });
+    const second = await fetch(`http://127.0.0.1:${port}/api/editor/w1/updates`, {
+      method: 'POST', headers, body: JSON.stringify({ seq: 1, updateB64, blipId: 'b2' }),
+    });
+    const crossWave = await fetch(`http://127.0.0.1:${port}/api/editor/w1/updates`, {
+      method: 'POST', headers, body: JSON.stringify({ seq: 2, updateB64, blipId: 'cross-wave' }),
+    });
+    server.close();
+
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+    expect(crossWave.status).toBe(400);
+    const ids = insertedDocs.filter((doc) => doc.type === 'yjs_update').map((doc) => doc._id);
+    expect(ids).toEqual(expect.arrayContaining(['yupd:w1:b1:1', 'yupd:w1:b2:1']));
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('search endpoint returns results', async () => {

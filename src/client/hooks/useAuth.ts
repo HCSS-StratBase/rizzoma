@@ -1,5 +1,6 @@
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { api } from '../lib/api';
+import { refreshSocketSession } from '../lib/socket';
 
 interface User {
   id: string;
@@ -43,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     if (response.ok) {
+      refreshSocketSession();
       setUser(response.data.user);
     } else {
       throw new Error(response.data.error || 'Login failed');
@@ -51,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await api('/api/auth/logout', { method: 'POST' });
+    refreshSocketSession();
     setUser(null);
   };
 

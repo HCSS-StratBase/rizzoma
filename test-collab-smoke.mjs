@@ -30,6 +30,7 @@
  * 13-14 second relays before the awareness feedback loop was fixed.
  */
 import { chromium } from 'playwright';
+import { seedAcceptedParticipant, seedVerifiedE2EAccount } from './scripts/lib/e2e-sharing-fixtures.mjs';
 
 const baseUrl = process.env.RIZZOMA_BASE_URL || 'http://localhost:3000';
 const headed = process.env.RIZZOMA_E2E_HEADED === '1';
@@ -70,12 +71,7 @@ async function ensureAuth(page, email, label) {
       body: JSON.stringify({ email, password }),
     });
     if (loginResp.ok) return { ok: true, method: 'login' };
-    const regResp = await fetch('/api/auth/register', {
-      method: 'POST', headers, credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
-    if (regResp.ok) return { ok: true, method: 'register' };
-    return { ok: false, status: regResp.status, error: await regResp.text() };
+    return { ok: false, status: loginResp.status, error: await loginResp.text() };
   }, { email, password });
   if (!result.ok) throw new Error(`${label}: auth failed: ${result.status} ${result.error}`);
   await page.reload({ waitUntil: 'domcontentloaded' });
@@ -269,6 +265,12 @@ async function main() {
   log(`user A: ${userA}`);
   log(`user B: ${userB}`);
 
+  // Seed test-only verified identities directly. Normal registration now
+  // requires mailbox proof, and normal invitations stay pending until their
+  // bearer token is redeemed; CI fixtures must not weaken either invariant.
+  const fixtureA = await seedVerifiedE2EAccount(userA, password);
+  await seedVerifiedE2EAccount(userB, password);
+
   // Separate browser processes model two independent active devices. Relay
   // latency is measured below and must stand on its own acceptance budget.
   const browserA = await chromium.launch({ headless: !headed, slowMo });
@@ -299,6 +301,20 @@ async function main() {
     // ----- A creates a topic + blip -----
     const { topicId, blipId } = await createTopicAndBlip(pageA, `Collab smoke ${Date.now()}`);
     log(`created topic ${topicId.slice(-8)} blip ${blipId.slice(-8)}`);
+
+    // New topics are private. Seed the accepted grant through the E2E database
+    // fixture path; the production invite endpoint intentionally remains
+    // pending until the emailed bearer is redeemed.
+    await seedAcceptedParticipant(topicId, userB, 'editor', fixtureA._id);
+    const editorAccess = await pageB.evaluate(async (id) => {
+      const response = await fetch(`/api/topics/${encodeURIComponent(id)}`, { credentials: 'include' });
+      const data = await response.json().catch(() => null);
+      return { status: response.status, canEdit: data?.permissions?.canEdit, role: data?.permissions?.role };
+    }, topicId);
+    recordCheck(
+      editorAccess.status === 200 && editorAccess.canEdit === true && editorAccess.role === 'editor',
+      `E2E fixture granted B editor access (${editorAccess.status}, ${editorAccess.role})`,
+    );
 
     // ----- A opens the topic and starts editing the blip -----
     await openTopicAndExpandBlip(pageA, topicId, blipId);
