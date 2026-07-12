@@ -2,10 +2,14 @@ import { Node } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { PollGadgetView } from './PollGadgetView';
 import { SandboxAppGadgetView } from './SandboxAppGadgetView';
+import {
+  normalizeAppFrameAttrs,
+  normalizeEmbedFrameAttrs,
+  type EmbedProvider,
+} from '../../../gadgets/security';
 
 type ChartDataPoint = { label: string; value: number };
 type PollOption = { id: string; label: string; votes: number };
-type EmbedProvider = 'youtube' | 'iframe' | 'spreadsheet';
 const parseAppData = (raw: unknown): Record<string, unknown> => {
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     return raw as Record<string, unknown>;
@@ -228,22 +232,20 @@ export const EmbedFrameGadget = Node.create({
   parseHTML() {
     return [{
       tag: 'figure[data-gadget-type="embed-frame"]',
-      getAttrs: (dom: HTMLElement) => ({
+      getAttrs: (dom: HTMLElement) => normalizeEmbedFrameAttrs({
         src: dom.getAttribute('data-embed-src') || '',
         title: dom.getAttribute('data-embed-title') || 'Embedded content',
         provider: (dom.getAttribute('data-embed-provider') as EmbedProvider) || 'iframe',
         width: dom.getAttribute('data-embed-width') || '600',
         height: dom.getAttribute('data-embed-height') || '400',
-      }),
+      }) || false,
     }];
   },
 
   renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
-    const src = String(HTMLAttributes['src'] || '');
-    const title = String(HTMLAttributes['title'] || 'Embedded content');
-    const provider = String(HTMLAttributes['provider'] || 'iframe');
-    const width = String(HTMLAttributes['width'] || '600');
-    const height = String(HTMLAttributes['height'] || '400');
+    const safe = normalizeEmbedFrameAttrs(HTMLAttributes);
+    if (!safe) return ['p', { 'data-blocked-gadget': 'embed-frame' }, 'Blocked unsafe embedded content'];
+    const { src, title, provider, width, height } = safe;
     const iframeAttrs: Record<string, string> = {
       src,
       width,
@@ -251,6 +253,7 @@ export const EmbedFrameGadget = Node.create({
       frameborder: '0',
       loading: 'lazy',
       referrerpolicy: 'strict-origin-when-cross-origin',
+      sandbox: 'allow-scripts allow-presentation allow-popups',
     };
 
     if (provider === 'youtube') {
@@ -284,16 +287,10 @@ export const EmbedFrameGadget = Node.create({
       insertEmbedFrame:
         (attrs: { src: string; title?: string; provider?: EmbedProvider; width?: string; height?: string }) =>
         ({ commands }: { commands: any }) =>
-          commands.insertContent({
-            type: this.name,
-            attrs: {
-              src: attrs.src,
-              title: attrs.title || 'Embedded content',
-              provider: attrs.provider || 'iframe',
-              width: attrs.width || '600',
-              height: attrs.height || '400',
-            },
-          }),
+          (() => {
+            const safe = normalizeEmbedFrameAttrs(attrs as unknown as Record<string, unknown>);
+            return safe ? commands.insertContent({ type: this.name, attrs: safe }) : false;
+          })(),
     };
   },
 });
@@ -447,14 +444,16 @@ export const AppFrameGadget = Node.create({
   parseHTML() {
     return [{
       tag: 'figure[data-gadget-type="app-frame"]',
-      getAttrs: (dom: HTMLElement) => ({
+      getAttrs: (dom: HTMLElement) => {
+        const safe = normalizeAppFrameAttrs({
         appId: dom.getAttribute('data-app-id') || 'kanban-board',
         instanceId: dom.getAttribute('data-app-instance-id') || 'app-frame',
         title: dom.getAttribute('data-app-title') || 'Kanban Board',
         src: dom.getAttribute('data-app-src') || '/gadgets/apps/kanban-board/index.html',
         height: dom.getAttribute('data-app-height') || '430',
-        data: stringifyAppData(dom.getAttribute('data-app-data')),
-      }),
+        });
+        return safe ? { ...safe, data: stringifyAppData(dom.getAttribute('data-app-data')) } : false;
+      },
     }];
   },
 
@@ -466,16 +465,16 @@ export const AppFrameGadget = Node.create({
     HTMLAttributes: Record<string, any>;
   }) {
     const attrs = node?.attrs ?? HTMLAttributes;
+    const safe = normalizeAppFrameAttrs(attrs);
+    if (!safe) return ['p', { 'data-blocked-gadget': 'app-frame' }, 'Blocked untrusted app frame'];
     const appData = parseAppData(attrs['data']);
-    const title = String(attrs['title'] || 'Kanban Board');
+    const { appId, instanceId, title, src, height } = safe;
     const summary = summarizeAppFrameData(appData);
-    const src = String(attrs['src'] || '/gadgets/apps/kanban-board/index.html');
-    const height = String(attrs['height'] || '430');
     return ['figure', {
       ...HTMLAttributes,
       'data-gadget-type': 'app-frame',
-      'data-app-id': String(attrs['appId'] || 'kanban-board'),
-      'data-app-instance-id': String(attrs['instanceId'] || 'app-frame'),
+      'data-app-id': appId,
+      'data-app-instance-id': instanceId,
       'data-app-title': title,
       'data-app-src': src,
       'data-app-height': height,
@@ -487,7 +486,7 @@ export const AppFrameGadget = Node.create({
       src,
       title,
       loading: 'lazy',
-      sandbox: 'allow-scripts allow-same-origin allow-forms allow-popups',
+      sandbox: 'allow-scripts allow-forms allow-popups',
       allow: 'clipboard-read; clipboard-write; fullscreen',
       style: `width: 100%; min-height: ${height}px; border: 0; border-radius: 16px; background: white; box-shadow: inset 0 0 0 1px rgba(136,156,178,0.18);`,
     }]];
@@ -502,17 +501,13 @@ export const AppFrameGadget = Node.create({
       insertAppFrame:
         (attrs: { appId: string; instanceId?: string; title?: string; src: string; height?: string; data?: unknown }) =>
         ({ commands }: { commands: any }) =>
-          commands.insertContent({
-            type: this.name,
-            attrs: {
-              appId: attrs.appId,
-              instanceId: attrs.instanceId || 'app-frame',
-              title: attrs.title || 'Kanban Board',
-              src: attrs.src,
-              height: attrs.height || '430',
-              data: stringifyAppData(attrs.data),
-            },
-          }),
+          (() => {
+            const safe = normalizeAppFrameAttrs(attrs as unknown as Record<string, unknown>);
+            return safe ? commands.insertContent({
+              type: this.name,
+              attrs: { ...safe, data: stringifyAppData(attrs.data) },
+            }) : false;
+          })(),
     };
   },
 });

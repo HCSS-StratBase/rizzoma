@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { api, ensureCsrf } from '../lib/api';
-// DISABLED: Socket subscription was causing infinite loop
-// import { subscribeTopicDetail } from '../lib/socket';
+import { isSafeRichUrl, sanitizeRichHtml } from '../lib/sanitizeRichHtml';
+import { insertGadget } from '../gadgets/insert';
+import type { GadgetInsertDetail } from '../gadgets/types';
 import { toast } from './Toast';
 import { InviteModal } from './InviteModal';
 import { ShareModal } from './ShareModal';
@@ -25,6 +26,8 @@ import { ActiveBlipProvider, EditSurfaceActiveBridge } from './blip/ActiveBlipCo
 import { parseHtmlToContentArray } from '@client/native/parser';
 import type { ContentArray } from '@client/native/types';
 import { useAuthenticatedCollaborationUser } from './editor/useAuthenticatedCollaborationUser';
+import { collectBlipPages } from '../lib/blipPagination';
+import { subscribeBlipEvents, subscribeTopicDetail } from '../lib/socket';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -57,12 +60,12 @@ function getLoadingState(): Map<string, LoadingState> {
   return new Map();
 }
 
-function getPerfBlipLimit(): number {
-  if (typeof window === 'undefined') return 500;
+function getPerfBlipLimit(): number | null {
+  if (typeof window === 'undefined') return null;
   const hash = window.location.hash || '';
   const query = hash.split('?')[1] || '';
   const params = new URLSearchParams(query);
-  if (!params.has('perf')) return 500;
+  if (!params.has('perf')) return null;
   const rawLimit = Number(params.get('perfLimit') || '');
   const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 2000;
   return Math.max(500, Math.min(limit, 5000));
@@ -95,10 +98,12 @@ type TopicFull = {
   };
 };
 
-type Participant = {
+export type Participant = {
   id: string;
   userId: string;
   email?: string;
+  name?: string;
+  avatar?: string;
   role: 'owner' | 'editor' | 'commenter' | 'viewer';
   status: 'pending' | 'accepted' | 'declined';
   invitedAt: number;
@@ -114,7 +119,7 @@ function getTopicAvatarInitials(name?: string, email?: string): string {
   return source.slice(0, 2).toUpperCase();
 }
 
-function TopicAvatar({
+export function TopicAvatar({
   participant,
   authorName,
   small = false,
@@ -125,8 +130,9 @@ function TopicAvatar({
   small?: boolean;
   style?: CSSProperties;
 }) {
-  const label = participant?.email || authorName || 'Author';
-  const initials = getTopicAvatarInitials(authorName, participant?.email);
+  const label = participant?.name || participant?.email || authorName || 'Author';
+  const initials = getTopicAvatarInitials(participant?.name || authorName, participant?.email);
+  const avatar = participant?.avatar && isSafeRichUrl(participant.avatar, 'src') ? participant.avatar : undefined;
   const roleClass = participant?.role === 'owner' ? 'owner' : '';
   const pendingClass = participant?.status === 'pending' ? 'pending' : '';
   const className = `${small ? 'topic-avatar-small' : 'participant-avatar'} ${roleClass} ${pendingClass}`.trim();
@@ -138,7 +144,16 @@ function TopicAvatar({
       title={`${label}${participant?.role === 'owner' ? ' (owner)' : ''}${participant?.status === 'pending' ? ' (invited)' : ''}`}
       aria-label={label}
     >
-      {initials}
+      <span className="topic-avatar-initials">{initials}</span>
+      {avatar && (
+        <img
+          className="topic-avatar-image"
+          src={avatar}
+          alt=""
+          referrerPolicy="no-referrer"
+          onError={(event) => { event.currentTarget.style.display = 'none'; }}
+        />
+      )}
     </span>
   );
 }
@@ -364,41 +379,11 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       createInlineChildBlipRef.current?.(from);
     };
     const handleInsertGadget = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { type?: string; url?: string } | undefined;
-      const gadgetType = detail?.type || 'iframe';
-      const url = detail?.url;
-      switch (gadgetType) {
-        case 'youtube': {
-          if (!url) return;
-          let embedUrl = url;
-          const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
-          if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
-          topicEditor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
-          break;
-        }
-        case 'code':
-          topicEditor.chain().focus().toggleCodeBlock().run(); break;
-        case 'poll':
-          topicEditor.chain().focus().insertContent({
-            type: 'pollGadget',
-            attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
-          }).run();
-          break;
-        case 'latex':
-          topicEditor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run(); break;
-        case 'iframe':
-        case 'spreadsheet':
-        case 'image': {
-          if (!url) return;
-          if (gadgetType === 'image') {
-            topicEditor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
-          } else {
-            topicEditor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
-          }
-          break;
-        }
-        default:
-          topicEditor.chain().focus().insertContent(`[${gadgetType} gadget]`).run(); break;
+      const detail = (e as CustomEvent<GadgetInsertDetail>).detail;
+      try {
+        insertGadget(topicEditor as any, detail || null);
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Invalid gadget source', 'error');
       }
     };
 
@@ -537,11 +522,12 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       // Was 3 sequential awaits (~90-250ms total); now ~max of the three
       // (~30-100ms). Saves ~100ms on every load(), including the one
       // gating Ctrl+Enter latency.
-      const blipLimit = getPerfBlipLimit();
+      const perfBlipLimit = getPerfBlipLimit();
+      const blipPageSize = Math.min(perfBlipLimit || 500, 500);
       const [r, participantsResponse, blipsResponse] = await Promise.all([
         api(`/api/topics/${encodeURIComponent(id)}`),
         api(`/api/waves/${encodeURIComponent(id)}/participants`),
-        api(`/api/blips?waveId=${encodeURIComponent(id)}&limit=${blipLimit}`),
+        api(`/api/blips?waveId=${encodeURIComponent(id)}&limit=${blipPageSize}`),
       ]);
       if (r.ok) {
         const loadedTopic = r.data as TopicFull;
@@ -557,12 +543,23 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         const contributors: BlipContributor[] = loadedParticipants.map(p => ({
           id: p.userId,
           email: p.email || '',
-          name: (p.email || p.userId).split('@')[0],
+          name: p.name || (p.email || p.userId).split('@')[0],
+          avatar: p.avatar,
           role: p.role,
         }));
 
         if (blipsResponse.ok && blipsResponse.data?.blips) {
-          const rawBlips = blipsResponse.data.blips as Array<any>;
+          const rawBlips = await collectBlipPages<any>(
+            blipsResponse.data as { blips?: any[]; nextBookmark?: string | null },
+            async (bookmark) => {
+              const next = await api(
+                `/api/blips?waveId=${encodeURIComponent(id)}&limit=${blipPageSize}&bookmark=${encodeURIComponent(bookmark)}`,
+              );
+              if (!next.ok || !next.data) throw new Error('blip_page_load_failed');
+              return next.data as { blips?: any[]; nextBookmark?: string | null };
+            },
+            { maxItems: perfBlipLimit ?? Number.POSITIVE_INFINITY },
+          );
           const unreadSet = unreadStateRef.current?.unreadSet ?? new Set<string>();
           const blipMap = new Map<string, BlipData>();
           rawBlips.forEach(raw => {
@@ -868,15 +865,23 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     }, 500);
   }, [load]);
 
-  // DISABLED: Socket-triggered reloads were causing infinite API call loops
-  // The socket events trigger after each load, creating a feedback loop
-  // User actions (edit, reply, delete) will still trigger reloads via their handlers
+  // Reload from authoritative storage when collaborators change this topic.
+  // GET-only reloads do not emit mutation events; the debounce and socket
+  // cooldown coalesce bursts without disabling collaboration updates.
   useEffect(() => {
     if (!id) return;
-    // Temporarily disabled to fix infinite loop
-    // const unsub = subscribeTopicDetail(id, () => debouncedLoad());
-    // return () => unsub();
-    return () => {};
+    const unsubscribeTopic = subscribeTopicDetail(id, () => debouncedLoad());
+    const unsubscribeBlips = subscribeBlipEvents(id, (event) => {
+      if (event.action !== 'read') debouncedLoad();
+    });
+    return () => {
+      unsubscribeTopic();
+      unsubscribeBlips();
+      if (debouncedLoadRef.current) {
+        clearTimeout(debouncedLoadRef.current);
+        debouncedLoadRef.current = null;
+      }
+    };
   }, [id, debouncedLoad]);
 
   // Listen for refresh events from RizzomaBlip (e.g., after duplicate/paste)
@@ -1178,17 +1183,19 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     // BLB: Topic content should always have title as first H1
     // Merge title + existing content, ensuring title is H1 at the start
     let initialContent = '';
-    const titleH1 = `<h1>${topic?.title || 'Untitled'}</h1>`;
+    const escapedTitle = String(topic?.title || 'Untitled').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!);
+    const titleH1 = `<h1>${escapedTitle}</h1>`;
 
     if (topic?.content) {
+      const safeTopicContent = sanitizeRichHtml(topic.content);
       // Check if content already starts with the title as H1
-      const contentHasTitle = topic.content.toLowerCase().includes(`<h1>${(topic.title || '').toLowerCase()}</h1>`);
+      const contentHasTitle = safeTopicContent.toLowerCase().includes(titleH1.toLowerCase());
       if (contentHasTitle) {
         // Use content as-is
-        initialContent = topic.content;
+        initialContent = safeTopicContent;
       } else {
         // Wrap content in <p> if it's plain text (no HTML tags)
-        let wrappedContent = topic.content;
+        let wrappedContent = safeTopicContent;
         if (!/<[^>]+>/.test(wrappedContent)) {
           wrappedContent = `<p>${wrappedContent}</p>`;
         }
@@ -1261,12 +1268,20 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   })();
 
   if (useNativeRender) {
+    const nativeBlips: Array<{ id: string; content: string }> = [];
+    const collectNativeBlips = (items: BlipData[]) => {
+      for (const blip of items) {
+        nativeBlips.push({ id: blip.id, content: blip.content || '' });
+        if (blip.childBlips?.length) collectNativeBlips(blip.childBlips);
+      }
+    };
+    collectNativeBlips(blips);
     const allBlips: Array<{ id: string; content: string }> = [
       { id: topic.id, content: topic.content || `<h1>${topic.title || 'Untitled'}</h1>` },
-      ...blips.map((b) => ({ id: b.id, content: b.content || '' })),
+      ...nativeBlips,
     ];
     const contentMap = new Map<string, ContentArray>(
-      allBlips.map((b) => [b.id, parseHtmlToContentArray(b.content)])
+      allBlips.map((b) => [b.id, parseHtmlToContentArray(sanitizeRichHtml(b.content))])
     );
     const lookup = (id: string): ContentArray | null => contentMap.get(id) ?? null;
 
@@ -1287,8 +1302,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const inlineRootBlips = renderedBlips.filter(b => typeof b.anchorPosition === 'number');
   const listBlips = renderedBlips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
   const topicContentHtmlBase = topic.content && topic.content.trim().length > 0
-    ? topic.content
-    : `<h1>${topic.title || 'Untitled'}</h1>`;
+    ? sanitizeRichHtml(topic.content)
+    : `<h1>${String(topic.title || 'Untitled').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!)}</h1>`;
   // Don't inject markers here — let RizzomaBlip handle it with expanded state tracking
   const topicBlip: BlipData = {
     id: topic.id,
@@ -1362,7 +1377,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                 />
               ))}
               {participants.length > 5 && (
-                <span className="participant-overflow" title={participants.slice(5).map(p => p.email || p.userId).join(', ')}>
+                <span className="participant-overflow" title={participants.slice(5).map(p => p.name || p.email || p.userId).join(', ')}>
                   +{participants.length - 5}
                 </span>
               )}
@@ -1709,6 +1724,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         onClose={() => setShowExportModal(false)}
         topicTitle={topic?.title || 'Untitled'}
         topicId={id}
+        topicContent={topic?.content || ''}
         blips={blips}
       />
       {showWavePlayback && (

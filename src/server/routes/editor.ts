@@ -31,6 +31,16 @@ type YDocUpdate = {
   createdAt: number;
 };
 
+type YDocSequence = {
+  _id: string;
+  _rev?: string;
+  type: 'yjs_sequence';
+  waveId: string;
+  blipId?: string;
+  value: number;
+  updatedAt: number;
+};
+
 const router = Router();
 
 if (!ENABLED) {
@@ -56,6 +66,49 @@ if (!ENABLED) {
   const rebuildJobs = new Map<string, RebuildJobState>();
   const jobKey = (waveId: string, blipId?: string) => `${waveId}::${blipId || ''}`;
   const CLEANUP_AFTER_MS = 5 * 60 * 1000;
+
+  const sequenceDocId = (waveId: string, blipId?: string) =>
+    `yseq:${waveId}:${encodeURIComponent(blipId || '__wave__')}`;
+
+  const readNextSequence = async (waveId: string, blipId?: string): Promise<number> => {
+    try {
+      const counter = await getDoc<YDocSequence>(sequenceDocId(waveId, blipId));
+      return counter.type === 'yjs_sequence' && Number.isSafeInteger(counter.value) && counter.value >= 0
+        ? counter.value + 1
+        : 1;
+    } catch (error: any) {
+      if (String(error?.message || '').startsWith('404')) return 1;
+      throw error;
+    }
+  };
+
+  const allocateSequence = async (waveId: string, blipId?: string): Promise<number> => {
+    const id = sequenceDocId(waveId, blipId);
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const now = Date.now();
+      let existing: YDocSequence | null = null;
+      try {
+        existing = await getDoc<YDocSequence>(id);
+      } catch (error: any) {
+        if (!String(error?.message || '').startsWith('404')) throw error;
+      }
+      if (existing && (existing.type !== 'yjs_sequence' || !Number.isSafeInteger(existing.value) || existing.value < 0)) {
+        throw new Error('invalid_yjs_sequence');
+      }
+      const value = (existing?.value || 0) + 1;
+      const next: YDocSequence = existing
+        ? { ...existing, value, updatedAt: now }
+        : { _id: id, type: 'yjs_sequence', waveId, blipId, value, updatedAt: now };
+      try {
+        if (existing) await updateDoc(next as any);
+        else await insertDoc(next as any);
+        return value;
+      } catch (error: any) {
+        if (!String(error?.message || '').startsWith('409')) throw error;
+      }
+    }
+    throw new Error('sequence_allocation_conflict');
+  };
 
   const normalizedBlipId = (value: unknown): string | undefined => {
     if (typeof value !== 'string') return undefined;
@@ -202,14 +255,7 @@ if (!ENABLED) {
       if (!snap && !blipId) {
         try { snap = await findOne<YDocSnapshot>({ type: 'yjs_snapshot', waveId }); } catch {}
       }
-      // next seq based on latest update
-      let nextSeq = 1;
-      const updateSelector: any = blipId
-        ? { type: 'yjs_update', waveId, blipId }
-        : { type: 'yjs_update', waveId, blipId: { $exists: false } };
-      const u = await findOne<YDocUpdate>(updateSelector);
-      // Note: findOne has no sort; in real impl we’d query by max seq. Keep it simple for dev.
-      if (u && typeof (u as any).seq === 'number') nextSeq = (u as any).seq + 1;
+      const nextSeq = await readNextSequence(waveId, blipId);
       res.json({ snapshotB64: snap?.snapshotB64 || null, nextSeq });
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'snapshot_error' });
@@ -243,18 +289,18 @@ if (!ENABLED) {
   // POST /api/editor/:waveId/updates { seq, updateB64, blipId? }
   router.post('/:waveId/updates', csrfProtect(), async (req, res) => {
     const waveId = req.params.waveId;
-    const seq = Number((req.body || {}).seq);
     const updateB64 = String((req.body || {}).updateB64 || '');
     const blipIdVal = normalizedBlipId((req.body as any)?.blipId);
-    if (!Number.isFinite(seq) || seq < 1 || !updateB64) { res.status(400).json({ error: 'invalid_payload' }); return; }
+    if (!updateB64) { res.status(400).json({ error: 'invalid_payload' }); return; }
     try {
       const access = await requireWaveAccess(req, res, waveId, 'edit');
       if (!access) return;
       if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
+      const seq = await allocateSequence(waveId, blipIdVal);
       const id = `yupd:${waveId}:${encodeURIComponent(blipIdVal || '__wave__')}:${seq}`;
       const doc: YDocUpdate = { _id: id, type: 'yjs_update', waveId, blipId: blipIdVal, seq, updateB64, createdAt: Date.now() };
       const r = await insertDoc(doc as any);
-      res.status(201).json({ ok: true, id: r.id, rev: r.rev });
+      res.status(201).json({ ok: true, id: r.id, rev: r.rev, seq });
       try { emitEditorUpdate(waveId, blipIdVal, { waveId, blipId: blipIdVal, seq, updateB64 }); } catch {}
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'update_save_error' });

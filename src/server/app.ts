@@ -32,11 +32,20 @@ import mentionsRouter from './routes/mentions.js';
 import tasksRouter from './routes/tasks.js';
 
 const app = express();
+const isProd = process.env['NODE_ENV'] === 'production';
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      objectSrc: ["'none'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https:', ...(!isProd ? ['http:'] : [])],
+      frameSrc: ["'self'", 'https:', ...(!isProd ? ['http:'] : [])],
+    },
+  },
+}));
 // reflect origin from allowlist for credentialed requests
-const isProd = process.env['NODE_ENV'] === 'production';
 const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost:8788,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002,http://127.0.0.1:3003,http://127.0.0.1:3004,http://127.0.0.1:3005,http://127.0.0.1:8788')
   .split(',')
   .map(s => s.trim())

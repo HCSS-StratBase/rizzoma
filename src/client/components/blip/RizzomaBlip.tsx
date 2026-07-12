@@ -14,6 +14,9 @@ import { InlineComments, InlineCommentsStatus } from '../editor/InlineComments';
 import { FEATURES } from '@shared/featureFlags';
 import { BlipHistoryModal } from './BlipHistoryModal';
 import { api, ensureCsrf } from '../../lib/api';
+import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
+import { insertGadget } from '../../gadgets/insert';
+import type { GadgetInsertDetail } from '../../gadgets/types';
 import {
   getInlineCommentsVisibility,
   getInlineCommentsVisibilityFromStorage,
@@ -386,7 +389,8 @@ export function RizzomaBlip({
 
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
-  const [editedContent, setEditedContent] = useState(blip.content);
+  const safeBlipContent = useMemo(() => sanitizeRichHtml(blip.content || ''), [blip.content]);
+  const [editedContent, setEditedContent] = useState(safeBlipContent);
   const [showInlineCommentBtn, setShowInlineCommentBtn] = useState(false);
   const [inlineCommentsNotice, setInlineCommentsNotice] = useState<string | null>(null);
   const [selectionCoords, setSelectionCoords] = useState<{ x: number; y: number } | null>(null);
@@ -411,7 +415,7 @@ export function RizzomaBlip({
   const [isSavingEdit] = useState(false); // Auto-save handles saving now
   const [isDeleting, setIsDeleting] = useState(false);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSavedContentRef = useRef<string>(blip.content);
+  const lastSavedContentRef = useRef<string>(safeBlipContent);
   const editorRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const blipContainerRef = useRef<HTMLDivElement>(null);
@@ -422,7 +426,7 @@ export function RizzomaBlip({
   const collapsePreferenceUpdatedAtRef = useRef(collapsePreferenceMetadata?.updatedAt ?? 0);
   const readOnlySelectionWarned = useRef(false);
   const pendingInsertRef = useRef<string | null>(null);
-  const pendingGadgetDetailRef = useRef<{ type?: string; url?: string } | null>(null);
+  const pendingGadgetDetailRef = useRef<GadgetInsertDetail | null>(null);
 
   // Auto-save blip content (debounced, silent)
   const autoSaveBlip = useCallback(async (content: string) => {
@@ -604,9 +608,9 @@ export function RizzomaBlip({
       if ((inlineEditor as any).isDestroyed) return;
       if (!collabProvider.shouldSeed) return;
       const frag = ydoc.getXmlFragment('default');
-      if (frag.length === 0 && blip.content) {
+      if (frag.length === 0 && safeBlipContent) {
         seedingYdocRef.current = true;
-        inlineEditor.commands.setContent(blip.content);
+        inlineEditor.commands.setContent(safeBlipContent);
         seedingYdocRef.current = false;
       }
     };
@@ -630,7 +634,7 @@ export function RizzomaBlip({
     });
 
     return () => { disposed = true; clearTimeout(timer); };
-  }, [inlineEditor, collabEnabled, ydoc, collabProvider, blip.content]);
+  }, [inlineEditor, collabEnabled, ydoc, collabProvider, safeBlipContent, blip.id]);
 
   // Cleanup auto-save timeout on unmount to prevent stale saves to wrong topic
   useEffect(() => {
@@ -653,13 +657,13 @@ export function RizzomaBlip({
       autoSaveTimeoutRef.current = null;
     }
     // Reset state to new blip's content
-    setEditedContent(blip.content);
-    lastSavedContentRef.current = blip.content;
+    setEditedContent(safeBlipContent);
+    lastSavedContentRef.current = safeBlipContent;
     setIsEditing(false);
     if (inlineEditor && !(inlineEditor as any).isDestroyed) {
-      inlineEditor.commands.setContent(blip.content);
+      inlineEditor.commands.setContent(safeBlipContent);
     }
-  }, [blip.id, blip.content, inlineEditor]);
+  }, [blip.id, safeBlipContent, inlineEditor]);
 
   // Dispatch editor focus/blur events for RightToolsPanel insert button visibility
   useEffect(() => {
@@ -826,10 +830,10 @@ export function RizzomaBlip({
   // and for edit mode (where TipTap NodeView still emits portal anchors).
   const parityViewRender = FEATURES.RIZZOMA_PARITY_RENDER && !isEditing;
   const viewContentHtml = parityViewRender
-    ? (blip.content || '')
+    ? safeBlipContent
     : (!isEditing && inlineChildren.length > 0
-        ? injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)
-        : (blip.content || ''));
+        ? injectInlineMarkers(safeBlipContent, inlineChildren, localExpandedInline)
+        : safeBlipContent);
 
   // Portal containers for rendering expanded inline children at their marker positions
   const portalContainers = useRef<Map<string, HTMLElement>>(new Map());
@@ -1604,45 +1608,11 @@ export function RizzomaBlip({
     };
 
     // Helper: execute a gadget insert action
-    const executeGadgetInsert = (editor: any, detail: { type?: string; url?: string } | null) => {
-      const gadgetType = detail?.type || 'iframe';
-      const url = detail?.url;
-
-      switch (gadgetType) {
-        case 'youtube': {
-          if (!url) return;
-          let embedUrl = url;
-          const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
-          if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
-          editor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
-          break;
-        }
-        case 'code':
-          editor.chain().focus().toggleCodeBlock().run();
-          break;
-        case 'poll':
-          editor.chain().focus().insertContent({
-            type: 'pollGadget',
-            attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
-          }).run();
-          break;
-        case 'latex':
-          editor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run();
-          break;
-        case 'iframe':
-        case 'spreadsheet':
-        case 'image': {
-          if (!url) return;
-          if (gadgetType === 'image') {
-            editor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
-          } else {
-            editor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
-          }
-          break;
-        }
-        default:
-          editor.chain().focus().insertContent(`[${gadgetType} gadget]`).run();
-          break;
+    const executeGadgetInsert = (editor: any, detail: GadgetInsertDetail | null) => {
+      try {
+        insertGadget(editor, detail);
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Invalid gadget source', 'error');
       }
     };
 
@@ -1663,7 +1633,7 @@ export function RizzomaBlip({
     const handleInsertReply = () => handleInsert(INSERT_EVENTS.REPLY);
 
     const handleInsertGadget = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { type?: string; url?: string } | undefined;
+      const detail = (e as CustomEvent<GadgetInsertDetail>).detail;
       if (isEditing && inlineEditor) {
         executeGadgetInsert(inlineEditor, detail || null);
       } else if (blip.permissions.canEdit) {
@@ -1700,44 +1670,10 @@ export function RizzomaBlip({
       if (action === INSERT_EVENTS.GADGET) {
         const detail = pendingGadgetDetailRef.current;
         pendingGadgetDetailRef.current = null;
-        const gadgetType = detail?.type || 'iframe';
-        const url = detail?.url;
-
-        switch (gadgetType) {
-          case 'youtube': {
-            if (!url) return;
-            let embedUrl = url;
-            const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
-            if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
-            inlineEditor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
-            break;
-          }
-          case 'code':
-            inlineEditor.chain().focus().toggleCodeBlock().run();
-            break;
-          case 'poll':
-            inlineEditor.chain().focus().insertContent({
-              type: 'pollGadget',
-              attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
-            }).run();
-            break;
-          case 'latex':
-            inlineEditor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run();
-            break;
-          case 'iframe':
-          case 'spreadsheet':
-          case 'image': {
-            if (!url) return;
-            if (gadgetType === 'image') {
-              inlineEditor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
-            } else {
-              inlineEditor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
-            }
-            break;
-          }
-          default:
-            inlineEditor.chain().focus().insertContent(`[${gadgetType} gadget]`).run();
-            break;
+        try {
+          insertGadget(inlineEditor as any, detail);
+        } catch (error) {
+          toast(error instanceof Error ? error.message : 'Invalid gadget source', 'error');
         }
       } else {
         // Trigger chars: @, ~, #, ↵

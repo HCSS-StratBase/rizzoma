@@ -228,7 +228,7 @@ export function subscribeEditorPresence(
 }
 
 export type BlipSocketEvent =
-  | { action: 'created' | 'updated' | 'deleted'; waveId: string; blipId: string; updatedAt?: number; userId?: string }
+  | { action: 'created' | 'updated' | 'moved' | 'deleted'; waveId: string; blipId: string; updatedAt?: number; userId?: string }
   | { action: 'read'; waveId: string; blipId: string; readAt?: number; userId?: string };
 export type WaveUnreadEvent = { waveId: string; userId?: string };
 
@@ -240,15 +240,18 @@ export function subscribeBlipEvents(waveId: string, onEvent: (payload: BlipSocke
   };
   const created = handlerFor('created');
   const updated = handlerFor('updated');
+  const moved = handlerFor('moved');
   const deleted = handlerFor('deleted');
   const read = handlerFor('read');
   s.on('blip:created', created);
   s.on('blip:updated', updated);
+  s.on('blip:moved', moved);
   s.on('blip:deleted', deleted);
   s.on('blip:read', read);
   return () => {
     s.off('blip:created', created);
     s.off('blip:updated', updated);
+    s.off('blip:moved', moved);
     s.off('blip:deleted', deleted);
     s.off('blip:read', read);
   };

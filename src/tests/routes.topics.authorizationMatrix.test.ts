@@ -840,6 +840,29 @@ describe('authorization route matrix', () => {
     vi.mocked(updateDoc).mockImplementation(originalUpdate!);
   });
 
+  it('returns per-recipient delivery status when topic creation partially delivers invites', async () => {
+    vi.mocked(sendInviteEmail)
+      .mockResolvedValueOnce({ success: true })
+      .mockResolvedValueOnce({ success: false, error: 'smtp unavailable' });
+
+    const response = await invokeRoute(topicsRouter, 'post', '/', {
+      identity: 'owner',
+      body: {
+        title: 'Partial delivery topic',
+        content: '<h1>Partial delivery topic</h1>',
+        participants: ['sent@example.test', 'failed@example.test'],
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.body).toMatchObject({ participantsInvited: 1 });
+    expect(response.body.invitations).toEqual([
+      { email: 'sent@example.test', ok: true, status: 'sent' },
+      { email: 'failed@example.test', ok: false, status: 'delivery_failed', error: 'delivery_failed' },
+    ]);
+    vi.mocked(sendInviteEmail).mockResolvedValue({ success: true });
+  });
+
   it('canonicalizes link authorization from the endpoint blips, not caller wave metadata', async () => {
     state.docs.set('topic-outsider', {
       _id: 'topic-outsider', type: 'topic', title: 'Outsider wave', authorId: 'outsider',

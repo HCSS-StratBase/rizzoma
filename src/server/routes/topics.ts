@@ -357,6 +357,12 @@ router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): 
     await insertDoc(ownerParticipant as any).catch(() => undefined);
 
     let invitedCount = 0;
+    const invitations: Array<{
+      email: string;
+      ok: boolean;
+      status: 'sent' | 'delivery_failed' | 'error';
+      error?: string;
+    }> = [];
     if (participantEmails.length > 0) {
       // Get inviter info
       const inviterUser = await findOne<User>({ type: 'user', _id: userId }).catch(() => null)
@@ -418,18 +424,21 @@ router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): 
           if (!delivery.success) {
             await updateDoc({ ...tokenDoc, status: 'failed', failedAt: Date.now() } as any).catch(() => undefined);
             console.warn('[topics] invite email failed', { email, error: delivery.error });
+            invitations.push({ email, ok: false, status: 'delivery_failed', error: 'delivery_failed' });
             continue;
           }
           await updateDoc({ ...tokenDoc, status: 'sent', deliveredAt: Date.now() } as any).catch(() => undefined);
 
           invitedCount++;
+          invitations.push({ email, ok: true, status: 'sent' });
         } catch (err: any) {
           console.error('[topics] invite participant error', { email, error: err?.message });
+          invitations.push({ email, ok: false, status: 'error', error: 'invite_setup_failed' });
         }
       }
     }
 
-    res.status(201).json({ id: topicId, rev: r.rev, participantsInvited: invitedCount });
+    res.status(201).json({ id: topicId, rev: r.rev, participantsInvited: invitedCount, invitations });
     try { emitEvent('topic:created', { id: topicId, title: doc.title, createdAt: doc.createdAt }); } catch {}
     return;
   } catch (e: any) {

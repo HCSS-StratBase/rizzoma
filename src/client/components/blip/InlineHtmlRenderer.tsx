@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Fragment, createElement } from 'react';
+import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
 
 type InlineChildLike = {
   id: string;
@@ -126,7 +127,7 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
   // function — visible but at the end of the parent rather than at a guessed
   // text-offset that would drift after parent edits.
   const container = document.createElement('div');
-  container.innerHTML = html;
+  container.innerHTML = sanitizeRichHtml(html);
 
   // Track which markers are expanded and need a child placed after their block parent.
   // We walk the DOM and emit React nodes. When a block parent (li/p) finishes, if any

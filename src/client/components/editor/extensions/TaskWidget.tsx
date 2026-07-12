@@ -240,11 +240,22 @@ export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
 
           const updateDOM = () => {
             if (!element) return;
-            element.innerHTML = currentItems.length
-              ? currentItems.map((user, i) =>
-                  `<button class="mention-item${i === selectedIndex ? ' is-selected' : ''}" data-index="${i}">${user.label}</button>`
-                ).join('')
-              : '<div class="mention-item is-empty">No users found</div>';
+            element.replaceChildren();
+            if (currentItems.length) {
+              currentItems.forEach((user, index) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `mention-item${index === selectedIndex ? ' is-selected' : ''}`;
+                button.dataset['index'] = String(index);
+                button.textContent = user.label;
+                element!.appendChild(button);
+              });
+            } else {
+              const empty = document.createElement('div');
+              empty.className = 'mention-item is-empty';
+              empty.textContent = 'No users found';
+              element.appendChild(empty);
+            }
           };
 
           return {

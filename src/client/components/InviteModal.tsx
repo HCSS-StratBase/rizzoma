@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 import { toast } from './Toast';
@@ -16,41 +16,73 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle }: InviteModa
   const [message, setMessage] = useState('');
   const [role, setRole] = useState<'viewer' | 'commenter' | 'editor'>('editor');
   const [sending, setSending] = useState(false);
+  const [sharingLevel, setSharingLevel] = useState<'private' | 'link' | 'public' | 'unknown'>('unknown');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    void api(`/api/waves/${encodeURIComponent(topicId)}/sharing`).then((response) => {
+      if (cancelled || !response.ok || !response.data || typeof response.data !== 'object') return;
+      const level = String((response.data as any).sharing?.shareLevel || 'unknown');
+      if (level === 'private' || level === 'link' || level === 'public') setSharingLevel(level);
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [isOpen, topicId]);
 
   if (!isOpen) return null;
 
   const handleInvite = async (): Promise<void> => {
-    const emailList = emails
-      .split(',')
-      .map(e => e.trim())
-      .filter(e => e.length > 0 && e.includes('@'));
+    const rawEmails = emails.split(/[,;\n]/).map((email) => email.trim().toLowerCase()).filter(Boolean);
+    const invalid = rawEmails.filter((email) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+    const emailList = [...new Set(rawEmails)];
 
-    if (emailList.length === 0) {
+    if (emailList.length === 0 || invalid.length > 0) {
       toast('Please enter at least one valid email address', 'error');
+      return;
+    }
+    if (emailList.length > 20) {
+      toast('You can invite at most 20 participants at a time', 'error');
       return;
     }
 
     setSending(true);
-    await ensureCsrf();
+    try {
+      await ensureCsrf();
+      const response = await api(`/api/waves/${encodeURIComponent(topicId)}/participants`, {
+        method: 'POST',
+        body: JSON.stringify({
+          emails: emailList,
+          message: message.trim() || undefined,
+          role,
+        }),
+      });
 
-    const response = await api(`/api/waves/${encodeURIComponent(topicId)}/participants`, {
-      method: 'POST',
-      body: JSON.stringify({
-        emails: emailList,
-        message: message.trim() || undefined,
-        role,
-      })
-    });
-
-    setSending(false);
-
-    if (response.ok) {
-      toast(`Invitation sent to ${emailList.length} participant(s)`);
+      if (!response.ok) {
+        toast('Failed to send invitations', 'error');
+        return;
+      }
+      const results = typeof response.data === 'object' && response.data
+        ? ((response.data as any).invited as Array<{ email?: string; ok?: boolean; status?: string }> | undefined) || []
+        : [];
+      const successful = results.filter((result) => result.ok === true);
+      const failed = results.filter((result) => result.ok !== true);
+      if (results.length === 0) {
+        toast('The server did not return invitation delivery status. Please retry.', 'error');
+        return;
+      }
+      if (failed.length > 0) {
+        setEmails(failed.map((result) => result.email).filter(Boolean).join(', '));
+        toast(`${successful.length} invitation(s) succeeded; ${failed.length} failed. Failed addresses remain for retry.`, 'error');
+        return;
+      }
+      toast(`${successful.length} invitation(s) sent or already accepted`);
       setEmails('');
       setMessage('');
       onClose();
-    } else {
-      toast('Failed to send invitations', 'error');
+    } catch {
+      toast('Invitation delivery could not reach the server. Please try again.', 'error');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -63,7 +95,9 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle }: InviteModa
   const handleCopyLink = () => {
     const url = `${window.location.origin}/#/topic/${topicId}`;
     navigator.clipboard.writeText(url).then(() => {
-      toast('Topic link copied to clipboard');
+      toast(sharingLevel === 'private' || sharingLevel === 'unknown'
+        ? 'Private topic link copied. Recipients still need an invitation.'
+        : 'Topic link copied to clipboard');
     }).catch(() => {
       toast('Failed to copy link', 'error');
     });
@@ -124,7 +158,9 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle }: InviteModa
           </div>
 
           <div className="form-group share-link-group">
-            <label>Or share a direct link</label>
+            <label>{sharingLevel === 'private' || sharingLevel === 'unknown'
+              ? 'Copy topic address (does not grant access; invitation required)'
+              : 'Or share a direct link'}</label>
             <div className="share-link-row">
               <input
                 type="text"

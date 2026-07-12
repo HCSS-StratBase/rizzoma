@@ -550,6 +550,7 @@ router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
 router.get('/', noStore, async (req, res): Promise<void> => {
   const waveId = (req.query as Record<string, string | undefined>)['waveId'];
   const limitParam = (req.query as Record<string, string | undefined>)['limit'];
+  const bookmark = (req.query as Record<string, string | undefined>)['bookmark'];
   
   if (!waveId) {
     res.status(400).json({ error: 'missing_waveId', requestId: (req as any)?.id });
@@ -559,12 +560,16 @@ router.get('/', noStore, async (req, res): Promise<void> => {
   try {
     const access = await requireWaveAccess(req, res, waveId, 'read');
     if (!access) return;
-    const limit = Math.min(Math.max(parseInt(String(limitParam ?? '100'), 10) || 100, 1), 5000);
+    const limit = Math.min(Math.max(parseInt(String(limitParam ?? '100'), 10) || 100, 1), 500);
     // Use the find method to query blips by waveId
     // Sort by [type, waveId, createdAt] to leverage idx_blip_wave_createdAt index
     const result = await find<Blip>(
       { type: 'blip', waveId },
-      { limit, sort: [{ type: 'asc' as const }, { waveId: 'asc' as const }, { createdAt: 'asc' as const }] }
+      {
+        limit,
+        sort: [{ type: 'asc' as const }, { waveId: 'asc' as const }, { createdAt: 'asc' as const }],
+        ...(bookmark ? { bookmark } : {}),
+      }
     );
     const blips = result.docs.filter((blip) => !(blip as any).deleted);
     
@@ -579,7 +584,8 @@ router.get('/', noStore, async (req, res): Promise<void> => {
           canRead: access.canRead,
           canManage: access.canManage,
         }
-      }))
+      })),
+      nextBookmark: result.docs.length === limit && result.bookmark ? result.bookmark : null,
     });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'get_blips_error', requestId: (req as any)?.id });

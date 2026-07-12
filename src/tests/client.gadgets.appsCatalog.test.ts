@@ -13,6 +13,7 @@ describe('client: gadget app runtime boundary', () => {
     expect(manifest).toBeDefined();
     const descriptor = describeSandboxedApp(manifest!);
     expect(descriptor.sandbox).toContain('allow-scripts');
+    expect(descriptor.sandbox).not.toContain('allow-same-origin');
     expect(descriptor.allow).toContain('fullscreen');
   });
 

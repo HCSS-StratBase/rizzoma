@@ -31,7 +31,12 @@ const socketState = vi.hoisted(() => {
 
 vi.mock('socket.io-client', () => ({ io: socketState.io }));
 
-import { getSocket, refreshSocketSession } from '../client/lib/socket';
+import {
+  getSocket,
+  refreshSocketSession,
+  subscribeBlipEvents,
+  subscribeTopicDetail,
+} from '../client/lib/socket';
 
 describe('client socket session identity', () => {
   beforeEach(() => {
@@ -75,5 +80,27 @@ describe('client socket session identity', () => {
     });
     window.removeEventListener('toast', toast);
     window.removeEventListener('rizzoma:auth-changed', authChanged);
+  });
+
+  it('delivers targeted topic and structural blip events and unsubscribes cleanly', () => {
+    const onTopic = vi.fn();
+    const onBlip = vi.fn();
+    const stopTopic = subscribeTopicDetail('wave-1', onTopic);
+    const stopBlips = subscribeBlipEvents('wave-1', onBlip);
+
+    socketState.socket.receive('topic:updated', { id: 'wave-other' });
+    socketState.socket.receive('topic:updated', { id: 'wave-1' });
+    socketState.socket.receive('blip:moved', { waveId: 'wave-1', blipId: 'b2' });
+    socketState.socket.receive('blip:deleted', { waveId: 'wave-other', blipId: 'b3' });
+
+    expect(onTopic).toHaveBeenCalledTimes(1);
+    expect(onBlip).toHaveBeenCalledWith(expect.objectContaining({ action: 'moved', waveId: 'wave-1', blipId: 'b2' }));
+
+    stopTopic();
+    stopBlips();
+    socketState.socket.receive('topic:updated', { id: 'wave-1' });
+    socketState.socket.receive('blip:moved', { waveId: 'wave-1', blipId: 'b4' });
+    expect(onTopic).toHaveBeenCalledTimes(1);
+    expect(onBlip).toHaveBeenCalledTimes(1);
   });
 });
