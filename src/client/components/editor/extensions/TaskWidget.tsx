@@ -1,5 +1,6 @@
 import { Node } from '@tiptap/core';
-import { PluginKey } from '@tiptap/pm/state';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import type { EditorView } from '@tiptap/pm/view';
 import { Suggestion } from '@tiptap/suggestion';
 import type { SuggestionProps } from '@tiptap/suggestion';
 import { api, ensureCsrf } from '../../../lib/api';
@@ -17,6 +18,11 @@ type TaskWidgetOptions = {
   /** Real participants from `/api/waves/:id/participants`. */
   participants: TaskUser[];
 };
+
+type TaskCompletion = { id: string; isCompleted: boolean };
+type TaskCompletionResponse = { tasks?: TaskCompletion[] };
+
+const TASK_WIDGET_SYNC_META = 'rizzomaTaskWidgetServerSync';
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return '';
@@ -68,6 +74,57 @@ async function toggleTaskOnServer(taskId: string): Promise<boolean | null> {
   } catch {
     return null;
   }
+}
+
+async function loadTaskCompletions(
+  blipId: string,
+  signal?: AbortSignal,
+): Promise<Map<string, boolean> | null> {
+  if (!blipId) return new Map();
+  try {
+    const response = await api<TaskCompletionResponse>(
+      `/api/tasks/by-blip/${encodeURIComponent(blipId)}`,
+      { cache: 'no-store', signal },
+    );
+    if (!response.ok || !response.data || typeof response.data !== 'object') return null;
+    const tasks = Array.isArray(response.data.tasks) ? response.data.tasks : [];
+    return new Map(tasks
+      .filter((task): task is TaskCompletion => typeof task?.id === 'string')
+      .map((task) => [task.id, Boolean(task.isCompleted)]));
+  } catch (error) {
+    if ((error as { name?: string })?.name === 'AbortError') return null;
+    return null;
+  }
+}
+
+/**
+ * Reconcile rendered task widgets with the authoritative task side-docs.
+ * `preventUpdate` keeps this server snapshot out of REST autosave: completion
+ * is persisted by `/api/tasks/:id/toggle`, not by stale HTML attributes.
+ */
+export function applyTaskCompletionSnapshot(
+  view: Pick<EditorView, 'state' | 'dispatch'>,
+  completions: ReadonlyMap<string, boolean>,
+): number {
+  const transaction = view.state.tr;
+  let changed = 0;
+  view.state.doc.descendants((node, pos) => {
+    if (node.type.name !== 'taskWidget') return true;
+    const taskId = String(node.attrs['taskId'] || '');
+    if (!taskId || !completions.has(taskId)) return false;
+    const isCompleted = completions.get(taskId) === true;
+    if (Boolean(node.attrs['done']) === isCompleted) return false;
+    transaction.setNodeMarkup(pos, undefined, { ...node.attrs, done: isCompleted });
+    changed += 1;
+    return false;
+  });
+  if (changed > 0) {
+    transaction.setMeta('addToHistory', false);
+    transaction.setMeta('preventUpdate', true);
+    transaction.setMeta(TASK_WIDGET_SYNC_META, true);
+    view.dispatch(transaction);
+  }
+  return changed;
 }
 
 export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
@@ -157,6 +214,20 @@ export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
 
   addProseMirrorPlugins() {
     const opts = this.options;
+    let activeView: EditorView | null = null;
+    let hydrationGeneration = 0;
+    let destroyed = false;
+    let hydrationController: AbortController | null = null;
+    const pendingToggles = new Set<string>();
+
+    const hydrate = async (view: EditorView) => {
+      const generation = ++hydrationGeneration;
+      hydrationController?.abort();
+      hydrationController = new AbortController();
+      const completions = await loadTaskCompletions(opts.blipId, hydrationController.signal);
+      if (destroyed || generation !== hydrationGeneration || !completions) return;
+      applyTaskCompletionSnapshot(view, completions);
+    };
 
     return [
       Suggestion({
@@ -290,37 +361,54 @@ export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
           };
         },
       } as any),
+      new Plugin({
+        key: new PluginKey('taskWidgetDurability'),
+        view: (view) => {
+          activeView = view;
+          void hydrate(view);
+          return {
+            destroy: () => {
+              destroyed = true;
+              hydrationGeneration += 1;
+              hydrationController?.abort();
+              hydrationController = null;
+              activeView = null;
+            },
+          };
+        },
+        props: {
+          handleDOMEvents: {
+            click: (_view, event) => {
+              const eventTarget = event.target;
+              if (!(eventTarget instanceof Element)) return false;
+              const target = eventTarget.closest<HTMLElement>('[data-task-widget]');
+              const taskId = target?.getAttribute('data-task-id') || '';
+              if (!taskId) return false;
+
+              event.preventDefault();
+              event.stopPropagation();
+              if (pendingToggles.has(taskId)) return true;
+              pendingToggles.add(taskId);
+              // A snapshot started before this mutation must never overwrite
+              // the newer toggle response if the requests complete out of order.
+              hydrationGeneration += 1;
+              hydrationController?.abort();
+
+              void toggleTaskOnServer(taskId).then((isCompleted) => {
+                if (destroyed || !activeView) return;
+                if (isCompleted === null) {
+                  void hydrate(activeView);
+                  return;
+                }
+                applyTaskCompletionSnapshot(activeView, new Map([[taskId, isCompleted]]));
+              }).finally(() => {
+                pendingToggles.delete(taskId);
+              });
+              return true;
+            },
+          },
+        },
+      }),
     ];
   },
 });
-
-/**
- * Click handler for rendered task widgets — toggles the server-side task
- * state and flips the `task-done` class. Attached at the document level so
- * it works for every blip on the page without needing per-widget listeners.
- */
-export function installTaskWidgetToggleHandler() {
-  if (typeof document === 'undefined') return;
-  if ((window as any).__rizzomaTaskToggleInstalled) return;
-  (window as any).__rizzomaTaskToggleInstalled = true;
-  document.addEventListener('click', async (e) => {
-    const target = (e.target as HTMLElement)?.closest('[data-task-widget]');
-    if (!target) return;
-    const taskId = target.getAttribute('data-task-id');
-    if (!taskId) return;
-    e.stopPropagation();
-    const nextState = await toggleTaskOnServer(taskId);
-    if (nextState === null) return;
-    target.classList.toggle('task-done', nextState);
-    target.classList.toggle('task-overdue', !nextState && (() => {
-      const raw = target.getAttribute('data-due-date') || '';
-      if (!raw) return false;
-      const d = new Date(raw);
-      return !isNaN(d.getTime()) && d.getTime() < Date.now();
-    })());
-    // Flip the leading checkbox glyph in the text content.
-    const txt = target.textContent || '';
-    if (nextState && txt.startsWith('\u2610')) target.textContent = '\u2611' + txt.slice(1);
-    else if (!nextState && txt.startsWith('\u2611')) target.textContent = '\u2610' + txt.slice(1);
-  }, true);
-}

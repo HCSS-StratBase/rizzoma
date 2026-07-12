@@ -21,7 +21,7 @@ import { BlipKeyboardShortcuts } from './extensions/BlipKeyboardShortcuts';
 import { AppFrameGadget, ChartGadget, EmbedFrameGadget, PollGadget } from './extensions/GadgetNodes';
 import { BlipThreadNode } from './extensions/BlipThreadNode';
 import { TagNode } from './extensions/TagNode';
-import { TaskWidgetNode, installTaskWidgetToggleHandler } from './extensions/TaskWidget';
+import { TaskWidgetNode } from './extensions/TaskWidget';
 import { CodeBlockView } from './extensions/CodeBlockView';
 import { FEATURES } from '@shared/featureFlags';
 import {
@@ -169,13 +169,11 @@ export const getEditorExtensions = (
     extensions.push(TagNode.configure({}));
     extensions.push(TaskWidgetNode.configure({
       waveId: options?.waveId || '',
-      blipId: options?.blipId || '',
+      // Topic-root tasks are reconciled against the topic ID itself.
+      blipId: options?.blipId || options?.waveId || '',
       currentUser: options?.currentUser || null,
       participants: options?.participants || [],
     }));
-    // Global click handler — toggles server-side task state when a
-    // rendered task widget is clicked. Idempotent (install-once).
-    installTaskWidgetToggleHandler();
   }
 
   // Add mentions if enabled

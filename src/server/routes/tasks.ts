@@ -137,7 +137,7 @@ router.get('/', noStore, requireAuth, async (req, res): Promise<void> => {
 // GET /api/tasks/by-blip/:blipId - List tasks anchored to a specific blip.
 // Used by the TaskWidget node view to hydrate current completion state for
 // every task the blip's content references.
-router.get('/by-blip/:blipId', requireAuth, async (req, res): Promise<void> => {
+router.get('/by-blip/:blipId', noStore, requireAuth, async (req, res): Promise<void> => {
   const blipId = String(req.params['blipId']);
   try {
     const resolved = await resolveBlipAccess(blipId, {
@@ -152,7 +152,7 @@ router.get('/by-blip/:blipId', requireAuth, async (req, res): Promise<void> => {
     const result = await find<TaskDoc>(
       { type: 'task', blipId, createdAt: { $gt: 0 } },
       {
-        limit: 100,
+        limit: 1_000,
         sort: [{ createdAt: 'desc' }],
         use_index: 'idx_task_blip_createdAt',
       },

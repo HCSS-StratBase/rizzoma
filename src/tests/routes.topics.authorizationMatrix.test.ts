@@ -1040,6 +1040,49 @@ describe('authorization route matrix', () => {
     expect([...state.docs.values()].some((doc) => doc['type'] === 'mention' && doc['blipId'] === 'blip-private')).toBe(false);
   });
 
+  it('keeps task completion authoritative across stale blip saves and authorized hydration', async () => {
+    const taskId = 'task:44444444-4444-4444-8444-444444444444';
+    const uncheckedContent = `<p>Durable task <span data-task-widget="" data-task-id="${taskId}" data-assignee-id="viewer" data-assignee="Viewer"></span></p>`;
+    const created = await invokeRoute(blipsRouter, 'put', '/:id', {
+      identity: 'editor',
+      params: { id: 'blip-private' },
+      body: { content: uncheckedContent },
+    });
+    expect(created.statusCode).toBe(200);
+
+    const toggled = await invokeRoute(tasksRouter, 'post', '/:id/toggle', {
+      identity: 'viewer',
+      params: { id: taskId },
+    });
+    expect(toggled.statusCode).toBe(200);
+    expect(toggled.body).toMatchObject({ id: taskId, isCompleted: true });
+    expect(state.docs.get(taskId)).toMatchObject({ isCompleted: true });
+
+    // A later content save still carries the original unchecked widget attr.
+    // Reference reconciliation must preserve the side-doc completion state.
+    const staleSave = await invokeRoute(blipsRouter, 'put', '/:id', {
+      identity: 'editor',
+      params: { id: 'blip-private' },
+      body: { content: uncheckedContent },
+    });
+    expect(staleSave.statusCode).toBe(200);
+    expect(state.docs.get(taskId)).toMatchObject({ isCompleted: true });
+
+    const hydrated = await invokeRoute(tasksRouter, 'get', '/by-blip/:blipId', {
+      identity: 'viewer',
+      params: { blipId: 'blip-private' },
+    });
+    expect(hydrated.statusCode).toBe(200);
+    expect(hydrated.headers['cache-control']).toBe('no-store');
+    expect(hydrated.body.tasks).toContainEqual(expect.objectContaining({ id: taskId, isCompleted: true }));
+
+    const outsider = await invokeRoute(tasksRouter, 'get', '/by-blip/:blipId', {
+      identity: 'outsider',
+      params: { blipId: 'blip-private' },
+    });
+    expect(outsider.statusCode).toBe(403);
+  });
+
   it('rejects spoofed nonparticipant references and direct phantom task creation', async () => {
     const originalContent = state.docs.get('blip-private')?.['content'];
     const forgedMention = await invokeRoute(blipsRouter, 'put', '/:id', {
