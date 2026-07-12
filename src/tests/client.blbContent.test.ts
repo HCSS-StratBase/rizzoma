@@ -29,6 +29,9 @@ describe('BLB creation content', () => {
     expect(plainTextToBlbHtml('First label\n\nSecond <label>')).toBe(
       '<ul><li><p>First label</p></li><li><p>Second &lt;label&gt;</p></li></ul>',
     );
+    expect(ensureBlbHtml('Latency < 5 ms & loss > 0')).toBe(
+      '<ul><li><p>Latency &lt; 5 ms &amp; loss &gt; 0</p></li></ul>',
+    );
   });
 
   it('normalizes empty, plain, and paragraph HTML while preserving an existing UL', () => {

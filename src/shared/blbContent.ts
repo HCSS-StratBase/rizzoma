@@ -39,7 +39,9 @@ export function ensureBlbHtml(value: unknown): string {
   const content = typeof value === 'string' ? value.trim() : '';
   if (!content) return EMPTY_BLB_HTML;
   if (/^<ul(?:\s|>)/i.test(content)) return content;
-  if (!/[<>]/.test(content)) return plainTextToBlbHtml(content);
+  // Angle brackets alone are normal prose (for example, "latency < 5 ms").
+  // Treat the value as HTML only when it contains an actual opening tag.
+  if (!/<[A-Za-z][^>]*>/.test(content)) return plainTextToBlbHtml(content);
   return flatBlockHtmlToBlbHtml(content) || `<ul><li>${content}</li></ul>`;
 }
 
