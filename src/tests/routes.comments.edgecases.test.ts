@@ -56,7 +56,7 @@ describe('routes: comments edge cases', () => {
     const body = await resp.json();
     server.close();
     expect(resp.status).toBe(401);
-    expect(body.error).toBe('unauthenticated');
+    expect(body.error).toBe('Authentication required');
   });
 
   it('rejects PATCH when not owner (403)', async () => {

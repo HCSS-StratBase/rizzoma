@@ -57,8 +57,11 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-// Sessions across API routes (auth, topics, comments)
-app.use(sessionMiddleware());
+// One shared session middleware instance backs both Express and Socket.IO.
+// Creating a second instance would create a second MemoryStore in local/test
+// mode, making authenticated HTTP and WebSocket identities disagree.
+const sharedSessionMiddleware = sessionMiddleware();
+app.use(sharedSessionMiddleware);
 app.use(requestId());
 app.use(requestLogger());
 app.use(csrfInit());
@@ -139,7 +142,7 @@ app.get('/{*path}', (_req, res, next) => {
 const server = http.createServer(app);
 
 // Initialize socket.io with same CORS policy as HTTP
-initSocket(server, allowedOrigins);
+initSocket(server, allowedOrigins, sharedSessionMiddleware);
 
 server.listen(config.port, config.host, () => {
   // eslint-disable-next-line no-console

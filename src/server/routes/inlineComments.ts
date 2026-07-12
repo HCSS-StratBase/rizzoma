@@ -4,6 +4,8 @@ import { requireAuth } from '../middleware/auth.js';
 import { find, insertDoc, getDoc, updateDoc, deleteDoc } from '../lib/couch.js';
 import { InlineComment } from '../../shared/types/comments.js';
 import { FEATURES } from '../../shared/featureFlags.js';
+import type { Blip } from '../schemas/wave.js';
+import { requireWaveAccess } from '../lib/access.js';
 
 const router = Router();
 
@@ -35,6 +37,9 @@ router.get('/blip/:blipId/comments', async (req, res): Promise<void> => {
     }
 
     const blipId = req.params['blipId'] as string;
+    const blip = await getDoc<Blip>(blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
 
     const result = await find<InlineComment>(
       { type: 'inline_comment', blipId },
@@ -64,6 +69,9 @@ router.post('/comments', requireAuth, async (req, res): Promise<void> => {
     }
 
     const { blipId, content, range, parentId } = createCommentSchema.parse(req.body);
+    const blip = await getDoc<Blip>(blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'comment');
+    if (!access) return;
     const userId = req.user!.id;
     const userName = req.user!.name || 'Anonymous';
     const userEmail = req.user!.email || '';
@@ -128,6 +136,13 @@ router.patch('/comments/:commentId/resolve', requireAuth, async (req, res): Prom
     const { resolved } = z.object({ resolved: z.boolean() }).parse(req.body);
     
     const doc = await getDoc<any>(commentId);
+    const blip = await getDoc<Blip>(doc.blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'comment');
+    if (!access) return;
+    if (doc.userId !== req.user!.id && !access.canEdit) {
+      res.status(403).json({ error: 'Not authorized' });
+      return;
+    }
     await updateDoc({
       ...doc,
       resolved,
@@ -154,7 +169,10 @@ router.delete('/comments/:commentId', requireAuth, async (req, res): Promise<voi
     const userId = req.user!.id;
     
     const doc = await getDoc<any>(commentId);
-    if (doc.userId !== userId) {
+    const blip = await getDoc<Blip>(doc.blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'comment');
+    if (!access) return;
+    if (doc.userId !== userId && !access.canEdit) {
       res.status(403).json({ error: 'Not authorized' });
       return;
     }

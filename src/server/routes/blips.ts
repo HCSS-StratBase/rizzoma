@@ -5,6 +5,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { noStore } from '../middleware/noStore.js';
 import { invalidateUnreadCacheForWave } from '../lib/unread.js';
 import type { Blip } from '../schemas/wave.js';
+import { requireWaveAccess } from '../lib/access.js';
 
 type LinkDoc = {
   _id?: string;
@@ -142,6 +143,8 @@ router.patch('/:id/reparent', requireAuth, async (req, res): Promise<void> => {
     const id = req.params['id'] as string;
     const parentId = (req.body || {}).parentId as string | null | undefined;
     const blip = await getDoc<Blip & { _id: string; _rev: string }>(id);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'edit');
+    if (!access) return;
     const next: Blip & { _rev?: string } = {
       ...blip,
       parentId: parentId ?? null,
@@ -167,6 +170,9 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
       res.status(400).json({ error: 'missing_required_fields', requestId: (req as any)?.id });
       return;
     }
+
+    const access = await requireWaveAccess(req, res, String(waveId), 'comment');
+    if (!access) return;
 
     const now = Date.now();
     const blipId = `${waveId}:b${now}`;
@@ -203,9 +209,11 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
       blip: {
         ...blip,
         permissions: {
-          canEdit: true,
-          canComment: true,
-          canRead: true
+          role: access.role,
+          canEdit: access.canEdit,
+          canComment: access.canComment,
+          canRead: access.canRead,
+          canManage: access.canManage,
         }
       }
     });
@@ -236,10 +244,8 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;
     }
-    
-    // In original Rizzoma, all wave participants can edit any blip (collaborative editing).
-    // Any authenticated user who can access the wave can edit its blips.
-    // In original Rizzoma, all wave participants can edit (collaborative editing)
+    const access = await requireWaveAccess(req, res, blip.waveId, 'edit');
+    if (!access) return;
 
     const updatedBlip: Blip & { _id: string; _rev?: string } = {
       ...blip,
@@ -263,9 +269,11 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
       blip: {
         ...updatedBlip,
         permissions: {
-          canEdit: true,
-          canComment: true,
-          canRead: true
+          role: access.role,
+          canEdit: access.canEdit,
+          canComment: access.canComment,
+          canRead: access.canRead,
+          canManage: access.canManage,
         }
       }
     });
@@ -280,7 +288,6 @@ router.put('/:id', requireAuth, async (req, res): Promise<void> => {
 
 // GET /api/blips/:id - Get single blip with permissions
 router.get('/:id', async (req, res): Promise<void> => {
-  const userId = req.session?.userId;
   try {
     const id = req.params['id'] as string;
     const blip = await getDoc<Blip>(id);
@@ -288,13 +295,17 @@ router.get('/:id', async (req, res): Promise<void> => {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;
     }
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
     
     res.json({
       ...blip,
       permissions: {
-        canEdit: !!userId, // All wave participants can edit (original Rizzoma behavior)
-        canComment: !!userId,
-        canRead: true
+        role: access.role,
+        canEdit: access.canEdit,
+        canComment: access.canComment,
+        canRead: access.canRead,
+        canManage: access.canManage,
       }
     });
   } catch (e: any) {
@@ -320,8 +331,10 @@ router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;
     }
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
     const isAuthor = !blip.authorId || blip.authorId === userId;
-    if (!isAuthor) {
+    if (!access.canManage && !access.canEdit && !(access.canComment && isAuthor)) {
       console.warn('[blips] forbidden delete', { blipId: id, userId, ownerId: blip.authorId, requestId: (req as any)?.id });
       res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
       return;
@@ -349,6 +362,9 @@ router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
 router.get('/:id/links', async (req, res): Promise<void> => {
   const id = req.params['id'] as string;
   try {
+    const blip = await getDoc<Blip>(id);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
     const out = (await find<LinkDoc>({ type: 'link', fromBlipId: id }, { limit: 1000 })).docs || [];
     const inn = (await find<LinkDoc>({ type: 'link', toBlipId: id }, { limit: 1000 })).docs || [];
     res.json({ out: out.map((d) => ({ fromBlipId: d.fromBlipId, toBlipId: d.toBlipId, waveId: d.waveId })), in: inn.map((d) => ({ fromBlipId: d.fromBlipId, toBlipId: d.toBlipId, waveId: d.waveId })) });
@@ -361,6 +377,9 @@ router.get('/:id/links', async (req, res): Promise<void> => {
 router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
   try {
     const blipId = req.params['id'] as string;
+    const blip = await getDoc<Blip>(blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
     const result = await find<BlipHistoryDoc>({ type: 'blip_history', blipId }, { limit: 200 });
     const history = (result.docs || [])
       .slice()
@@ -378,7 +397,6 @@ router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
 // would show the wrong permissions after a session switch and would
 // mask mark-read state changes.
 router.get('/', noStore, async (req, res): Promise<void> => {
-  const userId = req.session?.userId;
   const waveId = (req.query as Record<string, string | undefined>)['waveId'];
   const limitParam = (req.query as Record<string, string | undefined>)['limit'];
   
@@ -388,6 +406,8 @@ router.get('/', noStore, async (req, res): Promise<void> => {
   }
   
   try {
+    const access = await requireWaveAccess(req, res, waveId, 'read');
+    if (!access) return;
     const limit = Math.min(Math.max(parseInt(String(limitParam ?? '100'), 10) || 100, 1), 5000);
     // Use the find method to query blips by waveId
     // Sort by [type, waveId, createdAt] to leverage idx_blip_wave_createdAt index
@@ -402,9 +422,11 @@ router.get('/', noStore, async (req, res): Promise<void> => {
         ...blip,
         isFoldedByDefault: !!(blip as any).isFoldedByDefault,
         permissions: {
-          canEdit: !!userId, // All wave participants can edit (original Rizzoma behavior)
-          canComment: !!userId,
-          canRead: true
+          role: access.role,
+          canEdit: access.canEdit,
+          canComment: access.canComment,
+          canRead: access.canRead,
+          canManage: access.canManage,
         }
       }))
     });
@@ -419,6 +441,8 @@ router.get('/:id/collapse-default', noStore, requireAuth, async (req, res): Prom
   try {
     const blipId = req.params['id'] as string;
     const doc = await getDoc<Blip>(blipId);
+    const access = await requireWaveAccess(req, res, doc.waveId, 'read');
+    if (!access) return;
     res.json({ collapseByDefault: !!doc.isFoldedByDefault });
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) {
@@ -430,7 +454,6 @@ router.get('/:id/collapse-default', noStore, requireAuth, async (req, res): Prom
 });
 
 router.patch('/:id/collapse-default', requireAuth, async (req, res): Promise<void> => {
-  const userId = req.user!.id;
   const { collapseByDefault } = req.body || {};
   if (typeof collapseByDefault !== 'boolean') {
     res.status(400).json({ error: 'invalid_payload', requestId: (req as any)?.id });
@@ -440,10 +463,8 @@ router.patch('/:id/collapse-default', requireAuth, async (req, res): Promise<voi
   const blipId = req.params['id'] as string;
   try {
     const existing = await getDoc<Blip & { _rev: string }>(blipId);
-    if (existing.authorId && existing.authorId !== userId) {
-      res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
-      return;
-    }
+    const access = await requireWaveAccess(req, res, existing.waveId, 'edit');
+    if (!access) return;
     const next: Blip & { _rev?: string } = {
       ...existing,
       isFoldedByDefault: collapseByDefault,
@@ -463,8 +484,20 @@ router.patch('/:id/collapse-default', requireAuth, async (req, res): Promise<voi
 // noStore: per-user inline-comments visibility preference
 router.get('/:id/inline-comments-visibility', noStore, requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
+  const blipId = req.params['id'] as string;
   try {
-    const blipId = req.params['id'] as string;
+    const blip = await getDoc<Blip>(blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'blip_access_error', requestId: (req as any)?.id });
+    return;
+  }
+  try {
     const doc = await getDoc<InlineCommentsVisibilityDoc>(inlineCommentsPrefDocId(userId, blipId));
     res.json({ isVisible: typeof doc.isVisible === 'boolean' ? doc.isVisible : true, source: 'user' });
   } catch (e: any) {
@@ -487,6 +520,18 @@ router.patch('/:id/inline-comments-visibility', requireAuth, async (req, res): P
   const blipId = req.params['id'] as string;
   const docId = inlineCommentsPrefDocId(userId, blipId);
 
+  try {
+    const blip = await getDoc<Blip>(blipId);
+    const access = await requireWaveAccess(req, res, blip.waveId, 'read');
+    if (!access) return;
+  } catch (e: any) {
+    if (String(e?.message).startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'blip_access_error', requestId: (req as any)?.id });
+    return;
+  }
   try {
     const existing = await getDoc<InlineCommentsVisibilityDoc & { _rev: string }>(docId);
     const next: InlineCommentsVisibilityDoc & { _rev: string } = {
@@ -527,6 +572,8 @@ router.post('/:id/duplicate', requireAuth, async (req, res): Promise<void> => {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;
     }
+    const access = await requireWaveAccess(req, res, sourceBlip.waveId, 'edit');
+    if (!access) return;
 
     const now = Date.now();
     const newBlipId = `${sourceBlip.waveId}:b${now}`;
@@ -561,9 +608,11 @@ router.post('/:id/duplicate', requireAuth, async (req, res): Promise<void> => {
       blip: {
         ...duplicatedBlip,
         permissions: {
-          canEdit: true,
-          canComment: true,
-          canRead: true
+          role: access.role,
+          canEdit: access.canEdit,
+          canComment: access.canComment,
+          canRead: access.canRead,
+          canManage: access.canManage,
         }
       }
     });
@@ -589,8 +638,8 @@ router.post('/:id/move', requireAuth, async (req, res): Promise<void> => {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;
     }
-
-    // All wave participants can edit (original Rizzoma collaborative editing model)
+    const access = await requireWaveAccess(req, res, blip.waveId, 'edit');
+    if (!access) return;
 
     // Prevent moving to self or to a descendant (would create cycle)
     if (newParentId === id) {
@@ -615,9 +664,11 @@ router.post('/:id/move', requireAuth, async (req, res): Promise<void> => {
       blip: {
         ...updatedBlip,
         permissions: {
-          canEdit: true,
-          canComment: true,
-          canRead: true
+          role: access.role,
+          canEdit: access.canEdit,
+          canComment: access.canComment,
+          canRead: access.canRead,
+          canManage: access.canManage,
         }
       }
     });

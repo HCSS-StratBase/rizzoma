@@ -1,4 +1,6 @@
-# Rizzoma Project Status (master)
+# Rizzoma Project Status (public runtime `fe6988fb`; active development `codex/sharing-access-control-stack`)
+
+> **2026-07-12 sharing checkpoint:** The isolated `codex/sharing-access-control-stack` branch layers sharing authorization onto merged hardening commit `2595d2de`, whose tree matches source head `dda4d1d5`; it is locally green but not merged or deployed. Production inventory measured 26 topic metadata documents: 0 explicit policies, 26 missing-policy legacy documents, and 0 malformed policies. Continue with normal CI and an isolated staging role/socket matrix before any public cutover. See the [sharing and authorization reference](docs/SHARING_AUTHORIZATION.md).
 
 > **Session Continuity**: Read `CLAUDE_SESSION.md` first for detailed context from the last working session (recent fixes, test status, gotchas, key files).
 

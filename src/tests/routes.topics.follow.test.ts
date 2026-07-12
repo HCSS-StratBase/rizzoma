@@ -89,7 +89,8 @@ describe('routes: /api/topics follow + list enrichment', () => {
       if (method === 'POST' && path.endsWith('/_find')) {
         const body = JSON.parse((init?.body as string | undefined) ?? '{}') as { selector?: Record<string, any> };
         const selector = body.selector ?? {};
-        const type = selector['type'];
+        const type = selector['type']
+          ?? selector['$and']?.find((clause: Record<string, any>) => clause['type'])?.['type'];
         let resultDocs: Doc[] = [];
 
         if (type === 'topic') {

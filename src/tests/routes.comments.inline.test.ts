@@ -70,6 +70,12 @@ describe('routes: inline comments threading', () => {
 
       if (method === 'GET' && /\/[^/]+$/.test(path)) {
         const id = decodeURIComponent(path.split('/').pop() || '');
+        if (id === 'b1') {
+          return okResp({ _id: 'b1', type: 'blip', waveId: 'w1', content: '<p>hello</p>', createdAt: 1, updatedAt: 1 });
+        }
+        if (id === 'w1') {
+          return okResp({ _id: 'w1', type: 'wave', title: 'Wave', authorId: 'inline-user', createdAt: 1, updatedAt: 1 });
+        }
         const found = inlineDocs.find((doc) => doc._id === id);
         if (found) return okResp(found);
         return okResp({}, 404);

@@ -9,6 +9,8 @@ import { requireAuth } from '../middleware/auth.js';
 import { noStore } from '../middleware/noStore.js';
 import { sendInviteEmail } from '../services/email.js';
 import { getDoc, insertDoc, updateDoc, find } from '../lib/couch.js';
+import { requireWaveAccess } from '../lib/access.js';
+import { csrfProtect } from '../middleware/csrf.js';
 
 const router = Router();
 
@@ -39,7 +41,7 @@ const defaultPreferences: Omit<NotificationPreferencesDoc, '_id' | 'type' | 'use
 };
 
 // POST /api/notifications/invite - Send invite to topic
-router.post('/invite', requireAuth, async (req, res): Promise<void> => {
+router.post('/invite', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const userName = req.user?.name || req.user?.email || 'Someone';
 
@@ -59,11 +61,13 @@ router.post('/invite', requireAuth, async (req, res): Promise<void> => {
     }
 
     // Get topic details
-    const topic = await getDoc<{ _id: string; title?: string; type?: string }>(topicId);
+    const topic = await getDoc<{ _id: string; title?: string; type?: string; authorId?: string }>(topicId);
     if (!topic || topic.type !== 'topic') {
       res.status(404).json({ error: 'topic_not_found' });
       return;
     }
+    const access = await requireWaveAccess(req, res, String(topicId), 'manage', topic);
+    if (!access) return;
 
     const baseUrl = process.env['APP_URL'] || 'http://localhost:8788';
     const topicUrl = `${baseUrl}/?layout=rizzoma#/topic/${topicId}`;
@@ -200,7 +204,9 @@ router.patch('/preferences', requireAuth, async (req, res): Promise<void> => {
 // GET /api/notifications/invites - List pending invites for a topic (topic owner only)
 router.get('/invites/:topicId', requireAuth, async (req, res): Promise<void> => {
   try {
-    const topicId = req.params['topicId'];
+    const topicId = String(req.params['topicId'] || '');
+    const access = await requireWaveAccess(req, res, topicId, 'manage');
+    if (!access) return;
     const result = await find<{ _id: string; recipientEmail: string; sentAt: number; status: string }>(
       { type: 'topic_invite', topicId },
       { limit: 100 }

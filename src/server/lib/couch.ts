@@ -114,6 +114,11 @@ const ALL_INDEXES: Array<{ fields: string[]; name: string }> = [
   { fields: ['type', 'assigneeId', 'createdAt'], name: 'idx_task_assignee_createdAt' },
   { fields: ['type', 'assigneeId', 'isCompleted'], name: 'idx_task_assignee_isCompleted' },
   { fields: ['type', 'waveId', 'blipId', 'createdAt'], name: 'idx_task_wave_blip_createdAt' },
+  { fields: ['type', 'waveId', 'userId'], name: 'idx_participant_wave_user' },
+  { fields: ['type', 'waveId', 'email'], name: 'idx_participant_wave_email' },
+  { fields: ['type', 'userId', 'waveId'], name: 'idx_participant_user_wave' },
+  { fields: ['type', 'email', 'waveId'], name: 'idx_participant_email_wave' },
+  { fields: ['type', 'shareLevel', 'updatedAt'], name: 'idx_topic_share_updatedAt' },
 ];
 
 /**

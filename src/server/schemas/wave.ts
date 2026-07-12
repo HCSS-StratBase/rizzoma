@@ -10,6 +10,9 @@ export type Wave = {
   title: string;
   createdAt: number;
   updatedAt: number;
+  shareLevel?: 'private' | 'link' | 'public';
+  allowComments?: boolean;
+  allowEdits?: boolean;
 };
 
 export type Blip = {
@@ -46,7 +49,7 @@ export type WaveParticipant = {
   waveId: string;
   userId: string;
   email: string;
-  role: 'owner' | 'editor' | 'viewer';
+  role: 'owner' | 'editor' | 'commenter' | 'viewer';
   invitedBy?: string;
   invitedAt: number;
   acceptedAt?: number;

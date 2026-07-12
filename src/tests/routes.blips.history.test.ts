@@ -71,6 +71,9 @@ describe('routes: blip history playback', () => {
 
       if (method === 'GET' && /\/[^/]+$/.test(path)) {
         const id = decodeURIComponent(path.split('/').pop() || '');
+        if (id === 'w1') {
+          return okResp({ _id: 'w1', type: 'wave', title: 'Wave', authorId: 'user-1', createdAt: 1, updatedAt: 1 });
+        }
         const found = blipDocs.find((doc) => doc._id === id);
         if (found) return okResp(found);
       }

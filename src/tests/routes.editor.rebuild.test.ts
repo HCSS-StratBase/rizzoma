@@ -9,6 +9,10 @@ describe('routes: /api/editor rebuild snapshot', () => {
   const app = express();
   app.use(express.json());
   app.use(cookieParser());
+  app.use((req: any, _res, next) => {
+    req.session = { userId: 'editor-owner', userName: 'Editor Owner' };
+    next();
+  });
   let failSnapshotSave = false;
   let docsToReturn: Array<{ _id: string; updateB64: string }> = [];
   let snapshotDocs: Array<{ _id: string; snapshotB64: string }> = [];
@@ -53,6 +57,9 @@ describe('routes: /api/editor rebuild snapshot', () => {
       if (method === 'POST' && /\/project_rizzoma\/?$/.test(path)) {
         if (failSnapshotSave) return ok({ error: 'boom', reason: 'write_failed' }, 500);
         return ok({ ok: true, id: 'snap', rev: '1-x' }, 201);
+      }
+      if (method === 'GET' && /\/project_rizzoma\/w1$/.test(path)) {
+        return ok({ _id: 'w1', type: 'wave', title: 'Wave', authorId: 'editor-owner', createdAt: 1, updatedAt: 1 });
       }
       return ok({}, 404);
     }) as typeof global.fetch;

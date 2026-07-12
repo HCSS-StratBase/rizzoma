@@ -3,6 +3,8 @@ import { csrfProtect } from '../middleware/csrf.js';
 import { deleteDoc, find, getDoc, insertDoc, updateDoc } from '../lib/couch.js';
 import { CreateCommentSchema, UpdateCommentSchema } from '../schemas/comment.js';
 import { emitEvent } from '../lib/socket.js';
+import { requireAuth } from '../middleware/auth.js';
+import { requireWaveAccess } from '../lib/access.js';
 
 type Comment = {
   _id?: string;
@@ -21,7 +23,9 @@ const router = Router();
 // GET /api/topics/:id/comments
 router.get('/topics/:id/comments', async (req, res): Promise<void> => {
   try {
-    const topicId = req.params.id;
+    const topicId = String(req.params['id'] || '');
+    const access = await requireWaveAccess(req, res, topicId, 'read');
+    if (!access) return;
     const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
     const offset = Math.max(parseInt(String((req.query as any).offset ?? '0'), 10) || 0, 0);
     const bookmark = String((req.query as any).bookmark || '').trim() || undefined;
@@ -46,12 +50,12 @@ router.get('/topics/:id/comments', async (req, res): Promise<void> => {
 });
 
 // POST /api/topics/:id/comments
-router.post('/topics/:id/comments', csrfProtect(), async (req, res): Promise<void> => {
-  // @ts-ignore
-  const userId = req.session?.userId as string | undefined;
-  if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
+router.post('/topics/:id/comments', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
+  const userId = req.user!.id;
   try {
-    const topicId = req.params.id;
+    const topicId = String(req.params['id'] || '');
+    const access = await requireWaveAccess(req, res, topicId, 'comment');
+    if (!access) return;
     const { content } = CreateCommentSchema.parse(req.body ?? {});
     const now = Date.now();
     const doc: Comment = { type: 'comment', topicId, authorId: userId, content, createdAt: now, updatedAt: now };
@@ -67,13 +71,13 @@ router.post('/topics/:id/comments', csrfProtect(), async (req, res): Promise<voi
 });
 
 // PATCH /api/comments/:id
-router.patch('/comments/:id', csrfProtect(), async (req, res): Promise<void> => {
-  // @ts-ignore
-  const userId = req.session?.userId as string | undefined;
-  if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
+router.patch('/comments/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
+  const userId = req.user!.id;
   try {
-    const id = req.params.id;
+    const id = String(req.params['id'] || '');
     const existing = await getDoc<Comment>(id);
+    const access = await requireWaveAccess(req, res, existing.topicId, 'comment');
+    if (!access) return;
     if (existing.authorId !== userId) { res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id }); return; }
     const { content } = UpdateCommentSchema.parse(req.body ?? {});
     const next: Comment = { ...existing, content, updatedAt: Date.now() };
@@ -90,13 +94,13 @@ router.patch('/comments/:id', csrfProtect(), async (req, res): Promise<void> => 
 });
 
 // DELETE /api/comments/:id
-router.delete('/comments/:id', csrfProtect(), async (req, res): Promise<void> => {
-  // @ts-ignore
-  const userId = req.session?.userId as string | undefined;
-  if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
+router.delete('/comments/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
+  const userId = req.user!.id;
   try {
-    const id = req.params.id;
+    const id = String(req.params['id'] || '');
     const existing = await getDoc<Comment>(id);
+    const access = await requireWaveAccess(req, res, existing.topicId, 'comment');
+    if (!access) return;
     if (existing.authorId !== userId) { res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id }); return; }
     const r = await deleteDoc(id, (existing as any)._rev);
     res.json({ id: r.id, rev: r.rev });

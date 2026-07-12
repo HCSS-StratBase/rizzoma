@@ -77,13 +77,20 @@ type TopicFull = {
   updatedAt: number;
   authorId: string;
   authorName: string;
+  permissions?: {
+    role: 'outsider' | 'viewer' | 'commenter' | 'editor' | 'owner';
+    canRead: boolean;
+    canComment: boolean;
+    canEdit: boolean;
+    canManage: boolean;
+  };
 };
 
 type Participant = {
   id: string;
   userId: string;
-  email: string;
-  role: 'owner' | 'editor' | 'viewer';
+  email?: string;
+  role: 'owner' | 'editor' | 'commenter' | 'viewer';
   status: 'pending' | 'accepted' | 'declined';
   invitedAt: number;
   acceptedAt?: number;
@@ -184,6 +191,12 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const [allBlipsMap, setAllBlipsMap] = useState<Map<string, BlipData>>(new Map());
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Server permissions are authoritative. Keep controls and collaboration
+  // disabled until the access-checked topic response has arrived.
+  const topicCanRead = topic?.permissions?.canRead ?? false;
+  const topicCanComment = topic?.permissions?.canComment ?? false;
+  const topicCanEdit = topic?.permissions?.canEdit ?? false;
+  const topicCanManage = topic?.permissions?.canManage ?? false;
 
   // BLB: Ref to store newly created blips for immediate access (avoids race condition with state updates)
   const pendingBlipsRef = useRef<Map<string, BlipData>>(new Map());
@@ -229,7 +242,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
   // --- Real-time collaboration for topic root blip ---
   // RizzomaBlip skips collab for topic root (isTopicRoot), so this is the sole owner.
-  const topicCollabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && isAuthed);
+  const topicCollabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && topicCanEdit);
   const topicYdoc = useMemo(
     () => topicCollabEnabled ? yjsDocManager.getDocument(id) : undefined,
     [id, topicCollabEnabled]
@@ -492,7 +505,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         api(`/api/blips?waveId=${encodeURIComponent(id)}&limit=${blipLimit}`),
       ]);
       if (r.ok) {
-        setTopic(r.data as TopicFull);
+        const loadedTopic = r.data as TopicFull;
+        setTopic(loadedTopic);
 
         let loadedParticipants: Participant[] = [];
         if (participantsResponse.ok && participantsResponse.data?.participants) {
@@ -503,8 +517,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         // Convert participants to contributor format for blips
         const contributors: BlipContributor[] = loadedParticipants.map(p => ({
           id: p.userId,
-          email: p.email,
-          name: p.email.split('@')[0],
+          email: p.email || '',
+          name: (p.email || p.userId).split('@')[0],
           role: p.role,
         }));
 
@@ -512,7 +526,6 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           const rawBlips = blipsResponse.data.blips as Array<any>;
           const unreadSet = unreadStateRef.current?.unreadSet ?? new Set<string>();
           const blipMap = new Map<string, BlipData>();
-          const currentIsAuthed = isAuthed;
           rawBlips.forEach(raw => {
             // Generate blipPath from id (e.g., "waveId:b1234567" -> "b1234567")
             const rawId = raw._id || raw.id;
@@ -529,11 +542,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               parentBlipId: raw.parentId || null,
               childBlips: [],
               isFoldedByDefault: typeof raw.isFoldedByDefault === 'boolean' ? raw.isFoldedByDefault : undefined,
-              // Permissions - if user is authed, they can edit/comment
-              permissions: {
-                canEdit: currentIsAuthed,
-                canComment: currentIsAuthed,
-                canRead: true,
+              permissions: raw.permissions || {
+                canEdit: loadedTopic.permissions?.canEdit ?? false,
+                canComment: loadedTopic.permissions?.canComment ?? false,
+                canRead: loadedTopic.permissions?.canRead ?? false,
               },
               // Attach topic participants as contributors to each blip
               contributors: contributors,
@@ -579,7 +591,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       state.isLoading = false;
       state.lastCompleteTime = Date.now();
     }
-  }, [id, isAuthed]);
+  }, [id]);
 
   // Initial load + reload when auth state changes
   // load depends on [id, isAuthed], so when isAuthed changes (false→true after auth check),
@@ -668,8 +680,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   // BLB: Creates a subblip and navigates into it
   useEffect(() => {
     createInlineChildBlipRef.current = async (anchorPosition: number) => {
-      if (!isAuthed) {
-        toast('Sign in to create comments', 'error');
+      if (!topicCanComment) {
+        toast(isAuthed ? 'You do not have permission to comment' : 'Sign in to create comments', 'error');
         return;
       }
       await ensureCsrf();
@@ -717,7 +729,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               isRead: true,
               parentBlipId: undefined,
               childBlips: [],
-              permissions: { canEdit: true, canComment: true, canRead: true },
+              permissions: { canEdit: topicCanEdit, canComment: topicCanComment, canRead: topicCanRead },
               contributors: [],
             };
 
@@ -804,7 +816,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         toast('Failed to create comment', 'error');
       }
     };
-  }, [isAuthed, id, load]);
+  }, [isAuthed, topicCanRead, topicCanComment, topicCanEdit, id, load]);
 
   // Debounced load for socket/event-triggered reloads
   // These pass fromSocket=true so they respect the longer socket cooldown period
@@ -838,6 +850,16 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     window.addEventListener('rizzoma:refresh-topics', handleRefresh);
     return () => window.removeEventListener('rizzoma:refresh-topics', handleRefresh);
   }, [load]);
+
+  useEffect(() => {
+    const handleAccessChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ waveId?: string }>).detail;
+      if (!detail?.waveId || detail.waveId !== id) return;
+      void load(true);
+    };
+    window.addEventListener('rizzoma:access-changed', handleAccessChanged);
+    return () => window.removeEventListener('rizzoma:access-changed', handleAccessChanged);
+  }, [id, load]);
 
   // Bug A perf fix (2026-05-07): expose an awaitable reload so child blips
   // can do `await window.__rizzomaTopicReload()` instead of dispatching
@@ -919,7 +941,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
   const createRootBlip = useCallback(async () => {
     if (!newBlipContent.trim() || busy) return;
-    if (!isAuthed) { toast('Sign in to create blips', 'error'); return; }
+    if (!topicCanComment) { toast(isAuthed ? 'You do not have permission to comment' : 'Sign in to create blips', 'error'); return; }
     await ensureCsrf();
     setBusy(true);
     try {
@@ -931,7 +953,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       else { toast('Failed to create blip', 'error'); }
     } catch { toast('Failed to create blip', 'error'); }
     setBusy(false);
-  }, [newBlipContent, busy, isAuthed, id, load]);
+  }, [newBlipContent, busy, isAuthed, topicCanComment, id, load]);
 
   // Handlers for RizzomaBlip component
   const handleBlipUpdate = useCallback((_blipId: string, _content: string) => {
@@ -1110,8 +1132,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
   // Start editing topic (BLB: topic is meta-blip)
   const startEditingTopic = useCallback(() => {
-    if (!isAuthed) {
-      toast('Sign in to edit', 'error');
+    if (!topicCanEdit) {
+      toast(isAuthed ? 'You do not have permission to edit this topic' : 'Sign in to edit', 'error');
       return;
     }
     // BLB: Topic content should always have title as first H1
@@ -1144,7 +1166,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     lastSavedContentRef.current = nextContent;
     setIsEditingTopic(true);
     // The useEffect will handle syncing the editor content when isEditingTopic changes
-  }, [isAuthed, topic?.title, topic?.content, blips]);
+  }, [isAuthed, topicCanEdit, topic?.title, topic?.content, blips]);
 
   // Finish editing topic
   const finishEditingTopic = useCallback(() => {
@@ -1232,9 +1254,9 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     updatedAt: topic.updatedAt,
     isRead: true,
     permissions: {
-      canEdit: isAuthed,
-      canComment: isAuthed,
-      canRead: true,
+      canEdit: topicCanEdit,
+      canComment: topicCanComment,
+      canRead: topicCanRead,
     },
     childBlips: [...listBlips, ...inlineRootBlips],
   };
@@ -1248,7 +1270,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       {tags.map((tag, i) => <span key={i} className="topic-tag">{tag}</span>)}
     </div>
   ) : null;
-  const topicChildFooter = isAuthed ? (
+  const topicChildFooter = topicCanComment ? (
     <div className="write-reply-section">
       <input
         type="text"
@@ -1275,13 +1297,15 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           Original Rizzoma: Invite | avatars | +N | Share | gear
       ======================================== */}
       <div className="topic-collab-toolbar">
-        <button
-          className="collab-btn invite-btn"
-          title="Invite participants"
-          onClick={() => setShowInviteModal(true)}
-        >
-          Invite
-        </button>
+        {topicCanManage && (
+          <button
+            className="collab-btn invite-btn"
+            title="Invite participants"
+            onClick={() => setShowInviteModal(true)}
+          >
+            Invite
+          </button>
+        )}
         <div className="collab-participants">
           {/* Participant avatars */}
           {participants.length > 0 ? (
@@ -1293,7 +1317,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                 />
               ))}
               {participants.length > 5 && (
-                <span className="participant-overflow" title={participants.slice(5).map(p => p.email).join(', ')}>
+                <span className="participant-overflow" title={participants.slice(5).map(p => p.email || p.userId).join(', ')}>
                   +{participants.length - 5}
                 </span>
               )}
@@ -1302,13 +1326,15 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             <TopicAvatar authorName={topic.authorName} />
           )}
         </div>
-        <button
-          className="collab-btn share-btn"
-          title="Share settings"
-          onClick={() => setShowShareModal(true)}
-        >
-          🔒 Share
-        </button>
+        {topicCanManage && (
+          <button
+            className="collab-btn share-btn"
+            title="Share settings"
+            onClick={() => setShowShareModal(true)}
+          >
+            🔒 Share
+          </button>
+        )}
         <div className="gear-menu-container" ref={gearMenuRef}>
           <button
             className={`collab-btn gear-btn ${showGearMenu ? 'active' : ''}`}
@@ -1404,19 +1430,21 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       {!currentSubblip && (<div className="topic-meta-blip">
         {/* Meta-blip toolbar (like BlipMenu for regular blips) */}
         <div className={`topic-blip-toolbar ${isEditingTopic ? 'editing' : ''}`}>
-          <button
-            className={`topic-tb-btn ${isEditingTopic ? 'active primary' : ''}`}
-            title={isEditingTopic ? 'Done editing (changes auto-saved)' : 'Edit topic content'}
-            onClick={() => {
-              if (isEditingTopic) {
-                finishEditingTopic();
-              } else {
-                startEditingTopic();
-              }
-            }}
-          >
-            {isEditingTopic ? 'Done' : 'Edit'}
-          </button>
+          {topicCanEdit && (
+            <button
+              className={`topic-tb-btn ${isEditingTopic ? 'active primary' : ''}`}
+              title={isEditingTopic ? 'Done editing (changes auto-saved)' : 'Edit topic content'}
+              onClick={() => {
+                if (isEditingTopic) {
+                  finishEditingTopic();
+                } else {
+                  startEditingTopic();
+                }
+              }}
+            >
+              {isEditingTopic ? 'Done' : 'Edit'}
+            </button>
+          )}
           <button
             className={`topic-tb-btn ${showCommentsPanel ? 'active' : ''}`}
             title={showCommentsPanel ? 'Hide inline comments' : 'Show inline comments'}

@@ -9,6 +9,10 @@ describe('routes: /api/editor (realtime + search)', () => {
   const app = express();
   app.use(express.json());
   app.use(cookieParser());
+  app.use((req: any, _res, next) => {
+    req.session = { userId: 'editor-owner', userName: 'Editor Owner' };
+    next();
+  });
 
   beforeAll(async () => {
     process.env['EDITOR_ENABLE'] = '1';
@@ -38,6 +42,9 @@ describe('routes: /api/editor (realtime + search)', () => {
       if (method === 'GET' && /\/project_rizzoma\/?$/.test(path)) {
         // couchDbInfo
         return ok({ couchdb: 'Welcome', version: '3.x' });
+      }
+      if (method === 'GET' && /\/project_rizzoma\/w1$/.test(path)) {
+        return ok({ _id: 'w1', type: 'wave', title: 'Wave', authorId: 'editor-owner', createdAt: 1, updatedAt: 1 });
       }
       return ok({}, 404);
     }) as typeof global.fetch;

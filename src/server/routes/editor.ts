@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { findOne, insertDoc, updateDoc } from '../lib/couch.js';
 import { emitEvent, emitEditorUpdate } from '../lib/socket.js';
+import { identityFromRequest, requireWaveAccess, resolveWaveAccess } from '../lib/access.js';
 
 // Feature flag: set EDITOR_ENABLE=1 to enable endpoints
 const ENABLED = process.env['EDITOR_ENABLE'] === '1';
@@ -156,6 +157,8 @@ if (!ENABLED) {
     const waveId = req.params.waveId;
     const blipId = ((req.query as any)?.blipId ? String((req.query as any).blipId).trim() : '') || undefined;
     try {
+      const access = await requireWaveAccess(req, res, waveId, 'read');
+      if (!access) return;
       // Prefer a blip-specific snapshot when requested; otherwise fall back to wave-level
       let snap: YDocSnapshot | null = null;
       if (blipId) {
@@ -183,6 +186,8 @@ if (!ENABLED) {
     const blipIdVal = (req.body && typeof (req.body as any).blipId === 'string') ? String((req.body as any).blipId) : undefined;
     if (!snapshotB64) { res.status(400).json({ error: 'missing_snapshot' }); return; }
     try {
+      const access = await requireWaveAccess(req, res, waveId, 'edit');
+      if (!access) return;
       const selector: any = blipIdVal ? { type: 'yjs_snapshot', waveId, blipId: blipIdVal } : { type: 'yjs_snapshot', waveId };
       const existing = await findOne<YDocSnapshot>(selector);
       const doc: YDocSnapshot = existing
@@ -204,6 +209,8 @@ if (!ENABLED) {
     const blipIdVal = (req.body && typeof (req.body as any).blipId === 'string') ? String((req.body as any).blipId) : undefined;
     if (!Number.isFinite(seq) || seq < 1 || !updateB64) { res.status(400).json({ error: 'invalid_payload' }); return; }
     try {
+      const access = await requireWaveAccess(req, res, waveId, 'edit');
+      if (!access) return;
       const id = `yupd:${waveId}:${seq}`;
       const doc: YDocUpdate = { _id: id, type: 'yjs_update', waveId, blipId: blipIdVal, seq, updateB64, createdAt: Date.now() };
       const r = await insertDoc(doc as any);
@@ -215,8 +222,10 @@ if (!ENABLED) {
   });
 
   // GET /api/editor/:waveId/rebuild — inspect rebuild job status
-  router.get('/:waveId/rebuild', (req, res) => {
+  router.get('/:waveId/rebuild', async (req, res) => {
     const waveId = req.params.waveId;
+    const access = await requireWaveAccess(req, res, waveId, 'read');
+    if (!access) return;
     const blipIdVal = typeof (req.query as any)?.blipId === 'string' && String((req.query as any).blipId).trim()
       ? String((req.query as any).blipId).trim()
       : undefined;
@@ -227,6 +236,8 @@ if (!ENABLED) {
   // POST /api/editor/:waveId/rebuild — enqueue rebuild snapshot job
   router.post('/:waveId/rebuild', async (req, res) => {
     const waveId = req.params.waveId;
+    const access = await requireWaveAccess(req, res, waveId, 'edit');
+    if (!access) return;
     const blipIdVal = (req.body && typeof (req.body as any).blipId === 'string') ? String((req.body as any).blipId) : undefined;
     const key = jobKey(waveId, blipIdVal);
     const existing = rebuildJobs.get(key);
@@ -284,7 +295,11 @@ if (!ENABLED) {
       const selector: any = { type: 'yjs_snapshot', text: { $regex: `(?i).*${safe}.*` } };
       if (blipIdFilter) selector.blipId = blipIdFilter;
       const { find } = await import('../lib/couch.js');
-      const options: any = { limit: limit + 1, sort: [{ updatedAt: 'desc' }] };
+      // Preserve CouchDB bookmark boundaries exactly. Over-fetching and then
+      // slicing after authorization would advance the bookmark past visible
+      // results that were not returned, silently skipping them on page 2.
+      const fetchLimit = limit;
+      const options: any = { limit: fetchLimit, sort: [{ updatedAt: 'desc' }] };
       if (bookmark) options.bookmark = bookmark;
       let r: any;
       try {
@@ -295,8 +310,17 @@ if (!ENABLED) {
         r = await (find as any)(selector, fallback);
       }
       const docs = Array.isArray(r?.docs) ? r.docs : [];
-      const paged = docs.slice(0, limit);
-      const nextBookmark = docs.length > limit && r?.bookmark ? r.bookmark : null;
+      const identity = identityFromRequest(req);
+      const accessChecks = await Promise.all(docs.map(async (d: any) => {
+        try {
+          const access = await resolveWaveAccess(String(d.waveId || ''), identity);
+          return access.canRead ? d : null;
+        } catch {
+          return null;
+        }
+      }));
+      const paged = accessChecks.filter(Boolean).slice(0, limit) as any[];
+      const nextBookmark = docs.length >= fetchLimit && r?.bookmark ? r.bookmark : null;
       const results = paged.map((d: any) => ({
         waveId: d.waveId,
         blipId: d.blipId,

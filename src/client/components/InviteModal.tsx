@@ -14,6 +14,7 @@ interface InviteModalProps {
 export function InviteModal({ isOpen, onClose, topicId, topicTitle }: InviteModalProps): JSX.Element | null {
   const [emails, setEmails] = useState('');
   const [message, setMessage] = useState('');
+  const [role, setRole] = useState<'viewer' | 'commenter' | 'editor'>('editor');
   const [sending, setSending] = useState(false);
 
   if (!isOpen) return null;
@@ -36,7 +37,8 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle }: InviteModa
       method: 'POST',
       body: JSON.stringify({
         emails: emailList,
-        message: message.trim() || undefined
+        message: message.trim() || undefined,
+        role,
       })
     });
 
@@ -93,6 +95,19 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle }: InviteModa
               placeholder="email1@example.com, email2@example.com"
               autoFocus
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="invite-role">Access role</label>
+            <select
+              id="invite-role"
+              value={role}
+              onChange={(event) => setRole(event.target.value as 'viewer' | 'commenter' | 'editor')}
+            >
+              <option value="viewer">Viewer — can read</option>
+              <option value="commenter">Commenter — can read and reply</option>
+              <option value="editor">Editor — can edit content</option>
+            </select>
           </div>
 
           <div className="form-group">

@@ -1,13 +1,35 @@
 import { Router } from 'express';
 import { find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
-import { emitEvent } from '../lib/socket.js';
+import { emitEvent, refreshWaveSocketAccess } from '../lib/socket.js';
 import type { Blip, Wave, BlipRead, WaveParticipant } from '../schemas/wave.js';
 import { computeWaveUnreadCounts, invalidateUnreadCache } from '../lib/unread.js';
 import { sendInviteEmail } from '../services/email.js';
 import { noStore } from '../middleware/noStore.js';
+import { requireAuth } from '../middleware/auth.js';
+import { csrfProtect } from '../middleware/csrf.js';
+import { z } from 'zod';
+import {
+  buildAccessibleTopicSelector,
+  identityFromRequest,
+  normalizeSharingPolicy,
+  requireWaveAccess,
+  resolveWaveAccess,
+} from '../lib/access.js';
 
 const router = Router();
 type FlatBlip = { id: string; updatedAt: number; createdAt?: number; content?: string; children?: FlatBlip[] };
+
+const sharingPolicySchema = z.object({
+  shareLevel: z.enum(['private', 'link', 'public']),
+  allowComments: z.boolean(),
+  allowEdits: z.boolean(),
+}).transform((policy) => ({
+  ...policy,
+  // Editing necessarily includes replying/commenting; persist the canonical
+  // implication so the UI and effective role never disagree.
+  allowComments: policy.shareLevel === 'private' ? false : policy.allowComments || policy.allowEdits,
+  allowEdits: policy.shareLevel === 'private' ? false : policy.allowEdits,
+}));
 
 async function loadWaveBlipTree(waveId: string): Promise<{ blips: Blip[]; roots: FlatBlip[] }> {
   const result = await find<Blip>(
@@ -54,8 +76,15 @@ router.get('/', async (req, res) => {
   const offset = Math.max(parseInt(String((req.query as any).offset ?? '0'), 10) || 0, 0);
   const q = String((req.query as any).q ?? '').trim();
   try {
-    const selector: any = { type: 'wave' };
-    if (q) selector.title = { $regex: `(?i).*${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*` };
+    const accessSelector = await buildAccessibleTopicSelector(identityFromRequest(req), false, 'wave');
+    const selector: any = q
+      ? {
+          $and: [
+            accessSelector,
+            { title: { $regex: `(?i).*${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*` } },
+          ],
+        }
+      : accessSelector;
     let r: { docs: Wave[] };
     try {
       r = await find<Wave>(selector, { limit: limit + 1, skip: offset, sort: [{ createdAt: 'desc' }] });
@@ -65,12 +94,6 @@ router.get('/', async (req, res) => {
     let docs = r.docs || [];
     let list = docs.slice(0, limit).map((w) => ({ id: w._id, title: w.title, createdAt: w.createdAt }));
     let hasMore = docs.length > limit;
-    if (list.length === 0) {
-      // Fallback to legacy view by creation date
-      const legacy = await view('waves_by_creation_date', 'get', { descending: true, limit });
-      list = legacy.rows.map((row) => ({ id: String(row.value), title: `Wave ${String(row.value).slice(0, 6)}`, createdAt: Number(row.key) || Date.now() }));
-      hasMore = false;
-    }
     res.json({ waves: list, hasMore });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'waves_error', requestId: (req as any)?.id });
@@ -86,14 +109,84 @@ router.get('/unread_counts', noStore, async (req, res) => {
   try {
     const idsParam = String((req.query as any).ids || '').trim();
     const ids = idsParam ? idsParam.split(',').map(s => s.trim()).filter(Boolean).slice(0, 200) : [];
-    const counts = await computeWaveUnreadCounts(userId, ids);
-    const results = ids.map((waveId) => {
+    const identity = identityFromRequest(req);
+    const accessibleIds = (await Promise.all(ids.map(async (waveId) => {
+      try {
+        const access = await resolveWaveAccess(waveId, identity);
+        return access.canRead ? waveId : null;
+      } catch {
+        return null;
+      }
+    }))).filter((waveId): waveId is string => Boolean(waveId));
+    const counts = await computeWaveUnreadCounts(userId, accessibleIds);
+    const results = accessibleIds.map((waveId) => {
       const entry = counts[waveId] || { total: 0, unread: 0, read: 0 };
       return { waveId, total: entry.total, unread: entry.unread, read: entry.read };
     });
     res.json({ counts: results });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'unread_counts_error', requestId: (req as any)?.id });
+  }
+});
+
+// GET/PATCH /api/waves/:id/sharing — persisted topic sharing policy.
+// Legacy documents with no policy remain public-read-only for compatibility;
+// newly-created topics always persist an explicit private policy.
+router.get('/:id/sharing', noStore, async (req, res) => {
+  const waveId = String(req.params['id'] || '');
+  try {
+    const wave = await getDoc<any>(waveId);
+    const access = await requireWaveAccess(req, res, waveId, 'read', wave);
+    if (!access) return;
+    res.json({
+      sharing: normalizeSharingPolicy(wave),
+      role: access.role,
+      canManage: access.canManage,
+    });
+  } catch (e: any) {
+    if (String(e?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'sharing_read_error', requestId: (req as any)?.id });
+  }
+});
+
+router.patch('/:id/sharing', requireAuth, csrfProtect(), async (req, res) => {
+  const waveId = String(req.params['id'] || '');
+  try {
+    const policy = sharingPolicySchema.parse(req.body || {});
+    const wave = await getDoc<any>(waveId);
+    const access = await requireWaveAccess(req, res, waveId, 'manage', wave);
+    if (!access) return;
+    const now = Date.now();
+    const next = {
+      ...wave,
+      ...policy,
+      sharingUpdatedAt: now,
+      sharingUpdatedBy: req.user!.id,
+      updatedAt: Math.max(Number(wave.updatedAt || 0), now),
+    };
+    const result = await updateDoc(next);
+    await refreshWaveSocketAccess(waveId);
+    res.json({
+      id: result.id,
+      rev: result.rev,
+      sharing: policy,
+    });
+    try {
+      emitEvent('sharing:updated', { waveId, sharing: policy, updatedAt: now });
+    } catch {}
+  } catch (e: any) {
+    if (e?.issues) {
+      res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id });
+      return;
+    }
+    if (String(e?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'sharing_update_error', requestId: (req as any)?.id });
   }
 });
 
@@ -104,6 +197,8 @@ router.get('/:id/history', async (req, res) => {
   const after = parseInt(String((req.query as any).after ?? '0'), 10) || 0;
   const before = parseInt(String((req.query as any).before ?? '0'), 10) || 0;
   try {
+    const access = await requireWaveAccess(req, res, waveId, 'read');
+    if (!access) return;
     type BlipHistoryDoc = {
       _id: string;
       type: 'blip_history';
@@ -159,6 +254,8 @@ router.get('/:id', async (req, res) => {
       // ignore 404; treat as legacy-only wave id
       if (!String(e?.message || '').startsWith('404')) throw e;
     }
+    const access = await requireWaveAccess(req, res, id, 'read', wave);
+    if (!access) return;
     const { blips, roots } = await loadWaveBlipTree(id);
     const title = wave?.title || `(legacy) wave ${id.slice(0, 6)}`;
     const createdAt = wave?.createdAt || (blips[0]?.createdAt || Date.now());
@@ -190,6 +287,8 @@ router.get('/:id/unread', noStore, async (req, res) => {
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
   const id = req.params['id'] as string;
   try {
+    const access = await requireWaveAccess(req, res, id, 'read');
+    if (!access) return;
     const { roots } = await loadWaveBlipTree(id);
     const order = flattenBlips(roots);
 
@@ -212,6 +311,8 @@ router.get('/:id/next', noStore, async (req, res) => {
   const id = req.params['id'] as string;
   const after = String((req.query as any).after || '');
   try {
+    const access = await requireWaveAccess(req, res, id, 'read');
+    if (!access) return;
     const { roots } = await loadWaveBlipTree(id);
     const order = flattenBlips(roots);
 
@@ -235,6 +336,8 @@ router.get('/:id/prev', noStore, async (req, res) => {
   const id = req.params['id'] as string;
   const before = String((req.query as any).before || '');
   try {
+    const access = await requireWaveAccess(req, res, id, 'read');
+    if (!access) return;
     const { roots } = await loadWaveBlipTree(id);
     const order = flattenBlips(roots);
 
@@ -261,6 +364,8 @@ router.post('/:waveId/blips/:blipId/read', async (req, res) => {
   const waveId = req.params.waveId;
   const blipId = req.params.blipId;
   try {
+    const access = await requireWaveAccess(req, res, waveId, 'read');
+    if (!access) return;
     try { console.log('[waves] mark one read', { waveId, blipId, userId }); } catch {}
     const keyId = `read:user:${userId}:wave:${waveId}:blip:${blipId}`;
       const now = Date.now();
@@ -304,6 +409,9 @@ router.post('/:id/read', async (req, res) => {
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
   const id = req.params.id;
   let blipIds = Array.isArray((req.body || {}).blipIds) ? (req.body as any).blipIds.map((s: any) => String(s)) : [];
+
+  const access = await requireWaveAccess(req, res, id, 'read');
+  if (!access) return;
 
   // "Mark entire topic as read" path: when no specific blipIds are
   // passed, load every blip in the wave and mark all of them read.
@@ -354,6 +462,8 @@ router.post('/:id/read', async (req, res) => {
 router.get('/:id/participants', async (req, res) => {
   const id = req.params.id;
   try {
+    const access = await requireWaveAccess(req, res, id, 'read');
+    if (!access) return;
     // Task #192 (2026-05-11): explicitly use idx_participant_by_wave —
     // without it CouchDB Mango may pick a different (slower) index or do
     // a full table scan. Per memory: "Mango IGNORES use_index if sort
@@ -361,12 +471,12 @@ router.get('/:id/participants', async (req, res) => {
     // is honored.
     const r = await find<WaveParticipant>(
       { type: 'participant', waveId: id },
-      { limit: 200, use_index: 'idx_participant_by_wave' },
+      { limit: 200, use_index: 'idx_participant_wave_user' },
     );
     const participants = (r.docs || []).map(p => ({
       id: p._id,
       userId: p.userId,
-      email: p.email,
+      ...(access.canManage ? { email: p.email } : {}),
       role: p.role,
       status: p.status,
     }));
@@ -377,16 +487,64 @@ router.get('/:id/participants', async (req, res) => {
   }
 });
 
-// POST /api/waves/:id/participants — invite participants by email
-router.post('/:id/participants', async (req, res) => {
-  const userId = req.session?.userId as string | undefined;
-  if (!userId) { res.status(401).json({ error: 'unauthenticated' }); return; }
+router.patch('/:id/participants/:participantId', requireAuth, csrfProtect(), async (req, res) => {
+  const waveId = String(req.params['id'] || '');
+  const participantId = String(req.params['participantId'] || '');
+  try {
+    const access = await requireWaveAccess(req, res, waveId, 'manage');
+    if (!access) return;
+    const payload = z.object({
+      role: z.enum(['editor', 'commenter', 'viewer']),
+    }).parse(req.body || {});
+    const participant = await getDoc<WaveParticipant & { _id: string; _rev: string }>(participantId);
+    if (participant.type !== 'participant' || participant.waveId !== waveId) {
+      res.status(404).json({ error: 'participant_not_found' });
+      return;
+    }
+    if (participant.role === 'owner') {
+      res.status(400).json({ error: 'owner_role_immutable' });
+      return;
+    }
+    const next = { ...participant, role: payload.role };
+    const result = await updateDoc(next);
+    await refreshWaveSocketAccess(waveId);
+    res.json({ id: result.id, rev: result.rev, role: payload.role });
+  } catch (e: any) {
+    if (e?.issues) {
+      res.status(400).json({ error: 'validation_error', issues: e.issues });
+      return;
+    }
+    if (String(e?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'participant_not_found' });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'participant_update_error' });
+  }
+});
 
-  const waveId = req.params.id;
-  const { emails, message } = req.body as { emails?: string[]; message?: string };
+// POST /api/waves/:id/participants — invite participants by email
+router.post('/:id/participants', requireAuth, csrfProtect(), async (req, res) => {
+  const userId = req.user!.id;
+  const waveId = String(req.params['id'] || '');
+  const { emails, message, role = 'editor' } = req.body as { emails?: string[]; message?: string; role?: WaveParticipant['role'] };
+
+  const access = await requireWaveAccess(req, res, waveId, 'manage');
+  if (!access) return;
+
+  if (!['editor', 'commenter', 'viewer'].includes(role)) {
+    res.status(400).json({ error: 'invalid_role' });
+    return;
+  }
 
   if (!emails || !Array.isArray(emails) || emails.length === 0) {
     res.status(400).json({ error: 'emails array required' });
+    return;
+  }
+  const normalizedEmails = [...new Set(
+    emails.map((email) => String(email || '').trim().toLowerCase()).filter((email) => email.includes('@')),
+  )];
+  if (normalizedEmails.length === 0) {
+    res.status(400).json({ error: 'valid email required' });
     return;
   }
 
@@ -411,7 +569,7 @@ router.post('/:id/participants', async (req, res) => {
   const now = Date.now();
   const results: { email: string; ok: boolean; error?: string }[] = [];
 
-  for (const email of emails) {
+  for (const email of normalizedEmails) {
     try {
       // Find or reference user by email
       let targetUserId = `invite:${email}`;
@@ -438,7 +596,7 @@ router.post('/:id/participants', async (req, res) => {
           waveId,
           userId: targetUserId,
           email,
-          role: 'editor',
+          role,
           invitedBy: userId,
           invitedAt: now,
           status: 'pending',

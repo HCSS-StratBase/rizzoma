@@ -49,7 +49,7 @@ export type BlipContributor = {
   email: string;
   name?: string;
   avatar?: string;
-  role?: 'owner' | 'editor' | 'viewer';
+  role?: 'owner' | 'editor' | 'commenter' | 'viewer';
 };
 
 export interface BlipData {

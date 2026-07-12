@@ -1,5 +1,7 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
+Last refreshed: 2026-07-12 (`codex/sharing-access-control-stack`; rebased onto merged hardening commit `2595d2de`, tree-identical to source head `dda4d1d5`; **not merged or deployed**). Sharing/access enforcement is layered onto the managed runtime. Production inventory measured 26 total topic metadata documents / 0 explicit policies / 26 missing-policy legacy / 0 malformed; existing topics therefore take the public-read-only outsider fallback, owners retain management, and new topics are private. See the [sharing and authorization reference](SHARING_AUTHORIZATION.md).
+
 Last refreshed: 2026-07-12 (`master` target via `codex/production-service-hardening`; base `1241428b`; public runtime code still `fe6988fb`). The in-flight branch adds compiled systemd blue/green lanes, exact-SHA releases, loopback binding, strong secret rotation, Redis readiness, dirty-Yjs retention, and ordered HTTP/Socket.IO/Redis shutdown. Local gates passed: typecheck, 63 Vitest files / 299 passed / 3 skipped, and the 3,298-module production build. This is not yet deployed; public nginx remains on Vite `:3100` → API `:8100` until merge, direct preflight, zero-overlap maintenance drain, both-vhost cutover, and public acceptance. Worklog: [production service hardening](worklog-260712-production-service-hardening.md).
 
 Last refreshed (prior): 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — verified Playwright sign-in lands as `sdspieg@gmail.com`. Tasks #140 + #143 closed. Two Hetzner Robot firewall changes needed: opened :80 + consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to cover return traffic from MASQUERADE'd outbound. tcpdump-diagnosed.)
@@ -31,7 +33,7 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `master` (2026-07-12; public production checkpoint `fe6988fb`, PR #60). Always cite branch + date when sharing status.
+- Active development branch: `codex/sharing-access-control-stack` (2026-07-12; rebased onto merged hardening commit `2595d2de`, whose tree matches source head `dda4d1d5`; undeployed). Public production remains at application commit `fe6988fb` (PR #60). Always cite branch + date when sharing status.
 - Final release gates: 62 Vitest files / 284 passed / 3 skipped; production build 3,298 modules; public collaboration 10/10 with 39 ms relay and zero receiving-client REST PUTs; strict public desktop/mobile Follow-the-Green `2 → 1 → 0`; RedisStore active; zero API 5xx during acceptance.
 - Latest inspected production evidence is under `screenshots/260712-0530-pr60-production-final/`, including command logs, real-control before/after captures, and the required desktop viewport sweep.
 - Deployment boundary: nginx targets the exact merge through Vite `:3100` → API `:8100`; the old `:3000`/`:8788` lane remains healthy for immediate rollback. Both lanes are unmanaged bare processes and share CouchDB.
@@ -54,7 +56,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Run "git checkout master" immediately - that is the currently active branch we're working in.
+    - Continue in the isolated `codex/sharing-access-control-stack` worktree/branch; do not switch this worktree to `master` or modify another checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -64,14 +66,15 @@ codex exec '
 
   Priority focus (current backlog):
   1) Merge `codex/production-service-hardening`, install the managed unit/root-only env, and deploy exact SHA to `:8101`; run direct preflight, drain/stop the old lane with zero overlap, switch both vhosts, then run full public acceptance.
-  2) Keep native rendering disabled until full tree loading and lossless rich-content round trips pass; only then begin edit/reply/persistence integration.
-  3) Clean synthetic production topics, separate staging from production CouchDB, and retire disconnected `:3000`/`:8788` while preserving the exact restart recipe.
-  4) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
-  5) Repair/refresh BLB snapshots and test real-device iPhone Safari.
-  6) Reconcile the dirty canonical checkout and automate bundle/GDrive backup cadence.
-  7) Triage 3 stale PRs / 7 native-port issues; address Node 22, Capacitor CLI 8, GitHub Action majors, 6,354 lint warnings, and legacy assets.
+  2) Review the stacked sharing authorization PR through normal CI, then run the anonymous/outsider/viewer/commenter/editor/owner matrix and live socket-demotion checks against an isolated staging database before any public cutover. Production inventory is already measured at 26 missing-policy legacy topics out of 26 total, with 0 malformed.
+  3) Keep native rendering disabled until full tree loading and lossless rich-content round trips pass; only then begin edit/reply/persistence integration.
+  4) Clean synthetic production topics, separate staging from production CouchDB, and retire disconnected `:3000`/`:8788` while preserving the exact restart recipe.
+  5) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
+  6) Repair/refresh BLB snapshots and test real-device iPhone Safari.
+  7) Reconcile the dirty canonical checkout, automate bundle/GDrive backup cadence, and triage native/dependency/lint debt.
 
   Testing/CI hygiene:
+  - Keep the central sharing/access, route-role matrix, real-session Socket.IO authorization, and ShareModal tests green; production policy changes require staging evidence first.
   - Keep `npm run test:toolbar-inline`, `npm run test:follow-green`, and `npm run test:collab` green; snapshots live under `snapshots/<feature>/` and are uploaded as Actions artifacts.
   - Follow-the-Green acceptance must fail on any non-2xx or malformed unread response and must prove the real desktop and mobile Next control persists `2 -> 1 -> 0`; DOM mutation, debug hooks, direct-API fallbacks, missing-button success, and swallowed errors are forbidden.
   - Keep the enforced 120-blip full-render perf gate green: exact 120/120 rendering, required lazy slots, no timeout, stage duration under 3 seconds, and heap under 100 MB.
