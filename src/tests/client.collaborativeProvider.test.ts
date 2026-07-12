@@ -126,6 +126,19 @@ describe('client: CollaborativeProvider', () => {
     provider.destroy();
   });
 
+  it('tracks whether the server granted seed authority', () => {
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-seed');
+
+    socket._receive('blip:sync:blip-seed', { state: [], shouldSeed: true });
+    expect(provider.synced).toBe(true);
+    expect(provider.shouldSeed).toBe(true);
+
+    socket._receive('blip:sync:blip-seed', { state: [], shouldSeed: false });
+    expect(provider.shouldSeed).toBe(false);
+
+    provider.destroy();
+  });
+
   it('reconnects by re-joining and sending state vector', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-7');
 
@@ -164,5 +177,34 @@ describe('client: CollaborativeProvider', () => {
     const leaveCalls = socket.emit.mock.calls.filter(([ev]: any) => ev === 'blip:leave');
     expect(leaveCalls).toHaveLength(1);
     expect(leaveCalls[0][1]).toEqual({ blipId: 'blip-9' });
+  });
+
+  it('destroy removes the Y.Doc update listener', () => {
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-cleanup');
+    provider.destroy();
+    socket.emit.mockClear();
+
+    doc.getText('default').insert(0, 'after destroy');
+
+    const updateCalls = socket.emit.mock.calls.filter(([ev]: any) => ev === 'blip:update');
+    expect(updateCalls).toHaveLength(0);
+  });
+
+  it('destroy removes only its own socket listeners', () => {
+    const secondDoc = new Y.Doc();
+    const first = new SocketIOProvider(doc, socket as any, 'shared-blip');
+    const second = new SocketIOProvider(secondDoc, socket as any, 'shared-blip');
+    first.destroy();
+
+    const remoteDoc = new Y.Doc();
+    remoteDoc.getText('default').insert(0, 'still subscribed');
+    const update = Y.encodeStateAsUpdate(remoteDoc);
+    socket._receive('blip:update:shared-blip', { update: Array.from(update) });
+
+    expect(secondDoc.getText('default').toString()).toBe('still subscribed');
+
+    remoteDoc.destroy();
+    second.destroy();
+    secondDoc.destroy();
   });
 });

@@ -466,7 +466,12 @@ export function RizzomaBlip({
   // Skip collab for topic root — RizzomaTopicDetail.tsx owns the collab-enabled topicEditor.
   // Without this guard, both components would create SocketIOProviders for the same blipId,
   // causing duplicate socket room joins and update relay loops.
-  const collabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && effectiveExpanded && blip.permissions.canEdit && !isTopicRoot);
+  // Join editable child-blip rooms from their first render, before expansion.
+  // Gating this on `effectiveExpanded` lets an editor mount without a provider
+  // when activation and expansion race, so that client never receives live
+  // relays. TipTap also needs the Collaboration extension in its initial plugin
+  // set; late `setOptions()` calls do not reliably install ySyncPlugin.
+  const collabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && blip.permissions.canEdit && !isTopicRoot);
   const ydoc = useMemo(
     () => collabEnabled ? yjsDocManager.getDocument(blip.id) : undefined,
     [blip.id, collabEnabled]
@@ -579,12 +584,15 @@ export function RizzomaBlip({
   // Seed Y.Doc from blip HTML content after the server sync response arrives.
   // TipTap's Collaboration extension renders from Y.Doc fragment 'default' (ignoring the content prop).
   // The server always sends a blip:sync response — if it contains state, the Y.Doc is populated
-  // automatically; if empty, we seed from the saved blip HTML so only one client ever seeds.
+  // automatically. If it is empty, only the client granted `shouldSeed` may seed from saved HTML;
+  // every other client must wait for that authoritative Y.js update. This prevents two clients
+  // from creating divergent CRDT histories from the same HTML snapshot.
   useEffect(() => {
     if (!inlineEditor || (inlineEditor as any).isDestroyed || !collabEnabled || !ydoc || !collabProvider) return;
 
     const trySeed = () => {
       if ((inlineEditor as any).isDestroyed) return;
+      if (!collabProvider.shouldSeed) return;
       const frag = ydoc.getXmlFragment('default');
       if (frag.length === 0 && blip.content) {
         seedingYdocRef.current = true;
@@ -598,22 +606,20 @@ export function RizzomaBlip({
       return;
     }
 
-    // Wait for server sync before seeding; timeout fallback if server never responds
-    let done = false;
+    // Never fall back to unsupervised local seeding: if the sync response is
+    // delayed, seeding without server authority recreates the split-brain race.
+    let disposed = false;
     const timer = setTimeout(() => {
-      if (done) return;
-      done = true;
-      trySeed();
+      if (!disposed) console.warn(`[collab] waiting for seed authority for blip ${blip.id}`);
     }, 2000);
 
     collabProvider.onSynced(() => {
-      if (done) return;
-      done = true;
+      if (disposed) return;
       clearTimeout(timer);
       trySeed();
     });
 
-    return () => { done = true; clearTimeout(timer); };
+    return () => { disposed = true; clearTimeout(timer); };
   }, [inlineEditor, collabEnabled, ydoc, collabProvider, blip.content]);
 
   // Cleanup auto-save timeout on unmount to prevent stale saves to wrong topic

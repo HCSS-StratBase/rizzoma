@@ -162,6 +162,10 @@ async function openTopicAndExpandBlip(page, topicId, blipId) {
     blipId,
     { timeout: 15000 }
   );
+  // Editor mount alone is not collaboration readiness. The non-authoritative
+  // client intentionally starts with an empty Y.Doc and must receive the
+  // first client's seed before the test types into either side.
+  await waitForEditorText(page, blipId, 'Initial blip content', 15000);
 }
 
 async function focusBlipEditor(page, blipId) {
@@ -194,10 +198,28 @@ async function getEditorText(page, blipId) {
   }, blipId);
 }
 
+async function waitForEditorText(page, blipId, expected, timeout = 10000) {
+  await page.waitForFunction(({ id, expectedText }) => {
+    const editor = document.querySelector(`[data-blip-id="${id}"] .ProseMirror`);
+    if (!editor) return false;
+    const clean = (editor.innerHTML || '')
+      .replace(/<span class="collaboration-cursor[^"]*"[^>]*>.*?<\/span>/g, '')
+      .replace(/<[^>]+>/g, '');
+    return clean === expectedText;
+  }, { id: blipId, expectedText: expected }, { timeout });
+}
+
 async function getOutboundEventCount(page, eventName) {
   return page.evaluate((name) => {
     const out = window.__outbound || [];
     return out.filter((e) => e.event === name).length;
+  }, eventName);
+}
+
+async function getInboundEventCount(page, eventName) {
+  return page.evaluate((name) => {
+    const inbound = window.__inbound || [];
+    return inbound.filter((entry) => entry.ev === name).length;
   }, eventName);
 }
 
@@ -238,30 +260,31 @@ async function main() {
     await openTopicAndExpandBlip(pageB, topicId, blipId);
     await instrumentSocket(pageB);
 
-    // Wait briefly for both providers to join the collab room
-    await pageA.waitForTimeout(1000);
-
     // ===== CHECK 1: feature flags reachable + socket up on both sides =====
     const aSocketOk = await pageA.evaluate(() => !!(window.__socket && window.__socket.connected));
     const bSocketOk = await pageB.evaluate(() => !!(window.__socket && window.__socket.connected));
     recordCheck(aSocketOk && bSocketOk, 'Sockets connected on both contexts (BUG #58 — feature flags reachable)');
 
     // ===== CHECK 2: A types, blip:update emits =====
+    const aOutboundBefore = await getOutboundEventCount(pageA, 'blip:update');
+    const bInboundBefore = await getInboundEventCount(pageB, `blip:update:${blipId}`);
     await focusBlipEditor(pageA, blipId);
     await pageA.keyboard.press('A');
-    await pageA.waitForTimeout(500);
+    await pageA.waitForFunction((before) => (
+      (window.__outbound || []).filter((entry) => entry.event === 'blip:update').length > before
+    ), aOutboundBefore, { timeout: 10000 });
     const aOutCount = await getOutboundEventCount(pageA, 'blip:update');
     recordCheck(aOutCount >= 1, `A typed → ${aOutCount} blip:update emits (BUG #57a — Y.js binding wired)`);
 
     // ===== CHECK 3: B receives the update =====
-    await pageB.waitForTimeout(800);
-    const bInboundCount = await pageB.evaluate((id) => {
-      const inbound = window.__inbound || [];
-      return inbound.filter((e) => e.ev === `blip:update:${id}`).length;
-    }, blipId);
+    await pageB.waitForFunction(({ eventName, before }) => (
+      (window.__inbound || []).filter((entry) => entry.ev === eventName).length > before
+    ), { eventName: `blip:update:${blipId}`, before: bInboundBefore }, { timeout: 10000 });
+    const bInboundCount = await getInboundEventCount(pageB, `blip:update:${blipId}`);
     recordCheck(bInboundCount >= 1, `B received ${bInboundCount} blip:update relay events`);
 
     // ===== CHECK 4: B's editor text contains A's typed character =====
+    await waitForEditorText(pageB, blipId, 'Initial blip contentA');
     const bText = await getEditorText(pageB, blipId);
     recordCheck(
       bText && bText.includes('Initial blip contentA'),
@@ -269,9 +292,14 @@ async function main() {
     );
 
     // ===== CHECK 5: bidirectional — B types, A receives =====
+    const aInboundBefore = await getInboundEventCount(pageA, `blip:update:${blipId}`);
     await focusBlipEditor(pageB, blipId);
     await pageB.keyboard.press('B');
-    await pageB.waitForTimeout(800);
+    await pageA.waitForFunction(({ eventName, before }) => (
+      (window.__inbound || []).filter((entry) => entry.ev === eventName).length > before
+    ), { eventName: `blip:update:${blipId}`, before: aInboundBefore }, { timeout: 10000 });
+    await waitForEditorText(pageA, blipId, 'Initial blip contentAB');
+    await waitForEditorText(pageB, blipId, 'Initial blip contentAB');
     const aText = await getEditorText(pageA, blipId);
     recordCheck(
       aText && aText.includes('B'),
@@ -280,18 +308,23 @@ async function main() {
 
     // ===== CHECK 6: disconnect/reconnect catchup =====
     await pageB.evaluate(() => window.__socket && window.__socket.disconnect());
-    await pageB.waitForTimeout(300);
+    await pageB.waitForFunction(() => !window.__socket?.connected, null, { timeout: 5000 });
     const bDisconnected = await pageB.evaluate(() => !window.__socket?.connected);
     if (!bDisconnected) {
       fail('Could not disconnect B socket for catchup test');
     } else {
+      const bSyncBefore = await getInboundEventCount(pageB, `blip:sync:${blipId}`);
       // A types while B is offline
       await focusBlipEditor(pageA, blipId);
       await pageA.keyboard.press('Z');
-      await pageA.waitForTimeout(500);
+      await waitForEditorText(pageA, blipId, 'Initial blip contentABZ');
       // Reconnect B
       await pageB.evaluate(() => window.__socket && window.__socket.connect());
-      await pageB.waitForTimeout(2000); // give the sync request time to roundtrip
+      await pageB.waitForFunction(() => window.__socket?.connected, null, { timeout: 10000 });
+      await pageB.waitForFunction(({ eventName, before }) => (
+        (window.__inbound || []).filter((entry) => entry.ev === eventName).length > before
+      ), { eventName: `blip:sync:${blipId}`, before: bSyncBefore }, { timeout: 10000 });
+      await waitForEditorText(pageB, blipId, 'Initial blip contentABZ');
       const bTextAfter = await getEditorText(pageB, blipId);
       recordCheck(
         bTextAfter && bTextAfter.includes('Z'),
@@ -322,7 +355,11 @@ async function main() {
         body: JSON.stringify({ blipIds: ids }),
       });
     }, topicId);
-    await pageB.waitForTimeout(300);
+    await pageB.waitForFunction(async (waveId) => {
+      const r = await fetch(`/api/topics?limit=5&_t=${Date.now()}`, { credentials: 'include', cache: 'no-store' });
+      const j = await r.json();
+      return j.topics?.find((topic) => topic.id === waveId)?.unreadCount === 0;
+    }, topicId, { timeout: 10000, polling: 250 });
     const afterUnread = await pageB.evaluate(async (waveId) => {
       const r = await fetch(`/api/topics?limit=5&_t=${Date.now()}`, { credentials: 'include', cache: 'no-store' });
       const j = await r.json();

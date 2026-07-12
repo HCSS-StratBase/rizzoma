@@ -37,4 +37,8 @@
 - Tightened `/api/health` to check the configured application database rather than only CouchDB's server root, so readiness can no longer return green while every data route is unusable.
 - Removed 22 React Hooks-order lint errors without changing feature behavior by keeping the feature/perf guards in thin exported wrappers and moving hook-bearing implementations into unconditional child components.
 - Updated the collaboration smoke to enter edit mode through `rizzoma:enter-edit-blip`; it still dispatched the retired pre-single-active-editor event and therefore timed out before testing any Y.js synchronization.
+- Restored both client halves of the April Y.js fix that consolidation silently reverted: editable child blips now join their collaboration room before expansion, and only the server-authorized client may seed an empty Y.Doc. The regression left one editor outside the child room while near-simultaneous editors could independently seed divergent CRDT histories; live relay failed until reconnect merged server state.
+- Made the collaboration smoke wait for authoritative initial content on each editor, not merely a mounted ProseMirror element, before exercising bidirectional typing.
+- Replaced fixed collaboration sleeps with bounded waits on socket events, editor convergence, disconnect, reconnect, and catch-up state.
+- Fixed `SocketIOProvider.destroy()` to remove its own Y.Doc and socket callbacks by handler identity. The previous teardown leaked ghost outbound emitters and could remove another provider's same-event listener during editor churn.
 - Verification: workflow YAML PASS; typecheck PASS; production build PASS; complete Vitest PASS at 61 files / 275 passed / 3 skipped / 0 failed.

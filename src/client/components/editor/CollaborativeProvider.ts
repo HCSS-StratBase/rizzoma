@@ -15,6 +15,10 @@ export class SocketIOProvider {
   shouldSeed = false;
   private syncCallbacks: Array<() => void> = [];
   private reconnectHandler: (() => void) | null = null;
+  private docUpdateHandler: ((update: Uint8Array, origin: unknown) => void) | null = null;
+  private remoteUpdateHandler: ((data: { update: number[] }) => void) | null = null;
+  private syncHandler: ((data: { state: number[]; shouldSeed?: boolean }) => void) | null = null;
+  private remoteAwarenessHandler: ((data: { states: any }) => void) | null = null;
   /** Guard to prevent awareness update loop (receive → emit change → send → relay → receive) */
   private applyingRemoteAwareness = false;
 
@@ -41,22 +45,24 @@ export class SocketIOProvider {
   }
 
   private setupListeners() {
-    this.doc.on('update', (update: Uint8Array, origin: any) => {
+    this.docUpdateHandler = (update: Uint8Array, origin: unknown) => {
       if (origin !== this) {
         this.socket.emit('blip:update', {
           blipId: this.blipId,
           update: Array.from(update)
         });
       }
-    });
+    };
+    this.doc.on('update', this.docUpdateHandler);
 
     const eventName = `blip:update:${this.blipId}`;
-    this.socket.on(eventName, (data: { update: number[] }) => {
+    this.remoteUpdateHandler = (data: { update: number[] }) => {
       const update = new Uint8Array(data.update);
       Y.applyUpdate(this.doc, update, this);
-    });
+    };
+    this.socket.on(eventName, this.remoteUpdateHandler);
 
-    this.socket.on(`blip:sync:${this.blipId}`, (data: { state: number[]; shouldSeed?: boolean }) => {
+    this.syncHandler = (data: { state: number[]; shouldSeed?: boolean }) => {
       if (data.state.length > 0) {
         const state = new Uint8Array(data.state);
         Y.applyUpdate(this.doc, state, this);
@@ -65,7 +71,8 @@ export class SocketIOProvider {
       this.synced = true;
       this.syncCallbacks.forEach(cb => cb());
       this.syncCallbacks = [];
-    });
+    };
+    this.socket.on(`blip:sync:${this.blipId}`, this.syncHandler);
   }
 
   private setupAwareness() {
@@ -98,7 +105,7 @@ export class SocketIOProvider {
     });
 
     // Receive awareness updates from remote clients
-    this.socket.on(`awareness:update:${this.blipId}`, (data: { states: any }) => {
+    this.remoteAwarenessHandler = (data: { states: any }) => {
       this.applyingRemoteAwareness = true;
       try {
         Object.entries(data.states).forEach(([clientIdStr, state]) => {
@@ -117,7 +124,8 @@ export class SocketIOProvider {
       } finally {
         this.applyingRemoteAwareness = false;
       }
-    });
+    };
+    this.socket.on(`awareness:update:${this.blipId}`, this.remoteAwarenessHandler);
   }
 
   private setupReconnect() {
@@ -147,9 +155,22 @@ export class SocketIOProvider {
     this.socket.emit('blip:leave', {
       blipId: this.blipId
     });
-    this.socket.off(`blip:update:${this.blipId}`);
-    this.socket.off(`blip:sync:${this.blipId}`);
-    this.socket.off(`awareness:update:${this.blipId}`);
+    if (this.docUpdateHandler) {
+      this.doc.off('update', this.docUpdateHandler);
+      this.docUpdateHandler = null;
+    }
+    if (this.remoteUpdateHandler) {
+      this.socket.off(`blip:update:${this.blipId}`, this.remoteUpdateHandler);
+      this.remoteUpdateHandler = null;
+    }
+    if (this.syncHandler) {
+      this.socket.off(`blip:sync:${this.blipId}`, this.syncHandler);
+      this.syncHandler = null;
+    }
+    if (this.remoteAwarenessHandler) {
+      this.socket.off(`awareness:update:${this.blipId}`, this.remoteAwarenessHandler);
+      this.remoteAwarenessHandler = null;
+    }
     if (this.reconnectHandler) {
       this.socket.off('connect', this.reconnectHandler);
       this.reconnectHandler = null;
