@@ -75,6 +75,29 @@ function getSocket(): Socket {
     });
     socket.on('connect', () => console.log('[socket] connected', socket?.id));
     socket.on('connect_error', (err) => console.error('[socket] connect_error', err));
+    socket.on('session:ended', (payload: { reason?: string } = {}) => {
+      // A server-forced disconnect intentionally must not reconnect with the
+      // stale session identity. Surface the boundary and let the app return to
+      // its authentication state; an explicit successful login creates the
+      // next handshake via refreshSocketSession().
+      socket?.disconnect();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('toast', {
+          detail: {
+            type: 'error',
+            message: payload.reason === 'logout'
+              ? 'Your session was signed out.'
+              : 'Your session expired. Sign in again to continue editing.',
+          },
+        }));
+        window.dispatchEvent(new CustomEvent('rizzoma:auth-changed', {
+          detail: { authenticated: false, reason: payload.reason || 'session_ended' },
+        }));
+        window.dispatchEvent(new CustomEvent('rizzoma:access-changed', {
+          detail: { reason: payload.reason || 'session_ended' },
+        }));
+      }
+    });
     socket.on('access:changed', (payload: { waveId?: string }) => {
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('rizzoma:access-changed', { detail: payload }));

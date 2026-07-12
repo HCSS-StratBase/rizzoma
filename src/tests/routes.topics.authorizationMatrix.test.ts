@@ -772,6 +772,51 @@ describe('authorization route matrix', () => {
     expect(state.docs.get(task._id)).toEqual(task);
   });
 
+  it('rejects blip and task documents across every topic-specific route', async () => {
+    const authoredBlip = {
+      _id: 'commenter-authored-blip', _rev: '1-blip', type: 'blip', waveId: 'topic-private',
+      authorId: 'commenter', content: '<p>private blip secret</p>', createdAt: 1, updatedAt: 1,
+    };
+    const task = {
+      _id: 'task-as-topic', _rev: '1-task', type: 'task', waveId: 'topic-private',
+      authorId: 'commenter', title: 'Forged topic shape', content: 'must survive', createdAt: 1, updatedAt: 1,
+    };
+    state.docs.set(authoredBlip._id, authoredBlip);
+    state.docs.set(task._id, task);
+
+    const anonymousRead = await invokeRoute(topicsRouter, 'get', '/:id', {
+      identity: 'anonymous', params: { id: authoredBlip._id },
+    });
+    expect(anonymousRead.statusCode).toBe(404);
+    expect(JSON.stringify(anonymousRead.body)).not.toContain('private blip secret');
+
+    for (const id of [authoredBlip._id, task._id]) {
+      for (const [method, path, body] of [
+        ['patch', '/:id', { title: 'Overwritten' }],
+        ['delete', '/:id', {}],
+        ['post', '/:id/follow', {}],
+        ['post', '/:id/unfollow', {}],
+      ] as const) {
+        const response = await invokeRoute(topicsRouter, method, path, {
+          identity: 'commenter', params: { id }, body,
+        });
+        expect(response.statusCode, `${method.toUpperCase()} ${path} ${id}`).toBe(404);
+      }
+      for (const [method, body] of [
+        ['get', {}],
+        ['patch', { shareLevel: 'public', allowComments: true, allowEdits: true }],
+      ] as const) {
+        const response = await invokeRoute(wavesRouter, method, '/:id/sharing', {
+          identity: 'commenter', params: { id }, body,
+        });
+        expect(response.statusCode, `${method.toUpperCase()} waves sharing ${id}`).toBe(404);
+      }
+    }
+
+    expect(state.docs.get(authoredBlip._id)).toEqual(authoredBlip);
+    expect(state.docs.get(task._id)).toEqual(task);
+  });
+
   it('keeps a delivered token redeemable when the post-SMTP status update fails', async () => {
     const originalUpdate = vi.mocked(updateDoc).getMockImplementation();
     vi.mocked(updateDoc).mockImplementation(async (doc: any) => {

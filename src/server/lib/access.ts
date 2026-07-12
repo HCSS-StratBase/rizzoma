@@ -30,6 +30,15 @@ export type AccessControlledWave = {
   sharing?: Partial<SharingPolicy>;
 };
 
+function isCanonicalWaveMetadata(waveId: string, value: unknown): value is AccessControlledWave {
+  const wave = value as AccessControlledWave | null;
+  return Boolean(
+    wave
+      && wave._id === waveId
+      && (wave.type === 'topic' || wave.type === 'wave' || wave.type === 'topic_tombstone'),
+  );
+}
+
 export type WaveAccess = {
   waveId: string;
   identity: AccessIdentity;
@@ -196,6 +205,13 @@ export async function resolveWaveAccess(
       // still fail closed by propagating the error.
       wave = { _id: waveId, type: 'wave' };
     }
+  }
+  if (!isCanonicalWaveMetadata(waveId, wave)) {
+    // Compatibility applies only when metadata is genuinely absent (the
+    // explicit synthetic wave above), never when another Couch document is
+    // found at the requested id. This blocks blip/task authorId from being
+    // misinterpreted as topic ownership.
+    throw new Error('404 invalid_wave_metadata');
   }
   const policy = normalizeSharingPolicy(wave);
 

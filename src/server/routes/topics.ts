@@ -12,7 +12,6 @@ import type { WaveParticipant } from '../schemas/wave.js';
 import {
   buildAccessibleTopicSelector,
   identityFromRequest,
-  isDeletedWave,
   normalizeSharingPolicy,
   requireWaveAccess,
 } from '../lib/access.js';
@@ -52,6 +51,35 @@ type Topic = {
   allowComments?: boolean;
   allowEdits?: boolean;
 };
+
+async function loadLiveTopic(id: string): Promise<Topic & { _id: string; _rev?: string }> {
+  const doc = await getDoc<unknown>(id) as Partial<Topic> & { _rev?: unknown; deleted?: unknown } | null;
+  if (doc?.type === 'topic_tombstone' || doc?.deleted === true) throw new Error('410 topic_deleted');
+  if (
+    !doc
+    || doc.type !== 'topic'
+    || typeof doc._id !== 'string'
+    || typeof doc.title !== 'string'
+    || typeof doc.createdAt !== 'number'
+    || typeof doc.updatedAt !== 'number'
+  ) {
+    throw new Error('404 not_a_topic');
+  }
+  return doc as Topic & { _id: string; _rev?: string };
+}
+
+function respondTopicLookupFailure(error: unknown, res: any, requestId?: string): boolean {
+  const message = String((error as any)?.message || '');
+  if (message.startsWith('404')) {
+    res.status(404).json({ error: 'not_found', requestId });
+    return true;
+  }
+  if (message.startsWith('410')) {
+    res.status(410).json({ error: 'topic_deleted', requestId });
+    return true;
+  }
+  return false;
+}
 
 type TopicTombstone = Omit<Topic, 'type'> & {
   type: 'topic_tombstone';
@@ -415,11 +443,7 @@ router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): 
 router.get('/:id', async (req, res): Promise<void> => {
   try {
     const id = req.params['id'] as string;
-    const doc = await getDoc<Topic>(id);
-    if (isDeletedWave(doc)) {
-      res.status(410).json({ error: 'topic_deleted', requestId: (req as any)?.id });
-      return;
-    }
+    const doc = await loadLiveTopic(id);
     const access = await requireWaveAccess(req, res, id, 'read', doc);
     if (!access) return;
     let authorName: string | undefined;
@@ -487,7 +511,7 @@ router.get('/:id', async (req, res): Promise<void> => {
     });
     return;
   } catch (e: any) {
-    if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
+    if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
     res.status(500).json({ error: e?.message || 'topic_read_error', requestId: (req as any)?.id });
     return;
   }
@@ -498,11 +522,11 @@ router.post('/:id/follow', requireAuth, csrfProtect(), async (req, res): Promise
   const userId = req.user!.id;
   const topicId = req.params['id'] as string;
   try {
-    const topic = await getDoc<Topic>(topicId);
+    const topic = await loadLiveTopic(topicId);
     const access = await requireWaveAccess(req, res, topicId, 'read', topic);
     if (!access) return;
   } catch (e: any) {
-    if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
+    if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
     res.status(500).json({ error: e?.message || 'follow_access_error', requestId: (req as any)?.id });
     return;
   }
@@ -544,7 +568,7 @@ router.post('/:id/unfollow', requireAuth, csrfProtect(), async (req, res): Promi
   const followId = `topic_follow:${userId}:${topicId}`;
 
   try {
-    const topic = await getDoc<Topic>(topicId);
+    const topic = await loadLiveTopic(topicId);
     const access = await requireWaveAccess(req, res, topicId, 'read', topic);
     if (!access) return;
     const existing = await getDoc<TopicFollow & { _rev?: string }>(followId).catch(() => null);
@@ -556,10 +580,7 @@ router.post('/:id/unfollow', requireAuth, csrfProtect(), async (req, res): Promi
     res.json({ ok: true, topicId, isFollowed: false });
     return;
   } catch (e: any) {
-    if (String(e?.message).startsWith('404')) {
-      res.json({ ok: true, topicId, isFollowed: false });
-      return;
-    }
+    if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
     res.status(500).json({ error: e?.message || 'unfollow_error', requestId: (req as any)?.id });
     return;
   }
@@ -570,7 +591,7 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
   try {
     const id = req.params['id'] as string;
     const payload = UpdateTopicSchema.parse(req.body ?? {});
-    const existing = await getDoc<Topic & { _rev: string }>(id);
+    const existing = await loadLiveTopic(id);
     const access = await requireWaveAccess(req, res, id, 'edit', existing);
     if (!access) return;
     const nowPatch = Date.now();
@@ -599,7 +620,7 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
     return;
   } catch (e: any) {
     if (e?.issues) { res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id }); return; }
-    if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
+    if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
     res.status(500).json({ error: e?.message || 'update_error', requestId: (req as any)?.id });
     return;
   }
@@ -609,7 +630,11 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
 router.delete('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   try {
     const id = req.params['id'] as string;
-    const doc = await getDoc<{ _rev: string } & Topic>(id);
+    const doc = await loadLiveTopic(id);
+    if (!doc._rev) {
+      res.status(409).json({ error: 'topic_revision_missing', requestId: (req as any)?.id });
+      return;
+    }
     const access = await requireWaveAccess(req, res, id, 'manage', doc);
     if (!access) return;
     const deletedAt = Date.now();
@@ -643,7 +668,7 @@ router.delete('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void
     try { emitEvent('topic:deleted', { id: r['id'], deletedAt }); } catch {}
     return;
   } catch (e: any) {
-    if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
+    if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
     res.status(500).json({ error: e?.message || 'delete_error', requestId: (req as any)?.id });
     return;
   }

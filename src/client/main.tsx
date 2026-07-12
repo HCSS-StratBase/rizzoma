@@ -199,6 +199,15 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    const onAuthChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ authenticated?: boolean }>).detail;
+      if (detail?.authenticated === false) setMe(null);
+    };
+    window.addEventListener('rizzoma:auth-changed', onAuthChanged);
+    return () => window.removeEventListener('rizzoma:auth-changed', onAuthChanged);
+  }, []);
+
+  useEffect(() => {
     // Match topic with optional blipPath: #/topic/{topicId}/{blipPath}/
     // blipPath can contain multiple segments like "0_b_xxx/0_b_yyy/"
     const mTopicWithBlip = route.match(/^#\/topic\/([^/?]+)\/(.+?)(?:\?.*)?$/);
