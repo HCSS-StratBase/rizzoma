@@ -145,6 +145,15 @@ the VPS source is a linked worktree (`.git` file). The helper now validates via
 worktrees. Public nginx remains unchanged pending the zero-overlap final
 cutover and browser acceptance.
 
+A later immutable-release preflight reproduced a second deterministic stop:
+with Node 20.19.0 and npm 10.8.2, `npm prune --omit=dev` removed the intended
+development packages but also rewrote 59 tracked `package-lock.json` lines
+(41 additions and 18 deletions). The helper now passes
+`--package-lock=false` only to the post-build prune. A clean disposable
+worktree confirmed that development tools such as ESLint, TypeScript, Vite,
+and Vitest were removed, the production dependency tree remained valid, and
+the tracked tree stayed byte-clean for immutable validation.
+
 ## ClamAV as a managed readiness dependency
 
 - Extended the topology so malware scanning is not an ad-hoc sidecar: the installer creates or adopts `rizzoma-clamav` with a persistent signature volume, 4 GiB memory ceiling, restart policy, and loopback-only `127.0.0.1:3310` publication.

@@ -74,8 +74,9 @@ including indirect upstream definitions. It then builds in a private disposable
 staging worktree, publishes the release symlink atomically, and restores both
 the prior lane target and its active/inactive plus enabled/disabled state if
 startup or health fails. It installs exact dependencies, builds with the parity
-renderer enabled and the native renderer disabled, prunes development packages,
-starts `rizzoma@blue`, and verifies:
+renderer enabled and the native renderer disabled, prunes development packages
+without allowing npm to rewrite the reviewed lockfile, starts `rizzoma@blue`,
+and verifies:
 
 - service active
 - `/api/health` green, including Redis sessions

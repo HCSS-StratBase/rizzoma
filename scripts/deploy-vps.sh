@@ -294,7 +294,12 @@ if [[ ! -d "$RELEASE" ]]; then
     npm run build
   test -f dist/client/index.html
   test -f dist/server/server/app.js
-  CYPRESS_INSTALL_BINARY=0 npm prune --omit=dev --no-audit --no-fund --legacy-peer-deps
+  # npm 10 rewrites package-lock metadata during an omitted-dependency prune,
+  # even though the dependency graph itself is unchanged. The release tree is
+  # deliberately immutable, so prune node_modules without rewriting the
+  # reviewed lockfile; verify_release still fails closed on any tracked drift.
+  CYPRESS_INSTALL_BINARY=0 npm prune --omit=dev --package-lock=false \
+    --no-audit --no-fund --legacy-peer-deps
   install -d -m 0755 data
   rm -rf data/uploads
   ln -s /var/lib/rizzoma/uploads data/uploads
