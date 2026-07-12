@@ -1,12 +1,13 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
-## Merged release checkpoint — 2026-07-12
+## Public production checkpoint — 2026-07-12
 
-- PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) merged to `master` as `8840f552` from source `daa3f2f3`; final-head CI and iOS workflows passed.
-- Vitest passed **283 tests across 62 files** with 3 skipped; typecheck, production build, health checks, and lint at 0 errors also passed.
-- Two-browser-process collaboration passed **10/10** with **1 ms** relay, **0** remote REST PUTs, bidirectional convergence, reconnect catch-up, and stable unread drain.
-- The release-blocking full-render gate passed **120/120** with **101** lazy slots, **394.3 ms** landing, **595.6 ms** expanded, and **36 MB** heap.
-- Boundary: merged source is not yet deployed. Production verification, managed-service/Redis topology, 500/1,000 full-render sweeps, physical iPhone Safari, backup automation, and the 6,363-warning lint backlog remain open.
+- PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60) merged as `fe6988fb` and is public-live through the accepted blue/green lane. It removed proxy-sensitive unread self-fetching, awaits one topic reload for not-yet-materialized remote blips, and keeps the real Next action available on mobile.
+- CI passed **284 tests across 62 files** with 3 skipped; typecheck, production build, browser, health, performance, iOS, and aggregate gates passed; lint measured 0 errors and 6,354 warnings.
+- Public two-process collaboration passed **10/10** with a measured **39 ms** relay, **0** receiving-client REST PUTs, bidirectional convergence, reconnect catch-up, and stable unread drain.
+- Public Follow-the-Green passed the strict real-control contract on desktop and emulated Pixel 5 mobile: persisted unread state moved **2 → 1 → 0**, with unread HTTP 200 and mark-read HTTP 201 responses.
+- Public health/OAuth passed, RedisStore is active, zero API 5xx responses were recorded across acceptance, and the 1280/1366/1440/1600 visual sweep passed. Evidence: `screenshots/260712-0530-pr60-production-final/`.
+- Boundary: the active Node/Vite processes remain unsupervised; the rollback lane is intentionally retained; 500/1,000 full-render sweeps, physical iPhone Safari, backup automation, and the lint backlog remain open.
 
 ## Summary
 Core editor tracks remain behind feature flags, and unread tracking/presence are now persisted per user (CouchDB read docs + Socket.IO events) and rendered across the Rizzoma layout (list badges, WaveView navigation bar, Follow-the-Green button). Demo-mode shortcuts have been removed in favor of real sessions, and permissions now enforce real authorship. Recovery UI for rebuilds and editor search materialization/snippets are implemented and covered by tests. Follow-the-Green now has deterministic Vitest coverage, multi-user Playwright coverage, and CI gating. Uploads run through MIME sniffing + optional ClamAV, optionally stream to S3/MinIO, and the client surfaces cancel/retry/preview UI. The performance harness continuously gates the 120-blip full-render/lazy path, while larger 500/1,000 full-render sweeps remain scale work. Health/inline-comments/uploads checks run in CI. Pixel 9 Pro XL / Android Chrome evidence exists; physical iPhone Safari remains outstanding.
@@ -45,6 +46,9 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 - **Inline expansion** - Next button expands collapsed inline children ([+] markers) via `rizzoma:toggle-inline-blip` event.
 - **Time indicators** - Shows when content changed.
 - **Persistent tracking** - Saves read state to localStorage or per-wave unread docs.
+- **Proxy-safe server order** - Wave detail, unread, next, and previous routes share direct data-level wave-tree loading instead of self-fetching through nginx/Vite metadata.
+- **Remote materialization** - If a socket-delivered unread target is not yet in the observer DOM, the real Next handler awaits one topic reload before navigating and marking it read.
+- **Strict release gate** - Desktop and mobile browser smokes require the actual `.next-button.has-unread`, exact endpoint IDs, and persisted `2 → 1 → 0`; missing controls, malformed/non-2xx unread responses, DOM mutation, and direct-API fallbacks fail the test.
 - **Files created:**
   - `useChangeTracking.ts` - Local change tracking hook (dev/test harness).
   - `useWaveUnread.ts` - Wave-level unread state hook backed by `/api/waves/:id/unread`.

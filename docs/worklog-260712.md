@@ -56,3 +56,17 @@ This section supersedes the initial release boundary above.
 - Rendered evidence and metric payloads are preserved under `screenshots/260712-0313-pr57-release-gates/`; the PNGs were inspected for layout, clipping, toolbar state, and desktop/mobile readability.
 - Boundary: the merged source has not yet been deployed. Production verification, managed services plus Redis-backed sessions, 500/1,000 full-render sweeps, physical iPhone Safari, backup automation, and the 6,363-warning lint backlog remain separate follow-ups.
 - Post-merge backup completed: `rizzoma.bundle` and dated GDrive copy `rizzoma-260712-pr57-native-fractal-release.bundle` are 630 MB, `git bundle verify` reports complete history, and all three copies match SHA-256 `c0cb22744d190426c984217943ff1785983f48f1bdffd4b6705749108a58f327`.
+
+## Production acceptance and PR #60 deployment
+
+This section supersedes the deployment boundary above.
+
+- Corrected the release-state audit: PR #57 source head `daa3f2f3` was already serving the public URL from `/data/large-projects/stephan/rizzoma_260612`; the earlier “not yet deployed” status was wrong.
+- The first strict public acceptance run exposed a real production failure: `/api/waves/:id/unread` returned HTTP 500 because unread/next/previous routes self-fetched a URL assembled from proxy-derived HTTPS metadata and a rewritten plain-HTTP backend host. The former browser smoke hid the failure by accepting a missing/stale button path, mutating the DOM count, using debug/direct-API fallbacks, and swallowing errors.
+- PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60) replaced the self-fetch with shared direct wave-tree loading, reloaded once when remote unread blips had not yet materialized in the observer DOM, exposed the real Next action on mobile, and made the smoke require the actual `button.next-button.has-unread` plus persisted `2 → 1 → 0` state.
+- PR #60 CI was fully green: 62 test files, 284 passed, 3 skipped, 0 failed; typecheck passed; lint had 0 errors and 6,354 warnings; the production build transformed 3,298 modules; browser, health, performance, iOS, and aggregate gates passed. It merged as `fe6988fb`.
+- Promoted the exact merge tree through the accepted staging lane, restarted its API with the public OAuth environment and RedisStore, and switched nginx atomically from Vite `:3000` to Vite `:3100`/API `:8100`. The former public `:3000`/`:8788` lane remains healthy as an immediate rollback target; nginx backup: `/root/rizzoma.conf.pre-pr60-20260712-052206`.
+- Public verification passed: health HTTP 200, correct Google OAuth callback, zero API 5xx responses, RedisStore active, and 32 session keys measured after the acceptance run.
+- Public collaboration passed 10/10 with a 39 ms A-to-B relay, zero receiving-client REST PUTs, bidirectional convergence, reconnect catch-up, unread drain, and no-store topic reads.
+- Public Follow-the-Green passed on desktop and emulated Pixel 5 mobile. The real Next control and endpoint state moved `2 → 1 → 0`; unread reads returned HTTP 200 and individual mark-read writes returned HTTP 201. The visually inspected public evidence, including the 1280/1366/1440/1600 desktop sweep, is under `screenshots/260712-0530-pr60-production-final/`.
+- Remaining boundary: the active Node/Vite processes are not supervised services, the old lane is intentionally retained for rollback, live and staging share CouchDB, physical iPhone Safari remains untested, and 500/1,000-blip full-render sweeps remain open.

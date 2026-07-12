@@ -1,5 +1,14 @@
 # Rizzoma Feature Testing Status
 
+## Public production acceptance — 2026-07-12 (`master` @ `fe6988fb`)
+
+- PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60) merged and is public-live through nginx → Vite `:3100` → API `:8100`; the merge tree exactly matched the accepted staging tree.
+- [CI 29177833541](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833541) passed build, browser smokes, performance, health, and aggregate gates; [iOS 29177833560](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833560) passed. Vitest measured **62 files / 284 passed / 3 skipped / 0 failed**, typecheck passed, lint measured **0 errors / 6,354 warnings**, and the production build transformed **3,298 modules**.
+- The strict public Follow-the-Green smoke passed on desktop and emulated Pixel 5 mobile through the real Next control: endpoint IDs and persisted state both moved **2 → 1 → 0**, unread reads returned HTTP 200, and individual mark-read writes returned HTTP 201.
+- Public two-process collaboration passed **10/10** with a measured **39 ms** A-to-B relay, **0** receiving-client REST PUTs, bidirectional convergence, reconnect catch-up, unread drain, and no-store topic reads.
+- Public health and Google OAuth callback passed; the active API used RedisStore and logged **0** 5xx responses across acceptance. The inspected public evidence and required 1280/1366/1440/1600 viewport sweep are under `screenshots/260712-0530-pr60-production-final/`.
+- Boundary: the active Node/Vite processes remain unsupervised, the previous public lane is retained for immediate rollback, physical iPhone Safari is untested, and full-render 500/1,000-blip sweeps remain open.
+
 ## Merged release — 2026-07-12 (`master`; release code checkpoint `8840f552`)
 
 - Source head `daa3f2f3` merged through PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57).
@@ -10,7 +19,7 @@
 - Two-browser-process collaboration: **10/10**, **1 ms** A-to-B relay, **0** remote REST PUTs, bidirectional convergence, reconnect catch-up, stable unread drain, and no-store topic reads.
 - Enforced full-render performance: **120/120** labels and blips, **101** lazy slots, **394.3 ms** landing, **595.6 ms** expanded, and **36 MB** heap.
 - Inspected artifacts from the immediately preceding complete green run are under `screenshots/260712-0313-pr57-release-gates/`: 393.1 ms landing, 612.1 ms expanded, 36 MB, and the same 120/120 + 101-lazy structural verdict.
-- Boundary: merged source is not yet deployed. Production verification, full-render 500/1,000-blip sweeps, and physical iPhone Safari remain open.
+- Historical boundary: this release was subsequently found already public-live; its failed unread acceptance led to PR #60 and the production checkpoint above.
 
 ## 🟢 Current Status
 - **Full Vitest run (2026-02-10)**: 44 test files passed, 146 tests passed, 3 skipped, **0 failures**. All 9 pre-existing failures fixed (permission-model mismatches, BlipMenu selector drift, feature flags missing in test env, inline comment visibility default, timeout tuning).
