@@ -5,14 +5,15 @@ import { SocketIOProvider } from '../client/components/editor/CollaborativeProvi
 
 /** Create a minimal mock socket that mimics Socket.IO client behavior */
 function createMockSocket(connected = true) {
-  const handlers = new Map<string, Set<Function>>();
+  type SocketHandler = (...args: unknown[]) => void;
+  const handlers = new Map<string, Set<SocketHandler>>();
   const socket = {
     connected,
-    on(event: string, handler: Function) {
+    on(event: string, handler: SocketHandler) {
       if (!handlers.has(event)) handlers.set(event, new Set());
       handlers.get(event)!.add(handler);
     },
-    off(event: string, handler?: Function) {
+    off(event: string, handler?: SocketHandler) {
       if (handler) {
         handlers.get(event)?.delete(handler);
       } else {
