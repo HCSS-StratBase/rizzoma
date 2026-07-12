@@ -123,6 +123,7 @@ const ALL_INDEXES: Array<{ fields: string[]; name: string }> = [
   { fields: ['type', 'userId', 'waveId'], name: 'idx_participant_user_wave' },
   { fields: ['type', 'email', 'waveId'], name: 'idx_participant_email_wave' },
   { fields: ['type', 'shareLevel', 'updatedAt'], name: 'idx_topic_share_updatedAt' },
+  { fields: ['type', 'passwordReset.tokenHash'], name: 'idx_user_password_reset_token' },
 ];
 
 /**

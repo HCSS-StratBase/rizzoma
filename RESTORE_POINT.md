@@ -5,6 +5,18 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-07-12 password recovery candidate) Branch
+  `codex/password-recovery` is based on combined integration checkpoint
+  `c00e1711`. It adds generic non-enumerating reset requests, 32-byte one-time
+  bearers stored only as SHA-256 hashes, fragment-only email links, 30-minute
+  expiry, revision-atomic password/token/generation replacement, HTTP and
+  Socket.IO stale-generation rejection, eager Redis/MemoryStore cleanup, and
+  request/complete UI that scrubs the bearer before auth bootstrap even when a
+  valid signed-in session exists. Focused gates passed at 11 files / 79 tests,
+  typecheck, touched-file ESLint `--quiet`, 3,309 build modules, and ten visually
+  inspected responsive captures with zero unexpected console errors. It is not
+  merged or deployed; full combined CI and staging SMTP/session acceptance are
+  still required. Worklog: [password recovery](docs/worklog-260712-password-recovery.md).
 - (2026-07-12 offline/auth isolation candidate) Branch
   `codex/offline-auth-isolation` is based on PR #65 source checkpoint
   `5a376119`. Production mutation replay is kill-switched behind an empty

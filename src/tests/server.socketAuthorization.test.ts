@@ -65,6 +65,14 @@ describe('Socket.IO session-backed authorization', () => {
   let sessionStore: session.MemoryStore;
 
   beforeAll(async () => {
+    for (const userId of ['owner', 'viewer', 'editor', 'outsider']) {
+      state.docs.set(userId, {
+        _id: userId,
+        type: 'user',
+        email: `${userId}@example.test`,
+        authVersion: 0,
+      });
+    }
     state.docs.set('topic-private', {
       _id: 'topic-private',
       type: 'topic',
@@ -105,6 +113,7 @@ describe('Socket.IO session-backed authorization', () => {
       req.session.userId = userId;
       req.session.userName = `Server ${userId}`;
       req.session.userEmail = `${userId}@example.test`;
+      req.session.authVersion = Number(state.docs.get(userId)?.['authVersion'] || 0);
       const ids = sessionIds.get(userId) || [];
       ids.push(req.sessionID);
       sessionIds.set(userId, ids);
@@ -164,6 +173,15 @@ describe('Socket.IO session-backed authorization', () => {
       permission: 'read',
       error: 'forbidden',
     });
+  });
+
+  it('disconnects an established socket when password reset advances its credential generation', async () => {
+    const editor = await connectAs('editor');
+    const ended = waitForEvent<any>(editor, 'session:ended');
+    state.docs.set('editor', { ...state.docs.get('editor')!, authVersion: 1 });
+    await expect(ended).resolves.toMatchObject({ reason: 'invalidated' });
+    await vi.waitFor(() => expect(editor.connected).toBe(false));
+    state.docs.set('editor', { ...state.docs.get('editor')!, authVersion: 0 });
   });
 
   it('lets a viewer sync but rejects document and awareness writes', async () => {

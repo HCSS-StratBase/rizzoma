@@ -30,6 +30,7 @@ import notificationsRouter from './routes/notifications.js';
 import gadgetsRouter from './routes/gadgets.js';
 import mentionsRouter from './routes/mentions.js';
 import tasksRouter from './routes/tasks.js';
+import { sessionCredentialGuard } from './middleware/sessionCredentials.js';
 
 const app = express();
 const isProd = process.env['NODE_ENV'] === 'production';
@@ -88,6 +89,10 @@ app.get('/api/deps', async (_req, res) => {
 
 // API routes
 app.use('/api/auth', authRouter);
+// Password reset increments a user credential generation atomically with the
+// password hash. Validate that generation before every non-auth data route so
+// old sessions fail closed even if eager Redis deletion is unavailable.
+app.use('/api', sessionCredentialGuard());
 app.use('/api/topics', topicsRouter);
 app.use('/api', commentsRouter);
 app.use('/api/waves', wavesRouter);
@@ -115,7 +120,7 @@ if (process.env['NODE_ENV'] === 'production') {
 // Upload bytes are guarded against the current wave role on every request.
 // Never expose the storage directory via express.static: a known URL must stop
 // working as soon as its reader logs out or loses access.
-app.use('/uploads', uploadFilesRouter);
+app.use('/uploads', sessionCredentialGuard(), uploadFilesRouter);
 
 // SPA navigation handler (last registered — catch-all for non-/api, non-/uploads
 // GET requests). Uses the Express 5 / path-to-regexp v8 named-wildcard syntax

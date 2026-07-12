@@ -1,5 +1,25 @@
 # Rizzoma Feature Testing Status
 
+## Password recovery candidate — 2026-07-12
+
+- Branch `codex/password-recovery`, based on combined integration checkpoint
+  `c00e1711`; not merged or deployed.
+- Focused password/auth/session/socket/offline regression run: **11 files / 79
+  passed / 0 failed**.
+- Typecheck and touched-file ESLint `--quiet` passed; the production build
+  passed with **3,309 transformed modules**.
+- Playwright produced and visually verified **10 PNGs** for request and
+  completion surfaces at 1280/1366/1440/1600 × 900 and 390 × 844 mobile, with
+  **0 unexpected console errors**. The final mobile rerun includes the padding
+  fix found during visual inspection. See the [evidence archive](screenshots/260712-1723-password-recovery-ui/README.md).
+- Coverage proves generic non-enumerating request responses, hashed-only
+  fragment bearers, bounded expiry, atomic one-time consumption under races,
+  bcrypt policy, HTTP/Socket.IO generation invalidation, eager Redis/
+  MemoryStore cleanup, boot-time fragment scrubbing even with an existing
+  valid session, and client `finally` recovery behavior.
+- Boundary: final integration/full CI and live staging SMTP/session acceptance
+  remain required; no production change is claimed.
+
 ## Offline/auth isolation candidate — 2026-07-12
 
 - Branch `codex/offline-auth-isolation`, based on PR #65 source checkpoint

@@ -1,6 +1,6 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-12 (`release/preintegration-offline-upload`; sharing core `df3e189a`, offline/auth isolation, and private ACL-backed uploads integrated on merged `master` `6687f99d`; **not merged or deployed**). The combined branch preserves owner-partitioned offline/Yjs state, network-only private transports, persisted sharing roles, session-authorized Socket.IO, and revocable attachment access. Exact-core audit follow-ups and the sanitizer/realtime/large-wave/tasks/mentions/export/UI checkpoint still block the full combined gate. See the [sharing and authorization reference](SHARING_AUTHORIZATION.md).
+Last refreshed: 2026-07-12 (`codex/password-recovery`; isolated from combined checkpoint `c00e1711`; **not merged or deployed**). Password reset now has generic requests, hashed fragment-only tokens, atomic one-time consume, session-generation invalidation across HTTP/Socket.IO, eager session-store cleanup, and boot-forced responsive UI. Focused gates passed at 11 files / 79 tests plus typecheck, touched-file lint, 3,309-module build, and ten inspected PNGs. Integrate this commit onto the final combined branch, then run full CI and staging SMTP/session acceptance. See the [password recovery worklog](worklog-260712-password-recovery.md).
 
 Last refreshed (prior): 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — verified Playwright sign-in lands as `sdspieg@gmail.com`. Tasks #140 + #143 closed. Two Hetzner Robot firewall changes needed: opened :80 + consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to cover return traffic from MASQUERADE'd outbound. tcpdump-diagnosed.)
 
@@ -31,7 +31,7 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `release/preintegration-offline-upload` (2026-07-12), integrating sharing, offline isolation, cursor identity, and private uploads on merged `master` `6687f99d`; public production remains `fe6988fb` from PR #60. Always cite branch + date when sharing status.
+- Active branch: `codex/password-recovery` (2026-07-12), isolated password-recovery candidate on combined checkpoint `c00e1711`; public production remains `fe6988fb` from PR #60. Always cite branch + date when sharing status.
 - Final release gates: 62 Vitest files / 284 passed / 3 skipped; production build 3,298 modules; public collaboration 10/10 with 39 ms relay and zero receiving-client REST PUTs; strict public desktop/mobile Follow-the-Green `2 → 1 → 0`; RedisStore active; zero API 5xx during acceptance.
 - Latest inspected production evidence is under `screenshots/260712-0530-pr60-production-final/`, including command logs, real-control before/after captures, and the required desktop viewport sweep.
 - Deployment boundary: nginx targets the exact merge through Vite `:3100` → API `:8100`; the old `:3000`/`:8788` lane remains healthy for immediate rollback. Both lanes are unmanaged bare processes and share CouchDB.

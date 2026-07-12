@@ -1,15 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   OWNER_RECOVERY_TOKEN_KEY,
+  PASSWORD_RESET_TOKEN_KEY,
   PENDING_INVITE_URL_KEY,
   readOwnerRecoveryToken,
+  readPasswordResetToken,
   readPendingInvite,
   scrubInviteFragment,
   scrubOwnerRecoveryFragment,
+  scrubPasswordResetFragment,
 } from '../client/lib/fragmentSecrets';
 
 const inviteToken = 'invite-secret-token-that-is-long-enough-123456789';
 const recoveryToken = 'owner-recovery-secret-that-is-long-enough-123456789';
+const passwordResetToken = 'p'.repeat(43);
 
 describe('fragment secret lifecycle', () => {
   beforeEach(() => {
@@ -53,5 +57,24 @@ describe('fragment secret lifecycle', () => {
     const stored = JSON.parse(sessionStorage.getItem(OWNER_RECOVERY_TOKEN_KEY) || '{}');
     expect(Object.keys(stored).sort()).toEqual(['createdAt', 'expiresAt', 'token']);
     expect(stored.expiresAt - stored.createdAt).toBeLessThan(60 * 60 * 1000);
+  });
+
+  it('scrubs a password reset before render and retains only a tab-scoped TTL record', () => {
+    const now = Date.now();
+    window.history.replaceState(null, '', `/?layout=rizzoma#/?passwordReset=${passwordResetToken}`);
+    expect(scrubPasswordResetFragment(now)).toBe(passwordResetToken);
+    expect(window.location.hash).toBe('#/');
+    expect(window.location.href).not.toContain(passwordResetToken);
+    expect(readPasswordResetToken()).toBe(passwordResetToken);
+    const stored = JSON.parse(sessionStorage.getItem(PASSWORD_RESET_TOKEN_KEY) || '{}');
+    expect(Object.keys(stored).sort()).toEqual(['createdAt', 'expiresAt', 'token']);
+    expect(stored.expiresAt - stored.createdAt).toBe(30 * 60 * 1000);
+  });
+
+  it('rejects malformed password reset fragments instead of retaining them', () => {
+    window.history.replaceState(null, '', '/#/?passwordReset=too-short');
+    expect(scrubPasswordResetFragment()).toBeNull();
+    expect(window.location.href).not.toContain('too-short');
+    expect(sessionStorage.getItem(PASSWORD_RESET_TOKEN_KEY)).toBeNull();
   });
 });

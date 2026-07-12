@@ -6,6 +6,7 @@ declare module 'express-session' {
     userEmail?: string;
     userName?: string;
     userAvatar?: string;
+    authVersion?: number;
     csrfToken?: string;
     twitterOAuthState?: string;
     twitterCodeVerifier?: string;

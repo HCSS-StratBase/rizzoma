@@ -32,6 +32,7 @@ export type TicketPayload = {
   email: string;
   name?: string | undefined;
   avatar?: string | undefined;
+  authVersion?: number | undefined;
 };
 
 type Entry = TicketPayload & { expiresAt: number; verifierChallenge?: string };

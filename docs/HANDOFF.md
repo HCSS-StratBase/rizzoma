@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`release/preintegration-offline-upload`; integrated sharing core `df3e189a`, offline/auth isolation, and private ACL-backed uploads on merged `master` `6687f99d`; **not merged or deployed**). Production replay is disabled, REST/Yjs state is owner-partitioned, service-worker v2 makes private transports network-only, and persisted sharing roles plus session-authorized Socket.IO are present. Exact-core audit has required follow-up fixes before GO, and the later sanitizer/realtime/large-wave/tasks/mentions/export/UI checkpoint plus full combined gates remain open. Details: [sharing and authorization reference](SHARING_AUTHORIZATION.md).
+Last Updated: 2026-07-12 (`codex/password-recovery`; isolated candidate from combined checkpoint `c00e1711`; **not merged or deployed**). This slice adds generic password-reset requests, hashed fragment-only one-time tokens, atomic password/token/generation replacement, HTTP and Socket.IO stale-session rejection, eager Redis/MemoryStore cleanup, and request/complete UI that scrubs the bearer before auth bootstrap. Focused verification is 11 files / 79 tests, typecheck, touched-file lint, a 3,309-module build, and ten visually inspected responsive PNGs. The broader integration and deployment blockers remain unchanged. Details: [password recovery worklog](worklog-260712-password-recovery.md).
 
 **Deployment boundary:** nginx serves Vite `:3100` → API `:8100`; Redis backs API sessions. The public frontend is Vite's **development server**, not a compiled production frontend. The live client has parity rendering enabled and native rendering unset, so production uses the React/TipTap parity path; `NativeWaveView` remains read-only and is not the deployed architecture. The former `:3000`/`:8788` lane remains healthy for immediate rollback via `/root/rizzoma.conf.pre-pr60-20260712-052206`. Both lanes are unmanaged bare processes and share CouchDB.
 
@@ -35,7 +35,7 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active development branch: `release/preintegration-offline-upload` (2026-07-12; isolated offline/auth plus attachment-ACL preintegration on merged `master` `6687f99d`; undeployed). Public production remains at application commit `fe6988fb` (PR #60). Always include branch name + date when summarizing status.
+- Active development branch: `codex/password-recovery` (2026-07-12; isolated password-recovery slice on combined integration checkpoint `c00e1711`; undeployed). Public production remains at application commit `fe6988fb` (PR #60). Always include branch name + date when summarizing status.
 - The "Current State" section below is refreshed for the deployed parity release; older dated entries and “native release” labels are historical until the native renderer is write-capable and actually enabled.
 
 Branching mode (private repo):
@@ -69,7 +69,8 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`release/preintegration-offline-upload` on merged `master` `6687f99d` @ 2026-07-12; public production still `fe6988fb`, PR #60)
+Current State (`codex/password-recovery` on combined checkpoint `c00e1711` @ 2026-07-12; public production still `fe6988fb`, PR #60)
+- The password-recovery candidate covers the 44 audited password accounts with a non-enumerating request flow, 30-minute hashed-only fragment bearer, revision-atomic one-time consume, and 12-character new-password floor. Reset increments a credential generation checked by all non-auth application routes and Socket.IO revalidation, while eager store/socket revocation removes old sessions immediately. Boot-time fragment scrubbing forces the reset UI even over a valid existing session. Full combined CI and live staging SMTP/session acceptance remain open.
 - The offline/auth candidate keeps production mutation replay disabled and the UI read-only offline. Queue records, Yjs documents, pending acknowledgements, and unresolved in-memory snapshots are scoped to the authenticated owner; A→logout→B and cross-tab cookie-switch regressions are covered. One accessible shell auth surface renders per viewport.
 - The attachment slice removes the public upload-directory mount, requires edit access to the canonical blip before upload, stores opaque wave-bound metadata, and rechecks current read access for every `/uploads/:id` request. The service worker makes `/api/*`, `/socket.io/*`, and `/uploads/*` network-only and purges legacy caches.
 - The sharing/access core is now integrated locally: persisted private/link/public policy, viewer/commenter/editor/owner enforcement, server-session Socket.IO identity, and live revocation coexist with offline owner partitioning and private attachments. Exact audit follow-ups and later functional slices still block release.

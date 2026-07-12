@@ -49,6 +49,7 @@ vi.mock('../server/lib/bcrypt.js', () => ({
 
 vi.mock('../server/lib/socket.js', () => ({
   disconnectSessionSockets: vi.fn(() => 0),
+  disconnectUserSockets: vi.fn(() => 0),
 }));
 
 vi.mock('../server/lib/logger.js', () => ({ logAuthEvent: vi.fn() }));

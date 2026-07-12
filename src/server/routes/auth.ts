@@ -10,8 +10,14 @@ import { noStore } from '../middleware/noStore.js';
 import { isSamlEnabled, getSamlInstance, extractUserFromProfile, generateMetadata } from '../lib/saml.js';
 import { logAuthEvent } from '../lib/logger.js';
 import { issueTicket, redeemTicket } from '../lib/authTickets.js';
-import { disconnectSessionSockets } from '../lib/socket.js';
+import { disconnectSessionSockets, disconnectUserSockets } from '../lib/socket.js';
 import { hashInviteToken, invitationTokenDocId } from '../lib/invitations.js';
+import {
+  consumePasswordReset,
+  queuePasswordResetDelivery,
+} from '../lib/passwordReset.js';
+import { revokeUserSessions } from '../middleware/session.js';
+import { checkSessionCredentialVersion, normalizeAuthVersion } from '../lib/sessionCredentials.js';
 // import { config } from '../config.js';
 
 // Mobile OAuth handoff: Android's WebView has a Chromium bug where
@@ -46,6 +52,18 @@ const router = Router();
 // Basic rate limiters for auth endpoints
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 const loginLimiter = rateLimit({ windowMs: 10 * 60 * 1000, max: 30 });
+const passwordResetRequestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const passwordResetCompleteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const RegisterBody = z.object({
   email: z.string().email(),
@@ -59,6 +77,11 @@ const LoginBody = z.object({
   email: z.string().email(),
   password: z.string().min(6).max(200),
 });
+const PasswordResetRequestBody = z.object({ email: z.string().email().max(320) });
+const PasswordResetCompleteBody = z.object({
+  token: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+  password: z.string().min(12).max(200),
+});
 
 type User = {
   _id?: string;
@@ -71,9 +94,10 @@ type User = {
   avatar?: string;  // Profile picture URL from OAuth provider
   emailVerifiedAt?: number;
   emailVerificationProvider?: 'google' | 'facebook' | 'microsoft' | 'twitter' | 'saml' | 'invitation';
+  authVersion?: number;
 };
 
-type SessionIdentity = { id?: string; email: string; name?: string; avatar?: string };
+type SessionIdentity = { id?: string; email: string; name?: string; avatar?: string; authVersion?: number };
 
 async function establishAuthenticatedSession(req: any, res: any, identity: SessionIdentity): Promise<void> {
   const previous = req.session;
@@ -90,6 +114,7 @@ async function establishAuthenticatedSession(req: any, res: any, identity: Sessi
   req.session.userEmail = identity.email;
   req.session.userName = identity.name;
   req.session.userAvatar = identity.avatar;
+  req.session.authVersion = normalizeAuthVersion(identity.authVersion);
   // Session regeneration intentionally invalidates every pre-auth session
   // value, including the old CSRF secret. Mint and return a fresh pair now so
   // the first authenticated mutation works without relying on a page reload.
@@ -211,7 +236,12 @@ router.post('/register', authLimiter, csrfProtect(), async (req, res): Promise<v
       });
     }
     const sessionName = doc.name || normalized.split('@')[0];
-    await establishAuthenticatedSession(req, res, { id: userId, email: normalized, name: sessionName });
+    await establishAuthenticatedSession(req, res, {
+      id: userId,
+      email: normalized,
+      name: sessionName,
+      authVersion: doc.authVersion,
+    });
     res.status(201).json({ id: userId, email: normalized, name: sessionName });
     return;
   } catch (e: any) {
@@ -230,7 +260,13 @@ router.post('/login', loginLimiter, csrfProtect(), async (req, res): Promise<voi
     if (!user.passwordHash) { res.status(401).json({ error: 'invalid_credentials', requestId: (req as any)?.id }); return; }
     const ok = await bcryptCompare(password, user.passwordHash);
     if (!ok) { res.status(401).json({ error: 'invalid_credentials', requestId: (req as any)?.id }); return; }
-    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
+    await establishAuthenticatedSession(req, res, {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+      authVersion: user.authVersion,
+    });
     res.json({ id: user._id, email: user.email });
     return;
   } catch (e: any) {
@@ -280,7 +316,13 @@ router.post('/redeem-ticket', authLimiter, async (req, res): Promise<void> => {
     res.status(401).json({ error: 'invalid_or_expired_ticket', requestId: (req as any)?.id });
     return;
   }
-  await establishAuthenticatedSession(req, res, { id: payload.userId, email: payload.email, name: payload.name, avatar: payload.avatar });
+  await establishAuthenticatedSession(req, res, {
+    id: payload.userId,
+    email: payload.email,
+    name: payload.name,
+    avatar: payload.avatar,
+    authVersion: payload.authVersion,
+  });
   logAuthEvent(req, { provider: 'ticket', ok: true, email: payload.email });
   res.json({ id: payload.userId, email: payload.email, name: payload.name, avatar: payload.avatar });
 });
@@ -293,6 +335,26 @@ router.get('/me', noStore, async (req, res): Promise<void> => {
   const id = session?.userId;
   if (!id) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
   try {
+    const credentialCheck = await checkSessionCredentialVersion(session);
+    if (credentialCheck.status === 'unavailable') {
+      res.status(503).json({ error: 'session_verification_unavailable', requestId: (req as any)?.id });
+      return;
+    }
+    if (credentialCheck.status === 'invalid') {
+      const sessionId = String((req as any).sessionID || '');
+      if (typeof req.session?.destroy === 'function') {
+        await new Promise<void>((resolve) => req.session.destroy(() => resolve()));
+      }
+      disconnectSessionSockets(sessionId);
+      res.clearCookie('rizzoma.sid', {
+        path: '/',
+        httpOnly: true,
+        secure: process.env['NODE_ENV'] === 'production',
+        sameSite: 'lax',
+      });
+      res.status(401).json({ error: 'session_invalidated', requestId: (req as any)?.id });
+      return;
+    }
     const user = await getDoc<User>(id);
     if (!user) { res.status(404).json({ error: 'user_not_found', requestId: (req as any)?.id }); return; }
     // Return avatar from user doc, or from session (set during OAuth login)
@@ -342,6 +404,88 @@ const getBaseUrl = (req: any): string => {
 const getClientUrl = (): string => {
   return process.env['CLIENT_URL'] || process.env['APP_URL'] || '';
 };
+
+function getPasswordResetBaseUrl(req: any): string {
+  const configured = process.env['APP_URL'] || process.env['CLIENT_URL'];
+  if (process.env['NODE_ENV'] === 'production' && !configured) {
+    throw new Error('APP_URL or CLIENT_URL is required for password reset in production');
+  }
+  const value = configured || getBaseUrl(req);
+  const parsed = new URL(value);
+  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('invalid public application URL');
+  return parsed.toString();
+}
+
+const passwordResetGenericResponse = {
+  ok: true,
+  message: 'If that address has a password account, a reset link will be sent.',
+};
+
+router.post(
+  '/password-reset/request',
+  passwordResetRequestLimiter,
+  csrfProtect(),
+  noStore,
+  (req, res): void => {
+    const parsed = PasswordResetRequestBody.safeParse(req.body ?? {});
+    if (parsed.success) {
+      try {
+        const normalizedEmail = parsed.data.email.trim().toLowerCase();
+        queuePasswordResetDelivery(normalizedEmail, getPasswordResetBaseUrl(req));
+      } catch (error: any) {
+        // Keep the public response generic. Configuration/delivery failures are
+        // operational events and never include the submitted address or token.
+        console.error('[auth] password reset request could not be queued', {
+          requestId: (req as any)?.id,
+          error: String(error?.message || error || 'unknown error'),
+        });
+      }
+    }
+    res.status(202).json({ ...passwordResetGenericResponse, requestId: (req as any)?.id });
+  },
+);
+
+router.post(
+  '/password-reset/complete',
+  passwordResetCompleteLimiter,
+  csrfProtect(),
+  noStore,
+  async (req, res): Promise<void> => {
+    const parsed = PasswordResetCompleteBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({ error: 'validation_error', requestId: (req as any)?.id });
+      return;
+    }
+    try {
+      const passwordHash = await bcryptHash(parsed.data.password, BCRYPT_ROUNDS);
+      const consumed = await consumePasswordReset(parsed.data.token, passwordHash);
+      if (!consumed) {
+        res.status(400).json({ error: 'invalid_or_expired_reset', requestId: (req as any)?.id });
+        return;
+      }
+
+      // The authVersion increment in consumePasswordReset is authoritative.
+      // Eager store deletion and socket disconnection remove stale sessions
+      // immediately; version guards still fail closed if the store scan fails.
+      disconnectUserSockets(consumed.userId);
+      try {
+        await revokeUserSessions(consumed.userId);
+      } catch (error: any) {
+        console.error('[auth] password reset eager session revocation failed', {
+          requestId: (req as any)?.id,
+          error: String(error?.message || error || 'unknown error'),
+        });
+      }
+      res.json({ ok: true, requestId: (req as any)?.id });
+    } catch (error: any) {
+      console.error('[auth] password reset completion failed', {
+        requestId: (req as any)?.id,
+        error: String(error?.message || error || 'unknown error'),
+      });
+      res.status(503).json({ error: 'password_reset_unavailable', requestId: (req as any)?.id });
+    }
+  },
+);
 
 const base64Url = (buffer: Buffer): string =>
   buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
@@ -618,6 +762,7 @@ router.get('/google/callback', async (req, res): Promise<void> => {
         email: user.email,
         name: user.name,
         avatar: user.avatar,
+        authVersion: normalizeAuthVersion(user.authVersion),
       }, transaction.mobileChallenge);
       logAuthEvent(req, { provider: 'google', ok: true, email: user.email, reason: 'mobile_ticket' });
       res.redirect(nativeTicketUrl(ticket));
@@ -625,7 +770,10 @@ router.get('/google/callback', async (req, res): Promise<void> => {
     }
 
     // Set session
-    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
+    await establishAuthenticatedSession(req, res, {
+      id: user._id, email: user.email, name: user.name, avatar: user.avatar,
+      authVersion: user.authVersion,
+    });
 
     logAuthEvent(req, { provider: 'google', ok: true, email: user.email });
     const clientUrl = getClientUrl();
@@ -727,6 +875,7 @@ router.get('/facebook/callback', async (req, res): Promise<void> => {
         email: user.email,
         name: user.name,
         avatar: user.avatar,
+        authVersion: normalizeAuthVersion(user.authVersion),
       }, transaction.mobileChallenge);
       logAuthEvent(req, { provider: 'facebook', ok: true, email: user.email, reason: 'mobile_ticket' });
       res.redirect(nativeTicketUrl(ticket));
@@ -734,7 +883,10 @@ router.get('/facebook/callback', async (req, res): Promise<void> => {
     }
 
     // Set session
-    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
+    await establishAuthenticatedSession(req, res, {
+      id: user._id, email: user.email, name: user.name, avatar: user.avatar,
+      authVersion: user.authVersion,
+    });
 
     const clientUrl = getClientUrl();
     res.redirect(clientUrl ? `${clientUrl}/?layout=rizzoma` : '/?layout=rizzoma');
@@ -852,6 +1004,7 @@ router.get('/microsoft/callback', async (req, res): Promise<void> => {
         email: user.email,
         name: user.name,
         avatar: user.avatar,
+        authVersion: normalizeAuthVersion(user.authVersion),
       }, transaction.mobileChallenge);
       logAuthEvent(req, { provider: 'microsoft', ok: true, email: user.email, reason: 'mobile_ticket' });
       res.redirect(nativeTicketUrl(ticket));
@@ -859,7 +1012,10 @@ router.get('/microsoft/callback', async (req, res): Promise<void> => {
     }
 
     // Set session
-    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
+    await establishAuthenticatedSession(req, res, {
+      id: user._id, email: user.email, name: user.name, avatar: user.avatar,
+      authVersion: user.authVersion,
+    });
 
     const clientUrl = getClientUrl();
     res.redirect(clientUrl ? `${clientUrl}/?layout=rizzoma` : '/?layout=rizzoma');
@@ -952,7 +1108,10 @@ router.get('/twitter/callback', async (req, res): Promise<void> => {
       provider: 'twitter',
     });
 
-    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
+    await establishAuthenticatedSession(req, res, {
+      id: user._id, email: user.email, name: user.name, avatar: user.avatar,
+      authVersion: user.authVersion,
+    });
 
     const clientUrl = getClientUrl();
     res.redirect(clientUrl ? `${clientUrl}/?layout=rizzoma` : '/?layout=rizzoma');
@@ -1047,7 +1206,10 @@ router.post('/saml/callback', async (req, res): Promise<void> => {
     });
 
     // Set session
-    await establishAuthenticatedSession(req, res, { id: user._id, email: user.email, name: user.name, avatar: user.avatar });
+    await establishAuthenticatedSession(req, res, {
+      id: user._id, email: user.email, name: user.name, avatar: user.avatar,
+      authVersion: user.authVersion,
+    });
 
     const clientUrl = getClientUrl();
     res.redirect(clientUrl ? `${clientUrl}/?layout=rizzoma` : '/?layout=rizzoma');

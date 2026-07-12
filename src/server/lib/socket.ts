@@ -14,6 +14,7 @@ import {
   resolveWaveAccess,
   type WavePermission,
 } from './access.js';
+import { checkSessionCredentialVersion } from './sessionCredentials.js';
 
 let io: Server | undefined;
 let presenceManager: EditorPresenceManager | undefined;
@@ -150,8 +151,12 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
         return false;
       }
       return new Promise<boolean>((resolve) => {
-        session.reload((error: unknown) => {
-          const valid = !error && session.userId === identity.id;
+        session.reload(async (error: unknown) => {
+          let valid = !error && session.userId === identity.id;
+          if (valid) {
+            const credentialCheck = await checkSessionCredentialVersion(session);
+            valid = credentialCheck.status === 'valid';
+          }
           if (!valid) {
             socket.emit('session:ended', { reason: 'invalidated' });
             socket.disconnect(true);

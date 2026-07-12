@@ -73,6 +73,13 @@ export interface DigestEmailData {
   period: 'daily' | 'weekly';
 }
 
+export interface PasswordResetEmailData {
+  recipientEmail: string;
+  recipientName?: string;
+  resetUrl: string;
+  expiresInMinutes: number;
+}
+
 function cleanText(value: unknown, maxLength: number): string {
   const withoutControls = Array.from(String(value ?? ''), (character) => {
     const codePoint = character.codePointAt(0) ?? 0;
@@ -279,6 +286,48 @@ Rizzoma - Real-time collaboration platform
   };
 }
 
+export function generatePasswordResetEmail(data: PasswordResetEmailData): EmailTemplate {
+  const recipientName = cleanText(data.recipientName, 200);
+  const resetUrl = safeEmailUrl(data.resetUrl);
+  const expiresInMinutes = Math.max(1, Math.min(24 * 60, Math.trunc(Number(data.expiresInMinutes) || 30)));
+  const greeting = recipientName ? `Hi ${recipientName},` : 'Hi,';
+  return {
+    subject: 'Reset your Rizzoma password',
+    text: `${greeting}
+
+We received a request to reset your Rizzoma password.
+
+Reset your password: ${resetUrl}
+
+This one-time link expires in ${expiresInMinutes} minutes. If you did not request it, you can ignore this email and your password will stay unchanged.
+
+---
+Rizzoma - Real-time collaboration platform
+`,
+    html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #2c3e50; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+    <h1 style="margin: 0; font-size: 24px;">Rizzoma</h1>
+  </div>
+  <div style="background: #f9f9f9; padding: 24px; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0; border-top: none;">
+    <p style="margin-top: 0;">${escapeHtml(greeting)}</p>
+    <p>We received a request to reset your Rizzoma password.</p>
+    <a href="${escapeHtml(resetUrl)}" style="display: inline-block; background: #3498db; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; margin: 12px 0;">Reset password</a>
+    <p>This one-time link expires in ${expiresInMinutes} minutes.</p>
+    <p>If you did not request it, you can ignore this email and your password will stay unchanged.</p>
+    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 24px 0;">
+    <p style="color: #888; font-size: 12px; margin-bottom: 0;">Rizzoma - Real-time collaboration platform</p>
+  </div>
+</body>
+</html>`,
+  };
+}
+
 // Main email sending functions
 export async function sendInviteEmail(data: InviteEmailData): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
@@ -339,6 +388,26 @@ export async function sendDigestEmail(data: DigestEmailData): Promise<{ success:
     return { success: true, messageId: result.messageId };
   } catch (error: any) {
     console.error('[email] Failed to send digest', { to: data.userEmail, error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+export async function sendPasswordResetEmail(data: PasswordResetEmailData): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    const template = generatePasswordResetEmail(data);
+    const transport = getTransporter();
+    const result = await transport.sendMail({
+      from: EMAIL_CONFIG.from,
+      to: safeEmailAddress(data.recipientEmail),
+      subject: template.subject,
+      text: template.text,
+      html: template.html,
+    });
+    // Never log the reset URL: its fragment contains the bearer credential.
+    console.log('[email] Password reset sent', { messageId: result.messageId });
+    return { success: true, messageId: result.messageId };
+  } catch (error: any) {
+    console.error('[email] Failed to send password reset', { error: error.message });
     return { success: false, error: error.message };
   }
 }

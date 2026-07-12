@@ -1,6 +1,6 @@
-# Rizzoma Project Status (`release/preintegration-offline-upload`)
+# Rizzoma Project Status (`codex/password-recovery`)
 
-> **2026-07-12 integration checkpoint:** This isolated branch combines merged `master` `6687f99d`, offline/auth isolation, private ACL-backed uploads, and audited sharing/auth/socket core `df3e189a`. It is not merged or deployed; the remaining sanitizer, realtime, large-wave, tasks, mentions, export, and UI checkpoint plus full combined gates still block release. See the [sharing and authorization reference](docs/SHARING_AUTHORIZATION.md).
+> **2026-07-12 password-recovery checkpoint:** This isolated branch starts at combined integration commit `c00e1711` and adds generic password-reset requests, hashed fragment-only one-time tokens, atomic credential-generation invalidation, eager session cleanup, and responsive request/complete UI. Focused tests, typecheck, touched-file lint, production build, and the inspected viewport matrix pass. It is not merged or deployed; integrate it onto the final combined head and run full CI plus staging SMTP/session acceptance. See the [password recovery worklog](docs/worklog-260712-password-recovery.md).
 
 > **Session Continuity**: Read `CLAUDE_SESSION.md` first for detailed context from the last working session (recent fixes, test status, gotchas, key files).
 

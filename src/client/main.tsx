@@ -48,11 +48,13 @@ import {
   readPendingInvite,
   scrubInviteFragment,
   scrubOwnerRecoveryFragment,
+  scrubPasswordResetFragment,
 } from './lib/fragmentSecrets';
 
 // OAuth callbacks return to the app without the original fragment. Restore a
 // pending invite in this tab before React derives its initial route; fragment
 // data never reaches the OAuth provider or web-server logs.
+const passwordResetAtBoot = scrubPasswordResetFragment();
 const pendingInviteAtBoot = scrubInviteFragment();
 scrubOwnerRecoveryFragment();
 const oauthErrorAtBoot = new URLSearchParams(window.location.search).has('error');
@@ -119,6 +121,7 @@ export function App() {
   useCollaborationUnloadGuard();
   const perfMode = (window.location.hash || '').includes('perf=1');
   const [me, setMe] = useState<any>(perfMode ? { id: 'perf-mode' } : null);
+  const [passwordResetActive, setPasswordResetActive] = useState(Boolean(passwordResetAtBoot));
   const [error] = useState<string | null>(null);
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
   const [currentId, setCurrentId] = useState<string | null>(null);
@@ -128,7 +131,7 @@ export function App() {
   // Default to Rizzoma layout unless explicitly set to 'basic'
   const useRizzomaLayoutParam = params.get('layout') !== 'basic';
 
-  const [checkingAuth, setCheckingAuth] = useState(!perfMode);
+  const [checkingAuth, setCheckingAuth] = useState(!perfMode && !passwordResetAtBoot);
 
   // Calendar-banner dismiss state persisted in localStorage so the
   // yellow "Google Calendar automatically" banner sticks dismissed
@@ -174,7 +177,7 @@ export function App() {
 
   // bootstrap auth state
   useEffect(() => {
-    if (perfMode) return;
+    if (perfMode || passwordResetActive) return;
     (async () => {
       try {
         const r = await api('/api/auth/me');
@@ -190,7 +193,7 @@ export function App() {
         setCheckingAuth(false);
       }
     })();
-  }, [perfMode]);
+  }, [passwordResetActive, perfMode]);
 
   useEffect(() => {
     const onHash = () => setRoute(window.location.hash || '#/');
@@ -300,7 +303,7 @@ export function App() {
   };
   const listParams = parseListParams();
 
-  const forceRizzomaLayout = useRizzomaLayoutParam || route.startsWith('#/topic/') || route.startsWith('#/wave/');
+  const forceRizzomaLayout = passwordResetActive || useRizzomaLayoutParam || route.startsWith('#/topic/') || route.startsWith('#/wave/');
   const anonymousTopicRoute = !me && currentId && route.startsWith('#/topic/');
 
   // Always render the modern Rizzoma shell for topic/wave routes or explicit layout flag
@@ -327,6 +330,16 @@ export function App() {
         )}
         {checkingAuth ? (
           <div className="rizzoma-loading">Loading…</div>
+        ) : passwordResetActive ? (
+          <div className="rizzoma-auth-overlay">
+            <AuthPanel
+              onSignedIn={(u) => setMe(u)}
+              onPasswordResetExit={() => {
+                setPasswordResetActive(false);
+                setMe(null);
+              }}
+            />
+          </div>
         ) : anonymousTopicRoute ? (
           <AnonymousTopicRoute
             topicId={currentId}

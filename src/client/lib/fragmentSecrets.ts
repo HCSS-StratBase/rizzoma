@@ -1,8 +1,10 @@
 export const PENDING_INVITE_URL_KEY = 'rizzoma:pendingInvite';
 export const OWNER_RECOVERY_TOKEN_KEY = 'rizzoma:ownerRecovery';
+export const PASSWORD_RESET_TOKEN_KEY = 'rizzoma:passwordReset';
 
 const INVITE_SESSION_TTL_MS = 60 * 60 * 1000;
 const OWNER_RECOVERY_SESSION_TTL_MS = 30 * 60 * 1000;
+const PASSWORD_RESET_SESSION_TTL_MS = 30 * 60 * 1000;
 
 export type PendingInvite = {
   token: string;
@@ -12,6 +14,12 @@ export type PendingInvite = {
 };
 
 type PendingOwnerRecovery = {
+  token: string;
+  createdAt: number;
+  expiresAt: number;
+};
+
+type PendingPasswordReset = {
   token: string;
   createdAt: number;
   expiresAt: number;
@@ -120,4 +128,37 @@ export function readOwnerRecoveryToken(): string | null {
 export function clearOwnerRecoveryToken(): void {
   removeFragmentParam('ownerRecovery');
   try { window.sessionStorage.removeItem(OWNER_RECOVERY_TOKEN_KEY); } catch {}
+}
+
+/** Move the password-reset bearer out of browser history before rendering. */
+export function scrubPasswordResetFragment(now = Date.now()): string | null {
+  const fragmentToken = getFragmentParam('passwordReset');
+  if (fragmentToken) {
+    removeFragmentParam('passwordReset');
+    if (!/^[A-Za-z0-9_-]{43}$/.test(fragmentToken)) {
+      clearPasswordResetToken();
+      return null;
+    }
+    writeSessionRecord(PASSWORD_RESET_TOKEN_KEY, {
+      token: fragmentToken,
+      createdAt: now,
+      expiresAt: now + PASSWORD_RESET_SESSION_TTL_MS,
+    } satisfies PendingPasswordReset);
+    return fragmentToken;
+  }
+  return readPasswordResetToken();
+}
+
+export function readPasswordResetToken(): string | null {
+  const record = readSessionRecord<PendingPasswordReset>(PASSWORD_RESET_TOKEN_KEY);
+  if (!record || typeof record.token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(record.token)) {
+    clearPasswordResetToken();
+    return null;
+  }
+  return record.token;
+}
+
+export function clearPasswordResetToken(): void {
+  removeFragmentParam('passwordReset');
+  try { window.sessionStorage.removeItem(PASSWORD_RESET_TOKEN_KEY); } catch {}
 }

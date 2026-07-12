@@ -28,6 +28,8 @@ import { createClient, type RedisClientType } from 'redis';
 // the client auto-reconnects (redis@5's default behavior).
 
 let cachedRedisClient: RedisClientType | null = null;
+let activeSessionStore: session.Store | null = null;
+let activeSessionStoreMode: 'redis' | 'memory' | null = null;
 
 const DEVELOPMENT_SESSION_SECRET = 'dev-secret-change-me';
 const MINIMUM_PRODUCTION_SECRET_LENGTH = 32;
@@ -116,8 +118,11 @@ function resolveStore(): session.Store {
 
 export function sessionMiddleware(storeOverride?: session.Store): RequestHandler {
   const secret = sessionSecrets();
+  const store = storeOverride || resolveStore();
+  activeSessionStore = store;
+  activeSessionStoreMode = storeOverride || store instanceof session.MemoryStore ? 'memory' : 'redis';
   return session({
-    store: storeOverride || resolveStore(),
+    store,
     // express-session signs with the first secret and accepts the remaining
     // entries for verification. This permits a no-logout secret rotation:
     // deploy a new SESSION_SECRET with the old value in
@@ -134,6 +139,59 @@ export function sessionMiddleware(storeOverride?: session.Store): RequestHandler
     },
     name: 'rizzoma.sid',
   });
+}
+
+function sessionBelongsToUser(serialized: unknown, userId: string): boolean {
+  try {
+    const sessionData = typeof serialized === 'string' ? JSON.parse(serialized) : serialized;
+    return String((sessionData as any)?.userId || '') === userId;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Eagerly delete every server-side session for a user after password reset.
+ * Credential-version checks remain the authoritative fail-closed boundary;
+ * this scan shortens the lifetime of stale Redis/MemoryStore records and
+ * makes logout immediate across browser sessions and application replicas.
+ */
+export async function revokeUserSessions(userId: string): Promise<number> {
+  const normalizedUserId = String(userId || '').trim();
+  if (!normalizedUserId) return 0;
+
+  if (activeSessionStoreMode === 'redis' && cachedRedisClient) {
+    let revoked = 0;
+    const client = cachedRedisClient as any;
+    for await (const item of client.scanIterator({ MATCH: 'rizzoma:sess:*', COUNT: 100 })) {
+      const keys = (Array.isArray(item) ? item : [item]).map(String).filter(Boolean);
+      if (!keys.length) continue;
+      const values = await client.mGet(keys);
+      const matching = keys.filter((_key: string, index: number) => sessionBelongsToUser(values[index], normalizedUserId));
+      if (matching.length) {
+        revoked += Number(await client.del(matching));
+      }
+    }
+    return revoked;
+  }
+
+  const store = activeSessionStore;
+  if (!store || typeof store.all !== 'function' || typeof store.destroy !== 'function') {
+    throw new Error('session store does not support user revocation');
+  }
+  const sessions = await new Promise<Record<string, unknown>>((resolve, reject) => {
+    store.all!((error, result) => {
+      if (error) reject(error);
+      else resolve((result || {}) as Record<string, unknown>);
+    });
+  });
+  const ids = Object.entries(sessions)
+    .filter(([, value]) => sessionBelongsToUser(value, normalizedUserId))
+    .map(([id]) => id);
+  await Promise.all(ids.map((id) => new Promise<void>((resolve, reject) => {
+    store.destroy(id, (error) => error ? reject(error) : resolve());
+  })));
+  return ids.length;
 }
 
 export type SessionStoreHealth = {
