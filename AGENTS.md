@@ -76,7 +76,7 @@
   * For every backend or frontend change, cross-check behavior and UI against the legacy sources in `original-rizzoma/` and `original-rizzoma-src/`, and against the current live UI references in `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/` (PNGs + MD notes). Keep the modernized implementation functionally and visually close to the legacy GUI while upgrading “under the hood.”
 
   ## Branch Context Guardrails
-  * Active branch: `master` at `8840f552` (2026-07-12). Always cite branch name + date when summarizing status.
+  * Active branch: `master` (2026-07-12; native-fractal release code checkpoint `8840f552`, with handoff/evidence landed via PR #58). Always cite branch name + date when summarizing status.
   * Treat any "Current State" bullets in docs as historical snapshots unless explicitly refreshed for the active branch; update them before quoting.
   * Run `npm run lint:branch-context` after touching status docs; CI/local lint will fail if the branch name is missing from `docs/HANDOFF.md` Current State.
 

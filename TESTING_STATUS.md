@@ -1,6 +1,6 @@
 # Rizzoma Feature Testing Status
 
-## Merged release — 2026-07-12 (`master` @ `8840f552`)
+## Merged release — 2026-07-12 (`master`; release code checkpoint `8840f552`)
 
 - Source head `daa3f2f3` merged through PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57).
 - Final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401): PASS across build, browser smokes, performance budgets, health checks, and aggregate gate.

@@ -4,6 +4,8 @@ Source: [CI run 29175211360](https://github.com/HCSS-StratBase/rizzoma/actions/r
 
 PR #57's final source head `daa3f2f3` subsequently passed [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401) and [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404), then merged to `master` as `8840f552`. The final-head rerun reproduced the structural performance verdict at 120/120 with 101 lazy slots and 36 MB heap; measured stage durations were 394.3 ms landing and 595.6 ms expanded.
 
+PR [#58](https://github.com/HCSS-StratBase/rizzoma/pull/58) subsequently landed this handoff/evidence directory on `master`; `8840f552` remains the release code checkpoint.
+
 ## Measured acceptance
 
 - Two-process collaboration: **10/10 checks passed**; A-to-B relay was **1 ms** against a 5,000 ms budget, the receiving client issued **0 REST PUTs** for the remote edit, bidirectional text converged, reconnect catch-up succeeded, and mark-read remained at zero after autosave quiescence.
