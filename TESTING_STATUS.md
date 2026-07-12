@@ -73,6 +73,22 @@
   was recreated clean as master with no modules; public HTTPS health remained
   HTTP 200.
 
+## Stacked sharing-authorization checkpoint — 2026-07-12 (`codex/sharing-access-control-stack`)
+
+- Full stacked Vitest passed: **67 files / 361 passed / 3 skipped / 0 failed**.
+- The focused access suite passed **62/62**: central role/policy semantics, anonymous/outsider/viewer/commenter/editor/owner route matrices, owner-only sharing and invitations, client policy hydration/fail-closed behavior, and real session-backed Socket.IO spoof/write/demotion checks.
+- TypeScript no-emit check and production build passed; ESLint measured **0 errors / 6,684 warnings**, and Vite transformed **3,298 modules**. The warning count remains maintenance debt rather than a green-clean lint claim.
+- Playwright captured and the model visually inspected both sharing and invite modals at **1280 / 1366 / 1440 / 1600 × 900**. All eight screenshots fit without clipping or overlap; evidence is in [`screenshots/260712-122218-sharing-access-ui/`](screenshots/260712-122218-sharing-access-ui/).
+- Read-only production inventory measured **26 total topic metadata documents / 0 explicit policies / 26 missing-policy legacy / 0 malformed**. Boundary: the UI evidence is local mocked-API evidence, the branch is not merged or deployed, and no production policy was changed.
+
+## Private-upload ACL checkpoint — 2026-07-12 (`codex/private-upload-acl`)
+
+- The upload route now requires a server-resolved editable blip, persists opaque wave-bound metadata, and serves local bytes only after resolving current read access. The former public `express.static('/uploads')` mount is gone.
+- Focused stacked run passed **70/70** tests: the 14 upload authorization/lifecycle cases plus the central access resolver and six-identity route matrix. It covers anonymous/private denial, outsider upload denial, canonical-wave binding, wave mismatch, metadata failure cleanup, revocation of a known URL, no-store/nosniff headers, and S3 fail-closed behavior.
+- TypeScript no-emit and the production server/client build passed.
+- Read-only production inventory measured **0 files / 0 bytes** in every known legacy, active, managed-release, and persistent upload directory, so this URL/metadata transition has no legacy attachment migration.
+- Boundary: this upload slice still requires PR #66's centralized access resolver. In this isolated preintegration branch, the offline/auth-isolation service worker already makes `/api/*`, `/socket.io/*`, and `/uploads/*` network-only and purges legacy caches, but the combined sharing dependency is not present yet. Do not deploy until that dependency is integrated and the full combined gate passes.
+
 ## Public production acceptance — 2026-07-12 (public runtime `fe6988fb`)
 
 - A read-only runtime audit at 05:58 CEST found **395 requests / 0 5xx** in the current API log after **2,279 seconds** of API uptime. This is a short post-cutover sample only; it is not a soak or long-term reliability result.

@@ -52,7 +52,7 @@ Branch context guardrails:
 - Latest inspected production evidence is under `screenshots/260712-0530-pr60-production-final/`, including command logs, real-control before/after captures, and the required desktop viewport sweep.
 - Deployment boundary: nginx targets the exact merge through Vite `:3100` → API `:8100`; the old `:3000`/`:8788` lane remains healthy for immediate rollback. Both lanes are unmanaged bare processes and share CouchDB.
 - Re-read checkpoint: 2026-02-04 01:55 local — BLB child unread highlight removed (green [+] only) and BLB snapshots refreshed (`snapshots/blb/1770165748162-*`); drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
-- 2026-03-29 reality check: Docker Desktop WSL integration is required again for local live verification. The `src/server/app.ts` fallback route uses `'/{*path}'` which is the canonical Express 5 / path-to-regexp v8 syntax (previously called a "workaround" — see Hard Gap #29, 2026-04-13 for the cleanup that confirmed this and reordered the `/uploads` static handler ahead of the SPA catch-all).
+- 2026-03-29 reality check: Docker Desktop WSL integration is required again for local live verification. The `src/server/app.ts` fallback route uses `'/{*path}'`, the canonical Express 5 / path-to-regexp v8 syntax. As of 2026-07-12, `/uploads/:id` is an access-controlled router ahead of that catch-all, not a static directory mount.
 
 Private repo note:
 - Direct work on `master` is allowed for this private/solo repo.

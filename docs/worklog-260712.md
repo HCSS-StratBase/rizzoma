@@ -87,3 +87,75 @@ This section supersedes the deployment boundary above.
 - Renamed and bounded PR #60 discussion `cJolEA2G4Lvb`, cross-linked it to the new output, and clarified that zero 5xx applied to the bounded acceptance run.
 - Marked the 9 July single-active-editor precursor `74Hvd17c3Vfc` complete and added both missing Rizzoma tags so tag searches surface the detailed history.
 - Verified both 12 July entries directly on the HCSS day node, read back fields and tags, and swept the helper-created empty content placeholder while preserving field tuples. Updated the global `HANDOFF.md` to the same final state.
+
+## Sharing authorization implementation
+
+### Outcome
+
+- Built the change on isolated branch `fix/sharing-access-control` from `origin/master` `1241428b`; no production checkout, deployment, or remote branch was changed.
+- Replaced display-only sharing with persisted owner-controlled private/link/public policy plus viewer/commenter/editor/owner capabilities.
+- Centralized authorization across topic/wave listing and reads, topic/blip/comments/links/editor mutations, participants and both invitation endpoints, unread access, and Socket.IO collaboration.
+- Bound the compatibility rule: new topics are private; documents missing both policy shapes and true legacy waves missing metadata remain public read-only, never public-write.
+
+### Security and UI
+
+- Socket.IO now reads identity from the same Express session store and ignores client-supplied user identity. Viewers can sync but cannot publish Yjs or awareness updates; live role/policy changes immediately revoke lost room/write authority.
+- Sharing settings hydrate from the server, disable on load failure, canonicalize edit ⇒ comment, and clear public flags when made private.
+- Invite UI now assigns viewer, commenter, or editor; alternate notification invitations are owner-only as well.
+- Added the read-only `npm run sharing:count-legacy` inventory utility. It reports exact missing-policy counts and samples without stamping or modifying documents.
+
+### Verification
+
+- Full Vitest: 66 files / 346 passed / 3 skipped / 0 failed.
+- Focused authorization suite: 62/62 passed, including the six-identity route matrix and real session-backed Socket.IO spoof/demotion cases.
+- Typecheck and production build passed; ESLint measured 0 errors / 6,664 warnings, and Vite transformed 3,298 modules. The warning backlog remains maintenance debt.
+- Playwright captured Share and Invite modals at 1280, 1366, 1440, and 1600 × 900. All eight PNGs were inspected and showed centered, fully visible controls without clipping or overlap. Evidence: [`screenshots/260712-122218-sharing-access-ui/`](../screenshots/260712-122218-sharing-access-ui/).
+
+### Boundary
+
+- The original implementation branch did not connect to CouchDB or mutate production; a later read-only inventory measured the exact production boundary during stacked integration.
+- The implementation was not deployed. Staging role checks remain required before cutover.
+
+## Sharing authorization stacked on production hardening
+
+### Integration
+
+- Created isolated branch `codex/sharing-access-control-stack` from production-hardening head `dda4d1d5` and cherry-picked sharing commit `888b16fa`.
+- After PR #64 squash-merged and its source branch was deleted, rebased the one resolved sharing commit onto merged commit `2595d2de`. The pre/post tree hash remained identical, so the published PR contains only the 54-file sharing/documentation diff rather than replaying hardening history.
+- Resolved documentation conflicts by preserving the hardening/runtime incident checkpoint and adding the sharing checkpoint. Resolved backend overlaps by retaining the managed shutdown order and layering shared-session Socket.IO authorization on top.
+- The first focused run exposed a duplicate `closeSocket` export from the automatic merge. The duplicate sharing lifecycle hook would also have destroyed the Yjs cache before the hardening flush; it was removed so shutdown remains Socket.IO close → HTTP drain → version-aware Yjs flush → Redis close.
+- Incorporated the read-only production inventory: **26 topic metadata documents / 0 explicit policies / 26 missing-policy legacy / 0 malformed**. No titles, content, or policy documents were read or changed.
+
+### Verification
+
+- Focused authorization suite: **62/62 passed**.
+- Full stacked Vitest: **67 files / 361 passed / 3 skipped / 0 failed**.
+- Typecheck and production build passed; Vite transformed **3,298 modules**.
+- ESLint measured **0 errors / 6,684 warnings**; warnings remain explicit maintenance debt.
+- Independently read all eight checked-in Share/Invite PNGs at 1280, 1366, 1440, and 1600 × 900. Both 500-pixel modals stay centered and fully visible; controls and labels remain unclipped at every width. The exact bounds are in the [visual manifest](../screenshots/260712-122218-sharing-access-ui/manifest.json).
+
+### Boundary
+
+- This stacked branch is not deployed and does not mutate the VPS. Normal CI plus isolated staging/public role and live-demotion acceptance remain release gates.
+
+## Private attachment authorization
+
+### Outcome
+
+- Built isolated branch `codex/private-upload-acl` from committed PR #66 head `9e003d88`; no remote branch, production file, or database document was changed.
+- Replaced public static upload serving with opaque CouchDB metadata plus a per-request wave-read authorization check.
+- Required every upload to name its canonical blip and pass current edit authorization. The metadata wave comes from the stored blip; a conflicting client wave claim is rejected.
+- Kept the existing `/uploads/<id>` HTML contract while making logout and participant revocation effective immediately for known URLs.
+- Failed S3/MinIO closed until object bytes can be proxied through the same ACL; public and pre-signed URLs are not treated as revocable.
+
+### Evidence
+
+- Read-only VPS inventory measured zero files and zero bytes in the active legacy checkout, current public checkout, managed release, and persistent `/var/lib/rizzoma/uploads` directory. There is no live attachment migration boundary.
+- Focused stacked Vitest passed 70/70 across upload lifecycle, central access, and the six-role route matrix. The 14 upload cases include anonymous/private denial, non-editor upload denial, canonical-wave metadata, wave mismatch, local cleanup on metadata failure, no-store/nosniff streaming, and a known URL changing from HTTP-success eligibility to 403 after participant removal.
+- TypeScript no-emit and the production build passed.
+
+### Boundary
+
+- This branch is local-only and must be rebased onto the final sharing/cache head before CI or merge.
+- `public/sw.js` is intentionally untouched here. The companion integration must make `/uploads/*` network-only and purge the old dynamic cache before this route may deploy.
+- Task and mention residue is outside this isolated slice and remains owned by the sharing route-ACL patch.
