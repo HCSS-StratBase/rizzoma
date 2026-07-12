@@ -38,6 +38,7 @@ import { INSERT_EVENTS, EDIT_MODE_EVENT, EDITOR_FOCUS_EVENT, EDITOR_BLUR_EVENT, 
 import './RizzomaBlip.css';
 import { injectInlineMarkers } from './inlineMarkers';
 import { renderInlineHtml } from './InlineHtmlRenderer';
+import { LazyBlipSlot, LAZY_MOUNT_THRESHOLD } from './LazyBlipSlot';
 import { useCollaboration } from '../editor/useCollaboration';
 import { yjsDocManager } from '../editor/YjsDocumentManager';
 import { useAuth } from '../../hooks/useAuth';
@@ -2394,21 +2395,59 @@ export function RizzomaBlip({
         {(listChildren && listChildren.length > 0) || childFooter ? (
           <div className={`child-blips${childContainerClassName ? ` ${childContainerClassName}` : ''}`}>
             {listChildren && listChildren.length > 0 && (isTopicRoot ? (
-              listChildren.map((childBlip) => (
-                <RizzomaBlip
-                  key={childBlip.id}
-                  blip={childBlip}
-                  isRoot={false}
-                  depth={depth + 1}
-                  onBlipUpdate={onBlipUpdate}
-                  onAddReply={onAddReply}
-                  onToggleCollapse={onToggleCollapse}
-                  onDeleteBlip={onDeleteBlip}
-                  onBlipRead={onBlipRead}
-                  onExpand={onExpand}
-                  expandedBlips={expandedBlips}
-                />
-              ))
+              // Restore the lazy topic-root path from 28585a3e: large waves
+              // keep every label in the DOM, but only mount full editor/collab
+              // components near the viewport. Small waves retain eager mounts.
+              listChildren.length > LAZY_MOUNT_THRESHOLD ? (
+                listChildren.map((childBlip) => {
+                  const text = childBlip.content
+                    ? childBlip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+                    : '';
+                  const label = text
+                    ? (text.length > 80 ? `${text.slice(0, 80)}…` : text)
+                    : (childBlip.authorName || 'Reply');
+                  return (
+                    <LazyBlipSlot
+                      key={childBlip.id}
+                      blipId={childBlip.id}
+                      label={label}
+                      hasUnread={!childBlip.isRead}
+                      hasChildren={(childBlip.childBlips?.length ?? 0) > 0}
+                      onExpand={onExpand}
+                      renderFull={(expandOnMount) => (
+                        <RizzomaBlip
+                          blip={expandOnMount ? { ...childBlip, isCollapsed: false } : childBlip}
+                          isRoot={false}
+                          depth={depth + 1}
+                          onBlipUpdate={onBlipUpdate}
+                          onAddReply={onAddReply}
+                          onToggleCollapse={onToggleCollapse}
+                          onDeleteBlip={onDeleteBlip}
+                          onBlipRead={onBlipRead}
+                          onExpand={onExpand}
+                          expandedBlips={expandedBlips}
+                        />
+                      )}
+                    />
+                  );
+                })
+              ) : (
+                listChildren.map((childBlip) => (
+                  <RizzomaBlip
+                    key={childBlip.id}
+                    blip={childBlip}
+                    isRoot={false}
+                    depth={depth + 1}
+                    onBlipUpdate={onBlipUpdate}
+                    onAddReply={onAddReply}
+                    onToggleCollapse={onToggleCollapse}
+                    onDeleteBlip={onDeleteBlip}
+                    onBlipRead={onBlipRead}
+                    onExpand={onExpand}
+                    expandedBlips={expandedBlips}
+                  />
+                ))
+              )
             ) : (
               listChildren.map((childBlip) => {
                 const childExpanded = expandedBlips?.has(childBlip.id);

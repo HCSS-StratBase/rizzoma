@@ -2,19 +2,21 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const DEFAULTS = {
-  timeToFirstRender: Number(process.env.PERF_BUDGET_TTF || 3000), // ms
   stageDuration: Number(process.env.PERF_BUDGET_STAGE_DURATION || 3000), // ms
-  firstContentfulPaint: Number(process.env.PERF_BUDGET_FCP || 2000), // ms
   memoryUsage: Number(process.env.PERF_BUDGET_MEMORY || 150), // MB
   expectedBlips: Number(process.env.PERF_BUDGET_EXPECTED_BLIPS || 5000),
   minBlipRatio: Number(process.env.PERF_BUDGET_MIN_RATIO || 0.5), // accept partial render for large seeds
   sampleSize: Number(process.env.PERF_BUDGET_SAMPLE || 5), // number of recent runs to check
-  checkAbsoluteTtf: process.env.PERF_BUDGET_CHECK_TTF === '1',
 };
 
 const snapshotDir = path.resolve(process.env.PERF_SNAPSHOT_DIR || path.join('snapshots', 'perf'));
+
+function finiteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : Number.NaN;
+}
 
 async function loadRecentMetrics() {
   const files = (await fs.readdir(snapshotDir)).filter(
@@ -34,11 +36,14 @@ async function loadRecentMetrics() {
   return results;
 }
 
-function checkRun({ metrics }) {
+export function checkRun({ metrics }) {
   const perf = metrics.performance;
   const expectedBlips = Number(metrics.expectedBlips ?? DEFAULTS.expectedBlips);
   const minBlipCount = Math.round(expectedBlips * DEFAULTS.minBlipRatio);
-  const stageDuration = Number(perf.stageDurationMs ?? perf.timeToFirstRender ?? 0);
+  const stageDuration = finiteNumber(perf.stageDurationMs);
+  const memoryUsed = finiteNumber(perf.memoryUsage?.used);
+  const harnessChecks = metrics.benchmarks?.checks;
+  const actualBlips = finiteNumber(metrics.actualBlips);
 
   const checks = [
     {
@@ -47,41 +52,84 @@ function checkRun({ metrics }) {
       budget: DEFAULTS.stageDuration,
       unit: 'ms',
       reverse: false,
-    },
-    ...(DEFAULTS.checkAbsoluteTtf && perf.timeToFirstRender
-      ? [{
-          name: 'Time to First Render',
-          value: perf.timeToFirstRender,
-          budget: DEFAULTS.timeToFirstRender,
-          unit: 'ms',
-          reverse: false,
-        }]
-      : []),
-    {
-      name: 'First Contentful Paint',
-      value: perf.firstContentfulPaint,
-      budget: DEFAULTS.firstContentfulPaint,
-      unit: 'ms',
-      reverse: false,
+      telemetryAvailable: Number.isFinite(stageDuration),
     },
     {
       name: 'Memory Usage',
-      value: perf.memoryUsage?.used || 0,
+      value: memoryUsed,
       budget: DEFAULTS.memoryUsage,
       unit: 'MB',
       reverse: false,
+      telemetryAvailable: Number.isFinite(memoryUsed),
     },
     {
       name: 'Blip Render Count',
-      value: metrics.actualBlips,
+      value: actualBlips,
       budget: minBlipCount,
       unit: '',
       reverse: true, // higher is better
+      telemetryAvailable: Number.isFinite(actualBlips),
     },
+    ...(harnessChecks
+      ? [
+          {
+            name: 'Exact Child Count',
+            value: finiteNumber(harnessChecks.childCount?.actual),
+            budget: finiteNumber(harnessChecks.childCount?.expected),
+            unit: '',
+            comparison: 'exact',
+            telemetryAvailable: Number.isFinite(finiteNumber(harnessChecks.childCount?.actual))
+              && Number.isFinite(finiteNumber(harnessChecks.childCount?.expected)),
+            explicitPassed: finiteNumber(harnessChecks.childCount?.actual)
+              === finiteNumber(harnessChecks.childCount?.expected),
+          },
+          {
+            name: 'Exact Label Count',
+            value: finiteNumber(harnessChecks.labelCount?.actual),
+            budget: finiteNumber(harnessChecks.labelCount?.expected),
+            unit: '',
+            comparison: 'exact',
+            telemetryAvailable: Number.isFinite(finiteNumber(harnessChecks.labelCount?.actual))
+              && Number.isFinite(finiteNumber(harnessChecks.labelCount?.expected)),
+            explicitPassed: finiteNumber(harnessChecks.labelCount?.actual)
+              === finiteNumber(harnessChecks.labelCount?.expected),
+          },
+          {
+            name: 'Windowed Child Count',
+            value: finiteNumber(harnessChecks.windowedCount?.actual),
+            budget: finiteNumber(harnessChecks.windowedCount?.expected),
+            unit: '',
+            comparison: 'min, no timeout',
+            telemetryAvailable: Number.isFinite(finiteNumber(harnessChecks.windowedCount?.actual))
+              && Number.isFinite(finiteNumber(harnessChecks.windowedCount?.expected))
+              && typeof harnessChecks.windowedCount?.timedOut === 'boolean',
+            explicitPassed: harnessChecks.windowedCount?.timedOut === false
+              && finiteNumber(harnessChecks.windowedCount?.actual)
+                >= finiteNumber(harnessChecks.windowedCount?.expected),
+          },
+          ...(harnessChecks.lazySlots
+            ? [{
+                name: 'Lazy Slot Presence',
+                value: finiteNumber(harnessChecks.lazySlots?.actual),
+                budget: harnessChecks.lazySlots?.required ? 1 : 0,
+                unit: '',
+                comparison: harnessChecks.lazySlots?.required ? 'min' : 'diagnostic',
+                telemetryAvailable: Number.isFinite(finiteNumber(harnessChecks.lazySlots?.actual))
+                  && typeof harnessChecks.lazySlots?.required === 'boolean',
+                explicitPassed: harnessChecks.lazySlots?.required
+                  ? finiteNumber(harnessChecks.lazySlots?.actual) > 0
+                  : true,
+              }]
+            : []),
+        ]
+      : []),
   ];
 
   const results = checks.map((check) => {
-    const passed = check.reverse ? check.value >= check.budget : check.value <= check.budget;
+    const thresholdPassed = typeof check.explicitPassed === 'boolean'
+      ? check.explicitPassed
+      : (check.reverse ? check.value >= check.budget : check.value <= check.budget);
+    const passed = check.telemetryAvailable && thresholdPassed;
     return { ...check, passed };
   });
 
@@ -106,8 +154,9 @@ async function main() {
       console.log(`Run ${summary.timestamp} (${summary.renderProfile}/${summary.renderMode}, expected blips ${summary.expectedBlips}):`);
       summary.results.forEach((r) => {
         const status = r.passed ? '✅' : '❌';
-        const comparison = r.reverse ? 'min' : 'max';
-        console.log(`  ${status} ${r.name}: ${r.value}${r.unit} (${comparison}: ${r.budget}${r.unit})`);
+        const comparison = r.comparison || (r.reverse ? 'min' : 'max');
+        const value = r.telemetryAvailable ? `${r.value}${r.unit}` : 'telemetry unavailable';
+        console.log(`  ${status} ${r.name}: ${value} (${comparison}: ${r.budget}${r.unit})`);
       });
       console.log('');
       if (summary.results.some((r) => !r.passed)) allPassed = false;
@@ -126,4 +175,6 @@ async function main() {
   }
 }
 
-main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}

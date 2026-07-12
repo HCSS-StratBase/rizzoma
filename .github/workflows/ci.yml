@@ -242,10 +242,11 @@ jobs:
         if: ${{ steps.install-perf.outcome == 'success' }}
         env:
           RIZZOMA_BASE_URL: http://127.0.0.1:3000
-          RIZZOMA_PERF_BLIPS: 50
-          # Exercise the real RizzomaBlip path and make its 3s/100MB budgets
-          # release-blocking. Lite mode remains available for large-wave
-          # diagnostics but cannot prove an interactive expansion.
+          # Cross the 100-child lazy-mount threshold so CI continuously proves
+          # both lightweight off-screen slots and a real expanded RizzomaBlip.
+          RIZZOMA_PERF_BLIPS: 120
+          # Make the real full-render path and its 3s/100MB budgets
+          # release-blocking. Lite mode remains diagnostic-only.
           RIZZOMA_PERF_RENDER: full
           RIZZOMA_PERF_ENFORCE_BUDGETS: 1
           RIZZOMA_SNAPSHOT_DIR: snapshots/perf

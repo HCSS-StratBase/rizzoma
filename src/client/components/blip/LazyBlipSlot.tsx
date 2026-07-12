@@ -38,7 +38,7 @@ type LazyBlipSlotProps = {
   hasUnread: boolean;
   hasChildren: boolean;
   onExpand?: (blipId: string) => void;
-  renderFull: () => ReactNode;
+  renderFull: (expandOnMount: boolean) => ReactNode;
 };
 
 function LazyBlipSlotImpl({
@@ -51,6 +51,7 @@ function LazyBlipSlotImpl({
 }: LazyBlipSlotProps) {
   const slotRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [expandOnMount, setExpandOnMount] = useState(false);
 
   useEffect(() => {
     if (mounted) return;
@@ -83,6 +84,7 @@ function LazyBlipSlotImpl({
       // forward the expand intent so the resulting RizzomaBlip mounts
       // in its expanded state on the very first render.
       e.stopPropagation();
+      setExpandOnMount(true);
       setMounted(true);
       onExpand?.(blipId);
     },
@@ -90,7 +92,7 @@ function LazyBlipSlotImpl({
   );
 
   if (mounted) {
-    return <>{renderFull()}</>;
+    return <>{renderFull(expandOnMount)}</>;
   }
 
   return (
