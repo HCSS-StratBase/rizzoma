@@ -62,7 +62,7 @@ export function Editor({ waveId, blipId, readOnly = true }: EditorProps): JSX.El
         const data = (snap.data || {}) as SnapshotResponse;
         const initialUpdate = b64ToUint8Array(data.snapshotB64);
         if (initialUpdate.length > 0) {
-          Y.applyUpdate(yDoc, initialUpdate);
+          Y.applyUpdate(yDoc, initialUpdate, REMOTE_EDITOR_UPDATE);
         }
       } catch (e: unknown) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'editor_init_error');

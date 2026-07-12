@@ -505,7 +505,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
     // Socket-triggered loads have a longer cooldown after the last completed load
     // This breaks the feedback loop where load -> socket event -> load
-    if (fromSocket && state.lastCompleteTime > 0 && (now - state.lastCompleteTime) < SOCKET_COOLDOWN_MS) {
+    // Explicit mutation subscriptions call load(force=true). Never discard
+    // those authoritative collaborator events merely because the initial GET
+    // completed recently; GET-only reloads do not emit another mutation.
+    if (!force && fromSocket && state.lastCompleteTime > 0 && (now - state.lastCompleteTime) < SOCKET_COOLDOWN_MS) {
       return;
     }
 
