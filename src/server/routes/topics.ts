@@ -28,6 +28,7 @@ import {
 } from '../lib/contentReferences.js';
 import { readCollaborationProjection } from '../lib/collaborationProjection.js';
 import { yjsDocCache } from '../lib/yjsDocCache.js';
+import { ensureTopicBlbHtml } from '../../shared/blbContent.js';
 
 const CONTENT_REFERENCE_ERRORS = new Set([
   'invalid_mention_target',
@@ -334,6 +335,7 @@ router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): 
   const userId = req.user!.id;
   try {
     const parsed = CreateTopicSchema.parse(req.body ?? {});
+    const initialContent = ensureTopicBlbHtml(parsed.title, parsed.content);
     const participantEmails = [...new Set<string>(parsed.participants || [])];
     const ownerEmail = String(req.user?.email || '').trim().toLowerCase();
     if (ownerEmail && participantEmails.includes(ownerEmail)) {
@@ -344,13 +346,11 @@ router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): 
     // Seed initial sectionAttribution so a freshly-created topic
     // already has per-block author entries. First edit after create
     // will diff against this and only re-stamp changed blocks.
-    const initialAttribution = parsed.content
-      ? stampInitialAttribution({ html: parsed.content, authorId: userId, now })
-      : {};
+    const initialAttribution = stampInitialAttribution({ html: initialContent, authorId: userId, now });
     const doc: Topic = {
       type: 'topic',
       title: parsed.title,
-      content: parsed.content,
+      content: initialContent,
       authorId: userId,
       shareLevel: 'private',
       allowComments: false,

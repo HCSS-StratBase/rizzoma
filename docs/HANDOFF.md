@@ -93,16 +93,35 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`fix/read-marker-conflict` @ 2026-07-13; deployed base `0553a611`; read-marker hotfix pending)
-- The complete integrated stack is merged through PR #71 and publicly running
-  as exact `0553a611` on managed green `:8102`. All seven PR checks passed.
-- The only acceptance failure now in scope is the measured duplicate mark-read
-  race. The current helper fixes both initial-insert and existing-revision
-  conflicts for single and bulk routes; focused **8/8**, full **651 passed / 3
-  skipped**, typecheck, lint, build, and an independent audit are green.
-- Next: publish this branch, require green CI, deploy its exact squash merge to
-  inactive blue `:8101`, perform a zero-overlap cutover, and rerun the same
-  public acceptance through restart/auth/export/upload/visual/journal gates.
+Current State (`fix/blb-always-bulleted` @ 2026-07-13; PR #72 exact merge `5e1bc271` public on blue; BLB repair candidate locally green)
+- PR [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) passed all required
+  checks and squash-merged as exact master `5e1bc271`. That exact immutable
+  release is public on managed blue `:8101`; all **994** lockfile-required
+  production packages are present. Green `:8102` was drained for 38 seconds
+  without live connections or snapshot/flush errors, then stopped/disabled;
+  both nginx vhosts now target blue.
+- The deterministic read-marker repair is live. Local gates remain **8/8**
+  focused and **651 passed / 3 skipped / 0 failed** full-suite, with typecheck,
+  full-source lint, build, and independent audit green. Public phase 2 passed
+  **49/49** checks with zero unexpected browser errors and real Follow-the-Green
+  **2 -> 1 -> 0**.
+- Overall acceptance is withdrawn. SDS's first manual use showed that new topic,
+  reply, and/or inline-child bodies are not guaranteed to be bullet lists. A
+  flat paragraph cannot provide the recursive label-to-`[+]` BLB structure, so
+  the product's core paradigm is not yet functional even though the service is
+  healthy.
+- The real public demonstration is now captured: an intended 18-node, depth-1
+  spec became **18 P / 0 UL / 0 LI** and remained flat after reload, with zero
+  browser errors. The inspected evidence and full URL are in
+  `screenshots/260713-0130-public-blb-creation-failure/`.
+- The local repair now centralizes topic/reply/inline BLB seeds and server-side
+  creation normalization, and fixes the root Ctrl+Enter response-envelope bug.
+  Focused **25/25**, full **110 files / 658 passed / 3 skipped / 0 failed**,
+  typecheck, full lint, branch-context lint, and a **3,317-module** build pass.
+- Next: commit/publish this branch, privately deploy its exact SHA to inactive
+  green, prove topic/root-reply/nested-reply/Ctrl+Enter creation and recursion
+  through real controls, require green PR CI, then exact public cutover plus
+  reload/restart, responsive visuals, and clean journals.
 - The full application stack is merged on `master` through PR #66: private/link/public
   sharing, viewer/commenter/editor/owner enforcement, server-session Socket.IO
   identity, live demotion, owner-partitioned offline/Yjs state, ACL-backed

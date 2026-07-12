@@ -19,6 +19,7 @@ import {
 } from '../lib/contentReferences.js';
 import { readCollaborationProjection } from '../lib/collaborationProjection.js';
 import { yjsDocCache } from '../lib/yjsDocCache.js';
+import { ensureBlbHtml } from '../../shared/blbContent.js';
 
 const CONTENT_REFERENCE_ERRORS = new Set([
   'invalid_mention_target',
@@ -296,7 +297,7 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
   try {
     const { waveId, parentId, content, anchorPosition } = req.body || {};
 
-    if (!waveId || !content) {
+    if (!waveId) {
       res.status(400).json({ error: 'missing_required_fields', requestId: (req as any)?.id });
       return;
     }
@@ -306,7 +307,8 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
 
     const now = Date.now();
     const blipId = `${waveId}:b${randomUUID()}`;
-    const references = await validateStoredContentReferences(String(waveId), blipId, String(content));
+    const normalizedContent = ensureBlbHtml(content);
+    const references = await validateStoredContentReferences(String(waveId), blipId, normalizedContent);
     if (parentId !== null && parentId !== undefined && typeof parentId !== 'string') {
       res.status(400).json({ error: 'invalid_parent', requestId: (req as any)?.id });
       return;
@@ -326,7 +328,7 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
       type: 'blip',
       waveId,
       parentId: normalizedParentId,
-      content,
+      content: normalizedContent,
       createdAt: now,
       updatedAt: now,
       yjsGeneration: 0,

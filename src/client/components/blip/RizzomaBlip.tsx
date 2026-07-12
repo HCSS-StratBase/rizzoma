@@ -47,6 +47,7 @@ import { yjsDocManager } from '../editor/YjsDocumentManager';
 import { useAuthenticatedCollaborationUser } from '../editor/useAuthenticatedCollaborationUser';
 import { requestTaskCompletionHydration } from '../editor/extensions/TaskWidget';
 import { collaborationProjectionHeaders } from '../../lib/collaborationProjection';
+import { EMPTY_BLB_HTML, plainTextToBlbHtml } from '@shared/blbContent';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
 export type BlipContributor = {
@@ -396,7 +397,7 @@ export function RizzomaBlip({
 
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
-  const safeBlipContent = useMemo(() => sanitizeRichHtml(blip.content || ''), [blip.content]);
+  const safeBlipContent = useMemo(() => sanitizeRichHtml(blip.content || EMPTY_BLB_HTML), [blip.content]);
   const [editedContent, setEditedContent] = useState(safeBlipContent);
   const [showInlineCommentBtn, setShowInlineCommentBtn] = useState(false);
   const [inlineCommentsNotice, setInlineCommentsNotice] = useState<string | null>(null);
@@ -790,7 +791,7 @@ export function RizzomaBlip({
             // Start with <ul><li></li></ul> so the new child has a bullet ready
             // for the user's first label, matching original Rizzoma's behavior
             // where Ctrl+Enter created a new bulleted thread, not a paragraph.
-            content: '<ul><li><p></p></li></ul>',
+            content: EMPTY_BLB_HTML,
             anchorPosition, // Store the position where the [+] marker was created
           }),
         });
@@ -1182,7 +1183,7 @@ export function RizzomaBlip({
         body: JSON.stringify({
           waveId,
           parentId: blip.id,
-          content: replyContent
+          content: plainTextToBlbHtml(replyContent)
         }),
       });
 

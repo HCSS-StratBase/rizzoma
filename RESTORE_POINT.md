@@ -5,6 +5,34 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-07-13 always-bulleted BLB repair candidate) The real public
+  [reality-check topic](https://138-201-62-161.nip.io/#/topic/3305bc3a42889979c79fa39f400088c7?layout=rizzoma)
+  converted a content-gated 18-node/depth-1 spec into **18 top-level P / 0 UL /
+  0 LI**, and reload preserved the failure with zero browser errors. Inspected
+  evidence lives at `screenshots/260713-0130-public-blb-creation-failure/`.
+  Branch `fix/blb-always-bulleted` now supplies one shared creation contract for
+  H1+UL topic seeds, escaped plain-text-to-LI replies, empty inline UL/LI seeds,
+  authoritative server normalization, and correct nested create-response
+  mapping. Focused **25/25**, full Vitest **110 files / 658 passed / 3 skipped /
+  0 failed**, typecheck, full-source lint, branch-context lint, and a
+  **3,317-module** build pass. The candidate is not merged/deployed; private
+  real-control acceptance and the complete public release gate remain open.
+- (2026-07-13 public BLB reality check) PR
+  [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) passed all required
+  checks, merged the deterministic read-marker repair as exact master
+  `5e1bc271`, and that exact immutable tree became public on managed blue
+  `:8101` after a 38-second zero-overlap green drain. Package provenance is
+  exact at **994** production packages; public health is green; phase 2 passed
+  **49/49** with zero unexpected browser errors and real Follow-the-Green
+  **2 -> 1 -> 0**. The final restart/reset/responsive phase produced no report
+  and is not accepted evidence. More importantly, SDS's first manual use showed
+  the core BLB invariant is absent: freshly created bodies can be flat
+  paragraphs rather than bullet lists, preventing recursive label-to-`[+]`
+  construction. Production is **deployed but not accepted**. The next release
+  gate is a real public demonstration topic created from the legacy writer's
+  content-gated fractal spec, followed by fixes and acceptance for always-bulleted
+  topic/reply/inline creation, recursion, reload/restart persistence, responsive
+  inspected PNGs, and a clean journal.
 - (2026-07-13 concurrent read-marker release gate) PR
   [#71](https://github.com/HCSS-StratBase/rizzoma/pull/71) merged the complete
   generation-safe collaboration/auth repair as exact master `0553a611`; all

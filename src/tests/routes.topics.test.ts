@@ -3,6 +3,8 @@ import cookieParser from 'cookie-parser';
 import topicsRouter from '../server/routes/topics';
 import { requestId } from '../server/middleware/requestId';
 
+const insertedDocs: any[] = [];
+
 describe('routes: /api/topics', () => {
   const app = express();
   app.use(express.json());
@@ -67,6 +69,7 @@ describe('routes: /api/topics', () => {
       }
       if (method === 'POST' && /\/[^/]+$/.test(path)) {
         // insertDoc for topic create
+        insertedDocs.push(JSON.parse(init?.body?.toString() || '{}'));
         return okResp({ ok: true, id: 't-new', rev: '1-x' }, 201);
       }
       if (method === 'GET' && /\/[^/]+$/.test(path)) {
@@ -87,6 +90,10 @@ describe('routes: /api/topics', () => {
       // default
       return okResp({}, 404);
     }) as any;
+  });
+
+  beforeEach(() => {
+    insertedDocs.length = 0;
   });
 
   it('lists topics with hasMore computation', async () => {
@@ -110,6 +117,9 @@ describe('routes: /api/topics', () => {
     server.close();
     expect(resp.status).toBe(201);
     expect(body.id).toBe('t-new');
+    expect(insertedDocs.find((doc) => doc.type === 'topic')?.content).toBe(
+      '<h1>New Topic</h1><ul><li><p></p></li></ul>',
+    );
   });
 
   it('updates a topic (owner required)', async () => {

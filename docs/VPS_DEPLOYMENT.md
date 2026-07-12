@@ -1,22 +1,22 @@
 # VPS Deployment — Rizzoma on 138.201.62.161
 
-**Last updated**: 2026-07-13 (exact PR #71 green deployment; read-marker hotfix pending)
+**Last updated**: 2026-07-13 (exact PR #72 blue deployment; BLB creation blocker open)
 
 > **Current runtime truth:** exact merged master
-> `0553a611c54a7cfa8faf466ac0797a13b4aa51d4` is public through both nginx
-> vhosts to compiled, systemd-managed green `:8102`. Blue `:8101` is
+> `5e1bc271e81613768e811cfc306c0c691e71d77b` is public through both nginx
+> vhosts to compiled, systemd-managed blue `:8101`. Green `:8102` is
 > stopped/disabled. Public health reports CouchDB, Redis, and ClamAV ready; the
 > deployed client assets are `main-C53x9A2I.js` and `main-BNWeJdg2.css`.
-> Root-only rollback capture: `/root/rizzoma-cutover-coherence-20260713-003633`.
+> Root-only rollback capture: `/root/rizzoma-cutover-read-marker-20260713-010447`.
 >
-> Resumed public acceptance verified the collaboration/authorization/Task/
-> mention/export/FtG/ACL matrix, then found a duplicate mark-read update race:
-> one concurrent write returned 200 and the stale-revision twin returned 500.
-> Branch `fix/read-marker-conflict` is locally green at 108 test files / 651
-> passed / 3 skipped, typecheck, full-source lint, and a 3,315-module build. It
-> must merge through green CI, deploy as an exact immutable release to inactive
-> blue `:8101`, and pass the same public acceptance before replacing this
-> checkpoint with a final-production claim.
+> PR #72 passed every required check and the public phase-2 acceptance matrix
+> passed 49/49 with zero unexpected browser errors and Follow-the-Green
+> 2 -> 1 -> 0. The final restart/reset/responsive phase produced no report and
+> is not counted as accepted. SDS's first manual use then exposed a more basic
+> release blocker: fresh content is not guaranteed to be a bullet list, so the
+> recursive BLB label-to-`[+]` paradigm is not functional end to end. The
+> service is healthy and the read-marker fix is live, but the product is
+> **deployed, not accepted**.
 
 > **Application merged, not yet public:** PR
 > [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) merged as `bacb8a50`

@@ -30,6 +30,8 @@ import { requestTaskCompletionHydration } from './editor/extensions/TaskWidget';
 import { collectBlipPages } from '../lib/blipPagination';
 import { subscribeBlipEvents, subscribeTopicDetail } from '../lib/socket';
 import { collaborationProjectionHeaders } from '../lib/collaborationProjection';
+import { EMPTY_BLB_HTML, plainTextToBlbHtml, topicSeedHtml } from '@shared/blbContent';
+import { readCreatedBlip } from '../lib/blipCreateResponse';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -857,7 +859,7 @@ function RizzomaTopicDetailState({
         waveId: id,
         // BLB: new blips default to a bulleted list (every blip body is BLB-shaped).
         // Matches original Rizzoma where Ctrl+Enter created a bulleted thread.
-        content: '<ul><li><p></p></li></ul>',
+        content: EMPTY_BLB_HTML,
         parentId: null, // This is a child of the topic/wave itself (root-level blip)
         anchorPosition: anchorPosition, // The cursor position where this inline comment is anchored
       };
@@ -867,10 +869,10 @@ function RizzomaTopicDetailState({
           body: JSON.stringify(requestBody)
         });
         if (response.ok && response.data) {
-          const newBlip = response.data as { id?: string; _id?: string; content?: string; authorId?: string; authorName?: string; createdAt?: number; updatedAt?: number };
-          const newBlipId = newBlip.id || newBlip._id;
+          const createdBlip = readCreatedBlip(response.data);
+          const newBlipId = createdBlip?.id;
 
-          if (newBlipId) {
+          if (createdBlip && newBlipId) {
             // BLB: Insert [+] marker at cursor position in the topic content.
             // No setTextSelection: anchorPosition is now a TEXT-character offset
             // (not a PM doc position). The cursor is still at the original
@@ -889,11 +891,11 @@ function RizzomaTopicDetailState({
             const newBlipData: BlipData = {
               id: newBlipId,
               blipPath: blipPathSegment,
-              content: newBlip.content || '<p></p>',
-              authorId: newBlip.authorId || '',
-              authorName: newBlip.authorName || 'Anonymous',
-              createdAt: newBlip.createdAt || Date.now(),
-              updatedAt: newBlip.updatedAt || Date.now(),
+              content: createdBlip.content,
+              authorId: createdBlip.authorId,
+              authorName: createdBlip.authorName,
+              createdAt: createdBlip.createdAt,
+              updatedAt: createdBlip.updatedAt,
               yjsGeneration: 0,
               isRead: true,
               parentBlipId: undefined,
@@ -1124,7 +1126,7 @@ function RizzomaTopicDetailState({
     try {
       const r = await api('/api/blips', {
         method: 'POST',
-        body: JSON.stringify({ waveId: id, content: newBlipContent.trim() })
+        body: JSON.stringify({ waveId: id, content: plainTextToBlbHtml(newBlipContent) })
       });
       if (r.ok) { toast('Blip created'); setNewBlipContent(''); load(true); }
       else { toast('Failed to create blip', 'error'); }
@@ -1476,7 +1478,7 @@ function RizzomaTopicDetailState({
     };
     collectNativeBlips(blips);
     const allBlips: Array<{ id: string; content: string }> = [
-      { id: topic.id, content: topic.content || `<h1>${topic.title || 'Untitled'}</h1>` },
+      { id: topic.id, content: topic.content || topicSeedHtml(topic.title || 'Untitled') },
       ...nativeBlips,
     ];
     const contentMap = new Map<string, ContentArray>(

@@ -48,7 +48,56 @@
 
 ## Boundary
 
-- Branch `fix/read-marker-conflict` is not yet merged or deployed. Required
-  remaining gates are green GitHub CI, an exact immutable blue `:8101`
-  deployment with zero writer overlap, and a complete console-clean public
-  acceptance rerun including managed restart and responsive visual inspection.
+- PR [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) passed all required
+  checks and squash-merged as exact master
+  `5e1bc271e81613768e811cfc306c0c691e71d77b`.
+- That exact tree is public on managed blue `:8101`. The immutable package
+  contains all **994** lockfile-required production packages. Green `:8102`
+  was drained for 38 seconds with no live connections or snapshot/flush errors,
+  then stopped and disabled; both nginx vhosts now target blue. Public health
+  reports CouchDB, Redis, and ClamAV ready.
+- The resumed public phase-2 matrix passed **49/49** checks with zero unexpected
+  browser errors and real Follow-the-Green **2 -> 1 -> 0** behavior. The final
+  password-reset/restart/responsive phase did not produce its report and is not
+  counted as accepted evidence.
+
+## Core BLB release blocker
+
+- SDS's first manual use exposed a more fundamental miss than the read-marker
+  race: newly created content is not guaranteed to start and persist as a
+  bullet list. The application can therefore create flat paragraph bodies that
+  cannot serve as BLB labels with recursively anchored `[+]` subblips.
+- This invalidates the overall “fully functional” claim despite green CI,
+  infrastructure health, and the 49-check phase-2 matrix. Production is
+  **deployed but not accepted**.
+- Next acceptance must start from a real public topic created through the UI,
+  using the same content-gated fractal specification as the legacy Rizzoma
+  writer. It must prove always-bulleted topic, reply, and inline-child creation;
+  recursive `[+]` construction; persistence after reload and managed restart;
+  and inspected 1280/1366/1440/1600/mobile PNGs.
+
+## Public reproduction and repair candidate
+
+- The canonical content gate passed an intended **18-node**, depth-1 fractal
+  status specification. Real public controls created the
+  [reality-check topic](https://138-201-62-161.nip.io/#/topic/3305bc3a42889979c79fa39f400088c7?layout=rizzoma),
+  typed that spec into a real blip, saved it, and reloaded it.
+- Measured readback was exact: **18 paragraphs / 0 UL / 0 LI** before and after
+  reload, with zero browser errors. Visual inspection confirms one long flat
+  body with no recursive `[+]` anchors. Evidence:
+  `screenshots/260713-0130-public-blb-creation-failure/`.
+- Root cause spans all dominant creation paths: the topic modal posts H1-only
+  content; root and nested reply boxes post raw text; the server stores it
+  verbatim; and the topic-root Ctrl+Enter optimistic object read the wrong
+  response level and fell back to a paragraph.
+- Branch `fix/blb-always-bulleted` adds one shared BLB content contract. Topic
+  creation now seeds H1 + UL/LI; plain-text reply lines become escaped LI/P
+  labels; the server normalizes alternate/old clients; root and nested
+  Ctrl+Enter share the same starter; and the root optimistic mapper reads the
+  nested server `blip` envelope.
+- Local verification is green: focused **25/25**; full Vitest **110 files / 658
+  passed / 3 skipped / 0 failed**; typecheck; full-source ESLint `--quiet`;
+  branch-context lint; and a **3,317-module** production build.
+- Boundary: this candidate is not merged or deployed. Private managed-lane
+  real-control acceptance, green PR checks, exact public cutover, recursive
+  reload/restart proof, responsive PNG inspection, and clean journals remain.

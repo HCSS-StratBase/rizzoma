@@ -99,6 +99,31 @@ describe('routes: blips permissions', () => {
     expect(couch.updateDoc).not.toHaveBeenCalled();
   });
 
+  it('normalizes plain-text and empty creation through the authoritative route', async () => {
+    couch.getDoc.mockImplementation(async (id: string) => id === 'w1'
+      ? { _id: 'w1', type: 'topic', authorId: 'author', shareLevel: 'private' }
+      : null);
+    couch.insertDoc.mockImplementation(async (doc: any) => ({ ok: true, id: doc._id || 'created', rev: '1-x' }));
+
+    const plain = await invokeRoute(blipsRouter, 'post', '/', {
+      body: { waveId: 'w1', content: 'First label\nSecond label' },
+      session: { userId: 'author', userName: 'Author', csrfToken: 'tok' },
+      headers: { 'x-csrf-token': 'tok' },
+    });
+    expect(plain.statusCode).toBe(201);
+    expect(plain.body.blip.content).toBe(
+      '<ul><li><p>First label</p></li><li><p>Second label</p></li></ul>',
+    );
+
+    const empty = await invokeRoute(blipsRouter, 'post', '/', {
+      body: { waveId: 'w1', content: '' },
+      session: { userId: 'author', userName: 'Author', csrfToken: 'tok' },
+      headers: { 'x-csrf-token': 'tok' },
+    });
+    expect(empty.statusCode).toBe(201);
+    expect(empty.body.blip.content).toBe('<ul><li><p></p></li></ul>');
+  });
+
   it('denies an authenticated outsider from updating a blip', async () => {
     couch.getDoc.mockImplementation(async (id: string) => id === 'b1'
       ? { _id: 'b1', type: 'blip', waveId: 'w1', authorId: 'owner', content: '<p>old</p>' }

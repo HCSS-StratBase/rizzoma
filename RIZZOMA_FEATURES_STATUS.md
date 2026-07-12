@@ -524,6 +524,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 
 | Functionality | Status | Original Rizzoma | New Rizzoma |
 |---|---|---|---|
+| Fresh topic/reply/inline body is always a bullet list | **Fix candidate; public blocker** | Every new blip starts as `<ul><li>` | Public failure measured 18 P / 0 UL / 0 LI after reload; local shared-contract repair passes 25 focused and 658 full-suite tests, pending real-control deploy acceptance |
 | Collapsed TOC (bullet + label + [+]) | Done | [orig](screenshots/side-by-side/blb-01-collapsed-toc-old-260208.png) | [new](screenshots/side-by-side/blb-01-collapsed-toc-new-260208.png) |
 | Section expanded (blip content visible) | Done | [orig](screenshots/side-by-side/blb-02-section-expanded-old-260208.png) | [new](screenshots/side-by-side/blb-02-section-expanded-new-260208.png) |
 | [+] click = INLINE expansion (not navigation) | Done | [orig](screenshots/blb-inline-expanded_old-260208-0226.png) | [new](screenshots/blb-inline-expanded_new-260208-0330.png) |
