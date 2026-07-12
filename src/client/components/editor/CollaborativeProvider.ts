@@ -1,6 +1,11 @@
 import * as Y from 'yjs';
 import { Socket } from 'socket.io-client';
-import { Awareness } from 'y-protocols/awareness';
+import {
+  Awareness,
+  applyAwarenessUpdate,
+  encodeAwarenessUpdate,
+  removeAwarenessStates,
+} from 'y-protocols/awareness';
 
 export class SocketIOProvider {
   doc: Y.Doc;
@@ -18,9 +23,8 @@ export class SocketIOProvider {
   private docUpdateHandler: ((update: Uint8Array, origin: unknown) => void) | null = null;
   private remoteUpdateHandler: ((data: { update: number[] }) => void) | null = null;
   private syncHandler: ((data: { state: number[]; shouldSeed?: boolean }) => void) | null = null;
-  private remoteAwarenessHandler: ((data: { states: any }) => void) | null = null;
-  /** Guard to prevent awareness update loop (receive → emit change → send → relay → receive) */
-  private applyingRemoteAwareness = false;
+  private localAwarenessHandler: ((change: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => void) | null = null;
+  private remoteAwarenessHandler: ((data: { update?: number[]; states?: Record<string, unknown> }) => void) | null = null;
 
   constructor(doc: Y.Doc, socket: Socket, blipId: string) {
     this.doc = doc;
@@ -76,7 +80,27 @@ export class SocketIOProvider {
   }
 
   private setupAwareness() {
-    // Set initial user state
+    // Use the y-protocols wire format, including its per-client clocks. The
+    // previous implementation mutated awareness.getStates() directly and
+    // manually emitted `change`; yCursorPlugin reacted by publishing another
+    // local cursor update, producing a cross-client awareness ping-pong that
+    // delayed document relays by 13-14 seconds in CI.
+    this.localAwarenessHandler = ({ added, updated, removed }, origin) => {
+      // applyAwarenessUpdate marks remote changes with this provider as their
+      // origin. Never send those changes back to the server.
+      if (origin === this) return;
+      const changedClients = added.concat(updated).concat(removed);
+      if (changedClients.length === 0) return;
+      const update = encodeAwarenessUpdate(this.awareness, changedClients);
+      this.socket.emit('awareness:update', {
+        blipId: this.blipId,
+        update: Array.from(update),
+      });
+    };
+    this.awareness.on('update', this.localAwarenessHandler);
+
+    // Set initial user state after the listener is attached so peers receive
+    // a valid clocked awareness update even before the editor gains focus.
     const userColors = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4'];
     const userId = this.doc.clientID.toString();
 
@@ -86,44 +110,32 @@ export class SocketIOProvider {
       color: userColors[parseInt(userId) % userColors.length]
     });
 
-    // Send LOCAL awareness updates (skip when applying remote to prevent loop)
-    this.awareness.on('update', ({ added, updated, removed }: any) => {
-      if (this.applyingRemoteAwareness) return;
-
-      const changedClients = added.concat(updated).concat(removed);
-      // Only send updates for our own client
-      const localId = this.doc.clientID;
-      if (!changedClients.includes(localId)) return;
-
-      const localState = this.awareness.getLocalState();
-      if (!localState) return;
-
-      this.socket.emit('awareness:update', {
-        blipId: this.blipId,
-        states: { [localId]: localState }
-      });
-    });
-
     // Receive awareness updates from remote clients
-    this.remoteAwarenessHandler = (data: { states: any }) => {
-      this.applyingRemoteAwareness = true;
-      try {
-        Object.entries(data.states).forEach(([clientIdStr, state]) => {
-          const clientId = parseInt(clientIdStr);
-          if (clientId !== this.doc.clientID) {
-            const currentStates = this.awareness.getStates();
-            if (!currentStates.has(clientId)) {
-              currentStates.set(clientId, state as any);
-            } else {
-              const existingState = currentStates.get(clientId) || {};
-              currentStates.set(clientId, { ...existingState, ...(state as any) });
-            }
-          }
-        });
-        this.awareness.emit('change', [{ added: [], updated: Object.keys(data.states).map(Number), removed: [] }]);
-      } finally {
-        this.applyingRemoteAwareness = false;
+    this.remoteAwarenessHandler = (data) => {
+      if (Array.isArray(data.update)) {
+        applyAwarenessUpdate(this.awareness, new Uint8Array(data.update), this);
+        return;
       }
+      // Rolling-deploy compatibility for a stale client still sending the old
+      // raw-state payload. New clients never emit this form.
+      const states = data.states || {};
+      const updated: number[] = [];
+      Object.entries(states).forEach(([clientIdRaw, state]) => {
+        const clientId = Number(clientIdRaw);
+        if (!Number.isFinite(clientId) || clientId === this.doc.clientID) return;
+        this.awareness.getStates().set(clientId, state as Record<string, unknown>);
+        // Raw legacy payloads carry no awareness clock. Keep a minimal
+        // non-negative clock so stale-client cleanup can encode a valid
+        // removal update, while allowing a later clocked update (normally
+        // clock >= 1) to supersede this rolling-deploy fallback.
+        const currentMeta = this.awareness.meta.get(clientId);
+        this.awareness.meta.set(clientId, {
+          clock: currentMeta?.clock ?? 0,
+          lastUpdated: Date.now(),
+        });
+        updated.push(clientId);
+      });
+      if (updated.length > 0) this.awareness.emit('change', [{ added: [], updated, removed: [] }, this]);
     };
     this.socket.on(`awareness:update:${this.blipId}`, this.remoteAwarenessHandler);
   }
@@ -152,6 +164,9 @@ export class SocketIOProvider {
   }
 
   destroy() {
+    // Tell peers immediately that this cursor left instead of waiting for the
+    // awareness protocol's 30-second stale-client timeout.
+    removeAwarenessStates(this.awareness, [this.awareness.clientID], 'local-destroy');
     this.socket.emit('blip:leave', {
       blipId: this.blipId
     });
@@ -170,6 +185,10 @@ export class SocketIOProvider {
     if (this.remoteAwarenessHandler) {
       this.socket.off(`awareness:update:${this.blipId}`, this.remoteAwarenessHandler);
       this.remoteAwarenessHandler = null;
+    }
+    if (this.localAwarenessHandler) {
+      this.awareness.off('update', this.localAwarenessHandler);
+      this.localAwarenessHandler = null;
     }
     if (this.reconnectHandler) {
       this.socket.off('connect', this.reconnectHandler);

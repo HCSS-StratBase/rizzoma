@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as Y from 'yjs';
+import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { SocketIOProvider } from '../client/components/editor/CollaborativeProvider';
 
 /** Create a minimal mock socket that mimics Socket.IO client behavior */
@@ -161,11 +162,57 @@ describe('client: CollaborativeProvider', () => {
 
   it('setUser updates awareness state', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-8');
+    socket.emit.mockClear();
 
     provider.setUser({ id: 'u1', name: 'Alice', color: '#ff0000' });
 
     const localState = provider.awareness.getLocalState();
     expect(localState?.['user']).toEqual({ id: 'u1', name: 'Alice', color: '#ff0000' });
+    const awarenessCalls = socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update');
+    expect(awarenessCalls).toHaveLength(1);
+    expect(Array.isArray(awarenessCalls[0][1].update)).toBe(true);
+
+    provider.destroy();
+  });
+
+  it('applies clocked remote awareness without echoing it', () => {
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-awareness');
+    socket.emit.mockClear();
+
+    const remoteDoc = new Y.Doc();
+    const remoteAwareness = new Awareness(remoteDoc);
+    remoteAwareness.setLocalStateField('user', { id: 'remote', name: 'Remote', color: '#123456' });
+    const update = encodeAwarenessUpdate(remoteAwareness, [remoteAwareness.clientID]);
+
+    socket._receive('awareness:update:blip-awareness', { update: Array.from(update) });
+
+    expect(provider.awareness.getStates().get(remoteAwareness.clientID)?.['user']).toEqual({
+      id: 'remote', name: 'Remote', color: '#123456'
+    });
+    const echoed = socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update');
+    expect(echoed).toHaveLength(0);
+
+    remoteAwareness.destroy();
+    remoteDoc.destroy();
+    provider.destroy();
+  });
+
+  it('keeps legacy raw awareness removable during a rolling deploy', () => {
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-legacy-awareness');
+    socket.emit.mockClear();
+    const remoteClientId = (doc.clientID + 1) >>> 0;
+
+    socket._receive('awareness:update:blip-legacy-awareness', {
+      states: { [remoteClientId]: { user: { id: 'legacy', name: 'Legacy', color: '#abcdef' } } },
+    });
+
+    expect(provider.awareness.getStates().get(remoteClientId)?.['user']).toEqual({
+      id: 'legacy', name: 'Legacy', color: '#abcdef'
+    });
+    expect(provider.awareness.meta.get(remoteClientId)?.clock).toBe(0);
+    expect(Number.isFinite(provider.awareness.meta.get(remoteClientId)?.lastUpdated)).toBe(true);
+    const echoed = socket.emit.mock.calls.filter(([event]: any) => event === 'awareness:update');
+    expect(echoed).toHaveLength(0);
 
     provider.destroy();
   });

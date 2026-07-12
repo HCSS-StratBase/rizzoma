@@ -24,11 +24,10 @@
  *   0 = all PASS
  *   non-zero = at least one FAIL (printed to stderr)
  *
- * Uses two separate Playwright browser processes. Besides independent cookie
- * jars, sockets, and Y.Doc state, this avoids Chromium background-renderer
- * throttling delaying the receiving page when the sender is focused. A
- * single process with two contexts produced 13-second WebSocket delivery in
- * headless CI even though both clients had joined and synced correctly.
+ * Uses two separate Playwright browser processes to model two independent
+ * devices with isolated cookie jars, sockets, and Y.Doc state. This is an
+ * acceptance-shape improvement, not a latency workaround: CI still measured
+ * 13-14 second relays before the awareness feedback loop was fixed.
  */
 import { chromium } from 'playwright';
 
@@ -251,11 +250,11 @@ async function waitForEditorText(page, blipId, expected, timeout = 10000) {
   }, { id: blipId, expectedText: expected }, { timeout });
 }
 
-async function getOutboundEventCount(page, eventName) {
-  return page.evaluate((name) => {
+async function getOutboundEventCount(page, eventName, blipId = null) {
+  return page.evaluate(({ name, id }) => {
     const out = window.__outbound || [];
-    return out.filter((e) => e.event === name).length;
-  }, eventName);
+    return out.filter((e) => e.event === name && (!id || e.blipId === id)).length;
+  }, { name: eventName, id: blipId });
 }
 
 async function getInboundEventCount(page, eventName) {
@@ -270,8 +269,8 @@ async function main() {
   log(`user A: ${userA}`);
   log(`user B: ${userB}`);
 
-  // Separate browser processes model two active devices and prevent the
-  // receiver from being treated as an occluded/background tab by Chromium.
+  // Separate browser processes model two independent active devices. Relay
+  // latency is measured below and must stand on its own acceptance budget.
   const browserA = await chromium.launch({ headless: !headed, slowMo });
   const browserB = await chromium.launch({ headless: !headed, slowMo });
   const ctxA = await browserA.newContext();
@@ -313,14 +312,14 @@ async function main() {
     recordCheck(aSocketOk && bSocketOk, 'Sockets connected on both contexts (BUG #58 — feature flags reachable)');
 
     // ===== CHECK 2: A types, blip:update emits =====
-    const aOutboundBefore = await getOutboundEventCount(pageA, 'blip:update');
+    const aOutboundBefore = await getOutboundEventCount(pageA, 'blip:update', blipId);
     const bInboundBefore = await getInboundEventCount(pageB, `blip:update:${blipId}`);
     await focusBlipEditor(pageA, blipId);
     await pageA.keyboard.press('A');
-    await pageA.waitForFunction((before) => (
-      (window.__outbound || []).filter((entry) => entry.event === 'blip:update').length > before
-    ), aOutboundBefore, { timeout: 10000 });
-    const aOutCount = await getOutboundEventCount(pageA, 'blip:update');
+    await pageA.waitForFunction(({ before, id }) => (
+      (window.__outbound || []).filter((entry) => entry.event === 'blip:update' && entry.blipId === id).length > before
+    ), { before: aOutboundBefore, id: blipId }, { timeout: 10000 });
+    const aOutCount = await getOutboundEventCount(pageA, 'blip:update', blipId);
     recordCheck(aOutCount >= 1, `A typed → ${aOutCount} blip:update emits (BUG #57a — Y.js binding wired)`);
 
     // ===== CHECK 3: B receives the update =====
@@ -334,18 +333,21 @@ async function main() {
       throw error;
     }
     const bInboundCount = await getInboundEventCount(pageB, `blip:update:${blipId}`);
-    recordCheck(bInboundCount >= 1, `B received ${bInboundCount} blip:update relay events`);
-    const relayLatencyMs = await pageB.evaluate(({ id, before }) => {
+    const bInboundDelta = bInboundCount - bInboundBefore;
+    recordCheck(bInboundDelta >= 1, `B received ${bInboundDelta} new blip:update relay event(s)`);
+    const bRelayReceivedAt = await pageB.evaluate(({ id, before }) => {
       const inbound = (window.__inbound || [])
-        .filter((entry) => entry.ev === `blip:update:${id}` && entry.t > before)
-        .sort((a, b) => a.t - b.t);
-      return inbound[0]?.t || null;
-    }, { id: blipId, before: bInboundBefore }) - await pageA.evaluate((id) => {
+        .filter((entry) => entry.ev === `blip:update:${id}`);
+      return inbound[before]?.t ?? null;
+    }, { id: blipId, before: bInboundBefore });
+    const aRelaySentAt = await pageA.evaluate(({ id, before }) => {
       const outbound = (window.__outbound || [])
-        .filter((entry) => entry.event === 'blip:update' && entry.blipId === id)
-        .sort((a, b) => b.t - a.t);
-      return outbound[0]?.t || 0;
-    }, blipId);
+        .filter((entry) => entry.event === 'blip:update' && entry.blipId === id);
+      return outbound[before]?.t ?? null;
+    }, { id: blipId, before: aOutboundBefore });
+    const relayLatencyMs = typeof bRelayReceivedAt === 'number' && typeof aRelaySentAt === 'number'
+      ? bRelayReceivedAt - aRelaySentAt
+      : Number.NaN;
     recordCheck(
       Number.isFinite(relayLatencyMs) && relayLatencyMs >= 0 && relayLatencyMs <= 5000,
       `A → B relay latency ${relayLatencyMs}ms (budget ≤5000ms)`

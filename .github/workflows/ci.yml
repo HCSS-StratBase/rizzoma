@@ -135,8 +135,8 @@ jobs:
           RIZZOMA_SNAPSHOT_DIR: snapshots/follow-the-green-mobile
           RIZZOMA_E2E_PROFILES: mobile
         run: npm run test:follow-green
-      - name: Run real-time collab smoke (two-context Y.js sync)
-        # Two-browser-context Playwright test that catches regressions
+      - name: Run real-time collab smoke (two-process Y.js sync)
+        # Two-browser-process Playwright test that catches regressions
         # in BUG #56 (sidebar cache), #57 (Y.js editor binding + seed
         # lock), and #58 (FEAT_ALL default in production builds).
         # If this step starts failing the regression is likely back.
