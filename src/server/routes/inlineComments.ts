@@ -90,7 +90,20 @@ router.get('/blip/:blipId/comments', async (req, res): Promise<void> => {
 
     const comments = (result.docs || [])
       .map((comment) => ({
-        ...comment,
+        id: comment.id,
+        blipId: comment.blipId,
+        userId: comment.userId,
+        userName: comment.userName,
+        userAvatar: comment.userAvatar,
+        ...(access.canManage && comment.userEmail ? { userEmail: comment.userEmail } : {}),
+        content: comment.content,
+        range: comment.range,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        resolved: comment.resolved,
+        resolvedAt: comment.resolvedAt,
+        parentId: comment.parentId,
+        rootId: comment.rootId,
         isAuthenticated:
           typeof comment.userId === 'string' && comment.userId.trim().length > 0,
       }));

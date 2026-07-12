@@ -9,7 +9,9 @@ describe('routes: inline comments threading', () => {
   app.use(cookieParser());
   app.use(requestId());
   app.use((req: any, _res, next) => {
-    req.session = { userId: 'inline-user', userName: 'Inline Tester', csrfToken: 'token' };
+    req.session = req.get('x-test-anonymous') === '1'
+      ? { csrfToken: 'token' }
+      : { userId: 'inline-user', userName: 'Inline Tester', csrfToken: 'token' };
     next();
   });
 
@@ -242,6 +244,31 @@ describe('routes: inline comments threading', () => {
       expect([list.status, create.status, resolve.status, remove.status]).toEqual([expected, expected, expected, expected]);
     }
     expect(inlineDocs).toEqual(expect.arrayContaining([taskComment, deletedComment]));
+    server.close();
+  });
+
+  it('returns an explicit public DTO without email, revisions, or arbitrary stored fields', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    inlineDocs.push({
+      _id: 'comment-public-safe', _rev: '7-secret', id: 'comment-public-safe', type: 'inline_comment',
+      blipId: 'b1', userId: 'author-user', userName: 'Public Author', userEmail: 'secret@example.test',
+      userAvatar: 'https://example.test/avatar.png', content: 'Visible comment',
+      range: { start: 0, end: 5, text: 'hello' }, resolved: false, createdAt: 1, updatedAt: 1,
+      arbitrarySecret: 'must-not-leak',
+    });
+
+    const response = await fetch(`http://127.0.0.1:${port}/api/blip/b1/comments`, {
+      headers: { 'x-test-anonymous': '1' },
+    });
+    const body = await response.json();
+    const comment = body.comments.find((candidate: any) => candidate.id === 'comment-public-safe');
+
+    expect(response.status).toBe(200);
+    expect(comment).toMatchObject({ content: 'Visible comment', userName: 'Public Author' });
+    expect(comment).not.toHaveProperty('userEmail');
+    expect(comment).not.toHaveProperty('_rev');
+    expect(comment).not.toHaveProperty('arbitrarySecret');
     server.close();
   });
 });
