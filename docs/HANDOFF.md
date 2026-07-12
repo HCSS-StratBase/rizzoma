@@ -1,19 +1,25 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`fix/lockfile-driven-production-install`; application
-merge `bacb8a50`; helper merge `599fe025`; **not yet public**). PR
-[#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) merged the complete
-sharing/access, authenticated collaboration, offline/auth isolation, private
-upload/ClamAV, OAuth/password-recovery, realtime/export, mention, and durable
-Task stack after all seven GitHub gates passed, and PR #67 merged the managed
-helper after six more green checks. Its first private deployment exposed a
-second npm 10 failure mode: disabling lockfile writes during prune installed
-`yjs` 13.6.31 although the lock requires 13.6.29. The current fix replaces
-prune with a second lockfile-driven `npm ci --omit=dev` and rejects any
-installed package version that differs from the lock. A fresh PR/CI/private
-redeploy, zero-overlap cutover, and public acceptance remain open.
+Last Updated: 2026-07-12 (`fix/production-auth-session-race`; deployed base
+`e21afd04`). PRs [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66),
+[#67](https://github.com/HCSS-StratBase/rizzoma/pull/67), and
+[#68](https://github.com/HCSS-StratBase/rizzoma/pull/68) are merged. Exact
+master `e21afd046bfed1e9b065a6caee3b0f947fd26f59` passed its private dependency,
+health, asset, and journal gates and became public at 21:32 CEST through a
+zero-connection, no-snapshot-error drain. The first strict public login loop
+then exposed an intermittent session race: anonymous page/API/asset requests
+each minted a different session cookie, so a late response could overwrite a
+successful login. The current branch restricts anonymous CSRF-session creation
+to `/api/auth/csrf`; focused auth tests, server build, and ESLint at zero errors
+pass. CI, private redeploy, repeated public login, and the remaining public
+acceptance matrix are the immediate boundary.
 
-**Deployment boundary:** nginx serves Vite `:3100` → API `:8100`; Redis backs API sessions. The public frontend is Vite's **development server**, not a compiled production frontend. The live client has parity rendering enabled and native rendering unset, so production uses the React/TipTap parity path; `NativeWaveView` remains read-only and is not the deployed architecture. The former `:3000`/`:8788` lane remains healthy for immediate rollback via `/root/rizzoma.conf.pre-pr60-20260712-052206`. Both lanes are unmanaged bare processes and share CouchDB.
+**Deployment boundary:** both public vhosts point exactly once to the compiled,
+systemd-managed blue lane on loopback `:8101`; old listeners `:3100` and `:8100`
+are absent. `rizzoma@blue` is active/enabled at exact release `e21afd04`, with
+Redis sessions, CouchDB, and ClamAV all healthy. The root-only rollback capture
+is `/root/rizzoma-cutover-20260712-212948`. Native rendering remains disabled;
+production uses the React/TipTap parity path.
 
 Last Updated: 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — Playwright sign-in lands as `sdspieg@gmail.com` "Stephan De Spiegeleire" with Google avatar. Tasks #140 + #143 both closed. Required two Hetzner Robot firewall passes: (1) opened port 80 for Let's Encrypt; (2) consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to allow return traffic from MASQUERADE'd outbound — without that, server couldn't reach `oauth2.googleapis.com/token`. Diagnosed via tcpdump (SYN egressed, no SYN-ACK returned). Same fix unblocks SMTP / S3 / any container-outbound feature.)
 
@@ -46,10 +52,9 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active development branch: `fix/lockfile-driven-production-install`
-  (2026-07-12), based on merged helper commit `599fe025`; public production remains on the
-  earlier parity release until deploy-helper CI, zero-overlap cutover, and
-  public acceptance complete. Always include branch name + date when
+- Active development branch: `fix/production-auth-session-race` (2026-07-12),
+  based on deployed master `e21afd04`; the hotfix remains private until CI and
+  repeated login acceptance pass. Always include branch name + date when
   summarizing status.
 - The "Current State" section below is refreshed for the deployed parity release; older dated entries and “native release” labels are historical until the native renderer is write-capable and actually enabled.
 
@@ -84,7 +89,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`fix/lockfile-driven-production-install` @ 2026-07-12; helper merge `599fe025`; public production intentionally unchanged pending deterministic managed cutover)
+Current State (`fix/production-auth-session-race` @ 2026-07-12; deployed base `e21afd04`; public hotfix pending)
 - The full application stack is merged on `master` through PR #66: private/link/public
   sharing, viewer/commenter/editor/owner enforcement, server-session Socket.IO
   identity, live demotion, owner-partitioned offline/Yjs state, ACL-backed
@@ -105,15 +110,19 @@ Current State (`fix/lockfile-driven-production-install` @ 2026-07-12; helper mer
   across the required desktop widths plus 390 mobile. The Task manifest has
   zero unexpected console errors and every sharing modal remains within its
   viewport.
-- Remaining release gates are operational: publish the production-install fix,
-  require green CI, merge it, deploy the exact merged SHA to
-  the inactive managed lane, perform a zero-overlap drain/cutover, and complete
-  public mail/scanner/restart/collaboration/role/Task/mention/export/responsive
-  acceptance.
-- The managed compiled topology is code-complete on the in-flight branch but not yet public. `deploy/systemd/` defines immutable blue/green lanes on loopback `:8101`/`:8102`; `scripts/deploy-vps.sh` now builds and starts an exact candidate SHA without touching nginx. Graceful shutdown flushes dirty Yjs documents, production refuses the development session secret, and `/api/health` includes Redis session readiness.
+- Remaining release gates: merge the session-race hotfix only after green CI,
+  deploy it to the inactive managed lane, switch with zero writer overlap, and
+  complete public mail/scanner/restart/collaboration/role/Task/mention/export/
+  reset/responsive acceptance.
+- The managed compiled blue lane is public on `:8101`; the inactive green lane
+  remains the private hotfix target. Graceful shutdown flushes dirty Yjs
+  documents, production refuses the development session secret, and
+  `/api/health` includes Redis and ClamAV readiness.
 - A live security preflight proved CouchDB `5984` and unauthenticated Redis `6379` were externally reachable. Redis showed active attacker replication/config activity and an SSH-key payload. Root-only evidence was preserved; all 54 untrusted keys/sessions were flushed; Redis was recreated clean. Persistent dual-stack rules now close both dependencies and every direct Rizzoma internal port while public HTTPS health remains 200. The managed cutover must use a fresh secret with no previous verifier, intentionally forcing one re-login. See `screenshots/260712-1218-redis-incident-response/`.
-- Public nginx targets Vite `:3100`, which proxies to API `:8100`; RedisStore is active. The VPS checkout is clean at documentation checkpoint `3a55155a`, while the running application code is PR #60 `fe6988fb` because the intervening files are docs/evidence only. The prior public lane on Vite `:3000` and API `:8788` remains healthy but is rollback-only.
-- Public Vite reports `MODE=development`, `DEV=true`, and serves checkout source modules. Its live flags are `FEAT_ALL=1`, `FEAT_RIZZOMA_PARITY_RENDER=1`, and native unset. The API alone runs with `NODE_ENV=production`.
+- Public nginx targets the compiled managed blue service on `:8101`; old Vite
+  and API listeners are stopped. An independent post-cutover audit measured
+  exact SHA provenance, zero critical journal entries, and only ports
+  22/80/443 externally reachable.
 - `/mnt/c/Rizzoma` is not the release checkout: it remains on `feature/native-fractal-port` at `6e988cc` with one tracked modification and 134 untracked entries. Preserve those user-owned changes; use the clean release checkout for release work until reconciled.
 - FEAT_ALL required: start both server (:8788, the reserved Rizzoma backend port — see CLAUDE.md "Reserved Ports") and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Docker Desktop WSL integration was re-enabled on 2026-03-29; `docker compose up -d couchdb redis` works again from WSL for local live-app verification.

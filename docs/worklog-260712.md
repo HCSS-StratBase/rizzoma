@@ -239,3 +239,31 @@ This section supersedes the deployment boundary above.
 - `node --check` and `git diff --check` gate the harness patch locally; the
   refreshed GitHub perf/browser jobs remain the authoritative end-to-end
   verification because Docker Desktop is unavailable in this WSL session.
+
+## Managed cutover and login-session race
+
+- PR #68 merged the lockfile-driven production installer as `e21afd04`. The
+  exact private candidate matched all **994** installed package versions to
+  `package-lock.json`, passed `npm ls --omit=dev --all`, health, compiled-asset,
+  and journal gates, and preserved the build aggregate across repeated installs.
+- Captured root-only rollback state at
+  `/root/rizzoma-cutover-20260712-212948`, stopped the old Vite writer, waited
+  for zero API connections, observed no snapshot error, stopped the old API,
+  and switched both nginx vhosts to managed blue `:8101`. Public and dev health
+  returned 200; independent audit confirmed exact SHA `e21afd04`, no old
+  listeners, zero critical logs, and only 22/80/443 externally reachable.
+- The first real-user acceptance run failed after a successful password login:
+  `/api/auth/me` intermittently returned 401. A repeated fresh-browser probe
+  measured **1 failure in 5 attempts**. Header inspection proved `/`, static
+  assets, `/api/auth/me`, and `/api/auth/oauth-status` each set a distinct
+  anonymous `rizzoma.sid`; a late first-load response could overwrite the new
+  login cookie.
+- Hotfix branch `fix/production-auth-session-race` now allows only the dedicated
+  `/api/auth/csrf` request to mint anonymous CSRF/session state. Ordinary page,
+  API, and asset requests remain session-neutral; existing tokens are still
+  reissued. Focused verification passed **25/25** auth/CSRF/reset tests, the
+  production server build, and ESLint with zero errors.
+- Boundary: the hotfix is not public until green GitHub CI, exact private-lane
+  deployment, and repeated public login proof. The broader two-user, mail,
+  reset, role, collaboration, export, upload, scanner, restart, and visual
+  matrix remains paused at this gate.

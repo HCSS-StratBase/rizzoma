@@ -6,7 +6,13 @@ const HEADER_NAME = 'x-csrf-token';
 export function csrfInit() {
   return (req: any, res: any, next: any) => {
     const sess = (req as any).session as any;
-    if (sess && !sess.csrfToken) {
+    // Do not turn every anonymous page/API/asset request into a saved session.
+    // A first page load fans out many concurrent requests; when each response
+    // creates a different anonymous session cookie, a late asset response can
+    // overwrite the freshly regenerated login cookie. The dedicated endpoint
+    // is the only anonymous request allowed to mint the pre-auth CSRF session.
+    const requestPath = String(req.originalUrl || req.url || req.path || '').split('?')[0];
+    if (sess && !sess.csrfToken && requestPath === '/api/auth/csrf') {
       sess.csrfToken = randomBytes(16).toString('hex');
     }
     if (sess?.csrfToken) {
