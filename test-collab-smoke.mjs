@@ -290,7 +290,23 @@ async function main() {
   pageA.on('pageerror', (err) => errorsA.push(String(err)));
   pageB.on('pageerror', (err) => errorsB.push(String(err)));
   pageB.on('request', (request) => {
-    if (request.method() === 'PUT' && request.url().includes('/api/blips/')) putRequestsB.push(request.url());
+    if (request.method() === 'PUT' && request.url().includes('/api/blips/')) {
+      let projectedContent = '';
+      try { projectedContent = String(request.postDataJSON()?.content || ''); } catch {}
+      putRequestsB.push({
+        request,
+        url: request.url(),
+        startedAt: Date.now(),
+        projectedContent,
+        stateDigest: request.headers()['x-rizzoma-yjs-state-digest'] || '',
+        yjsGeneration: request.headers()['x-rizzoma-yjs-generation'] || '',
+        status: null,
+      });
+    }
+  });
+  pageB.on('response', (response) => {
+    const entry = putRequestsB.find(({ request }) => request === response.request());
+    if (entry) entry.status = response.status();
   });
 
   try {
@@ -328,6 +344,9 @@ async function main() {
     recordCheck(aSocketOk && bSocketOk, 'Sockets connected on both contexts (BUG #58 — feature flags reachable)');
 
     // ===== CHECK 2: A types, blip:update emits =====
+    // Begin projection evidence at the exact action boundary. Captures from
+    // initial mount/seeding must never satisfy the remote-materialization gate.
+    putRequestsB.length = 0;
     const aOutboundBefore = await getOutboundEventCount(pageA, 'blip:update', blipId);
     const bInboundBefore = await getInboundEventCount(pageB, `blip:update:${blipId}`);
     await focusBlipEditor(pageA, blipId);
@@ -377,12 +396,53 @@ async function main() {
       `B's editor text reflects A's typing (BUG #57b — seed lock prevents divergence). Got: "${bText}"`
     );
 
-    // Give the 300ms REST autosave debounce time to fire. Only A made a local
-    // edit; B applied a Y.js-originated transaction and must not echo it back
-    // through PUT /api/blips/:id.
+    // Give the 300ms materialization debounce time to fire. A remote peer now
+    // projects the converged HTML too, carrying the exact full-state digest
+    // and durable generation;
+    // this keeps Couch HTML/task/mention side-documents durable if A closes
+    // before its own debounce finishes.
     await pageB.waitForTimeout(750);
-    const bRemotePutCount = putRequestsB.filter((url) => url.includes(encodeURIComponent(blipId)) || url.includes(blipId)).length;
-    recordCheck(bRemotePutCount === 0, `B emitted ${bRemotePutCount} REST PUTs for A's remote edit`);
+    for (let attempt = 0; attempt < 40 && !putRequestsB.some(({ status }) => status !== null); attempt += 1) {
+      await pageB.waitForTimeout(100);
+    }
+    const bRemotePuts = putRequestsB.filter(({ url }) => url.includes(encodeURIComponent(blipId)) || url.includes(blipId));
+    recordCheck(
+      bRemotePuts.length >= 1 && bRemotePuts.every(({
+        stateDigest,
+        yjsGeneration,
+        status,
+        startedAt,
+        projectedContent,
+      }) => (
+        /^[a-f0-9]{64}$/.test(stateDigest)
+        && /^(0|[1-9][0-9]*)$/.test(yjsGeneration)
+        && status >= 200
+        && status < 300
+        && typeof bRelayReceivedAt === 'number'
+        && startedAt >= bRelayReceivedAt
+        && projectedContent.includes('Initial blip contentA')
+      )),
+      `B emitted ${bRemotePuts.length} digest+generation-bound 2xx REST projection(s) for A's remote edit`,
+    );
+    const durableProjection = await pageA.evaluate(async ({ waveId, targetBlipId }) => {
+      const response = await fetch(`/api/blips?waveId=${encodeURIComponent(waveId)}&limit=500`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const data = await response.json().catch(() => null);
+      const blip = data?.blips?.find((candidate) => (candidate._id || candidate.id) === targetBlipId);
+      return {
+        status: response.status,
+        content: blip?.content || '',
+        yjsGeneration: blip?.yjsGeneration,
+      };
+    }, { waveId: topicId, targetBlipId: blipId });
+    recordCheck(
+      durableProjection.status === 200
+        && durableProjection.content.includes('Initial blip contentA')
+        && durableProjection.yjsGeneration === 0,
+      `Couch readback contains A's converged edit in generation ${durableProjection.yjsGeneration}`,
+    );
 
     // ===== CHECK 5: bidirectional — B types, A receives =====
     const aInboundBefore = await getInboundEventCount(pageA, `blip:update:${blipId}`);

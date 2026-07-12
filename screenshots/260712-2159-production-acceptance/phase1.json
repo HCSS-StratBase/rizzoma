@@ -1,0 +1,95 @@
+{
+  "checks": [
+    {
+      "label": "pre-cutover storage contains a matching unexpired sid",
+      "ok": true
+    },
+    {
+      "label": "pre-cutover cookie rejected",
+      "ok": true,
+      "details": {
+        "status": 401
+      }
+    },
+    {
+      "label": "owner session remains authenticated",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "Google OAuth starts with redirect",
+      "ok": true,
+      "details": {
+        "status": 302
+      }
+    },
+    {
+      "label": "Google OAuth target",
+      "ok": true
+    },
+    {
+      "label": "Google OAuth callback shape",
+      "ok": true
+    },
+    {
+      "label": "Google OAuth state shape",
+      "ok": true
+    },
+    {
+      "label": "acceptance topic read-back",
+      "ok": true
+    },
+    {
+      "label": "invited participant read-back",
+      "ok": true
+    },
+    {
+      "label": "root hierarchy read-back",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "child hierarchy read-back",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "grandchild hierarchy read-back",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "clean upload read-back",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "EICAR rejected on resumed gate",
+      "ok": true,
+      "details": {
+        "status": 400,
+        "data": {
+          "error": "virus_detected"
+        }
+      }
+    },
+    {
+      "label": "owner console clean",
+      "ok": true,
+      "details": []
+    }
+  ],
+  "inviteEmail": "sdspieg+rizzoma-accept-20260712195835@gmail.com",
+  "topicId": "3305bc3a42889979c79fa39f40000720",
+  "consoleErrors": []
+}

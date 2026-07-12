@@ -1,5 +1,32 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
+## REST/Yjs coherence candidate — 2026-07-12
+
+- Collaborative HTML materialization now carries the exact durable Yjs
+  generation plus a SHA-256 digest of the full encoded Yjs state and is
+  accepted only from the matching writable HTTP/Socket.IO session.
+- REST replacement, socket join/update, and snapshot persistence serialize per
+  blip. An external replacement advances the generation; a replacement cannot
+  overwrite acknowledged dirty state, and generation-keyed caches/snapshots/
+  browser documents cannot revive an older history.
+- Remote convergence is materialized too, so Couch HTML and derived Task/
+  mention documents cannot remain behind when the originating tab closes.
+  Topic-root seeding now honors the same socket-owned single-seeder contract as
+  nested blips, socket writes recheck authorization inside the mutation lock,
+  the legacy editor has its own snapshot namespace, and missing Task
+  side-documents return an honest 404.
+- Per-wave policy epochs invalidate pending joins across demotion/deletion, the
+  provider retries a stale authorization result without exposing write access,
+  and partial access-policy writes cannot leave live socket authority stale.
+- Snapshot loading now distinguishes a successful empty query from a storage or
+  decode failure; decoding occurs in a disposable document so partial mutation
+  cannot poison authority, and failures trigger only bounded, paused retries.
+- Local gates: **108 test files / 647 passed / 3 skipped**, typecheck,
+  full-source ESLint `--quiet`, and a **3,315-module** production build.
+- Boundary: branch `fix/rest-yjs-content-coherence` is not merged or deployed;
+  exact private-lane collaboration proof and resumed public acceptance still
+  gate release.
+
 ## Integrated application merge — 2026-07-12
 
 - PR [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66), merged as

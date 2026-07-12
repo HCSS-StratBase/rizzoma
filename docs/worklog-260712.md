@@ -291,3 +291,84 @@ This section supersedes the deployment boundary above.
   neither request is made for a topic root. Typecheck and touched-file ESLint
   at zero errors passed. Boundary: CI, exact inactive-lane deploy, cutover, and
   resumed phase 1/2 acceptance remain open.
+
+### Public phase-2 acceptance and REST/Yjs coherence repair
+
+- PR #70 passed all seven checks, merged as `04b94622`, and moved public
+  production to managed blue `:8101` through a zero-overlap cutover. Resumed
+  phase 1 passed **15/15** checks: old-session rejection, managed-restart
+  session survival, OAuth redirect/state shape, hierarchy/upload persistence,
+  EICAR rejection, and a console-clean rendered topic.
+- Phase 2 then proved invitation acceptance, editor/viewer/commenter role
+  enforcement, assignee Task authority, ACL upload access, two-browser Yjs
+  relay and reconnect catch-up, persisted Follow-the-Green `2 -> 1 -> 0`, three
+  recursive exports, public read-only/private restoration, and participant
+  revocation. The final revoked Task toggle returned 500 because its side-doc
+  had disappeared.
+- Readback and the production journal isolated the real data-loss path: a
+  direct REST save created task-bearing HTML and the Task document, but an
+  older in-memory/persisted Yjs state remained authoritative. The next
+  collaborative edit projected old-plus-edit HTML, so reference reconciliation
+  removed the Task. Clearing only cache or only snapshot is unsafe because a
+  retained client Y.Doc can restore the old history.
+- Branch `fix/rest-yjs-content-coherence` now serializes REST replacement/
+  projection, Yjs joins/updates, and snapshot persistence per blip. Normal UI
+  projections carry the exact Yjs state vector and are accepted only from the
+  matching writable HTTP session; stale projections retry from current merged
+  HTML. Active out-of-band replacements return 409, while quiescent
+  replacements clear cache, dirty state, every snapshot, and seed authority.
+  The elected seeder receives current server HTML; topic root now obeys the
+  same `shouldSeed` contract as nested blips. Missing Task docs map to 404.
+- Verification: focused **137/137**, full **107 files / 600 passed / 3 skipped**,
+  typecheck, full-source ESLint `--quiet`, `git diff --check`, and a
+  **3,315-module** production build. Docker Desktop is not integrated into this
+  WSL distro, so the real collaboration smoke is deferred to the exact private
+  managed lane after CI. No canonical `/mnt/c/Rizzoma` files were touched.
+
+### Generation-safe collaboration and auth closeout
+
+- Replaced REST/Yjs dual authority with a durable per-blip generation spanning
+  Couch content, browser documents, cache entries, persisted snapshots, socket
+  joins, and updates. Collaborative projections now prove the writable HTTP
+  session, exact generation, and SHA-256 digest of the full Yjs state.
+- Serialized replacement, socket mutation, tombstone discard, and snapshot
+  persistence. The server now persists the exact snapshot before projecting
+  HTML, refuses to overwrite acknowledged dirty state, and self-heals derived
+  references even when the incoming HTML is byte-identical.
+- Closed the final adversarial races: authorization and generation are
+  rechecked inside the mutation lock; queued updates cannot survive demotion or
+  deletion; seeding is claimed by one socket and re-elects only when that
+  claimant leaves; and legacy-editor snapshots are isolated from modern blips.
+- The independent final audit found two additional wait-boundary defects and
+  blocked publication. A join now revalidates the session, permission,
+  tombstone, and generation after snapshot loading before publishing any room
+  or write authority; editor search now rejects unscoped/stale snapshots unless
+  their generation exactly matches the locked live blip.
+- A second audit then found the remaining lookup-level TOCTOU. Synchronous
+  per-wave policy epochs now invalidate pending collaboration, presence, and
+  unread joins on policy refresh or topic deletion; overlapping old refreshes
+  cannot re-grant access; and the browser retries `access_changed` twice on
+  later macrotasks while all editing gates remain closed.
+- Sharing, participant role/removal, and invitation-acceptance routes now run a
+  failure-safe authority refresh when a CouchDB write may have partially
+  persisted before a later write failed. The original HTTP error remains
+  authoritative and refresh cleanup cannot double-send a response.
+- The absolute-final audit blocked a fail-open snapshot lookup: a transient
+  Couch query error could previously look identical to “no snapshot” and let
+  older HTML reseed over an acknowledged edit after restart. Lookup/decode
+  errors now remove only the clean empty cache entry created by that attempt,
+  propagate to a no-room/no-ref/no-seed acknowledgement, and receive two
+  paused client retries at 250/500 ms before an explicit unavailable state.
+- A follow-up adversarial check proved Yjs decoding is non-atomic: truncating a
+  large update can mutate a target document before throwing. Snapshot bytes now
+  decode in a disposable Y.Doc and only a completely validated state merges
+  into the authoritative cache. Corrupt-then-valid retry tests prove the cache
+  remains clean and the newer exact state wins without HTML reseeding.
+- Closed residual auth edges with verifier-bound native tickets, an OAuth merge
+  preclaim check on insert conflicts, and failure-safe synchronous logout.
+- Final measured local gates: **108 test files / 647 passed / 3 skipped / 0
+  failed**; cache/socket/provider **80/80** and authorization matrix **80/80** focused;
+  typecheck; full-source ESLint
+  `--quiet`; `git diff --check`; and a **3,315-module** production build. Public
+  remains on exact `04b94622`; CI, private deployment, and resumed acceptance
+  through a managed restart remain open.

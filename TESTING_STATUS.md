@@ -1,5 +1,35 @@
 # Rizzoma Feature Testing Status
 
+## REST/Yjs content-coherence candidate — 2026-07-12
+
+- Branch `fix/rest-yjs-content-coherence` is based on public master
+  `04b94622`; it is not yet deployed.
+- Full Vitest passed: **108 files / 647 passed / 3 skipped / 0 failed**.
+  Final focused checks passed **80/80** across Yjs cache, socket authorization,
+  and provider retry plus **80/80** for the access-route authorization matrix.
+- Typecheck and full-source ESLint `--quiet` passed. Production build passed
+  with **3,315 transformed modules**; only the existing chunk-size advisory
+  remains.
+- Regression coverage proves: crash-stale snapshots cannot beat newer Couch
+  content; external replacements advance a durable generation; acknowledged
+  dirty state cannot be silently replaced; collaborative HTML requires the
+  exact writable HTTP session, generation, and SHA-256 full-state digest; the
+  exact snapshot persists before HTML; same-content reconciliation self-heals
+  missing Task/mention side-documents; delayed/duplicate joins remain
+  refcount-safe; a non-seeder departure cannot elect a second seeder; queued
+  updates cannot survive demotion or deletion; policy epochs invalidate a
+  second-lookup join race and topic-deletion race; the browser performs a
+  bounded final-role retry; partial access-policy writes still trigger live
+  authority refresh; legacy-editor state is isolated; stale legacy-search hits
+  fail closed against the live blip generation; snapshot lookup/decode failure
+  publishes no membership/ref/seed, corrupt bytes decode only in a disposable
+  document, and the client retries with bounded backoff; and
+  missing Task documents return 404 instead of 500.
+- Boundary: Docker Desktop is unavailable in this WSL distro, so the real
+  two-process smoke will run against the exact private managed lane after CI.
+  Public Task/mention survival through collaboration plus a managed restart,
+  password reset, OAuth, and responsive/mobile acceptance remain blocking.
+
 ## Integrated application merge — 2026-07-12
 
 - PR [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) merged as

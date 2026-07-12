@@ -18,6 +18,8 @@ import {
 } from '../../lib/collaborationPending';
 
 type UpdateAcknowledgement = { ok?: boolean; error?: string } | undefined;
+const MAX_ACCESS_CHANGED_JOIN_RETRIES = 2;
+const MAX_STORAGE_JOIN_RETRIES = 2;
 
 export class SocketIOProvider {
   doc: Y.Doc;
@@ -30,6 +32,8 @@ export class SocketIOProvider {
    *  from blip HTML on first join (only the first client to join a fresh
    *  blip gets this authority — see task #57 comment in src/server/lib/socket.ts). */
   shouldSeed = false;
+  /** Authoritative durable HTML supplied only to the elected first seeder. */
+  seedContent: string | null = null;
   /** Server-authorized room membership. */
   private joined = false;
   /** True only after the authorized server snapshot has been applied. */
@@ -37,18 +41,25 @@ export class SocketIOProvider {
   private canEdit = false;
   private destroyed = false;
   private joinAttempt = 0;
+  private accessChangedJoinRetries = 0;
+  private storageJoinRetries = 0;
+  private joinRetryTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly ownerId: string | null;
+  private readonly expectedGeneration: number;
   private syncCallbacks: Array<() => void> = [];
   private reconnectHandler: (() => void) | null = null;
   private disconnectHandler: (() => void) | null = null;
   private docUpdateHandler: ((update: Uint8Array, origin: unknown) => void) | null = null;
-  private remoteUpdateHandler: ((data: { update: number[] }) => void) | null = null;
+  private remoteUpdateHandler: ((data: { update: number[]; yjsGeneration?: number }) => void) | null = null;
   private syncHandler: ((data: {
     state: number[];
     shouldSeed?: boolean;
+    seedContent?: string;
     user?: { id?: string } | null;
     canEdit?: boolean;
+    yjsGeneration?: number;
   }) => void) | null = null;
+  private seedRetryHandler: ((data?: { yjsGeneration?: number }) => void) | null = null;
   private localAwarenessHandler: ((change: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => void) | null = null;
   private remoteAwarenessHandler: ((data: { update?: number[]; states?: Record<string, unknown> }) => void) | null = null;
 
@@ -57,12 +68,14 @@ export class SocketIOProvider {
     socket: Socket,
     blipId: string,
     user: CollaborationUser | null = null,
+    expectedGeneration = 0,
   ) {
     this.doc = doc;
     this.socket = socket;
     this.blipId = blipId;
     this.awareness = new Awareness(doc);
     this.ownerId = user?.id?.trim() || null;
+    this.expectedGeneration = expectedGeneration;
 
     this.setupListeners();
     this.setupAwareness(user);
@@ -90,7 +103,11 @@ export class SocketIOProvider {
     this.doc.on('update', this.docUpdateHandler);
 
     const eventName = `blip:update:${this.blipId}`;
-    this.remoteUpdateHandler = (data: { update: number[] }) => {
+    this.remoteUpdateHandler = (data: { update: number[]; yjsGeneration?: number }) => {
+      if (data.yjsGeneration !== this.expectedGeneration) {
+        this.rejectGeneration(data.yjsGeneration);
+        return;
+      }
       const update = new Uint8Array(data.update);
       Y.applyUpdate(this.doc, update, this);
     };
@@ -99,10 +116,16 @@ export class SocketIOProvider {
     this.syncHandler = (data: {
       state: number[];
       shouldSeed?: boolean;
+      seedContent?: string;
       user?: { id?: string } | null;
       canEdit?: boolean;
+      yjsGeneration?: number;
     }) => {
       if (!this.joined) return;
+      if (data.yjsGeneration !== this.expectedGeneration) {
+        this.rejectGeneration(data.yjsGeneration);
+        return;
+      }
       // The server session is authoritative on every join. A cookie can switch
       // accounts in another tab while this tab still renders the old user; in
       // that case never release the old owner's Y.Doc into the new session.
@@ -112,6 +135,7 @@ export class SocketIOProvider {
         this.roomReady = false;
         this.synced = false;
         this.shouldSeed = false;
+        this.seedContent = null;
         this.socket.emit('blip:leave', { blipId: this.blipId });
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('rizzoma:auth-session-mismatch', {
@@ -130,6 +154,9 @@ export class SocketIOProvider {
       const serverStateVector = Y.encodeStateVector(serverDoc);
       serverDoc.destroy();
       this.shouldSeed = Boolean(data.shouldSeed);
+      this.seedContent = this.shouldSeed && typeof data.seedContent === 'string'
+        ? data.seedContent
+        : null;
       if (typeof data.canEdit === 'boolean') this.canEdit = data.canEdit;
       this.roomReady = true;
       this.synced = true;
@@ -153,6 +180,16 @@ export class SocketIOProvider {
       this.syncCallbacks = [];
     };
     this.socket.on(`blip:sync:${this.blipId}`, this.syncHandler);
+
+    this.seedRetryHandler = (data) => {
+      if (this.destroyed) return;
+      if (data?.yjsGeneration !== undefined && data.yjsGeneration !== this.expectedGeneration) {
+        this.rejectGeneration(data.yjsGeneration);
+        return;
+      }
+      this.joinRoom();
+    };
+    this.socket.on(`blip:seed:retry:${this.blipId}`, this.seedRetryHandler);
   }
 
   private emitDocumentUpdate(update: Uint8Array, coversCompleteDocument: boolean) {
@@ -161,6 +198,7 @@ export class SocketIOProvider {
     if (!coversCompleteDocument) markCollaborationUpdatePending(this.ownerId, this.blipId);
     this.socket.emit('blip:update', {
       blipId: this.blipId,
+      yjsGeneration: this.expectedGeneration,
       update: Array.from(update),
     }, (ack: UpdateAcknowledgement) => {
       if (!ack?.ok) {
@@ -169,6 +207,8 @@ export class SocketIOProvider {
           this.roomReady = false;
           this.canEdit = false;
           this.reportAuthorizationFailure(ack.error);
+        } else if (ack?.error === 'generation_mismatch') {
+          this.rejectGeneration(undefined);
         }
         return;
       }
@@ -238,6 +278,8 @@ export class SocketIOProvider {
 
   private setupReconnect() {
     this.reconnectHandler = () => {
+      this.accessChangedJoinRetries = 0;
+      this.storageJoinRetries = 0;
       this.joinRoom();
     };
     this.socket.on('connect', this.reconnectHandler);
@@ -247,7 +289,14 @@ export class SocketIOProvider {
       this.canEdit = false;
       this.synced = false;
       this.shouldSeed = false;
+      this.seedContent = null;
       this.joinAttempt += 1;
+      this.accessChangedJoinRetries = 0;
+      this.storageJoinRetries = 0;
+      if (this.joinRetryTimer !== null) {
+        clearTimeout(this.joinRetryTimer);
+        this.joinRetryTimer = null;
+      }
     };
     this.socket.on('disconnect', this.disconnectHandler);
   }
@@ -259,12 +308,32 @@ export class SocketIOProvider {
     this.canEdit = false;
     this.synced = false;
     this.shouldSeed = false;
+    this.seedContent = null;
     this.socket.emit('blip:join', {
-      blipId: this.blipId
-    }, (result: { ok?: boolean; error?: string; canEdit?: boolean; user?: { id: string; name: string; color: string } }) => {
+      blipId: this.blipId,
+      yjsGeneration: this.expectedGeneration,
+    }, (result: { ok?: boolean; error?: string; canEdit?: boolean; yjsGeneration?: number; user?: { id: string; name: string; color: string } }) => {
       if (this.destroyed || attempt !== this.joinAttempt) return;
       if (!result?.ok) {
+        if (result?.error === 'generation_mismatch') {
+          this.rejectGeneration(result.yjsGeneration);
+          return;
+        }
+        if (result?.error === 'access_changed') {
+          this.retryAccessChangedJoin(attempt);
+          return;
+        }
+        if (result?.error === 'collaboration_storage_unavailable') {
+          this.retryStorageJoin(attempt);
+          return;
+        }
         this.reportAuthorizationFailure(result?.error || 'forbidden');
+        return;
+      }
+      this.accessChangedJoinRetries = 0;
+      this.storageJoinRetries = 0;
+      if (result.yjsGeneration !== this.expectedGeneration) {
+        this.rejectGeneration(result.yjsGeneration);
         return;
       }
       if (this.ownerId && result.user?.id !== this.ownerId) {
@@ -288,9 +357,57 @@ export class SocketIOProvider {
       const sv = Y.encodeStateVector(this.doc);
       this.socket.emit('blip:sync:request', {
         blipId: this.blipId,
+        yjsGeneration: this.expectedGeneration,
         stateVector: Array.from(sv)
       });
     });
+  }
+
+  private retryAccessChangedJoin(attempt: number) {
+    if (this.destroyed || attempt !== this.joinAttempt) return;
+    if (this.accessChangedJoinRetries >= MAX_ACCESS_CHANGED_JOIN_RETRIES) {
+      this.reportAuthorizationFailure('access_changed');
+      return;
+    }
+    this.accessChangedJoinRetries += 1;
+    if (this.joinRetryTimer !== null) clearTimeout(this.joinRetryTimer);
+    // Policy refresh advances synchronously, but its durable access sweep is
+    // asynchronous. Retry on the next macrotask so the new role can settle;
+    // attempt/destroy guards prevent stale callbacks from resurrecting a room.
+    this.joinRetryTimer = setTimeout(() => {
+      this.joinRetryTimer = null;
+      if (this.destroyed || attempt !== this.joinAttempt || !this.socket.connected) return;
+      this.joinRoom();
+    }, 0);
+  }
+
+  private retryStorageJoin(attempt: number) {
+    if (this.destroyed || attempt !== this.joinAttempt) return;
+    if (this.storageJoinRetries >= MAX_STORAGE_JOIN_RETRIES) {
+      this.reportStorageFailure();
+      return;
+    }
+    const delay = 250 * (2 ** this.storageJoinRetries);
+    this.storageJoinRetries += 1;
+    if (this.joinRetryTimer !== null) clearTimeout(this.joinRetryTimer);
+    this.joinRetryTimer = setTimeout(() => {
+      this.joinRetryTimer = null;
+      if (this.destroyed || attempt !== this.joinAttempt || !this.socket.connected) return;
+      this.joinRoom();
+    }, delay);
+  }
+
+  private reportStorageFailure() {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('toast', {
+      detail: {
+        type: 'error',
+        message: 'Collaboration storage is temporarily unavailable. Local updates remain paused; reconnect to retry.',
+      },
+    }));
+    window.dispatchEvent(new CustomEvent('rizzoma:collaboration-unavailable', {
+      detail: { blipId: this.blipId, error: 'collaboration_storage_unavailable' },
+    }));
   }
 
   private reportAuthorizationFailure(error: string) {
@@ -306,6 +423,25 @@ export class SocketIOProvider {
     }));
     window.dispatchEvent(new CustomEvent('rizzoma:access-changed', {
       detail: { blipId: this.blipId, error },
+    }));
+  }
+
+  private rejectGeneration(actualGeneration: number | undefined) {
+    this.joinAttempt += 1;
+    this.joined = false;
+    this.roomReady = false;
+    this.canEdit = false;
+    this.synced = false;
+    this.shouldSeed = false;
+    this.seedContent = null;
+    this.socket.emit('blip:leave', { blipId: this.blipId });
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics', {
+      detail: {
+        blipId: this.blipId,
+        expectedGeneration: this.expectedGeneration,
+        actualGeneration: actualGeneration ?? null,
+      },
     }));
   }
 
@@ -341,6 +477,10 @@ export class SocketIOProvider {
   destroy() {
     this.destroyed = true;
     this.joinAttempt += 1;
+    if (this.joinRetryTimer !== null) {
+      clearTimeout(this.joinRetryTimer);
+      this.joinRetryTimer = null;
+    }
     // Tell peers immediately that this cursor left instead of waiting for the
     // awareness protocol's 30-second stale-client timeout.
     removeAwarenessStates(this.awareness, [this.awareness.clientID], 'local-destroy');
@@ -362,6 +502,10 @@ export class SocketIOProvider {
     if (this.syncHandler) {
       this.socket.off(`blip:sync:${this.blipId}`, this.syncHandler);
       this.syncHandler = null;
+    }
+    if (this.seedRetryHandler) {
+      this.socket.off(`blip:seed:retry:${this.blipId}`, this.seedRetryHandler);
+      this.seedRetryHandler = null;
     }
     if (this.remoteAwarenessHandler) {
       this.socket.off(`awareness:update:${this.blipId}`, this.remoteAwarenessHandler);

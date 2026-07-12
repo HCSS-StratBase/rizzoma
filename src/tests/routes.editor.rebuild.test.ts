@@ -14,8 +14,11 @@ describe('routes: /api/editor rebuild snapshot', () => {
     next();
   });
   let failSnapshotSave = false;
-  let docsToReturn: Array<{ _id: string; updateB64: string }> = [];
-  let snapshotDocs: Array<{ _id: string; snapshotB64: string }> = [];
+  let docsToReturn: Array<{ _id: string; updateB64: string; yjsGeneration?: number }> = [];
+  let snapshotDocs: Array<{ _id: string; snapshotB64: string; yjsGeneration?: number }> = [];
+  const findSelectors: any[] = [];
+  const insertedDocs: any[] = [];
+  let blipGeneration = 4;
   let hitFindCount = 0;
   let serverInst: ReturnType<typeof app.listen> | null = null;
 
@@ -49,20 +52,22 @@ describe('routes: /api/editor rebuild snapshot', () => {
         hitFindCount += 1;
         try {
           const parsed = init?.body ? JSON.parse(init.body.toString()) : {};
+          findSelectors.push(parsed?.selector);
           const selectorType = parsed?.selector?.type;
-          if (selectorType === 'yjs_snapshot') return ok({ docs: snapshotDocs });
+          if (selectorType === 'editor_yjs_snapshot') return ok({ docs: snapshotDocs });
         } catch {}
         return ok({ docs: docsToReturn });
       }
       if (method === 'POST' && /\/project_rizzoma\/?$/.test(path)) {
         if (failSnapshotSave) return ok({ error: 'boom', reason: 'write_failed' }, 500);
+        insertedDocs.push(JSON.parse((init?.body as string) || '{}'));
         return ok({ ok: true, id: 'snap', rev: '1-x' }, 201);
       }
       if (method === 'GET' && /\/project_rizzoma\/w1$/.test(path)) {
         return ok({ _id: 'w1', type: 'wave', title: 'Wave', authorId: 'editor-owner', createdAt: 1, updatedAt: 1 });
       }
       if (method === 'GET' && /\/project_rizzoma\/b1$/.test(path)) {
-        return ok({ _id: 'b1', _rev: '1-blip', type: 'blip', waveId: 'w1', createdAt: 1, updatedAt: 1 });
+        return ok({ _id: 'b1', _rev: '1-blip', type: 'blip', waveId: 'w1', yjsGeneration: blipGeneration, createdAt: 1, updatedAt: 1 });
       }
       return ok({}, 404);
     }) as typeof global.fetch;
@@ -74,9 +79,12 @@ describe('routes: /api/editor rebuild snapshot', () => {
   beforeEach(() => {
     failSnapshotSave = false;
     hitFindCount = 0;
+    findSelectors.length = 0;
+    insertedDocs.length = 0;
+    blipGeneration = 4;
     docsToReturn = [
-      { _id: 'upd:1', updateB64: Buffer.from(new Uint8Array([1, 2, 3])).toString('base64') },
-      { _id: 'upd:2', updateB64: Buffer.from(new Uint8Array([4, 5, 6])).toString('base64') },
+      { _id: 'upd:1', updateB64: Buffer.from(new Uint8Array([1, 2, 3])).toString('base64'), yjsGeneration: 0 },
+      { _id: 'upd:2', updateB64: Buffer.from(new Uint8Array([4, 5, 6])).toString('base64'), yjsGeneration: 0 },
     ];
     snapshotDocs = [];
   });
@@ -113,6 +121,30 @@ describe('routes: /api/editor rebuild snapshot', () => {
     expect(body.logs.length).toBeGreaterThan(0);
     expect(typeof body.applied).toBe('number');
     expect(hitFindCount).toBeGreaterThan(0);
+    expect(findSelectors).toContainEqual({ type: 'editor_yjs_update', waveId: 'w1', yjsGeneration: 0, blipId: { $exists: false } });
+    expect(insertedDocs.find((doc) => doc.type === 'editor_yjs_snapshot')?.yjsGeneration).toBe(0);
+  });
+
+  it('rebuilds a blip only from updates in its captured generation', async () => {
+    docsToReturn = [
+      { _id: 'current', updateB64: Buffer.from(new Uint8Array([1, 2, 3])).toString('base64'), yjsGeneration: 4 },
+      { _id: 'legacy-untagged', updateB64: Buffer.from(new Uint8Array([4, 5, 6])).toString('base64') },
+    ];
+    const server = startServer();
+    const port = (server.address() as any).port;
+    const post = await fetch(`http://127.0.0.1:${port}/api/editor/w1/rebuild`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 'token' },
+      body: JSON.stringify({ blipId: 'b1' }),
+    });
+    expect(post.status).toBe(202);
+    const body = await waitForStatus(port, (candidate) => candidate.status === 'complete', 6000, 'b1');
+
+    expect(body.yjsGeneration).toBe(4);
+    expect(body.logs.some((entry: any) => entry.message === 'Fetched 1 updates')).toBe(true);
+    expect(findSelectors).toContainEqual({ type: 'editor_yjs_update', waveId: 'w1', blipId: 'b1', yjsGeneration: 4 });
+    expect(findSelectors).toContainEqual({ type: 'editor_yjs_snapshot', waveId: 'w1', blipId: 'b1', yjsGeneration: 4 });
+    expect(insertedDocs.find((doc) => doc.type === 'editor_yjs_snapshot')).toMatchObject({ blipId: 'b1', yjsGeneration: 4 });
   });
 
   it('surfaces errors when snapshot save fails', async () => {

@@ -1,18 +1,25 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import { findOne, getDoc, insertDoc, updateDoc } from '../lib/couch.js';
 import { emitEvent, emitEditorUpdate } from '../lib/socket.js';
 import { identityFromRequest, requireWaveAccess, resolveWaveAccess } from '../lib/access.js';
 import { csrfProtect } from '../middleware/csrf.js';
+import { yjsDocCache } from '../lib/yjsDocCache.js';
 import type { Blip } from '../schemas/wave.js';
 
 // Feature flag: set EDITOR_ENABLE=1 to enable endpoints
 const ENABLED = process.env['EDITOR_ENABLE'] === '1';
+// This legacy WaveView editor has its own Y.Doc lifecycle and transport. Keep
+// its persistence namespace disjoint from the modern Socket.IO cache so an
+// arbitrary legacy snapshot can never become modern collaboration authority.
+const EDITOR_SNAPSHOT_TYPE = 'editor_yjs_snapshot' as const;
+const EDITOR_UPDATE_TYPE = 'editor_yjs_update' as const;
 
 type YDocSnapshot = {
   _id?: string;
-  type: 'yjs_snapshot';
+  type: typeof EDITOR_SNAPSHOT_TYPE;
   waveId: string;
   blipId?: string;
+  yjsGeneration: number;
   updatedAt: number;
   // base64-encoded Yjs snapshot (Uint8Array)
   snapshotB64: string;
@@ -22,9 +29,10 @@ type YDocSnapshot = {
 
 type YDocUpdate = {
   _id?: string;
-  type: 'yjs_update';
+  type: typeof EDITOR_UPDATE_TYPE;
   waveId: string;
   blipId?: string;
+  yjsGeneration: number;
   seq: number;
   // base64-encoded Yjs update
   updateB64: string;
@@ -54,6 +62,7 @@ if (!ENABLED) {
     id: string;
     waveId: string;
     blipId?: string;
+    yjsGeneration: number;
     status: RebuildJobStatus;
     logs: RebuildLogEntry[];
     queuedAt: number;
@@ -116,31 +125,74 @@ if (!ENABLED) {
     return trimmed || undefined;
   };
 
-  const validateEditorBlip = async (
-    res: any,
+  const normalizeYjsGeneration = (value: unknown): number => (
+    Number.isSafeInteger(value) && Number(value) >= 0 ? Number(value) : 0
+  );
+
+  const requestedYjsGeneration = (value: unknown): number | null => (
+    Number.isSafeInteger(value) && Number(value) >= 0 ? Number(value) : null
+  );
+
+  type EditorTarget = { blip: (Blip & { _id: string; yjsGeneration?: number }) | null; yjsGeneration: number };
+
+  const resolveEditorTarget = async (
+    res: Response | null,
     waveId: string,
     blipId: string | undefined,
-  ): Promise<boolean> => {
-    if (!blipId) return true;
+  ): Promise<EditorTarget | null> => {
+    if (!blipId) return { blip: null, yjsGeneration: 0 };
     if (blipId.length > 500) {
+      if (!res) throw new Error('invalid_blip');
       res.status(400).json({ error: 'invalid_blip' });
-      return false;
+      return null;
     }
     try {
-      const blip = await getDoc<Blip & { _id: string }>(blipId);
+      const blip = await getDoc<Blip & { _id: string; yjsGeneration?: number }>(blipId);
       if (blip.type !== 'blip' || blip.deleted || String(blip.waveId) !== waveId) {
+        if (!res) throw new Error('invalid_blip');
         res.status(400).json({ error: 'invalid_blip' });
-        return false;
+        return null;
       }
-      return true;
+      return { blip, yjsGeneration: normalizeYjsGeneration(blip.yjsGeneration) };
     } catch (error: any) {
       if (String(error?.message || '').startsWith('404')) {
+        if (!res) throw new Error('blip_not_found');
         res.status(404).json({ error: 'blip_not_found' });
-        return false;
+        return null;
       }
       throw error;
     }
   };
+
+  const withBlipLock = <T>(blipId: string | undefined, operation: () => Promise<T>): Promise<T> => (
+    blipId ? yjsDocCache.runExclusive(blipId, operation) : operation()
+  );
+
+  const requireMatchingGeneration = (res: any, target: EditorTarget, value: unknown): boolean => {
+    const requested = requestedYjsGeneration(value);
+    if (requested === target.yjsGeneration) return true;
+    res.status(409).json({
+      error: 'collaboration_generation_mismatch',
+      expectedYjsGeneration: target.yjsGeneration,
+    });
+    return false;
+  };
+
+  const hasExactGeneration = (doc: any, yjsGeneration: number): boolean => (
+    Number.isSafeInteger(doc?.yjsGeneration) && Number(doc.yjsGeneration) === yjsGeneration
+  );
+
+  const scopedSelector = (
+    type: typeof EDITOR_SNAPSHOT_TYPE | typeof EDITOR_UPDATE_TYPE,
+    waveId: string,
+    blipId: string | undefined,
+    yjsGeneration: number,
+  ): Record<string, unknown> => ({
+    type,
+    waveId,
+    yjsGeneration,
+    ...(blipId ? { blipId } : { blipId: { $exists: false } }),
+  });
 
   const addLog = (job: RebuildJobState, message: string, level: 'info' | 'error' = 'info') => {
     job.logs.push({ at: Date.now(), message, level });
@@ -154,6 +206,7 @@ if (!ENABLED) {
       jobId: job.id,
       waveId: job.waveId,
       blipId: job.blipId ?? null,
+      yjsGeneration: job.yjsGeneration,
       queuedAt: job.queuedAt,
       startedAt: job.startedAt ?? null,
       completedAt: job.completedAt ?? null,
@@ -181,49 +234,71 @@ if (!ENABLED) {
     job.status = 'running';
     job.startedAt = Date.now();
     addLog(job, `Starting rebuild${blipIdVal ? ` for blip ${blipIdVal}` : ''}`);
+    let applied = 0;
     try {
-      const selector: any = blipIdVal ? { type: 'yjs_update', waveId, blipId: blipIdVal } : { type: 'yjs_update', waveId };
-      const { find } = await import('../lib/couch.js');
-      let docs: any[] = [];
-      try {
-        const r = await (find as any)(selector, { sort: [{ seq: 'asc' }], limit: 10000 });
-        docs = Array.isArray(r?.docs) ? r.docs : [];
-      } catch {
-        const fallback = await (find as any)(selector, { limit: 10000 }).catch((err: any) => {
-          addLog(job, `Failed to fetch updates: ${err?.message || err}`, 'error');
-          throw err;
-        });
-        docs = Array.isArray(fallback?.docs) ? fallback.docs : [];
-      }
-      addLog(job, `Fetched ${docs.length} updates`);
-      const Y: any = await import('yjs');
-      const ydoc = new (Y as any).Doc();
-      addLog(job, 'Applying updates');
-      let applied = 0;
-      for (const d of docs) {
-        const b64 = String((d as any)?.updateB64 || '');
-        if (!b64) continue;
+      await withBlipLock(blipIdVal, async () => {
+        const target = await resolveEditorTarget(null, waveId, blipIdVal);
+        if (!target) throw new Error('rebuild_target_missing');
+        if (target.yjsGeneration !== job.yjsGeneration) throw new Error('collaboration_generation_changed');
+        const selector = scopedSelector(
+          EDITOR_UPDATE_TYPE,
+          waveId,
+          blipIdVal,
+          job.yjsGeneration,
+        );
+        const { find } = await import('../lib/couch.js');
+        let docs: any[] = [];
         try {
-          const buf = Buffer.from(b64, 'base64');
-          (Y as any).applyUpdate(ydoc, new Uint8Array(buf));
-          applied++;
-          job.applied = applied;
-        } catch (err) {
-          addLog(job, `Failed to apply update ${d?._id || ''}: ${err instanceof Error ? err.message : String(err)}`, 'error');
+          const r = await (find as any)(selector, { sort: [{ seq: 'asc' }], limit: 10000 });
+          docs = Array.isArray(r?.docs) ? r.docs.filter((doc: any) => hasExactGeneration(doc, job.yjsGeneration)) : [];
+        } catch {
+          const fallback = await (find as any)(selector, { limit: 10000 }).catch((err: any) => {
+            addLog(job, `Failed to fetch updates: ${err?.message || err}`, 'error');
+            throw err;
+          });
+          docs = Array.isArray(fallback?.docs)
+            ? fallback.docs.filter((doc: any) => hasExactGeneration(doc, job.yjsGeneration))
+            : [];
         }
-      }
-      addLog(job, `Applied ${applied} updates`);
-      const combined = (Y as any).encodeStateAsUpdate(ydoc) as Uint8Array;
-      const snapshotB64 = Buffer.from(combined).toString('base64');
-      addLog(job, 'Persisting snapshot');
-      const snapSelector: any = blipIdVal ? { type: 'yjs_snapshot', waveId, blipId: blipIdVal } : { type: 'yjs_snapshot', waveId };
-      const couch = await import('../lib/couch.js');
-      const existing = await couch.findOne<YDocSnapshot>(snapSelector).catch(() => null);
-      const doc: YDocSnapshot = existing
-        ? { ...existing, snapshotB64, updatedAt: Date.now(), blipId: blipIdVal ?? (existing as any).blipId }
-        : { type: 'yjs_snapshot', waveId, blipId: blipIdVal, snapshotB64, updatedAt: Date.now() };
-      const r = existing && (existing as any)?._id ? await (couch.updateDoc as any)(doc as any) : await (couch.insertDoc as any)(doc as any);
-      addLog(job, `Snapshot saved (${r?.rev ?? 'unknown rev'})`);
+        addLog(job, `Fetched ${docs.length} updates`);
+        const Y: any = await import('yjs');
+        const ydoc = new (Y as any).Doc();
+        addLog(job, 'Applying updates');
+        for (const d of docs) {
+          const b64 = String((d as any)?.updateB64 || '');
+          if (!b64) continue;
+          try {
+            const buf = Buffer.from(b64, 'base64');
+            (Y as any).applyUpdate(ydoc, new Uint8Array(buf));
+            applied++;
+            job.applied = applied;
+          } catch (err) {
+            addLog(job, `Failed to apply update ${d?._id || ''}: ${err instanceof Error ? err.message : String(err)}`, 'error');
+          }
+        }
+        addLog(job, `Applied ${applied} updates`);
+        const combined = (Y as any).encodeStateAsUpdate(ydoc) as Uint8Array;
+        const snapshotB64 = Buffer.from(combined).toString('base64');
+        addLog(job, 'Persisting snapshot');
+        const revalidatedTarget = await resolveEditorTarget(null, waveId, blipIdVal);
+        if (!revalidatedTarget || revalidatedTarget.yjsGeneration !== job.yjsGeneration) {
+          throw new Error('collaboration_generation_changed');
+        }
+        const snapSelector = scopedSelector(
+          EDITOR_SNAPSHOT_TYPE,
+          waveId,
+          blipIdVal,
+          job.yjsGeneration,
+        );
+        const couch = await import('../lib/couch.js');
+        const candidate = await couch.findOne<YDocSnapshot>(snapSelector).catch(() => null);
+        const existing = hasExactGeneration(candidate, job.yjsGeneration) ? candidate : null;
+        const doc: YDocSnapshot = existing
+          ? { ...existing, snapshotB64, updatedAt: Date.now(), yjsGeneration: job.yjsGeneration, blipId: blipIdVal ?? (existing as any).blipId }
+          : { type: EDITOR_SNAPSHOT_TYPE, waveId, blipId: blipIdVal, yjsGeneration: job.yjsGeneration, snapshotB64, updatedAt: Date.now() };
+        const r = existing && (existing as any)?._id ? await (couch.updateDoc as any)(doc as any) : await (couch.insertDoc as any)(doc as any);
+        addLog(job, `Snapshot saved (${r?.rev ?? 'unknown rev'})`);
+      });
       job.status = 'complete';
       job.applied = applied;
       job.completedAt = Date.now();
@@ -246,23 +321,29 @@ if (!ENABLED) {
     try {
       const access = await requireWaveAccess(req, res, waveId, 'read');
       if (!access) return;
-      if (!(await validateEditorBlip(res, waveId, blipId))) return;
-      // Prefer a blip-specific snapshot when requested; otherwise fall back to wave-level
-      let snap: YDocSnapshot | null = null;
-      if (blipId) {
-        try { snap = await findOne<YDocSnapshot>({ type: 'yjs_snapshot', waveId, blipId }); } catch {}
-      }
-      if (!snap && !blipId) {
-        try { snap = await findOne<YDocSnapshot>({ type: 'yjs_snapshot', waveId }); } catch {}
-      }
-      const nextSeq = await readNextSequence(waveId, blipId);
-      res.json({ snapshotB64: snap?.snapshotB64 || null, nextSeq });
+      await withBlipLock(blipId, async () => {
+        const target = await resolveEditorTarget(res, waveId, blipId);
+        if (!target) return;
+        const selector = scopedSelector(
+          EDITOR_SNAPSHOT_TYPE,
+          waveId,
+          blipId,
+          target.yjsGeneration,
+        );
+        let snap: YDocSnapshot | null = null;
+        try {
+          const candidate = await findOne<YDocSnapshot>(selector);
+          snap = hasExactGeneration(candidate, target.yjsGeneration) ? candidate : null;
+        } catch {}
+        const nextSeq = await readNextSequence(waveId, blipId);
+        res.json({ snapshotB64: snap?.snapshotB64 || null, nextSeq, yjsGeneration: target.yjsGeneration });
+      });
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'snapshot_error' });
     }
   });
 
-  // POST /api/editor/:waveId/snapshot { snapshotB64 }
+  // POST /api/editor/:waveId/snapshot { snapshotB64, yjsGeneration, blipId? }
   router.post('/:waveId/snapshot', csrfProtect(), async (req, res) => {
     const waveId = req.params.waveId;
     const snapshotB64 = String((req.body || {}).snapshotB64 || '');
@@ -272,21 +353,34 @@ if (!ENABLED) {
     try {
       const access = await requireWaveAccess(req, res, waveId, 'edit');
       if (!access) return;
-      if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
-      const selector: any = blipIdVal ? { type: 'yjs_snapshot', waveId, blipId: blipIdVal } : { type: 'yjs_snapshot', waveId };
-      const existing = await findOne<YDocSnapshot>(selector);
-      const doc: YDocSnapshot = existing
-        ? { ...existing, snapshotB64, updatedAt: Date.now(), text: (typeof text === 'string' ? text : (existing as any).text), blipId: blipIdVal ?? (existing as any).blipId }
-        : { type: 'yjs_snapshot', waveId, blipId: blipIdVal, snapshotB64, updatedAt: Date.now(), text };
-      const r = existing && (existing as any)._id ? await updateDoc(doc as any) : await insertDoc(doc as any);
-      res.status(existing ? 200 : 201).json({ ok: true, id: r.id, rev: r.rev });
-      try { emitEvent('editor:snapshot', { waveId }); } catch {}
+      let saved = false;
+      await withBlipLock(blipIdVal, async () => {
+        const target = await resolveEditorTarget(res, waveId, blipIdVal);
+        if (!target || !requireMatchingGeneration(res, target, (req.body as any)?.yjsGeneration)) return;
+        const selector = scopedSelector(
+          EDITOR_SNAPSHOT_TYPE,
+          waveId,
+          blipIdVal,
+          target.yjsGeneration,
+        );
+        const candidate = await findOne<YDocSnapshot>(selector);
+        const existing = hasExactGeneration(candidate, target.yjsGeneration) ? candidate : null;
+        const doc: YDocSnapshot = existing
+          ? { ...existing, snapshotB64, updatedAt: Date.now(), yjsGeneration: target.yjsGeneration, text: (typeof text === 'string' ? text : (existing as any).text), blipId: blipIdVal ?? (existing as any).blipId }
+          : { type: EDITOR_SNAPSHOT_TYPE, waveId, blipId: blipIdVal, yjsGeneration: target.yjsGeneration, snapshotB64, updatedAt: Date.now(), text };
+        const r = existing && (existing as any)._id ? await updateDoc(doc as any) : await insertDoc(doc as any);
+        res.status(existing ? 200 : 201).json({ ok: true, id: r.id, rev: r.rev, yjsGeneration: target.yjsGeneration });
+        saved = true;
+      });
+      if (saved) {
+        try { emitEvent('editor:snapshot', { waveId }); } catch {}
+      }
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'snapshot_save_error' });
     }
   });
 
-  // POST /api/editor/:waveId/updates { seq, updateB64, blipId? }
+  // POST /api/editor/:waveId/updates { updateB64, yjsGeneration, blipId? }
   router.post('/:waveId/updates', csrfProtect(), async (req, res) => {
     const waveId = req.params.waveId;
     const updateB64 = String((req.body || {}).updateB64 || '');
@@ -295,13 +389,16 @@ if (!ENABLED) {
     try {
       const access = await requireWaveAccess(req, res, waveId, 'edit');
       if (!access) return;
-      if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
-      const seq = await allocateSequence(waveId, blipIdVal);
-      const id = `yupd:${waveId}:${encodeURIComponent(blipIdVal || '__wave__')}:${seq}`;
-      const doc: YDocUpdate = { _id: id, type: 'yjs_update', waveId, blipId: blipIdVal, seq, updateB64, createdAt: Date.now() };
-      const r = await insertDoc(doc as any);
-      res.status(201).json({ ok: true, id: r.id, rev: r.rev, seq });
-      try { emitEditorUpdate(waveId, blipIdVal, { waveId, blipId: blipIdVal, seq, updateB64 }); } catch {}
+      await withBlipLock(blipIdVal, async () => {
+        const target = await resolveEditorTarget(res, waveId, blipIdVal);
+        if (!target || !requireMatchingGeneration(res, target, (req.body as any)?.yjsGeneration)) return;
+        const seq = await allocateSequence(waveId, blipIdVal);
+        const id = `yupd:${waveId}:${encodeURIComponent(blipIdVal || '__wave__')}:${seq}`;
+        const doc: YDocUpdate = { _id: id, type: EDITOR_UPDATE_TYPE, waveId, blipId: blipIdVal, yjsGeneration: target.yjsGeneration, seq, updateB64, createdAt: Date.now() };
+        const r = await insertDoc(doc as any);
+        res.status(201).json({ ok: true, id: r.id, rev: r.rev, seq, yjsGeneration: target.yjsGeneration });
+        try { emitEditorUpdate(waveId, blipIdVal, { waveId, blipId: blipIdVal, yjsGeneration: target.yjsGeneration, seq, updateB64 }); } catch {}
+      });
     } catch (e: any) {
       res.status(500).json({ error: e?.message || 'update_save_error' });
     }
@@ -313,7 +410,7 @@ if (!ENABLED) {
     const access = await requireWaveAccess(req, res, waveId, 'read');
     if (!access) return;
     const blipIdVal = normalizedBlipId((req.query as any)?.blipId);
-    if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
+    if (!(await resolveEditorTarget(res, waveId, blipIdVal))) return;
     const job = rebuildJobs.get(jobKey(waveId, blipIdVal));
     res.json(serializeJob(job));
   });
@@ -324,7 +421,8 @@ if (!ENABLED) {
     const access = await requireWaveAccess(req, res, waveId, 'edit');
     if (!access) return;
     const blipIdVal = normalizedBlipId((req.body as any)?.blipId);
-    if (!(await validateEditorBlip(res, waveId, blipIdVal))) return;
+    const target = await resolveEditorTarget(res, waveId, blipIdVal);
+    if (!target) return;
     const key = jobKey(waveId, blipIdVal);
     const existing = rebuildJobs.get(key);
     if (existing && (existing.status === 'queued' || existing.status === 'running')) {
@@ -335,6 +433,7 @@ if (!ENABLED) {
       id: `${key}:${Date.now()}`,
       waveId,
       blipId: blipIdVal,
+      yjsGeneration: target.yjsGeneration,
       status: 'queued',
       logs: [],
       queuedAt: Date.now(),
@@ -378,8 +477,14 @@ if (!ENABLED) {
         limit = Math.min(limit, 10);
       }
       const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const selector: any = { type: 'yjs_snapshot', text: { $regex: `(?i).*${safe}.*` } };
-      if (blipIdFilter) selector.blipId = blipIdFilter;
+      const selector: any = {
+        type: EDITOR_SNAPSHOT_TYPE,
+        text: { $regex: `(?i).*${safe}.*` },
+        // Wave-level legacy snapshots have no durable content generation and
+        // therefore cannot be proven current after a child blip replacement.
+        // Search only generation-scoped snapshots tied to a concrete blip.
+        blipId: blipIdFilter || { $exists: true },
+      };
       const { find } = await import('../lib/couch.js');
       // Preserve CouchDB bookmark boundaries exactly. Over-fetching and then
       // slicing after authorization would advance the bookmark past visible
@@ -398,9 +503,16 @@ if (!ENABLED) {
       const docs = Array.isArray(r?.docs) ? r.docs : [];
       const identity = identityFromRequest(req);
       const accessChecks = await Promise.all(docs.map(async (d: any) => {
+        const waveId = String(d?.waveId || '');
+        const blipId = normalizedBlipId(d?.blipId);
+        if (!waveId || !blipId) return null;
         try {
-          const access = await resolveWaveAccess(String(d.waveId || ''), identity);
-          return access.canRead ? d : null;
+          const access = await resolveWaveAccess(waveId, identity);
+          if (!access.canRead) return null;
+          return await withBlipLock(blipId, async () => {
+            const target = await resolveEditorTarget(null, waveId, blipId);
+            return target && hasExactGeneration(d, target.yjsGeneration) ? d : null;
+          });
         } catch {
           return null;
         }

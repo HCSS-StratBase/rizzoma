@@ -1,0 +1,265 @@
+{
+  "title": "Production acceptance 20260712195835",
+  "topicId": "3305bc3a42889979c79fa39f40000720",
+  "topicContent": "<p>Production acceptance 20260712195835</p>",
+  "topicText": "Production acceptance 20260712195835",
+  "exportedAt": "2026-07-12T20:20:35.106Z",
+  "blipCount": 11,
+  "blips": [
+    {
+      "id": "3305bc3a42889979c79fa39f40000720:bded2e01c-826b-43e8-adc4-efbf05bb0dc0",
+      "content": "<p>Restart persistence 20260712195835 collab-20260712195835 reconnect-20260712195835 collab-20260712195835 reconnect-20260712195835 collab-20260712195835-20260712202024 reconnect-20260712195835-20260712202024</p>",
+      "text": "Restart persistence 20260712195835 collab-20260712195835 reconnect-20260712195835 collab-20260712195835 reconnect-20260712195835 collab-20260712195835-20260712202024 reconnect-20260712195835-20260712202024",
+      "authorId": "0b997d49bf636cdd371819e1360004e4",
+      "authorName": "Anonymous",
+      "authorAvatar": null,
+      "createdAt": "2026-07-12T19:58:39.993Z",
+      "updatedAt": "2026-07-12T20:20:31.049Z",
+      "isRead": false,
+      "isFoldedByDefault": false,
+      "deleted": false,
+      "deletedAt": null,
+      "parentBlipId": null,
+      "permissions": {
+        "role": "owner",
+        "canEdit": true,
+        "canComment": true,
+        "canRead": true,
+        "canManage": true
+      },
+      "children": [
+        {
+          "id": "3305bc3a42889979c79fa39f40000720:bdd520fb5-14c8-48ff-b6cf-98eed19c5b19",
+          "content": "<p>Child level 20260712195835</p><p><span class=\"mention\" data-type=\"mention\" data-id=\"user:email:a7b26e32a56ed990448eee8e1f47767d01b544837653940ab7f8879f11423a8e\" data-label=\"Acceptance invitee\">@Acceptance invitee</span></p>",
+          "text": "Child level 20260712195835\n@Acceptance invitee",
+          "authorId": "0b997d49bf636cdd371819e1360004e4",
+          "authorName": "Anonymous",
+          "authorAvatar": null,
+          "createdAt": "2026-07-12T19:58:40.113Z",
+          "updatedAt": "2026-07-12T20:20:27.729Z",
+          "isRead": false,
+          "isFoldedByDefault": false,
+          "deleted": false,
+          "deletedAt": null,
+          "parentBlipId": "3305bc3a42889979c79fa39f40000720:bded2e01c-826b-43e8-adc4-efbf05bb0dc0",
+          "permissions": {
+            "role": "owner",
+            "canEdit": true,
+            "canComment": true,
+            "canRead": true,
+            "canManage": true
+          },
+          "children": [
+            {
+              "id": "3305bc3a42889979c79fa39f40000720:b9ef22101-f82d-4889-98c9-fe0eadfb9978",
+              "content": "<p>Grandchild level 20260712195835</p>",
+              "text": "Grandchild level 20260712195835",
+              "authorId": "0b997d49bf636cdd371819e1360004e4",
+              "authorName": "Anonymous",
+              "authorAvatar": null,
+              "createdAt": "2026-07-12T19:58:40.200Z",
+              "updatedAt": "2026-07-12T19:58:40.200Z",
+              "isRead": false,
+              "isFoldedByDefault": false,
+              "deleted": false,
+              "deletedAt": null,
+              "parentBlipId": "3305bc3a42889979c79fa39f40000720:bdd520fb5-14c8-48ff-b6cf-98eed19c5b19",
+              "permissions": {
+                "role": "owner",
+                "canEdit": true,
+                "canComment": true,
+                "canRead": true,
+                "canManage": true
+              },
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "3305bc3a42889979c79fa39f40000720:b64926da4-d36d-4b52-a573-adc7a5968b02",
+          "content": "<p>Editor update 20260712195835</p>",
+          "text": "Editor update 20260712195835",
+          "authorId": "user:email:a7b26e32a56ed990448eee8e1f47767d01b544837653940ab7f8879f11423a8e",
+          "authorName": "sdspieg+rizzoma-accept-20260712195835",
+          "authorAvatar": null,
+          "createdAt": "2026-07-12T20:16:31.387Z",
+          "updatedAt": "2026-07-12T20:16:31.924Z",
+          "isRead": false,
+          "isFoldedByDefault": false,
+          "deleted": false,
+          "deletedAt": null,
+          "parentBlipId": "3305bc3a42889979c79fa39f40000720:bded2e01c-826b-43e8-adc4-efbf05bb0dc0",
+          "permissions": {
+            "role": "owner",
+            "canEdit": true,
+            "canComment": true,
+            "canRead": true,
+            "canManage": true
+          },
+          "children": []
+        },
+        {
+          "id": "3305bc3a42889979c79fa39f40000720:b9b377d33-ab1f-4f88-8068-4d4bfec85b03",
+          "content": "<p>Editor update 20260712195835</p>",
+          "text": "Editor update 20260712195835",
+          "authorId": "user:email:a7b26e32a56ed990448eee8e1f47767d01b544837653940ab7f8879f11423a8e",
+          "authorName": "sdspieg+rizzoma-accept-20260712195835",
+          "authorAvatar": null,
+          "createdAt": "2026-07-12T20:18:00.408Z",
+          "updatedAt": "2026-07-12T20:18:00.924Z",
+          "isRead": false,
+          "isFoldedByDefault": false,
+          "deleted": false,
+          "deletedAt": null,
+          "parentBlipId": "3305bc3a42889979c79fa39f40000720:bded2e01c-826b-43e8-adc4-efbf05bb0dc0",
+          "permissions": {
+            "role": "owner",
+            "canEdit": true,
+            "canComment": true,
+            "canRead": true,
+            "canManage": true
+          },
+          "children": []
+        },
+        {
+          "id": "3305bc3a42889979c79fa39f40000720:b35aadb6b-a052-4df9-b7f3-0ff11bb005fd",
+          "content": "<p>Editor update 20260712195835</p>",
+          "text": "Editor update 20260712195835",
+          "authorId": "user:email:a7b26e32a56ed990448eee8e1f47767d01b544837653940ab7f8879f11423a8e",
+          "authorName": "sdspieg+rizzoma-accept-20260712195835",
+          "authorAvatar": null,
+          "createdAt": "2026-07-12T20:19:55.466Z",
+          "updatedAt": "2026-07-12T20:19:55.978Z",
+          "isRead": false,
+          "isFoldedByDefault": false,
+          "deleted": false,
+          "deletedAt": null,
+          "parentBlipId": "3305bc3a42889979c79fa39f40000720:bded2e01c-826b-43e8-adc4-efbf05bb0dc0",
+          "permissions": {
+            "role": "owner",
+            "canEdit": true,
+            "canComment": true,
+            "canRead": true,
+            "canManage": true
+          },
+          "children": []
+        },
+        {
+          "id": "3305bc3a42889979c79fa39f40000720:bc5b448b4-d678-4ca9-b8c4-ff0d2892de23",
+          "content": "<p>Editor update 20260712195835</p>",
+          "text": "Editor update 20260712195835",
+          "authorId": "user:email:a7b26e32a56ed990448eee8e1f47767d01b544837653940ab7f8879f11423a8e",
+          "authorName": "sdspieg+rizzoma-accept-20260712195835",
+          "authorAvatar": null,
+          "createdAt": "2026-07-12T20:20:28.999Z",
+          "updatedAt": "2026-07-12T20:20:29.522Z",
+          "isRead": false,
+          "isFoldedByDefault": false,
+          "deleted": false,
+          "deletedAt": null,
+          "parentBlipId": "3305bc3a42889979c79fa39f40000720:bded2e01c-826b-43e8-adc4-efbf05bb0dc0",
+          "permissions": {
+            "role": "owner",
+            "canEdit": true,
+            "canComment": true,
+            "canRead": true,
+            "canManage": true
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "3305bc3a42889979c79fa39f40000720:b416bdd94-6380-4835-8ed7-d97b76c85fd2",
+      "content": "<p>FtG one 20260712195835</p>",
+      "text": "FtG one 20260712195835",
+      "authorId": "0b997d49bf636cdd371819e1360004e4",
+      "authorName": "Anonymous",
+      "authorAvatar": null,
+      "createdAt": "2026-07-12T20:18:03.721Z",
+      "updatedAt": "2026-07-12T20:18:03.721Z",
+      "isRead": false,
+      "isFoldedByDefault": false,
+      "deleted": false,
+      "deletedAt": null,
+      "parentBlipId": null,
+      "permissions": {
+        "role": "owner",
+        "canEdit": true,
+        "canComment": true,
+        "canRead": true,
+        "canManage": true
+      },
+      "children": []
+    },
+    {
+      "id": "3305bc3a42889979c79fa39f40000720:b5a8e61d3-cdd7-49dd-af36-be8edd31d5c9",
+      "content": "<p>FtG two 20260712195835</p>",
+      "text": "FtG two 20260712195835",
+      "authorId": "0b997d49bf636cdd371819e1360004e4",
+      "authorName": "Anonymous",
+      "authorAvatar": null,
+      "createdAt": "2026-07-12T20:18:03.853Z",
+      "updatedAt": "2026-07-12T20:18:03.853Z",
+      "isRead": false,
+      "isFoldedByDefault": false,
+      "deleted": false,
+      "deletedAt": null,
+      "parentBlipId": null,
+      "permissions": {
+        "role": "owner",
+        "canEdit": true,
+        "canComment": true,
+        "canRead": true,
+        "canManage": true
+      },
+      "children": []
+    },
+    {
+      "id": "3305bc3a42889979c79fa39f40000720:b3b4b63b5-2d3b-44cb-bf6e-d277b1ddb9cb",
+      "content": "<p>FtG one 20260712195835</p>",
+      "text": "FtG one 20260712195835",
+      "authorId": "0b997d49bf636cdd371819e1360004e4",
+      "authorName": "Anonymous",
+      "authorAvatar": null,
+      "createdAt": "2026-07-12T20:20:33.429Z",
+      "updatedAt": "2026-07-12T20:20:33.429Z",
+      "isRead": false,
+      "isFoldedByDefault": false,
+      "deleted": false,
+      "deletedAt": null,
+      "parentBlipId": null,
+      "permissions": {
+        "role": "owner",
+        "canEdit": true,
+        "canComment": true,
+        "canRead": true,
+        "canManage": true
+      },
+      "children": []
+    },
+    {
+      "id": "3305bc3a42889979c79fa39f40000720:bf8ad8ec2-b3da-42a8-8784-7f5e09d3b11d",
+      "content": "<p>FtG two 20260712195835</p>",
+      "text": "FtG two 20260712195835",
+      "authorId": "0b997d49bf636cdd371819e1360004e4",
+      "authorName": "Anonymous",
+      "authorAvatar": null,
+      "createdAt": "2026-07-12T20:20:33.559Z",
+      "updatedAt": "2026-07-12T20:20:33.559Z",
+      "isRead": false,
+      "isFoldedByDefault": false,
+      "deleted": false,
+      "deletedAt": null,
+      "parentBlipId": null,
+      "permissions": {
+        "role": "owner",
+        "canEdit": true,
+        "canComment": true,
+        "canRead": true,
+        "canManage": true
+      },
+      "children": []
+    }
+  ]
+}

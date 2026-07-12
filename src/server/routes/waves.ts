@@ -198,6 +198,8 @@ router.get('/:id/sharing', noStore, async (req, res) => {
 
 router.patch('/:id/sharing', requireAuth, csrfProtect(), async (req, res) => {
   const waveId = String(req.params['id'] || '');
+  let accessMutationAttempted = false;
+  let accessRefreshCompleted = false;
   try {
     const policy = sharingPolicySchema.parse(req.body || {});
     const wave = await getDoc<any>(waveId);
@@ -211,8 +213,10 @@ router.patch('/:id/sharing', requireAuth, csrfProtect(), async (req, res) => {
       sharingUpdatedBy: req.user!.id,
       updatedAt: Math.max(Number(wave.updatedAt || 0), now),
     };
+    accessMutationAttempted = true;
     const result = await updateDoc(next);
     await refreshWaveSocketAccess(waveId);
+    accessRefreshCompleted = true;
     res.json({
       id: result.id,
       rev: result.rev,
@@ -231,6 +235,15 @@ router.patch('/:id/sharing', requireAuth, csrfProtect(), async (req, res) => {
       return;
     }
     res.status(500).json({ error: e?.message || 'sharing_update_error', requestId: (req as any)?.id });
+  } finally {
+    if (accessMutationAttempted && !accessRefreshCompleted) {
+      await refreshWaveSocketAccess(waveId).catch((refreshError: any) => {
+        console.error('[waves] sharing access refresh failed after mutation error', {
+          waveId,
+          error: refreshError?.message || String(refreshError),
+        });
+      });
+    }
   }
 });
 
@@ -567,6 +580,8 @@ router.get('/:id/participants', async (req, res) => {
 router.patch('/:id/participants/:participantId', requireAuth, csrfProtect(), async (req, res) => {
   const waveId = String(req.params['id'] || '');
   const participantId = String(req.params['participantId'] || '');
+  let accessMutationAttempted = false;
+  let accessRefreshCompleted = false;
   try {
     const access = await requireWaveAccess(req, res, waveId, 'manage');
     if (!access) return;
@@ -588,9 +603,11 @@ router.patch('/:id/participants/:participantId', requireAuth, csrfProtect(), asy
       res.status(400).json({ error: 'owner_role_immutable' });
       return;
     }
+    accessMutationAttempted = true;
     const updates = await Promise.all(mutable.map((candidate) => updateDoc({ ...candidate, role: payload.role } as any)));
     const result = updates.find((entry) => entry.id === participantId) || updates[0];
     await refreshWaveSocketAccess(waveId);
+    accessRefreshCompleted = true;
     res.json({ id: result?.id || participantId, rev: result?.rev, role: payload.role, updated: mutable.length });
   } catch (e: any) {
     if (e?.issues) {
@@ -602,12 +619,24 @@ router.patch('/:id/participants/:participantId', requireAuth, csrfProtect(), asy
       return;
     }
     res.status(500).json({ error: e?.message || 'participant_update_error' });
+  } finally {
+    if (accessMutationAttempted && !accessRefreshCompleted) {
+      await refreshWaveSocketAccess(waveId).catch((refreshError: any) => {
+        console.error('[waves] participant update access refresh failed after mutation error', {
+          waveId,
+          participantId,
+          error: refreshError?.message || String(refreshError),
+        });
+      });
+    }
   }
 });
 
 router.delete('/:id/participants/:participantId', requireAuth, csrfProtect(), async (req, res) => {
   const waveId = String(req.params['id'] || '');
   const participantId = String(req.params['participantId'] || '');
+  let accessMutationAttempted = false;
+  let accessRefreshCompleted = false;
   try {
     const access = await requireWaveAccess(req, res, waveId, 'manage');
     if (!access) return;
@@ -626,6 +655,7 @@ router.delete('/:id/participants/:participantId', requireAuth, csrfProtect(), as
       return;
     }
     const now = Date.now();
+    accessMutationAttempted = true;
     const updates = await Promise.all(duplicates.map((candidate) => updateDoc({
         ...candidate,
         status: 'declined',
@@ -646,6 +676,7 @@ router.delete('/:id/participants/:participantId', requireAuth, csrfProtect(), as
       .filter((token) => token.status !== 'used' && token.status !== 'revoked')
       .map((token) => updateDoc({ ...token, status: 'revoked', revokedAt: now } as any)));
     await refreshWaveSocketAccess(waveId);
+    accessRefreshCompleted = true;
     res.json({ id: result?.id || participantId, rev: result?.rev, removed: true, status: 'declined', updated: duplicates.length });
   } catch (e: any) {
     if (String(e?.message || '').startsWith('404')) {
@@ -653,6 +684,16 @@ router.delete('/:id/participants/:participantId', requireAuth, csrfProtect(), as
       return;
     }
     res.status(500).json({ error: e?.message || 'participant_remove_error' });
+  } finally {
+    if (accessMutationAttempted && !accessRefreshCompleted) {
+      await refreshWaveSocketAccess(waveId).catch((refreshError: any) => {
+        console.error('[waves] participant removal access refresh failed after mutation error', {
+          waveId,
+          participantId,
+          error: refreshError?.message || String(refreshError),
+        });
+      });
+    }
   }
 });
 
@@ -665,6 +706,8 @@ router.post('/invitations/accept', requireAuth, csrfProtect(), async (req, res) 
     return;
   }
   const tokenHash = hashInviteToken(token);
+  let accessMutationWaveId: string | null = null;
+  let accessRefreshCompleted = false;
   try {
     const tokenDoc = await getDoc<InvitationTokenDoc>(invitationTokenDocId(tokenHash)).catch(() => null);
     if (tokenDoc) {
@@ -780,6 +823,7 @@ router.post('/invitations/accept', requireAuth, csrfProtect(), async (req, res) 
       acceptedInviteTokenHash: tokenHash,
       acceptedInviteExpiresAt: originalExpiry,
     };
+    accessMutationWaveId = participant.waveId;
     const updated = await updateDoc(canonicalNext as any);
     for (const duplicate of canonicalCandidates.slice(1)) {
       await updateDoc({
@@ -806,6 +850,7 @@ router.post('/invitations/accept', requireAuth, csrfProtect(), async (req, res) 
       }
     }
     await refreshWaveSocketAccess(participant.waveId);
+    accessRefreshCompleted = true;
     res.json({
       id: updated.id,
       rev: updated.rev,
@@ -815,6 +860,15 @@ router.post('/invitations/accept', requireAuth, csrfProtect(), async (req, res) 
     });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'invite_accept_error' });
+  } finally {
+    if (accessMutationWaveId && !accessRefreshCompleted) {
+      await refreshWaveSocketAccess(accessMutationWaveId).catch((refreshError: any) => {
+        console.error('[waves] invitation acceptance access refresh failed after mutation error', {
+          waveId: accessMutationWaveId,
+          error: refreshError?.message || String(refreshError),
+        });
+      });
+    }
   }
 });
 

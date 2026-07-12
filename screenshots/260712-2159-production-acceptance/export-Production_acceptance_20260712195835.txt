@@ -1,0 +1,25 @@
+Production acceptance 20260712195835
+====================================
+
+Production acceptance 20260712195835
+
+• Restart persistence 20260712195835 collab-20260712195835 reconnect-20260712195835 collab-20260712195835 reconnect-20260712195835 collab-20260712195835-20260712202024 reconnect-20260712195835-20260712202024
+  ◦ Child level 20260712195835
+    @Acceptance invitee
+    ▪ Grandchild level 20260712195835
+  ◦ Editor update 20260712195835
+  ◦ Editor update 20260712195835
+  ◦ Editor update 20260712195835
+  ◦ Editor update 20260712195835
+
+• FtG one 20260712195835
+
+• FtG two 20260712195835
+
+• FtG one 20260712195835
+
+• FtG two 20260712195835
+
+---
+Exported from Rizzoma on 7/12/2026, 10:20:35 PM
+Topic ID: 3305bc3a42889979c79fa39f40000720

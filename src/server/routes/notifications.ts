@@ -49,6 +49,8 @@ const defaultPreferences: Omit<NotificationPreferencesDoc, '_id' | 'type' | 'use
 router.post('/invite', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const userName = req.user?.name || req.user?.email || 'Someone';
+  let accessMutationWaveId: string | null = null;
+  let accessRefreshCompleted = false;
 
   try {
     const parsed = z.object({
@@ -122,6 +124,7 @@ router.post('/invite', requireAuth, csrfProtect(), inviteRateLimit, async (req, 
     const baseUrl = resolveInviteBaseUrl(req);
     const topicUrl = buildInviteUrl(baseUrl, String(topicId), invite.token);
 
+    accessMutationWaveId = String(topicId);
     if (existingParticipant) await updateDoc(participant as any);
     else await insertDoc(participant as any);
     const tokenDoc: any = {
@@ -163,6 +166,7 @@ router.post('/invite', requireAuth, csrfProtect(), inviteRateLimit, async (req, 
     if (result.success) {
       await updateDoc({ ...tokenDoc, status: 'sent', deliveredAt: Date.now() } as any).catch(() => undefined);
       await refreshWaveSocketAccess(String(topicId));
+      accessRefreshCompleted = true;
       res.json({ success: true, messageId: result.messageId, status: 'pending' });
     } else {
       await updateDoc({ ...tokenDoc, status: 'failed', failedAt: Date.now() } as any).catch(() => undefined);
@@ -171,6 +175,15 @@ router.post('/invite', requireAuth, csrfProtect(), inviteRateLimit, async (req, 
   } catch (e: any) {
     console.error('[notifications] invite error', e);
     res.status(500).json({ error: e?.message || 'invite_error' });
+  } finally {
+    if (accessMutationWaveId && !accessRefreshCompleted) {
+      await refreshWaveSocketAccess(accessMutationWaveId).catch((refreshError: any) => {
+        console.error('[notifications] invite access refresh failed after mutation error', {
+          waveId: accessMutationWaveId,
+          error: refreshError?.message || String(refreshError),
+        });
+      });
+    }
   }
 });
 

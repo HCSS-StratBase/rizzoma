@@ -1,11 +1,18 @@
 import express from 'express';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const oauthCouch = vi.hoisted(() => ({
+  findOne: vi.fn(async () => undefined as any),
+  insertDoc: vi.fn(async () => ({ id: 'twitter-user', rev: '1-x' })),
+  getDoc: vi.fn(async () => undefined as any),
+  updateDoc: vi.fn(async () => ({ id: 'updated-user', rev: '2-x' })),
+}));
 
 vi.mock('../server/lib/couch', () => ({
-  findOne: vi.fn(async () => undefined),
-  insertDoc: vi.fn(async () => ({ id: 'twitter-user', rev: '1-x' })),
-  getDoc: vi.fn(),
-  updateDoc: vi.fn(),
+  findOne: oauthCouch.findOne,
+  insertDoc: oauthCouch.insertDoc,
+  getDoc: oauthCouch.getDoc,
+  updateDoc: oauthCouch.updateDoc,
 }));
 
 vi.mock('../server/lib/bcrypt', () => ({
@@ -47,12 +54,22 @@ const fetchFromApp = async (app: express.Express, path: string) => {
 };
 
 describe('auth OAuth provider coverage', () => {
+  beforeEach(() => {
+    oauthCouch.findOne.mockReset().mockResolvedValue(undefined);
+    oauthCouch.insertDoc.mockReset().mockResolvedValue({ id: 'twitter-user', rev: '1-x' });
+    oauthCouch.getDoc.mockReset().mockResolvedValue(undefined);
+    oauthCouch.updateDoc.mockReset().mockResolvedValue({ id: 'updated-user', rev: '2-x' });
+  });
+
   afterEach(() => {
     delete process.env['GOOGLE_CLIENT_ID'];
     delete process.env['GOOGLE_CLIENT_SECRET'];
     delete process.env['FACEBOOK_APP_ID'];
+    delete process.env['FACEBOOK_APP_SECRET'];
     delete process.env['MICROSOFT_CLIENT_ID'];
+    delete process.env['MICROSOFT_CLIENT_SECRET'];
     delete process.env['TWITTER_CLIENT_ID'];
+    vi.restoreAllMocks();
     vi.resetModules();
   });
 
@@ -130,6 +147,75 @@ describe('auth OAuth provider coverage', () => {
     const replay = await fetchFromApp(app, `/api/auth/google/callback?code=x&state=${encodeURIComponent(firstState)}`);
     expect(replay.headers.get('location')).toBe('/?error=google_auth_failed');
     expect(session['oauthTransactions'][secondState]).toBeDefined();
+  });
+
+  it.each([
+    { provider: 'google', clientKey: 'GOOGLE_CLIENT_ID', secretKey: 'GOOGLE_CLIENT_SECRET', clientValue: 'google-client', secretValue: 'google-secret', error: 'google_auth_failed' },
+    { provider: 'facebook', clientKey: 'FACEBOOK_APP_ID', secretKey: 'FACEBOOK_APP_SECRET', clientValue: 'facebook-client', secretValue: 'facebook-secret', error: 'facebook_auth_failed' },
+    { provider: 'microsoft', clientKey: 'MICROSOFT_CLIENT_ID', secretKey: 'MICROSOFT_CLIENT_SECRET', clientValue: 'microsoft-client', secretValue: 'microsoft-secret', error: 'microsoft_auth_failed' },
+  ])('rejects $provider desktop callback login-CSRF and consumes valid state once', async ({ provider, clientKey, secretKey, clientValue, secretValue, error }) => {
+    process.env[clientKey] = clientValue;
+    process.env[secretKey] = secretValue;
+    const session: Record<string, any> = { destroy: (cb: () => void) => cb() };
+    const app = await buildApp(session);
+
+    const start = new URL((await fetchFromApp(app, `/api/auth/${provider}`)).headers.get('location') || '');
+    const state = start.searchParams.get('state') || '';
+    expect(state).toMatch(/^[A-Za-z0-9_-]{40,}$/);
+    expect(session['oauthTransactions'][state]).toMatchObject({ provider, state });
+
+    const forged = await fetchFromApp(app, `/api/auth/${provider}/callback?code=attacker-code&state=forged-state`);
+    expect(forged.headers.get('location')).toBe(`/?error=${error}`);
+    expect(session['oauthTransactions'][state]).toBeDefined();
+
+    const consumed = await fetchFromApp(app, `/api/auth/${provider}/callback?state=${encodeURIComponent(state)}`);
+    expect(consumed.headers.get('location')).toBe(`/?error=${error}`);
+    expect(session['oauthTransactions'][state]).toBeUndefined();
+
+    const replay = await fetchFromApp(app, `/api/auth/${provider}/callback?code=attacker-code&state=${encodeURIComponent(state)}`);
+    expect(replay.headers.get('location')).toBe(`/?error=${error}`);
+  });
+
+  it('does not merge a concurrently inserted unverified password preclaim after a provider insert conflict', async () => {
+    process.env['GOOGLE_CLIENT_ID'] = 'google-client';
+    process.env['GOOGLE_CLIENT_SECRET'] = 'google-secret';
+    oauthCouch.findOne.mockResolvedValue(undefined);
+    oauthCouch.insertDoc.mockRejectedValue(new Error('409 conflict'));
+    oauthCouch.getDoc.mockResolvedValue({
+      _id: 'user:email:race',
+      _rev: '1-race',
+      type: 'user',
+      email: 'race@example.test',
+      passwordHash: 'unverified-password-hash',
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    const session: Record<string, any> = { destroy: (cb: () => void) => cb() };
+    const app = await buildApp(session);
+    const start = new URL((await fetchFromApp(app, '/api/auth/google')).headers.get('location') || '');
+    const state = start.searchParams.get('state') || '';
+
+    const realFetch = globalThis.fetch;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(String(input));
+      if (url.origin === 'https://oauth2.googleapis.com') {
+        return new Response(JSON.stringify({ access_token: 'provider-token' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      if (url.origin === 'https://www.googleapis.com') {
+        return new Response(JSON.stringify({ email: 'race@example.test', name: 'Mailbox Owner' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return realFetch(input, init);
+    });
+
+    const callback = await fetchFromApp(app, `/api/auth/google/callback?code=provider-code&state=${encodeURIComponent(state)}`);
+    expect(callback.headers.get('location')).toBe('/?error=google_auth_error');
+    expect(oauthCouch.updateDoc).not.toHaveBeenCalled();
   });
 
   it('binds mobile OAuth to a verifier challenge and sends only random state to the provider', async () => {

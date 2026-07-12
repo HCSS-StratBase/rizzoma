@@ -35,7 +35,7 @@ export type TicketPayload = {
   authVersion?: number | undefined;
 };
 
-type Entry = TicketPayload & { expiresAt: number; verifierChallenge?: string };
+type Entry = TicketPayload & { expiresAt: number; verifierChallenge: string };
 
 const TTL_MS = 2 * 60 * 1000;
 const tickets = new Map<string, Entry>();
@@ -47,10 +47,13 @@ function sweep(): void {
   }
 }
 
-export function issueTicket(payload: TicketPayload, verifierChallenge?: string): string {
+export function issueTicket(payload: TicketPayload, verifierChallenge: string): string {
+  if (!/^[A-Za-z0-9_-]{43}$/.test(verifierChallenge)) {
+    throw new Error('invalid_native_verifier_challenge');
+  }
   sweep();
   const id = randomBytes(24).toString('base64url');
-  tickets.set(id, { ...payload, expiresAt: Date.now() + TTL_MS, ...(verifierChallenge ? { verifierChallenge } : {}) });
+  tickets.set(id, { ...payload, expiresAt: Date.now() + TTL_MS, verifierChallenge });
   return id;
 }
 
@@ -59,13 +62,11 @@ export function redeemTicket(id: string, verifier?: string): TicketPayload | nul
   const entry = tickets.get(id);
   if (!entry) return null;
   if (entry.expiresAt <= Date.now()) return null;
-  if (entry.verifierChallenge) {
-    if (!verifier || !/^[A-Za-z0-9_-]{43}$/.test(verifier)) return null;
-    const actual = createHash('sha256').update(verifier, 'utf8').digest('base64url');
-    const expectedBytes = Buffer.from(entry.verifierChallenge, 'utf8');
-    const actualBytes = Buffer.from(actual, 'utf8');
-    if (expectedBytes.length !== actualBytes.length || !timingSafeEqual(expectedBytes, actualBytes)) return null;
-  }
+  if (!verifier || !/^[A-Za-z0-9_-]{43}$/.test(verifier)) return null;
+  const actual = createHash('sha256').update(verifier, 'utf8').digest('base64url');
+  const expectedBytes = Buffer.from(entry.verifierChallenge, 'utf8');
+  const actualBytes = Buffer.from(actual, 'utf8');
+  if (expectedBytes.length !== actualBytes.length || !timingSafeEqual(expectedBytes, actualBytes)) return null;
   tickets.delete(id);
   const { expiresAt: _expiresAt, verifierChallenge: _verifierChallenge, ...payload } = entry;
   return payload;

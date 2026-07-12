@@ -282,7 +282,16 @@ router.post('/logout', csrfProtect(), async (req, res): Promise<void> => {
     res.json({ ok: true, requestId: (req as any)?.id });
     return;
   }
-  const destroyError = await new Promise<unknown>((resolve) => req.session.destroy((error) => resolve(error)));
+  let destroyError: unknown;
+  try {
+    destroyError = await new Promise<unknown>((resolve) => req.session.destroy((error) => resolve(error)));
+  } catch (error) {
+    // Some custom/session-store implementations can throw synchronously
+    // instead of reporting through the callback. Treat that exactly like a
+    // durable destroy failure: retain the cookie/socket boundary and tell the
+    // client logout did not complete.
+    destroyError = error;
+  }
   if (destroyError) {
     console.error('[auth] session revocation failed', { requestId: (req as any)?.id, error: String((destroyError as any)?.message || destroyError) });
     res.status(503).json({ error: 'revocation_failed', requestId: (req as any)?.id });
@@ -618,13 +627,15 @@ async function findOrCreateVerifiedUser(input: {
   const now = Date.now();
   let user = await findOne<User>({ type: 'user', email });
   let created = false;
-  if (user?.passwordHash && !user.emailVerifiedAt) {
+  const rejectUnverifiedPasswordPreclaim = (candidate: User | null | undefined): void => {
+    if (!candidate?.passwordHash || candidate.emailVerifiedAt) return;
     // Do not silently merge a provider-authenticated mailbox owner into an
     // unverified password account that may have pre-registered that address.
     // Existing legacy password login remains available; provider linking
     // requires a separate, explicit account-link flow.
     throw new Error('oauth_link_required');
-  }
+  };
+  rejectUnverifiedPasswordPreclaim(user);
   if (!user) {
     const doc: User = {
       _id: canonicalUserIdForEmail(email),
@@ -646,6 +657,11 @@ async function findOrCreateVerifiedUser(input: {
       if (!String(error?.message || '').startsWith('409')) throw error;
       user = await getDoc<User>(doc._id!);
       if (user.email.trim().toLowerCase() !== email) throw new Error('canonical_email_conflict');
+      // Close the find-then-insert race: a password preclaim can appear after
+      // the initial email lookup but before our deterministic-id insert. A
+      // conflict reload must pass the same verification gate as the first
+      // lookup before provider identity is allowed to update it.
+      rejectUnverifiedPasswordPreclaim(user);
     }
   }
 

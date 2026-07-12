@@ -33,6 +33,7 @@ function createMockSocket(
           ok: true,
           waveId: 'wave-1',
           canEdit: true,
+          yjsGeneration: 0,
           user: joinUser,
         });
       } else {
@@ -57,12 +58,16 @@ function createMockSocket(
     emit,
     // Test helper: simulate server sending an event to this client
     _receive(event: string, data: any) {
-      handlers.get(event)?.forEach(fn => fn(data));
+      const generationBound = event.startsWith('blip:sync:') || event.startsWith('blip:update:');
+      const payload = generationBound
+        ? { yjsGeneration: 0, ...(data || {}) }
+        : data;
+      handlers.get(event)?.forEach(fn => fn(payload));
     },
     _ackNextJoin(result: any) {
       const ack = pendingJoinAcks.shift();
       if (!ack) throw new Error('No pending blip:join acknowledgement');
-      ack(result);
+      ack({ yjsGeneration: 0, ...(result || {}) });
     },
   };
   return socket;
@@ -175,6 +180,76 @@ describe('client: CollaborativeProvider', () => {
     provider.destroy();
   });
 
+  it('retries a policy-invalidated join on the next macrotask without a premature access failure', async () => {
+    socket = createMockSocket(true, { autoJoinAck: false });
+    const toast = vi.fn();
+    const accessChanged = vi.fn();
+    window.addEventListener('toast', toast);
+    window.addEventListener('rizzoma:access-changed', accessChanged);
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-policy-retry');
+    try {
+      socket._ackNextJoin({ ok: false, error: 'access_changed' });
+
+      expect(toast).not.toHaveBeenCalled();
+      expect(accessChanged).not.toHaveBeenCalled();
+      expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:join')).toHaveLength(1);
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:join')).toHaveLength(2);
+
+      socket._ackNextJoin({
+        ok: true,
+        waveId: 'wave-1',
+        canEdit: false,
+        user: { id: 'user-1', name: 'User One', color: '#123456' },
+      });
+      expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:sync:request')).toHaveLength(1);
+      socket._receive('blip:sync:blip-policy-retry', { state: [], canEdit: false });
+      expect(provider.synced).toBe(true);
+      expect(toast).not.toHaveBeenCalled();
+      expect(accessChanged).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener('toast', toast);
+      window.removeEventListener('rizzoma:access-changed', accessChanged);
+      provider.destroy();
+    }
+  });
+
+  it('retries a snapshot storage failure with bounded backoff and never opens the room', async () => {
+    vi.useFakeTimers();
+    socket = createMockSocket(true, { autoJoinAck: false });
+    const toast = vi.fn();
+    const unavailable = vi.fn();
+    window.addEventListener('toast', toast);
+    window.addEventListener('rizzoma:collaboration-unavailable', unavailable);
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-storage-retry');
+    try {
+      socket._ackNextJoin({ ok: false, error: 'collaboration_storage_unavailable', retryable: true });
+      expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:join')).toHaveLength(1);
+      expect(toast).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(250);
+      expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:join')).toHaveLength(2);
+      socket._ackNextJoin({ ok: false, error: 'collaboration_storage_unavailable', retryable: true });
+
+      await vi.advanceTimersByTimeAsync(500);
+      expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:join')).toHaveLength(3);
+      socket._ackNextJoin({ ok: false, error: 'collaboration_storage_unavailable', retryable: true });
+
+      expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:join')).toHaveLength(3);
+      expect(socket.emit.mock.calls.filter(([event]: any) => event === 'blip:sync:request')).toHaveLength(0);
+      expect(provider.synced).toBe(false);
+      expect(provider.shouldSeed).toBe(false);
+      expect(toast).toHaveBeenCalledTimes(1);
+      expect(unavailable).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener('toast', toast);
+      window.removeEventListener('rizzoma:collaboration-unavailable', unavailable);
+      provider.destroy();
+      vi.useRealTimers();
+    }
+  });
+
   it('applies remote updates from server', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-4');
 
@@ -235,13 +310,54 @@ describe('client: CollaborativeProvider', () => {
   it('tracks whether the server granted seed authority', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-seed');
 
-    socket._receive('blip:sync:blip-seed', { state: [], shouldSeed: true });
+    socket._receive('blip:sync:blip-seed', {
+      state: [],
+      shouldSeed: true,
+      seedContent: '<p>Authoritative seed</p>',
+    });
     expect(provider.synced).toBe(true);
     expect(provider.shouldSeed).toBe(true);
+    expect(provider.seedContent).toBe('<p>Authoritative seed</p>');
 
     socket._receive('blip:sync:blip-seed', { state: [], shouldSeed: false });
     expect(provider.shouldSeed).toBe(false);
+    expect(provider.seedContent).toBeNull();
 
+    provider.destroy();
+  });
+
+  it('rejoins so a waiting writable peer can take over abandoned seed authority', () => {
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-seed-retry');
+    socket._receive('blip:sync:blip-seed-retry', { state: [], shouldSeed: false });
+    const before = socket.emit.mock.calls.filter(([event]: any) => event === 'blip:join').length;
+
+    socket._receive('blip:seed:retry:blip-seed-retry', { yjsGeneration: 0 });
+
+    const joins = socket.emit.mock.calls.filter(([event]: any) => event === 'blip:join');
+    expect(joins).toHaveLength(before + 1);
+    expect(joins.at(-1)?.[1]).toMatchObject({ blipId: 'blip-seed-retry', yjsGeneration: 0 });
+    provider.destroy();
+  });
+
+  it('rejects a server generation mismatch without applying old state', () => {
+    socket = createMockSocket(true, { autoJoinAck: false });
+    const refresh = vi.fn();
+    window.addEventListener('rizzoma:refresh-topics', refresh);
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-generation', null, 3);
+
+    socket._ackNextJoin({
+      ok: false,
+      error: 'generation_mismatch',
+      yjsGeneration: 4,
+    });
+
+    expect(provider.synced).toBe(false);
+    expect(doc.getText('default').toString()).toBe('');
+    expect(socket.emit.mock.calls.some(([event, payload]: any) => (
+      event === 'blip:leave' && payload.blipId === 'blip-generation'
+    ))).toBe(true);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    window.removeEventListener('rizzoma:refresh-topics', refresh);
     provider.destroy();
   });
 
