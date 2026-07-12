@@ -161,10 +161,11 @@ describe('parity view task hydration', () => {
     await flushReactAsyncWork();
     expect(container.querySelector('[data-task-widget]')?.textContent).toBe('\u2610 Viewer');
 
-    act(() => {
+    await act(async () => {
       container.querySelector<HTMLElement>('[data-task-widget]')!.dispatchEvent(
         new MouseEvent('click', { bubbles: true, cancelable: true }),
       );
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     await flushReactAsyncWork();
@@ -175,6 +176,54 @@ describe('parity view task hydration', () => {
     expect(widget?.textContent).toBe('\u2610 Viewer');
     expect(widget?.classList.contains('task-done')).toBe(false);
     expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it('revokes stale toggle authority when the post-failure refresh is denied', async () => {
+    let byBlipCalls = 0;
+    apiMocks.api.mockImplementation(async (path: string) => {
+      if (path === BY_BLIP_PATH) {
+        byBlipCalls += 1;
+        if (byBlipCalls === 1) {
+          return {
+            ok: true,
+            status: 200,
+            data: { tasks: [{ id: TASK_ID, isCompleted: false, canToggle: true }] },
+          };
+        }
+        return { ok: false, status: 403, data: {} };
+      }
+      if (path === TOGGLE_PATH) return { ok: false, status: 403, data: {} };
+      throw new Error(`Unexpected API path: ${path}`);
+    });
+
+    renderView();
+    await flushReactAsyncWork();
+    await vi.waitFor(() => {
+      expect(container.querySelector<HTMLElement>('[data-task-widget]')?.getAttribute('role')).toBe('button');
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLElement>('[data-task-widget]')!.dispatchEvent(
+        new MouseEvent('click', { bubbles: true, cancelable: true }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    await vi.waitFor(() => expect(byBlipCalls).toBe(2));
+    await vi.waitFor(() => {
+      expect(container.querySelector<HTMLElement>('[data-task-widget]')?.getAttribute('role')).toBeNull();
+    });
+    expect(container.querySelector<HTMLElement>('[data-task-widget]')?.classList.contains('task-readonly')).toBe(true);
+
+    act(() => {
+      container.querySelector<HTMLElement>('[data-task-widget]')!.dispatchEvent(
+        new MouseEvent('click', { bubbles: true, cancelable: true }),
+      );
+    });
+    await flushReactAsyncWork();
+
+    expect(apiMocks.api.mock.calls.filter(([path]) => path === TOGGLE_PATH)).toHaveLength(1);
+    expect(apiMocks.ensureCsrf).toHaveBeenCalledTimes(1);
   });
 
   it('renders a hydrated public task without interactive button semantics when canToggle is false', async () => {

@@ -360,8 +360,14 @@ export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
         destroyed
         || generation !== hydrationGeneration
         || taskIdsKey(view) !== requestedTaskIdsKey
-        || !snapshot
       ) return;
+      // Do not retain authority from an older identity/access snapshot when
+      // the current refresh is denied or fails. Generation checks come first
+      // so an aborted stale request cannot revoke a newer successful grant.
+      if (!snapshot) {
+        toggleableTaskIds = new Set();
+        return;
+      }
       toggleableTaskIds = snapshot.toggleableTaskIds;
       applyTaskCompletionSnapshot(view, snapshot.completions);
     };

@@ -178,6 +178,41 @@ describe('task widget durable completion', () => {
     editor.destroy();
   });
 
+  it('revokes stale editor toggle authority when a later hydration is denied', async () => {
+    let byBlipCalls = 0;
+    apiMocks.api.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path === '/api/tasks/by-blip/blip-private') {
+        byBlipCalls += 1;
+        if (byBlipCalls === 1) {
+          return {
+            ok: true,
+            status: 200,
+            data: { tasks: [{ id: TASK_ID, isCompleted: false, canToggle: true }] },
+          };
+        }
+        return { ok: false, status: 403, data: {} };
+      }
+      if (path === `/api/tasks/${encodeURIComponent(TASK_ID)}/toggle` && init?.method === 'POST') {
+        return { ok: true, status: 200, data: { isCompleted: true } };
+      }
+      throw new Error(`Unexpected API request: ${path}`);
+    });
+    const { editor, element } = createTaskEditor();
+    await vi.waitFor(() => expect(byBlipCalls).toBe(1));
+
+    requestTaskCompletionHydration(editor);
+    await vi.waitFor(() => expect(byBlipCalls).toBe(2));
+    element.querySelector<HTMLElement>('[data-task-widget]')?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, cancelable: true }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(apiMocks.ensureCsrf).not.toHaveBeenCalled();
+    expect(apiMocks.api.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(0);
+    expect(taskDone(editor)).toBe(false);
+    editor.destroy();
+  });
+
   it('makes a newly inserted task toggleable after its durable save refreshes side-doc authority', async () => {
     let saved = false;
     apiMocks.api.mockImplementation(async (path: string, init?: { method?: string }) => {

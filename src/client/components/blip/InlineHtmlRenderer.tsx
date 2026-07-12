@@ -425,8 +425,14 @@ export function InlineHtmlRenderer({ taskBlipId, ...renderOptions }: InlineHtmlR
         || controller.signal.aborted
         || generation !== hydrationGenerationRef.current
         || activeBlipIdRef.current !== requestedBlipId
-        || !snapshot
       ) return;
+      // A current denied/failed refresh must revoke previously granted UI
+      // authority. Keep the last confirmed completion glyph for continuity,
+      // but fail closed so a stale button cannot keep issuing denied writes.
+      if (!snapshot) {
+        setToggleableTaskIds(new Set());
+        return;
+      }
       setTaskCompletions(snapshot.completions);
       setToggleableTaskIds(snapshot.toggleableTaskIds);
     });
