@@ -4,6 +4,19 @@ const CLAM_HOST = process.env['CLAMAV_HOST'];
 const CLAM_PORT = Number(process.env['CLAMAV_PORT'] || 3310);
 const MAX_CHUNK = 64 * 1024;
 
+function normalizeClamdVerdictFrame(response: string): string | null {
+  let verdict = response.trim();
+
+  // Commands using clamd's `z` prefix are framed with one trailing NUL byte.
+  // Keep newline-only replies compatible, but reject embedded or repeated NULs
+  // so a malformed/multi-frame response can never be mistaken for a verdict.
+  if (verdict.endsWith('\0')) {
+    verdict = verdict.slice(0, -1).trim();
+  }
+
+  return verdict.length > 0 && !verdict.includes('\0') ? verdict : null;
+}
+
 export type VirusScannerHealth = {
   status: 'ok' | 'error';
   ms: number;
@@ -117,18 +130,25 @@ export async function scanBuffer(buffer: Buffer): Promise<void> {
     });
 
     socket.on('close', () => {
-      const verdict = response.trim();
-      if (/\bOK\s*$/i.test(verdict)) {
+      const verdict = normalizeClamdVerdictFrame(response);
+      if (verdict !== null && /\bOK\s*$/i.test(verdict)) {
         finish();
         return;
       }
-      if (/\bFOUND\s*$/i.test(verdict)) {
+      if (verdict !== null && /\bFOUND\s*$/i.test(verdict)) {
         finish(new VirusDetectedError(verdict));
         return;
       }
       // An empty response, protocol error, or premature close is not a clean
       // verdict. Fail closed so a scanner outage cannot admit an upload.
-      finish(new VirusScanUnavailableError(verdict || 'Virus scanner returned no verdict'));
+      finish(
+        new VirusScanUnavailableError(
+          verdict ??
+            (response.trim().length > 0
+              ? 'Virus scanner returned malformed verdict'
+              : 'Virus scanner returned no verdict'),
+        ),
+      );
     });
   });
 }

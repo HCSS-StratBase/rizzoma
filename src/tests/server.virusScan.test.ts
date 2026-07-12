@@ -57,10 +57,28 @@ describe('ClamAV streaming verdicts', () => {
     await expect(scanBuffer(Buffer.from('clean'))).resolves.toBeUndefined();
   });
 
+  it('accepts an exact NUL-framed clean verdict', async () => {
+    scannerResponse('stream: OK\0');
+    const { scanBuffer } = await import('../server/lib/virusScan');
+    await expect(scanBuffer(Buffer.from('clean'))).resolves.toBeUndefined();
+  });
+
   it('reports an explicit malware verdict', async () => {
     scannerResponse('stream: Eicar-Test-Signature FOUND\n');
     const { scanBuffer, VirusDetectedError } = await import('../server/lib/virusScan');
     await expect(scanBuffer(Buffer.from('unsafe'))).rejects.toBeInstanceOf(VirusDetectedError);
+  });
+
+  it('reports an exact NUL-framed malware verdict', async () => {
+    scannerResponse('stream: Eicar-Test-Signature FOUND\0');
+    const { scanBuffer, VirusDetectedError } = await import('../server/lib/virusScan');
+    await expect(scanBuffer(Buffer.from('unsafe'))).rejects.toBeInstanceOf(VirusDetectedError);
+  });
+
+  it('fails closed on multiple or embedded NUL-framed replies', async () => {
+    scannerResponse('stream: Eicar-Test-Signature FOUND\0stream: OK\0');
+    const { scanBuffer, VirusScanUnavailableError } = await import('../server/lib/virusScan');
+    await expect(scanBuffer(Buffer.from('unknown'))).rejects.toBeInstanceOf(VirusScanUnavailableError);
   });
 
   it('fails closed when ClamAV closes without a verdict', async () => {
