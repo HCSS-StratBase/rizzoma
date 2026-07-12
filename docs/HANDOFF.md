@@ -1,8 +1,8 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-12 (`master`; native-fractal release code checkpoint `8840f552`, handoff/evidence merged through PR [#58](https://github.com/HCSS-StratBase/rizzoma/pull/58) as `6db65e20`). PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) merged from source head `daa3f2f3` after final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401) and [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404) passed. Final CI measured **62 files / 283 passed / 3 skipped**, a **3,298-module** production build, and lint at **0 errors** with 6,363 warnings retained as maintenance debt. The two-browser-process collaboration smoke passed **10/10** with **1 ms** A-to-B relay, **0** remote REST PUTs, bidirectional convergence, reconnect catch-up, stable unread drain, and no-store topic reads. The enforced full-render performance gate passed **120/120** labels and blips with **101** lazy slots, **394.3 ms** landing, **595.6 ms** expanded, and **36 MB** heap. Inspected CI fixture evidence is under `screenshots/260712-0313-pr57-release-gates/`.
+Last Updated: 2026-07-12 (`master` @ `fe6988fb`). PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60) is merged and public-live after a blue/green cutover. Its fully green [CI 29177833541](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833541) measured **62 files / 284 passed / 3 skipped**, a **3,298-module** production build, lint at **0 errors / 6,354 warnings**, strict desktop/mobile Follow-the-Green `2 → 1 → 0`, and collaboration **10/10**; [iOS 29177833560](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833560) also passed. Public acceptance then measured collaboration **10/10** with a **39 ms** relay and **0** receiving-client REST PUTs, real-control unread drain **2 → 1 → 0** on desktop and emulated Pixel 5 mobile, health/OAuth success, RedisStore active, and **0** API 5xx responses. The visually inspected evidence and required desktop viewport sweep are under `screenshots/260712-0530-pr60-production-final/`.
 
-**Deployment boundary:** merged `master` has not yet been deployed. Live/staging remain bare `nohup` development processes with MemoryStore sessions until a separate deployment and topology-hardening batch verifies health, auth, collaboration, reconnect/catch-up, and unread behavior in production.
+**Deployment boundary:** nginx now serves the exact merge tree through Vite `:3100` → API `:8100`; Redis backs sessions. The former `:3000`/`:8788` public lane remains healthy for immediate rollback via `/root/rizzoma.conf.pre-pr60-20260712-052206`. Both lanes are still unmanaged bare processes, share CouchDB, and need supervised-service hardening before the rollback lane is retired.
 
 Last Updated: 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — Playwright sign-in lands as `sdspieg@gmail.com` "Stephan De Spiegeleire" with Google avatar. Tasks #140 + #143 both closed. Required two Hetzner Robot firewall passes: (1) opened port 80 for Let's Encrypt; (2) consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to allow return traffic from MASQUERADE'd outbound — without that, server couldn't reach `oauth2.googleapis.com/token`. Diagnosed via tcpdump (SYN egressed, no SYN-ACK returned). Same fix unblocks SMTP / S3 / any container-outbound feature.)
 
@@ -35,7 +35,7 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active branch: `master` (2026-07-12; release code checkpoint `8840f552`, handoff/evidence PR #58). Always include branch name + date when summarizing status.
+- Active branch: `master` (2026-07-12; public production checkpoint `fe6988fb`, PR #60). Always include branch name + date when summarizing status.
 - The "Current State" section below is refreshed for the merged native-fractal release; older dated entries are historical evidence only.
 
 Branching mode (private repo):
@@ -69,7 +69,8 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`master` @ 2026-07-12; release code `8840f552` + handoff/evidence PR #58)
+Current State (`master` @ 2026-07-12; public production `fe6988fb`, PR #60)
+- Public nginx targets Vite `:3100`, which proxies to API `:8100` from `/data/large-projects/stephan/rizzoma_merge` at exact merge `fe6988fb`; RedisStore is active. The prior public lane on Vite `:3000` and API `:8788` remains healthy but is rollback-only.
 - FEAT_ALL required: start both server (:8788, the reserved Rizzoma backend port — see CLAUDE.md "Reserved Ports") and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Docker Desktop WSL integration was re-enabled on 2026-03-29; `docker compose up -d couchdb redis` works again from WSL for local live-app verification.
 - Express 5 SPA fallback: `src/server/app.ts` uses `app.get('/{*path}', ...)` which is the canonical path-to-regexp v8 syntax under Express 5 (bare `*` was dropped in v8). This was documented as a "workaround" in earlier snapshots but is actually the correct form. Cleaned up in Hard Gap #29 (2026-04-13): the `/uploads` static handler is now mounted BEFORE the SPA catch-all so the catch-all only has to skip `/api` paths, and the code comment explains the syntax is canonical.
@@ -181,11 +182,11 @@ Current State (`master` @ 2026-07-12; release code `8840f552` + handoff/evidence
 - Dependency upgrades: audit captured in `docs/DEPENDENCY_UPGRADE_AUDIT.md`; minor/patch batch applied (Playwright/Vitest/Prettier, AWS SDK, session/email libs). Major editor/tooling/server upgrades remain deferred.
 
 Current Next Work
-1. Deploy merged `master`; verify health, auth, two-user collaboration, reconnect/catch-up, and unread behavior with repo-stored Playwright evidence.
-2. Replace bare `nohup` processes and MemoryStore sessions with managed services and Redis-backed sessions.
+1. Replace the active and rollback bare Node/Vite processes with managed services; preserve the verified Redis session configuration and exact-SHA rollback procedure.
+2. Soak the PR #60 production lane, then retire `:3000`/`:8788` only after the rollback window closes.
 3. Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
 4. Repair/refresh BLB snapshots and continue inline-marker, toolbar, and unread parity.
-5. Test real-device iPhone Safari; Pixel 9 Pro XL / Android Chrome is already evidenced.
+5. Test real-device iPhone Safari; Pixel 9 Pro XL / Android Chrome and emulated Pixel 5 are already evidenced.
 6. Automate bundle/GDrive backup cadence.
 7. Address Node 22, Capacitor CLI 8, GitHub Action majors, 6,363 lint warnings, and legacy assets.
 

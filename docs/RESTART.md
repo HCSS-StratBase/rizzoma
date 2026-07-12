@@ -1,6 +1,6 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-12 (`master`; native-fractal release code checkpoint `8840f552`, with handoff/evidence landed through PR [#58](https://github.com/HCSS-StratBase/rizzoma/pull/58). Final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401) and [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404) passed. The merged source is not yet deployed; production verification is the next gate.)
+Last refreshed: 2026-07-12 (`master` @ `fe6988fb`; PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60) merged and is public-live. [CI 29177833541](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833541) and [iOS 29177833560](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29177833560) passed. Public acceptance passed health/OAuth, collaboration 10/10 at 39 ms, strict real-control Follow-the-Green `2 → 1 → 0` on desktop and emulated Pixel 5 mobile, zero API 5xx, RedisStore, and the 1280/1366/1440/1600 visual sweep. Evidence: `screenshots/260712-0530-pr60-production-final/`.)
 
 Last refreshed (prior): 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — verified Playwright sign-in lands as `sdspieg@gmail.com`. Tasks #140 + #143 closed. Two Hetzner Robot firewall changes needed: opened :80 + consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to cover return traffic from MASQUERADE'd outbound. tcpdump-diagnosed.)
 
@@ -31,10 +31,10 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `master` (2026-07-12; release code checkpoint `8840f552`, handoff/evidence PR #58). Always cite branch + date when sharing status.
-- Final release gates: 62 Vitest files / 283 passed / 3 skipped; production build 3,298 modules; collaboration 10/10 with 1 ms relay and zero remote REST PUTs; enforced full-render perf 120/120 with 101 lazy slots, 394.3 ms landing, 595.6 ms expanded, and 36 MB heap.
-- Latest inspected release evidence is under `screenshots/260712-0313-pr57-release-gates/`. It contains CI fixture screenshots and metrics, not production-deployment proof.
-- Deployment boundary: merged `master` has not yet been deployed; live/staging still need health, auth, two-user collaboration, reconnect/catch-up, and unread verification after deployment.
+- Active branch: `master` (2026-07-12; public production checkpoint `fe6988fb`, PR #60). Always cite branch + date when sharing status.
+- Final release gates: 62 Vitest files / 284 passed / 3 skipped; production build 3,298 modules; public collaboration 10/10 with 39 ms relay and zero receiving-client REST PUTs; strict public desktop/mobile Follow-the-Green `2 → 1 → 0`; RedisStore active; zero API 5xx during acceptance.
+- Latest inspected production evidence is under `screenshots/260712-0530-pr60-production-final/`, including command logs, real-control before/after captures, and the required desktop viewport sweep.
+- Deployment boundary: nginx targets the exact merge through Vite `:3100` → API `:8100`; the old `:3000`/`:8788` lane remains healthy for immediate rollback. Both lanes are unmanaged bare processes and share CouchDB.
 - Re-read checkpoint: 2026-02-04 01:55 local — BLB child unread highlight removed (green [+] only) and BLB snapshots refreshed (`snapshots/blb/1770165748162-*`); drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
 - 2026-03-29 reality check: Docker Desktop WSL integration is required again for local live verification. The `src/server/app.ts` fallback route uses `'/{*path}'` which is the canonical Express 5 / path-to-regexp v8 syntax (previously called a "workaround" — see Hard Gap #29, 2026-04-13 for the cleanup that confirmed this and reordered the `/uploads` static handler ahead of the SPA catch-all).
 
@@ -63,16 +63,17 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Deploy merged `master`; verify health, auth, two-user collaboration, reconnect/catch-up, and unread behavior with repo-stored Playwright evidence.
-  2) Replace bare `nohup` processes and MemoryStore sessions with managed services and Redis-backed sessions.
+  1) Replace the active and rollback bare Node/Vite processes with managed services; preserve the verified Redis session configuration and exact-SHA rollback procedure.
+  2) Soak the PR #60 production lane, then retire `:3000`/`:8788` only after the rollback window closes.
   3) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
   4) Repair/refresh BLB snapshots and continue inline-marker, toolbar, and unread parity.
-  5) Test real-device iPhone Safari; Pixel 9 Pro XL / Android Chrome is already evidenced.
+  5) Test real-device iPhone Safari; Pixel 9 Pro XL / Android Chrome and emulated Pixel 5 are already evidenced.
   6) Automate bundle/GDrive backup cadence.
-  7) Address Node 22, Capacitor CLI 8, GitHub Action majors, 6,363 lint warnings, and legacy assets.
+  7) Address Node 22, Capacitor CLI 8, GitHub Action majors, 6,354 lint warnings, and legacy assets.
 
   Testing/CI hygiene:
   - Keep `npm run test:toolbar-inline`, `npm run test:follow-green`, and `npm run test:collab` green; snapshots live under `snapshots/<feature>/` and are uploaded as Actions artifacts.
+  - Follow-the-Green acceptance must fail on any non-2xx or malformed unread response and must prove the real desktop and mobile Next control persists `2 -> 1 -> 0`; DOM mutation, debug hooks, direct-API fallbacks, missing-button success, and swallowed errors are forbidden.
   - Keep the enforced 120-blip full-render perf gate green: exact 120/120 rendering, required lazy slots, no timeout, stage duration under 3 seconds, and heap under 100 MB.
   - Keep repo screenshot artifacts under `screenshots/YYMMDD-HHMM[-SS]-purpose-label/`; read `screenshots/README.md` before adding new visual artifacts, and do not leave loose PNG/JSON/HTML files at `screenshots/` root.
   - Update TESTING_STATUS.md and RIZZOMA_FEATURES_STATUS.md after targeted runs; call out gaps. For visual sweeps use `RIZZOMA_SWEEP_STAMP=<YYMMDD-HHMMSS> npm run visual:sweep` followed by `RIZZOMA_SWEEP_DIR=<folder> npm run visual:coverage`; for custom perf artifact folders, run `PERF_SNAPSHOT_DIR=<dir> node scripts/perf-budget.mjs`.
@@ -82,6 +83,7 @@ codex exec '
 ```
 
 Latest screenshot/parity archive (2026-02-25):
+- Newest production acceptance evidence: `screenshots/260712-0530-pr60-production-final/` (public command logs, inspected desktop/mobile before/after captures, and 1280/1366/1440/1600 sweep).
 - Newest release-gate evidence: `screenshots/260712-0313-pr57-release-gates/` (CI fixtures, visually inspected; not a production-deployment claim).
 - `screenshots/260225/INDEX.md`
 - `screenshots/260225/TODAY_RUN_EXHAUSTIVE_ANALYSIS_260225.md`

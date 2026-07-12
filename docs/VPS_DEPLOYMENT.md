@@ -1,28 +1,53 @@
 # VPS Deployment — Rizzoma on 138.201.62.161
 
-**Last updated**: 2026-07-09 (single-active-editor cutover)
+**Last updated**: 2026-07-12 (PR #60 blue/green production cutover)
 
-> **⚠️ 2026-07-09 REALITY CHECK — the Docker topology below is STALE.** Since at
-> least June 2026 the site is NOT served by the Docker containers described in
-> this file. Current truth (see [worklog-260709.md](./worklog-260709.md) for the
-> full table): **live** = `/data/large-projects/stephan/rizzoma_260612` (detached
-> at `origin/fix/single-active-editor`), nohup tsx server :8000 + vite :3000,
-> nginx vhost `138-201-62-161.nip.io`; **staging** =
-> `/data/large-projects/stephan/rizzoma_merge` (same branch), server :8100 +
-> vite :3100, nginx vhost `dev.138-201-62-161.nip.io`. Both with `FEAT_ALL=1
-> FEAT_RIZZOMA_PARITY_RENDER=1`. Only CouchDB (`rizzoma-couchdb`, :5984, db
-> `project_rizzoma` shared by both instances) and Redis (`rizzoma-redis`) still
-> run in Docker. Rollback artifacts: `/root/rizzoma-live-rollback-commit.txt`,
-> `/root/rizzoma-live.env.bak-cutover`. The sections below are kept for the
-> eventual re-productionization (Phase 5).
+> **⚠️ CURRENT RUNTIME TRUTH — the Docker application topology below is
+> historical.** Public nginx now targets Vite `:3100`, which proxies to API
+> `:8100` from `/data/large-projects/stephan/rizzoma_merge` at exact merged
+> commit `fe6988fb`. That API uses RedisStore at the local Redis container.
+> The former public lane remains healthy for immediate rollback: Vite `:3000`
+> plus API `:8788` from `/data/large-projects/stephan/rizzoma_260612` at
+> `daa3f2f3`. Nginx rollback backup:
+> `/root/rizzoma.conf.pre-pr60-20260712-052206`.
 >
-> The repository default remains the reserved local backend `:8788`. The bare
-> VPS processes therefore **must** start Vite with explicit targets:
-> live `VITE_API_TARGET=http://127.0.0.1:8000`; staging
-> `VITE_PORT=3100 VITE_API_TARGET=http://127.0.0.1:8100`. Never change the
-> portable default to match one deployment topology.
+> Both lanes are still unmanaged bare Node/Vite processes. They share CouchDB
+> database `project_rizzoma`; only the active lane is Redis-backed for sessions.
+> The `dev.138-201-62-161.nip.io` vhost reaches the same `:3100` lane, which now
+> intentionally uses the public OAuth callback environment. Legacy listeners
+> on `:3001` and `:8000` are unrelated and must not be touched. The old
+> `scripts/deploy-vps.sh` and Docker instructions below do not describe the live
+> deployment and must not be used until the service topology is rebuilt.
 
-## Server details
+Production acceptance for PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60)
+is preserved under `screenshots/260712-0530-pr60-production-final/`: health and
+OAuth passed, public collaboration passed 10/10, strict desktop/mobile unread
+navigation persisted `2 → 1 → 0`, the API recorded zero 5xx responses, and the
+required 1280/1366/1440/1600 visual sweep was inspected.
+
+## Current blue/green deployment and rollback
+
+1. Fetch the desired `master` commit in the inactive checkout and verify its Git
+   tree against the already accepted candidate. Require zero tracked changes;
+   preserve all untracked runtime/backup files.
+2. Check out the exact commit detached. Never deploy an unpinned branch name.
+3. Restart only the inactive API/Vite lane with explicit `PORT`, `VITE_PORT`,
+   `VITE_API_TARGET`, public `APP_URL`/`APP_BASE_URL`/`CLIENT_URL`, allowed
+   origins, `FEAT_ALL=1`, `FEAT_RIZZOMA_PARITY_RENDER=1`, and the verified Redis
+   URL. Load secrets from the preserved live environment file without printing
+   it.
+4. Before exposure, verify direct health, the public Google OAuth callback,
+   Redis readiness, collaboration/reconnect, and strict desktop/mobile
+   Follow-the-Green `2 → 1 → 0`. Inspect medium-resolution PNGs.
+5. Back up `/etc/nginx/sites-available/rizzoma.conf`, change only the one Rizzoma
+   `proxy_pass`, run `nginx -t`, and reload nginx.
+6. Repeat the full acceptance set against the public URL. Keep the former lane
+   running until the rollback window closes.
+7. Roll back atomically by restoring the recorded nginx backup, running
+   `nginx -t`, reloading nginx, and verifying public health. Do not modify either
+   checkout during rollback.
+
+## Historical Docker-era server details (do not use for current deployment)
 
 | Field | Value |
 |---|---|
@@ -40,7 +65,7 @@
 | **Repo** | `HCSS-StratBase/rizzoma` on GitHub |
 | **Current HEAD** | `b99fa4bf` (late-night prod-build path green + CI gates tightened, 2026-04-22) |
 
-## What's running (as of 2026-04-23)
+## Historical Docker stack (as of 2026-04-23; no longer serving public traffic)
 
 Docker-Compose stack:
 
@@ -79,7 +104,7 @@ Active env vars on both `rizzoma-app` and `rizzoma-app-prod` containers (same SH
 
 OAuth sign-in buttons render and POST to `/api/auth/{google,facebook,microsoft}/start` correctly, but the OAuth provider redirects back to `https://138-201-62-161.nip.io/...` which **requires HTTPS** — currently 404 because Caddy/Let's Encrypt is blocked on the Hetzner Cloud firewall (port 80 inbound denied → ACME webroot challenge times out). HTTP-only OAuth is rejected by all three providers in 2026.
 
-## How to update (verified procedure, 2026-04-21)
+## Historical Docker update procedure (2026-04-21; do not use)
 
 Hryhorii's local docker-compose.yml has VPS-specific overrides (ports, persistent volumes, `ALLOWED_ORIGINS` for the public IP). The stock upstream docker-compose matches on sphinx + FEAT_ALL but differs on these. When pulling:
 

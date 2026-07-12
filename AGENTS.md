@@ -76,7 +76,7 @@
   * For every backend or frontend change, cross-check behavior and UI against the legacy sources in `original-rizzoma/` and `original-rizzoma-src/`, and against the current live UI references in `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/` (PNGs + MD notes). Keep the modernized implementation functionally and visually close to the legacy GUI while upgrading “under the hood.”
 
   ## Branch Context Guardrails
-  * Active branch: `master` (2026-07-12; native-fractal release code checkpoint `8840f552`, with handoff/evidence landed via PR #58). Always cite branch name + date when summarizing status.
+  * Active branch: `master` (2026-07-12; public production checkpoint `fe6988fb`, PR #60). Always cite branch name + date when summarizing status.
   * Treat any "Current State" bullets in docs as historical snapshots unless explicitly refreshed for the active branch; update them before quoting.
   * Run `npm run lint:branch-context` after touching status docs; CI/local lint will fail if the branch name is missing from `docs/HANDOFF.md` Current State.
 
@@ -97,16 +97,17 @@ codex exec '
     - If you need the dev stack, run `./scripts/start-all.sh` (now warns + continues if `sphinx` is missing/slow) or the manual flow (`docker compose up -d couchdb redis` + `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev`). Ensure `http://localhost:3000/` is reachable before Playwright.
 
   Priority focus (current backlog):
-  1) Deploy merged `master`; verify health, auth, two-user collaboration, reconnect/catch-up, and unread behavior with repo-stored Playwright evidence.
-  2) Replace bare `nohup` processes and MemoryStore sessions with managed services and Redis-backed sessions.
+  1) Replace the active and rollback bare Node/Vite processes with managed services; preserve the verified Redis session configuration and exact-SHA rollback procedure.
+  2) Soak the PR #60 production lane, then retire `:3000`/`:8788` only after the rollback window closes.
   3) Run full-render 500/1,000-blip resilience sweeps; retain the enforced 120-blip lazy-path CI gate.
   4) Repair/refresh BLB snapshots and continue inline-marker, toolbar, and unread parity.
-  5) Test real-device iPhone Safari; Pixel 9 Pro XL / Android Chrome is already evidenced.
+  5) Test real-device iPhone Safari; Pixel 9 Pro XL / Android Chrome and emulated Pixel 5 are already evidenced.
   6) Automate bundle/GDrive backup cadence.
-  7) Address Node 22, Capacitor CLI 8, GitHub Action majors, 6,363 lint warnings, and legacy assets.
+  7) Address Node 22, Capacitor CLI 8, GitHub Action majors, 6,354 lint warnings, and legacy assets.
 
   Testing/CI hygiene:
   - Keep `npm run test:toolbar-inline`, `npm run test:follow-green`, and `npm run test:collab` green; snapshots live under `snapshots/<feature>/` and are uploaded as Actions artifacts.
+  - Follow-the-Green acceptance must fail on any non-2xx or malformed unread response and must prove the real desktop and mobile Next control persists `2 -> 1 -> 0`; DOM mutation, debug hooks, direct-API fallbacks, missing-button success, and swallowed errors are forbidden.
   - Keep the enforced 120-blip full-render perf gate green: exact 120/120 rendering, required lazy slots, no timeout, stage duration under 3 seconds, and heap under 100 MB.
   - Keep repo screenshot artifacts under `screenshots/YYMMDD-HHMM[-SS]-purpose-label/`; read `screenshots/README.md` before adding new visual artifacts, and do not leave loose PNG/JSON/HTML files at `screenshots/` root.
   - Update TESTING_STATUS.md and RIZZOMA_FEATURES_STATUS.md after targeted runs; call out gaps. For visual sweeps use `RIZZOMA_SWEEP_STAMP=<YYMMDD-HHMMSS> npm run visual:sweep` followed by `RIZZOMA_SWEEP_DIR=<folder> npm run visual:coverage`; for custom perf artifact folders, run `PERF_SNAPSHOT_DIR=<dir> node scripts/perf-budget.mjs`.
