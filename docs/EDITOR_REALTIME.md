@@ -1,6 +1,7 @@
 # Editor Realtime — Summary
 
-Last refreshed: 2026-04-13 (master, after Hard Gap Executions 6 + 7).
+Last refreshed: 2026-07-12 (`codex/authenticated-cursor-identity`, based on
+merged PR #64 `master` at `2595d2de`).
 
 Implemented (behind `EDITOR_ENABLE=1`)
 - Incremental updates → `/api/editor/:waveId/updates` and broadcast/apply via Socket.IO.
@@ -9,6 +10,13 @@ Implemented (behind `EDITOR_ENABLE=1`)
 - Recovery endpoint: `/api/editor/:waveId/rebuild { blipId? }`.
 - Search materialization: `/api/editor/search` with Mango indexes, snippets, and pagination.
 - **Y.js + TipTap collaborative editing** (verified 2026-02-09, commit `ae62a22b`): cross-tab realtime sync via Y.Doc fragment 'default', synchronous provider creation in `useCollaboration`, awareness loop break via `applyingRemoteAwareness` flag in `CollaborativeProvider.ts`, relay-first server pattern (`blip:update` relayed to room before applying to yjsDocCache). Behind `REALTIME_COLLAB` + `LIVE_CURSORS` (both enabled by `FEAT_ALL=1`).
+- **Authenticated cursor identity candidate** (2026-07-12): topic-root,
+  nested-blip, and generic editor providers synchronously seed awareness with
+  the authenticated account name (email fallback) and deterministic user-ID
+  color. Cursor decorations and typing indicators consume the same awareness
+  identity; reconnect re-announces it and destroy removes it immediately.
+  Unit/build gates are green, but two-real-user Playwright and PNG inspection
+  remain required before browser acceptance.
 
 See `docs/EDITOR.md` for the request/response shapes and `CLAUDE_SESSION.md` "Real-Time Collaboration" section for the TipTap collaboration gotchas (synchronous provider, history conflict, fragment name `'default'` not `'prosemirror'`).
 

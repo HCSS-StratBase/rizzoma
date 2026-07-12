@@ -4,7 +4,7 @@ This guide provides step-by-step instructions for modernizing the Rizzoma codeba
 
 For live project status and the restart checklist, see `docs/HANDOFF.md` and `docs/RESTART.md`.
 
-## Current Branch Notes (master target, last refreshed 2026-07-12)
+## Current Branch Notes (follow-on candidate, last refreshed 2026-07-12)
 
 This document includes historical phase language and legacy shortcuts. For the active branch, treat the following as authoritative:
 - Status and backlog: `RIZZOMA_FEATURES_STATUS.md`
@@ -12,6 +12,12 @@ This document includes historical phase language and legacy shortcuts. For the a
 - Reserved ports and grep checklist: `CLAUDE.md` "Reserved Ports" section
 
 Operational reality for this branch:
+- The authenticated-cursor candidate is isolated on
+  `codex/authenticated-cursor-identity`, based on `master` at PR #64 merge
+  `2595d2de`. It replaces invented `User N` cursor
+  labels with authenticated names (email fallback), deterministic colors,
+  reconnect re-announcement, and immediate leave cleanup. Two real signed-in
+  users still need browser acceptance before this can be called UI-verified.
 - The production-service hardening candidate is isolated on
   `codex/production-service-hardening` for merge back to `master`; see the
   [managed deployment guide](deploy/systemd/README.md). Public traffic remains

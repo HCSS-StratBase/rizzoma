@@ -1,6 +1,8 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-12 (`master` target via `codex/production-service-hardening`; base `1241428b`; public runtime code still `fe6988fb`). The in-flight branch adds compiled systemd blue/green lanes, exact-SHA releases, loopback binding, strong secret rotation, Redis readiness, dirty-Yjs retention, and ordered HTTP/Socket.IO/Redis shutdown. Local gates passed: typecheck, 63 Vitest files / 299 passed / 3 skipped, and the 3,298-module production build. This is not yet deployed; public nginx remains on Vite `:3100` → API `:8100` until merge, direct preflight, zero-overlap maintenance drain, both-vhost cutover, and public acceptance. Worklog: [production service hardening](worklog-260712-production-service-hardening.md).
+Last refreshed: 2026-07-12 (follow-on branch `codex/authenticated-cursor-identity`; `master` base `2595d2de`, merged PR #64; public runtime code still `fe6988fb`). The candidate carries authenticated Yjs cursor names, stable colors, reconnect re-announcement, and immediate leave cleanup. Focused collaboration tests passed 27/27; full Vitest passed 64 files / 306 tests with 3 skipped; typecheck and the 3,299-module production build passed. Keep the PR draft until two real signed-in users verify cursor names/colors, typing indicators, reconnect, and leave cleanup in Playwright. No VPS change belongs to this branch. Worklog: [authenticated cursor identity](worklog-260712-authenticated-cursor-identity.md).
+
+Base branch state: PR #64 merged production-service hardening to `master` as `2595d2de`. This branch changes no service/deployment files and makes no new rollout claim. Worklog: [production service hardening](worklog-260712-production-service-hardening.md).
 
 Last refreshed (prior): 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — verified Playwright sign-in lands as `sdspieg@gmail.com`. Tasks #140 + #143 closed. Two Hetzner Robot firewall changes needed: opened :80 + consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to cover return traffic from MASQUERADE'd outbound. tcpdump-diagnosed.)
 
@@ -31,7 +33,7 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `master` (2026-07-12; public production checkpoint `fe6988fb`, PR #60). Always cite branch + date when sharing status.
+- Active branch: `codex/authenticated-cursor-identity` (2026-07-12), based on merged PR #64 `master` at `2595d2de`; public production remains `fe6988fb` from PR #60. Always cite branch + date when sharing status.
 - Final release gates: 62 Vitest files / 284 passed / 3 skipped; production build 3,298 modules; public collaboration 10/10 with 39 ms relay and zero receiving-client REST PUTs; strict public desktop/mobile Follow-the-Green `2 → 1 → 0`; RedisStore active; zero API 5xx during acceptance.
 - Latest inspected production evidence is under `screenshots/260712-0530-pr60-production-final/`, including command logs, real-control before/after captures, and the required desktop viewport sweep.
 - Deployment boundary: nginx targets the exact merge through Vite `:3100` → API `:8100`; the old `:3000`/`:8788` lane remains healthy for immediate rollback. Both lanes are unmanaged bare processes and share CouchDB.

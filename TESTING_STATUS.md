@@ -1,5 +1,22 @@
 # Rizzoma Feature Testing Status
 
+## Authenticated cursor identity candidate — 2026-07-12
+
+- Branch `codex/authenticated-cursor-identity` follows merged PR #64 on
+  `master` at `2595d2de`.
+- Focused identity/provider/editor suite: **3 files / 27 passed / 0 failed**.
+- Full Vitest: **64 files / 306 passed / 3 skipped / 0 failed**.
+- Typecheck passed; the production build passed with **3,299 transformed
+  modules**.
+- Unit coverage proves authenticated name/email selection, deterministic
+  colors for opaque IDs, no invented `User N` fallback, two named awareness
+  states, idempotent identity updates, reconnect re-announcement, and immediate
+  awareness removal on destroy.
+- Boundary: UI acceptance is still open. Run Playwright with two real signed-in
+  users and inspect saved PNGs for both names/colors, typing indicators,
+  reconnect recovery, and immediate leave cleanup before marking this feature
+  browser-verified or deploying it.
+
 ## Managed-production hardening candidate — 2026-07-12
 
 - Branch `codex/production-service-hardening` adds production loopback binding,
