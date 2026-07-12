@@ -159,3 +159,10 @@ This section supersedes the deployment boundary above.
 - This branch is local-only and must be rebased onto the final sharing/cache head before CI or merge.
 - `public/sw.js` is intentionally untouched here. The companion integration must make `/uploads/*` network-only and purge the old dynamic cache before this route may deploy.
 - Task and mention residue is outside this isolated slice and remains owned by the sharing route-ACL patch.
+
+### Attachment scanner and cancellation hardening
+
+- Made production scanning fail closed: absent configuration, connection/timeout failure, an empty response, and an unrecognized ClamAV response now return `virus_scan_unavailable`; only an explicit terminal `OK` verdict admits bytes, while `FOUND` remains a malware rejection.
+- Added CSRF to the multipart upload route and restricted declared image MIME types to the existing allowlist instead of accepting every `image/*` subtype.
+- Closed the preflight cancellation race in `createUploadTask`: canceling while CSRF setup is pending now rejects as `upload_aborted` without opening or sending the XHR.
+- Verification: **20/20** focused tests passed across upload authorization, scanner protocol verdicts, and pre-CSRF cancellation; full TypeScript typecheck and `git diff --check` passed.

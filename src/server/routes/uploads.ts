@@ -5,7 +5,8 @@ import multer from 'multer';
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../middleware/auth.js';
-import { scanBuffer } from '../lib/virusScan.js';
+import { csrfProtect } from '../middleware/csrf.js';
+import { scanBuffer, VirusDetectedError, VirusScanUnavailableError } from '../lib/virusScan.js';
 import { getDoc, insertDoc } from '../lib/couch.js';
 import {
   identityFromRequest,
@@ -35,7 +36,7 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith('image/') || allowedMimeTypes.has(file.mimetype)) {
+    if (allowedMimeTypes.has(file.mimetype)) {
       return cb(null, true);
     }
     cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', file.fieldname));
@@ -112,7 +113,7 @@ function isInlineSafeImage(mimeType: string): boolean {
   return ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(mimeType);
 }
 
-uploadsRouter.post('/', requireAuth, upload.single('file'), async (req, res) => {
+uploadsRouter.post('/', requireAuth, csrfProtect(), upload.single('file'), async (req, res) => {
   try {
     const file = req.file as Express.Multer.File | undefined;
     if (!file || !file.buffer) {
@@ -155,7 +156,7 @@ uploadsRouter.post('/', requireAuth, upload.single('file'), async (req, res) => 
 
     const sniffed = sniffMime(file.buffer);
     const mimeType = sniffed?.mime || file.mimetype;
-    if (!mimeType || (!mimeType.startsWith('image/') && !allowedMimeTypes.has(mimeType))) {
+    if (!mimeType || !allowedMimeTypes.has(mimeType)) {
       res.status(400).json({ error: 'invalid_file_type' });
       return;
     }
@@ -163,8 +164,12 @@ uploadsRouter.post('/', requireAuth, upload.single('file'), async (req, res) => 
     try {
       await scanBuffer(file.buffer);
     } catch (error) {
-      console.error('[uploads] Virus scan failed', error);
-      res.status(400).json({ error: 'virus_detected' });
+      if (error instanceof VirusDetectedError) {
+        res.status(400).json({ error: 'virus_detected' });
+        return;
+      }
+      console.error('[uploads] Virus scan unavailable', error);
+      res.status(error instanceof VirusScanUnavailableError ? 503 : 500).json({ error: 'virus_scan_unavailable' });
       return;
     }
 

@@ -23,10 +23,20 @@ export type UploadTask = {
 export function createUploadTask(file: File, options: UploadOptions): UploadTask {
   const xhr = new XMLHttpRequest();
   let settled = false;
+  let cancelled = false;
 
   const promise = (async () => {
     await ensureCsrf();
+    if (cancelled) {
+      settled = true;
+      throw new Error('upload_aborted');
+    }
     return new Promise<UploadResult>((resolve, reject) => {
+      if (cancelled) {
+        settled = true;
+        reject(new Error('upload_aborted'));
+        return;
+      }
       xhr.open('POST', '/api/uploads');
       xhr.withCredentials = true;
       const token = readCookie('XSRF-TOKEN');
@@ -66,7 +76,8 @@ export function createUploadTask(file: File, options: UploadOptions): UploadTask
 
   const cancel = () => {
     if (settled) return;
-    xhr.abort();
+    cancelled = true;
+    if (xhr.readyState !== XMLHttpRequest.UNSENT) xhr.abort();
   };
 
   if (options?.signal) {

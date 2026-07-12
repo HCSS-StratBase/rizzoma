@@ -2,7 +2,7 @@ import fs from 'fs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Router, Request, Response, NextFunction } from 'express';
 import type { Session, SessionData } from 'express-session';
-import { scanBuffer } from '../server/lib/virusScan';
+import { scanBuffer, VirusDetectedError, VirusScanUnavailableError } from '../server/lib/virusScan';
 import { find, getDoc, insertDoc } from '../server/lib/couch';
 
 const scanBufferMock = scanBuffer as unknown as ReturnType<typeof vi.fn>;
@@ -12,6 +12,18 @@ const insertDocMock = insertDoc as unknown as ReturnType<typeof vi.fn>;
 
 vi.mock('../server/lib/virusScan', () => ({
   scanBuffer: vi.fn(async () => {}),
+  VirusDetectedError: class VirusDetectedError extends Error {
+    constructor(message = 'Virus detected') {
+      super(message);
+      this.name = 'VirusDetectedError';
+    }
+  },
+  VirusScanUnavailableError: class VirusScanUnavailableError extends Error {
+    constructor(message = 'Virus scanner unavailable') {
+      super(message);
+      this.name = 'VirusScanUnavailableError';
+    }
+  },
 }));
 
 vi.mock('../server/lib/couch', () => ({
@@ -113,6 +125,11 @@ async function invokeUploads(
         }
       : undefined,
   };
+  req.get = ((name: string) => (
+    name.toLowerCase() === 'x-csrf-token'
+      ? String((req.session as any).csrfToken || '')
+      : undefined
+  )) as Request['get'];
   const res: Partial<Response> & {
     statusCode: number;
     body: any;
@@ -164,6 +181,7 @@ const makeSession = (overrides: Record<string, unknown> = {}) =>
     reload: vi.fn(),
     save: vi.fn(),
     touch: vi.fn(),
+    csrfToken: 'test-csrf-token',
     ...overrides,
   }) as unknown as Session & Partial<SessionData> & Record<string, unknown>;
 
@@ -342,7 +360,7 @@ describe('routes: access-controlled uploads', () => {
 
   it('rejects uploads when virus scan fails', async () => {
     const { uploadsRouter } = await loadUploadsModule();
-    scanBufferMock.mockRejectedValueOnce(new Error('FOUND'));
+    scanBufferMock.mockRejectedValueOnce(new VirusDetectedError('stream: Eicar-Test-Signature FOUND'));
     const res = await invokeUploads(uploadsRouter, 'post', '/', {
       session: makeSession({ userId: 'owner-1' }),
       body: { blipId: blip._id },
@@ -350,6 +368,19 @@ describe('routes: access-controlled uploads', () => {
     });
     expect(res.statusCode).toBe(400);
     expect(res.body).toMatchObject({ error: 'virus_detected' });
+  });
+
+  it('fails closed with 503 when the virus scanner is unavailable', async () => {
+    const { uploadsRouter } = await loadUploadsModule();
+    scanBufferMock.mockRejectedValueOnce(new VirusScanUnavailableError('Virus scanner returned no verdict'));
+    const res = await invokeUploads(uploadsRouter, 'post', '/', {
+      session: makeSession({ userId: 'owner-1' }),
+      body: { blipId: blip._id },
+      file: pdfFile(),
+    });
+    expect(res.statusCode).toBe(503);
+    expect(res.body).toMatchObject({ error: 'virus_scan_unavailable' });
+    expect(writeFileSpy).not.toHaveBeenCalled();
   });
 
   it('fails S3 closed because public and signed URLs outlive revocation', async () => {
