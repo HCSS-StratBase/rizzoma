@@ -9,6 +9,8 @@ export type UploadResult = {
 };
 
 export type UploadOptions = {
+  blipId: string;
+  waveId?: string;
   onProgress?: (percent: number) => void;
   signal?: AbortSignal;
 };
@@ -18,7 +20,7 @@ export type UploadTask = {
   cancel: () => void;
 };
 
-export function createUploadTask(file: File, options?: UploadOptions): UploadTask {
+export function createUploadTask(file: File, options: UploadOptions): UploadTask {
   const xhr = new XMLHttpRequest();
   let settled = false;
 
@@ -56,6 +58,8 @@ export function createUploadTask(file: File, options?: UploadOptions): UploadTas
       };
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('blipId', options.blipId);
+      if (options.waveId) formData.append('waveId', options.waveId);
       xhr.send(formData);
     });
   })();
@@ -76,6 +80,6 @@ export function createUploadTask(file: File, options?: UploadOptions): UploadTas
   return { promise, cancel };
 }
 
-export function uploadFile(file: File, onProgress?: (percent: number) => void): Promise<UploadResult> {
-  return createUploadTask(file, { onProgress }).promise;
+export function uploadFile(file: File, blipId: string, onProgress?: (percent: number) => void): Promise<UploadResult> {
+  return createUploadTask(file, { blipId, onProgress }).promise;
 }

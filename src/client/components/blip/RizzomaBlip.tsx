@@ -1167,6 +1167,7 @@ export function RizzomaBlip({
       });
       lastUploadRef.current = { file, kind, ...handlers };
       const task = createUploadTask(file, {
+        blipId: blip.id,
         onProgress: (percent) => {
           setUploadState((prev) => (prev ? { ...prev, progress: percent } : prev));
         },
@@ -1198,7 +1199,7 @@ export function RizzomaBlip({
           toast(handlers.failureToast, 'error');
         });
     },
-    [toast],
+    [blip.id, toast],
   );
 
   const handleCancelUpload = useCallback(() => {

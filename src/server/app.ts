@@ -24,7 +24,7 @@ import editorRouter from './routes/editor.js';
 import linksRouter from './routes/links.js';
 import blipsRouter from './routes/blips.js';
 import { inlineCommentsRouter } from './routes/inlineComments.js';
-import { uploadsPath, uploadsRouter } from './routes/uploads.js';
+import { uploadFilesRouter, uploadsRouter } from './routes/uploads.js';
 import healthRouter from './routes/health.js';
 import notificationsRouter from './routes/notifications.js';
 import gadgetsRouter from './routes/gadgets.js';
@@ -100,12 +100,10 @@ if (process.env['NODE_ENV'] === 'production') {
   app.use(express.static(staticDir));
 }
 
-// Uploads are served from disk; mount BEFORE the SPA catch-all so the
-// catch-all doesn't need to defensively skip /uploads paths itself.
-app.use('/uploads', express.static(uploadsPath, {
-  fallthrough: false,
-  maxAge: '1d',
-}));
+// Upload bytes are guarded against the current wave role on every request.
+// Never expose the storage directory via express.static: a known URL must stop
+// working as soon as its reader logs out or loses access.
+app.use('/uploads', uploadFilesRouter);
 
 // SPA navigation handler (last registered — catch-all for non-/api, non-/uploads
 // GET requests). Uses the Express 5 / path-to-regexp v8 named-wildcard syntax

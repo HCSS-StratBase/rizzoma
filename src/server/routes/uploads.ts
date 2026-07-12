@@ -6,12 +6,13 @@ import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { scanBuffer } from '../lib/virusScan.js';
-
-// AWS SDK v3 - optional, loaded dynamically when S3 storage is enabled
-let S3Client: any = null;
-let PutObjectCommand: any = null;
-let GetObjectCommand: any = null;
-let getSignedUrl: any = null;
+import { getDoc, insertDoc } from '../lib/couch.js';
+import {
+  identityFromRequest,
+  requireWaveAccess,
+  resolveBlipAccess,
+  sendAccessDenied,
+} from '../lib/access.js';
 
 const uploadRoot = path.resolve(process.cwd(), 'data', 'uploads');
 fs.mkdirSync(uploadRoot, { recursive: true });
@@ -30,55 +31,6 @@ const imageMimes = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp'
 const allowedMimeTypes = new Set([...documentMimes, ...imageMimes]);
 const blockedExtensions = new Set(['.exe', '.bat', '.cmd', '.sh', '.msi']);
 
-let s3Client: any = null;
-let s3Initialized = false;
-
-// Initialize S3 client lazily on first use
-async function ensureS3Initialized() {
-  if (s3Initialized) return;
-
-  const storageMode = (process.env['UPLOADS_STORAGE'] || 'local').toLowerCase();
-  if (storageMode !== 's3') return;
-
-  const s3Bucket = process.env['UPLOADS_S3_BUCKET'] || '';
-  if (!s3Bucket) {
-    throw new Error('UPLOADS_S3_BUCKET is required when UPLOADS_STORAGE=s3');
-  }
-
-  try {
-    // Dynamic import for optional AWS SDK v3
-    // Using string variables to prevent Vite from trying to resolve at build time
-    const s3ClientPkg = '@aws-sdk/client-s3';
-    const presignerPkg = '@aws-sdk/s3-request-presigner';
-    const s3Module = await import(/* @vite-ignore */ s3ClientPkg);
-    const presignerModule = await import(/* @vite-ignore */ presignerPkg);
-
-    S3Client = s3Module.S3Client;
-    PutObjectCommand = s3Module.PutObjectCommand;
-    GetObjectCommand = s3Module.GetObjectCommand;
-    getSignedUrl = presignerModule.getSignedUrl;
-
-    const endpoint = process.env['UPLOADS_S3_ENDPOINT'];
-    const forcePathStyle = process.env['UPLOADS_S3_FORCE_PATH_STYLE'] === '1';
-
-    s3Client = new S3Client({
-      credentials: {
-        accessKeyId: process.env['UPLOADS_S3_ACCESS_KEY'] || '',
-        secretAccessKey: process.env['UPLOADS_S3_SECRET_KEY'] || '',
-      },
-      endpoint: endpoint || undefined,
-      forcePathStyle: forcePathStyle,
-      region: process.env['UPLOADS_S3_REGION'] || 'us-east-1',
-    });
-
-    s3Initialized = true;
-    console.log('[uploads] S3 client initialized');
-  } catch (error) {
-    console.error('[uploads] Failed to initialize S3 client:', error);
-    throw new Error('AWS SDK v3 is required for S3 storage. Install @aws-sdk/client-s3 and @aws-sdk/s3-request-presigner');
-  }
-}
-
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
@@ -91,13 +43,24 @@ const upload = multer({
 });
 
 export const uploadsRouter = Router();
+export const uploadFilesRouter = Router();
 export const uploadsPath = uploadRoot;
 
-function sanitizeBaseName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, '_');
-}
-
 type SniffedType = { mime: string; ext: string | null };
+
+type UploadDoc = {
+  _id: string;
+  type: 'upload';
+  waveId: string;
+  blipId: string;
+  uploaderId: string;
+  storage: 'local';
+  storageKey: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  createdAt: number;
+};
 
 function sniffMime(buffer: Buffer): SniffedType | null {
   if (!buffer || buffer.length < 4) return null;
@@ -124,47 +87,29 @@ function sniffMime(buffer: Buffer): SniffedType | null {
   return null;
 }
 
-async function persistLocalFile(filename: string, buffer: Buffer): Promise<string> {
-  await fs.promises.writeFile(path.join(uploadRoot, filename), buffer);
-  return `/uploads/${encodeURIComponent(filename)}`;
+function uploadUrl(uploadId: string): string {
+  return `/uploads/${encodeURIComponent(uploadId)}`;
 }
 
-async function persistS3File(filename: string, buffer: Buffer, mimeType: string): Promise<string> {
-  await ensureS3Initialized();
+function localUploadPath(storageKey: string): string | null {
+  if (!storageKey || storageKey !== path.basename(storageKey)) return null;
+  const resolved = path.resolve(uploadRoot, storageKey);
+  return path.dirname(resolved) === uploadRoot ? resolved : null;
+}
 
-  const s3Bucket = process.env['UPLOADS_S3_BUCKET'] || '';
-  const s3BaseUrl = (process.env['UPLOADS_S3_PUBLIC_URL'] || '').replace(/\/$/, '');
-  const s3SignedUrlTtl = Number(process.env['UPLOADS_S3_SIGNED_URL_TTL'] || 3600);
+function storageExtension(originalName: string, sniffed: SniffedType | null): string {
+  const raw = sniffed?.ext ? `.${sniffed.ext}` : path.extname(originalName);
+  return raw.replace(/[^.a-zA-Z0-9]/g, '').slice(0, 16);
+}
 
-  if (!s3Client || !s3Bucket) {
-    throw new Error('S3 storage is not configured');
-  }
+function contentDisposition(originalName: string, inline: boolean): string {
+  const name = path.basename(originalName || 'download');
+  const fallback = name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
+  return `${inline ? 'inline' : 'attachment'}; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(name)}`;
+}
 
-  // Upload file using PutObjectCommand
-  const putCommand = new PutObjectCommand({
-    Bucket: s3Bucket,
-    Key: filename,
-    Body: buffer,
-    ContentType: mimeType,
-    Metadata: {
-      'original-name': filename,
-    },
-  });
-
-  await s3Client.send(putCommand);
-
-  // Return public URL or generate signed URL
-  if (s3BaseUrl) {
-    return `${s3BaseUrl}/${encodeURIComponent(filename)}`;
-  }
-
-  // Generate signed URL for private buckets
-  const getCommand = new GetObjectCommand({
-    Bucket: s3Bucket,
-    Key: filename,
-  });
-
-  return await getSignedUrl(s3Client, getCommand, { expiresIn: s3SignedUrlTtl });
+function isInlineSafeImage(mimeType: string): boolean {
+  return ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(mimeType);
 }
 
 uploadsRouter.post('/', requireAuth, upload.single('file'), async (req, res) => {
@@ -174,6 +119,35 @@ uploadsRouter.post('/', requireAuth, upload.single('file'), async (req, res) => 
       res.status(400).json({ error: 'missing_file' });
       return;
     }
+
+    const blipId = String(req.body?.['blipId'] || '').trim();
+    if (!blipId) {
+      res.status(400).json({ error: 'missing_blip_id' });
+      return;
+    }
+
+    const identity = identityFromRequest(req);
+    const resolved = await resolveBlipAccess(blipId, identity);
+    if (!resolved.access.canEdit) {
+      sendAccessDenied(res, identity, 'edit', (req as any)?.id);
+      return;
+    }
+    const waveId = String(resolved.blip.waveId || '');
+    const claimedWaveId = String(req.body?.['waveId'] || '').trim();
+    if (claimedWaveId && claimedWaveId !== waveId) {
+      res.status(400).json({ error: 'wave_mismatch' });
+      return;
+    }
+
+    // Public or pre-signed object-store URLs remain usable after a role is
+    // revoked. Until S3 is proxied through this same per-request ACL, fail
+    // closed instead of minting a non-revocable attachment URL.
+    const storageMode = (process.env['UPLOADS_STORAGE'] || 'local').toLowerCase();
+    if (storageMode !== 'local') {
+      res.status(503).json({ error: 'upload_storage_acl_unavailable' });
+      return;
+    }
+
     if (blockedExtensions.has(path.extname(file.originalname).toLowerCase())) {
       res.status(400).json({ error: 'invalid_file_type' });
       return;
@@ -194,30 +168,106 @@ uploadsRouter.post('/', requireAuth, upload.single('file'), async (req, res) => 
       return;
     }
 
-    const baseName = sanitizeBaseName(path.basename(file.originalname, path.extname(file.originalname))) || 'upload';
-    const ext = sniffed?.ext ? `.${sniffed.ext}` : path.extname(file.originalname);
-    const filename = `${baseName}-${randomUUID()}${ext || ''}`;
+    const opaqueId = randomUUID();
+    const uploadId = `upload:${opaqueId}`;
+    const storageKey = `${opaqueId}${storageExtension(file.originalname, sniffed)}`;
+    const storagePath = localUploadPath(storageKey);
+    if (!storagePath) throw new Error('invalid_upload_storage_key');
 
-    let url: string;
-    const storageMode = (process.env['UPLOADS_STORAGE'] || 'local').toLowerCase();
-    if (storageMode === 's3') {
-      url = await persistS3File(filename, file.buffer, mimeType);
-    } else {
-      url = await persistLocalFile(filename, file.buffer);
+    await fs.promises.writeFile(storagePath, file.buffer, { flag: 'wx', mode: 0o600 });
+    try {
+      const metadata: UploadDoc = {
+        _id: uploadId,
+        type: 'upload',
+        waveId,
+        blipId: String(resolved.blip._id || blipId),
+        uploaderId: req.user!.id,
+        storage: 'local',
+        storageKey,
+        originalName: file.originalname,
+        mimeType,
+        size: file.size,
+        createdAt: Date.now(),
+      };
+      await insertDoc(metadata);
+    } catch (error) {
+      await fs.promises.unlink(storagePath).catch((cleanupError) => {
+        console.error('[uploads] Failed to clean unindexed upload', cleanupError);
+      });
+      throw error;
     }
 
     res.status(201).json({
       upload: {
-        id: filename,
-        url,
+        id: uploadId,
+        url: uploadUrl(uploadId),
         originalName: file.originalname,
         mimeType,
         size: file.size,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (String(error?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'blip_not_found' });
+      return;
+    }
     console.error('[uploads] Unexpected error', error);
     res.status(500).json({ error: 'upload_failed' });
+  }
+});
+
+// Attachment bytes are never static assets: the current wave role is checked
+// on every request so logout, participant removal, or a private-policy change
+// takes effect immediately. The service worker must treat /uploads as
+// network-only; it is intentionally changed in the sharing/cache patch.
+uploadFilesRouter.get('/:id', async (req, res, next) => {
+  const uploadId = String(req.params['id'] || '');
+  try {
+    const metadata = await getDoc<UploadDoc>(uploadId);
+    if (!metadata || metadata.type !== 'upload') {
+      res.status(404).json({ error: 'upload_not_found' });
+      return;
+    }
+
+    const access = await requireWaveAccess(req, res, metadata.waveId, 'read');
+    if (!access) return;
+
+    if (metadata.storage !== 'local') {
+      res.status(503).json({ error: 'upload_storage_acl_unavailable' });
+      return;
+    }
+    const storagePath = localUploadPath(metadata.storageKey);
+    if (!storagePath) {
+      res.status(500).json({ error: 'invalid_upload_metadata' });
+      return;
+    }
+
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Type', metadata.mimeType || 'application/octet-stream');
+    res.setHeader(
+      'Content-Disposition',
+      contentDisposition(metadata.originalName, isInlineSafeImage(metadata.mimeType)),
+    );
+    res.sendFile(storagePath, { cacheControl: false, dotfiles: 'deny' }, (error) => {
+      if (!error) return;
+      if (!res.headersSent) {
+        res.status((error as any)?.code === 'ENOENT' ? 404 : 500).json({
+          error: (error as any)?.code === 'ENOENT' ? 'upload_not_found' : 'upload_read_failed',
+        });
+        return;
+      }
+      next(error);
+    });
+  } catch (error: any) {
+    if (String(error?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'upload_not_found' });
+      return;
+    }
+    console.error('[uploads] Download failed', error);
+    res.status(500).json({ error: 'upload_read_failed' });
   }
 });
 
