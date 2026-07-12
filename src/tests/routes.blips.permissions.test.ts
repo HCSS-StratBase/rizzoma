@@ -9,6 +9,7 @@ vi.mock('../server/lib/couch.js', () => {
     updateDoc: vi.fn(),
     insertDoc: vi.fn(),
     find: vi.fn().mockResolvedValue({ docs: [] }),
+    getDocsById: vi.fn().mockResolvedValue({}),
     deleteDoc: vi.fn(),
   };
 });
@@ -82,7 +83,12 @@ describe('routes: blips permissions', () => {
   });
 
   it('denies an authenticated outsider from updating a blip', async () => {
-    couch.getDoc.mockResolvedValue({ _id: 'b1', type: 'blip', waveId: 'w1', authorId: 'owner', content: '<p>old</p>' });
+    couch.getDoc.mockImplementation(async (id: string) => id === 'b1'
+      ? { _id: 'b1', type: 'blip', waveId: 'w1', authorId: 'owner', content: '<p>old</p>' }
+      : {
+          _id: 'w1', type: 'topic', authorId: 'owner',
+          sharing: { shareLevel: 'private', allowComments: false, allowEdits: false },
+        });
     couch.updateDoc.mockResolvedValue({ ok: true, id: 'b1', rev: '2-x' });
     const res = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
@@ -95,7 +101,12 @@ describe('routes: blips permissions', () => {
   });
 
   it('allows the author to update a blip', async () => {
-    couch.getDoc.mockResolvedValue({ _id: 'b1', type: 'blip', waveId: 'w1', authorId: 'author', content: '<p>old</p>' });
+    couch.getDoc.mockImplementation(async (id: string) => id === 'b1'
+      ? { _id: 'b1', type: 'blip', waveId: 'w1', authorId: 'author', content: '<p>old</p>' }
+      : {
+          _id: 'w1', type: 'topic', authorId: 'author',
+          sharing: { shareLevel: 'private', allowComments: false, allowEdits: false },
+        });
     couch.updateDoc.mockResolvedValue({ ok: true, id: 'b1', rev: '2-x' });
     const res = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
@@ -104,7 +115,10 @@ describe('routes: blips permissions', () => {
       headers: { 'x-csrf-token': 'tok' },
     });
     expect(res.statusCode).toBe(200);
-    expect(couch.updateDoc).toHaveBeenCalledTimes(1);
+    expect(couch.updateDoc).toHaveBeenCalledWith(expect.objectContaining({
+      _id: 'b1',
+      content: '<p>new</p>',
+    }));
   });
 });
 
@@ -114,7 +128,11 @@ describe('routes: topics permission checks', () => {
   });
 
   it('denies topic deletion for non-author', async () => {
-    couch.getDoc.mockResolvedValue({ _id: 't1', _rev: '1-x', authorId: 'owner' });
+    couch.getDoc.mockResolvedValue({
+      _id: 't1', _rev: '1-x', type: 'topic', authorId: 'owner',
+      title: 'Protected topic', createdAt: 1, updatedAt: 1,
+      sharing: { shareLevel: 'private', allowComments: false, allowEdits: false },
+    });
     const res = await invokeRoute(topicsRouter, 'delete', '/:id', {
       params: { id: 't1' },
       session: { userId: 'other', csrfToken: 'tok' },

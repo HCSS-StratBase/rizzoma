@@ -245,24 +245,19 @@ export function App() {
       const csrfToken = await ensureCsrf();
       let response: { ok: boolean; status: number; data?: unknown };
       try {
-        // Bearer redemption is deliberately direct/online-only. The generic
-        // API helper may queue mutations while offline; persisting this raw
-        // token in an offline queue would turn a tab-scoped secret into a
-        // durable localStorage credential and could report a synthetic 202 as
-        // acceptance.
-        const result = await fetch('/api/waves/invitations/accept', {
+        // Bearer redemption stays on the shared API boundary but is explicitly
+        // online-only. Persisting this raw token in an offline queue would turn
+        // a tab-scoped secret into a durable localStorage credential and could
+        // report a synthetic 202 as acceptance.
+        response = await api('/api/waves/invitations/accept', {
           method: 'POST',
-          credentials: 'include',
+          queueable: false,
           headers: {
             'content-type': 'application/json',
             ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
           },
           body: JSON.stringify({ token: pendingInvite.token }),
         });
-        const text = await result.text();
-        let data: unknown = text;
-        try { data = text ? JSON.parse(text) : null; } catch {}
-        response = { ok: result.ok, status: result.status, data };
       } catch {
         response = { ok: false, status: 0 };
       }

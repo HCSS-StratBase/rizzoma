@@ -37,6 +37,12 @@ describe('routes: comments edge cases', () => {
 
       if (method === 'GET' && /\/[^/]+$/.test(path)) {
         // getDoc
+        if (path.endsWith('/t1')) {
+          return okResp({
+            _id: 't1', type: 'topic', authorId: 'owner',
+            sharing: { shareLevel: 'public', allowComments: true, allowEdits: false },
+          });
+        }
         if (path.endsWith('/c404')) return notFound();
         if (path.endsWith('/task-confusion')) {
           return okResp({

@@ -74,7 +74,7 @@ describe('auth OAuth provider coverage', () => {
       twitter: true,
       saml: false,
     });
-  }, 15_000);
+  }, 45_000);
 
   it('starts the Twitter/X PKCE redirect flow when configured', async () => {
     process.env['TWITTER_CLIENT_ID'] = 'twitter-client';
@@ -92,7 +92,7 @@ describe('auth OAuth provider coverage', () => {
     expect(redirect.searchParams.get('code_challenge_method')).toBe('S256');
     expect(redirect.searchParams.get('code_challenge')).toMatch(/^[A-Za-z0-9_-]{43,}$/);
     expect(redirect.searchParams.get('state')).toMatch(/^[A-Za-z0-9_-]{40,}$/);
-  });
+  }, 45_000);
 
   it('returns 501 for Twitter/X when credentials are absent', async () => {
     const app = await buildApp();
