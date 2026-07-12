@@ -223,7 +223,7 @@ Backup (GDrive)
 - Bundle (manual): `git -C /mnt/c/Rizzoma bundle create /mnt/c/Rizzoma/rizzoma.bundle --all`
 - Copy (manual PowerShell):
   `powershell.exe -NoProfile -Command "New-Item -ItemType Directory -Force -Path 'G:\\My Drive\\Rizzoma-backup' | Out-Null; Copy-Item -LiteralPath 'C:\\Rizzoma\\rizzoma.bundle' -Destination 'G:\\My Drive\\Rizzoma-backup\\rizzoma.bundle' -Force'"`
-- Last run: 2026-02-03 (bundle created + copied to GDrive via `scripts/backup-bundle.sh`).
+- Last run: 2026-07-12. `/mnt/c/Rizzoma/rizzoma.bundle` was rebuilt, `git bundle verify` reported complete history, and both GDrive copies (`rizzoma.bundle` plus `rizzoma-260712-pr57-native-fractal-release.bundle`) matched SHA-256 `c0cb22744d190426c984217943ff1785983f48f1bdffd4b6705749108a58f327` at 630 MB.
 
 Remote access (Tailscale Funnel — 2026-04-14)
 - **Public URL (one for everyone)**: `https://stephan-office.tail4ee1d0.ts.net/`

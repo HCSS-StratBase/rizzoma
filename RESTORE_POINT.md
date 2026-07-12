@@ -588,6 +588,7 @@
 ### Operations, automation, and backups
 - [ ] Implement Google Drive bundle automation in `scripts/deploy-updates.sh`; schedule post-merge bundle + copy commands and document cadence.
 - [ ] Maintain bundle + GDrive backup workflow; verify bundle after each merge.
+  - (2026-07-12) Manual post-merge backup completed: bundle integrity verified as complete history; local, GDrive latest, and dated GDrive copies all matched SHA-256 `c0cb22744d190426c984217943ff1785983f48f1bdffd4b6705749108a58f327` at 630 MB. Automated cadence/alerting remains open.
 - [x] Ensure CI runs typecheck/tests/build; final-head run 29175331401 passed all three gates.
 - [ ] Keep Docker image build push-only and add failure alerting/operational ownership.
 

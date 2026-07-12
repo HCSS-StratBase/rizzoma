@@ -55,3 +55,4 @@ This section supersedes the initial release boundary above.
 - The enforced full-render gate passed 120/120 labels and blips with 101 lazy slots, 394.3 ms landing, 595.6 ms expanded, and 36 MB heap.
 - Rendered evidence and metric payloads are preserved under `screenshots/260712-0313-pr57-release-gates/`; the PNGs were inspected for layout, clipping, toolbar state, and desktop/mobile readability.
 - Boundary: the merged source has not yet been deployed. Production verification, managed services plus Redis-backed sessions, 500/1,000 full-render sweeps, physical iPhone Safari, backup automation, and the 6,363-warning lint backlog remain separate follow-ups.
+- Post-merge backup completed: `rizzoma.bundle` and dated GDrive copy `rizzoma-260712-pr57-native-fractal-release.bundle` are 630 MB, `git bundle verify` reports complete history, and all three copies match SHA-256 `c0cb22744d190426c984217943ff1785983f48f1bdffd4b6705749108a58f327`.
