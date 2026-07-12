@@ -40,7 +40,7 @@ import { createUploadTask, type UploadResult, type UploadTask } from '../../lib/
 import { INSERT_EVENTS, EDIT_MODE_EVENT, EDITOR_FOCUS_EVENT, EDITOR_BLUR_EVENT, BLIP_ACTIVE_EVENT } from '../RightToolsPanel';
 import './RizzomaBlip.css';
 import { injectInlineMarkers } from './inlineMarkers';
-import { renderInlineHtml } from './InlineHtmlRenderer';
+import { InlineHtmlRenderer } from './InlineHtmlRenderer';
 import { LazyBlipSlot, LAZY_MOUNT_THRESHOLD } from './LazyBlipSlot';
 import { useCollaboration } from '../editor/useCollaboration';
 import { yjsDocManager } from '../editor/YjsDocumentManager';
@@ -2224,12 +2224,13 @@ export function RizzomaBlip({
                     title={contentTitle}
                     style={onContentClick ? { cursor: 'pointer' } : undefined}
                   >
-                    {renderInlineHtml({
-                      html: blip.content || '',
-                      inlineChildren,
-                      expandedSet: localExpandedInline,
-                      everMountedSet: everMountedInline,
-                      renderInlineChild: (childId: string) => {
+                    <InlineHtmlRenderer
+                      taskBlipId={blip.id}
+                      html={blip.content || ''}
+                      inlineChildren={inlineChildren}
+                      expandedSet={localExpandedInline}
+                      everMountedSet={everMountedInline}
+                      renderInlineChild={(childId: string) => {
                         const child = inlineChildren.find(c => c.id === childId);
                         if (!child) return null;
                         return (
@@ -2247,8 +2248,8 @@ export function RizzomaBlip({
                             expandedBlips={expandedBlips}
                           />
                         );
-                      },
-                    })}
+                      }}
+                    />
                   </div>
                 ) : (
                   <div

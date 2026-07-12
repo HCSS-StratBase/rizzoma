@@ -1,6 +1,19 @@
-import type { ReactNode } from 'react';
-import { Fragment, createElement } from 'react';
+import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import {
+  Fragment,
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
+import {
+  formatTaskDate,
+  loadTaskCompletions,
+  toggleTaskOnServer,
+} from '../editor/extensions/TaskWidget';
 
 type InlineChildLike = {
   id: string;
@@ -93,6 +106,12 @@ export interface InlineHtmlRenderOptions {
    */
   everMountedSet?: Set<string>;
   renderInlineChild: (childId: string) => ReactNode;
+  /** Authoritative completion state for task widgets in this saved HTML. */
+  taskCompletions?: ReadonlyMap<string, boolean> | null;
+  /** Task IDs with a server mutation already in flight. */
+  pendingTaskIds?: ReadonlySet<string>;
+  /** Server-authoritative, non-optimistic task toggle. */
+  onTaskToggle?: (taskId: string) => void;
 }
 
 /**
@@ -106,7 +125,16 @@ export interface InlineHtmlRenderOptions {
  * No portals. No useLayoutEffect DOM mutation. Single React-owned tree.
  */
 export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
-  const { html, inlineChildren, expandedSet, everMountedSet, renderInlineChild } = opts;
+  const {
+    html,
+    inlineChildren,
+    expandedSet,
+    everMountedSet,
+    renderInlineChild,
+    taskCompletions,
+    pendingTaskIds,
+    onTaskToggle,
+  } = opts;
   if (!html) return null;
   if (typeof document === 'undefined') return null;
 
@@ -163,6 +191,60 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     // Skip stale portal anchors from old injectInlineMarkers output.
     if (el.classList.contains('inline-child-portal')) {
       return null;
+    }
+
+    // A task widget in view mode is not a TipTap NodeView. Render it as a
+    // React-owned control so the durable task side-document, rather than the
+    // stale HTML class, controls the visible checkbox. This is deliberately
+    // handled before the generic element walker to avoid a global DOM patch.
+    if (el.matches('span[data-task-widget]')) {
+      const taskId = el.getAttribute('data-task-id') || '';
+      const savedDone = el.classList.contains('task-done');
+      const isCompleted = taskId && taskCompletions?.has(taskId)
+        ? taskCompletions.get(taskId) === true
+        : savedDone;
+      const classNames = new Set(
+        (el.getAttribute('class') || '').split(/\s+/).filter(Boolean),
+      );
+      classNames.add('task-widget');
+      classNames.delete('task-done');
+      classNames.delete('task-overdue');
+      if (isCompleted) classNames.add('task-done');
+
+      const dueDate = el.getAttribute('data-due-date') || '';
+      if (dueDate && !isCompleted) {
+        const date = new Date(dueDate);
+        if (!Number.isNaN(date.getTime()) && date.getTime() < Date.now()) {
+          classNames.add('task-overdue');
+        }
+      }
+
+      const assignee = el.getAttribute('data-assignee') || '';
+      const savedLabel = (el.textContent || '').trim().replace(/^[\u2610\u2611]\s*/, '');
+      const label = assignee || dueDate
+        ? `${assignee}${dueDate ? ` ${formatTaskDate(dueDate)}` : ''}`.trim()
+        : savedLabel;
+      const props = elementToProps(el);
+      props['key'] = nextKey();
+      props['className'] = [...classNames].join(' ');
+      props['aria-pressed'] = isCompleted;
+      if (pendingTaskIds?.has(taskId)) props['aria-busy'] = true;
+      if (taskId && onTaskToggle) {
+        props['role'] = 'button';
+        props['tabIndex'] = 0;
+        props['onClick'] = (event: ReactMouseEvent<HTMLElement>) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onTaskToggle(taskId);
+        };
+        props['onKeyDown'] = (event: { key: string; preventDefault: () => void; stopPropagation: () => void }) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          event.stopPropagation();
+          onTaskToggle(taskId);
+        };
+      }
+      return createElement('span', props, `${isCompleted ? '\u2611' : '\u2610'}${label ? ` ${label}` : ''}`);
     }
 
     // Marker span — render with current expanded state.
@@ -285,4 +367,118 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
   });
 
   return createElement(Fragment, null, ...topNodes, ...orphanFollowups);
+}
+
+export interface InlineHtmlRendererProps extends Omit<
+  InlineHtmlRenderOptions,
+  'taskCompletions' | 'pendingTaskIds' | 'onTaskToggle'
+> {
+  /** Blip ID used by the task side-doc API; for topic roots this is topic.id. */
+  taskBlipId: string;
+}
+
+/**
+ * Parity-view renderer with one authoritative task hydration per visible blip.
+ * Toggle responses are applied only after the server confirms them. Failed
+ * mutations rehydrate and never create a checked-but-unpersisted phantom.
+ */
+export function InlineHtmlRenderer({ taskBlipId, ...renderOptions }: InlineHtmlRendererProps) {
+  const [taskCompletions, setTaskCompletions] = useState<ReadonlyMap<string, boolean> | null>(null);
+  const [pendingTaskIds, setPendingTaskIds] = useState<ReadonlySet<string>>(() => new Set());
+  const pendingTaskIdsRef = useRef(new Set<string>());
+  const hydrationGenerationRef = useRef(0);
+  const hydrationControllerRef = useRef<AbortController | null>(null);
+  const toggleControllersRef = useRef(new Map<string, AbortController>());
+  const activeBlipIdRef = useRef(taskBlipId);
+
+  // Rehydrate if the set of task references changes while this view remains
+  // mounted (for example after a realtime content update).
+  const taskIdsKey = useMemo(() => {
+    if (typeof document === 'undefined') return '';
+    const container = document.createElement('div');
+    container.innerHTML = sanitizeRichHtml(renderOptions.html);
+    return Array.from(container.querySelectorAll<HTMLElement>('[data-task-widget][data-task-id]'))
+      .map((element) => element.getAttribute('data-task-id') || '')
+      .filter(Boolean)
+      .sort()
+      .join(',');
+  }, [renderOptions.html]);
+
+  const hydrate = useCallback(() => {
+    const generation = ++hydrationGenerationRef.current;
+    hydrationControllerRef.current?.abort();
+    const controller = new AbortController();
+    hydrationControllerRef.current = controller;
+    const requestedBlipId = taskBlipId;
+
+    void loadTaskCompletions(requestedBlipId, controller.signal).then((completions) => {
+      if (
+        controller.signal.aborted
+        || generation !== hydrationGenerationRef.current
+        || activeBlipIdRef.current !== requestedBlipId
+        || !completions
+      ) return;
+      setTaskCompletions(completions);
+    });
+  }, [taskBlipId]);
+
+  useEffect(() => {
+    activeBlipIdRef.current = taskBlipId;
+    setTaskCompletions(null);
+    // Most blips do not contain tasks. Do not turn a large topic into one
+    // by-blip request per visible blip when there is nothing to hydrate.
+    if (taskIdsKey) hydrate();
+    return () => {
+      hydrationGenerationRef.current += 1;
+      hydrationControllerRef.current?.abort();
+      hydrationControllerRef.current = null;
+    };
+  }, [hydrate, taskBlipId, taskIdsKey]);
+
+  useEffect(() => () => {
+    for (const controller of toggleControllersRef.current.values()) controller.abort();
+    toggleControllersRef.current.clear();
+    pendingTaskIdsRef.current.clear();
+  }, [taskBlipId]);
+
+  const handleTaskToggle = useCallback((taskId: string) => {
+    if (!taskId || pendingTaskIdsRef.current.has(taskId)) return;
+    pendingTaskIdsRef.current.add(taskId);
+    setPendingTaskIds(new Set(pendingTaskIdsRef.current));
+
+    // A hydration started before this write cannot overwrite the newer server
+    // response. The POST is nonqueued and the visible state is not optimistic.
+    hydrationGenerationRef.current += 1;
+    hydrationControllerRef.current?.abort();
+    const controller = new AbortController();
+    toggleControllersRef.current.set(taskId, controller);
+    const requestedBlipId = taskBlipId;
+
+    void toggleTaskOnServer(taskId, controller.signal).then((isCompleted) => {
+      if (controller.signal.aborted || activeBlipIdRef.current !== requestedBlipId) return;
+      if (isCompleted === null) {
+        hydrate();
+        return;
+      }
+      setTaskCompletions((current) => {
+        const next = new Map(current || []);
+        next.set(taskId, isCompleted);
+        return next;
+      });
+    }).finally(() => {
+      if (toggleControllersRef.current.get(taskId) === controller) {
+        toggleControllersRef.current.delete(taskId);
+      }
+      if (controller.signal.aborted || activeBlipIdRef.current !== requestedBlipId) return;
+      pendingTaskIdsRef.current.delete(taskId);
+      setPendingTaskIds(new Set(pendingTaskIdsRef.current));
+    });
+  }, [hydrate, taskBlipId]);
+
+  return createElement(Fragment, null, renderInlineHtml({
+    ...renderOptions,
+    taskCompletions,
+    pendingTaskIds,
+    onTaskToggle: handleTaskToggle,
+  }));
 }

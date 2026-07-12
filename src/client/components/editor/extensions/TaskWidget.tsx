@@ -19,12 +19,12 @@ type TaskWidgetOptions = {
   participants: TaskUser[];
 };
 
-type TaskCompletion = { id: string; isCompleted: boolean };
+export type TaskCompletion = { id: string; isCompleted: boolean };
 type TaskCompletionResponse = { tasks?: TaskCompletion[] };
 
 const TASK_WIDGET_SYNC_META = 'rizzomaTaskWidgetServerSync';
 
-function formatDate(dateStr: string): string {
+export function formatTaskDate(dateStr: string): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
@@ -61,12 +61,16 @@ function createTaskId(): string {
   return `task:${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-async function toggleTaskOnServer(taskId: string): Promise<boolean | null> {
+export async function toggleTaskOnServer(
+  taskId: string,
+  signal?: AbortSignal,
+): Promise<boolean | null> {
   try {
     await ensureCsrf();
     const r = await api<{ isCompleted?: boolean }>(`/api/tasks/${encodeURIComponent(taskId)}/toggle`, {
       method: 'POST',
       queueable: false,
+      ...(signal ? { signal } : {}),
     });
     if (!r.ok) return null;
     const data = r.data as { isCompleted?: boolean };
@@ -76,7 +80,7 @@ async function toggleTaskOnServer(taskId: string): Promise<boolean | null> {
   }
 }
 
-async function loadTaskCompletions(
+export async function loadTaskCompletions(
   blipId: string,
   signal?: AbortSignal,
 ): Promise<Map<string, boolean> | null> {
@@ -196,7 +200,7 @@ export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
     const dueDate = HTMLAttributes['data-due-date'] || HTMLAttributes['dueDate'] || '';
     const done = HTMLAttributes['done'] || HTMLAttributes['class'] === 'task-done';
     const check = done ? '\u2611' : '\u2610';
-    const dateStr = dueDate ? ` ${formatDate(String(dueDate))}` : '';
+    const dateStr = dueDate ? ` ${formatTaskDate(String(dueDate))}` : '';
     const classes = ['task-widget'];
     if (done) classes.push('task-done');
     // Mark overdue so CSS can color it red.
