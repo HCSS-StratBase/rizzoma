@@ -24,11 +24,11 @@
  *   0 = all PASS
  *   non-zero = at least one FAIL (printed to stderr)
  *
- * Uses a single Playwright browser instance with two separate
- * BROWSER CONTEXTS — each context has its own cookie jar, socket
- * connection, and Y.Doc state, simulating two independent users on
- * two devices much more accurately than two tabs in the same
- * context (which would share session cookies and Y.Doc cache).
+ * Uses two separate Playwright browser processes. Besides independent cookie
+ * jars, sockets, and Y.Doc state, this avoids Chromium background-renderer
+ * throttling delaying the receiving page when the sender is focused. A
+ * single process with two contexts produced 13-second WebSocket delivery in
+ * headless CI even though both clients had joined and synced correctly.
  */
 import { chromium } from 'playwright';
 
@@ -270,12 +270,12 @@ async function main() {
   log(`user A: ${userA}`);
   log(`user B: ${userB}`);
 
-  const browser = await chromium.launch({ headless: !headed, slowMo });
-
-  // Two SEPARATE contexts = two independent cookie jars / socket connections.
-  // This is the key thing we couldn't do with the in-session Playwright MCP.
-  const ctxA = await browser.newContext();
-  const ctxB = await browser.newContext();
+  // Separate browser processes model two active devices and prevent the
+  // receiver from being treated as an occluded/background tab by Chromium.
+  const browserA = await chromium.launch({ headless: !headed, slowMo });
+  const browserB = await chromium.launch({ headless: !headed, slowMo });
+  const ctxA = await browserA.newContext();
+  const ctxB = await browserB.newContext();
   const pageA = await ctxA.newPage();
   const pageB = await ctxB.newPage();
 
@@ -285,8 +285,12 @@ async function main() {
   // Capture console errors per page
   const errorsA = [];
   const errorsB = [];
+  const putRequestsB = [];
   pageA.on('pageerror', (err) => errorsA.push(String(err)));
   pageB.on('pageerror', (err) => errorsB.push(String(err)));
+  pageB.on('request', (request) => {
+    if (request.method() === 'PUT' && request.url().includes('/api/blips/')) putRequestsB.push(request.url());
+  });
 
   try {
     // ----- Auth both contexts -----
@@ -331,6 +335,21 @@ async function main() {
     }
     const bInboundCount = await getInboundEventCount(pageB, `blip:update:${blipId}`);
     recordCheck(bInboundCount >= 1, `B received ${bInboundCount} blip:update relay events`);
+    const relayLatencyMs = await pageB.evaluate(({ id, before }) => {
+      const inbound = (window.__inbound || [])
+        .filter((entry) => entry.ev === `blip:update:${id}` && entry.t > before)
+        .sort((a, b) => a.t - b.t);
+      return inbound[0]?.t || null;
+    }, { id: blipId, before: bInboundBefore }) - await pageA.evaluate((id) => {
+      const outbound = (window.__outbound || [])
+        .filter((entry) => entry.event === 'blip:update' && entry.blipId === id)
+        .sort((a, b) => b.t - a.t);
+      return outbound[0]?.t || 0;
+    }, blipId);
+    recordCheck(
+      Number.isFinite(relayLatencyMs) && relayLatencyMs >= 0 && relayLatencyMs <= 5000,
+      `A → B relay latency ${relayLatencyMs}ms (budget ≤5000ms)`
+    );
 
     // ===== CHECK 4: B's editor text contains A's typed character =====
     await waitForEditorText(pageB, blipId, 'Initial blip contentA');
@@ -339,6 +358,13 @@ async function main() {
       bText && bText.includes('Initial blip contentA'),
       `B's editor text reflects A's typing (BUG #57b — seed lock prevents divergence). Got: "${bText}"`
     );
+
+    // Give the 300ms REST autosave debounce time to fire. Only A made a local
+    // edit; B applied a Y.js-originated transaction and must not echo it back
+    // through PUT /api/blips/:id.
+    await pageB.waitForTimeout(750);
+    const bRemotePutCount = putRequestsB.filter((url) => url.includes(encodeURIComponent(blipId)) || url.includes(blipId)).length;
+    recordCheck(bRemotePutCount === 0, `B emitted ${bRemotePutCount} REST PUTs for A's remote edit`);
 
     // ===== CHECK 5: bidirectional — B types, A receives =====
     const aInboundBefore = await getInboundEventCount(pageA, `blip:update:${blipId}`);
@@ -439,7 +465,8 @@ async function main() {
   } finally {
     await ctxA.close();
     await ctxB.close();
-    await browser.close();
+    await browserA.close();
+    await browserB.close();
   }
 
   console.log('');

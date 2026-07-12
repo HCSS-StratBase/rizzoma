@@ -21,8 +21,13 @@ const log = (msg) => console.log(`➡️  [perf] ${msg}`);
 
 const metricsStages = [
   { name: 'landing-labels', selector: '.blip-collapsed-row' },
-  // In perf mode we render a stub root for visibility; prefer the stub, fall back to the real blip/anchor
-  { name: 'expanded-root', selector: '.perf-root-stub-blip, .perf-blip-anchor, .rizzoma-blip' },
+  // Lite mode intentionally renders non-interactive rows, so it has no honest
+  // expansion stage. Full mode must exercise a real RizzomaBlip interaction;
+  // the retired `.blip-expand-btn` selector made the old "expanded-root"
+  // stage a no-op whose screenshot was byte-identical to landing.
+  ...(renderMode === 'full'
+    ? [{ name: 'expanded-first-blip', selector: '.rizzoma-blip:not(.topic-root) > .blip-collapsed-row' }]
+    : []),
 ];
 
 async function gotoApp(page) {
@@ -246,11 +251,19 @@ async function captureMetrics(waveId, creds) {
       }
     }
 
-    if (stage.name === 'expanded-root') {
-      const expandBtn = await page.$('.blip-expand-btn');
-      if (expandBtn) {
-        await expandBtn.click();
+    let expandedBlipId = null;
+    if (stage.name === 'expanded-first-blip') {
+      const firstCollapsed = page.locator('.rizzoma-blip:not(.topic-root) > .blip-collapsed-row').first();
+      expandedBlipId = await firstCollapsed.evaluate((node) => node.parentElement?.dataset.blipId || null);
+      if (!expandedBlipId) {
+        throw new Error('Full-render perf stage could not resolve the first collapsed blip id');
       }
+      await firstCollapsed.click();
+      await page.waitForFunction((blipId) => {
+        const blip = document.querySelector(`[data-blip-id="${blipId}"]`);
+        return blip?.classList.contains('expanded')
+          && blip.querySelector('.blip-content[data-expanded="1"]') !== null;
+      }, expandedBlipId, { timeout: 15000 });
       const windowTarget = Math.min(blipTarget, 200);
       windowed = await measureWindowedCount('.rizzoma-blip', windowTarget, 60000);
       await page.waitForSelector('.rizzoma-blip', { timeout: 180000, state: 'attached' });
@@ -279,8 +292,13 @@ async function captureMetrics(waveId, creds) {
         appMetrics,
         labelCount: document.querySelectorAll('.blip-collapsed-row').length,
         blipCount: document.querySelectorAll('.rizzoma-blip').length,
+        expandedBlipCount: document.querySelectorAll('.rizzoma-blip.expanded:not(.topic-root)').length,
       };
     });
+
+    if (stage.name === 'expanded-first-blip' && perfData.expandedBlipCount < 1) {
+      throw new Error('Full-render perf stage did not leave a real child blip expanded');
+    }
 
     const stageTimestamp = `${timestamp}-${stage.name}`;
     const screenshotPath = path.join(snapshotDir, `render-${stageTimestamp}.png`);
@@ -294,6 +312,8 @@ async function captureMetrics(waveId, creds) {
       actualBlips: stage.name === 'landing-labels' ? perfData.labelCount : perfData.blipCount,
       labelsVisible: perfData.labelCount,
       blipsRendered: perfData.blipCount,
+      expandedBlips: perfData.expandedBlipCount,
+      expandedBlipId,
       renderMode: stage.name,
       windowed: windowed
         ? {

@@ -14,6 +14,7 @@ import { RizzomaBlip, type BlipData, type BlipContributor } from './blip/Rizzoma
 import { injectInlineMarkers } from './blip/inlineMarkers';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
+import { isChangeOrigin } from '@tiptap/extension-collaboration';
 import { getEditorExtensions, defaultEditorProps } from './editor/EditorConfig';
 import { EDIT_MODE_EVENT, INSERT_EVENTS } from './RightToolsPanel';
 import { useCollaboration } from './editor/useCollaboration';
@@ -257,9 +258,9 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       const html = editor.getHTML();
       setTopicContent(html);
 
-      // Skip auto-save for remote Y.Doc sync updates (origin is ySyncPlugin object)
-      const isRemoteSync = transaction?.origin != null && typeof transaction.origin === 'object';
-      if (isRemoteSync) return;
+      // Skip REST persistence for remote Y.Doc sync. The authoritative remote
+      // marker lives in ySyncPlugin metadata, not `transaction.origin`.
+      if (isChangeOrigin(transaction)) return;
 
       // Debounced auto-save (300ms delay)
       if (topicSaveTimeoutRef.current) {

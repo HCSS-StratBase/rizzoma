@@ -243,7 +243,11 @@ jobs:
         env:
           RIZZOMA_BASE_URL: http://127.0.0.1:3000
           RIZZOMA_PERF_BLIPS: 50
-          RIZZOMA_PERF_ENFORCE_BUDGETS: 0
+          # Exercise the real RizzomaBlip path and make its 3s/100MB budgets
+          # release-blocking. Lite mode remains available for large-wave
+          # diagnostics but cannot prove an interactive expansion.
+          RIZZOMA_PERF_RENDER: full
+          RIZZOMA_PERF_ENFORCE_BUDGETS: 1
           RIZZOMA_SNAPSHOT_DIR: snapshots/perf
         run: npm run perf:harness
       - name: Upload perf snapshots

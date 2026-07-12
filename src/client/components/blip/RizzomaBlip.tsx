@@ -5,6 +5,7 @@ import { BlipMenu } from './BlipMenu';
 import { useActiveBlip } from './ActiveBlipContext';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
+import { isChangeOrigin } from '@tiptap/extension-collaboration';
 import { getEditorExtensions, defaultEditorProps } from '../editor/EditorConfig';
 import { TypingIndicator } from '../editor/CollaborativeCursors';
 import { toast } from '../Toast';
@@ -549,10 +550,12 @@ export function RizzomaBlip({
         const html = editor.getHTML();
         setEditedContent(html);
 
-        // When collab is active, only auto-save for local edits (not remote Y.Doc sync).
-        // Remote updates have transaction.origin set to the ySyncPlugin binding.
-        const isRemoteSync = transaction?.origin != null && typeof transaction.origin === 'object';
-        if (isRemoteSync) return;
+        // When collab is active, only auto-save for local edits. ProseMirror
+        // transactions do not expose a public `transaction.origin`; Y.js marks
+        // remote sync through ySyncPlugin metadata. The old property check was
+        // always false, so every remote keystroke caused a redundant REST PUT
+        // from every collaborator.
+        if (isChangeOrigin(transaction)) return;
 
         // Debounced auto-save (300ms delay)
         if (autoSaveTimeoutRef.current) {
