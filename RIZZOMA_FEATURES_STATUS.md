@@ -15,11 +15,16 @@
   on authoritative server sync/edit permission. The audit closed undo-history split-brain,
   topic-H1 child creation, reserved-root poisoning, existing-flat seed
   projection, stale-prop replay, malformed HTML, and task-list roots.
-- Full local gates pass at **112 files / 684 passed / 3 skipped / 0 failed**,
+- PR #74 merged the revision-race repair as exact `d2f200c8`; private green
+  preserved the correct topic and child BLB documents but caught a self-
+  canceling second toggle during the child portal handoff. Branch
+  `fix/blb-inline-child-handoff` waits for the view portal instead.
+- Full local gates pass at **113 files / 686 passed / 3 skipped / 0 failed**,
   typecheck, branch-context lint, full-source ESLint at **0 errors / 8,954
   baseline warnings**, and a **3,318-module** production build. An independent
   audit returned **GO for merge-candidate testing**.
-- Boundary: the follow-up is not merged or deployed; public still runs the broken PR
+- Boundary: the handoff follow-up is not merged or deployed; nginx still points
+  at stopped blue while exact PR #74 remains private on green. Public still has the broken PR
   #72 tree. Private-green two-client/reload/restart and responsive visual
   acceptance, exact public cutover, and repair of the measured failure topic
   remain required. Physical iPhone Safari and 500/1,000-blip full-render sweeps

@@ -1,0 +1,10 @@
+{
+  "result": "ERROR",
+  "title": "BLB creation acceptance 1783907599111",
+  "createdIds": [],
+  "errors": [
+    "http 500: https://138-201-62-161.nip.io:8444/api/topics/3305bc3a42889979c79fa39f4000c80f",
+    "console: Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.rizzoma-blip[data-blip-id=\"3305bc3a42889979c79fa39f4000c80f:be0c7d0c4-4235-4285-8098-43074f81da09\"]').first().locator('.ProseMirror[contenteditable=\"true\"]').first() to be visible\u001b[22m\n"
+}

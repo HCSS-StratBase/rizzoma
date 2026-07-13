@@ -24,8 +24,13 @@
   merged a blank pre-sync TipTap root beside the authoritative Yjs document.
   The topic then returned repeated 409s and post-restart
   `invalid_blb_structure`. Green was stopped and public stayed on PR #72.
-- Follow-up branch `fix/blb-topic-revision-race` is green at full **112 test files /
-  684 passed / 3 skipped / 0 failed**, typecheck, branch-context lint,
+- PR #74 merged the revision-race repair as exact `d2f200c8` after seven green
+  checks. Private green proved four topic bullets plus the canonical child and
+  marker were durable, but failed the automatic edit handoff: the retry loop
+  collapsed the child when its portal temporarily disappeared.
+- Follow-up branch `fix/blb-inline-child-handoff` removes that second toggle and
+  is green at full **113 test files / 686 passed / 3 skipped / 0 failed**,
+  **33/33** focused, typecheck, branch-context lint,
   full-source ESLint with **0 errors / 8,954 baseline warnings**, and a
   **3,318-module** production build. An independent final audit returned **GO**.
 - Coverage now includes the pre-Yjs transaction gate, unchanged Yjs state after

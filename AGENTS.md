@@ -76,7 +76,7 @@
   * For every backend or frontend change, cross-check behavior and UI against the legacy sources in `original-rizzoma/` and `original-rizzoma-src/`, and against the current live UI references in `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/` (PNGs + MD notes). Keep the modernized implementation functionally and visually close to the legacy GUI while upgrading “under the hood.”
 
   ## Branch Context Guardrails
-  * Active development branch: `fix/blb-topic-revision-race` (2026-07-13; based on merged PR #73 exact `7581d036`). Public production remains exact PR #72 `5e1bc271` on managed blue `:8101`; PR #73 failed private green on a pre-sync duplicate-root race and was never cut over. The follow-up remains private until green CI, exact inactive-lane deploy, and real-control acceptance. Always cite branch name + date when summarizing status.
+  * Active development branch: `fix/blb-inline-child-handoff` (2026-07-13; based on merged PR #74 exact `d2f200c8`). Nginx still points at stopped PR #72 blue; PR #74 is private on green and failed automatic root Ctrl+Enter handoff because a retry collapsed the still-expanded child while its portal remounted. The follow-up remains private until green CI, exact inactive-lane deploy, and real-control acceptance. Always cite branch name + date when summarizing status.
   * Treat any "Current State" bullets in docs as historical snapshots unless explicitly refreshed for the active branch; update them before quoting.
   * Run `npm run lint:branch-context` after touching status docs; CI/local lint will fail if the branch name is missing from `docs/HANDOFF.md` Current State.
 
@@ -95,7 +95,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `/home/stephan/rizzoma-final-release` worktree on `fix/blb-topic-revision-race`; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
+    - Continue in the isolated `/home/stephan/rizzoma-final-release` worktree on `fix/blb-inline-child-handoff`; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
