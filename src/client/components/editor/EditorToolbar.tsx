@@ -2,6 +2,11 @@ import type { Editor } from '@tiptap/core';
 import { useState, useRef, useEffect } from 'react';
 import { DEFAULT_BG_COLORS } from '@shared/constants/textFormatting';
 import './EditorToolbar.css';
+import {
+  runBlbSafeListAction,
+  runBlbSafeOutdent,
+  selectionIsInCanonicalTopLevelList,
+} from './blbEditorInvariant';
 
 interface EditorToolbarProps {
   editor: Editor | null;
@@ -333,23 +338,25 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <div className="toolbar-group">
         <button
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          onClick={() => runBlbSafeListAction(editor, 'bullet')}
           className={editor.isActive('bulletList') ? 'active' : ''}
-          title="Bullet List"
+          title={selectionIsInCanonicalTopLevelList(editor) ? 'BLB bullet list (always on)' : 'Bullet List'}
         >
           • List
         </button>
         <button
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          onClick={() => runBlbSafeListAction(editor, 'ordered')}
           className={editor.isActive('orderedList') ? 'active' : ''}
           title="Ordered List"
+          disabled={selectionIsInCanonicalTopLevelList(editor)}
         >
           1. List
         </button>
         <button
-          onClick={() => editor.chain().focus().toggleTaskList().run()}
+          onClick={() => runBlbSafeListAction(editor, 'task')}
           className={editor.isActive('taskList') ? 'active' : ''}
           title="Task List"
+          disabled={selectionIsInCanonicalTopLevelList(editor)}
         >
           ☐ Tasks
         </button>
@@ -361,8 +368,8 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
           →
         </button>
         <button
-          onClick={() => editor.chain().focus().liftListItem('listItem').run()}
-          disabled={!editor.can().liftListItem('listItem')}
+          onClick={() => runBlbSafeOutdent(editor)}
+          disabled={!editor.can().liftListItem('listItem') || selectionIsInCanonicalTopLevelList(editor)}
           title="Outdent"
         >
           ←

@@ -28,7 +28,7 @@ import {
 } from '../lib/contentReferences.js';
 import { readCollaborationProjection } from '../lib/collaborationProjection.js';
 import { yjsDocCache } from '../lib/yjsDocCache.js';
-import { ensureTopicBlbHtml } from '../../shared/blbContent.js';
+import { ensureTopicBlbHtml, isTopicBlbHtml } from '../../shared/blbContent.js';
 
 const CONTENT_REFERENCE_ERRORS = new Set([
   'invalid_mention_target',
@@ -636,12 +636,32 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
     if (!access) return;
     const result = await yjsDocCache.runExclusive(id, async () => {
       const existing = await loadLiveTopic(id);
-      const references = payload.content !== undefined
-        ? await validateStoredContentReferences(id, id, payload.content)
+      const nextTitle = payload.title ?? existing.title;
+      // The title has one source of truth: topic.title. A title-only patch
+      // therefore also rewrites the document H1 and is an external content
+      // replacement subject to the same Yjs generation boundary.
+      const contentReplacementRequested = payload.content !== undefined || nextTitle !== existing.title;
+      const requestedContent = payload.content ?? existing.content ?? '';
+      if (
+        payload.content !== undefined
+        && collaborationProjection !== null
+        && !isTopicBlbHtml(nextTitle, requestedContent)
+      ) {
+        throw new Error('invalid_blb_structure');
+      }
+      const nextContent = contentReplacementRequested
+        ? (
+          collaborationProjection !== null
+            ? requestedContent
+            : ensureTopicBlbHtml(nextTitle, requestedContent)
+        )
+        : (existing.content ?? '');
+      const references = contentReplacementRequested
+        ? await validateStoredContentReferences(id, id, nextContent)
         : null;
       const currentGeneration = yjsGenerationOf(existing.yjsGeneration);
       let nextGeneration = currentGeneration;
-      if (payload.content !== undefined) {
+      if (contentReplacementRequested) {
         const liveProjection = collaborationProjection !== null
           && hasWritableBlipSocket(id, String((req as any).sessionID || ''), currentGeneration);
         if (collaborationProjection !== null && !liveProjection) {
@@ -664,8 +684,6 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
           nextGeneration = currentGeneration + 1;
         }
       }
-      const nextTitle = payload.title ?? existing.title;
-      const nextContent = payload.content ?? existing.content;
       const contentChanged = nextContent !== existing.content;
       const titleChanged = nextTitle !== existing.title;
       const generationChanged = nextGeneration !== currentGeneration;
@@ -677,11 +695,11 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
       // Authorship is server authority. Ignore any unknown client sidecar and
       // derive changed blocks from the stored old/new content plus this session.
       let nextSectionAttribution = existing.sectionAttribution;
-      if (payload.content !== undefined && payload.content !== existing.content) {
+      if (contentChanged) {
         nextSectionAttribution = diffAndStampAttribution({
           prevAttribution: existing.sectionAttribution,
           oldHtml: existing.content || '',
-          newHtml: payload.content,
+          newHtml: nextContent,
           currentUserId: req.user!.id,
           now: nowPatch,
         });
@@ -708,6 +726,7 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
     if (
       String(e?.message) === 'invalid_collaboration_state_digest'
       || String(e?.message) === 'invalid_collaboration_generation'
+      || String(e?.message) === 'invalid_blb_structure'
     ) {
       res.status(400).json({ error: e.message, requestId: (req as any)?.id });
       return;

@@ -3,8 +3,8 @@
 Last refreshed: 2026-07-13 (`fix/blb-always-bulleted`; PR #72 exact
 `5e1bc271` public on managed blue `:8101`; read-marker hotfix merged and public;
 public phase 2 passed 49/49, but SDS's first manual use exposed the core BLB
-always-bulleted creation invariant as broken. A local shared-contract repair is
-green at 110 files / 658 passed / 3 skipped and 3,317 build modules, but is not
+always-bulleted creation invariant as broken. A local durable editor/Yjs/API
+repair is green at 112 files / 672 passed / 3 skipped and 3,318 build modules, but is not
 merged or deployed. Overall release is deployed but not accepted. Resume from
 the isolated release worktree; do not touch the dirty canonical checkout.)
 
@@ -76,7 +76,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `fix/read-marker-conflict` worktree/branch until the concurrent read-marker fix merges; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
+    - Continue in the isolated `/home/stephan/rizzoma-final-release` worktree on `fix/blb-always-bulleted`; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -85,7 +85,7 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Commit and publish the locally green always-bulleted repair branch; deploy its exact SHA privately to inactive managed green.
+  1) Publish the hardened PR #73 head and require every GitHub check; merge only after green, then deploy the exact merge SHA privately to inactive managed green.
   2) Prove fresh topic, root reply, nested reply, and both Ctrl+Enter paths are real UL/LI through browser controls; prove recursive `[+]` creation and reload persistence.
   3) Require green PR CI, merge, and deploy only the exact squash tree through the immutable zero-overlap lane process.
   4) Prove managed-restart persistence, inspect 1280/1366/1440/1600/mobile PNGs, and require clean browser/server journals.

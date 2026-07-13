@@ -15,6 +15,7 @@ import {
   type WavePermission,
 } from './access.js';
 import { checkSessionCredentialVersion } from './sessionCredentials.js';
+import { isBlbYjsDocument } from './blbYjsValidation.js';
 
 let io: Server | undefined;
 let presenceManager: EditorPresenceManager | undefined;
@@ -640,6 +641,12 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
           const current = yjsDocCache.getState(blipId);
           if (current) Y.applyUpdate(probe, current, 'validation-base');
           Y.applyUpdate(probe, update, 'validation-candidate');
+          const waveId = collabWaveByBlip.get(blipId);
+          if (!isBlbYjsDocument(probe, Boolean(waveId && blipId === waveId))) {
+            probe.destroy();
+            acknowledge?.({ ok: false, error: 'invalid_blb_structure', blipId });
+            return;
+          }
           probe.destroy();
           yjsDocCache.applyUpdate(blipId, update, 'remote', currentJoinedGeneration);
           if (!yjsDocCache.isEmpty(blipId)) seedAuthorityOwnerByBlip.delete(blipId);

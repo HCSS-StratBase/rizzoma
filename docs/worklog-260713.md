@@ -86,18 +86,22 @@
   reload, with zero browser errors. Visual inspection confirms one long flat
   body with no recursive `[+]` anchors. Evidence:
   `screenshots/260713-0130-public-blb-creation-failure/`.
-- Root cause spans all dominant creation paths: the topic modal posts H1-only
-  content; root and nested reply boxes post raw text; the server stores it
-  verbatim; and the topic-root Ctrl+Enter optimistic object read the wrong
-  response level and fell back to a paragraph.
+- Root cause spans creation and durability paths: topic creation and reply boxes
+  supplied prose, the server accepted it verbatim, Ctrl+Enter read the wrong
+  response level, toolbars and Shift+Tab could remove the outer list, raw API
+  updates and duplication bypassed the invariant, and collaboration accepted
+  flat ProseMirror state.
 - Branch `fix/blb-always-bulleted` adds one shared BLB content contract. Topic
   creation now seeds H1 + UL/LI; plain-text reply lines become escaped LI/P
-  labels; the server normalizes alternate/old clients; root and nested
+  labels; a ProseMirror transaction filter blocks flattening before Yjs emits;
+  the server independently rejects flat CRDT candidates before cache mutation
+  or relay; visible/secondary toolbars and keyboard escape paths are guarded;
+  API replacements, duplicates, and legacy content normalize; root and nested
   Ctrl+Enter share the same starter; and the root optimistic mapper reads the
   nested server `blip` envelope.
-- Local verification is green: focused **25/25**; full Vitest **110 files / 658
-  passed / 3 skipped / 0 failed**; typecheck; full-source ESLint `--quiet`;
-  branch-context lint; and a **3,317-module** production build.
+- Local verification is green: focused **57/57**; full Vitest **112 files / 672
+  passed / 3 skipped / 0 failed**; typecheck; full-source ESLint;
+  branch-context lint; and a **3,318-module** production build.
 - Boundary: this candidate is not merged or deployed. Private managed-lane
   real-control acceptance, green PR checks, exact public cutover, recursive
   reload/restart proof, responsive PNG inspection, and clean journals remain.

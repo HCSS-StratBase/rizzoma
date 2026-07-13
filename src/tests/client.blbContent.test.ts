@@ -5,6 +5,8 @@ import {
   EMPTY_BLB_HTML,
   ensureBlbHtml,
   ensureTopicBlbHtml,
+  isBlbHtml,
+  isTopicBlbHtml,
   plainTextToBlbHtml,
   topicSeedHtml,
 } from '../shared/blbContent';
@@ -43,11 +45,50 @@ describe('BLB creation content', () => {
     expect(ensureBlbHtml('<ul><li><p>Already BLB</p></li></ul>')).toBe(
       '<ul><li><p>Already BLB</p></li></ul>',
     );
+    expect(isBlbHtml('<ul data-test=">"><li><p>Nested</p><ul><li><p>Leaf</p></li></ul></li></ul>')).toBe(true);
+    expect(isBlbHtml('<ul></ul>')).toBe(false);
+    expect(isBlbHtml('<ul><p>Not a label</p></ul>')).toBe(false);
+    expect(isBlbHtml('<ul>bare text<li><p>Label</p></li></ul>')).toBe(false);
   });
 
-  it('normalizes the topic body without nesting the title in a bullet', () => {
+  it('normalizes the full document instead of accepting a UL with an orphan block', () => {
+    const mixed = '<ul><li><p>List label</p></li></ul><p>Orphan</p>';
+    expect(isBlbHtml(mixed)).toBe(false);
+    expect(ensureBlbHtml(mixed)).toBe(`<ul><li>${mixed}</li></ul>`);
+    expect(isBlbHtml(ensureBlbHtml(mixed))).toBe(true);
+  });
+
+  it('uses the authoritative topic title and discards a caller-provided H1', () => {
     expect(ensureTopicBlbHtml('Fallback title', '<h1>Stored title</h1><p>One</p><p>Two</p>')).toBe(
-      '<h1>Stored title</h1><ul><li><p>One</p></li><li><p>Two</p></li></ul>',
+      '<h1>Fallback title</h1><ul><li><p>One</p></li><li><p>Two</p></li></ul>',
     );
+    expect(ensureTopicBlbHtml('A <safe> title', '<h1 class="stale">Wrong</h1>')).toBe(
+      '<h1>A &lt;safe&gt; title</h1><ul><li><p></p></li></ul>',
+    );
+    expect(isTopicBlbHtml(
+      'Fallback title',
+      '<h1>Fallback title</h1><ul><li><p>One</p></li></ul>',
+    )).toBe(true);
+    expect(isTopicBlbHtml(
+      'Fallback title',
+      '<h1>Wrong title</h1><ul><li><p>One</p></li></ul>',
+    )).toBe(false);
+  });
+
+  it('handles a large malformed block document in bounded time', () => {
+    const malformed = '<p>'.repeat(32_768);
+    const startedAt = performance.now();
+    const normalized = ensureBlbHtml(malformed);
+    const elapsedMs = performance.now() - startedAt;
+    expect(normalized).toBe(`<ul><li>${malformed}</li></ul>`);
+    expect(elapsedMs).toBeLessThan(750);
+
+    const manyBlocks = '<p>label</p>'.repeat(8_192);
+    const manyBlocksStartedAt = performance.now();
+    const normalizedBlocks = ensureBlbHtml(manyBlocks);
+    const manyBlocksElapsedMs = performance.now() - manyBlocksStartedAt;
+    expect(normalizedBlocks.startsWith('<ul><li><p>label</p></li>')).toBe(true);
+    expect(normalizedBlocks.endsWith('<li><p>label</p></li></ul>')).toBe(true);
+    expect(manyBlocksElapsedMs).toBeLessThan(750);
   });
 });

@@ -19,9 +19,13 @@
   at depth 1, while the saved and reloaded blip measured **18 P / 0 UL / 0 LI**.
   Zero browser errors isolate this as a structure-contract defect. Inspected
   artifacts: `screenshots/260713-0130-public-blb-creation-failure/`.
-- Local branch `fix/blb-always-bulleted` is green at focused **25/25**, full
-  **110 test files / 658 passed / 3 skipped / 0 failed**, typecheck,
-  full-source ESLint `--quiet`, branch-context lint, and **3,317 build modules**.
+- Local branch `fix/blb-always-bulleted` is green at focused **57/57**, full
+  **112 test files / 672 passed / 3 skipped / 0 failed**, typecheck,
+  full-source ESLint, branch-context lint, and **3,318 build modules**.
+  Coverage now includes the pre-Yjs transaction gate, unchanged Yjs state after
+  rejected flattening commands, server-side CRDT rejection/no relay, mixed-UL
+  rejection, toolbar/keyboard escape paths, duplicate normalization, and
+  bounded malformed-input handling.
   These are code gates, not yet private/public real-control acceptance.
 
 ## Concurrent read-marker hotfix — 2026-07-13

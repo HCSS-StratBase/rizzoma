@@ -93,7 +93,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`fix/blb-always-bulleted` @ 2026-07-13; PR #72 exact merge `5e1bc271` public on blue; BLB repair candidate locally green)
+Current State (`fix/blb-always-bulleted` @ 2026-07-13; PR #72 exact merge `5e1bc271` public on blue; PR #73 BLB repair candidate locally green)
 - PR [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) passed all required
   checks and squash-merged as exact master `5e1bc271`. That exact immutable
   release is public on managed blue `:8101`; all **994** lockfile-required
@@ -114,11 +114,14 @@ Current State (`fix/blb-always-bulleted` @ 2026-07-13; PR #72 exact merge `5e1bc
   spec became **18 P / 0 UL / 0 LI** and remained flat after reload, with zero
   browser errors. The inspected evidence and full URL are in
   `screenshots/260713-0130-public-blb-creation-failure/`.
-- The local repair now centralizes topic/reply/inline BLB seeds and server-side
-  creation normalization, and fixes the root Ctrl+Enter response-envelope bug.
-  Focused **25/25**, full **110 files / 658 passed / 3 skipped / 0 failed**,
-  typecheck, full lint, branch-context lint, and a **3,317-module** build pass.
-- Next: commit/publish this branch, privately deploy its exact SHA to inactive
+- The local repair now centralizes topic/reply/inline BLB seeds, blocks invalid
+  local transactions before Yjs emission, rejects flat CRDT state before cache
+  mutation/relay, guards toolbar/keyboard escape routes, normalizes API and
+  duplicate writes, repairs legacy content, and fixes the root Ctrl+Enter
+  response-envelope bug. Focused **57/57**, full **112 files / 672 passed / 3
+  skipped / 0 failed**, typecheck, full lint, branch-context lint, and a
+  **3,318-module** build pass.
+- Next: publish the hardened PR #73 head, privately deploy its exact merged SHA to inactive
   green, prove topic/root-reply/nested-reply/Ctrl+Enter creation and recursion
   through real controls, require green PR CI, then exact public cutover plus
   reload/restart, responsive visuals, and clean journals.

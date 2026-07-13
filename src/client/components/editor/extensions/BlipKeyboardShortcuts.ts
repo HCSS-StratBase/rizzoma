@@ -1,4 +1,7 @@
 import { Extension } from '@tiptap/core';
+import { isChangeOrigin } from '@tiptap/extension-collaboration';
+import { Plugin } from '@tiptap/pm/state';
+import { getBlbListContext } from '../blbEditorInvariant';
 
 export type BlipKeyboardShortcutsOptions = {
   blipId?: string;
@@ -13,7 +16,23 @@ export type BlipKeyboardShortcutsOptions = {
   onHideComments?: () => void;
   /** Callback to show (unfold) all inline comments. Triggered by Ctrl+Shift+Down. */
   onShowComments?: () => void;
+  /** Topic roots allow exactly one leading H1 before their outer bullet list. */
+  isTopicRoot?: boolean;
 };
+
+export function isCanonicalBlbDocument(
+  doc: { childCount: number; child: (index: number) => { type: { name: string }; attrs?: Record<string, unknown> } },
+  isTopicRoot = false,
+): boolean {
+  if (isTopicRoot) {
+    if (doc.childCount !== 2) return false;
+    const heading = doc.child(0);
+    if (heading.type.name !== 'heading' || heading.attrs?.['level'] !== 1) return false;
+    return doc.child(1).type.name === 'bulletList';
+  }
+
+  return doc.childCount === 1 && doc.child(0).type.name === 'bulletList';
+}
 
 /**
  * TipTap extension for blip-specific keyboard shortcuts.
@@ -43,7 +62,26 @@ export const BlipKeyboardShortcuts = Extension.create({
       onCreateInlineChildBlip: undefined as ((anchorPosition: number) => Promise<void> | void) | undefined,
       onHideComments: undefined as (() => void) | undefined,
       onShowComments: undefined as (() => void) | undefined,
+      isTopicRoot: false,
     };
+  },
+
+  addProseMirrorPlugins() {
+    const opts = this.options as BlipKeyboardShortcutsOptions;
+    return [
+      new Plugin({
+        filterTransaction: (transaction) => {
+          if (!transaction.docChanged) return true;
+          // Remote Yjs state has already been accepted by the authoritative
+          // document before it reaches ProseMirror. Let legacy invalid state
+          // render once so the onUpdate defense can replace it with a canonical
+          // transaction. Local invalid transactions are rejected here BEFORE
+          // the Collaboration plugin can emit them to Yjs.
+          if (isChangeOrigin(transaction)) return true;
+          return isCanonicalBlbDocument(transaction.doc, opts.isTopicRoot);
+        },
+      }),
+    ];
   },
 
   addKeyboardShortcuts() {
@@ -112,6 +150,11 @@ export const BlipKeyboardShortcuts = Extension.create({
         }
 
         if (inListItem) {
+          // The outer bullet list IS the blip. Lifting its item would turn the
+          // label into a paragraph, so top-level Shift+Tab is deliberately a
+          // no-op. Nested list items can still be lifted one level at a time.
+          if (listDepth <= 1) return true;
+
           // Try to lift (outdent) the list item
           try {
             if (this.editor.can().liftListItem('listItem')) {
@@ -122,26 +165,26 @@ export const BlipKeyboardShortcuts = Extension.create({
             // liftListItem not available
           }
 
-          // If we can't lift but we're in a top-level list, convert back to paragraph
-          if (listDepth === 1) {
-            try {
-              // Toggle off the bullet list to convert to paragraph
-              this.editor.commands.toggleBulletList();
-              return true;
-            } catch {
-              // Try ordered list
-              try {
-                this.editor.commands.toggleOrderedList();
-                return true;
-              } catch {
-                // Neither worked
-              }
-            }
-          }
         }
 
         // Always return true to prevent Shift+Tab from escaping the editor
         return true;
+      },
+
+      // TipTap exits a list when Enter is pressed in an empty list item. BLB
+      // has no prose state to exit into, so keep the empty top-level label.
+      'Enter': () => {
+        const context = getBlbListContext(this.editor);
+        if (context.listDepth === 1 && context.isEmptyListItem) return true;
+        return false;
+      },
+
+      // Backspace at the start of the first outer-list item normally lifts it
+      // into a paragraph. Joining later items and editing nested lists remain
+      // untouched.
+      'Backspace': () => {
+        if (getBlbListContext(this.editor).isAtFirstTopLevelItemStart) return true;
+        return false;
       },
 
       // Ctrl/Cmd+Enter: Create a NEW inline child blip document at cursor position.

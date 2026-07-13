@@ -10,12 +10,14 @@
   converted a content-gated 18-node/depth-1 spec into **18 top-level P / 0 UL /
   0 LI**, and reload preserved the failure with zero browser errors. Inspected
   evidence lives at `screenshots/260713-0130-public-blb-creation-failure/`.
-  Branch `fix/blb-always-bulleted` now supplies one shared creation contract for
+  Branch `fix/blb-always-bulleted` now supplies one durable content contract for
   H1+UL topic seeds, escaped plain-text-to-LI replies, empty inline UL/LI seeds,
-  authoritative server normalization, and correct nested create-response
-  mapping. Focused **25/25**, full Vitest **110 files / 658 passed / 3 skipped /
-  0 failed**, typecheck, full-source lint, branch-context lint, and a
-  **3,317-module** build pass. The candidate is not merged/deployed; private
+  pre-Yjs editor transaction rejection, server-side CRDT rejection, guarded
+  toolbar/keyboard escape paths, API normalization, duplicate normalization,
+  legacy-document repair, and correct nested create-response mapping. Focused
+  **57/57**, full Vitest **112 files / 672 passed / 3 skipped / 0 failed**,
+  typecheck, full-source lint, branch-context lint, and a **3,318-module** build
+  pass. The candidate is not merged/deployed; private
   real-control acceptance and the complete public release gate remain open.
 - (2026-07-13 public BLB reality check) PR
   [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) passed all required

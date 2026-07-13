@@ -124,6 +124,33 @@ describe('routes: blips permissions', () => {
     expect(empty.body.blip.content).toBe('<ul><li><p></p></li></ul>');
   });
 
+  it('normalizes legacy flat content when duplicating a blip', async () => {
+    couch.getDoc.mockImplementation(async (id: string) => id === 'b1'
+      ? {
+          _id: 'b1', type: 'blip', waveId: 'w1', parentId: null,
+          authorId: 'author', content: '<p>Legacy flat label</p>',
+        }
+      : { _id: 'w1', type: 'topic', authorId: 'author', shareLevel: 'private' });
+    couch.insertDoc.mockImplementation(async (doc: any) => ({ ok: true, id: doc._id, rev: '1-x' }));
+
+    const res = await invokeRoute(blipsRouter, 'post', '/:id/duplicate', {
+      params: { id: 'b1' },
+      session: { userId: 'author', csrfToken: 'tok' },
+      headers: { 'x-csrf-token': 'tok', 'x-rizzoma-perf': '1' },
+    });
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body.blip).toMatchObject({
+      content: '<ul><li><p>Legacy flat label</p></li></ul>',
+      yjsGeneration: 0,
+    });
+    expect(couch.insertDoc).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'blip',
+      content: '<ul><li><p>Legacy flat label</p></li></ul>',
+      yjsGeneration: 0,
+    }));
+  });
+
   it('denies an authenticated outsider from updating a blip', async () => {
     couch.getDoc.mockImplementation(async (id: string) => id === 'b1'
       ? { _id: 'b1', type: 'blip', waveId: 'w1', authorId: 'owner', content: '<p>old</p>' }
@@ -159,7 +186,8 @@ describe('routes: blips permissions', () => {
     expect(res.statusCode).toBe(200);
     expect(couch.updateDoc).toHaveBeenCalledWith(expect.objectContaining({
       _id: 'b1',
-      content: '<p>new</p>',
+      content: '<ul><li><p>new</p></li></ul>',
+      yjsGeneration: 1,
     }));
   });
 
@@ -192,7 +220,7 @@ describe('routes: blips permissions', () => {
 
     const accepted = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
-      body: { content: '<p>projected</p>' },
+      body: { content: '<ul><li><p>projected</p></li></ul>' },
       sessionID: 'session-1',
       session: { userId: 'author', csrfToken: 'tok' },
       headers: {
@@ -203,9 +231,23 @@ describe('routes: blips permissions', () => {
     });
     expect(accepted.statusCode).toBe(200);
 
+    const invalid = await invokeRoute(blipsRouter, 'put', '/:id', {
+      params: { id: 'b1' },
+      body: { content: '<ul><li><p>projected</p></li></ul><p>orphan</p>' },
+      sessionID: 'session-1',
+      session: { userId: 'author', csrfToken: 'tok' },
+      headers: {
+        'x-csrf-token': 'tok',
+        'x-rizzoma-yjs-state-digest': digest,
+        'x-rizzoma-yjs-generation': '0',
+      },
+    });
+    expect(invalid.statusCode).toBe(400);
+    expect(invalid.body).toMatchObject({ error: 'invalid_blb_structure' });
+
     const stale = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
-      body: { content: '<p>stale</p>' },
+      body: { content: '<ul><li><p>stale</p></li></ul>' },
       sessionID: 'session-1',
       session: { userId: 'author', csrfToken: 'tok' },
       headers: {
@@ -228,7 +270,7 @@ describe('routes: blips permissions', () => {
 
     const res = await invokeRoute(blipsRouter, 'put', '/:id', {
       params: { id: 'b1' },
-      body: { content: '<p>must not become an external replacement</p>' },
+      body: { content: '<ul><li><p>must not become an external replacement</p></li></ul>' },
       sessionID: 'expired-lease',
       session: { userId: 'author', csrfToken: 'tok' },
       headers: {
@@ -296,7 +338,7 @@ describe('routes: topics permission checks', () => {
     vi.mocked(hasWritableBlipSocket).mockReturnValue(true);
     const accepted = await invokeRoute(topicsRouter, 'patch', '/:id', {
       params: { id: 't1' },
-      body: { content: '<h1>Root title</h1><p>projected</p>' },
+      body: { content: '<h1>Root title</h1><ul><li><p>projected</p></li></ul>' },
       sessionID: 'session-1',
       session: { userId: 'author', csrfToken: 'tok' },
       headers: {
@@ -307,9 +349,23 @@ describe('routes: topics permission checks', () => {
     });
     expect(accepted.statusCode).toBe(200);
 
+    const invalid = await invokeRoute(topicsRouter, 'patch', '/:id', {
+      params: { id: 't1' },
+      body: { content: '<h1>Wrong title</h1><ul><li><p>projected</p></li></ul>' },
+      sessionID: 'session-1',
+      session: { userId: 'author', csrfToken: 'tok' },
+      headers: {
+        'x-csrf-token': 'tok',
+        'x-rizzoma-yjs-state-digest': collaborationDigest('t1'),
+        'x-rizzoma-yjs-generation': '0',
+      },
+    });
+    expect(invalid.statusCode).toBe(400);
+    expect(invalid.body).toMatchObject({ error: 'invalid_blb_structure' });
+
     const stale = await invokeRoute(topicsRouter, 'patch', '/:id', {
       params: { id: 't1' },
-      body: { content: '<h1>Root title</h1><p>stale</p>' },
+      body: { content: '<h1>Root title</h1><ul><li><p>stale</p></li></ul>' },
       sessionID: 'session-1',
       session: { userId: 'author', csrfToken: 'tok' },
       headers: {
@@ -320,6 +376,29 @@ describe('routes: topics permission checks', () => {
     });
     expect(stale.statusCode).toBe(409);
     expect(stale.body).toMatchObject({ error: 'collaboration_projection_stale' });
+  });
+
+  it('reconciles the topic H1 from a title-only external replacement', async () => {
+    couch.getDoc.mockResolvedValue({
+      _id: 't1', _rev: '1-x', type: 'topic', authorId: 'author',
+      title: 'Old title', content: '<h1>Stale heading</h1><p>Legacy body</p>',
+      shareLevel: 'private', createdAt: 1, updatedAt: 1, yjsGeneration: 4,
+    });
+    couch.updateDoc.mockResolvedValue({ ok: true, id: 't1', rev: '2-x' });
+
+    const res = await invokeRoute(topicsRouter, 'patch', '/:id', {
+      params: { id: 't1' },
+      body: { title: 'Canonical title' },
+      session: { userId: 'author', csrfToken: 'tok' },
+      headers: { 'x-csrf-token': 'tok' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(couch.updateDoc).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Canonical title',
+      content: '<h1>Canonical title</h1><ul><li><p>Legacy body</p></li></ul>',
+      yjsGeneration: 5,
+    }));
   });
 
   it('denies topic deletion for non-author', async () => {

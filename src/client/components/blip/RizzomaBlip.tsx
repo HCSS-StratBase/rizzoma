@@ -47,7 +47,9 @@ import { yjsDocManager } from '../editor/YjsDocumentManager';
 import { useAuthenticatedCollaborationUser } from '../editor/useAuthenticatedCollaborationUser';
 import { requestTaskCompletionHydration } from '../editor/extensions/TaskWidget';
 import { collaborationProjectionHeaders } from '../../lib/collaborationProjection';
-import { EMPTY_BLB_HTML, plainTextToBlbHtml } from '@shared/blbContent';
+import { EMPTY_BLB_HTML, ensureBlbHtml, plainTextToBlbHtml } from '@shared/blbContent';
+import { normalizeBlbEditorDocument } from '../editor/blbEditorInvariant';
+import { isCanonicalBlbDocument } from '../editor/extensions/BlipKeyboardShortcuts';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
 export type BlipContributor = {
@@ -397,7 +399,12 @@ export function RizzomaBlip({
 
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
-  const safeBlipContent = useMemo(() => sanitizeRichHtml(blip.content || EMPTY_BLB_HTML), [blip.content]);
+  const safeBlipContent = useMemo(
+    () => isTopicRoot
+      ? sanitizeRichHtml(blip.content || EMPTY_BLB_HTML)
+      : sanitizeRichHtml(ensureBlbHtml(sanitizeRichHtml(blip.content || ''))),
+    [blip.content, isTopicRoot],
+  );
   const [editedContent, setEditedContent] = useState(safeBlipContent);
   const [showInlineCommentBtn, setShowInlineCommentBtn] = useState(false);
   const [inlineCommentsNotice, setInlineCommentsNotice] = useState<string | null>(null);
@@ -488,6 +495,10 @@ export function RizzomaBlip({
 
   // Ref to suppress auto-save during Y.Doc seeding (setContent triggers onUpdate)
   const seedingYdocRef = useRef(false);
+  // An invalid remote/legacy document is repaired in a queued canonical
+  // editor transaction. The ref prevents setContent's nested onUpdate from
+  // scheduling another repair or persisting the transient invalid projection.
+  const blbNormalizationPendingRef = useRef(false);
 
   // Refs to hold current editor and callback (avoids stale closures in useEditor)
   const createChildBlipRef = useRef<(anchorPosition: number) => Promise<void>>();
@@ -617,6 +628,7 @@ export function RizzomaBlip({
       onUpdate: ({ editor, transaction }: { editor: Editor; transaction: any }) => {
         // Skip auto-save during Y.Doc seeding (setContent triggers onUpdate)
         if (seedingYdocRef.current) return;
+        if (blbNormalizationPendingRef.current) return;
 
         // Critical: skip non-collaborative updates when NOT in edit mode. Programmatic
         // setContent calls (e.g. on mount, on blip-id change at line ~617,
@@ -632,6 +644,23 @@ export function RizzomaBlip({
         if (!isEditingRef.current && !remoteCollaborationChange) return;
 
         const html = editor.getHTML();
+        if (!isCanonicalBlbDocument(editor.state.doc)) {
+          blbNormalizationPendingRef.current = true;
+          queueMicrotask(() => {
+            if ((editor as any).isDestroyed) {
+              blbNormalizationPendingRef.current = false;
+              return;
+            }
+            const repaired = normalizeBlbEditorDocument(editor, { kind: 'blip' }).html;
+            blbNormalizationPendingRef.current = false;
+            setEditedContent(repaired);
+            if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+            autoSaveTimeoutRef.current = setTimeout(() => {
+              void persistLatestProjection(repaired);
+            }, 300);
+          });
+          return;
+        }
         setEditedContent(html);
 
         // Materialize both local and remote convergence. The server validates
@@ -690,7 +719,9 @@ export function RizzomaBlip({
       if ((inlineEditor as any).isDestroyed) return;
       if (!collabProvider.shouldSeed) return;
       if (ydoc.getXmlFragment('default').length > 0) return;
-      const authoritativeSeed = sanitizeRichHtml(collabProvider.seedContent ?? safeBlipContent);
+      const authoritativeSeed = sanitizeRichHtml(ensureBlbHtml(
+        sanitizeRichHtml(collabProvider.seedContent ?? safeBlipContent),
+      ));
       seedingYdocRef.current = true;
       inlineEditor.commands.setContent(authoritativeSeed);
       seedingYdocRef.current = false;
@@ -1124,7 +1155,7 @@ export function RizzomaBlip({
   const handleStartEdit = () => {
     console.log('handleStartEdit called for blip:', blip.id, 'canEdit:', blip.permissions.canEdit);
     if (blip.permissions.canEdit) {
-      const nextContent = injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline);
+      const nextContent = injectInlineMarkers(safeBlipContent, inlineChildren, localExpandedInline);
       // Revalidate the hidden editor before replacing its content. Existing
       // task IDs refresh after a parity-view toggle; a new task signature is
       // detected by the durability plugin's setContent lifecycle update.

@@ -5,6 +5,7 @@ import { DEFAULT_BG_COLORS } from '@shared/constants/textFormatting';
 import { useMobileContextSafe } from '../../contexts/MobileContext';
 import { BottomSheetMenu, createBlipMenuItems } from '../mobile/BottomSheetMenu';
 import './BlipMenu.css';
+import { runBlbSafeListAction, selectionIsInCanonicalTopLevelList } from '../editor/blbEditorInvariant';
 
 interface BlipMenuProps {
   isActive: boolean;
@@ -170,8 +171,8 @@ export function BlipMenu({
   const handleItalic = () => editor?.chain().focus().toggleItalic().run();
   const handleUnderline = () => editor?.chain().focus().toggleUnderline().run();
   const handleStrike = () => editor?.chain().focus().toggleStrike().run();
-  const handleBulletList = () => editor?.chain().focus().toggleBulletList().run();
-  const handleOrderedList = () => editor?.chain().focus().toggleOrderedList().run();
+  const handleBulletList = () => { if (editor) runBlbSafeListAction(editor, 'bullet'); };
+  const handleOrderedList = () => { if (editor) runBlbSafeListAction(editor, 'ordered'); };
   const handleUndo = () => editor?.chain().focus().undo().run();
   const handleRedo = () => editor?.chain().focus().redo().run();
   const handleClearFormat = () => editor?.chain().focus().clearNodes().unsetAllMarks().run();
@@ -587,9 +588,9 @@ export function BlipMenu({
 
           <div className="menu-group">
             <button 
-              className="menu-btn"
+              className={`menu-btn ${editor?.isActive('bulletList') ? 'active' : ''}`}
               onClick={handleBulletList}
-              title="Bulleted list"
+              title={editor && selectionIsInCanonicalTopLevelList(editor) ? 'BLB bullet list (always on)' : 'Bulleted list'}
               data-testid="blip-menu-bullet-list"
             >
               •
@@ -598,6 +599,7 @@ export function BlipMenu({
               className="menu-btn"
               onClick={handleOrderedList}
               title="Numbered list"
+              disabled={!!editor && selectionIsInCanonicalTopLevelList(editor)}
               data-testid="blip-menu-ordered-list"
             >
               1.

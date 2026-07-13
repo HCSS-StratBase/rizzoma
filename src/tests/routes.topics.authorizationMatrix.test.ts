@@ -243,22 +243,22 @@ describe('authorization route matrix', () => {
   it('derives section attribution server-side and ignores forged owner provenance', async () => {
     state.docs.set('topic-private', {
       ...state.docs.get('topic-private')!,
-      content: '<p>Original block</p>',
+      content: '<h1>Private topic</h1><ul><li><p>Original block</p></li></ul>',
       sectionAttribution: { forged: { authorId: 'owner', updatedAt: 1 } },
     });
     const response = await invokeRoute(topicsRouter, 'patch', '/:id', {
       identity: 'editor',
       params: { id: 'topic-private' },
       body: {
-        content: '<p>Changed by editor</p>',
+        content: '<h1>Private topic</h1><ul><li><p>Changed by editor</p></li></ul>',
         sectionAttribution: { attacker: { authorId: 'owner', updatedAt: 0 } },
       },
     });
     expect(response.statusCode).toBe(200);
     const saved = state.docs.get('topic-private')?.['sectionAttribution'] || {};
     expect(Object.keys(saved)).not.toContain('attacker');
-    expect(Object.values(saved)).toHaveLength(1);
-    expect(Object.values(saved)[0]).toMatchObject({ authorId: 'editor' });
+    expect(Object.values(saved)).toHaveLength(2);
+    expect(Object.values(saved).every((entry: any) => entry.authorId === 'editor')).toBe(true);
   });
 
   it.each([
@@ -1178,7 +1178,7 @@ describe('authorization route matrix', () => {
       method: 'put',
       targetId: 'blip-private',
       taskId: 'task:55555555-5555-4555-8555-555555555555',
-      content: '<p>Repair nested task <span data-task-widget="" data-task-id="task:55555555-5555-4555-8555-555555555555" data-assignee-id="viewer" data-assignee="Viewer"></span></p>',
+      content: '<ul><li><p>Repair nested task <span data-task-widget="" data-task-id="task:55555555-5555-4555-8555-555555555555" data-assignee-id="viewer" data-assignee="Viewer"></span></p></li></ul>',
     },
     {
       label: 'topic root',
@@ -1186,7 +1186,7 @@ describe('authorization route matrix', () => {
       method: 'patch',
       targetId: 'topic-private',
       taskId: 'task:66666666-6666-4666-8666-666666666666',
-      content: '<h1>Private topic</h1><p>Repair root task <span data-task-widget="" data-task-id="task:66666666-6666-4666-8666-666666666666" data-assignee-id="viewer" data-assignee="Viewer"></span></p>',
+      content: '<h1>Private topic</h1><ul><li><p>Repair root task <span data-task-widget="" data-task-id="task:66666666-6666-4666-8666-666666666666" data-assignee-id="viewer" data-assignee="Viewer"></span></p></li></ul>',
     },
   ])('self-heals a missing task side-document on an identical $label save', async ({
     router,

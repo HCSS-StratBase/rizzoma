@@ -2,13 +2,14 @@
 export const EMPTY_BLB_HTML = '<ul><li><p></p></li></ul>';
 
 export function escapeBlbHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => ({
+  const replacements: Record<string, string> = {
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
     "'": '&#39;',
-  })[character]!);
+  };
+  return value.replace(/[&<>"']/g, (character) => replacements[character] ?? character);
 }
 
 export function plainTextToBlbHtml(value: string): string {
@@ -22,39 +23,202 @@ export function plainTextToBlbHtml(value: string): string {
   return `<ul>${labels.map((label) => `<li><p>${escapeBlbHtml(label)}</p></li>`).join('')}</ul>`;
 }
 
-function flatBlockHtmlToBlbHtml(value: string): string | null {
-  const blocks = Array.from(value.matchAll(/<(p|h[1-6]|blockquote|pre)\b[^>]*>[\s\S]*?<\/\1>/gi));
-  if (blocks.length === 0) return null;
-  const withoutBlocks = value.replace(/<(p|h[1-6]|blockquote|pre)\b[^>]*>[\s\S]*?<\/\1>/gi, '').trim();
-  if (withoutBlocks) return null;
-  return `<ul>${blocks.map((match) => `<li>${match[0]}</li>`).join('')}</ul>`;
+type HtmlTag = {
+  end: number;
+  name: string;
+  closing: boolean;
+  selfClosing: boolean;
+};
+
+const VOID_ELEMENTS = new Set([
+  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+  'link', 'meta', 'param', 'source', 'track', 'wbr',
+]);
+
+function isTagNameCharacter(character: string | undefined): boolean {
+  if (character === undefined || character === '') return false;
+  const code = character.charCodeAt(0);
+  return (
+    (code >= 48 && code <= 57)
+    || (code >= 65 && code <= 90)
+    || (code >= 97 && code <= 122)
+    || character === '-'
+    || character === ':'
+  );
 }
 
 /**
- * Normalize newly-created blip content to a top-level unordered list.
+ * Read one HTML tag without a backtracking regular expression. Attribute
+ * values may contain `>`; quoted values are therefore scanned explicitly.
+ */
+function readHtmlTag(value: string, start: number): HtmlTag | null {
+  if (value[start] !== '<') return null;
+  if (value.startsWith('<!--', start)) {
+    const commentEnd = value.indexOf('-->', start + 4);
+    return commentEnd < 0
+      ? null
+      : { end: commentEnd + 3, name: '', closing: false, selfClosing: true };
+  }
+
+  let end = start + 1;
+  let quote = '';
+  while (end < value.length) {
+    const character = value.charAt(end);
+    if (quote !== '') {
+      if (character === quote) quote = '';
+    } else if (character === '"' || character === "'") {
+      quote = character;
+    } else if (character === '>') {
+      break;
+    }
+    end += 1;
+  }
+  if (end >= value.length) return null;
+
+  let cursor = start + 1;
+  while (/\s/.test(value[cursor] || '')) cursor += 1;
+  const closing = value[cursor] === '/';
+  if (closing) {
+    cursor += 1;
+    while (/\s/.test(value[cursor] || '')) cursor += 1;
+  }
+  const nameStart = cursor;
+  while (isTagNameCharacter(value[cursor])) cursor += 1;
+  const name = value.slice(nameStart, cursor).toLowerCase();
+  const beforeClose = value.slice(start + 1, end).trimEnd();
+  return {
+    end: end + 1,
+    name,
+    closing,
+    selfClosing: name.length === 0 || beforeClose.endsWith('/') || VOID_ELEMENTS.has(name),
+  };
+}
+
+/** Return the exclusive end of an element, or -1 for malformed HTML. */
+function elementEnd(value: string, start: number, expectedName: string): number {
+  const root = readHtmlTag(value, start);
+  if (!root || root.closing || root.selfClosing || root.name !== expectedName) return -1;
+
+  let depth = 1;
+  let cursor = root.end;
+  while (cursor < value.length) {
+    const tagStart = value.indexOf('<', cursor);
+    if (tagStart < 0) return -1;
+    const tag = readHtmlTag(value, tagStart);
+    if (!tag) return -1;
+    cursor = tag.end;
+    if (tag.name !== expectedName || tag.selfClosing) continue;
+    depth += tag.closing ? -1 : 1;
+    if (depth === 0) return tag.end;
+  }
+  return -1;
+}
+
+function firstOpeningTag(value: string, start = 0): HtmlTag | null {
+  const tag = readHtmlTag(value, start);
+  return tag && !tag.closing && !tag.selfClosing && tag.name.length > 0 ? tag : null;
+}
+
+function hasOnlyDirectListItems(value: string, root: HtmlTag): boolean {
+  let cursor = root.end;
+  let itemCount = 0;
+  while (cursor < value.length) {
+    while (/\s/.test(value[cursor] || '')) cursor += 1;
+    if (cursor >= value.length) return false;
+    const tag = readHtmlTag(value, cursor);
+    if (!tag) return false;
+    if (tag.closing && tag.name === 'ul') {
+      return itemCount > 0 && tag.end === value.length;
+    }
+    if (tag.name === '' && tag.selfClosing) {
+      cursor = tag.end;
+      continue;
+    }
+    if (tag.closing || tag.selfClosing || tag.name !== 'li') return false;
+    const end = elementEnd(value, cursor, 'li');
+    if (end < 0) return false;
+    itemCount += 1;
+    cursor = end;
+  }
+  return false;
+}
+
+/** True only when the complete document is one UL with direct LI children. */
+export function isBlbHtml(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  const content = value.trim();
+  if (content !== value) return false;
+  const root = firstOpeningTag(content);
+  return root !== null
+    && root.name === 'ul'
+    && elementEnd(content, 0, 'ul') === content.length
+    && hasOnlyDirectListItems(content, root);
+}
+
+/**
+ * Split the small set of legacy flat block documents into one BLB label per
+ * block. Each character is scanned a bounded number of times; malformed or
+ * mixed documents return null and are wrapped as one rich label instead.
+ */
+function splitFlatBlocks(value: string): string[] | null {
+  const blocks: string[] = [];
+  let cursor = 0;
+  while (cursor < value.length) {
+    while (/\s/.test(value[cursor] || '')) cursor += 1;
+    if (cursor >= value.length) break;
+    const tag = firstOpeningTag(value, cursor);
+    if (!tag || !/^(?:p|h[1-6]|blockquote|pre)$/.test(tag.name)) return null;
+    const end = elementEnd(value, cursor, tag.name);
+    if (end < 0) return null;
+    blocks.push(value.slice(cursor, end));
+    cursor = end;
+  }
+  return blocks.length > 0 ? blocks : null;
+}
+
+function stripLeadingHeading(value: string): string {
+  const content = value.trim();
+  const tag = firstOpeningTag(content);
+  if (!tag || tag.name !== 'h1') return content;
+  const end = elementEnd(content, 0, 'h1');
+  return end < 0 ? content : content.slice(end).trim();
+}
+
+/**
+ * Normalize complete blip content to exactly one top-level unordered list.
  * Existing rich inline HTML is preserved inside list items; plain-text lines
- * become separate atomic labels.
+ * become separate atomic labels. A mixed `<ul>...</ul><p>orphan</p>` document
+ * is deliberately not accepted by the fast path and is wrapped as one label.
  */
 export function ensureBlbHtml(value: unknown): string {
   const content = typeof value === 'string' ? value.trim() : '';
   if (!content) return EMPTY_BLB_HTML;
-  if (/^<ul(?:\s|>)/i.test(content)) return content;
+  if (isBlbHtml(content)) return content;
   // Angle brackets alone are normal prose (for example, "latency < 5 ms").
   // Treat the value as HTML only when it contains an actual opening tag.
   if (!/<[A-Za-z][^>]*>/.test(content)) return plainTextToBlbHtml(content);
-  return flatBlockHtmlToBlbHtml(content) || `<ul><li>${content}</li></ul>`;
+  const blocks = splitFlatBlocks(content);
+  return blocks
+    ? `<ul>${blocks.map((block) => `<li>${block}</li>`).join('')}</ul>`
+    : `<ul><li>${content}</li></ul>`;
 }
 
 export function topicSeedHtml(title: string): string {
   return `<h1>${escapeBlbHtml(title.trim())}</h1>${EMPTY_BLB_HTML}`;
 }
 
-/** Keep the topic title as H1 while making every body block BLB-shaped. */
+/** Keep the canonical topic title as H1 while making every body block BLB-shaped. */
 export function ensureTopicBlbHtml(title: string, value: unknown): string {
   const content = typeof value === 'string' ? value.trim() : '';
-  if (!content) return topicSeedHtml(title);
+  const body = content ? stripLeadingHeading(content) : '';
+  return `<h1>${escapeBlbHtml(title.trim())}</h1>${ensureBlbHtml(body)}`;
+}
 
-  const heading = content.match(/^(<h1\b[^>]*>[\s\S]*?<\/h1>)([\s\S]*)$/i);
-  if (heading) return `${heading[1]}${ensureBlbHtml(heading[2])}`;
-  return `<h1>${escapeBlbHtml(title.trim())}</h1>${ensureBlbHtml(content)}`;
+/** True only for the canonical title H1 followed by one BLB body list. */
+export function isTopicBlbHtml(title: string, value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  const content = value.trim();
+  if (content !== value) return false;
+  const heading = `<h1>${escapeBlbHtml(title.trim())}</h1>`;
+  return content.startsWith(heading) && isBlbHtml(content.slice(heading.length));
 }
