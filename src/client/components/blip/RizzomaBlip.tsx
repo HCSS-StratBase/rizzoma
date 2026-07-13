@@ -973,16 +973,14 @@ export function RizzomaBlip({
             const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
             const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
             if (editable) return;
-            if (!container) {
-              window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
-                detail: { threadId: newBlipId, parentId: blip.id },
-              }));
-              const marker = document.querySelector<HTMLElement>(
-                `[data-blip-thread="${CSS.escape(newBlipId)}"]`
-              );
-              if (marker && marker.textContent !== '−') {
-                marker.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-              }
+            window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
+              detail: { threadId: newBlipId, parentId: blip.id },
+            }));
+            const marker = document.querySelector<HTMLElement>(
+              `[data-blip-thread="${CSS.escape(newBlipId)}"]`
+            );
+            if (marker && marker.textContent !== '−') {
+              marker.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
             }
             window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
               detail: { blipId: newBlipId },

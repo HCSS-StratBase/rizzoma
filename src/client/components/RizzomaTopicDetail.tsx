@@ -1092,7 +1092,7 @@ function RizzomaTopicDetailState({
               const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
               const action = nextInlineChildHandoffAction(Boolean(container), Boolean(editable));
               if (action === 'done') return;
-              if (action === 'ensure-expanded') {
+              if (action === 'ensure-expanded' || !editable) {
                 window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
                   detail: { threadId: newBlipId, parentId: id }
                 }));
@@ -1104,7 +1104,7 @@ function RizzomaTopicDetailState({
                 const marker = document.querySelector<HTMLElement>(
                   `[data-blip-thread="${CSS.escape(newBlipId)}"]`
                 );
-                if (marker && !container && marker.textContent !== '−') {
+                if (marker && marker.textContent !== '−') {
                   marker.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
                 }
               }
