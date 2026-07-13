@@ -155,17 +155,18 @@ router.get('/:id', async (req, res) => {
 });
 
 // compute a depth-first order of blips (preorder) including timestamps
-function flattenBlips(blips: FlatBlip[]): Array<{ id: string; updatedAt: number }> {
-  const out: Array<{ id: string; updatedAt: number }> = [];
-  const visit = (n: FlatBlip) => {
-    if (n && n.id) {
-      const updatedAt = Number(n.updatedAt ?? n.createdAt ?? 0);
-      out.push({ id: String(n.id), updatedAt });
-    }
-    (n.children || []).forEach(visit);
-  };
-  (blips || []).forEach(visit);
-  return out;
+async function loadWaveBlipOrder(id: string): Promise<Array<{ id: string; updatedAt: number }>> {
+  const r = await find<Blip>(
+    { type: 'blip', waveId: id },
+    { limit: 20000, sort: [{ type: 'asc' }, { waveId: 'asc' }, { createdAt: 'asc' }] },
+  ).catch(async () => find<Blip>({ type: 'blip', waveId: id }, { limit: 20000 }));
+  return (r.docs || [])
+    .filter((doc) => !(doc as any).deleted)
+    .map((doc) => ({
+      id: String((doc as any)._id || ''),
+      updatedAt: Number((doc as any).updatedAt ?? (doc as any).createdAt ?? 0),
+    }))
+    .filter((entry) => entry.id);
 }
 
 // GET /api/waves/:id/unread — list unread blip IDs for current user
@@ -175,10 +176,7 @@ router.get('/:id/unread', async (req, res) => {
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
   const id = req.params.id;
   try {
-    // get tree
-    const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
-    const waveData: any = await waveResp.json();
-    const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
+    const order = await loadWaveBlipOrder(id);
 
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
@@ -198,9 +196,7 @@ router.get('/:id/next', async (req, res) => {
   const id = req.params.id;
   const after = String((req.query as any).after || '');
   try {
-    const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
-    const waveData: any = await waveResp.json();
-    const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
+    const order = await loadWaveBlipOrder(id);
 
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
@@ -221,17 +217,19 @@ router.get('/:id/prev', async (req, res) => {
   const id = req.params.id;
   const before = String((req.query as any).before || '');
   try {
-    const waveResp = await fetch(`${req.protocol}://${req.headers.host}/api/waves/${encodeURIComponent(id)}`);
-    const waveData: any = await waveResp.json();
-    const order = flattenBlips((waveData.blips || []) as FlatBlip[]);
+    const order = await loadWaveBlipOrder(id);
 
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
     (r.docs || []).forEach((d) => readMap.set(String(d.blipId), Number((d as any).readAt || 0)));
-    const startIdx = before ? Math.max(0, order.findIndex((o) => o.id === before) - 1) : order.length - 1;
+    const beforeIdx = before ? order.findIndex((o) => o.id === before) : -1;
+    const startIdx = before
+      ? (beforeIdx > 0 ? beforeIdx - 1 : order.length - 1)
+      : order.length - 1;
     let prev: string | null = null;
     for (let i = startIdx; i >= 0; i--) {
       const entry = order[i];
+      if (!entry) continue;
       const readAt = readMap.get(entry.id) || 0;
       if (entry && entry.updatedAt > readAt) { prev = entry.id; break; }
     }

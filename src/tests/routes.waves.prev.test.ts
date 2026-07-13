@@ -41,6 +41,15 @@ describe('routes: /api/waves prev', () => {
         return realFetch(url, init);
       }
       if (method === 'POST' && path.endsWith('/_find')) {
+        const body = init?.body ? JSON.parse(String(init.body)) : {};
+        if (body?.selector?.type === 'blip') {
+          return toJsonResponse({
+            docs: [
+              { _id: 'b1', type: 'blip', waveId: 'w1', content: 'one', createdAt: 1, updatedAt: 1 },
+              { _id: 'b2', type: 'blip', waveId: 'w1', content: 'two', createdAt: 2, updatedAt: 2 },
+            ],
+          });
+        }
         return toJsonResponse({ docs: [] });
       }
       return toJsonResponse({}, 404);
