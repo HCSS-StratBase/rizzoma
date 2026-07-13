@@ -1,12 +1,12 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-14 (parity gate/audit checkpoint synced everywhere · VPS at ac6a6f9d)
+Last Updated: 2026-07-14 (parity gate/audit checkpoint synced everywhere · VPS includes ac6a6f9d plus status-doc sync)
 
 Current State (feature/native-fractal-port @ 2026-07-14)
 
 ### Current state — 2026-07-14, branch `feature/native-fractal-port`
 
-- **Everything points at the same checkpoint now**: local repo, pushed branch, and VPS checkout `/data/large-projects/stephan/rizzoma_260612` are at `ac6a6f9d`.
+- **Everything points at the same checkpoint now**: local repo, pushed branch, and VPS checkout `/data/large-projects/stephan/rizzoma_260612` all include the `ac6a6f9d` parity-gate checkpoint plus subsequent status-doc sync commits.
 - **Public health**: `https://138-201-62-161.nip.io/` returns 200 and `https://138-201-62-161.nip.io/api/health` returns 200 after the VPS fast-forward.
 - **Hard parity gate**: `npm run parity:gate` now requires legacy references, current public sweep, coverage, side-by-side old/current PNGs, and written audit before UI work can be handed off.
 - **Current audit status**: `screenshots/260713-225614-public-parity-sweep-feature-sweep/legacy-current-comparisons/PARITY_AUDIT.md` is **FAIL / IN_PROGRESS**: 200 documented rows, 159 classified rows, 24 old PNGs, 44 new PNGs, 104/159 visual coverage, 2 screenshot gaps, 10 comparison sheets, and 0 completed written analyses before the audit.
@@ -14,11 +14,11 @@ Current State (feature/native-fractal-port @ 2026-07-14)
 
 ### Current state — 2026-07-13, branch `feature/native-fractal-port`
 
-- **BLB creation/read surface is no longer terminal-looking on the public hostname**: collapsed root, nested, and terminal BLB rows now render a bullet plus `[+]` affordance instead of bare text, and collapsed-row clicks expand without bubbling into the wrong parent. The current branch/VPS checkpoint is `ac6a6f9d`.
+- **BLB creation/read surface is no longer terminal-looking on the public hostname**: collapsed root, nested, and terminal BLB rows now render a bullet plus `[+]` affordance instead of bare text, and collapsed-row clicks expand without bubbling into the wrong parent. The current branch/VPS includes the parity-gate checkpoint `ac6a6f9d`.
 - **Clickable public proof**: [BLB proof 20260713T203706](https://138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a00740b). Artifacts: `screenshots/260713-223655-public-blb-fractal-proof-after-sso-502-fix/` (`01` root/collapsed, `02` root expanded, `03` nested expanded, `04` reload persistence, plus `result.json`). Earlier dev proof remains at [BLB proof 20260713T132301](https://dev.138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a005c3a).
 - **Unread route 500s fixed**: `/api/waves/:id/unread`, `/next`, and `/prev` no longer call the app through `fetch(req.protocol + req.headers.host)`, which broke behind nginx; they compute blip order directly from CouchDB.
 - **Public 502 fixed after Gmail SSO callback**: Google OAuth redirects back to the bare hostname, but enabled production nginx was still pointing at dead `127.0.0.1:8101`. It was temporarily restored to live legacy `8102`, then cut over to the new app on `127.0.0.1:3000` so SSO returns to the same codebase as the BLB proof. Backups: `/etc/nginx/sites-enabled/rizzoma.conf.bak-20260713-fix-prod-502` and `/etc/nginx/sites-enabled/rizzoma.conf.bak-20260713-cutover-new-blb`.
-- **Dev VPS restored**: active checkout `/data/large-projects/stephan/rizzoma_260612` is now synced to `ac6a6f9d`; `https://dev.138-201-62-161.nip.io` is live after repairing the enabled nginx dev vhost from dead `127.0.0.1:8101` to live `127.0.0.1:3000`.
+- **Dev VPS restored**: active checkout `/data/large-projects/stephan/rizzoma_260612` now includes `ac6a6f9d` plus status-doc sync commits; `https://dev.138-201-62-161.nip.io` is live after repairing the enabled nginx dev vhost from dead `127.0.0.1:8101` to live `127.0.0.1:3000`.
 - **Verification**: `npm run build` passed; targeted route tests passed (11/11); full `npm run test` passed (55 files, 245 passed, 3 skipped); Playwright proof passed against both dev and the bare public URL. The only console error in the clean proof is the expected initial unauthenticated `/api/auth/me` 401 before the proof user registers.
 - **Boundary**: public proof path is green, but broader visual sweep, mobile/responsive sweep, and iPhone Safari remain separate gates.
 

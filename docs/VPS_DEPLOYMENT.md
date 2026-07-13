@@ -1,6 +1,6 @@
 # VPS Deployment — Rizzoma on 138.201.62.161
 
-**Last updated**: 2026-07-14 00:40 CEST (public checkout synced to `feature/native-fractal-port` `ac6a6f9d`; parity gate/audit evidence present)
+**Last updated**: 2026-07-14 00:40 CEST (public checkout includes parity gate/audit evidence checkpoint `ac6a6f9d` plus status-doc sync commits)
 
 ## Server details
 
@@ -18,8 +18,8 @@
 | **Persistent volumes** | `/data/volumes/stephan-rizzoma/{app,redis,couchdb,rabbitmq,sphinx,minio}` |
 | **Auth account** | `hp@rizzoma.com` / `stratbase2026` |
 | **Repo** | `HCSS-StratBase/rizzoma` on GitHub |
-| **Current documented source** | `feature/native-fractal-port`, public/dev active checkout synced to `ac6a6f9d` |
-| **Last verified VPS code baseline** | Public HTTPS currently targets the host-run `feature/native-fractal-port` checkout at `ac6a6f9d`; legacy prod process at `/srv/rizzoma/releases/72c54ced28d6ece725c1a6971e1be9ca5f97dbd9` listens on `8102` but is not the public target |
+| **Current documented source** | `feature/native-fractal-port`, public/dev active checkout includes parity gate/audit checkpoint `ac6a6f9d` plus status-doc sync commits |
+| **Last verified VPS code baseline** | Public HTTPS currently targets the host-run `feature/native-fractal-port` checkout containing `ac6a6f9d`; legacy prod process at `/srv/rizzoma/releases/72c54ced28d6ece725c1a6971e1be9ca5f97dbd9` listens on `8102` but is not the public target |
 
 ## Public 502 / SSO callback repair (2026-07-13)
 
@@ -54,7 +54,7 @@ Current public verification:
 
 ## Public parity-gate sync (2026-07-14)
 
-The active checkout `/data/large-projects/stephan/rizzoma_260612` was fast-forwarded from `d8d2d0c4` to `ac6a6f9d` after the visual parity gate checkpoint. This commit is primarily docs/evidence/gate work, but the VPS source tree now carries the current project truth:
+The active checkout `/data/large-projects/stephan/rizzoma_260612` was fast-forwarded from `d8d2d0c4` through `ac6a6f9d` after the visual parity gate checkpoint, then again after status-doc sync commits. The VPS source tree now carries the current project truth:
 
 - `scripts/check-rizzoma-parity-gate.mjs`
 - `npm run parity:gate`
@@ -64,14 +64,14 @@ The active checkout `/data/large-projects/stephan/rizzoma_260612` was fast-forwa
 
 Verification:
 
-- VPS checkout: `feature/native-fractal-port` at `ac6a6f9d`
+- VPS checkout: `feature/native-fractal-port` includes `ac6a6f9d` and later status-doc sync commits
 - `https://138-201-62-161.nip.io/` returns 200
 - `https://138-201-62-161.nip.io/api/health` returns 200
 - Audit status remains **FAIL / IN_PROGRESS**; this sync does not certify full parity.
 
 ## Dev BLB proof repair (2026-07-13)
 
-The active dev/public checkout for `feature/native-fractal-port` is `/data/large-projects/stephan/rizzoma_260612`, currently synced to `ac6a6f9d`.
+The active dev/public checkout for `feature/native-fractal-port` is `/data/large-projects/stephan/rizzoma_260612`, and it includes the `ac6a6f9d` parity-gate checkpoint plus later status-doc sync commits.
 
 The enabled nginx dev vhost (`/etc/nginx/sites-enabled/rizzoma-dev.conf`) had drifted to a dead upstream `127.0.0.1:8101`, causing `https://dev.138-201-62-161.nip.io` to return 502 even though the dev Vite/server pair was healthy on `3000/8000`. It was repaired to:
 

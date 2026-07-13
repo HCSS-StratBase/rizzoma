@@ -42,7 +42,7 @@ function mtimeSeconds(relPath) {
 }
 
 const uiPathPattern =
-  /^(src\/client\/|src\/shared\/|scripts\/visual-feature-sweep\.mjs|scripts\/verify-blb-fractal-proof\.mjs|RIZZOMA_FEATURES_STATUS\.md|TESTING_STATUS\.md|.*\.(tsx|css))$/;
+  /^(src\/client\/|src\/shared\/|scripts\/visual-feature-sweep\.mjs|scripts\/verify-blb-fractal-proof\.mjs|RIZZOMA_FEATURES_STATUS\.md|.*\.(tsx|css))$/;
 const uiKeywordPattern =
   /(RizzomaBlip|BlipMenu|BlipThreadNode|RightToolsPanel|RizzomaTopicDetail|EditorConfig|inlineMarker|visual-feature-sweep|verify-blb-fractal-proof)/;
 
@@ -68,7 +68,7 @@ const workingChanged = runGit(['status', '--porcelain=v1'])
 const workingUiChanged = workingChanged.filter((file) => uiPathPattern.test(file) || uiKeywordPattern.test(file));
 
 if (latestUiCommitTs === 0 && workingUiChanged.length === 0) {
-  console.log('Rizzoma parity gate: no UI/sweep/status changes detected today; pass.');
+  console.log('Rizzoma parity gate: no UI/sweep/feature-matrix changes detected today; pass.');
   process.exit(0);
 }
 

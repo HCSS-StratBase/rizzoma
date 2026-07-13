@@ -7,7 +7,8 @@ Branch: `feature/native-fractal-port`
 - Synced the public/dev VPS checkout:
   - path: `/data/large-projects/stephan/rizzoma_260612`
   - before: `d8d2d0c4`
-  - after: `ac6a6f9d`
+  - parity evidence checkpoint: `ac6a6f9d`
+  - then updated again after status-doc sync commits
   - public root and `/api/health` both returned 200 after the fast-forward
 - Updated stale repo status surfaces that still cited older checkpoints:
   - `RESTORE_POINT.md`
@@ -16,7 +17,7 @@ Branch: `feature/native-fractal-port`
   - `TESTING_STATUS.md`
   - `docs/HANDOFF.md`
 - Current synchronized truth:
-  - local repo, pushed branch, and VPS checkout are all at `ac6a6f9d`
+  - local repo, pushed branch, and VPS checkout all include `ac6a6f9d` plus status-doc sync commits
   - `npm run parity:gate` is the current blocking visual parity gate
   - latest evidence folder is `screenshots/260713-225614-public-parity-sweep-feature-sweep/`
   - latest written audit is `screenshots/260713-225614-public-parity-sweep-feature-sweep/legacy-current-comparisons/PARITY_AUDIT.md`
