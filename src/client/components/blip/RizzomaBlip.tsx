@@ -1252,7 +1252,9 @@ export function RizzomaBlip({
       claimActive();
     }
     setIsExpanded(next);
-    onToggleCollapse?.(blip.id);
+    if (!next) {
+      onToggleCollapse?.(blip.id);
+    }
     if (!blip.isRead) {
       onBlipRead?.(blip.id);
     }
