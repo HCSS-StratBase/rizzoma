@@ -122,6 +122,21 @@ describe('routes: /api/topics', () => {
     );
   });
 
+  it('rejects a whitespace-only topic title before creating an uneditable root', async () => {
+    const server = app.listen(0);
+    const port = (server.address() as any).port;
+    const resp = await fetch(`http://127.0.0.1:${port}/api/topics`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-csrf-token': 't' },
+      body: JSON.stringify({ title: '   ' }),
+    });
+    const body = await resp.json();
+    server.close();
+    expect(resp.status).toBe(400);
+    expect(body.error).toBe('validation_error');
+    expect(insertedDocs.some((doc) => doc.type === 'topic')).toBe(false);
+  });
+
   it('updates a topic (owner required)', async () => {
     const server = app.listen(0);
     const port = (server.address() as any).port;

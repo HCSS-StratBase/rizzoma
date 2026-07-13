@@ -4,8 +4,22 @@ import { yXmlFragmentToProsemirrorJSON } from 'y-prosemirror';
 type ProsemirrorNode = {
   type?: unknown;
   attrs?: Record<string, unknown> | null;
+  text?: unknown;
+  marks?: unknown[];
   content?: ProsemirrorNode[];
 };
+
+function isPlainTopicHeading(node: ProsemirrorNode | undefined): boolean {
+  if (node?.type !== 'heading' || Number(node.attrs?.['level']) !== 1) return false;
+  if (!Array.isArray(node.content) || node.content.length === 0) return false;
+  let title = '';
+  for (const child of node.content) {
+    if (child.type !== 'text' || typeof child.text !== 'string') return false;
+    if (Array.isArray(child.marks) && child.marks.length > 0) return false;
+    title += child.text;
+  }
+  return title.trim().length > 0;
+}
 
 /**
  * Validate the one invariant that makes BLB navigation possible: every
@@ -22,7 +36,7 @@ export function isBlbProsemirrorDocument(
   if (topicRoot) {
     if (nodes.length !== 2) return false;
     const title = nodes[0];
-    if (title?.type !== 'heading' || Number(title.attrs?.['level']) !== 1) return false;
+    if (!isPlainTopicHeading(title)) return false;
     return nodes[1]?.type === 'bulletList';
   }
 
@@ -40,7 +54,10 @@ export function isBlbYjsDocument(document: Y.Doc, topicRoot: boolean): boolean {
   if ((sharedType as { constructor?: unknown }).constructor === Y.AbstractType) {
     sharedType = document.getXmlFragment('default');
   }
-  if (!(sharedType instanceof Y.XmlFragment)) return true;
+  // A concrete map/text under TipTap's reserved root name poisons later
+  // getXmlFragment() calls. Unrelated shared types are allowed only under
+  // other names; `default` must always be the editor XmlFragment.
+  if (!(sharedType instanceof Y.XmlFragment)) return false;
   return isBlbProsemirrorDocument(
     yXmlFragmentToProsemirrorJSON(sharedType) as ProsemirrorNode,
     topicRoot,

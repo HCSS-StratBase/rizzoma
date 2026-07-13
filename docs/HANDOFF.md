@@ -1,29 +1,30 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-13 (`fix/read-marker-conflict`; deployed base
-`0553a611c54a7cfa8faf466ac0797a13b4aa51d4`). PR
-[#71](https://github.com/HCSS-StratBase/rizzoma/pull/71) merged the complete
-generation-safe collaboration/auth repair after all seven GitHub checks passed,
-and that exact master is public on managed green `:8102`. Resumed production
-acceptance proved invitation delivery/acceptance, viewer/commenter/editor
-enforcement, Tasks and mentions, two-browser relay/reconnect, Follow-the-Green
-`2 -> 1 -> 0`, recursive exports, public/private ACLs, and revocation. Its final
-console gate then caught one real 500: two concurrent mark-read writes could use
-the same CouchDB revision, so one succeeded while the second conflict surfaced
-as 500. The current branch replaces both single and bulk read-marker writes
-with one deterministic-ID, direct-reread, bounded-retry upsert; legacy random-ID
-markers remain compatible, timestamps stay monotonic, and non-conflict failures
-remain visible. Local gates pass at **108 files / 651 tests / 3 skipped / 0
-failed**, plus typecheck, full-source ESLint `--quiet`, `git diff --check`, a
-**3,315-module** build, and an independent GO audit. GitHub CI, exact blue-lane
-deployment, and the final clean public acceptance rerun remain open.
+Last Updated: 2026-07-13 (`fix/blb-always-bulleted`; deployed base
+`5e1bc271e81613768e811cfc306c0c691e71d77b`). PR
+[#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) merged the read-marker
+repair and that exact tree is public on managed blue `:8101`. Public phase 2
+passed **49/49**, but the first real BLB authoring attempt exposed the primary
+product invariant as broken: an intended 18-node bulleted structure persisted
+as **18 P / 0 UL / 0 LI**. Public production is therefore deployed but not
+accepted.
 
-**Deployment boundary:** both public vhosts point exactly once to the compiled,
-systemd-managed green lane on loopback `:8102`; blue and the old listeners are
-inactive. `rizzoma@green` is active/enabled at exact release `0553a611`, with
-Redis sessions, CouchDB, and ClamAV healthy. The root-only rollback capture is
-`/root/rizzoma-cutover-coherence-20260713-003633`. Native rendering remains
-disabled; production uses the React/TipTap parity path.
+Draft PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) is the audited
+always-bulleted repair. It closes editor/Yjs/API creation and durability paths,
+including undo-history split-brain, topic-H1 child creation, reserved-root
+poisoning, existing-flat seed projection, stale-prop replay, malformed HTML,
+and task-list roots. Full local gates pass at **112 files / 678 passed / 3
+skipped / 0 failed**, typecheck, branch-context lint, full ESLint at **0 errors
+/ 8,954 baseline warnings**, and a **3,318-module** build; an independent audit
+returned **GO for merge-candidate testing**.
+
+**Deployment boundary:** public traffic still targets managed blue `:8101` at
+the broken PR #72 tree. Inactive green `:8102` is stopped. PR #73 is not merged
+or deployed. It must pass green CI and exact inactive-lane deployment, then
+private two-client/reload/restart and responsive visual acceptance before any
+public cutover. After cutover, repair and re-verify the exact public failure
+topic. Native rendering remains disabled; production uses the React/TipTap
+parity path.
 
 Last Updated: 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — Playwright sign-in lands as `sdspieg@gmail.com` "Stephan De Spiegeleire" with Google avatar. Tasks #140 + #143 both closed. Required two Hetzner Robot firewall passes: (1) opened port 80 for Let's Encrypt; (2) consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to allow return traffic from MASQUERADE'd outbound — without that, server couldn't reach `oauth2.googleapis.com/token`. Diagnosed via tcpdump (SYN egressed, no SYN-ACK returned). Same fix unblocks SMTP / S3 / any container-outbound feature.)
 
@@ -56,10 +57,11 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active development branch: `fix/read-marker-conflict` (2026-07-13), based on
-  deployed master `0553a611`; the read-marker hotfix remains private until CI,
-  exact-lane deployment, and resumed console-clean acceptance pass. Always include branch name + date when
-  summarizing status.
+- Active development branch: `fix/blb-always-bulleted` (2026-07-13), based on
+  deployed master `5e1bc271`; draft PR #73 remains private until green CI,
+  exact inactive-lane deployment, and two-client/reload/restart/responsive
+  real-control acceptance. Always include branch name + date when summarizing
+  status.
 - The "Current State" section below is refreshed for the deployed parity release; older dated entries and “native release” labels are historical until the native renderer is write-capable and actually enabled.
 
 Branching mode (private repo):
@@ -118,13 +120,21 @@ Current State (`fix/blb-always-bulleted` @ 2026-07-13; PR #72 exact merge `5e1bc
   local transactions before Yjs emission, rejects flat CRDT state before cache
   mutation/relay, guards toolbar/keyboard escape routes, normalizes API and
   duplicate writes, repairs legacy content, and fixes the root Ctrl+Enter
-  response-envelope bug. Focused **57/57**, full **112 files / 672 passed / 3
-  skipped / 0 failed**, typecheck, full lint, branch-context lint, and a
-  **3,318-module** build pass.
-- Next: publish the hardened PR #73 head, privately deploy its exact merged SHA to inactive
-  green, prove topic/root-reply/nested-reply/Ctrl+Enter creation and recursion
-  through real controls, require green PR CI, then exact public cutover plus
-  reload/restart, responsive visuals, and clean journals.
+  response-envelope bug. The final audit also closed Yjs undo-history
+  split-brain, topic-H1 child creation, reserved-root poisoning, durable
+  projection for existing-flat seeds, stale-prop replay, malformed HTML, and
+  task-list-root bypasses. An independent audit returned **GO for
+  merge-candidate testing**.
+- Full local gates pass: **112 files / 678 passed / 3 skipped / 0 failed**,
+  typecheck, branch-context lint, full ESLint at **0 errors / 8,954 baseline
+  warnings**, and a **3,318-module** production build. Draft PR
+  [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) is not deployed;
+  public production still runs the broken PR #72 tree.
+- Next: publish the audited PR #73 head and require green CI, merge it, then
+  privately deploy its exact merge SHA to inactive green. Prove two-client
+  collaboration plus topic/root-reply/nested-reply/Ctrl+Enter recursion across
+  reload and managed restart, inspect 1280/1366/1440/1600/mobile PNGs, then
+  perform the exact public cutover and repair the measured failure topic.
 - The full application stack is merged on `master` through PR #66: private/link/public
   sharing, viewer/commenter/editor/owner enforcement, server-session Socket.IO
   identity, live demotion, owner-partitioned offline/Yjs state, ACL-backed

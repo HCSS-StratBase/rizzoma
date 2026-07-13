@@ -12,6 +12,31 @@ export function escapeBlbHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => replacements[character] ?? character);
 }
 
+/** Escape element text without encoding quotes that are not delimiters here. */
+export function escapeBlbText(value: string): string {
+  const replacements: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+  };
+  return value.replace(/[&<>"]/g, (character) => replacements[character] ?? character);
+}
+
+function decodeBlbText(value: string): string {
+  const entities: Record<string, string> = {
+    amp: '&',
+    lt: '<',
+    gt: '>',
+    quot: '"',
+    '#39': "'",
+    '#x27': "'",
+  };
+  return value.replace(/&(amp|lt|gt|quot|#39|#x27);/gi, (entity, name: string) => (
+    entities[name.toLowerCase()] ?? entity
+  ));
+}
+
 export function plainTextToBlbHtml(value: string): string {
   const labels = value
     .replace(/\r\n?/g, '\n')
@@ -119,6 +144,9 @@ function firstOpeningTag(value: string, start = 0): HtmlTag | null {
   return tag && !tag.closing && !tag.selfClosing && tag.name.length > 0 ? tag : null;
 }
 
+const TASK_LIST_DATA_TYPE = /\bdata-type\s*=\s*(?:"tasklist"|'tasklist'|tasklist(?=[\s>]))/i;
+const TASK_ITEM_DATA_TYPE = /\bdata-type\s*=\s*(?:"taskitem"|'taskitem'|taskitem(?=[\s>]))/i;
+
 function hasOnlyDirectListItems(value: string, root: HtmlTag): boolean {
   let cursor = root.end;
   let itemCount = 0;
@@ -135,6 +163,7 @@ function hasOnlyDirectListItems(value: string, root: HtmlTag): boolean {
       continue;
     }
     if (tag.closing || tag.selfClosing || tag.name !== 'li') return false;
+    if (TASK_ITEM_DATA_TYPE.test(value.slice(cursor, tag.end))) return false;
     const end = elementEnd(value, cursor, 'li');
     if (end < 0) return false;
     itemCount += 1;
@@ -151,6 +180,7 @@ export function isBlbHtml(value: unknown): boolean {
   const root = firstOpeningTag(content);
   return root !== null
     && root.name === 'ul'
+    && !TASK_LIST_DATA_TYPE.test(content.slice(0, root.end))
     && elementEnd(content, 0, 'ul') === content.length
     && hasOnlyDirectListItems(content, root);
 }
@@ -198,27 +228,40 @@ export function ensureBlbHtml(value: unknown): string {
   // Treat the value as HTML only when it contains an actual opening tag.
   if (!/<[A-Za-z][^>]*>/.test(content)) return plainTextToBlbHtml(content);
   const blocks = splitFlatBlocks(content);
-  return blocks
-    ? `<ul>${blocks.map((block) => `<li>${block}</li>`).join('')}</ul>`
-    : `<ul><li>${content}</li></ul>`;
+  if (blocks) return `<ul>${blocks.map((block) => `<li>${block}</li>`).join('')}</ul>`;
+  const richCandidate = `<ul><li>${content}</li></ul>`;
+  if (isBlbHtml(richCandidate)) return richCandidate;
+  // Malformed markup must never make the normalizer violate its own
+  // postcondition. Preserve it as escaped text when bounded parsing fails.
+  return `<ul><li><p>${escapeBlbHtml(content)}</p></li></ul>`;
 }
 
 export function topicSeedHtml(title: string): string {
-  return `<h1>${escapeBlbHtml(title.trim())}</h1>${EMPTY_BLB_HTML}`;
+  return `<h1>${escapeBlbText(title.trim())}</h1>${EMPTY_BLB_HTML}`;
 }
 
 /** Keep the canonical topic title as H1 while making every body block BLB-shaped. */
 export function ensureTopicBlbHtml(title: string, value: unknown): string {
   const content = typeof value === 'string' ? value.trim() : '';
   const body = content ? stripLeadingHeading(content) : '';
-  return `<h1>${escapeBlbHtml(title.trim())}</h1>${ensureBlbHtml(body)}`;
+  return `<h1>${escapeBlbText(title.trim())}</h1>${ensureBlbHtml(body)}`;
 }
 
 /** True only for the canonical title H1 followed by one BLB body list. */
 export function isTopicBlbHtml(title: string, value: unknown): boolean {
   if (typeof value !== 'string') return false;
   const content = value.trim();
-  if (content !== value) return false;
-  const heading = `<h1>${escapeBlbHtml(title.trim())}</h1>`;
-  return content.startsWith(heading) && isBlbHtml(content.slice(heading.length));
+  if (content !== value || title.trim().length === 0) return false;
+  const heading = firstOpeningTag(content);
+  if (!heading || heading.name !== 'h1') return false;
+  const headingEnd = elementEnd(content, 0, 'h1');
+  if (headingEnd < 0) return false;
+  const closingStart = content.toLowerCase().lastIndexOf('</h1', headingEnd);
+  if (closingStart < heading.end) return false;
+  const headingText = content.slice(heading.end, closingStart);
+  // Formatting marks and inline widgets create child tags. Topic titles stay
+  // plain so metadata and collaborative H1 content cannot diverge.
+  if (headingText.includes('<')) return false;
+  if (decodeBlbText(headingText.trim()) !== title.trim()) return false;
+  return isBlbHtml(content.slice(headingEnd));
 }

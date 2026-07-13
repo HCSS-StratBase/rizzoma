@@ -4,9 +4,13 @@ Last refreshed: 2026-07-13 (`fix/blb-always-bulleted`; PR #72 exact
 `5e1bc271` public on managed blue `:8101`; read-marker hotfix merged and public;
 public phase 2 passed 49/49, but SDS's first manual use exposed the core BLB
 always-bulleted creation invariant as broken. A local durable editor/Yjs/API
-repair is green at 112 files / 672 passed / 3 skipped and 3,318 build modules, but is not
-merged or deployed. Overall release is deployed but not accepted. Resume from
-the isolated release worktree; do not touch the dirty canonical checkout.)
+repair is green at 112 files / 678 passed / 3 skipped, 0 ESLint errors (8,954
+baseline warnings), and 3,318 build modules; an independent audit returned GO
+for merge-candidate testing. Draft PR #73 is not deployed and public remains
+the broken PR #72 tree. Remaining gates are private-green two-client,
+reload/restart, and responsive visual acceptance, then exact public cutover and
+repair of the measured failure topic. Resume from the isolated release
+worktree; do not touch the dirty canonical checkout.)
 
 Last refreshed (prior): 2026-07-12 (`fix/lockfile-driven-production-install`; helper
 merge `599fe025`; **not yet public**). PR #66 merged the complete authorization,
@@ -85,10 +89,10 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Publish the hardened PR #73 head and require every GitHub check; merge only after green, then deploy the exact merge SHA privately to inactive managed green.
-  2) Prove fresh topic, root reply, nested reply, and both Ctrl+Enter paths are real UL/LI through browser controls; prove recursive `[+]` creation and reload persistence.
+  1) Publish the audited PR #73 head and require every GitHub check; merge only after green, then deploy the exact merge SHA privately to inactive managed green.
+  2) Prove fresh topic, root reply, nested reply, and both Ctrl+Enter paths are real UL/LI through browser controls; prove two-client recursive `[+]` creation and reload persistence.
   3) Require green PR CI, merge, and deploy only the exact squash tree through the immutable zero-overlap lane process.
-  4) Prove managed-restart persistence, inspect 1280/1366/1440/1600/mobile PNGs, and require clean browser/server journals.
+  4) Prove managed-restart persistence, inspect 1280/1366/1440/1600/mobile PNGs, require clean browser/server journals, then repair and verify the exact public failure topic after cutover.
   5) Finalize project docs, global HANDOFF, HCSS Tana, and the Git bundle only after the core BLB gate passes.
 
   Testing/CI hygiene:

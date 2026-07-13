@@ -99,9 +99,18 @@
   API replacements, duplicates, and legacy content normalize; root and nested
   Ctrl+Enter share the same starter; and the root optimistic mapper reads the
   nested server `blip` envelope.
-- Local verification is green: focused **57/57**; full Vitest **112 files / 672
-  passed / 3 skipped / 0 failed**; typecheck; full-source ESLint;
-  branch-context lint; and a **3,318-module** production build.
-- Boundary: this candidate is not merged or deployed. Private managed-lane
-  real-control acceptance, green PR checks, exact public cutover, recursive
-  reload/restart proof, responsive PNG inspection, and clean journals remain.
+- The durability review then closed seven additional split-brain/bypass paths:
+  Yjs undo could restore invalid state; topic H1 accepted child creation;
+  reserved Yjs roots could be poisoned; existing-flat seeds were repaired only
+  in memory; stale REST props could overwrite collaborative state; malformed
+  HTML could escape normalization; and task-list roots were mistaken for the
+  canonical outer bullet list.
+- Local verification is green: full Vitest **112 files / 678 passed / 3 skipped
+  / 0 failed**; typecheck; branch-context lint; full-source ESLint at **0
+  errors / 8,954 baseline warnings**; and a **3,318-module** production build.
+  An independent final audit returned **GO for merge-candidate testing**.
+- Boundary: draft PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73)
+  is not deployed; public production still runs the broken PR #72 tree.
+  Private-green two-client/reload/restart and responsive visual acceptance,
+  green PR checks, exact public cutover, repair of the measured failure topic,
+  and clean journals remain.

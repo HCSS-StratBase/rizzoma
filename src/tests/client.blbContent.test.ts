@@ -1,5 +1,7 @@
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
+import { TaskList } from '@tiptap/extension-task-list';
+import { TaskItem } from '@tiptap/extension-task-item';
 import { describe, expect, it } from 'vitest';
 import {
   EMPTY_BLB_HTML,
@@ -25,6 +27,10 @@ describe('BLB creation content', () => {
       ],
     });
     editor.destroy();
+
+    expect(topicSeedHtml(`O'Brien "review" & <scope>`)).toBe(
+      `<h1>O'Brien &quot;review&quot; &amp; &lt;scope&gt;</h1><ul><li><p></p></li></ul>`,
+    );
   });
 
   it('maps plain-text reply lines to separate bullet labels and escapes markup', () => {
@@ -49,6 +55,14 @@ describe('BLB creation content', () => {
     expect(isBlbHtml('<ul></ul>')).toBe(false);
     expect(isBlbHtml('<ul><p>Not a label</p></ul>')).toBe(false);
     expect(isBlbHtml('<ul>bare text<li><p>Label</p></li></ul>')).toBe(false);
+
+    const taskRoot = '<ul data-type="taskList"><li data-type="taskItem" data-checked="false"><p>Task</p></li></ul>';
+    expect(isBlbHtml(taskRoot)).toBe(false);
+    const normalizedTaskRoot = ensureBlbHtml(taskRoot);
+    expect(isBlbHtml(normalizedTaskRoot)).toBe(true);
+    const taskEditor = new Editor({ extensions: [StarterKit as any, TaskList, TaskItem], content: normalizedTaskRoot });
+    expect(taskEditor.getJSON().content?.[0]?.type).toBe('bulletList');
+    taskEditor.destroy();
   });
 
   it('normalizes the full document instead of accepting a UL with an orphan block', () => {
@@ -56,6 +70,12 @@ describe('BLB creation content', () => {
     expect(isBlbHtml(mixed)).toBe(false);
     expect(ensureBlbHtml(mixed)).toBe(`<ul><li>${mixed}</li></ul>`);
     expect(isBlbHtml(ensureBlbHtml(mixed))).toBe(true);
+
+    const malformed = '<p title="unterminated>text';
+    expect(ensureBlbHtml(malformed)).toBe(
+      '<ul><li><p>&lt;p title=&quot;unterminated&gt;text</p></li></ul>',
+    );
+    expect(isBlbHtml(ensureBlbHtml(malformed))).toBe(true);
   });
 
   it('uses the authoritative topic title and discards a caller-provided H1', () => {
@@ -73,6 +93,15 @@ describe('BLB creation content', () => {
       'Fallback title',
       '<h1>Wrong title</h1><ul><li><p>One</p></li></ul>',
     )).toBe(false);
+    expect(isTopicBlbHtml(
+      `O'Brien "review" & <scope>`,
+      `<h1>O'Brien "review" &amp; &lt;scope&gt;</h1><ul><li><p>One</p></li></ul>`,
+    )).toBe(true);
+    expect(isTopicBlbHtml(
+      'Formatted title',
+      '<h1><strong>Formatted title</strong></h1><ul><li><p>One</p></li></ul>',
+    )).toBe(false);
+    expect(isTopicBlbHtml('', '<h1></h1><ul><li><p>One</p></li></ul>')).toBe(false);
   });
 
   it('handles a large malformed block document in bounded time', () => {

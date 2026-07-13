@@ -14,11 +14,19 @@
   H1+UL topic seeds, escaped plain-text-to-LI replies, empty inline UL/LI seeds,
   pre-Yjs editor transaction rejection, server-side CRDT rejection, guarded
   toolbar/keyboard escape paths, API normalization, duplicate normalization,
-  legacy-document repair, and correct nested create-response mapping. Focused
-  **57/57**, full Vitest **112 files / 672 passed / 3 skipped / 0 failed**,
-  typecheck, full-source lint, branch-context lint, and a **3,318-module** build
-  pass. The candidate is not merged/deployed; private
-  real-control acceptance and the complete public release gate remain open.
+  legacy-document repair, and correct nested create-response mapping. The
+  durability audit additionally closed Yjs undo-history split-brain, topic-H1
+  child creation, poisoned reserved-root, existing-flat seed-projection,
+  stale-prop replay, malformed-HTML, and task-list-root bypasses. An independent
+  audit returned **GO for merge-candidate testing**. Full Vitest is green at
+  **112 files / 678 passed / 3 skipped / 0 failed**; typecheck and
+  branch-context lint pass; full ESLint reports **0 errors / 8,954 baseline
+  warnings**; and the production build transforms **3,318 modules**. Draft PR
+  [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) is not merged or
+  deployed; public production still runs the broken PR #72 tree. Remaining
+  gates are private-green two-client/reload/restart and responsive visual
+  acceptance, followed by exact public cutover and repair of the reproduction
+  topic above.
 - (2026-07-13 public BLB reality check) PR
   [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) passed all required
   checks, merged the deterministic read-marker repair as exact master

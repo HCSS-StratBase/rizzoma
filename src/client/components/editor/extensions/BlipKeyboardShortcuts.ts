@@ -1,7 +1,7 @@
 import { Extension } from '@tiptap/core';
 import { isChangeOrigin } from '@tiptap/extension-collaboration';
 import { Plugin } from '@tiptap/pm/state';
-import { getBlbListContext } from '../blbEditorInvariant';
+import { getBlbListContext, selectionIsInTopicHeading } from '../blbEditorInvariant';
 
 export type BlipKeyboardShortcutsOptions = {
   blipId?: string;
@@ -21,13 +21,31 @@ export type BlipKeyboardShortcutsOptions = {
 };
 
 export function isCanonicalBlbDocument(
-  doc: { childCount: number; child: (index: number) => { type: { name: string }; attrs?: Record<string, unknown> } },
+  doc: {
+    childCount: number;
+    child: (index: number) => {
+      type: { name: string };
+      attrs?: Record<string, unknown>;
+      childCount?: number;
+      child?: (childIndex: number) => { type: { name: string }; marks?: readonly unknown[] };
+      textContent?: string;
+    };
+  },
   isTopicRoot = false,
 ): boolean {
   if (isTopicRoot) {
     if (doc.childCount !== 2) return false;
     const heading = doc.child(0);
     if (heading.type.name !== 'heading' || heading.attrs?.['level'] !== 1) return false;
+    // The REST topic model stores a plain, non-empty title. Marks or inline
+    // widgets in the collaborative H1 would make Yjs and its HTML projection
+    // disagree, so reject that transaction before Collaboration can emit it.
+    if (!heading.textContent?.trim()) return false;
+    if (typeof heading.childCount !== 'number' || typeof heading.child !== 'function') return false;
+    for (let index = 0; index < heading.childCount; index += 1) {
+      const child = heading.child(index);
+      if (child.type.name !== 'text' || (child.marks?.length ?? 0) > 0) return false;
+    }
     return doc.child(1).type.name === 'bulletList';
   }
 
@@ -202,6 +220,10 @@ export const BlipKeyboardShortcuts = Extension.create({
       // renders children at their structural location. So we don't need to
       // compute a text offset here anymore.
       'Mod-Enter': () => {
+        // A topic H1 is metadata, not a BLB label. Creating the API child
+        // before the marker transaction is rejected would leave an orphaned
+        // child blip, so stop before invoking the callback.
+        if (opts.isTopicRoot && selectionIsInTopicHeading(this.editor)) return true;
         if (opts.onCreateInlineChildBlip) {
           opts.onCreateInlineChildBlip(0);
         }

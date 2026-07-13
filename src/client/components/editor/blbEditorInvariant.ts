@@ -13,14 +13,41 @@ export type BlbListContext = {
   isAtFirstTopLevelItemStart: boolean;
 };
 
+type BlbContentEditor = Pick<Editor, 'chain' | 'getHTML'>;
+
 /**
- * Normalize through `Editor.commands.setContent`, never by mutating the DOM.
+ * Establish a canonical editor baseline without adding that baseline to undo.
+ *
+ * Under Collaboration, TipTap undo mutates the Y.Doc before ProseMirror sees
+ * the resulting transaction. If the empty shared document -> canonical BLB
+ * seed is captured by Y.UndoManager, Ctrl+Z can therefore make the Y.Doc
+ * invalid before a ProseMirror transaction filter can reject it.
+ * `addToHistory: false` is forwarded by y-prosemirror to the Yjs transaction,
+ * so the seed/repair is shared but can never be popped by undo.
+ */
+export function setBlbEditorBaseline(editor: BlbContentEditor, html: string): boolean {
+  return editor.chain()
+    .setContent(html)
+    .setMeta('addToHistory', false)
+    .run();
+}
+
+/** Avoid a forced REST projection when Couch already stores the exact seed. */
+export function needsBlbSeedProjection(
+  sanitizedDurableContent: string,
+  authoritativeSeed: string,
+): boolean {
+  return sanitizedDurableContent !== authoritativeSeed;
+}
+
+/**
+ * Normalize through an editor transaction, never by mutating the DOM.
  * With the Collaboration extension installed this command creates a Yjs
  * transaction, keeping the visible ProseMirror document and shared Y.Doc in
  * the same state before the Couch projection is materialized.
  */
 export function normalizeBlbEditorDocument(
-  editor: Pick<Editor, 'getHTML' | 'commands'>,
+  editor: BlbContentEditor,
   document: BlbEditorDocument,
 ): { changed: boolean; html: string } {
   const current = editor.getHTML();
@@ -29,7 +56,7 @@ export function normalizeBlbEditorDocument(
     : ensureBlbHtml(current);
 
   if (normalized === current) return { changed: false, html: current };
-  editor.commands.setContent(normalized);
+  setBlbEditorBaseline(editor, normalized);
   return { changed: true, html: editor.getHTML() };
 }
 
@@ -96,6 +123,31 @@ export function currentTopicEditorTitle(editor: Pick<Editor, 'state'>, fallback:
   const first = editor.state.doc.child(0);
   if (first.type.name !== 'heading' || first.attrs?.['level'] !== 1) return fallback;
   return first.textContent.trim() || fallback;
+}
+
+/** A topic title is metadata, never a valid anchor for an inline child blip. */
+export function selectionIsInTopicHeading(editor: Pick<Editor, 'state'>): boolean {
+  const { $from } = editor.state.selection;
+  for (let depth = $from.depth; depth > 0; depth -= 1) {
+    const node = $from.node(depth);
+    if (node.type.name === 'heading' && node.attrs?.['level'] === 1) return true;
+  }
+  return false;
+}
+
+/**
+ * Never replay a stale REST prop over an editor already backed by non-empty
+ * authoritative collaborative state. The Collaboration extension renders the
+ * Y.Doc into the editor; its current HTML is therefore the edit-session source
+ * of truth.
+ */
+export function contentForBlbEditStart(
+  editor: Pick<Editor, 'getHTML'> | null | undefined,
+  fallback: string,
+  hasAuthoritativeCollaborationState: boolean,
+): string {
+  if (!editor || !hasAuthoritativeCollaborationState) return fallback;
+  return editor.getHTML();
 }
 
 /**

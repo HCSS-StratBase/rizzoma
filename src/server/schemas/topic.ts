@@ -10,13 +10,13 @@ export const SectionAttributionEntrySchema = z.object({
 export const SectionAttributionSchema = z.record(z.string(), SectionAttributionEntrySchema);
 
 export const CreateTopicSchema = z.object({
-  title: z.string().min(1).max(200),
+  title: z.string().trim().min(1).max(200),
   content: z.string().optional().default(''),
   participants: z.array(z.string().trim().email().max(320).transform((email) => email.toLowerCase())).max(20).optional(),
 });
 
 export const UpdateTopicSchema = z.object({
-  title: z.string().min(1).max(200).optional(),
+  title: z.string().trim().min(1).max(200).optional(),
   content: z.string().optional(),
 });
 

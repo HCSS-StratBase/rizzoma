@@ -48,7 +48,12 @@ import { useAuthenticatedCollaborationUser } from '../editor/useAuthenticatedCol
 import { requestTaskCompletionHydration } from '../editor/extensions/TaskWidget';
 import { collaborationProjectionHeaders } from '../../lib/collaborationProjection';
 import { EMPTY_BLB_HTML, ensureBlbHtml, plainTextToBlbHtml } from '@shared/blbContent';
-import { normalizeBlbEditorDocument } from '../editor/blbEditorInvariant';
+import {
+  contentForBlbEditStart,
+  needsBlbSeedProjection,
+  normalizeBlbEditorDocument,
+  setBlbEditorBaseline,
+} from '../editor/blbEditorInvariant';
 import { isCanonicalBlbDocument } from '../editor/extensions/BlipKeyboardShortcuts';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
@@ -455,9 +460,10 @@ export function RizzomaBlip({
   const autoSaveBlip = useCallback(async (
     content: string,
     headers?: Record<string, string>,
+    force = false,
   ): Promise<'saved' | 'retry' | 'failed'> => {
     if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return 'failed';
-    if (content === lastSavedContentRef.current) return 'saved';
+    if (!force && content === lastSavedContentRef.current) return 'saved';
     try {
       await ensureCsrf();
       if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return 'failed';
@@ -553,6 +559,7 @@ export function RizzomaBlip({
   const persistLatestProjection = useCallback(async (
     fallbackContent: string,
     attempt = 0,
+    force = false,
   ): Promise<void> => {
     if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return;
     const currentEditor = inlineEditorRef.current;
@@ -566,6 +573,7 @@ export function RizzomaBlip({
     const result = await autoSaveBlip(
       latestContent,
       headers,
+      force,
     );
     // Another collaborator may advance the server Y.Doc while this HTTP
     // projection is in flight. Re-read both HTML and the full-state digest before a
@@ -577,7 +585,7 @@ export function RizzomaBlip({
       && attempt < 8
     ) {
       autoSaveTimeoutRef.current = setTimeout(() => {
-        void persistLatestProjection(fallbackContent, attempt + 1);
+        void persistLatestProjection(fallbackContent, attempt + 1, force);
       }, Math.min(2_000, 150 * (2 ** attempt)));
     }
   }, [autoSaveBlip, collabActive, projectionIdentity, ydoc, yjsGeneration]);
@@ -656,7 +664,10 @@ export function RizzomaBlip({
             setEditedContent(repaired);
             if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
             autoSaveTimeoutRef.current = setTimeout(() => {
-              void persistLatestProjection(repaired);
+              // This branch proves the shared snapshot was structurally
+              // invalid; force its canonical repair into the Couch projection
+              // even when the client-side lazy-normalized cache looks equal.
+              void persistLatestProjection(repaired, 0, true);
             }, 300);
           });
           return;
@@ -719,12 +730,24 @@ export function RizzomaBlip({
       if ((inlineEditor as any).isDestroyed) return;
       if (!collabProvider.shouldSeed) return;
       if (ydoc.getXmlFragment('default').length > 0) return;
-      const authoritativeSeed = sanitizeRichHtml(ensureBlbHtml(
-        sanitizeRichHtml(collabProvider.seedContent ?? safeBlipContent),
-      ));
+      const durableSeedContent = sanitizeRichHtml(
+        collabProvider.seedContent ?? blip.content ?? '',
+      );
+      const authoritativeSeed = sanitizeRichHtml(ensureBlbHtml(durableSeedContent));
+      const needsMigration = needsBlbSeedProjection(durableSeedContent, authoritativeSeed);
       seedingYdocRef.current = true;
-      inlineEditor.commands.setContent(authoritativeSeed);
+      setBlbEditorBaseline(inlineEditor, authoritativeSeed);
       seedingYdocRef.current = false;
+      setEditedContent(authoritativeSeed);
+      if (needsMigration) {
+        if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+        // Seeding deliberately suppresses onUpdate, so explicitly materialize
+        // a changed canonical Y.Doc through the digest-backed projection.
+        // Exact canonical Couch content produces no migration PUT.
+        autoSaveTimeoutRef.current = setTimeout(() => {
+          void persistLatestProjection(authoritativeSeed, 0, true);
+        }, 0);
+      }
     };
 
     if (collabProvider.synced) {
@@ -746,7 +769,7 @@ export function RizzomaBlip({
     });
 
     return () => { disposed = true; clearTimeout(timer); };
-  }, [inlineEditor, collabEnabled, ydoc, collabProvider, safeBlipContent, blip.id]);
+  }, [inlineEditor, collabEnabled, ydoc, collabProvider, blip.content, blip.id, persistLatestProjection]);
 
   // Cleanup auto-save timeout on unmount to prevent stale saves to wrong topic
   useEffect(() => {
@@ -774,8 +797,8 @@ export function RizzomaBlip({
     setEditedContent(safeBlipContent);
     lastSavedContentRef.current = safeBlipContent;
     setIsEditing(false);
-    if (inlineEditor && !(inlineEditor as any).isDestroyed) {
-      inlineEditor.commands.setContent(safeBlipContent);
+    if (inlineEditor && !(inlineEditor as any).isDestroyed && !collabActive) {
+      setBlbEditorBaseline(inlineEditor, safeBlipContent);
     }
   }, [blip.id, safeBlipContent, inlineEditor]);
 
@@ -1155,7 +1178,15 @@ export function RizzomaBlip({
   const handleStartEdit = () => {
     console.log('handleStartEdit called for blip:', blip.id, 'canEdit:', blip.permissions.canEdit);
     if (blip.permissions.canEdit) {
-      const nextContent = injectInlineMarkers(safeBlipContent, inlineChildren, localExpandedInline);
+      const fallbackContent = injectInlineMarkers(safeBlipContent, inlineChildren, localExpandedInline);
+      const hasAuthoritativeCollaborationState = Boolean(
+        collabActive && ydoc && ydoc.getXmlFragment('default').length > 0,
+      );
+      const nextContent = contentForBlbEditStart(
+        inlineEditor,
+        fallbackContent,
+        hasAuthoritativeCollaborationState,
+      );
       // Revalidate the hidden editor before replacing its content. Existing
       // task IDs refresh after a parity-view toggle; a new task signature is
       // detected by the durability plugin's setContent lifecycle update.
@@ -1165,7 +1196,11 @@ export function RizzomaBlip({
       claimActive();
       // Update inline editor content and make it editable
       if (inlineEditor) {
-        inlineEditor.commands.setContent(nextContent);
+        // Collaboration owns editor content from first render. If its Y.Doc is
+        // empty, wait for the supervised seed effect; if it is non-empty, the
+        // current editor HTML above is already authoritative. Only the local
+        // editor path needs a prop-driven setContent here.
+        if (!collabActive) setBlbEditorBaseline(inlineEditor, nextContent);
         inlineEditor.setEditable(true);
       }
     }

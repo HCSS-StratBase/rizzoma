@@ -19,14 +19,24 @@
   at depth 1, while the saved and reloaded blip measured **18 P / 0 UL / 0 LI**.
   Zero browser errors isolate this as a structure-contract defect. Inspected
   artifacts: `screenshots/260713-0130-public-blb-creation-failure/`.
-- Local branch `fix/blb-always-bulleted` is green at focused **57/57**, full
-  **112 test files / 672 passed / 3 skipped / 0 failed**, typecheck,
-  full-source ESLint, branch-context lint, and **3,318 build modules**.
-  Coverage now includes the pre-Yjs transaction gate, unchanged Yjs state after
+- Local branch `fix/blb-always-bulleted` is green at full **112 test files /
+  678 passed / 3 skipped / 0 failed**, typecheck, branch-context lint,
+  full-source ESLint with **0 errors / 8,954 baseline warnings**, and a
+  **3,318-module** production build. An independent final audit returned **GO
+  for merge-candidate testing**.
+- Coverage now includes the pre-Yjs transaction gate, unchanged Yjs state after
   rejected flattening commands, server-side CRDT rejection/no relay, mixed-UL
-  rejection, toolbar/keyboard escape paths, duplicate normalization, and
-  bounded malformed-input handling.
-  These are code gates, not yet private/public real-control acceptance.
+  rejection, toolbar/keyboard escape paths, duplicate normalization, bounded
+  malformed-input handling, isolated Yjs undo history, the topic-H1 child
+  guard, reserved-root poison rejection, durable projection of existing flat
+  seeds, prevention of stale-prop replay, and canonicalization of malformed
+  HTML and task-list roots.
+- These are code gates, not private/public real-control acceptance. Draft PR
+  [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) is not deployed;
+  public production remains the broken PR #72 tree. Remaining acceptance is
+  private-green two-client/reload/restart plus 1280/1366/1440/1600/mobile
+  visual inspection, then exact public cutover and repair of the measured
+  failure topic.
 
 ## Concurrent read-marker hotfix — 2026-07-13
 
