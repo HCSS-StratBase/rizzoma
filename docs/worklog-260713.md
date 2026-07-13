@@ -59,3 +59,24 @@ Branch: `feature/native-fractal-port`
   - public BLB proof passed at [BLB proof 20260713T203706](https://138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a00740b)
   - proof artifacts: `screenshots/260713-223655-public-blb-fractal-proof-after-sso-502-fix/`
   - visually inspected PNGs show public root/nested/terminal bullet-plus recursion and reload persistence
+
+## Active-only blip toolbar parity
+
+- Fixed the UI parity defect reported from the user's latest Downloads screenshot (`2026-07-13_22-41-24.png`):
+  - wrong behavior: every expanded ancestor/descendant showed the full per-blip menu (`Edit / Collapse / Expand / link / gear`)
+  - legacy Rizzoma reference: inactive expanded blips show content/reply surfaces only; the full menu belongs to the single active blip
+- Root cause:
+  - `RizzomaBlip` auto-marked every expanded non-inline blip active (`effectiveExpanded || isEditing`)
+  - active-state clicks bubbled up through ancestors
+  - CSS used descendant selectors for active menu/text styling, so active chrome could cascade through child trees
+- Fix:
+  - `src/client/components/blip/RizzomaBlip.tsx` now uses an explicit single active-blip claim event and stops click propagation at the clicked blip
+  - expanded blips no longer become active merely because they are visible
+  - `src/client/components/blip/RizzomaBlip.css` scopes active menu/text styling to the active blip's own direct menu/content
+- Verification:
+  - `npm run build` passed
+  - focused tests passed: `src/tests/client.BlipMenu.test.tsx`, `src/tests/routes.waves.prev.test.ts`, `src/tests/routes.waves.unread.test.ts` — 25/25
+  - public proof passed at [BLB proof 20260713T205010](https://138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a00e553)
+  - proof artifacts: `screenshots/260713-225006-public-active-terminal-toolbar-proof/`
+  - hard gate in `scripts/verify-blb-fractal-proof.mjs`: after clicking the terminal blip, exactly one visible `.blip-menu-container` exists and its `data-blip-id` is the terminal blip
+  - visually inspected `04-terminal-active-only-toolbar.png`: root and nested blips have no repeated menu; only the terminal active blip shows the toolbar

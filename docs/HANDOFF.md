@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-13 (public 502 fixed · bare hostname cut over to new BLB app · public proof captured)
+Last Updated: 2026-07-13 (active-only toolbar parity fixed · public proof captured)
 
 Current State (feature/native-fractal-port @ 2026-07-13)
 
@@ -13,6 +13,13 @@ Current State (feature/native-fractal-port @ 2026-07-13)
 - **Dev VPS restored**: active checkout `/data/large-projects/stephan/rizzoma_260612` is synced to `5fb1b6ad`; `https://dev.138-201-62-161.nip.io` is live after repairing the enabled nginx dev vhost from dead `127.0.0.1:8101` to live `127.0.0.1:3000`.
 - **Verification**: `npm run build` passed; targeted route tests passed (11/11); full `npm run test` passed (55 files, 245 passed, 3 skipped); Playwright proof passed against both dev and the bare public URL. The only console error in the clean proof is the expected initial unauthenticated `/api/auth/me` 401 before the proof user registers.
 - **Boundary**: public proof path is green, but broader visual sweep, mobile/responsive sweep, and iPhone Safari remain separate gates.
+
+### Current state — 2026-07-13 late, active-only toolbar parity
+
+- **Per-blip menu parity fixed on public**: the user's screenshot correctly showed a major mismatch with original Rizzoma — every expanded blip was showing its own `Edit / Collapse / Expand / link / gear` strip. `b517102b` changes active state to an explicit single-blip claim and prevents click bubbling from activating ancestors; active-menu CSS is now scoped to the active blip's own direct menu/content.
+- **Public proof**: [BLB proof 20260713T205010](https://138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a00e553). Evidence: `screenshots/260713-225006-public-active-terminal-toolbar-proof/`.
+- **Verification**: `npm run build` passed; focused tests passed (3 files, 25 tests); proof harness now asserts exactly one visible `.blip-menu-container` after clicking the terminal blip, and that menu's `data-blip-id` is the terminal blip. Visual PNG inspection confirms root and nested blips have no repeated menu while the terminal active blip has the toolbar.
+- **Boundary**: this closes the specific active-toolbar parity defect. Broader visual/responsive/mobile sweep and iPhone Safari remain open.
 
 ### Current state — what shipped today (2026-05-12, branch `feature/native-fractal-port`)
 

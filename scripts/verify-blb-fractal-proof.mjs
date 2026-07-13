@@ -16,6 +16,29 @@ async function shot(page, name) {
   await page.screenshot({ path: path.join(outDir, name), fullPage: false });
 }
 
+async function visibleToolbarState(page) {
+  return page.evaluate(() => {
+    const isVisible = (el) => {
+      const style = window.getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      return style.display !== 'none'
+        && style.visibility !== 'hidden'
+        && style.opacity !== '0'
+        && rect.width > 0
+        && rect.height > 0;
+    };
+    return Array.from(document.querySelectorAll('.blip-menu-container'))
+      .filter(isVisible)
+      .map((menu) => {
+        const blip = menu.closest('.blip-container');
+        return {
+          blipId: blip?.getAttribute('data-blip-id') || null,
+          text: menu.textContent?.replace(/\s+/g, ' ').trim() || '',
+        };
+      });
+  });
+}
+
 async function browserApi(page, path, options = {}) {
   return page.evaluate(async ({ path, options }) => {
     const response = await fetch(path, {
@@ -156,10 +179,20 @@ async function main() {
     throw new Error(`terminal collapsed affordance failed: ${JSON.stringify(terminalCollapsed)}`);
   }
 
+  await page.locator(`[data-blip-id="${terminalId}"] .blip-collapsed-row`).first().click();
+  await page.locator(`[data-blip-id="${terminalId}"].expanded`).first().waitFor({ timeout: 10000 });
+  await page.locator(`[data-blip-id="${terminalId}"] .blip-text`).first().click();
+  await sleep(700);
+  await shot(page, '04-terminal-active-only-toolbar.png');
+  const terminalActiveToolbars = await visibleToolbarState(page);
+  if (terminalActiveToolbars.length !== 1 || terminalActiveToolbars[0]?.blipId !== terminalId) {
+    throw new Error(`active toolbar scope failed: ${JSON.stringify(terminalActiveToolbars)}`);
+  }
+
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator(`[data-blip-id="${rootId}"] .blip-collapsed-row`).first().waitFor({ timeout: 30000 });
   await sleep(1000);
-  await shot(page, '04-reload-persisted-collapsed-blb.png');
+  await shot(page, '05-reload-persisted-collapsed-blb.png');
 
   const result = {
     ok: true,
@@ -173,6 +206,7 @@ async function main() {
     collapsedRoot,
     nestedCollapsed,
     terminalCollapsed,
+    terminalActiveToolbars,
     consoleErrors,
     outDir,
   };
