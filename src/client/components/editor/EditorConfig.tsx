@@ -57,6 +57,8 @@ type EditorExtensionOptions = {
   onHideComments?: () => void;
   /** Callback to show (unfold) all inline comments. Triggered by Ctrl+Shift+Down. */
   onShowComments?: () => void;
+  /** Allow one canonical H1 before the topic root's outer bullet list. */
+  isTopicRoot?: boolean;
   /** Currently signed-in user — injected into the ~task assignee picker so the user can assign tasks to themselves. */
   currentUser?: EditorRosterUser | null;
   /** Real wave participants — injected into the ~task assignee picker. */
@@ -123,6 +125,7 @@ export const getEditorExtensions = (
         onCreateInlineChildBlip: options?.onCreateInlineChildBlip,
         onHideComments: options?.onHideComments,
         onShowComments: options?.onShowComments,
+        isTopicRoot: options?.isTopicRoot ?? false,
       })
     );
     // BLB: Always include BlipThreadNode when blip shortcuts are enabled

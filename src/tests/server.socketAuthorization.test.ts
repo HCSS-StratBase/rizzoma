@@ -5,6 +5,8 @@ import { io as createClient, type Socket } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
+import { Schema } from '@tiptap/pm/model';
+import { prosemirrorJSONToYDoc } from 'y-prosemirror';
 
 type StoredDoc = Record<string, any> & { _id: string };
 
@@ -115,6 +117,12 @@ describe('Socket.IO session-backed authorization', () => {
       type: 'blip',
       waveId: 'topic-private',
       content: '<p>Secret</p>',
+    });
+    state.docs.set('blip-blb-shape', {
+      _id: 'blip-blb-shape',
+      type: 'blip',
+      waveId: 'topic-private',
+      content: '<ul><li><p>Durable bullet</p></li></ul>',
     });
     for (const role of ['viewer', 'editor'] as const) {
       state.docs.set(`participant-${role}`, {
@@ -1149,6 +1157,46 @@ describe('Socket.IO session-backed authorization', () => {
     expect(accepted).toMatchObject({ ok: true, blipId: 'blip-private' });
     await expect(received).resolves.toMatchObject({ update });
     source.destroy();
+  });
+
+  it('rejects a collaboration transaction that flattens the BLB top level', async () => {
+    const editor = await connectAs('editor');
+    const owner = await connectAs('owner');
+    await Promise.all([
+      joinCollaboration(editor, 'blip-blb-shape'),
+      joinCollaboration(owner, 'blip-blb-shape'),
+    ]);
+
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'block+' },
+        paragraph: { content: 'inline*', group: 'block' },
+        bulletList: { content: 'listItem+', group: 'block' },
+        listItem: { content: 'paragraph block*' },
+        text: { group: 'inline' },
+      },
+    });
+    const flat = prosemirrorJSONToYDoc(schema, {
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Flat escape' }] }],
+    }, 'default');
+    let relayed = false;
+    owner.once('blip:update:blip-blb-shape', () => { relayed = true; });
+    const rejected = await new Promise<any>((resolve) => {
+      editor.emit('blip:update', {
+        blipId: 'blip-blb-shape',
+        update: Array.from(Y.encodeStateAsUpdate(flat)),
+      }, resolve);
+    });
+    expect(rejected).toMatchObject({
+      ok: false,
+      error: 'invalid_blb_structure',
+      blipId: 'blip-blb-shape',
+    });
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    expect(relayed).toBe(false);
+    expect(yjsDocCache.isEmpty('blip-blb-shape')).toBe(true);
+    flat.destroy();
   });
 
   it('fails closed after passive session-store invalidation', async () => {

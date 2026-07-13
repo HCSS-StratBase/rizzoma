@@ -70,7 +70,7 @@ function topicResponse(owner: User, marker: string) {
     data: {
       id: 'private-topic',
       title: `${owner.name} private topic`,
-      content: `<h1>${marker}</h1>`,
+      content: `<h1>${owner.name} private topic</h1><p>${marker}</p>`,
       createdAt: 1,
       updatedAt: 2,
       authorId: owner.id,

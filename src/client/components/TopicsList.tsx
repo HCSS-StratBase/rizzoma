@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, ensureCsrf } from '../lib/api';
+import { topicSeedHtml } from '@shared/blbContent';
 import { subscribeTopicsRefresh } from '../lib/socket';
 import { toast } from './Toast';
 import { formatTimestamp } from '../lib/format';
@@ -67,7 +68,11 @@ export function TopicsList({ isAuthed = false, initialMy=false, initialLimit=20,
     if (!title.trim()) { setError('Title required'); return; }
     await ensureCsrf();
     setBusy(true);
-    const r = await api('/api/topics', { method: 'POST', body: JSON.stringify({ title }) });
+    const trimmedTitle = title.trim();
+    const r = await api('/api/topics', {
+      method: 'POST',
+      body: JSON.stringify({ title: trimmedTitle, content: topicSeedHtml(trimmedTitle) }),
+    });
     setBusy(false);
     if (!r.ok) setError('Create failed'); else { setTitle(''); toast('Topic created'); refresh(); }
   };

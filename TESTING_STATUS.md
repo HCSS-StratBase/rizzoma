@@ -1,5 +1,43 @@
 # Rizzoma Feature Testing Status
 
+## Public BLB creation blocker — 2026-07-13
+
+- Exact PR #72 merge `5e1bc271` is public on managed blue `:8101`; dependency
+  provenance and health are green. Public phase 2 passed **49/49** checks with
+  zero unexpected browser errors and Follow-the-Green **2 -> 1 -> 0**.
+- These gates did not test the product's primary content-creation invariant.
+  SDS's first manual use showed that a fresh body can remain a flat paragraph
+  instead of an always-bulleted BLB list. Without `<ul><li>` structure, labels
+  cannot recursively anchor `[+]` child blips.
+- The previous BLB “Done” rows are therefore historical parity evidence, not
+  current end-to-end acceptance. The release is **deployed but not accepted**.
+- Required repair gate: real UI creation of topic root, reply, and inline child;
+  structural readback proving bullet lists; recursive child creation and
+  persistence after reload and managed restart; visual inspection at
+  1280/1366/1440/1600 and mobile; zero unexpected browser/server errors.
+- Public reproduction is now exact: the content-gated spec intended **18 nodes**
+  at depth 1, while the saved and reloaded blip measured **18 P / 0 UL / 0 LI**.
+  Zero browser errors isolate this as a structure-contract defect. Inspected
+  artifacts: `screenshots/260713-0130-public-blb-creation-failure/`.
+- Local branch `fix/blb-always-bulleted` is green at full **112 test files /
+  678 passed / 3 skipped / 0 failed**, typecheck, branch-context lint,
+  full-source ESLint with **0 errors / 8,954 baseline warnings**, and a
+  **3,318-module** production build. An independent final audit returned **GO
+  for merge-candidate testing**.
+- Coverage now includes the pre-Yjs transaction gate, unchanged Yjs state after
+  rejected flattening commands, server-side CRDT rejection/no relay, mixed-UL
+  rejection, toolbar/keyboard escape paths, duplicate normalization, bounded
+  malformed-input handling, isolated Yjs undo history, the topic-H1 child
+  guard, reserved-root poison rejection, durable projection of existing flat
+  seeds, prevention of stale-prop replay, and canonicalization of malformed
+  HTML and task-list roots.
+- These are code gates, not private/public real-control acceptance. Draft PR
+  [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) is not deployed;
+  public production remains the broken PR #72 tree. Remaining acceptance is
+  private-green two-client/reload/restart plus 1280/1366/1440/1600/mobile
+  visual inspection, then exact public cutover and repair of the measured
+  failure topic.
+
 ## Concurrent read-marker hotfix — 2026-07-13
 
 - Public production is exact merged master `0553a611` on managed green
@@ -21,9 +59,9 @@
   and the production build all pass; Vite transformed **3,315 modules**. An
   independent read-only audit returned **GO** for the observed two-request
   race.
-- Boundary: this branch is not yet merged or public. GitHub CI, exact inactive
-  blue-lane deployment, and a console-clean public acceptance rerun still gate
-  the final production claim.
+- PR #72 merged the hotfix as exact `5e1bc271`, and that tree is public on blue
+  `:8101`. The hotfix itself is accepted; overall product acceptance remains
+  blocked by the always-bulleted BLB creation failure above.
 
 ## REST/Yjs content-coherence candidate — 2026-07-12
 

@@ -30,6 +30,21 @@ import { requestTaskCompletionHydration } from './editor/extensions/TaskWidget';
 import { collectBlipPages } from '../lib/blipPagination';
 import { subscribeBlipEvents, subscribeTopicDetail } from '../lib/socket';
 import { collaborationProjectionHeaders } from '../lib/collaborationProjection';
+import {
+  EMPTY_BLB_HTML,
+  ensureTopicBlbHtml,
+  plainTextToBlbHtml,
+  topicSeedHtml,
+} from '@shared/blbContent';
+import {
+  currentTopicEditorTitle,
+  needsBlbSeedProjection,
+  normalizeBlbEditorDocument,
+  selectionIsInTopicHeading,
+  setBlbEditorBaseline,
+} from './editor/blbEditorInvariant';
+import { isCanonicalBlbDocument } from './editor/extensions/BlipKeyboardShortcuts';
+import { readCreatedBlip } from '../lib/blipCreateResponse';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -322,12 +337,20 @@ function RizzomaTopicDetailState({
   if (topicProjectionIdentityRef.current !== topicProjectionIdentity) {
     topicProjectionIdentityRef.current = topicProjectionIdentity;
   }
+  const autoSaveTopicContentRef = useRef<(
+    content: string,
+    attempt?: number,
+    force?: boolean,
+  ) => Promise<void>>(async () => {});
 
   // Ref-based callback for creating inline child blips
   // Using a ref so the TipTap extension always gets the latest version
   const createInlineChildBlipRef = useRef<((anchorPosition: number) => Promise<void>) | null>(null);
   // Ref to hold the editor instance (avoids stale closures in callbacks)
   const topicEditorRef = useRef<Editor | null>(null);
+  const topicTitleRef = useRef(topic?.title || 'Untitled');
+  topicTitleRef.current = topic?.title || 'Untitled';
+  const topicBlbNormalizationPendingRef = useRef(false);
 
   // Stable callback wrapper that delegates to the ref
   const stableCreateInlineChildBlip = useCallback((anchorPosition: number) => {
@@ -375,6 +398,7 @@ function RizzomaTopicDetailState({
       topicCollabActive ? topicCollabProvider : undefined,
       {
         waveId: id,
+        isTopicRoot: true,
         onCreateInlineChildBlip: stableCreateInlineChildBlip,
         currentUser: collaborationUser ? { id: collaborationUser.id, label: collaborationUser.name } : null,
         participants: acceptedEditorRoster,
@@ -386,8 +410,32 @@ function RizzomaTopicDetailState({
     onUpdate: ({ editor }: { editor: Editor }) => {
       // Skip auto-save during Y.Doc seeding
       if (seedingTopicYdocRef.current) return;
+      if (topicBlbNormalizationPendingRef.current) return;
 
       const html = editor.getHTML();
+      if (!isCanonicalBlbDocument(editor.state.doc, true)) {
+        topicBlbNormalizationPendingRef.current = true;
+        queueMicrotask(() => {
+          if ((editor as any).isDestroyed) {
+            topicBlbNormalizationPendingRef.current = false;
+            return;
+          }
+          const repairTitle = currentTopicEditorTitle(editor, topicTitleRef.current);
+          const repaired = normalizeBlbEditorDocument(editor, {
+            kind: 'topic',
+            title: repairTitle,
+          }).html;
+          topicBlbNormalizationPendingRef.current = false;
+          setTopicContent(repaired);
+          if (topicSaveTimeoutRef.current) clearTimeout(topicSaveTimeoutRef.current);
+          topicSaveTimeoutRef.current = setTimeout(() => {
+            // A nonempty invalid collaborative snapshot needs a forced Couch
+            // materialization; local equality may reflect only lazy rendering.
+            void autoSaveTopicContent(repaired, 0, true);
+          }, 300);
+        });
+        return;
+      }
       setTopicContent(html);
 
       // Materialize both local and remote convergence. The callback reads the
@@ -501,23 +549,42 @@ function RizzomaTopicDetailState({
               setContentAndFocus();
               return;
             }
-            const authoritativeSeed = sanitizeRichHtml(topicCollabProvider.seedContent ?? topicContent);
+            const durableSeedContent = sanitizeRichHtml(
+              topicCollabProvider.seedContent ?? topic?.content ?? topicContent,
+            );
+            const authoritativeSeed = sanitizeRichHtml(ensureTopicBlbHtml(
+              topicTitleRef.current,
+              durableSeedContent,
+            ));
+            const needsMigration = needsBlbSeedProjection(durableSeedContent, authoritativeSeed);
             seedingTopicYdocRef.current = true;
-            topicEditor.commands.setContent(authoritativeSeed);
+            setBlbEditorBaseline(topicEditor, authoritativeSeed);
             seedingTopicYdocRef.current = false;
+            setTopicContent(authoritativeSeed);
+            if (needsMigration) {
+              if (topicSaveTimeoutRef.current) clearTimeout(topicSaveTimeoutRef.current);
+              // Seeding suppresses onUpdate; explicitly migrate only a changed
+              // canonical shared document through the digest-backed projection.
+              topicSaveTimeoutRef.current = setTimeout(() => {
+                void autoSaveTopicContentRef.current(authoritativeSeed, 0, true);
+              }, 0);
+            }
           }
           setContentAndFocus();
         });
       } else {
         // No collab: set content directly
         hasSetInitialContentRef.current = true;
-        topicEditor.commands.setContent(topicContent);
+        setBlbEditorBaseline(topicEditor, sanitizeRichHtml(ensureTopicBlbHtml(
+          topicTitleRef.current,
+          topicContent,
+        )));
         setContentAndFocus();
       }
     } else if (topicEditor && !isEditingTopic) {
       topicEditor.setEditable(false);
     }
-  }, [topicEditor, isEditingTopic, topicContent, topicCollabActive, topicYdoc, topicCollabProvider]);
+  }, [topicEditor, isEditingTopic, topicContent, topic?.content, topicCollabActive, topicYdoc, topicCollabProvider]);
 
   // Use refs to avoid dependency issues in callbacks
   const unreadStateRef = useRef(unreadState);
@@ -848,6 +915,11 @@ function RizzomaTopicDetailState({
   // BLB: Creates a subblip and navigates into it
   useEffect(() => {
     createInlineChildBlipRef.current = async (anchorPosition: number) => {
+      const editor = topicEditorRef.current;
+      if (editor && selectionIsInTopicHeading(editor)) {
+        toast('Create a child from a bulleted label, not the topic title', 'error');
+        return;
+      }
       if (!topicCanComment) {
         toast(isAuthed ? 'You do not have permission to comment' : 'Sign in to create comments', 'error');
         return;
@@ -857,7 +929,7 @@ function RizzomaTopicDetailState({
         waveId: id,
         // BLB: new blips default to a bulleted list (every blip body is BLB-shaped).
         // Matches original Rizzoma where Ctrl+Enter created a bulleted thread.
-        content: '<ul><li><p></p></li></ul>',
+        content: EMPTY_BLB_HTML,
         parentId: null, // This is a child of the topic/wave itself (root-level blip)
         anchorPosition: anchorPosition, // The cursor position where this inline comment is anchored
       };
@@ -867,17 +939,16 @@ function RizzomaTopicDetailState({
           body: JSON.stringify(requestBody)
         });
         if (response.ok && response.data) {
-          const newBlip = response.data as { id?: string; _id?: string; content?: string; authorId?: string; authorName?: string; createdAt?: number; updatedAt?: number };
-          const newBlipId = newBlip.id || newBlip._id;
+          const createdBlip = readCreatedBlip(response.data);
+          const newBlipId = createdBlip?.id;
 
-          if (newBlipId) {
+          if (createdBlip && newBlipId) {
             // BLB: Insert [+] marker at cursor position in the topic content.
             // No setTextSelection: anchorPosition is now a TEXT-character offset
             // (not a PM doc position). The cursor is still at the original
             // selection from the Ctrl+Enter keypress, which is the correct
             // structural anchor — matches original Rizzoma's blip-thread
             // positioning model (renderer.coffee:107-113).
-            const editor = topicEditorRef.current;
             if (editor) {
               (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
             }
@@ -889,11 +960,11 @@ function RizzomaTopicDetailState({
             const newBlipData: BlipData = {
               id: newBlipId,
               blipPath: blipPathSegment,
-              content: newBlip.content || '<p></p>',
-              authorId: newBlip.authorId || '',
-              authorName: newBlip.authorName || 'Anonymous',
-              createdAt: newBlip.createdAt || Date.now(),
-              updatedAt: newBlip.updatedAt || Date.now(),
+              content: createdBlip.content,
+              authorId: createdBlip.authorId,
+              authorName: createdBlip.authorName,
+              createdAt: createdBlip.createdAt,
+              updatedAt: createdBlip.updatedAt,
               yjsGeneration: 0,
               isRead: true,
               parentBlipId: undefined,
@@ -1124,7 +1195,7 @@ function RizzomaTopicDetailState({
     try {
       const r = await api('/api/blips', {
         method: 'POST',
-        body: JSON.stringify({ waveId: id, content: newBlipContent.trim() })
+        body: JSON.stringify({ waveId: id, content: plainTextToBlbHtml(newBlipContent) })
       });
       if (r.ok) { toast('Blip created'); setNewBlipContent(''); load(true); }
       else { toast('Failed to create blip', 'error'); }
@@ -1287,6 +1358,7 @@ function RizzomaTopicDetailState({
   const autoSaveTopicContent = useCallback(async (
     content: string,
     attempt = 0,
+    force = false,
   ): Promise<void> => {
     if (
       !topicProjectionActiveRef.current
@@ -1299,7 +1371,7 @@ function RizzomaTopicDetailState({
         || topicProjectionIdentityRef.current !== topicProjectionIdentity
       ) return;
       const latestContent = topicEditorRef.current?.getHTML() || content;
-      if (latestContent === lastSavedContentRef.current) return;
+      if (!force && latestContent === lastSavedContentRef.current) return;
       const extractedTitle = extractTitleFromContent(latestContent);
       if (!extractedTitle) return;
       const headers = topicCollabActive
@@ -1340,7 +1412,7 @@ function RizzomaTopicDetailState({
       ) {
         topicSaveTimeoutRef.current = setTimeout(() => {
           const latestContent = topicEditorRef.current?.getHTML() || content;
-          void autoSaveTopicContent(latestContent, attempt + 1);
+          void autoSaveTopicContent(latestContent, attempt + 1, force);
         }, Math.min(2_000, 150 * (2 ** attempt)));
       }
     } catch {
@@ -1351,11 +1423,12 @@ function RizzomaTopicDetailState({
       ) {
         topicSaveTimeoutRef.current = setTimeout(() => {
           const latestContent = topicEditorRef.current?.getHTML() || content;
-          void autoSaveTopicContent(latestContent, attempt + 1);
+          void autoSaveTopicContent(latestContent, attempt + 1, force);
         }, Math.min(2_000, 150 * (2 ** attempt)));
       }
     }
   }, [id, topicCollabActive, topicProjectionIdentity, topicYdoc, topicYjsGeneration]);
+  autoSaveTopicContentRef.current = autoSaveTopicContent;
 
   useEffect(() => {
     topicProjectionActiveRef.current = true;
@@ -1374,36 +1447,21 @@ function RizzomaTopicDetailState({
       toast(isAuthed ? 'You do not have permission to edit this topic' : 'Sign in to edit', 'error');
       return;
     }
-    // BLB: Topic content should always have title as first H1
-    // Merge title + existing content, ensuring title is H1 at the start
-    let initialContent = '';
-    const escapedTitle = String(topic?.title || 'Untitled').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!);
-    const titleH1 = `<h1>${escapedTitle}</h1>`;
-
-    if (topic?.content) {
-      const safeTopicContent = sanitizeRichHtml(topic.content);
-      // Check if content already starts with the title as H1
-      const contentHasTitle = safeTopicContent.toLowerCase().includes(titleH1.toLowerCase());
-      if (contentHasTitle) {
-        // Use content as-is
-        initialContent = safeTopicContent;
-      } else {
-        // Wrap content in <p> if it's plain text (no HTML tags)
-        let wrappedContent = safeTopicContent;
-        if (!/<[^>]+>/.test(wrappedContent)) {
-          wrappedContent = `<p>${wrappedContent}</p>`;
-        }
-        // Prepend title as H1 to content
-        initialContent = titleH1 + wrappedContent;
-      }
-    } else {
-      // No content, just use title as H1
-      initialContent = titleH1;
-    }
+    // Seed the editor with the canonical title plus an outer bullet list. This
+    // also lazily migrates legacy flat topic bodies before any local/Yjs edit.
+    const initialContent = sanitizeRichHtml(ensureTopicBlbHtml(
+      topic?.title || 'Untitled',
+      sanitizeRichHtml(topic?.content || ''),
+    ));
     const inlineRootBlips = blips.filter((b) => typeof b.anchorPosition === 'number');
     const nextContent = injectInlineMarkers(initialContent, inlineRootBlips);
     setTopicContent(nextContent);
-    lastSavedContentRef.current = nextContent;
+    // Track the actual durable REST projection, not its lazy canonicalization,
+    // so entering edit mode can migrate a flat legacy topic even before typing.
+    lastSavedContentRef.current = injectInlineMarkers(
+      sanitizeRichHtml(topic?.content || ''),
+      inlineRootBlips,
+    );
     // The topic editor is created empty and survives view mode. Requesting
     // before setContent is intentionally request-free on first entry; the
     // plugin hydrates when task nodes arrive. Later entries refresh existing
@@ -1476,7 +1534,7 @@ function RizzomaTopicDetailState({
     };
     collectNativeBlips(blips);
     const allBlips: Array<{ id: string; content: string }> = [
-      { id: topic.id, content: topic.content || `<h1>${topic.title || 'Untitled'}</h1>` },
+      { id: topic.id, content: topic.content || topicSeedHtml(topic.title || 'Untitled') },
       ...nativeBlips,
     ];
     const contentMap = new Map<string, ContentArray>(
@@ -1500,9 +1558,10 @@ function RizzomaTopicDetailState({
     : currentSubblip;
   const inlineRootBlips = renderedBlips.filter(b => typeof b.anchorPosition === 'number');
   const listBlips = renderedBlips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
-  const topicContentHtmlBase = topic.content && topic.content.trim().length > 0
-    ? sanitizeRichHtml(topic.content)
-    : `<h1>${String(topic.title || 'Untitled').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!)}</h1>`;
+  const topicContentHtmlBase = sanitizeRichHtml(ensureTopicBlbHtml(
+    topic.title || 'Untitled',
+    sanitizeRichHtml(topic.content || ''),
+  ));
   // Don't inject markers here — let RizzomaBlip handle it with expanded state tracking
   const topicBlip: BlipData = {
     id: topic.id,

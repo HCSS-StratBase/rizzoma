@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './FloatingToolbar.css';
+import { runBlbSafeListAction, selectionIsInCanonicalTopLevelList } from './blbEditorInvariant';
 
 interface FloatingToolbarProps {
   editor: any; // TipTap editor instance
@@ -66,10 +67,10 @@ export function FloatingToolbar({ editor, isVisible }: FloatingToolbarProps) {
         editor.chain().focus().setParagraph().run();
         break;
       case 'bulletlist':
-        editor.chain().focus().toggleBulletList().run();
+        runBlbSafeListAction(editor, 'bullet');
         break;
       case 'orderedlist':
-        editor.chain().focus().toggleOrderedList().run();
+        runBlbSafeListAction(editor, 'ordered');
         break;
       case 'undo':
         editor.chain().focus().undo().run();
@@ -156,6 +157,7 @@ export function FloatingToolbar({ editor, isVisible }: FloatingToolbarProps) {
         className={activeButtons.has('orderedlist') ? 'active' : ''}
         onClick={() => handleAction('orderedlist')}
         title="Numbered List"
+        disabled={selectionIsInCanonicalTopLevelList(editor)}
       >
         1.
       </button>

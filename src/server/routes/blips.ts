@@ -19,6 +19,7 @@ import {
 } from '../lib/contentReferences.js';
 import { readCollaborationProjection } from '../lib/collaborationProjection.js';
 import { yjsDocCache } from '../lib/yjsDocCache.js';
+import { ensureBlbHtml, isBlbHtml } from '../../shared/blbContent.js';
 
 const CONTENT_REFERENCE_ERRORS = new Set([
   'invalid_mention_target',
@@ -296,7 +297,7 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
   try {
     const { waveId, parentId, content, anchorPosition } = req.body || {};
 
-    if (!waveId || !content) {
+    if (!waveId) {
       res.status(400).json({ error: 'missing_required_fields', requestId: (req as any)?.id });
       return;
     }
@@ -306,7 +307,8 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
 
     const now = Date.now();
     const blipId = `${waveId}:b${randomUUID()}`;
-    const references = await validateStoredContentReferences(String(waveId), blipId, String(content));
+    const normalizedContent = ensureBlbHtml(content);
+    const references = await validateStoredContentReferences(String(waveId), blipId, normalizedContent);
     if (parentId !== null && parentId !== undefined && typeof parentId !== 'string') {
       res.status(400).json({ error: 'invalid_parent', requestId: (req as any)?.id });
       return;
@@ -326,7 +328,7 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
       type: 'blip',
       waveId,
       parentId: normalizedParentId,
-      content,
+      content: normalizedContent,
       createdAt: now,
       updatedAt: now,
       yjsGeneration: 0,
@@ -387,7 +389,7 @@ router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> =
     const { content } = req.body || {};
     const collaborationProjection = readCollaborationProjection(req);
     
-    if (!content) {
+    if (typeof content !== 'string') {
       res.status(400).json({ error: 'missing_content', requestId: (req as any)?.id });
       return;
     }
@@ -405,7 +407,18 @@ router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> =
       // the exact state this projection/replacement supersedes.
       const blip = await loadBlipDoc(id);
       if (blip.deleted) throw new Error('410 deleted');
-      const references = await validateStoredContentReferences(blip.waveId, id, String(content));
+      // A digest-bearing request materializes the exact current Y.Doc. Never
+      // rewrite that HTML on the server: doing so would make Couch disagree
+      // with the authoritative CRDT. External replacements are safe to
+      // normalize because they clear the cached document and advance its
+      // durable generation below.
+      if (collaborationProjection !== null && !isBlbHtml(content)) {
+        throw new Error('invalid_blb_structure');
+      }
+      const nextContent = collaborationProjection !== null
+        ? content
+        : ensureBlbHtml(content);
+      const references = await validateStoredContentReferences(blip.waveId, id, nextContent);
       const currentGeneration = yjsGenerationOf(blip.yjsGeneration);
       const liveProjection = collaborationProjection !== null
         && hasWritableBlipSocket(id, String((req as any).sessionID || ''), currentGeneration);
@@ -432,7 +445,7 @@ router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> =
         nextGeneration = currentGeneration + 1;
       }
 
-      const contentChanged = String(content) !== String(blip.content || '');
+      const contentChanged = nextContent !== String(blip.content || '');
       const generationChanged = nextGeneration !== currentGeneration;
       if (!contentChanged && !generationChanged) {
         // Reconciliation is independently durable. A prior Couch write may
@@ -445,7 +458,7 @@ router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> =
       const updatedBlip: Blip & { _id: string; _rev?: string } = {
         ...blip,
         _id: blip._id || id,
-        content,
+        content: nextContent,
         yjsGeneration: nextGeneration,
         updatedAt: Date.now()
       };
@@ -481,6 +494,7 @@ router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> =
     if (
       String(e?.message) === 'invalid_collaboration_state_digest'
       || String(e?.message) === 'invalid_collaboration_generation'
+      || String(e?.message) === 'invalid_blb_structure'
     ) {
       res.status(400).json({ error: e.message, requestId: (req as any)?.id });
       return;
@@ -858,9 +872,10 @@ router.post('/:id/duplicate', requireAuth, csrfProtect(), async (req, res): Prom
       type: 'blip',
       waveId: sourceBlip.waveId,
       parentId: sourceBlip.parentId || null, // Same parent as source (sibling)
-      content: sourceBlip.content,
+      content: ensureBlbHtml(sourceBlip.content),
       createdAt: now,
       updatedAt: now,
+      yjsGeneration: 0,
       authorId: userId,
       authorName: fallbackName,
       deleted: false,

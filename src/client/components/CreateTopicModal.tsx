@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { api, ensureCsrf } from '../lib/api';
+import { topicSeedHtml } from '@shared/blbContent';
 import { toast } from './Toast';
 import './CreateTopicModal.css';
 
@@ -35,14 +36,11 @@ export function CreateTopicModal({ isOpen, onClose, onTopicCreated }: CreateTopi
     setCreating(true);
     try {
       await ensureCsrf();
-      const escapedTitle = trimmedTitle.replace(/[&<>"']/g, (character) => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-      })[character]!);
       const response = await api('/api/topics', {
         method: 'POST',
         body: JSON.stringify({
           title: trimmedTitle,
-          content: `<h1>${escapedTitle}</h1>`,
+          content: topicSeedHtml(trimmedTitle),
           participants: emails,
         }),
       });

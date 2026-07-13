@@ -1,9 +1,16 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-13 (`fix/read-marker-conflict`; PR #71 exact
-`0553a611` public on managed green `:8102`; concurrent read-marker hotfix
-locally green and pending CI/deploy/final acceptance. Resume from the isolated
-release worktree; do not touch the dirty canonical checkout.)
+Last refreshed: 2026-07-13 (`fix/blb-always-bulleted`; PR #72 exact
+`5e1bc271` public on managed blue `:8101`; read-marker hotfix merged and public;
+public phase 2 passed 49/49, but SDS's first manual use exposed the core BLB
+always-bulleted creation invariant as broken. A local durable editor/Yjs/API
+repair is green at 112 files / 678 passed / 3 skipped, 0 ESLint errors (8,954
+baseline warnings), and 3,318 build modules; an independent audit returned GO
+for merge-candidate testing. Draft PR #73 is not deployed and public remains
+the broken PR #72 tree. Remaining gates are private-green two-client,
+reload/restart, and responsive visual acceptance, then exact public cutover and
+repair of the measured failure topic. Resume from the isolated release
+worktree; do not touch the dirty canonical checkout.)
 
 Last refreshed (prior): 2026-07-12 (`fix/lockfile-driven-production-install`; helper
 merge `599fe025`; **not yet public**). PR #66 merged the complete authorization,
@@ -45,13 +52,13 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `fix/read-marker-conflict` (2026-07-13), based on deployed
-  master `0553a611`; public production runs that exact generation-safe release
-  on green `:8102`. Always cite branch + date when sharing status.
-- Current local gates: 107/107 Vitest files, 588 passed, 3 skipped, typecheck,
-  full-source ESLint `--quiet`, 3,314 build modules, responsive local evidence,
-  and independent GO audit. Public collaboration, restart persistence, roles,
-  mail, scanner, and visual acceptance must be re-measured after exact cutover.
+- Active branch: `fix/blb-always-bulleted` (2026-07-13), based on public PR #72
+  exact merge `5e1bc271` on managed blue `:8101`. Always cite branch + date
+  when sharing status.
+- Current release evidence: 108 test files / 651 passed / 3 skipped, typecheck,
+  full-source ESLint `--quiet`, 3,315 build modules, exact 994-package provenance,
+  and public phase 2 at 49/49 with zero unexpected browser errors. This evidence
+  does **not** accept the product because fresh content can be non-bulleted.
 - Latest inspected production evidence is under `screenshots/260712-0530-pr60-production-final/`, including command logs, real-control before/after captures, and the required desktop viewport sweep.
 - Deployment boundary: nginx targets the exact merge through Vite `:3100` → API `:8100`; the old `:3000`/`:8788` lane remains healthy for immediate rollback. Both lanes are unmanaged bare processes and share CouchDB.
 - Re-read checkpoint: 2026-02-04 01:55 local — BLB child unread highlight removed (green [+] only) and BLB snapshots refreshed (`snapshots/blb/1770165748162-*`); drift warnings below remain accurate (note `docs/LINKS_REPARENT.md` is still missing).
@@ -73,7 +80,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `fix/read-marker-conflict` worktree/branch until the concurrent read-marker fix merges; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
+    - Continue in the isolated `/home/stephan/rizzoma-final-release` worktree on `fix/blb-always-bulleted`; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -82,11 +89,11 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Publish the concurrent read-marker hotfix, require all CI jobs, and merge only the green tree.
-  2) Deploy the exact squash merge to inactive managed blue `:8101`; verify exact release/dependency provenance plus direct health/assets/journal/ClamAV, then drain green with zero writer overlap before switching both vhosts.
-  3) Rerun public login/restart/edit-persistence/OAuth/two-account collaboration/FtG/role/demotion/invite/Task/mention/export/reset/upload/EICAR/mail acceptance plus inspected 1280/1366/1440/1600/mobile PNGs and a zero-5xx journal check.
-  4) Record the exact production result in project docs, global HANDOFF, and HCSS Tana under the correct 2026-07-13 date; refresh the Git bundle after final docs merge.
-  5) Keep native rendering disabled; after release, address 500/1,000-blip sweeps, physical iPhone Safari, staging-data separation, synthetic-data cleanup, and dependency/lint debt.
+  1) Publish the audited PR #73 head and require every GitHub check; merge only after green, then deploy the exact merge SHA privately to inactive managed green.
+  2) Prove fresh topic, root reply, nested reply, and both Ctrl+Enter paths are real UL/LI through browser controls; prove two-client recursive `[+]` creation and reload persistence.
+  3) Require green PR CI, merge, and deploy only the exact squash tree through the immutable zero-overlap lane process.
+  4) Prove managed-restart persistence, inspect 1280/1366/1440/1600/mobile PNGs, require clean browser/server journals, then repair and verify the exact public failure topic after cutover.
+  5) Finalize project docs, global HANDOFF, HCSS Tana, and the Git bundle only after the core BLB gate passes.
 
   Testing/CI hygiene:
   - Keep the central sharing/access, route-role matrix, real-session Socket.IO authorization, and ShareModal tests green; production policy changes require staging evidence first.

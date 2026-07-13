@@ -5,6 +5,44 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
+- (2026-07-13 always-bulleted BLB repair candidate) The real public
+  [reality-check topic](https://138-201-62-161.nip.io/#/topic/3305bc3a42889979c79fa39f400088c7?layout=rizzoma)
+  converted a content-gated 18-node/depth-1 spec into **18 top-level P / 0 UL /
+  0 LI**, and reload preserved the failure with zero browser errors. Inspected
+  evidence lives at `screenshots/260713-0130-public-blb-creation-failure/`.
+  Branch `fix/blb-always-bulleted` now supplies one durable content contract for
+  H1+UL topic seeds, escaped plain-text-to-LI replies, empty inline UL/LI seeds,
+  pre-Yjs editor transaction rejection, server-side CRDT rejection, guarded
+  toolbar/keyboard escape paths, API normalization, duplicate normalization,
+  legacy-document repair, and correct nested create-response mapping. The
+  durability audit additionally closed Yjs undo-history split-brain, topic-H1
+  child creation, poisoned reserved-root, existing-flat seed-projection,
+  stale-prop replay, malformed-HTML, and task-list-root bypasses. An independent
+  audit returned **GO for merge-candidate testing**. Full Vitest is green at
+  **112 files / 678 passed / 3 skipped / 0 failed**; typecheck and
+  branch-context lint pass; full ESLint reports **0 errors / 8,954 baseline
+  warnings**; and the production build transforms **3,318 modules**. Draft PR
+  [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) is not merged or
+  deployed; public production still runs the broken PR #72 tree. Remaining
+  gates are private-green two-client/reload/restart and responsive visual
+  acceptance, followed by exact public cutover and repair of the reproduction
+  topic above.
+- (2026-07-13 public BLB reality check) PR
+  [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) passed all required
+  checks, merged the deterministic read-marker repair as exact master
+  `5e1bc271`, and that exact immutable tree became public on managed blue
+  `:8101` after a 38-second zero-overlap green drain. Package provenance is
+  exact at **994** production packages; public health is green; phase 2 passed
+  **49/49** with zero unexpected browser errors and real Follow-the-Green
+  **2 -> 1 -> 0**. The final restart/reset/responsive phase produced no report
+  and is not accepted evidence. More importantly, SDS's first manual use showed
+  the core BLB invariant is absent: freshly created bodies can be flat
+  paragraphs rather than bullet lists, preventing recursive label-to-`[+]`
+  construction. Production is **deployed but not accepted**. The next release
+  gate is a real public demonstration topic created from the legacy writer's
+  content-gated fractal spec, followed by fixes and acceptance for always-bulleted
+  topic/reply/inline creation, recursion, reload/restart persistence, responsive
+  inspected PNGs, and a clean journal.
 - (2026-07-13 concurrent read-marker release gate) PR
   [#71](https://github.com/HCSS-StratBase/rizzoma/pull/71) merged the complete
   generation-safe collaboration/auth repair as exact master `0553a611`; all

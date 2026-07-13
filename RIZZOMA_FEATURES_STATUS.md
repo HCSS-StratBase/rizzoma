@@ -1,26 +1,25 @@
 # 🚀 Rizzoma Core Features Implementation Status
 
-## Final production hotfix checkpoint — 2026-07-13
+## Always-bulleted BLB repair checkpoint — 2026-07-13
 
-- PR [#71](https://github.com/HCSS-StratBase/rizzoma/pull/71) merged the
-  generation-safe collaboration, authorization, recovery, and auth closeout as
-  exact master `0553a611`; all seven GitHub checks passed and that exact release
-  is public on managed green `:8102`.
-- Resumed production acceptance verified the substantive feature matrix through
-  two-account collaboration/reconnect, viewer/commenter/editor enforcement,
-  Tasks and mentions, Follow-the-Green, recursive export, public/private ACLs,
-  and revocation. It then found one genuine remaining runtime defect: duplicate
-  mark-read requests could race on the same CouchDB revision and produce one
-  500.
-- `fix/read-marker-conflict` makes single and bulk read markers conflict-
-  idempotent with deterministic IDs, authoritative direct rereads, bounded
-  retry, monotonic timestamps, and legacy marker compatibility. Full local
-  gates pass at **108 files / 651 tests / 3 skipped**, plus typecheck,
-  full-source ESLint `--quiet`, `git diff --check`, and a **3,315-module** build;
-  an independent audit returned **GO**.
-- Boundary: merge/CI, exact blue deployment, and final clean production
-  acceptance remain required. Physical iPhone Safari and 500/1,000-blip
-  full-render sweeps remain explicit post-release risks, not hidden blockers.
+- PR [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) merged the
+  read-marker repair as exact master `5e1bc271`; that tree is public on managed
+  blue `:8101`. Public phase 2 passed **49/49**, but real authoring proved that
+  an intended 18-node bullet structure persisted as **18 P / 0 UL / 0 LI**.
+- Draft PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) supplies the
+  shared always-bulleted contract across editor, Yjs, API, duplication, and
+  existing-document repair. The audit closed undo-history split-brain,
+  topic-H1 child creation, reserved-root poisoning, existing-flat seed
+  projection, stale-prop replay, malformed HTML, and task-list roots.
+- Full local gates pass at **112 files / 678 passed / 3 skipped / 0 failed**,
+  typecheck, branch-context lint, full-source ESLint at **0 errors / 8,954
+  baseline warnings**, and a **3,318-module** production build. An independent
+  audit returned **GO for merge-candidate testing**.
+- Boundary: PR #73 is not merged or deployed; public still runs the broken PR
+  #72 tree. Private-green two-client/reload/restart and responsive visual
+  acceptance, exact public cutover, and repair of the measured failure topic
+  remain required. Physical iPhone Safari and 500/1,000-blip full-render sweeps
+  remain explicit post-release risks, not hidden blockers.
 
 ## REST/Yjs coherence candidate — 2026-07-12
 
@@ -524,6 +523,7 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 
 | Functionality | Status | Original Rizzoma | New Rizzoma |
 |---|---|---|---|
+| Fresh topic/reply/inline body is always a bullet list | **Audited fix candidate; public blocker** | Every new blip starts as `<ul><li>` | Public failure measured 18 P / 0 UL / 0 LI after reload; draft PR #73 closes editor/Yjs/API plus undo, H1, reserved-root, seed-projection, stale-prop, malformed-HTML, and task-list bypasses; independent audit GO and 678 full-suite tests pass, but private-green two-client/reload/restart/responsive acceptance and public cutover remain |
 | Collapsed TOC (bullet + label + [+]) | Done | [orig](screenshots/side-by-side/blb-01-collapsed-toc-old-260208.png) | [new](screenshots/side-by-side/blb-01-collapsed-toc-new-260208.png) |
 | Section expanded (blip content visible) | Done | [orig](screenshots/side-by-side/blb-02-section-expanded-old-260208.png) | [new](screenshots/side-by-side/blb-02-section-expanded-new-260208.png) |
 | [+] click = INLINE expansion (not navigation) | Done | [orig](screenshots/blb-inline-expanded_old-260208-0226.png) | [new](screenshots/blb-inline-expanded_new-260208-0330.png) |

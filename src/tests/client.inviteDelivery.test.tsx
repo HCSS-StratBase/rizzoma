@@ -87,6 +87,8 @@ describe('client invitation delivery feedback', () => {
     expect(inviteMocks.api).toHaveBeenCalledWith('/api/topics', expect.objectContaining({
       body: expect.stringContaining('"participants":["sent@example.test","failed@example.test"]'),
     }));
+    const createBody = JSON.parse(inviteMocks.api.mock.calls.find(([path]) => path === '/api/topics')?.[1]?.body as string);
+    expect(createBody.content).toBe('<h1>Partial topic</h1><ul><li><p></p></li></ul>');
     expect(inviteMocks.toast).toHaveBeenCalledWith(expect.stringContaining('1 invitation(s) delivered and 1 failed'), 'error');
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onTopicCreated).toHaveBeenCalledWith('topic-1');
