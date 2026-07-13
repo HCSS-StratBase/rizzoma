@@ -979,7 +979,9 @@ export function RizzomaBlip({
       setIsActive(true);
     }
     setIsExpanded(next);
-    onToggleCollapse?.(blip.id);
+    if (!next) {
+      onToggleCollapse?.(blip.id);
+    }
     if (!blip.isRead) {
       onBlipRead?.(blip.id);
     }
@@ -2075,12 +2077,16 @@ export function RizzomaBlip({
     >
       {/* Collapsed View - Simple like live Rizzoma: bullet + label + [+] only */}
       {showCollapsedView && (
-        <div className="blip-collapsed-row" onClick={handleToggleExpand}>
+        <div
+          className="blip-collapsed-row"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggleExpand();
+          }}
+        >
           <span className="blip-bullet">•</span>
           <span className="blip-collapsed-label-text">{blipLabel}</span>
-          {listChildren.length > 0 && (
-            <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>+</span>
-          )}
+          <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>+</span>
         </div>
       )}
 
@@ -2398,9 +2404,7 @@ export function RizzomaBlip({
                       >
                         <span className="blip-bullet">•</span>
                         <span className="blip-label-text">{label}</span>
-                        {(childBlip.childBlips?.length ?? 0) > 0 && (
-                          <span className={`blip-expand-icon ${childHasUnread ? 'has-unread' : ''}`}>+</span>
-                        )}
+                        <span className={`blip-expand-icon ${childHasUnread ? 'has-unread' : ''}`}>+</span>
                       </div>
                     )}
                     {/* Expanded child blip */}
