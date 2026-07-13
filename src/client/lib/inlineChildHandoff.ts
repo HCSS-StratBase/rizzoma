@@ -1,16 +1,17 @@
-export type InlineChildHandoffAction = 'done' | 'wait' | 'enter-edit';
+export type InlineChildHandoffAction = 'done' | 'ensure-expanded' | 'enter-edit';
 
 /**
  * Decide the next step while a topic-root Ctrl+Enter child moves from the
  * topic editor's NodeView portal into the topic's view-mode portal.
  *
- * A missing container is temporary. The root RizzomaBlip retains the child's
- * expanded state across that handoff, so toggling again would collapse it.
+ * A missing container is temporary, but the owning RizzomaBlip may also have
+ * remounted and lost local expansion state. Re-assert expansion idempotently;
+ * never use a toggle during handoff retries.
  */
 export function nextInlineChildHandoffAction(
   containerPresent: boolean,
   editablePresent: boolean,
 ): InlineChildHandoffAction {
   if (editablePresent) return 'done';
-  return containerPresent ? 'enter-edit' : 'wait';
+  return containerPresent ? 'enter-edit' : 'ensure-expanded';
 }

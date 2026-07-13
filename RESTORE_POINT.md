@@ -35,10 +35,15 @@
   all seven checks. Private green proved the topic bullets and canonical child
   persist, but its automatic child handoff failed: closing the topic editor
   temporarily removed the portal, and the retry loop toggled the still-expanded
-  child again, collapsing it. Branch `fix/blb-inline-child-handoff` now waits
-  through the absent-portal phase instead of toggling. Local gates pass at **113
-  files / 686 passed / 3 skipped / 0 failed** plus **33/33** focused. Public
-  blue is stopped for writer isolation; nginx has not been cut over. Remaining
+  child again, collapsing it. PR #75 merged as exact `cb209dbd` with all seven
+  checks green, but private green still failed: the topic and child persisted
+  correctly, yet topic-editor remount lost the root blip's local expanded-child
+  state, so the child container never rendered. Branch
+  `fix/blb-ensure-inline-expand` changes programmatic Ctrl+Enter from toggle to
+  idempotent ensure-expanded and reasserts that state on retries. Local gates
+  pass at **113 files / 686 passed / 3 skipped / 0 failed**, touched-file ESLint,
+  and a **3,319-module** production build. Public blue is stopped for writer
+  isolation; nginx has not been cut over. Remaining
   gates are private-green two-client/reload/restart and responsive visual
   acceptance, followed by exact public cutover and repair of the reproduction
   topic above.

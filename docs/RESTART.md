@@ -1,6 +1,6 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-13 (`fix/blb-inline-child-handoff`; PR #72 exact
+Last refreshed: 2026-07-13 (`fix/blb-ensure-inline-expand`; PR #72 exact
 `5e1bc271` remains public on managed blue `:8101`. PR #73 merged as exact
 `7581d036`, but private green caught a pre-sync TipTap/Yjs duplicate-root race,
 so green was stopped and never cut over. The follow-up starts collaborative
@@ -10,9 +10,11 @@ pending/invalid state on every rejection. Local gates are green at 112 files /
 684 passed / 3 skipped, 0 ESLint errors, and 3,318 build modules. An independent
 audit returned GO. PR #74 then merged as exact `d2f200c8`, but private green
 caught the root Ctrl+Enter retry collapsing a still-expanded child while its
-portal moved from topic edit to view mode. The handoff follow-up removes that
-second toggle and is green at 113 files / 686 passed / 3 skipped. Blue is
-stopped for writer isolation and nginx has not changed. Remaining gates are
+portal moved from topic edit to view mode. PR #75 merged as exact `cb209dbd`,
+but private green still failed because topic-editor remount lost local inline
+expansion state. The current follow-up uses idempotent ensure-expanded creation
+and is green at 113 files / 686 passed / 3 skipped plus a 3,319-module build.
+Blue is stopped for writer isolation and nginx has not changed. Remaining gates are
 follow-up PR/CI/merge, exact green redeploy, private-green two-client,
 reload/restart, and responsive visual acceptance, then exact public cutover and
 repair of the measured failure topic. Resume from the isolated release
@@ -58,9 +60,9 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `fix/blb-inline-child-handoff` (2026-07-13), based on merged PR
-  #74 exact `d2f200c8`; nginx remains on stopped PR #72 blue while PR #74 is
-  private on green.
+- Active branch: `fix/blb-ensure-inline-expand` (2026-07-13), based on merged PR
+  #75 exact `cb209dbd`; nginx remains on stopped PR #72 blue while PR #75 is
+  private on green but rejected by acceptance.
   Always cite branch + date
   when sharing status.
 - Current release evidence: 108 test files / 651 passed / 3 skipped, typecheck,
@@ -88,7 +90,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `/home/stephan/rizzoma-final-release` worktree on `fix/blb-inline-child-handoff`; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
+    - Continue in the isolated `/home/stephan/rizzoma-final-release` worktree on `fix/blb-ensure-inline-expand`; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.

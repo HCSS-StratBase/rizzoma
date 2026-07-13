@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-13 (`fix/blb-inline-child-handoff`; deployed base
+Last Updated: 2026-07-13 (`fix/blb-ensure-inline-expand`; deployed base
 `5e1bc271e81613768e811cfc306c0c691e71d77b`). PR
 [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) merged the read-marker
 repair and that exact tree is public on managed blue `:8101`. Public phase 2
@@ -25,7 +25,16 @@ handoff collapsed the child while its portal moved from topic edit mode to view
 mode. Public blue was gracefully stopped for writer isolation and remains
 stopped during repair; nginx has not been cut over.
 
-Branch `fix/blb-inline-child-handoff` removes the self-canceling second toggle.
+PR [#75](https://github.com/HCSS-StratBase/rizzoma/pull/75) merged the first
+handoff repair as exact `cb209dbd` after all seven checks passed. Exact
+`cb209dbd` is healthy on private green, but its real-control gate still failed:
+the root topic and child persisted as canonical bullets with a `[+]` marker,
+yet the child container never rendered after the topic editor remounted because
+the root blip's local expanded-child state was lost.
+
+Branch `fix/blb-ensure-inline-expand` changes programmatic child creation from
+toggle to idempotent ensure-expanded. Creation retries now reassert expansion
+without ever inverting it; user marker clicks still toggle.
 The underlying PR #74 repair ensures collaborative
 topic and child editors start without local content, the elected seeder imports
 one canonical document directly into the empty Y.XmlFragment, and every editor,
@@ -34,14 +43,14 @@ frozen until the exact provider has authoritative sync plus server-granted edit
 permission. Disconnects and every rejected Yjs update revoke that capability;
 the local pending document is preserved for explicit recovery. Invalid durable
 snapshots likewise fail closed and remain preserved rather than being silently
-deleted. The handoff regression waits while the view portal remounts and only
-re-enters edit after the child container exists. Final local gates pass at
-**113 files / 686 passed / 3 skipped / 0 failed**, typecheck, and the focused
-handoff/provider matrix at **33/33**; final build/CI remain before redeployment.
+deleted. Final local gates pass at **113 files / 686 passed / 3 skipped / 0
+failed**, touched-file ESLint, branch-context lint, and a **3,319-module**
+production build; final CI remains before redeployment.
 
 **Deployment boundary:** nginx still targets blue `:8101`, but blue is stopped
-for the zero-overlap maintenance window. Green `:8102` runs exact PR #74
-`d2f200c8` privately. The handoff follow-up needs PR/CI/merge and exact green
+for the zero-overlap maintenance window. Green `:8102` runs exact PR #75
+`cb209dbd` privately and is rejected by real-control acceptance. The ensure-
+expanded follow-up needs PR/CI/merge and exact green
 redeployment; private two-client,
 reload, restart, and responsive visual acceptance must pass before a
 zero-overlap cutover. The known public failure topic then needs an explicit
@@ -118,7 +127,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`fix/blb-inline-child-handoff` @ 2026-07-13; PR #72 still configured public; PR #74 exact `d2f200c8` private green failed child handoff)
+Current State (`fix/blb-ensure-inline-expand` @ 2026-07-13; PR #72 still configured public; PR #75 exact `cb209dbd` private green failed child expansion state)
 - PR [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) passed all required
   checks and squash-merged as exact master `5e1bc271`. That exact immutable
   release is public on managed blue `:8101`; all **994** lockfile-required
@@ -164,14 +173,19 @@ Current State (`fix/blb-inline-child-handoff` @ 2026-07-13; PR #72 still configu
   retry loop toggled the retained expanded state again while the portal moved
   from topic edit mode to view mode, collapsing the child before it became
   editable. The release gate stopped.
-- Branch `fix/blb-inline-child-handoff` removes that second toggle and codifies
-  the handoff decision: absent portal means wait; present container means
-  re-enter edit; editable means done.
+- PR [#75](https://github.com/HCSS-StratBase/rizzoma/pull/75) merged as exact
+  `cb209dbd` after seven green checks and deployed to private green. It removed
+  the second toggle, but the acceptance gate still failed because the root
+  blip's local expansion state was lost on topic-editor remount; the child
+  persisted but never rendered as an editable container.
+- Branch `fix/blb-ensure-inline-expand` adds an idempotent
+  `rizzoma:ensure-inline-blip-expanded` path. Programmatic creation/retry uses
+  add-only expansion; user marker clicks remain toggle-based.
 - Full local gates pass: **113 files / 686 passed / 3 skipped / 0 failed**,
-  typecheck, branch-context lint, full ESLint at **0 errors / 8,954 baseline
-  warnings**, and a **3,318-module** production build. Public production still
-  runs the broken PR #72 tree.
-- Next: publish this handoff follow-up as a new PR and require green CI, merge it, then
+  touched-file ESLint, branch-context lint, and a **3,319-module** production
+  build. Public production still runs the broken PR #72 tree when blue is
+  active; currently blue is stopped and nginx still points at it.
+- Next: publish this ensure-expanded follow-up as a new PR and require green CI, merge it, then
   privately deploy its exact merge SHA to inactive green. Prove two-client
   collaboration plus topic/root-reply/nested-reply/Ctrl+Enter recursion across
   reload and managed restart, inspect 1280/1366/1440/1600/mobile PNGs, then

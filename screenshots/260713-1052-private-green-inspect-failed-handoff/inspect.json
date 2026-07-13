@@ -1,0 +1,102 @@
+{
+  "topicId": "3305bc3a42889979c79fa39f4000dd8c",
+  "childId": "3305bc3a42889979c79fa39f4000dd8c:b73c4c8ee-b618-4d2d-b072-5ae83c73cabb",
+  "inventory": [
+    {
+      "id": "3305bc3a42889979c79fa39f4000dd8c",
+      "classes": "rizzoma-blip blip-container root-blip topic-root   expanded",
+      "text": "BLB creation acceptance 1783939749302Release statusFunctional failureRepair scopeEvidence+",
+      "editors": [],
+      "editButtons": [],
+      "doneButtons": 0
+    }
+  ],
+  "topic": {
+    "status": 200,
+    "body": {
+      "id": "3305bc3a42889979c79fa39f4000dd8c",
+      "title": "BLB creation acceptance 1783939749302",
+      "content": "<h1>BLB creation acceptance 1783939749302</h1><ul><li><p>Release status</p></li><li><p>Functional failure</p></li><li><p>Repair scope</p></li><li><p>Evidence<span class=\"blip-thread-host\" contenteditable=\"false\"><span data-blip-thread=\"3305bc3a42889979c79fa39f4000dd8c:b73c4c8ee-b618-4d2d-b072-5ae83c73cabb\" class=\"blip-thread-marker\">+</span><span class=\"inline-child-portal\" data-portal-child=\"3305bc3a42889979c79fa39f4000dd8c:b73c4c8ee-b618-4d2d-b072-5ae83c73cabb\"></span></span></p></li></ul>",
+      "createdAt": 1783939752562,
+      "updatedAt": 1783939754029,
+      "yjsGeneration": 0,
+      "authorId": "0b997d49bf636cdd371819e1360004e4",
+      "authorName": "hp",
+      "sectionAttribution": {
+        "7try58": {
+          "authorId": "0b997d49bf636cdd371819e1360004e4",
+          "authorName": "hp",
+          "updatedAt": 1783939752562
+        },
+        "1o992hk": {
+          "authorId": "0b997d49bf636cdd371819e1360004e4",
+          "authorName": "hp",
+          "updatedAt": 1783939754029
+        },
+        "xat8ui": {
+          "authorId": "0b997d49bf636cdd371819e1360004e4",
+          "authorName": "hp",
+          "updatedAt": 1783939754029
+        },
+        "1ur3le": {
+          "authorId": "0b997d49bf636cdd371819e1360004e4",
+          "authorName": "hp",
+          "updatedAt": 1783939754029
+        },
+        "taupgd": {
+          "authorId": "0b997d49bf636cdd371819e1360004e4",
+          "authorName": "hp",
+          "updatedAt": 1783939754029
+        }
+      },
+      "sharing": {
+        "shareLevel": "private",
+        "allowComments": false,
+        "allowEdits": false
+      },
+      "permissions": {
+        "role": "owner",
+        "canRead": true,
+        "canComment": true,
+        "canEdit": true,
+        "canManage": true
+      }
+    }
+  },
+  "child": {
+    "status": 200,
+    "body": {
+      "_id": "3305bc3a42889979c79fa39f4000dd8c:b73c4c8ee-b618-4d2d-b072-5ae83c73cabb",
+      "_rev": "1-3f3fddc3f1798e6d207b976dcbbf81cc",
+      "type": "blip",
+      "waveId": "3305bc3a42889979c79fa39f4000dd8c",
+      "parentId": null,
+      "content": "<ul><li><p></p></li></ul>",
+      "createdAt": 1783939753686,
+      "updatedAt": 1783939753686,
+      "yjsGeneration": 0,
+      "authorId": "0b997d49bf636cdd371819e1360004e4",
+      "authorName": "Anonymous",
+      "deleted": false,
+      "isFoldedByDefault": false,
+      "anchorPosition": 0,
+      "permissions": {
+        "role": "owner",
+        "canEdit": true,
+        "canComment": true,
+        "canRead": true,
+        "canManage": true
+      }
+    }
+  },
+  "responses": [
+    {
+      "status": 409,
+      "url": "https://138-201-62-161.nip.io:8444/api/topics/3305bc3a42889979c79fa39f4000dd8c"
+    },
+    {
+      "status": 409,
+      "url": "https://138-201-62-161.nip.io:8444/api/topics/3305bc3a42889979c79fa39f4000dd8c"
+    }
+  ]
+}
