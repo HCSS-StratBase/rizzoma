@@ -1026,12 +1026,13 @@
   background-color: transparent !important;
 }
 
-.blip-container.active .blip-text {
+.blip-container.active > .blip-content > .blip-view-mode .blip-text {
   background-color: rgba(87, 170, 217, 0.05);
 }
 
-/* Ensure menu appears when blip is active */
-.blip-container.active .blip-menu-container {
+/* Ensure only the active blip's own direct menu appears. Do not cascade this
+ * through expanded child blips; original Rizzoma shows one active toolbar. */
+.blip-container.active > .blip-menu-container {
   opacity: 1;
   transform: translateY(0);
 }

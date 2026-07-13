@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { BlipMenu } from './BlipMenu';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
@@ -75,6 +75,7 @@ export interface BlipData {
 }
 
 let globalActiveBlipId: string | null = null;
+const ACTIVE_BLIP_CLAIM_EVENT = 'rizzoma:active-blip-claim' as const;
 
 export function getGlobalActiveBlipId(): string | null {
   return globalActiveBlipId;
@@ -352,9 +353,10 @@ export function RizzomaBlip({
     window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing } }));
   }, [isEditing]);
 
-  // BLB: Toolbar visibility — inline children start inactive (no toolbar on [+] expand),
-  // regular blips that are force-expanded start active. Toolbar appears on click into content.
-  const [isActive, setIsActive] = useState(forceExpanded && !isInlineChild);
+  // BLB: toolbar visibility follows original Rizzoma: exactly one clicked blip
+  // is active. Expanding a thread must NOT make every visible ancestor/child
+  // show its own Edit/Collapse/Expand/link/gear menu.
+  const [isActive, setIsActive] = useState(false);
 
   // Dispatch blip-active-editable event so RightToolsPanel shows insert buttons
   // even before entering edit mode (enables auto-enter-edit on insert click)
@@ -366,9 +368,20 @@ export function RizzomaBlip({
       globalActiveBlipId = null;
     }
     window.dispatchEvent(new CustomEvent(BLIP_ACTIVE_EVENT, {
-      detail: { active: isActive && blip.permissions.canEdit },
+      detail: { active: isActive && blip.permissions.canEdit, blipId: blip.id },
     }));
   }, [isActive, blip.id, blip.permissions.canEdit]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const handleActiveClaim = (event: Event) => {
+      const targetId = (event as CustomEvent<{ blipId?: string }>).detail?.blipId;
+      if (!targetId) return;
+      setIsActive(targetId === blip.id);
+    };
+    window.addEventListener(ACTIVE_BLIP_CLAIM_EVENT, handleActiveClaim);
+    return () => window.removeEventListener(ACTIVE_BLIP_CLAIM_EVENT, handleActiveClaim);
+  }, [blip.id]);
 
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
@@ -1430,9 +1443,17 @@ export function RizzomaBlip({
     };
   }, [blip.id, isPerfMode]);
 
-  // Handle click to make blip active (show menu)
-  const handleBlipClick = () => {
-    setIsActive(true);
+  // Handle click to make exactly this blip active (show menu).
+  // Stop propagation so clicking a nested blip does not activate every ancestor.
+  const handleBlipClick = (event: ReactMouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    globalActiveBlipId = blip.id;
+    window.dispatchEvent(new CustomEvent(ACTIVE_BLIP_CLAIM_EVENT, {
+      detail: { blipId: blip.id },
+    }));
+    window.dispatchEvent(new CustomEvent(BLIP_ACTIVE_EVENT, {
+      detail: { active: blip.permissions.canEdit, blipId: blip.id },
+    }));
     if (!blip.isRead) {
       onBlipRead?.(blip.id);
     }
@@ -2062,9 +2083,11 @@ export function RizzomaBlip({
       // On initial [+] expand, toolbar stays hidden until user clicks into content.
       if (isEditing) setIsActive(true);
     } else {
-      setIsActive(effectiveExpanded || isEditing);
+      // Original Rizzoma does not expose every expanded blip's chrome. Only
+      // explicit user activation or edit mode should show the per-blip menu.
+      if (isEditing) setIsActive(true);
     }
-  }, [effectiveExpanded, isEditing, isInlineChild]);
+  }, [isEditing, isInlineChild]);
 
 
   return (
