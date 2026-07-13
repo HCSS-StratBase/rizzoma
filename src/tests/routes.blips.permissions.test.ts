@@ -401,6 +401,25 @@ describe('routes: topics permission checks', () => {
     }));
   });
 
+  it('reports topic document revision races as 409 conflicts', async () => {
+    couch.getDoc.mockResolvedValue({
+      _id: 't1', _rev: '1-x', type: 'topic', authorId: 'author',
+      title: 'Root title', content: '<h1>Root title</h1><ul><li><p>old</p></li></ul>',
+      shareLevel: 'private', createdAt: 1, updatedAt: 1,
+    });
+    couch.updateDoc.mockRejectedValue(new Error('409 conflict'));
+
+    const res = await invokeRoute(topicsRouter, 'patch', '/:id', {
+      params: { id: 't1' },
+      body: { title: 'Root title', content: '<h1>Root title</h1><ul><li><p>new</p></li></ul>' },
+      session: { userId: 'author', csrfToken: 'tok' },
+      headers: { 'x-csrf-token': 'tok' },
+    });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.body).toMatchObject({ error: 'topic_revision_conflict' });
+  });
+
   it('denies topic deletion for non-author', async () => {
     couch.getDoc.mockResolvedValue({
       _id: 't1', _rev: '1-x', type: 'topic', authorId: 'owner',

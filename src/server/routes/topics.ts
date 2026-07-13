@@ -108,6 +108,14 @@ function respondTopicLookupFailure(error: unknown, res: any, requestId?: string)
   return false;
 }
 
+function isCouchRevisionConflict(error: unknown): boolean {
+  const err = error as { status?: unknown; statusCode?: unknown; message?: unknown; error?: unknown; reason?: unknown };
+  const status = Number(err?.statusCode ?? err?.status);
+  if (status === 409) return true;
+  const text = `${String(err?.message || '')} ${String(err?.error || '')} ${String(err?.reason || '')}`.toLowerCase();
+  return /\b409\b/.test(text) && text.includes('conflict');
+}
+
 type TopicTombstone = Omit<Topic, 'type'> & {
   type: 'topic_tombstone';
   _id: string;
@@ -744,6 +752,10 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
     if (e?.issues) { res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id }); return; }
     if (CONTENT_REFERENCE_ERRORS.has(String(e?.message || ''))) {
       res.status(400).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
+    if (isCouchRevisionConflict(e)) {
+      res.status(409).json({ error: 'topic_revision_conflict', requestId: (req as any)?.id });
       return;
     }
     if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
