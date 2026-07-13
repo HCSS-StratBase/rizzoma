@@ -25,7 +25,9 @@ const baseUrl = process.env.RZ_BASE || 'https://dev.138-201-62-161.nip.io';
 const topicId = process.env.RZ_TOPIC || '1a94345b983b3a1c78f2a2da1a02a5aa'; // Try topic with depth-10 spine
 const ownerEmail = process.env.RZ_EMAIL || 'try-owner+try-1777937672763@example.com';
 const ownerPassword = process.env.RZ_PASS || 'Try!Owner-try-1777937672763';
-const outDir = path.join('/mnt/c/Rizzoma/screenshots', '260505-rizzoma-sanity');
+const outDir = process.env.RZ_OUT_DIR
+  ? path.resolve(process.env.RZ_OUT_DIR)
+  : path.join('/mnt/c/Rizzoma/screenshots', '260505-rizzoma-sanity');
 
 const log = m => console.log(`[rizzoma-sanity] ${m}`);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
