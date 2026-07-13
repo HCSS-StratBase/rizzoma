@@ -46,6 +46,7 @@ import {
 } from './editor/blbEditorInvariant';
 import { isCanonicalBlbDocument } from './editor/extensions/BlipKeyboardShortcuts';
 import { readCreatedBlip } from '../lib/blipCreateResponse';
+import { nextInlineChildHandoffAction } from '../lib/inlineChildHandoff';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -1081,21 +1082,23 @@ function RizzomaTopicDetailState({
             // Robust edit-entry (2026-07-09): under the single-active model the
             // child's claim closes the TOPIC editor, which unmounts the child's
             // first mount (it lived inside the editor's BlipThreadNode portal).
-            // Keep re-driving until the child's editor is actually editable:
-            // re-EXPAND only if its container left the DOM (toggle is a toggle —
-            // re-dispatching while mounted would collapse it), then re-enter edit.
+            // Keep re-driving until the child's editor is actually editable.
+            // Claiming the child closes the topic editor, which temporarily
+            // removes the portal container. The topic-root RizzomaBlip itself
+            // remains mounted and retains its expanded-child state, so a second
+            // toggle while the portal is absent would COLLAPSE the child and
+            // make this retry loop permanently self-defeating. Wait for the
+            // view-mode portal to remount; only re-dispatch enter-edit.
             const tryEnterEdit = (attempt: number) => {
               const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
               const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
-              if (editable) return;
-              if (!container) {
-                window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
-                  detail: { threadId: newBlipId, parentId: id }
+              const action = nextInlineChildHandoffAction(Boolean(container), Boolean(editable));
+              if (action === 'done') return;
+              if (action === 'enter-edit') {
+                window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
+                  detail: { blipId: newBlipId }
                 }));
               }
-              window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
-                detail: { blipId: newBlipId }
-              }));
               if (attempt < 8) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 400);
             };
             requestAnimationFrame(() => requestAnimationFrame(() => tryEnterEdit(0)));

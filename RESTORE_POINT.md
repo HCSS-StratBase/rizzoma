@@ -5,7 +5,7 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
-- (2026-07-13 BLB revision-race follow-up) The real public
+- (2026-07-13 BLB inline-child handoff follow-up) The real public
   [reality-check topic](https://138-201-62-161.nip.io/#/topic/3305bc3a42889979c79fa39f400088c7?layout=rizzoma)
   converted a content-gated 18-node/depth-1 spec into **18 top-level P / 0 UL /
   0 LI**, and reload preserved the failure with zero browser errors. Inspected
@@ -31,8 +31,14 @@
   green at **112 files / 684 passed / 3 skipped / 0 failed**; typecheck and
   branch-context lint pass; full ESLint reports **0 errors / 8,954 baseline
   warnings**; and the production build transforms **3,318 modules**. The
-  follow-up is not merged or deployed; public production still runs the broken
-  PR #72 tree. Remaining
+  revision-race follow-up merged through PR #74 as exact `d2f200c8` and passed
+  all seven checks. Private green proved the topic bullets and canonical child
+  persist, but its automatic child handoff failed: closing the topic editor
+  temporarily removed the portal, and the retry loop toggled the still-expanded
+  child again, collapsing it. Branch `fix/blb-inline-child-handoff` now waits
+  through the absent-portal phase instead of toggling. Local gates pass at **113
+  files / 686 passed / 3 skipped / 0 failed** plus **33/33** focused. Public
+  blue is stopped for writer isolation; nginx has not been cut over. Remaining
   gates are private-green two-client/reload/restart and responsive visual
   acceptance, followed by exact public cutover and repair of the reproduction
   topic above.

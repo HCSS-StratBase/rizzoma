@@ -165,3 +165,23 @@
   deployment, two-client/reload/restart/responsive real-control acceptance, the
   zero-overlap public cutover, and explicit repair of the measured public
   failure topic remain mandatory.
+
+## PR #74 private-green handoff rejection
+
+- PR [#74](https://github.com/HCSS-StratBase/rizzoma/pull/74) passed all seven
+  GitHub checks and squash-merged as exact
+  `d2f200c8a35d9e9587abe4f41b0fb05b69e011f1`.
+- The exact tree deployed healthy to private green. Blue was gracefully stopped
+  after a 40-second maintenance drain; zero old-lane connections and no
+  snapshot/flush/graceful-shutdown errors were measured. Nginx was not changed.
+- Real controls created a topic whose four labels remained proper bullets. Root
+  Ctrl+Enter durably created a canonical `<ul><li>` child and persisted the
+  topic's `[+]` marker, but the child never became editable within 30 seconds.
+- Fresh reload proved the stored topic and child were intact. The measured UI
+  cause was a self-canceling retry: claiming the child closes the topic editor,
+  temporarily removing the portal; the retry interpreted “container absent” as
+  “expand again” and toggled the retained expanded state to collapsed.
+- Branch `fix/blb-inline-child-handoff` replaces that toggle with an explicit
+  three-state decision: missing portal = wait, mounted child = enter edit,
+  editable child = done. Focused regression is **33/33**; full Vitest is **113
+  files / 686 passed / 3 skipped / 0 failed**.
