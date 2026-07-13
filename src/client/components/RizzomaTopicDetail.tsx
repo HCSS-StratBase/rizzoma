@@ -1096,13 +1096,24 @@ function RizzomaTopicDetailState({
                 window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
                   detail: { threadId: newBlipId, parentId: id }
                 }));
+                // The state event can race the topic-root RizzomaBlip's first
+                // listener/effect commit. Once the durable marker is present,
+                // fall back to the exact user path (marker click) to force the
+                // inline thread open instead of silently timing out with a
+                // saved but invisible child.
+                const marker = document.querySelector<HTMLElement>(
+                  `[data-blip-thread="${CSS.escape(newBlipId)}"]`
+                );
+                if (marker && !container && marker.textContent !== '−') {
+                  marker.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                }
               }
               if (action === 'enter-edit') {
                 window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
                   detail: { blipId: newBlipId }
                 }));
               }
-              if (attempt < 8) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 400);
+              if (attempt < 60) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 400);
             };
             requestAnimationFrame(() => requestAnimationFrame(() => tryEnterEdit(0)));
           } else {
