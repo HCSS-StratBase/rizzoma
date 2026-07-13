@@ -1000,6 +1000,15 @@ function RizzomaTopicDetailState({
             // positioning model (renderer.coffee:107-113).
             if (editor && canMutateTopicEditorNow()) {
               (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
+              const nextTopicContent = editor.getHTML();
+              if (topicSaveTimeoutRef.current) {
+                clearTimeout(topicSaveTimeoutRef.current);
+                topicSaveTimeoutRef.current = null;
+              }
+              setTopicContent(nextTopicContent);
+              await autoSaveTopicContentRef.current(nextTopicContent);
+              setIsEditingTopic(false);
+              editor.setEditable(false);
             } else {
               // The durable child already records its anchor. Preserve it and
               // let the authoritative reload attach it after collaboration
