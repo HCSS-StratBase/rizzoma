@@ -1,13 +1,13 @@
 # VPS Deployment — Rizzoma on 138.201.62.161
 
-**Last updated**: 2026-04-24 23:48 CEST (cursor-based BLB inline comments deployed and verified on public Pixel Chrome)
+**Last updated**: 2026-07-13 15:25 CEST (dev BLB collapsed-row proof live on `feature/native-fractal-port`)
 
 ## Server details
 
 | Field | Value |
 |---|---|
 | **IP** | `138.201.62.161` |
-| **Dev port** | `8200` (UI; `rizzoma-app` dev target → container `:3000`) |
+| **Dev port** | `3000` (Vite UI) + `8000` (API) for active `/data/large-projects/stephan/rizzoma_260612`; nginx dev HTTPS proxies to `127.0.0.1:3000` |
 | **Prod port** | `8201` (UI; `rizzoma-app-prod` production target → container `:8000`) — green since 2026-04-22 |
 | **URL (HTTPS)** | `https://138-201-62-161.nip.io/` — Let's Encrypt cert + nginx proxy → `localhost:8201` (`rizzoma-app-prod`, cut over 2026-04-23 23:24 CEST) |
 | **URL (HTTP, legacy)** | `http://138.201.62.161:8200/` (dev, direct Docker port-mapped) |
@@ -20,6 +20,25 @@
 | **Repo** | `HCSS-StratBase/rizzoma` on GitHub |
 | **Current documented source** | `feature/rizzoma-core-features`, fast-forwarded to the latest docs/evidence checkpoint after the verified app-code deploy |
 | **Last verified VPS code baseline** | Running prod image built from app-code commit `69d6a8a9`; later VPS source checkouts are docs/evidence-only updates and do not require rebuild; public HTTPS targets prod `:8201`; prior dirty VPS tree preserved as stash `pre-cursor-inline-deploy-20260424-234017` |
+
+## Dev BLB proof repair (2026-07-13)
+
+The active dev checkout for `feature/native-fractal-port` is `/data/large-projects/stephan/rizzoma_260612`, currently synced to `75d888c7`.
+
+The enabled nginx dev vhost (`/etc/nginx/sites-enabled/rizzoma-dev.conf`) had drifted to a dead upstream `127.0.0.1:8101`, causing `https://dev.138-201-62-161.nip.io` to return 502 even though the dev Vite/server pair was healthy on `3000/8000`. It was repaired to:
+
+```nginx
+proxy_pass http://127.0.0.1:3000;
+```
+
+Backup: `/etc/nginx/sites-enabled/rizzoma-dev.conf.bak-20260713-blb-dev-proxy`.
+
+Current verification:
+- `https://dev.138-201-62-161.nip.io/` returns 200.
+- `https://dev.138-201-62-161.nip.io/api/health` returns 200.
+- Clickable BLB proof: `https://dev.138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a005c3a`.
+- Evidence folder: `screenshots/260713-152256-dev-https-blb-fractal-proof-clean/`.
+- Scope boundary: this is a dev proof, not a public production cutover.
 
 ## What's running (as of 2026-04-24)
 

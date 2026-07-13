@@ -1,6 +1,17 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-05-12 (Coverage lift to 97% · sweep 45/45 stable · CouchDB participants index · Hryhorii cherry-pick)
+Last Updated: 2026-07-13 (BLB collapsed-row affordance fixed · clickable dev proof · unread proxy bug fixed)
+
+Current State (feature/native-fractal-port @ 2026-07-13)
+
+### Current state — 2026-07-13, branch `feature/native-fractal-port`
+
+- **BLB creation/read surface is no longer terminal-looking on dev**: collapsed root, nested, and terminal BLB rows now render a bullet plus `[+]` affordance instead of bare text, and collapsed-row clicks expand without bubbling into the wrong parent. Code: `75d888c7` on `feature/native-fractal-port`.
+- **Clickable proof**: [BLB proof 20260713T132301](https://dev.138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a005c3a). Artifacts: `screenshots/260713-152256-dev-https-blb-fractal-proof-clean/` (`01` root/collapsed, `02` root expanded, `03` nested expanded, `04` reload persistence, plus `result.json`).
+- **Unread route 500s fixed**: `/api/waves/:id/unread`, `/next`, and `/prev` no longer call the app through `fetch(req.protocol + req.headers.host)`, which broke behind nginx; they compute blip order directly from CouchDB.
+- **Dev VPS restored**: active checkout `/data/large-projects/stephan/rizzoma_260612` is synced to `75d888c7`; `https://dev.138-201-62-161.nip.io` is live again after repairing the enabled nginx dev vhost from dead `127.0.0.1:8101` to live `127.0.0.1:3000`.
+- **Verification**: `npm run build` passed; targeted route tests passed (11/11); full `npm run test` passed (55 files, 245 passed, 3 skipped); Playwright proof passed against the clickable dev URL. The only console error in the clean proof is the expected initial unauthenticated `/api/auth/me` 401 before the proof user registers.
+- **Boundary**: this is verified on the dev VPS, not production cutover. Broader visual sweep, production deployment, and iPhone Safari remain separate gates.
 
 ### Current state — what shipped today (2026-05-12, branch `feature/native-fractal-port`)
 
@@ -48,7 +59,7 @@ VPS state: `nginx :443` for `138-201-62-161.nip.io` → `:8201` (prod), for `dev
 
 Branch context guardrails:
 - Active branch: `feature/rizzoma-core-features`. Always include branch name + date when summarizing status, and refresh branch-specific bullets before citing them.
-- The "Current State" section below reflects `feature/rizzoma-core-features` as of 2026-04-25; revalidate after further changes.
+- The historical state section below reflects `feature/rizzoma-core-features` as of 2026-04-25; revalidate before relying on it.
 
 ### Drift warnings (actively curating)
 - Some onboarding/status docs (`README*.md`, `README_MODERNIZATION.md`, `MODERNIZATION_STRATEGY.md`, `PARALLEL_DEVELOPMENT_PLAN.md`) still talk about demo-mode shortcuts, “all core features green,” or aggressive auto-merge flows that predate the unread/perf backlog. Treat them as historical until we rewrite them with the current perf harness + CI gating expectations.
@@ -70,7 +81,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (feature/rizzoma-core-features @ 2026-04-25)
+Historical State (feature/rizzoma-core-features @ 2026-04-25)
 - FEAT_ALL required: start both server (:8000) and Vite (:3000) with `FEAT_ALL=1` plus `SESSION_STORE=memory REDIS_URL=memory://` for local smokes; CouchDB/Redis via Docker.
 - Tests last run (2026-04-24): public-prod visual feature sweep passed via `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_SWEEP_STAMP=260424-025320 npm run visual:sweep`, with artifacts in `screenshots/260424-025320-feature-sweep/`: 42 primary screenshots, manifest parsing 196 documented rows / 161 screenshot-valid rows / 69 dynamic candidates, and no residuals. `RIZZOMA_SWEEP_DIR=screenshots/260424-025320-feature-sweep npm run visual:coverage` passed and wrote `coverage.md`/`coverage.json` with all 161 screenshot-valid rows classified: 101 static screenshot-covered, 2 dynamic screenshot-covered, 58 non-screenshot/test-artifact, 0 screenshot gaps, 0 needs-review. `BUILD_QUALITY_VERDICT.md` now marks 161 green / 0 orange / 0 red after Redis 5 session storage, Twitter/X OAuth2 PKCE, mobile/PWA/offline runtime tests, and physical Pixel 9 Pro XL / Chrome evidence in `screenshots/260424-2319-real-device-pixel9proxl-local/`. The phone pass exposed and then fixed a mobile blip-toolbar overlap; final accepted evidence is `015-cdp-android-toolbar-compact-final.png` with measured `overlaps: false`. Public-prod full-render perf baseline also passed at 100 seeded blips (`RIZZOMA_PERF_RENDER=full`, artifacts in `screenshots/260424-0010-prod-perf-baseline/`): landing-labels stage 1193.7ms, expanded-root stage 524.5ms, FCP 740ms, memory 33-36MB, labels 100/100. `PERF_SNAPSHOT_DIR=screenshots/260424-0010-prod-perf-baseline PERF_BUDGET_EXPECTED_BLIPS=100 PERF_BUDGET_MIN_RATIO=1 node scripts/perf-budget.mjs` passed on stage-local budgets. Optional absolute-TTF diagnostic still flags expanded-root at 3522.9ms vs 3000ms. `RIZZOMA_BASE_URL=https://138-201-62-161.nip.io RIZZOMA_E2E_BROWSERS=chromium RIZZOMA_SNAPSHOT_DIR=screenshots/260424-0010-prod-toolbar-scoped npm run test:toolbar-inline` passed. Latest local verification before the phone fix: `npm run typecheck` and full `npm run test` passed (48 files, 174 passed, 3 skipped, 0 failures). Latest verification after the phone fix: `npm run typecheck`, `npm run lint:branch-context`, `git diff --check`, and `npm run test -- --run src/tests/client.BlipMenu.test.tsx src/tests/client.mobilePwa.test.tsx` passed (2 files, 26 tests). Full `npm run test` was attempted twice after the phone fix but was killed with exit `-1` after many suites passed and without a final assertion summary; rerun in CI or a clean shell before using it as fresh full-suite proof.
 - Perf tooling: `perf-harness.mjs` now supports `RIZZOMA_PERF_RENDER=lite|full` and records `renderProfile`/`perfMode` in metrics. `scripts/perf-budget.mjs` supports `PERF_SNAPSHOT_DIR`, checks stage-local duration by default, and only checks absolute page TTF when `PERF_BUDGET_CHECK_TTF=1`.
