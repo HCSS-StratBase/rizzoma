@@ -977,11 +977,17 @@ export function RizzomaBlip({
               window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
                 detail: { threadId: newBlipId, parentId: blip.id },
               }));
+              const marker = document.querySelector<HTMLElement>(
+                `[data-blip-thread="${CSS.escape(newBlipId)}"]`
+              );
+              if (marker && marker.textContent !== '−') {
+                marker.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+              }
             }
             window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
               detail: { blipId: newBlipId },
             }));
-            if (attempt < 6) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 500);
+            if (attempt < 60) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 400);
           };
           requestAnimationFrame(() => tryEnterEdit(0));
         }
