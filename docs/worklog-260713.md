@@ -185,3 +185,25 @@
   three-state decision: missing portal = wait, mounted child = enter edit,
   editable child = done. Focused regression is **33/33**; full Vitest is **113
   files / 686 passed / 3 skipped / 0 failed**.
+
+## PR #75 private-green expansion-state rejection
+
+- PR [#75](https://github.com/HCSS-StratBase/rizzoma/pull/75) passed all seven
+  checks and merged as exact `cb209dbd29c2c60ee17244328bee764f35aea6cb`.
+- Exact PR #75 deployed healthy to private green `:8102`; blue was stopped and
+  nginx was not changed.
+- Real controls again created a topic whose four labels were proper bullets,
+  and Ctrl+Enter durably created a canonical empty child plus a persisted `[+]`
+  marker. Evidence: `screenshots/260713-1050-private-green-blb-acceptance/`.
+- The child still never became editable. Inspection proved the stored topic and
+  child were correct, but the DOM rendered only the root blip after reload:
+  `screenshots/260713-1052-private-green-inspect-failed-handoff/`.
+- Root cause: the first fix stopped the second toggle, but expansion remained
+  local component state. Closing the topic editor remounted the root blip and
+  lost that local state, so the child container disappeared. Branch
+  `fix/blb-ensure-inline-expand` adds an idempotent
+  `rizzoma:ensure-inline-blip-expanded` event and uses it for programmatic
+  creation/retry while preserving toggle semantics for user marker clicks.
+- Local gates after the patch: touched-file ESLint, branch-context lint,
+  **113 test files / 686 passed / 3 skipped / 0 failed**, and a
+  **3,319-module** production build.

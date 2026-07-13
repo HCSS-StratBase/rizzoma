@@ -960,7 +960,7 @@ export function RizzomaBlip({
             window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
             await new Promise((r) => setTimeout(r, 250));
           }
-          window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+          window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
             detail: { threadId: newBlipId, parentId: blip.id },
           }));
           // Robust edit-entry (2026-07-09): a single RAF dispatch races BOTH
@@ -973,6 +973,11 @@ export function RizzomaBlip({
             const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
             const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
             if (editable) return;
+            if (!container) {
+              window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
+                detail: { threadId: newBlipId, parentId: blip.id },
+              }));
+            }
             window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
               detail: { blipId: newBlipId },
             }));
@@ -1012,6 +1017,21 @@ export function RizzomaBlip({
       return next;
     });
     // Lazy-mount on first expand; never remove from the mounted set.
+    setEverMountedInline(prev => {
+      if (prev.has(childId)) return prev;
+      const next = new Set(prev);
+      next.add(childId);
+      return next;
+    });
+  }, []);
+
+  const ensureInlineChildExpanded = useCallback((childId: string) => {
+    setLocalExpandedInline(prev => {
+      if (prev.has(childId)) return prev;
+      const next = new Set(prev);
+      next.add(childId);
+      return next;
+    });
     setEverMountedInline(prev => {
       if (prev.has(childId)) return prev;
       const next = new Set(prev);
@@ -1096,6 +1116,23 @@ export function RizzomaBlip({
     window.addEventListener('rizzoma:toggle-inline-blip', handleToggleInline);
     return () => window.removeEventListener('rizzoma:toggle-inline-blip', handleToggleInline);
   }, [blip.id, inlineChildren, toggleInlineChild]);
+
+  // Programmatic creation must be idempotent: retries/remounts should ensure
+  // the child is open, never invert its state. User marker clicks still use
+  // the toggle listener above.
+  useEffect(() => {
+    const handleEnsureInline = (e: Event) => {
+      const { threadId, parentId } = (e as CustomEvent).detail || {};
+      if (!threadId) return;
+      const claimByParent = parentId && parentId === blip.id;
+      const claimByMatch = !parentId && inlineChildren.some(c => c.id === threadId);
+      if (claimByParent || claimByMatch) {
+        ensureInlineChildExpanded(threadId);
+      }
+    };
+    window.addEventListener('rizzoma:ensure-inline-blip-expanded', handleEnsureInline);
+    return () => window.removeEventListener('rizzoma:ensure-inline-blip-expanded', handleEnsureInline);
+  }, [blip.id, ensureInlineChildExpanded, inlineChildren]);
 
   // Listen for activation-only events (from Follow-the-Green) — activates blip without triggering mark-read
   useEffect(() => {

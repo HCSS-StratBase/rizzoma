@@ -28,11 +28,14 @@
   checks. Private green proved four topic bullets plus the canonical child and
   marker were durable, but failed the automatic edit handoff: the retry loop
   collapsed the child when its portal temporarily disappeared.
-- Follow-up branch `fix/blb-inline-child-handoff` removes that second toggle and
-  is green at full **113 test files / 686 passed / 3 skipped / 0 failed**,
-  **33/33** focused, typecheck, branch-context lint,
-  full-source ESLint with **0 errors / 8,954 baseline warnings**, and a
-  **3,318-module** production build. An independent final audit returned **GO**.
+- PR #75 merged the first handoff repair as exact `cb209dbd` with all seven
+  checks green, but private green still failed: topic and child storage were
+  canonical, while the child container never rendered because local expansion
+  state was lost on topic-editor remount.
+- Follow-up branch `fix/blb-ensure-inline-expand` replaces programmatic
+  creation toggles with idempotent ensure-expanded retries. It is green at full
+  **113 test files / 686 passed / 3 skipped / 0 failed**, touched-file ESLint,
+  branch-context lint, and a **3,319-module** production build.
 - Coverage now includes the pre-Yjs transaction gate, unchanged Yjs state after
   rejected flattening commands, server-side CRDT rejection/no relay, mixed-UL
   rejection, toolbar/keyboard escape paths, duplicate normalization, bounded
@@ -44,8 +47,8 @@
   creation, and fail-closed preservation after every rejected collaboration
   update.
 - These are code gates, not private/public real-control acceptance. The
-  follow-up is not deployed;
-  public production remains the broken PR #72 tree. Remaining acceptance is
+  follow-up is not deployed; public production remains the broken PR #72 tree
+  when blue is active. Remaining acceptance is
   private-green two-client/reload/restart plus 1280/1366/1440/1600/mobile
   visual inspection, then exact public cutover and repair of the measured
   failure topic.

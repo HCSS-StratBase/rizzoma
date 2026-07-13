@@ -1076,7 +1076,7 @@ function RizzomaTopicDetailState({
               // load() rarely fails; if it does the optimistic state above
               // still lets the toggle render.
             }
-            window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+            window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
               detail: { threadId: newBlipId, parentId: id }
             }));
             // Robust edit-entry (2026-07-09): under the single-active model the
@@ -1084,16 +1084,19 @@ function RizzomaTopicDetailState({
             // first mount (it lived inside the editor's BlipThreadNode portal).
             // Keep re-driving until the child's editor is actually editable.
             // Claiming the child closes the topic editor, which temporarily
-            // removes the portal container. The topic-root RizzomaBlip itself
-            // remains mounted and retains its expanded-child state, so a second
-            // toggle while the portal is absent would COLLAPSE the child and
-            // make this retry loop permanently self-defeating. Wait for the
-            // view-mode portal to remount; only re-dispatch enter-edit.
+            // removes the portal container. The topic-root RizzomaBlip may also
+            // remount and lose its local expanded-child state, so retries must
+            // re-assert expansion idempotently. They must never toggle.
             const tryEnterEdit = (attempt: number) => {
               const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
               const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
               const action = nextInlineChildHandoffAction(Boolean(container), Boolean(editable));
               if (action === 'done') return;
+              if (action === 'ensure-expanded') {
+                window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
+                  detail: { threadId: newBlipId, parentId: id }
+                }));
+              }
               if (action === 'enter-edit') {
                 window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
                   detail: { blipId: newBlipId }
