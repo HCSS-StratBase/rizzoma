@@ -1,6 +1,6 @@
 ## Handoff Summary — Rizzoma Modernization
 
-Last Updated: 2026-07-13 (`fix/blb-always-bulleted`; deployed base
+Last Updated: 2026-07-13 (`fix/blb-topic-revision-race`; deployed base
 `5e1bc271e81613768e811cfc306c0c691e71d77b`). PR
 [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) merged the read-marker
 repair and that exact tree is public on managed blue `:8101`. Public phase 2
@@ -9,21 +9,33 @@ product invariant as broken: an intended 18-node bulleted structure persisted
 as **18 P / 0 UL / 0 LI**. Public production is therefore deployed but not
 accepted.
 
-Draft PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) is the audited
-always-bulleted repair. It closes editor/Yjs/API creation and durability paths,
-including undo-history split-brain, topic-H1 child creation, reserved-root
-poisoning, existing-flat seed projection, stale-prop replay, malformed HTML,
-and task-list roots. Full local gates pass at **112 files / 678 passed / 3
-skipped / 0 failed**, typecheck, branch-context lint, full ESLint at **0 errors
-/ 8,954 baseline warnings**, and a **3,318-module** build; an independent audit
-returned **GO for merge-candidate testing**.
+PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) merged the first
+always-bulleted repair as exact master `7581d036`. Every GitHub check passed,
+but private green acceptance correctly stopped release: four bullets initially
+rendered, then a blank pre-sync TipTap root merged with the authoritative Yjs
+snapshot. The resulting duplicate H1+UL history produced repeated 409s and,
+after restart, HTTP 400 `invalid_blb_structure`. Green was stopped and public
+blue was never changed.
+
+Branch `fix/blb-topic-revision-race` removes that second history: collaborative
+topic and child editors start without local content, the elected seeder imports
+one canonical document directly into the empty Y.XmlFragment, and every editor,
+toolbar, Ctrl+Enter, paste, upload, and async child-creation mutation stays
+frozen until the exact provider has authoritative sync plus server-granted edit
+permission. Disconnects and every rejected Yjs update revoke that capability;
+the local pending document is preserved for explicit recovery. Invalid durable
+snapshots likewise fail closed and remain preserved rather than being silently
+deleted. Final local gates pass at **112 files / 684 passed / 3 skipped / 0
+failed**, typecheck, touched-file ESLint with no errors, and a **3,318-module**
+production build. An independent final audit returned **GO**.
 
 **Deployment boundary:** public traffic still targets managed blue `:8101` at
-the broken PR #72 tree. Inactive green `:8102` is stopped. PR #73 is not merged
-or deployed. It must pass green CI and exact inactive-lane deployment, then
-private two-client/reload/restart and responsive visual acceptance before any
-public cutover. After cutover, repair and re-verify the exact public failure
-topic. Native rendering remains disabled; production uses the React/TipTap
+the broken PR #72 tree. Inactive green `:8102` is stopped. The follow-up needs
+final audit, PR/CI/merge, and exact green redeployment; private two-client,
+reload, restart, and responsive visual acceptance must pass before a
+zero-overlap cutover. The known public failure topic then needs an explicit
+verified generation migration and in-app repair; no snapshot may be silently
+discarded. Native rendering remains disabled; production uses the React/TipTap
 parity path.
 
 Last Updated: 2026-04-23 03:50am (`master` @ `20dbd289`+docs, **Google OAuth WORKS end-to-end** at [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) — Playwright sign-in lands as `sdspieg@gmail.com` "Stephan De Spiegeleire" with Google avatar. Tasks #140 + #143 both closed. Required two Hetzner Robot firewall passes: (1) opened port 80 for Let's Encrypt; (2) consolidated `apps` (8000-9999) → `apps-and-ephemeral` (8000-65535) to allow return traffic from MASQUERADE'd outbound — without that, server couldn't reach `oauth2.googleapis.com/token`. Diagnosed via tcpdump (SYN egressed, no SYN-ACK returned). Same fix unblocks SMTP / S3 / any container-outbound feature.)
@@ -57,11 +69,11 @@ Last Updated (prior): 2026-04-15 (FtG + collab hardening sweep — three indepen
 Last Updated (prior): 2026-03-31 (cross-session gadget preference lifecycle accepted on fresh client; runtime/store verification archived under screenshots/260331-*/)
 
 Branch context guardrails:
-- Active development branch: `fix/blb-always-bulleted` (2026-07-13), based on
-  deployed master `5e1bc271`; draft PR #73 remains private until green CI,
-  exact inactive-lane deployment, and two-client/reload/restart/responsive
-  real-control acceptance. Always include branch name + date when summarizing
-  status.
+- Active development branch: `fix/blb-topic-revision-race` (2026-07-13), based
+  on merged master `7581d036`; public remains exact `5e1bc271` on blue. The
+  follow-up remains private until final audit, green CI, exact inactive-lane
+  deployment, and two-client/reload/restart/responsive real-control acceptance.
+  Always include branch name + date when summarizing status.
 - The "Current State" section below is refreshed for the deployed parity release; older dated entries and “native release” labels are historical until the native renderer is write-capable and actually enabled.
 
 Branching mode (private repo):
@@ -95,7 +107,7 @@ PR Ops (CLI)
 - CLI‑only: `gh pr create|edit|merge`; resolve conflicts locally; squash‑merge and auto‑delete branch.
 - After merges, refresh the GDrive bundle (commands below).
 
-Current State (`fix/blb-always-bulleted` @ 2026-07-13; PR #72 exact merge `5e1bc271` public on blue; PR #73 BLB repair candidate locally green)
+Current State (`fix/blb-topic-revision-race` @ 2026-07-13; PR #72 exact merge `5e1bc271` public on blue; PR #73 exact merge `7581d036` failed private green)
 - PR [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) passed all required
   checks and squash-merged as exact master `5e1bc271`. That exact immutable
   release is public on managed blue `:8101`; all **994** lockfile-required
@@ -116,21 +128,30 @@ Current State (`fix/blb-always-bulleted` @ 2026-07-13; PR #72 exact merge `5e1bc
   spec became **18 P / 0 UL / 0 LI** and remained flat after reload, with zero
   browser errors. The inspected evidence and full URL are in
   `screenshots/260713-0130-public-blb-creation-failure/`.
-- The local repair now centralizes topic/reply/inline BLB seeds, blocks invalid
+- PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) merged the first
+  repair as exact `7581d036`, but its private-green real-control gate failed:
+  four proper bullets appeared initially, then immediate Ctrl+Enter produced a
+  blank duplicate topic document and repeated 409s. After restart the server
+  correctly rejected the duplicate H1+UL history as `invalid_blb_structure`.
+  Green was stopped; public blue never changed. Failure evidence is under
+  `screenshots/260713-0258-private-green-blb-acceptance/`.
+- The follow-up repair now centralizes topic/reply/inline BLB seeds, blocks invalid
   local transactions before Yjs emission, rejects flat CRDT state before cache
   mutation/relay, guards toolbar/keyboard escape routes, normalizes API and
   duplicate writes, repairs legacy content, and fixes the root Ctrl+Enter
   response-envelope bug. The final audit also closed Yjs undo-history
   split-brain, topic-H1 child creation, reserved-root poisoning, durable
   projection for existing-flat seeds, stale-prop replay, malformed HTML, and
-  task-list-root bypasses. An independent audit returned **GO for
-  merge-candidate testing**.
-- Full local gates pass: **112 files / 678 passed / 3 skipped / 0 failed**,
+  task-list-root bypasses. It additionally prevents a blank local ProseMirror
+  history before server sync, gates all mutation surfaces on authoritative
+  provider edit readiness, rechecks after async child/upload work, freezes on
+  every rejected update, and preserves invalid snapshots plus pending local
+  state for explicit recovery. An independent final audit returned **GO**.
+- Full local gates pass: **112 files / 684 passed / 3 skipped / 0 failed**,
   typecheck, branch-context lint, full ESLint at **0 errors / 8,954 baseline
-  warnings**, and a **3,318-module** production build. Draft PR
-  [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) is not deployed;
-  public production still runs the broken PR #72 tree.
-- Next: publish the audited PR #73 head and require green CI, merge it, then
+  warnings**, and a **3,318-module** production build. Public production still
+  runs the broken PR #72 tree.
+- Next: publish this audited follow-up as a new PR and require green CI, merge it, then
   privately deploy its exact merge SHA to inactive green. Prove two-client
   collaboration plus topic/root-reply/nested-reply/Ctrl+Enter recursion across
   reload and managed restart, inspect 1280/1366/1440/1600/mobile PNGs, then

@@ -76,7 +76,7 @@
   * For every backend or frontend change, cross-check behavior and UI against the legacy sources in `original-rizzoma/` and `original-rizzoma-src/`, and against the current live UI references in `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/` (PNGs + MD notes). Keep the modernized implementation functionally and visually close to the legacy GUI while upgrading “under the hood.”
 
   ## Branch Context Guardrails
-  * Active development branch: `fix/blb-always-bulleted` (2026-07-13; based on deployed master `5e1bc271`). Public production runs exact PR #72 on managed blue `:8101`; PR #73 is the local durable BLB repair and remains private until green CI, exact inactive-lane deploy, and real-control acceptance. Always cite branch name + date when summarizing status.
+  * Active development branch: `fix/blb-topic-revision-race` (2026-07-13; based on merged PR #73 exact `7581d036`). Public production remains exact PR #72 `5e1bc271` on managed blue `:8101`; PR #73 failed private green on a pre-sync duplicate-root race and was never cut over. The follow-up remains private until green CI, exact inactive-lane deploy, and real-control acceptance. Always cite branch name + date when summarizing status.
   * Treat any "Current State" bullets in docs as historical snapshots unless explicitly refreshed for the active branch; update them before quoting.
   * Run `npm run lint:branch-context` after touching status docs; CI/local lint will fail if the branch name is missing from `docs/HANDOFF.md` Current State.
 
@@ -95,7 +95,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `/home/stephan/rizzoma-final-release` worktree on `fix/blb-always-bulleted`; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
+    - Continue in the isolated `/home/stephan/rizzoma-final-release` worktree on `fix/blb-topic-revision-race`; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -104,7 +104,7 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Publish the hardened PR #73 head and require every GitHub check; merge only after green, then deploy the exact merge SHA privately to inactive managed green.
+  1) Publish the audited follow-up PR and require every GitHub check; merge only after green, then deploy the exact merge SHA privately to inactive managed green.
   2) Prove fresh topic, root reply, nested reply, and both Ctrl+Enter paths are real UL/LI through browser controls; prove recursive `[+]` creation and reload persistence.
   3) Require green PR CI, merge, and deploy only the exact squash tree through the immutable zero-overlap lane process.
   4) Prove managed-restart persistence, inspect 1280/1366/1440/1600/mobile PNGs, and require clean browser/server journals.

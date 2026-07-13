@@ -40,6 +40,7 @@ import {
   currentTopicEditorTitle,
   needsBlbSeedProjection,
   normalizeBlbEditorDocument,
+  seedEmptyBlbYdoc,
   selectionIsInTopicHeading,
   setBlbEditorBaseline,
 } from './editor/blbEditorInvariant';
@@ -327,6 +328,8 @@ function RizzomaTopicDetailState({
 
   // Topic content editing state (BLB: topic is meta-blip, title is first line)
   const [isEditingTopic, setIsEditingTopic] = useState(false);
+  const isEditingTopicRef = useRef(isEditingTopic);
+  isEditingTopicRef.current = isEditingTopic;
   const [topicContent, setTopicContent] = useState('');
   const topicSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const topicProjectionActiveRef = useRef(true);
@@ -376,6 +379,32 @@ function RizzomaTopicDetailState({
     topicYjsGeneration,
   );
   const topicCollabActive = topicCollabEnabled && !!topicYdoc && !!topicCollabProvider;
+  const [syncedTopicCollabProvider, setSyncedTopicCollabProvider] = useState(
+    topicCollabProvider?.synced ? topicCollabProvider : null,
+  );
+  const topicCollabReady = !topicCollabActive
+    || Boolean(topicCollabProvider?.mutationReady && syncedTopicCollabProvider === topicCollabProvider);
+  const topicCollabActiveRef = useRef(topicCollabActive);
+  const topicCollabProviderRef = useRef(topicCollabProvider);
+  topicCollabActiveRef.current = topicCollabActive;
+  topicCollabProviderRef.current = topicCollabProvider;
+
+  useEffect(() => {
+    if (!topicCollabActive || !topicCollabProvider) {
+      setSyncedTopicCollabProvider(null);
+      return;
+    }
+    return topicCollabProvider.onSyncStateChange((synced) => {
+      setSyncedTopicCollabProvider(synced ? topicCollabProvider : null);
+    });
+  }, [topicCollabActive, topicCollabProvider]);
+
+  const canMutateTopicEditorNow = useCallback(() => {
+    const editor = topicEditorRef.current;
+    if (!isEditingTopicRef.current || !editor || (editor as any).isDestroyed) return false;
+    if (!topicCollabActiveRef.current) return true;
+    return Boolean(topicCollabProviderRef.current?.mutationReady);
+  }, []);
   const seedingTopicYdocRef = useRef(false);
   const acceptedEditorRoster = participants
     .filter((participant) => participant.status === 'accepted' || !participant.status)
@@ -404,13 +433,17 @@ function RizzomaTopicDetailState({
         participants: acceptedEditorRoster,
       }
     ),
-    content: '',
+    // Collaboration must begin from the server Y.Doc alone. Supplying even an
+    // empty local document here can be normalized before sync and then merged
+    // beside the authoritative snapshot as a second H1+UL root.
+    content: topicCollabActive ? undefined : '',
     editable: false,
     editorProps: defaultEditorProps,
     onUpdate: ({ editor }: { editor: Editor }) => {
       // Skip auto-save during Y.Doc seeding
       if (seedingTopicYdocRef.current) return;
       if (topicBlbNormalizationPendingRef.current) return;
+      if (topicCollabActive && !topicCollabProvider?.synced) return;
 
       const html = editor.getHTML();
       if (!isCanonicalBlbDocument(editor.state.doc, true)) {
@@ -468,9 +501,9 @@ function RizzomaTopicDetailState({
   useEffect(() => {
     if (typeof window === 'undefined') return;
     window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, {
-      detail: { isEditing: isEditingTopic, blipId: id },
+      detail: { isEditing: isEditingTopic && topicCollabReady, blipId: id },
     }));
-  }, [id, isEditingTopic]);
+  }, [id, isEditingTopic, topicCollabReady]);
 
   // Connectivity is folded into `isAuthed` by RizzomaLayout. If it drops
   // while this editor is active, freeze the surface without issuing a REST
@@ -488,10 +521,11 @@ function RizzomaTopicDetailState({
 
   // Handle insert events from RightToolsPanel when topic editor is active
   useEffect(() => {
-    if (!isEditingTopic || !topicEditor) return;
+    if (!isEditingTopic || !topicEditor || !topicCollabReady) return;
 
     // Helper: insert trigger char with space prefix if needed (suggestion plugins require allowedPrefixes=[' '])
     const insertTrigger = (char: string) => {
+      if (!canMutateTopicEditorNow()) return;
       topicEditor.commands['focus']();
       const { from } = topicEditor.state.selection;
       const $from = topicEditor.state.doc.resolve(from);
@@ -503,10 +537,12 @@ function RizzomaTopicDetailState({
     const handleInsertTask = () => insertTrigger('~');
     const handleInsertTag = () => insertTrigger('#');
     const handleInsertReply = () => {
+      if (!canMutateTopicEditorNow()) return;
       const { from } = topicEditor.state.selection;
       createInlineChildBlipRef.current?.(from);
     };
     const handleInsertGadget = (e: Event) => {
+      if (!canMutateTopicEditorNow()) return;
       const detail = (e as CustomEvent<GadgetInsertDetail>).detail;
       try {
         insertGadget(topicEditor as any, detail || null);
@@ -527,16 +563,18 @@ function RizzomaTopicDetailState({
       window.removeEventListener(INSERT_EVENTS.REPLY, handleInsertReply);
       window.removeEventListener(INSERT_EVENTS.GADGET, handleInsertGadget);
     };
-  }, [isEditingTopic, topicEditor]);
+  }, [canMutateTopicEditorNow, isEditingTopic, topicCollabReady, topicEditor]);
 
   // Sync editor content and editable state when entering edit mode.
   // With Collaboration, wait for server sync before seeding — only seed if Y.Doc is empty.
   useEffect(() => {
     if (topicEditor && isEditingTopic && topicContent && !hasSetInitialContentRef.current) {
       const setContentAndFocus = () => {
-        if ((topicEditor as any).isDestroyed) return;
+        if ((topicEditor as any).isDestroyed || !canMutateTopicEditorNow()) return;
         topicEditor.setEditable(true);
-        setTimeout(() => { topicEditor.commands['focus']('end'); }, 50);
+        setTimeout(() => {
+          if (canMutateTopicEditorNow()) topicEditor.commands['focus']('end');
+        }, 50);
       };
 
       if (topicCollabActive && topicYdoc && topicCollabProvider) {
@@ -558,8 +596,11 @@ function RizzomaTopicDetailState({
             ));
             const needsMigration = needsBlbSeedProjection(durableSeedContent, authoritativeSeed);
             seedingTopicYdocRef.current = true;
-            setBlbEditorBaseline(topicEditor, authoritativeSeed);
-            seedingTopicYdocRef.current = false;
+            try {
+              seedEmptyBlbYdoc(topicEditor, topicYdoc, authoritativeSeed);
+            } finally {
+              seedingTopicYdocRef.current = false;
+            }
             setTopicContent(authoritativeSeed);
             if (needsMigration) {
               if (topicSaveTimeoutRef.current) clearTimeout(topicSaveTimeoutRef.current);
@@ -584,7 +625,13 @@ function RizzomaTopicDetailState({
     } else if (topicEditor && !isEditingTopic) {
       topicEditor.setEditable(false);
     }
-  }, [topicEditor, isEditingTopic, topicContent, topic?.content, topicCollabActive, topicYdoc, topicCollabProvider]);
+  }, [canMutateTopicEditorNow, topicEditor, isEditingTopic, topicContent, topic?.content, topicCollabActive, topicYdoc, topicCollabProvider]);
+
+  useEffect(() => {
+    if (!topicEditor || (topicEditor as any).isDestroyed) return;
+    const editable = isEditingTopic && topicCollabReady;
+    topicEditor.setEditable(editable);
+  }, [isEditingTopic, topicCollabReady, topicEditor]);
 
   // Use refs to avoid dependency issues in callbacks
   const unreadStateRef = useRef(unreadState);
@@ -916,6 +963,7 @@ function RizzomaTopicDetailState({
   useEffect(() => {
     createInlineChildBlipRef.current = async (anchorPosition: number) => {
       const editor = topicEditorRef.current;
+      if (!canMutateTopicEditorNow()) return;
       if (editor && selectionIsInTopicHeading(editor)) {
         toast('Create a child from a bulleted label, not the topic title', 'error');
         return;
@@ -949,8 +997,15 @@ function RizzomaTopicDetailState({
             // selection from the Ctrl+Enter keypress, which is the correct
             // structural anchor — matches original Rizzoma's blip-thread
             // positioning model (renderer.coffee:107-113).
-            if (editor) {
+            if (editor && canMutateTopicEditorNow()) {
               (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
+            } else {
+              // The durable child already records its anchor. Preserve it and
+              // let the authoritative reload attach it after collaboration
+              // resynchronizes; never mutate the disconnected topic Y.Doc.
+              window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+              toast('Child created; reconnecting before attaching it.', 'info');
+              return;
             }
 
             // BLB: Extract blipPath and navigate to the new subblip
@@ -1056,7 +1111,7 @@ function RizzomaTopicDetailState({
         toast('Failed to create comment', 'error');
       }
     };
-  }, [isAuthed, topicCanRead, topicCanComment, topicCanEdit, id, load]);
+  }, [canMutateTopicEditorNow, isAuthed, topicCanRead, topicCanComment, topicCanEdit, id, load]);
 
   // Debounced load for socket/event-triggered reloads
   // These pass fromSocket=true so they respect the longer socket cooldown period
@@ -1480,14 +1535,14 @@ function RizzomaTopicDetailState({
     }
     // Final save if content changed
     const currentContent = topicEditor?.getHTML() || topicContent;
-    if (currentContent !== lastSavedContentRef.current) {
+    if (canMutateTopicEditorNow() && currentContent !== lastSavedContentRef.current) {
       void autoSaveTopicContent(currentContent);
     }
     setIsEditingTopic(false);
     if (topicEditor) {
       topicEditor.setEditable(false);
     }
-  }, [autoSaveTopicContent, topicCollabActive, topicContent, topicEditor, topicYdoc]);
+  }, [autoSaveTopicContent, canMutateTopicEditorNow, topicContent, topicEditor]);
 
   if (error) {
     return (
@@ -1605,7 +1660,7 @@ function RizzomaTopicDetailState({
   return (
     <ActiveBlipProvider>
     <EditSurfaceActiveBridge
-      editing={isEditingTopic}
+      editing={isEditingTopic && topicCollabReady}
       surfaceId={`topic-editor:${id}`}
       hostBlipId={id}
       onRelease={finishEditingTopic}
@@ -1775,7 +1830,7 @@ function RizzomaTopicDetailState({
             💬
           </button>
           {/* Insert inline comment button - only visible in edit mode */}
-          {isEditingTopic && (
+          {isEditingTopic && topicCollabReady && (
             <button
               className="topic-tb-btn insert-comment-btn"
               title="Insert inline comment at cursor (Ctrl+Enter)"
@@ -1784,7 +1839,7 @@ function RizzomaTopicDetailState({
                 console.log('[TopicDetail] topicEditor:', topicEditor);
                 console.log('[TopicDetail] createInlineChildBlipRef.current:', createInlineChildBlipRef.current);
                 // Get cursor position from the editor
-                if (topicEditor) {
+                if (topicEditor && canMutateTopicEditorNow()) {
                   const { from } = topicEditor.state.selection;
                   console.log('[TopicDetail] Cursor position:', from);
                   if (createInlineChildBlipRef.current) {

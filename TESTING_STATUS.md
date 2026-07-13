@@ -19,20 +19,27 @@
   at depth 1, while the saved and reloaded blip measured **18 P / 0 UL / 0 LI**.
   Zero browser errors isolate this as a structure-contract defect. Inspected
   artifacts: `screenshots/260713-0130-public-blb-creation-failure/`.
-- Local branch `fix/blb-always-bulleted` is green at full **112 test files /
-  678 passed / 3 skipped / 0 failed**, typecheck, branch-context lint,
+- PR #73 merged as exact `7581d036`, but private green correctly failed before
+  cutover: the first screenshot showed four bullets, while immediate Ctrl+Enter
+  merged a blank pre-sync TipTap root beside the authoritative Yjs document.
+  The topic then returned repeated 409s and post-restart
+  `invalid_blb_structure`. Green was stopped and public stayed on PR #72.
+- Follow-up branch `fix/blb-topic-revision-race` is green at full **112 test files /
+  684 passed / 3 skipped / 0 failed**, typecheck, branch-context lint,
   full-source ESLint with **0 errors / 8,954 baseline warnings**, and a
-  **3,318-module** production build. An independent final audit returned **GO
-  for merge-candidate testing**.
+  **3,318-module** production build. An independent final audit returned **GO**.
 - Coverage now includes the pre-Yjs transaction gate, unchanged Yjs state after
   rejected flattening commands, server-side CRDT rejection/no relay, mixed-UL
   rejection, toolbar/keyboard escape paths, duplicate normalization, bounded
   malformed-input handling, isolated Yjs undo history, the topic-H1 child
   guard, reserved-root poison rejection, durable projection of existing flat
   seeds, prevention of stale-prop replay, and canonicalization of malformed
-  HTML and task-list roots.
-- These are code gates, not private/public real-control acceptance. Draft PR
-  [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) is not deployed;
+  HTML and task-list roots, direct empty-Y.Doc seeding, authoritative sync/edit
+  readiness, mutation-time guards across toolbars/paste/uploads/async child
+  creation, and fail-closed preservation after every rejected collaboration
+  update.
+- These are code gates, not private/public real-control acceptance. The
+  follow-up is not deployed;
   public production remains the broken PR #72 tree. Remaining acceptance is
   private-green two-client/reload/restart plus 1280/1366/1440/1600/mobile
   visual inspection, then exact public cutover and repair of the measured

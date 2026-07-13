@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { Schema } from '@tiptap/pm/model';
-import { prosemirrorJSONToYDoc } from 'y-prosemirror';
+import { prosemirrorJSONToYDoc, yXmlFragmentToProsemirrorJSON } from 'y-prosemirror';
 
 type StoredDoc = Record<string, any> & { _id: string };
 
@@ -420,9 +420,26 @@ describe('Socket.IO session-backed authorization', () => {
       updatedAt: 10,
       yjsGeneration: 2,
     });
-    const sourceDoc = new Y.Doc();
     const expected = Array.from({ length: 256 }, (_, index) => `newer-${index}`).join('|');
-    sourceDoc.getText('default').insert(0, expected);
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'block+' },
+        paragraph: { content: 'inline*', group: 'block' },
+        bulletList: { content: 'listItem+', group: 'block' },
+        listItem: { content: 'paragraph block*' },
+        text: { group: 'inline' },
+      },
+    });
+    const sourceDoc = prosemirrorJSONToYDoc(schema, {
+      type: 'doc',
+      content: [{
+        type: 'bulletList',
+        content: [{
+          type: 'listItem',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: expected }] }],
+        }],
+      }],
+    }, 'default');
     const validUpdate = Y.encodeStateAsUpdate(sourceDoc);
     const truncatedUpdate = validUpdate.slice(0, -1);
     const partiallyApplied = new Y.Doc();
@@ -465,7 +482,8 @@ describe('Socket.IO session-backed authorization', () => {
       expect(retry.sync).toMatchObject({ ok: true, shouldSeed: false, yjsGeneration: 2 });
       const joinedDoc = new Y.Doc();
       Y.applyUpdate(joinedDoc, new Uint8Array(retry.sync.state));
-      expect(joinedDoc.getText('default').toString()).toBe(expected);
+      const joinedJson = yXmlFragmentToProsemirrorJSON(joinedDoc.getXmlFragment('default')) as any;
+      expect(joinedJson.content[0].content[0].content[0].content[0].text).toBe(expected);
       joinedDoc.destroy();
     } finally {
       editor.emit('blip:leave', { blipId });
@@ -823,6 +841,71 @@ describe('Socket.IO session-backed authorization', () => {
     } finally {
       owner.disconnect();
       staleDoc.destroy();
+    }
+  });
+
+  it('fails a duplicate-root snapshot closed without deleting its only durable copy', async () => {
+    const topicId = 'topic-root-duplicate-snapshot';
+    const schema = new Schema({
+      nodes: {
+        doc: { content: 'block+' },
+        heading: { attrs: { level: { default: 1 } }, content: 'inline*', group: 'block' },
+        paragraph: { content: 'inline*', group: 'block' },
+        bulletList: { content: 'listItem+', group: 'block' },
+        listItem: { content: 'paragraph block*' },
+        text: { group: 'inline' },
+      },
+    });
+    const duplicate = prosemirrorJSONToYDoc(schema, {
+      type: 'doc',
+      content: [
+        { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'Current root' }] },
+        { type: 'bulletList', content: [{ type: 'listItem', content: [{ type: 'paragraph' }] }] },
+        { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'Duplicate root' }] },
+        { type: 'bulletList', content: [{ type: 'listItem', content: [{ type: 'paragraph' }] }] },
+      ],
+    }, 'default');
+    state.docs.set(topicId, {
+      _id: topicId,
+      type: 'topic',
+      authorId: 'owner',
+      shareLevel: 'private',
+      content: '<h1>Current root</h1><ul><li><p>Durable label</p></li></ul>',
+      updatedAt: 300,
+      yjsGeneration: 0,
+    });
+    state.docs.set(`snapshot-${topicId}`, {
+      _id: `snapshot-${topicId}`,
+      _rev: '1-poisoned',
+      type: 'yjs_snapshot',
+      waveId: topicId,
+      blipId: topicId,
+      yjsGeneration: 0,
+      snapshotB64: Buffer.from(Y.encodeStateAsUpdate(duplicate)).toString('base64'),
+      updatedAt: 300,
+    });
+    clearBlipSeedAuthority(topicId);
+    const owner = await connectAs('owner');
+    try {
+      let syncPublished = false;
+      owner.on(`blip:sync:${topicId}`, () => { syncPublished = true; });
+      const failed = await withTimeout(new Promise<any>((resolve) => owner.emit('blip:join', {
+        blipId: topicId,
+        yjsGeneration: 0,
+      }, resolve)), 'duplicate snapshot acknowledgement');
+      expect(failed).toMatchObject({
+        ok: false,
+        error: 'collaboration_storage_unavailable',
+        retryable: true,
+      });
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      expect(syncPublished).toBe(false);
+      expect(state.docs.has(`snapshot-${topicId}`)).toBe(true);
+      expect(yjsDocCache.getState(topicId)).toBeNull();
+      expect(yjsDocCache.hasActiveRefs(topicId)).toBe(false);
+    } finally {
+      owner.disconnect();
+      duplicate.destroy();
     }
   });
 

@@ -6,16 +6,20 @@
   read-marker repair as exact master `5e1bc271`; that tree is public on managed
   blue `:8101`. Public phase 2 passed **49/49**, but real authoring proved that
   an intended 18-node bullet structure persisted as **18 P / 0 UL / 0 LI**.
-- Draft PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) supplies the
+- PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) merged the
   shared always-bulleted contract across editor, Yjs, API, duplication, and
-  existing-document repair. The audit closed undo-history split-brain,
+  existing-document repair as exact `7581d036`, but private green caught a
+  pre-sync local-history merge that duplicated the topic H1+UL root. Green was
+  stopped and public was not changed. Follow-up branch
+  `fix/blb-topic-revision-race` removes that history and gates every mutation
+  on authoritative server sync/edit permission. The audit closed undo-history split-brain,
   topic-H1 child creation, reserved-root poisoning, existing-flat seed
   projection, stale-prop replay, malformed HTML, and task-list roots.
-- Full local gates pass at **112 files / 678 passed / 3 skipped / 0 failed**,
+- Full local gates pass at **112 files / 684 passed / 3 skipped / 0 failed**,
   typecheck, branch-context lint, full-source ESLint at **0 errors / 8,954
   baseline warnings**, and a **3,318-module** production build. An independent
   audit returned **GO for merge-candidate testing**.
-- Boundary: PR #73 is not merged or deployed; public still runs the broken PR
+- Boundary: the follow-up is not merged or deployed; public still runs the broken PR
   #72 tree. Private-green two-client/reload/restart and responsive visual
   acceptance, exact public cutover, and repair of the measured failure topic
   remain required. Physical iPhone Safari and 500/1,000-blip full-render sweeps

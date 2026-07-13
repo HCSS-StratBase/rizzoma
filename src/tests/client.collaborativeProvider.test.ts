@@ -307,6 +307,65 @@ describe('client: CollaborativeProvider', () => {
     provider.destroy();
   });
 
+  it('reports synced and unsynced transitions so editors can revoke mutation capability', () => {
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-sync-state');
+    const states: boolean[] = [];
+    const unsubscribe = provider.onSyncStateChange((synced) => states.push(synced));
+
+    socket._receive('blip:sync:blip-sync-state', { state: [] });
+    socket._receive('disconnect', undefined);
+
+    expect(states).toEqual([false, true, false]);
+    unsubscribe();
+    provider.destroy();
+  });
+
+  it('requires server-authoritative edit permission for mutation readiness', () => {
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-readiness');
+    expect(provider.mutationReady).toBe(false);
+
+    socket._receive('blip:sync:blip-readiness', { state: [], canEdit: false });
+    expect(provider.synced).toBe(true);
+    expect(provider.mutationReady).toBe(false);
+
+    provider.destroy();
+  });
+
+  it('revokes sync and mutation readiness when a document update is rejected', () => {
+    socket = createMockSocket(true, { autoUpdateAck: false });
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-rejected-update');
+    socket._receive('blip:sync:blip-rejected-update', { state: [], canEdit: true });
+    expect(provider.mutationReady).toBe(true);
+
+    doc.getText('default').insert(0, 'pending');
+    const updateCall = socket.emit.mock.calls.find(([event]: any) => event === 'blip:update');
+    const acknowledge = updateCall?.[2] as ((result: { ok: boolean; error?: string }) => void) | undefined;
+    acknowledge?.({ ok: false, error: 'forbidden' });
+
+    expect(provider.synced).toBe(false);
+    expect(provider.mutationReady).toBe(false);
+    provider.destroy();
+  });
+
+  it('freezes on structural update rejection while preserving pending local recovery state', () => {
+    socket = createMockSocket(true, { autoUpdateAck: false });
+    const provider = new SocketIOProvider(doc, socket as any, 'blip-invalid-structure');
+    socket._receive('blip:sync:blip-invalid-structure', { state: [], canEdit: true });
+
+    doc.getText('default').insert(0, 'rejected but preserved');
+    const updateCall = socket.emit.mock.calls.find(([event]: any) => event === 'blip:update');
+    const acknowledge = updateCall?.[2] as ((result: { ok: boolean; error?: string }) => void) | undefined;
+    acknowledge?.({ ok: false, error: 'invalid_blb_structure' });
+
+    expect(provider.mutationReady).toBe(false);
+    expect(doc.getText('default').toString()).toBe('rejected but preserved');
+    expect(getPendingCollaborationCount()).toBeGreaterThan(0);
+    expect(socket.emit.mock.calls.some(([event, payload]: any) => (
+      event === 'blip:leave' && payload.blipId === 'blip-invalid-structure'
+    ))).toBe(true);
+    provider.destroy();
+  });
+
   it('tracks whether the server granted seed authority', () => {
     const provider = new SocketIOProvider(doc, socket as any, 'blip-seed');
 

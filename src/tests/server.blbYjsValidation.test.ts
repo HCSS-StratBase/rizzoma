@@ -46,9 +46,15 @@ describe('BLB ProseMirror document validation', () => {
     poisonedText.getText('default').insert(0, 'wrong shared type');
     expect(isBlbYjsDocument(poisonedText, false)).toBe(false);
 
+    const remotelyDecodedPoison = new Y.Doc();
+    Y.applyUpdate(remotelyDecodedPoison, Y.encodeStateAsUpdate(poisonedText));
+    expect(() => isBlbYjsDocument(remotelyDecodedPoison, false)).not.toThrow();
+    expect(isBlbYjsDocument(remotelyDecodedPoison, false)).toBe(false);
+
     unrelated.destroy();
     emptyEditor.destroy();
     poisonedMap.destroy();
     poisonedText.destroy();
+    remotelyDecodedPoison.destroy();
   });
 });

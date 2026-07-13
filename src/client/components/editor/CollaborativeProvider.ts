@@ -47,6 +47,7 @@ export class SocketIOProvider {
   private readonly ownerId: string | null;
   private readonly expectedGeneration: number;
   private syncCallbacks: Array<() => void> = [];
+  private syncStateCallbacks = new Set<(synced: boolean) => void>();
   private reconnectHandler: (() => void) | null = null;
   private disconnectHandler: (() => void) | null = null;
   private docUpdateHandler: ((update: Uint8Array, origin: unknown) => void) | null = null;
@@ -93,6 +94,26 @@ export class SocketIOProvider {
     this.syncCallbacks.push(cb);
   }
 
+  /** Subscribe to both authoritative sync and every transition back to an
+   * unsynced state. Consumers use this to revoke editor mutation capability
+   * immediately on disconnect, generation rejection, or access loss. */
+  onSyncStateChange(cb: (synced: boolean) => void): () => void {
+    this.syncStateCallbacks.add(cb);
+    cb(this.synced);
+    return () => this.syncStateCallbacks.delete(cb);
+  }
+
+  private setSynced(next: boolean) {
+    if (this.synced === next) return;
+    this.synced = next;
+    this.syncStateCallbacks.forEach((cb) => cb(next));
+  }
+
+  /** Server-authoritative capability for mutating this Y.Doc right now. */
+  get mutationReady(): boolean {
+    return !this.destroyed && this.synced && this.roomReady && this.canEdit;
+  }
+
   private setupListeners() {
     this.docUpdateHandler = (update: Uint8Array, origin: unknown) => {
       if (origin !== this) {
@@ -133,7 +154,7 @@ export class SocketIOProvider {
         this.joined = false;
         this.canEdit = false;
         this.roomReady = false;
-        this.synced = false;
+        this.setSynced(false);
         this.shouldSeed = false;
         this.seedContent = null;
         this.socket.emit('blip:leave', { blipId: this.blipId });
@@ -159,7 +180,7 @@ export class SocketIOProvider {
         : null;
       if (typeof data.canEdit === 'boolean') this.canEdit = data.canEdit;
       this.roomReady = true;
-      this.synced = true;
+      this.setSynced(true);
 
       if (completesJoin) {
         // Local edits made while offline or while authorization was pending
@@ -203,12 +224,13 @@ export class SocketIOProvider {
     }, (ack: UpdateAcknowledgement) => {
       if (!ack?.ok) {
         if (ack?.error === 'forbidden' || ack?.error === 'unauthenticated') {
-          this.joined = false;
-          this.roomReady = false;
-          this.canEdit = false;
+          this.freezeRejectedUpdate();
           this.reportAuthorizationFailure(ack.error);
         } else if (ack?.error === 'generation_mismatch') {
           this.rejectGeneration(undefined);
+        } else {
+          this.freezeRejectedUpdate();
+          this.reportDocumentUpdateFailure(ack?.error || 'update_rejected');
         }
         return;
       }
@@ -287,7 +309,7 @@ export class SocketIOProvider {
       this.joined = false;
       this.roomReady = false;
       this.canEdit = false;
-      this.synced = false;
+      this.setSynced(false);
       this.shouldSeed = false;
       this.seedContent = null;
       this.joinAttempt += 1;
@@ -306,7 +328,7 @@ export class SocketIOProvider {
     this.joined = false;
     this.roomReady = false;
     this.canEdit = false;
-    this.synced = false;
+    this.setSynced(false);
     this.shouldSeed = false;
     this.seedContent = null;
     this.socket.emit('blip:join', {
@@ -410,7 +432,35 @@ export class SocketIOProvider {
     }));
   }
 
+  private freezeRejectedUpdate() {
+    // The server did not accept this Y.Doc history. Preserve the local doc and
+    // its pending-change ledger for explicit recovery, but stop all further
+    // mutation/relay and leave the room so a known-bad base is never replayed.
+    this.joinAttempt += 1;
+    this.joined = false;
+    this.roomReady = false;
+    this.canEdit = false;
+    this.shouldSeed = false;
+    this.seedContent = null;
+    this.setSynced(false);
+    this.socket.emit('blip:leave', { blipId: this.blipId });
+  }
+
+  private reportDocumentUpdateFailure(error: string) {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('toast', {
+      detail: {
+        type: 'error',
+        message: 'This edit was rejected and editing has been paused. Your local changes are preserved for recovery.',
+      },
+    }));
+    window.dispatchEvent(new CustomEvent('rizzoma:collaboration-update-rejected', {
+      detail: { blipId: this.blipId, error },
+    }));
+  }
+
   private reportAuthorizationFailure(error: string) {
+    this.setSynced(false);
     if (typeof window === 'undefined') return;
     const sessionEnded = error === 'unauthenticated';
     window.dispatchEvent(new CustomEvent('toast', {
@@ -431,7 +481,7 @@ export class SocketIOProvider {
     this.joined = false;
     this.roomReady = false;
     this.canEdit = false;
-    this.synced = false;
+    this.setSynced(false);
     this.shouldSeed = false;
     this.seedContent = null;
     this.socket.emit('blip:leave', { blipId: this.blipId });
@@ -476,6 +526,7 @@ export class SocketIOProvider {
 
   destroy() {
     this.destroyed = true;
+    this.setSynced(false);
     this.joinAttempt += 1;
     if (this.joinRetryTimer !== null) {
       clearTimeout(this.joinRetryTimer);
@@ -526,6 +577,7 @@ export class SocketIOProvider {
     this.joined = false;
     this.roomReady = false;
     this.canEdit = false;
+    this.syncStateCallbacks.clear();
     this.awareness.destroy();
   }
 }

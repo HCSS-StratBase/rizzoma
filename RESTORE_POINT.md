@@ -5,12 +5,18 @@
 - [x] Capture deltas from the re-read in this file and in `docs/HANDOFF.md`/`docs/RESTART.md` if startup or workflow guidance changed.
 
 ### Doc drift (latest re-read)
-- (2026-07-13 always-bulleted BLB repair candidate) The real public
+- (2026-07-13 BLB revision-race follow-up) The real public
   [reality-check topic](https://138-201-62-161.nip.io/#/topic/3305bc3a42889979c79fa39f400088c7?layout=rizzoma)
   converted a content-gated 18-node/depth-1 spec into **18 top-level P / 0 UL /
   0 LI**, and reload preserved the failure with zero browser errors. Inspected
   evidence lives at `screenshots/260713-0130-public-blb-creation-failure/`.
-  Branch `fix/blb-always-bulleted` now supplies one durable content contract for
+  PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) merged that durable
+  contract as exact `7581d036`, but private green acceptance caught a second
+  root cause before public release: pre-sync local TipTap history merged beside
+  the authoritative Yjs document, creating duplicate H1+UL roots, repeated
+  409s, and a post-restart `invalid_blb_structure` rejection. Green was stopped
+  and public remained on PR #72. Branch `fix/blb-topic-revision-race` now adds
+  direct empty-Y.XmlFragment seeding plus authoritative mutation-readiness for
   H1+UL topic seeds, escaped plain-text-to-LI replies, empty inline UL/LI seeds,
   pre-Yjs editor transaction rejection, server-side CRDT rejection, guarded
   toolbar/keyboard escape paths, API normalization, duplicate normalization,
@@ -18,12 +24,15 @@
   durability audit additionally closed Yjs undo-history split-brain, topic-H1
   child creation, poisoned reserved-root, existing-flat seed-projection,
   stale-prop replay, malformed-HTML, and task-list-root bypasses. An independent
-  audit returned **GO for merge-candidate testing**. Full Vitest is green at
-  **112 files / 678 passed / 3 skipped / 0 failed**; typecheck and
+  audit also forced every toolbar/paste/upload/child-create path to recheck
+  sync and edit permission at mutation time, every rejected update to freeze
+  without discarding pending local state, and every invalid durable snapshot to
+  remain preserved for explicit migration. It returned **GO**. Full Vitest is
+  green at **112 files / 684 passed / 3 skipped / 0 failed**; typecheck and
   branch-context lint pass; full ESLint reports **0 errors / 8,954 baseline
-  warnings**; and the production build transforms **3,318 modules**. Draft PR
-  [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) is not merged or
-  deployed; public production still runs the broken PR #72 tree. Remaining
+  warnings**; and the production build transforms **3,318 modules**. The
+  follow-up is not merged or deployed; public production still runs the broken
+  PR #72 tree. Remaining
   gates are private-green two-client/reload/restart and responsive visual
   acceptance, followed by exact public cutover and repair of the reproduction
   topic above.

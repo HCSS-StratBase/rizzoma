@@ -9,6 +9,7 @@ import {
   needsBlbSeedProjection,
   normalizeBlbEditorDocument,
   runBlbSafeListAction,
+  seedEmptyBlbYdoc,
   setBlbEditorBaseline,
 } from '../client/components/editor/blbEditorInvariant';
 import {
@@ -147,6 +148,28 @@ describe('client: durable BLB editor invariant', () => {
     expect(editor.getHTML()).toContain('<ul>');
     expect(Array.from(Y.encodeStateAsUpdate(ydoc))).toEqual(afterValidRedo);
     expect(observedValidity.every(Boolean)).toBe(true);
+    editor.destroy();
+    ydoc.destroy();
+  });
+
+  it('imports one authoritative BLB root directly into an empty collaborative fragment', () => {
+    const ydoc = new Y.Doc();
+    const editor = new Editor({
+      extensions: [
+        StarterKit.configure({ history: false }) as any,
+        BlipKeyboardShortcuts.configure({ isTopicRoot: true }),
+        Collaboration.configure({ document: ydoc }),
+      ],
+      content: undefined,
+    });
+    const canonical = '<h1>Topic</h1><ul><li><p>Only root</p></li></ul>';
+
+    expect(seedEmptyBlbYdoc(editor, ydoc, canonical)).toBe(true);
+    expect(isBlbYjsDocument(ydoc, true)).toBe(true);
+    expect(editor.getHTML()).toBe(canonical);
+    expect(seedEmptyBlbYdoc(editor, ydoc, '<h1>Duplicate</h1><ul><li><p>Root</p></li></ul>')).toBe(false);
+    expect(editor.getHTML()).toBe(canonical);
+
     editor.destroy();
     ydoc.destroy();
   });

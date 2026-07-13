@@ -114,3 +114,54 @@
   Private-green two-client/reload/restart and responsive visual acceptance,
   green PR checks, exact public cutover, repair of the measured failure topic,
   and clean journals remain.
+
+## PR #73 private-green rejection
+
+- PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) passed all seven
+  GitHub checks and merged as exact `7581d03677dd64a1ec5169ac8fc73b3a23d4039d`.
+- That exact tree was deployed only to inactive managed green. A real-control
+  test initially rendered four proper topic bullets, then immediate Ctrl+Enter
+  erased their labels and exposed repeated topic PATCH 409s. After a managed
+  restart the server rejected the stored duplicate H1+UL collaboration history
+  as HTTP 400 `invalid_blb_structure`.
+- Visual evidence is preserved under
+  `screenshots/260713-0258-private-green-blb-acceptance/`. Green was stopped;
+  nginx and public blue remained on exact PR #72 `5e1bc271` throughout.
+
+## BLB revision-race repair
+
+- Root cause: collaboration-capable TipTap editors could create and normalize a
+  local blank ProseMirror document before the server snapshot arrived. Yjs
+  merged histories rather than replacing them, so the authoritative H1+UL tree
+  landed beside a local H1+UL baseline.
+- Collaborative topic and child editors now start without a local content
+  document. The elected seeder converts one canonical ProseMirror document
+  directly into an empty Y.XmlFragment; a nonempty fragment is never reseeded.
+- `SocketIOProvider` now publishes live sync-state transitions and an
+  authoritative `mutationReady` capability requiring server sync, room
+  readiness, and server-granted edit permission. Topic/root and child editors,
+  menus, right tools, paste, formatting, uploads, queued actions, and both
+  Ctrl+Enter child-create paths remain frozen until that capability is true and
+  recheck it after asynchronous work.
+- Disconnect, access loss, generation mismatch, and every rejected update revoke
+  mutation readiness. A rejected document leaves the room and freezes the UI
+  while preserving the local Y.Doc and pending-change ledger for explicit
+  recovery; it is never replayed as a known-bad base.
+- Invalid durable snapshots are validated before admission, fail the join
+  closed, and remain stored for evidence-backed migration. Only the inactive
+  decode is discarded; no snapshot is silently deleted.
+
+## Follow-up verification
+
+- Focused collaboration/BLB gate: **73/73 passed**.
+- Full Vitest: **112 files / 684 passed / 3 skipped / 0 failed**.
+- TypeScript no-emit, touched-file ESLint, and `git diff --check`: passed.
+- Production build: passed, **3,318 modules** transformed.
+- Independent multi-pass race/data-loss audit: initial NO-GO findings were fixed
+  across toolbar, upload, async child-create, access-loss, and rejected-update
+  paths; final verdict **GO** with no remaining pre-sync, post-disconnect,
+  rejected-update, async-mutation, or invalid-snapshot blocker found.
+- Boundary: this is still a code candidate. Follow-up PR/CI/merge, exact private
+  deployment, two-client/reload/restart/responsive real-control acceptance, the
+  zero-overlap public cutover, and explicit repair of the measured public
+  failure topic remain mandatory.

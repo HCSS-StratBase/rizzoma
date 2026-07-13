@@ -446,6 +446,19 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
           }
           try {
             await yjsDocCache.loadFromDb(blipId, loadGeneration);
+            const loadedDoc = yjsDocCache.getOrCreate(blipId, loadGeneration);
+            const topicRoot = blipId === String(initial.blip.waveId);
+            if (!yjsDocCache.isEmpty(blipId) && !isBlbYjsDocument(loadedDoc, topicRoot)) {
+              // Preserve the durable snapshot: it may contain acknowledged
+              // edits whose HTML projection failed and therefore be newer than
+              // Couch. Publishing it would poison a fresh editor, while
+              // deleting it would silently lose the only durable copy. Drop
+              // only this inactive in-memory decode and fail the join closed;
+              // an explicit, evidence-backed external replacement can advance
+              // the generation after the content has been recovered.
+              yjsDocCache.discard(blipId);
+              throw new Error('collaboration_snapshot_invalid');
+            }
           } catch (error) {
             // A snapshot lookup failure must never be interpreted as an empty
             // collaborative history. Ask the client to retry without joining
