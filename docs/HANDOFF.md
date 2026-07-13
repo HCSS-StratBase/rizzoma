@@ -21,6 +21,14 @@ Current State (feature/native-fractal-port @ 2026-07-13)
 - **Verification**: `npm run build` passed; focused tests passed (3 files, 25 tests); proof harness now asserts exactly one visible `.blip-menu-container` after clicking the terminal blip, and that menu's `data-blip-id` is the terminal blip. Visual PNG inspection confirms root and nested blips have no repeated menu while the terminal active blip has the toolbar.
 - **Boundary**: this closes the specific active-toolbar parity defect. Broader visual/responsive/mobile sweep and iPhone Safari remain open.
 
+### Current state — 2026-07-13 late, visual parity gate hardened
+
+- **Process gap fixed mechanically**: the previous `.claude/hooks/visual-sweep-gate.sh` only warned and was not registered in the local Stop hook chain. It now calls `npm run parity:gate` and returns `continue:false` when parity evidence is missing.
+- **Durable gate**: `scripts/check-rizzoma-parity-gate.mjs` plus `npm run parity:gate` now requires the legacy reference set, a fresh `screenshots/*-feature-sweep/`, current `coverage.md`, saved side-by-side comparison PNGs, and written `PARITY_AUDIT.md` before UI work can be handed off as checked.
+- **Measured audit**: `screenshots/260713-225614-public-parity-sweep-feature-sweep/legacy-current-comparisons/PARITY_AUDIT.md` records the current status as **FAIL / IN_PROGRESS**: 200 documented rows, 159 classified rows, 24 old reference PNGs, 44 new sweep PNGs, 104/159 visual screenshot row coverage, 2 screenshot gaps, 10 side-by-side sheets, and 0 completed written analyses before the new audit.
+- **Known severe failures recorded**: BLB/fractal bullet defects, active-toolbar menu regression, Google SSO 502, deep-BLB layout divergence, and unresolved mobile parity decision. The audit does not claim broad parity.
+- **Verification**: `npm run parity:gate` passed with the audit present; `.claude/hooks/visual-sweep-gate.sh </dev/null` returned `{"continue": true}`.
+
 ### Current state — what shipped today (2026-05-12, branch `feature/native-fractal-port`)
 
 - **Sweep**: 45/45 PASS · 0 FAIL · 0 no-gate (stable through 6 coverage-lift cycles).

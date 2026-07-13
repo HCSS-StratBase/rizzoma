@@ -80,3 +80,30 @@ Branch: `feature/native-fractal-port`
   - proof artifacts: `screenshots/260713-225006-public-active-terminal-toolbar-proof/`
   - hard gate in `scripts/verify-blb-fractal-proof.mjs`: after clicking the terminal blip, exactly one visible `.blip-menu-container` exists and its `data-blip-id` is the terminal blip
   - visually inspected `04-terminal-active-only-toolbar.png`: root and nested blips have no repeated menu; only the terminal active blip shows the toolbar
+
+## Visual parity gate hardening
+
+- Root process failure:
+  - the repository already had `scripts/visual-feature-sweep.mjs`, the legacy reference set, and `.claude/hooks/visual-sweep-gate.sh`
+  - the hook was only a warning and was not registered in the local Stop hook chain, so a plain programmatic sweep could be mistaken for legacy visual parity
+- Measured current state:
+  - latest public sweep: `screenshots/260713-225614-public-parity-sweep-feature-sweep/`
+  - documented rows parsed: 200
+  - classified coverage rows: 159
+  - current visual screenshot row coverage: 104/159 = 65.4% of classified rows, or 52.0% of all documented rows
+  - old reference set: 24 PNG screenshots + 24 MD notes
+  - new sweep: 44 PNG screenshots
+  - side-by-side comparison sheets generated: 10
+  - completed written analyses before the new audit: 0
+- Gate changes:
+  - added `scripts/check-rizzoma-parity-gate.mjs`
+  - added `npm run parity:gate`
+  - rewrote `.claude/hooks/visual-sweep-gate.sh` to call the npm gate and return `continue:false` on failure
+  - registered the hook in local `.claude/settings.local.json` for this machine; the local settings file is gitignored, so `docs/VISUAL_SCREENSHOT_SWEEP.md` now documents the Stop-hook registration requirement
+- Audit artifact:
+  - added `screenshots/260713-225614-public-parity-sweep-feature-sweep/legacy-current-comparisons/PARITY_AUDIT.md`
+  - verdict is explicitly **FAIL / IN_PROGRESS**
+  - severe failures recorded: BLB/fractal bullet defects, active-toolbar menu regression, Google SSO 502, deep-BLB layout divergence, and unresolved mobile parity decision
+- Verification:
+  - `npm run parity:gate` passed after the audit was created
+  - `.claude/hooks/visual-sweep-gate.sh </dev/null` returned `{"continue": true}` with the current audit present
