@@ -1,6 +1,6 @@
 # VPS Deployment — Rizzoma on 138.201.62.161
 
-**Last updated**: 2026-07-13 15:25 CEST (dev BLB collapsed-row proof live on `feature/native-fractal-port`)
+**Last updated**: 2026-07-13 22:40 CEST (public 502 fixed; bare hostname cut over to new BLB app on `feature/native-fractal-port`)
 
 ## Server details
 
@@ -8,22 +8,53 @@
 |---|---|
 | **IP** | `138.201.62.161` |
 | **Dev port** | `3000` (Vite UI) + `8000` (API) for active `/data/large-projects/stephan/rizzoma_260612`; nginx dev HTTPS proxies to `127.0.0.1:3000` |
-| **Prod port** | `8201` (UI; `rizzoma-app-prod` production target → container `:8000`) — green since 2026-04-22 |
-| **URL (HTTPS)** | `https://138-201-62-161.nip.io/` — Let's Encrypt cert + nginx proxy → `localhost:8201` (`rizzoma-app-prod`, cut over 2026-04-23 23:24 CEST) |
+| **Prod/public HTTPS target** | `3000` (Vite UI) + `8000` (API) for active `/data/large-projects/stephan/rizzoma_260612`; legacy prod process still listens on `8102` but is no longer the public nginx target |
+| **URL (HTTPS)** | `https://138-201-62-161.nip.io/` — Let's Encrypt cert + nginx proxy → `127.0.0.1:3000` as of 2026-07-13 22:40 CEST |
 | **URL (HTTP, legacy)** | `http://138.201.62.161:8200/` (dev, direct Docker port-mapped) |
 | **SSH** | `root@138.201.62.161` (key auth) |
 | **Operator** | Hryhorii (first deployed 2026-04-17; co-owned with Stephan) |
-| **Deployment path** | `/data/large-projects/stephan/rizzoma` |
-| **Process** | Docker Compose (`rizzoma-app` runs `npm run dev`; `rizzoma-app-prod` runs `node dist/server/server/app.js`) |
+| **Deployment path** | `/data/large-projects/stephan/rizzoma_260612` for current public/dev BLB proof; legacy Docker release path remains `/data/large-projects/stephan/rizzoma` |
+| **Process** | Current public/dev proof uses host Node/Vite processes (`npm run dev:server` on `8000`, `npm run dev:client` on `3000`); legacy Docker Compose production process remains available on `8102` |
 | **Persistent volumes** | `/data/volumes/stephan-rizzoma/{app,redis,couchdb,rabbitmq,sphinx,minio}` |
 | **Auth account** | `hp@rizzoma.com` / `stratbase2026` |
 | **Repo** | `HCSS-StratBase/rizzoma` on GitHub |
-| **Current documented source** | `feature/rizzoma-core-features`, fast-forwarded to the latest docs/evidence checkpoint after the verified app-code deploy |
-| **Last verified VPS code baseline** | Running prod image built from app-code commit `69d6a8a9`; later VPS source checkouts are docs/evidence-only updates and do not require rebuild; public HTTPS targets prod `:8201`; prior dirty VPS tree preserved as stash `pre-cursor-inline-deploy-20260424-234017` |
+| **Current documented source** | `feature/native-fractal-port`, public/dev active checkout synced to `5fb1b6ad` |
+| **Last verified VPS code baseline** | Public HTTPS currently targets the host-run `feature/native-fractal-port` checkout at `5fb1b6ad`; legacy prod process at `/srv/rizzoma/releases/72c54ced28d6ece725c1a6971e1be9ca5f97dbd9` listens on `8102` but is not the public target |
+
+## Public 502 / SSO callback repair (2026-07-13)
+
+The user hit `502 Bad Gateway` after Gmail SSO because Google OAuth redirects back to:
+
+```text
+https://138-201-62-161.nip.io/api/auth/google/callback
+```
+
+At that moment, the enabled public nginx vhost (`/etc/nginx/sites-enabled/rizzoma.conf`) still proxied to dead `127.0.0.1:8101`, even though a legacy production node process was alive on `8102` and the new BLB app was alive on `3000/8000`.
+
+Repair sequence:
+
+1. Confirmed the outage in `/var/log/nginx/error.log`: `connect() failed (111: Connection refused) while connecting to upstream` for the OAuth callback to `127.0.0.1:8101`.
+2. Confirmed `127.0.0.1:8102` returned 200 for `/` and `/api/health`.
+3. Backed up and temporarily restored public nginx to `8102`:
+   - backup: `/etc/nginx/sites-enabled/rizzoma.conf.bak-20260713-fix-prod-502`
+4. Confirmed `/api/auth/google` on both dev and public hosts redirects back to the bare public hostname, so a dev-only public proof is insufficient for SSO testing.
+5. Backed up and cut the bare public hostname over to the new BLB app:
+   - backup: `/etc/nginx/sites-enabled/rizzoma.conf.bak-20260713-cutover-new-blb`
+   - current public proxy: `proxy_pass http://127.0.0.1:3000;`
+6. `nginx -t` succeeded and nginx was reloaded.
+
+Current public verification:
+
+- `https://138-201-62-161.nip.io/` returns 200.
+- `https://138-201-62-161.nip.io/api/health` returns 200.
+- `https://138-201-62-161.nip.io/api/auth/google` returns 302 to Google with callback to the same public hostname.
+- Public BLB proof passed at `https://138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a00740b`.
+- Evidence folder: `screenshots/260713-223655-public-blb-fractal-proof-after-sso-502-fix/`.
+- Boundary: public proof path is green; broad responsive/mobile/iPhone Safari verification remains open.
 
 ## Dev BLB proof repair (2026-07-13)
 
-The active dev checkout for `feature/native-fractal-port` is `/data/large-projects/stephan/rizzoma_260612`, currently synced to `75d888c7`.
+The active dev checkout for `feature/native-fractal-port` is `/data/large-projects/stephan/rizzoma_260612`, currently synced to `5fb1b6ad`.
 
 The enabled nginx dev vhost (`/etc/nginx/sites-enabled/rizzoma-dev.conf`) had drifted to a dead upstream `127.0.0.1:8101`, causing `https://dev.138-201-62-161.nip.io` to return 502 even though the dev Vite/server pair was healthy on `3000/8000`. It was repaired to:
 
