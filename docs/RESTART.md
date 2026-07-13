@@ -1,13 +1,14 @@
 ## Restart Checklist (Same Folder, Any Machine)
 
-Last refreshed: 2026-07-13 (`fix/blb-always-bulleted`; PR #72 exact
-`5e1bc271` public on managed blue `:8101`; read-marker hotfix merged and public;
-public phase 2 passed 49/49, but SDS's first manual use exposed the core BLB
-always-bulleted creation invariant as broken. A local durable editor/Yjs/API
-repair is green at 112 files / 678 passed / 3 skipped, 0 ESLint errors (8,954
-baseline warnings), and 3,318 build modules; an independent audit returned GO
-for merge-candidate testing. Draft PR #73 is not deployed and public remains
-the broken PR #72 tree. Remaining gates are private-green two-client,
+Last refreshed: 2026-07-13 (`fix/blb-topic-revision-race`; PR #72 exact
+`5e1bc271` remains public on managed blue `:8101`. PR #73 merged as exact
+`7581d036`, but private green caught a pre-sync TipTap/Yjs duplicate-root race,
+so green was stopped and never cut over. The follow-up starts collaborative
+editors without local history, seeds one canonical Y.Doc directly, freezes all
+mutation paths until server-authoritative sync/edit readiness, and preserves
+pending/invalid state on every rejection. Local gates are green at 112 files /
+684 passed / 3 skipped, 0 ESLint errors, and 3,318 build modules. An independent
+audit returned GO. Remaining gates are follow-up PR/CI/merge, private-green two-client,
 reload/restart, and responsive visual acceptance, then exact public cutover and
 repair of the measured failure topic. Resume from the isolated release
 worktree; do not touch the dirty canonical checkout.)
@@ -52,8 +53,9 @@ Last refreshed (prior): 2026-04-15 (`master`, FtG + collab audit — BUG #58 FEA
 Last refreshed (prior): 2026-03-31 (`master`, cross-session gadget preference lifecycle accepted on fresh client)
 
 Branch context guardrails:
-- Active branch: `fix/blb-always-bulleted` (2026-07-13), based on public PR #72
-  exact merge `5e1bc271` on managed blue `:8101`. Always cite branch + date
+- Active branch: `fix/blb-topic-revision-race` (2026-07-13), based on merged PR
+  #73 exact `7581d036`; public remains PR #72 exact `5e1bc271` on blue `:8101`.
+  Always cite branch + date
   when sharing status.
 - Current release evidence: 108 test files / 651 passed / 3 skipped, typecheck,
   full-source ESLint `--quiet`, 3,315 build modules, exact 994-package provenance,
@@ -80,7 +82,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Continue in the isolated `/home/stephan/rizzoma-final-release` worktree on `fix/blb-always-bulleted`; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
+    - Continue in the isolated `/home/stephan/rizzoma-final-release` worktree on `fix/blb-topic-revision-race`; never modify the dirty canonical `/mnt/c/Rizzoma` checkout.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md, and any Markdown changed in the last 31 days; capture drift into RESTORE_POINT.md and the handoff/restart guides, then tick the meta prerequisites and update the checkpoint timestamp in RESTORE_POINT.md.
   Step 0.1:
     - Run "npm run lint:branch-context" to ensure docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.
@@ -89,7 +91,7 @@ codex exec '
     - If Docker is missing in WSL, re-enable Docker Desktop -> Settings -> Resources -> WSL Integration for the active distro before continuing.
 
   Priority focus (current backlog):
-  1) Publish the audited PR #73 head and require every GitHub check; merge only after green, then deploy the exact merge SHA privately to inactive managed green.
+  1) Publish the audited follow-up PR and require every GitHub check; merge only after green, then deploy the exact merge SHA privately to inactive managed green.
   2) Prove fresh topic, root reply, nested reply, and both Ctrl+Enter paths are real UL/LI through browser controls; prove two-client recursive `[+]` creation and reload persistence.
   3) Require green PR CI, merge, and deploy only the exact squash tree through the immutable zero-overlap lane process.
   4) Prove managed-restart persistence, inspect 1280/1366/1440/1600/mobile PNGs, require clean browser/server journals, then repair and verify the exact public failure topic after cutover.

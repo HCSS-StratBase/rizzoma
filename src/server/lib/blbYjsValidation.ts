@@ -58,8 +58,17 @@ export function isBlbYjsDocument(document: Y.Doc, topicRoot: boolean): boolean {
   // getXmlFragment() calls. Unrelated shared types are allowed only under
   // other names; `default` must always be the editor XmlFragment.
   if (!(sharedType instanceof Y.XmlFragment)) return false;
-  return isBlbProsemirrorDocument(
-    yXmlFragmentToProsemirrorJSON(sharedType) as ProsemirrorNode,
-    topicRoot,
-  );
+  try {
+    return isBlbProsemirrorDocument(
+      yXmlFragmentToProsemirrorJSON(sharedType) as ProsemirrorNode,
+      topicRoot,
+    );
+  } catch {
+    // A remote update initially decodes shared roots as AbstractType. Asking
+    // for the expected XmlFragment materializes that placeholder, but the
+    // retained payload may still have been authored as Y.Text/Y.Map and be
+    // impossible for y-prosemirror to serialize. Treat that decodable poison
+    // as invalid structure so join recovery can discard and reseed it.
+    return false;
+  }
 }

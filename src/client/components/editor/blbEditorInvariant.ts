@@ -1,4 +1,7 @@
-import type { Editor } from '@tiptap/core';
+import { createNodeFromContent, type Editor } from '@tiptap/core';
+import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import * as Y from 'yjs';
+import { prosemirrorToYXmlFragment } from 'y-prosemirror';
 import { ensureBlbHtml, ensureTopicBlbHtml } from '@shared/blbContent';
 
 export type BlbEditorDocument =
@@ -14,6 +17,41 @@ export type BlbListContext = {
 };
 
 type BlbContentEditor = Pick<Editor, 'chain' | 'getHTML'>;
+
+const BLB_SEED_ORIGIN = Symbol('rizzoma-blb-seed');
+
+/**
+ * Populate an empty collaborative fragment without giving TipTap a second
+ * independent document history to merge on first sync.
+ *
+ * TipTap's Collaboration extension owns the ProseMirror document. Calling
+ * setContent() after that extension is attached can race the initial server
+ * snapshot: Yjs then keeps both the local baseline and the authoritative
+ * snapshot, yielding two top-level BLB roots. Import directly into the empty
+ * shared fragment instead; y-prosemirror renders that one authoritative Yjs
+ * transaction back into the editor.
+ */
+export function seedEmptyBlbYdoc(
+  editor: Pick<Editor, 'schema'>,
+  ydoc: Y.Doc,
+  html: string,
+): boolean {
+  const fragment = ydoc.getXmlFragment('default');
+  if (fragment.length > 0) return false;
+
+  const parsed = createNodeFromContent(html, editor.schema, {
+    slice: false,
+    errorOnInvalidContent: true,
+  }) as ProseMirrorNode;
+  if (parsed.type !== editor.schema.topNodeType) {
+    throw new Error('invalid_blb_seed_document');
+  }
+
+  ydoc.transact(() => {
+    prosemirrorToYXmlFragment(parsed, fragment);
+  }, BLB_SEED_ORIGIN);
+  return true;
+}
 
 /**
  * Establish a canonical editor baseline without adding that baseline to undo.
