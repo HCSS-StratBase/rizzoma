@@ -615,7 +615,7 @@ export function RizzomaBlip({
       const frag = ydoc.getXmlFragment('default');
       if (frag.length === 0 && blip.content) {
         seedingYdocRef.current = true;
-        inlineEditor.commands.setContent(blip.content);
+        inlineEditor.commands.setContent(ensureBulletedBody(blip.content));
         seedingYdocRef.current = false;
       }
     };
@@ -663,12 +663,16 @@ export function RizzomaBlip({
       clearTimeout(autoSaveTimeoutRef.current);
       autoSaveTimeoutRef.current = null;
     }
-    // Reset state to new blip's content
-    setEditedContent(blip.content);
-    lastSavedContentRef.current = blip.content;
+    // Reset state to new blip's content. BLB guard: a freshly-created child can
+    // still carry the empty optimistic body here — seed the bulleted list so the
+    // editor never initialises as a bare <p> (which the first auto-save would
+    // then persist, un-bulleting the blip).
+    const resetContent = ensureBulletedBody(blip.content);
+    setEditedContent(resetContent);
+    lastSavedContentRef.current = resetContent;
     setIsEditing(false);
     if (inlineEditor && !(inlineEditor as any).isDestroyed) {
-      inlineEditor.commands.setContent(blip.content);
+      inlineEditor.commands.setContent(resetContent);
     }
   }, [blip.id, blip.content, inlineEditor]);
 
@@ -944,6 +948,13 @@ export function RizzomaBlip({
       setIsActive(true);
       if (blip.permissions.canEdit) {
         setIsEditing(true);
+        // BLB: guarantee a bulleted body at edit entry (this path does NOT go
+        // through handleStartEdit, so nothing else seeds the list).
+        if (inlineEditorRef.current) {
+          const cur = inlineEditorRef.current.getHTML();
+          const seeded = ensureBulletedBody(cur);
+          if (seeded !== cur) inlineEditorRef.current.commands.setContent(seeded);
+        }
         // Bug A perf fix (2026-05-11): single RAF instead of two. The
         // setIsEditing's effect commits + the inlineEditor's
         // useEffect-mount runs in the same tick; one RAF lands after
