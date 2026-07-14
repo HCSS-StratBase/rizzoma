@@ -142,6 +142,37 @@ if (!latestSweep) {
     }
   }
 
+  // HAND-BUILD GATE (SDS 2026-07-14, after the day of seam-patching).
+  // Fixture-expansion, 44 sweep gates, 159 coverage rows, 11 single-active gates,
+  // 14 sanity checks and pixel measurements ALL passed while the fractal was dying
+  // at depth 3 and nested blips were persisting as bare <p>. Only a hand-build
+  // through the real UI finds bugs in the CREATION path. So: UI work does not
+  // close without fresh hand-build evidence.
+  const handbuildDirs = fs
+    .readdirSync(path.join(repoRoot, 'screenshots'), { withFileTypes: true })
+    .filter((e) => e.isDirectory() && /handbuild-d10/.test(e.name))
+    .map((e) => path.join('screenshots', e.name))
+    .sort();
+  const latestHandbuild = handbuildDirs.at(-1) ?? null;
+  if (!latestHandbuild) {
+    errors.push(
+      'no hand-build evidence: run scripts/handbuild_depth10.mjs (real clicks + real Ctrl+Enter + real typing, a PNG after EVERY action) and eyeball every PNG',
+    );
+  } else {
+    const shots = filesIn(latestHandbuild, (name) => name.endsWith('.png'));
+    notes.push(`hand-build ${latestHandbuild}: ${shots.length} step PNGs`);
+    if (shots.length < 20) {
+      errors.push(
+        `hand-build evidence too thin: ${shots.length} PNGs in ${latestHandbuild} (a depth-10 build is >=20 atomic steps — one PNG per action)`,
+      );
+    }
+    if (latestUiCommitTs > 0 && mtimeSeconds(latestHandbuild) < latestUiCommitTs) {
+      errors.push(
+        `hand-build ${latestHandbuild} is OLDER than today's latest UI-touching commit — re-run it against the current build`,
+      );
+    }
+  }
+
   const comparisonDir = path.join(latestSweep, 'legacy-current-comparisons');
   const comparisons = filesIn(comparisonDir, (name) => name.endsWith('.png'));
   if (comparisons.length < 16) {
