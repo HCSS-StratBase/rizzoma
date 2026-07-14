@@ -1430,16 +1430,23 @@
  * ============================================================ */
 .rizzoma-parity .inline-child-expanded {
   margin-left: 0;
-  padding: 0 0 0 6px;
+  padding: 0 0 0 2px;
 }
 .rizzoma-parity .inline-child-expanded .blip-content-row {
-  padding-left: 4px !important;
-  padding-right: 4px !important;
+  padding-left: 0 !important;
+  padding-right: 2px !important;
+  gap: 4px;
   position: relative;
 }
 .rizzoma-parity .inline-child-expanded .blip-text {
-  padding-left: 2px !important;
-  padding-right: 2px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+/* The nested bullet gutter is the last compounding term: legacy's per-level step
+   IS the LI's 22px margin, so keep the bullet tight against it. */
+.rizzoma-parity .inline-child-expanded > .blip-container > .blip-content .blip-bullet {
+  margin-left: 0;
+  width: 4px;
 }
 /* Legacy boxed-card look for nested children */
 .rizzoma-parity .inline-child-expanded > .blip-container {
