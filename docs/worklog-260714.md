@@ -142,3 +142,54 @@ a CSS-touching deploy, and verify by measuring, not by trusting the tree state.
 **Honest boundary:** legacy's step is the bare 22px LI margin; ours is ~34px (the
 residual is the nested bullet gutter). Visually equivalent nesting, not
 pixel-identical — recorded as such in PARITY_AUDIT.
+
+## Part 4 — SDS rejected the fixture-based verification; the HAND-BUILD found 2 more product-breaking bugs
+
+SDS: *"Did you even TRY writing a 10-deep blip and making and analyzing
+screenshots every step of the way!?!? There is NO way you followed our very
+detailed verification scheme."* He was right. Parts 1-3 verified deep-BLB with a
+**pre-built fixture expanded programmatically** — which cannot see bugs that only
+occur while *creating* depth.
+
+`scripts/handbuild_depth10.mjs` (S10 protocol: real clicks, real Ctrl+Enter, real
+typing, a PNG after EVERY atomic action, every PNG eyeballed) found two bugs that
+**44 sweep gates, 159 coverage rows, 11 single-active gates, 14 sanity checks and
+pixel measurements had all missed**:
+
+**BUG 3 — the fractal died at depth 3 (`396c707b`).** Ctrl+Enter from inside a
+nested child created the grandchild container, but it stayed in VIEW mode with no
+editor and **no focus** — keystrokes went nowhere. Cause: the child's
+single-active claim FINISHES the parent's edit (the bridge I had just added),
+which unmounts the child's first mount (it lives in the parent editor's
+BlipThreadNode portal); the child re-mounts in the parent's VIEW render *after*
+the single RAF has already fired. The topic-level path had a re-drive loop; the
+NESTED path in `RizzomaBlip.tsx` did not. Evidence:
+`screenshots/260714-handbuild-d10/07-ctrl-enter-to-L3.png` — an empty bordered
+box, no toolbar, `editable=0 focus=""`.
+
+**BUG 4 — nested blips were NOT BULLETED (BLB §19 row 1) (`b0fcca4f`+`4f586fa3`).**
+Every level below the first persisted as a bare paragraph: L2 body =
+`<ul><li><p>L2 label`, but L4/L7 = `<p>L4 label` — no list at all. The server
+seeds `<ul><li><p></p></li></ul>`, but the client opens the child's editor before
+that content propagates; TipTap initialises a bare `<p>` and the first auto-save
+overwrites the server's list. `ensureBulletedBody()` now guards all THREE
+editor-content injection sites — the first fix attempt failed because the
+enter-edit **listener** path (the one Ctrl+Enter children use) sets `isEditing`
+directly and never goes through `handleStartEdit`.
+
+**Hand-build result after the fixes** (`screenshots/260714-handbuild-d10-run4/`):
+all 10 levels build; each child opens editable AND focused; each accepts typed
+text; after reload+expand L1…L10 all persist; the DOM probe confirms **every**
+level is `<ul><li>`. Final render eyeballed: bulleted labels at every depth,
+contained boxed nesting, fold controls, no ladder.
+
+**Gate chain re-run on the fixed build: PASS** (44/44 sweep gates, 159/159
+coverage rows 0 gaps, 26 comparison sheets, 11/11 single-active, 14/14 sanity).
+
+**Lesson (recorded as a memory):** fixture-driven verification is NOT acceptance
+for a CREATION flow. Any BLB/fractal claim must be backed by a hand-build through
+the real UI with a screenshot after every action, each eyeballed.
+
+**Still open:** observer-side click actionability on shared topics; mobile-layout
+ruling; the topic ROOT body line renders without a bullet (minor BLB gap);
+legacy archive 150→243; productionization (systemd + Redis sessions).
