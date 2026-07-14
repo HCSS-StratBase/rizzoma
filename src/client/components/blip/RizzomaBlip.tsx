@@ -280,6 +280,20 @@ type UploadUiState = {
   error?: string | null;
 };
 
+// BLB invariant (§19 row 1): EVERY blip body is a bulleted list. A freshly
+// created child is seeded server-side with <ul><li><p></p></li></ul>, but the
+// client can open its editor before that content has propagated (optimistic
+// mount / re-drive race) — TipTap then initialises a bare <p>, and the first
+// auto-save OVERWRITES the server's list with a paragraph. Hand-building a
+// depth-10 fractal (2026-07-14) showed every nested level below the first
+// coming back as <p>L4 label</p> — unbulleted, i.e. not BLB.
+const BLB_EMPTY_BODY = '<ul><li><p></p></li></ul>';
+const ensureBulletedBody = (html: string): string => {
+  const stripped = (html || '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+  if (stripped.length === 0 && !/<li[\s>]/i.test(html || '')) return BLB_EMPTY_BODY;
+  return html;
+};
+
 export function RizzomaBlip({
   blip,
   isRoot = false,
@@ -1048,7 +1062,9 @@ export function RizzomaBlip({
   const handleStartEdit = () => {
     console.log('handleStartEdit called for blip:', blip.id, 'canEdit:', blip.permissions.canEdit);
     if (blip.permissions.canEdit) {
-      const nextContent = injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline);
+      const nextContent = ensureBulletedBody(
+        injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)
+      );
       setEditedContent(nextContent);
       setIsEditing(true);
       setIsActive(true);
