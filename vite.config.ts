@@ -56,15 +56,17 @@ export default defineConfig(({ command, mode }) => {
   },
   server: {
     host: true,
-    port: 3000,
+    // Overridable so a staging instance can run beside live on its own ports.
+    port: Number(process.env.VITE_PORT || 3000),
+    strictPort: !!process.env.VITE_PORT,
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_API_TARGET || 'http://localhost:8000',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_API_TARGET || 'http://localhost:8000',
         ws: true,
       },
     },
