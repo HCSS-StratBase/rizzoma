@@ -761,16 +761,34 @@ export function RizzomaBlip({
           window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
             detail: { threadId: newBlipId, parentId: blip.id },
           }));
-          // Bug A perf fix (2026-05-11): single RAF instead of two. The
-          // new RizzomaBlip mounts in the React commit triggered by the
-          // toggle event's setLocalExpandedInline; useEffect (which
-          // registers the enter-edit listener) runs synchronously after
-          // commit, so a single RAF is sufficient to land after both.
-          requestAnimationFrame(() => {
+          // Robust edit-entry (2026-07-14). A single-RAF dispatch is NOT
+          // enough for NESTED creation: the new child claims the single-active
+          // slot, which FINISHES this parent's edit, which unmounts the child's
+          // first mount (it lives in the parent editor's BlipThreadNode portal).
+          // The child then re-mounts in the parent's VIEW render — after the RAF
+          // has already fired — so it sat in view mode with no editor and no
+          // focus, and the fractal died at depth 3 (hand-build, 2026-07-14).
+          // Re-drive until the child's ProseMirror is actually editable:
+          // re-EXPAND only if its container left the DOM (toggle is a toggle),
+          // then re-enter edit. Capped ~3.5s.
+          const tryEnterEdit = (attempt: number) => {
+            const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
+            const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
+            if (editable) {
+              (editable as HTMLElement).focus();
+              return;
+            }
+            if (!container) {
+              window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+                detail: { threadId: newBlipId, parentId: blip.id },
+              }));
+            }
             window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
               detail: { blipId: newBlipId },
             }));
-          });
+            if (attempt < 8) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 450);
+          };
+          requestAnimationFrame(() => tryEnterEdit(0));
         }
       } catch (error) {
         console.error('Error creating child blip:', error);
