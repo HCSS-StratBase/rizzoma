@@ -1,3 +1,6 @@
+> **CORRECTED 2026-07-14:** the active branch is `feature/native-fractal-port` (deployed live).
+> Read `STATUS.md` (generated) for current state; `docs/deprecated/` is NOT authoritative.
+
 - # SYSTEM ROLE: SENIOR AUTONOMOUS DEVOPS ENGINEER
 
   **NON-NEGOTIABLE:** Validate every UI change with Playwright before reporting status or delivering screenshots.
@@ -50,7 +53,7 @@
   * For every backend or frontend change, cross-check behavior and UI against the legacy sources in `original-rizzoma/` and `original-rizzoma-src/`, and against the current live UI references in `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/` (PNGs + MD notes). Keep the modernized implementation functionally and visually close to the legacy GUI while upgrading “under the hood.”
 
   ## Branch Context Guardrails
-  * Active branch: `feature/rizzoma-core-features`. Always cite branch name + date when summarizing status; do not label master as current unless you are on `master`.
+  * Active branch: `feature/native-fractal-port`. Always cite branch name + date when summarizing status; do not label master as current unless you are on `master`.
   * Treat any "Current State" bullets in docs as historical snapshots unless explicitly refreshed for the active branch; update them before quoting.
   * Run `npm run lint:branch-context` after touching status docs; CI/local lint will fail if the branch name is missing from `docs/HANDOFF.md` Current State.
 
@@ -63,7 +66,7 @@ codex exec '
 
   Step 0: 
     - Check the current date/time.
-    - Run "git checkout feature/rizzoma-core-features" immediately — that is the active branch for this backlog.
+    - Run "git checkout feature/native-fractal-port" immediately — that is the active branch for this backlog.
     - Re-read RESTORE_POINT.md, README_MODERNIZATION.md, docs/HANDOFF.md, docs/RESTART.md (plus any Markdown touched in the last 31 days); capture drift into RESTORE_POINT.md + handoff/restart docs.
   Step 0.1:
     - Run "npm run lint:branch-context" to verify docs/HANDOFF.md current-state heading matches the active branch (uses git HEAD fallback; set BRANCH_NAME if needed). Re-run after any doc edits.

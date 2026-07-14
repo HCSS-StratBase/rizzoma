@@ -1,3 +1,27 @@
+# CLAUDE.md — Rizzoma (entry point)
+
+> **READ THESE FIRST — they are the only authoritative docs:**
+> | For | Read |
+> |---|---|
+> | Current state (branch, deployment, gates, open failures) | **[`STATUS.md`](STATUS.md)** — GENERATED (`node scripts/gen_status.mjs`); never hand-write status |
+> | Architecture + why the React/TipTap hybrid keeps cracking | **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** |
+> | BLB rules (every rule labelled OLD vs NEW; **bullets are IMPOSED in our app**) | **[`docs/BLB.md`](docs/BLB.md)** |
+> | The prescribed fix | [`docs/NATIVE_RENDER_PORT_PLAN.md`](docs/NATIVE_RENDER_PORT_PLAN.md) |
+> | Verification gates | [`docs/VISUAL_SCREENSHOT_SWEEP.md`](docs/VISUAL_SCREENSHOT_SWEEP.md) |
+> | Anything superseded | [`docs/deprecated/README.md`](docs/deprecated/README.md) — **not authoritative** |
+>
+> A PreToolUse hook DENIES edits to `src/**` until the architecture analysis, the port plan,
+> the sweep doc and `docs/BLB.md` have been read **this session**. That is deliberate.
+>
+> **Working branch: `feature/native-fractal-port`** (this is what is deployed live).
+> Docs telling you to check out `feature/rizzoma-core-features` are deprecated.
+>
+> **The app does NOT run in Docker.** Live = nohup tsx :8000 + vite :3000 behind nginx;
+> only CouchDB + Redis are containers. `docker compose up app …` is historical.
+
+
+---
+
 # Rizzoma Project Status (feature/rizzoma-core-features)
 
 > **Session Continuity**: Read `CLAUDE_SESSION.md` first for detailed context from the last working session (recent fixes, test status, gotchas, key files).

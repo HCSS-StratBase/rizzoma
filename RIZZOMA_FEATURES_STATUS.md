@@ -1,3 +1,10 @@
+> **⚠️ 2026-07-14.** This file has TWO parts with different authority:
+> 1. The **240-row "Comprehensive Feature Comparison"** below is the **MACHINE-PARSED CONTRACT** —
+>    `scripts/visual-feature-sweep.mjs` and `visual-feature-coverage.mjs` read it. Keep it accurate.
+> 2. The **prose summary** that follows is a HISTORICAL accretion (it still cites the April sweep
+>    `260424-025320` as current, and a "161 green / 0 red" verdict that later audits contradict).
+>    **Do not cite it as status** — status is generated into [`STATUS.md`](STATUS.md).
+
 # 🚀 Rizzoma Core Features Implementation Status
 
 ## Summary
