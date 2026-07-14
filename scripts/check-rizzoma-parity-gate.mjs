@@ -72,12 +72,24 @@ if (latestUiCommitTs === 0 && workingUiChanged.length === 0) {
   process.exit(0);
 }
 
-const legacyDir = 'screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features';
-const legacyPngs = filesIn(legacyDir, (name) => name.endsWith('.png'));
-const legacyNotes = filesIn(legacyDir, (name) => name.endsWith('.md'));
-if (legacyPngs.length < 20 || legacyNotes.length < 20) {
+// Legacy baseline = the Feb per-feature set PLUS the systematic 260714 archive.
+// FULL-MATRIX RULE (SDS 2026-07-14): the legacy archive must be at matrix scale —
+// >=150 PNGs total, each paired with an .md note (the target is the ~243-PNG
+// scale of the original app's own asset inventory).
+const legacyDirs = [
+  'screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features',
+  'screenshots/260714-legacy-reference-archive',
+];
+let legacyPngs = 0;
+let legacyNotes = 0;
+for (const dir of legacyDirs) {
+  legacyPngs += filesIn(dir, (name) => name.endsWith('.png')).length;
+  legacyNotes += filesIn(dir, (name) => name.endsWith('.md')).length;
+}
+notes.push(`legacy reference PNGs=${legacyPngs}, notes=${legacyNotes} (floor 150)`);
+if (legacyPngs < 150 || legacyNotes < 150) {
   errors.push(
-    `legacy reference set incomplete: ${legacyPngs.length} PNGs and ${legacyNotes.length} MD notes in ${legacyDir}`,
+    `legacy reference archive below matrix scale: ${legacyPngs} PNGs / ${legacyNotes} notes across ${legacyDirs.join(' + ')} (need >=150 each; target ~243)`,
   );
 }
 
@@ -121,12 +133,19 @@ if (!latestSweep) {
     notes.push(
       `coverage visual=${screenshotCovered + dynamicCovered}, gaps=${screenshotGaps}, nonScreenshot=${nonScreenshot}`,
     );
+    // FULL-MATRIX RULE (SDS 2026-07-14): a screenshot gap is a FAIL, not a note.
+    if (screenshotGaps > 0) {
+      errors.push(`coverage matrix has ${screenshotGaps} screenshot gap(s) — every screenshot-valid row must be covered`);
+    }
+    if (screenshotCovered + dynamicCovered + nonScreenshot === 0) {
+      errors.push(`coverage matrix parsed 0 rows from ${coveragePath} — coverage.md malformed or empty`);
+    }
   }
 
   const comparisonDir = path.join(latestSweep, 'legacy-current-comparisons');
   const comparisons = filesIn(comparisonDir, (name) => name.endsWith('.png'));
-  if (comparisons.length < 8) {
-    errors.push(`legacy/current side-by-side comparison PNGs missing or too few: ${comparisons.length} in ${comparisonDir}`);
+  if (comparisons.length < 16) {
+    errors.push(`legacy/current side-by-side comparison PNGs missing or too few: ${comparisons.length} in ${comparisonDir} (need >=16, one per comparison track)`);
   }
 
   const auditPath = path.join(comparisonDir, 'PARITY_AUDIT.md');

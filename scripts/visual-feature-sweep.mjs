@@ -968,6 +968,9 @@ async function enterMainBlipEdit(page, fixture) {
   await main.waitFor({ timeout: 25000 });
   await main.locator('.blip-collapsed-row').click({ timeout: 5000 }).catch(() => {});
   if (!(await main.locator('[data-testid="blip-menu-edit-surface"]').first().count())) {
+    // Single-active model (2026-07): the read menu only renders on the ACTIVE
+    // blip — activate by clicking the blip content first, then wait for it.
+    await main.locator('.blip-content').first().click({ timeout: 5000 }).catch(() => {});
     await main.locator('[data-testid="blip-menu-read-surface"]').first().waitFor({ timeout: 25000 });
     await main.locator('[data-testid="blip-menu-edit"]').first().click();
   }

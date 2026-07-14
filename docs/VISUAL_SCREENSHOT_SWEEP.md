@@ -20,7 +20,9 @@ npm run parity:gate
 
 The project Stop hook [visual-sweep-gate.sh](../.claude/hooks/visual-sweep-gate.sh) calls the same npm gate. On machines where `.claude/settings.local.json` is active, register that hook under Stop. The checked-in hook file is durable; `.claude/settings.local.json` itself is intentionally local/ignored.
 
-Latest audit anchor: [PARITY_AUDIT.md](../screenshots/260713-225614-public-parity-sweep-feature-sweep/legacy-current-comparisons/PARITY_AUDIT.md) records the current measured status as **FAIL / IN_PROGRESS**, not parity-complete.
+**2026-07-14 update (Claude Fable 5):** the gate now enforces the FULL coverage matrix (SDS directive): coverage `screenshot_gap > 0` is a hard FAIL; the legacy reference archive must be at matrix scale (>=150 PNG+md pairs across the Feb set + `screenshots/260714-legacy-reference-archive/`, target ~243); comparison floor raised to 16. The systematic legacy archive (126 captures over 4 read-only passes of rizzoma.com) plus the two-client realtime capture (`capture_realtime_pair.mjs`, closes VF-039/040) brought the chain to PASS: 44/44 sweep gates, 159/159 coverage rows with 0 gaps, 24 comparison sheets, audit at `screenshots/260714-021500-feature-sweep/legacy-current-comparisons/PARITY_AUDIT.md` (verdict: EVIDENCE-COMPLETE / VISUAL PARITY IN_PROGRESS — deep-BLB layout divergence is the #1 open item).
+
+Latest audit anchor: [PARITY_AUDIT.md](../screenshots/260713-225614-public-parity-sweep-feature-sweep/legacy-current-comparisons/PARITY_AUDIT.md) recorded FAIL / IN_PROGRESS; superseded by the 2026-07-14 audit above.
 
 ## 2026-04-24 Sweep
 
