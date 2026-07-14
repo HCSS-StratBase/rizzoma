@@ -101,3 +101,44 @@ without `strictPort` silently drifts to :3001.
   `RizzomaBlip.tsx:2110` (`marginLeft: depth * 24`) + `RizzomaBlip.css` LI indents.
 - Deploy bridge to live (with the layout fix), full gate re-run, PARITY_AUDIT #2 → resolved.
 - Observer-side click actionability (audit #3); mobile ruling (#4); legacy archive 150 → 243.
+
+## Part 3 — Deep-BLB layout FIXED (audit severe-failure #1), both fixes LIVE
+
+Commits `e53b95c9` (v1) + `76ed55e2` (v2) + `cd14290a` (v3), deployed to live and staging.
+
+**Root cause (measured, not guessed).** A per-level geometry probe
+(`measure_fractal_geometry.mjs`) + an element-chain attribution probe
+(`measure_indent_chain.mjs`) showed the diagonal ladder was FIVE compounding terms
+per nesting level, not one:
+
+| Term | Before | After |
+|---|---|---|
+| `.inline-child-expanded` margin-left | 22px | 0 |
+| `.inline-child-expanded` padding-left | 8px | 2px |
+| LI margin-left (the LEGACY step — keep) | 22px | 22px |
+| `.blip-content-row` padding-left | 12px | 0 |
+| `.blip-text` padding-left | 8px | 0 |
+| bullet gutter (bullet + flex gap) | ~13px | ~8px |
+| **left step per level** | **~87px** | **~34px** |
+| **width lost per level** (avatar/meta flex column) | **~157px** | **~11px** |
+| **depth-10 usable width** (1440 viewport) | **241px** | **562px** |
+
+Fixes: keep ONLY the LI's 22px step (that IS legacy's step); the inline-child
+wrapper hugs it; body paddings stop stacking; the avatar/contributors chip is
+`position: absolute` in the box corner instead of consuming flex width; nested
+children get the legacy boxed-card treatment (1px #d9d9d9 border + radius +
+subtle shadow) so a child renders visually INSIDE its parent's box.
+
+**Eyeballed** (not DOM-only): `screenshots/260714-blb-layout/` —
+`after-fix-v2-depth10.png` and the side-by-side
+`legacy_vs_fixed_depth10_v3.png` vs the 2026-05-05 legacy reference. The
+diagonal ladder is gone; depth-10 renders as contained boxed nesting.
+
+**Ops gotcha (cost a false negative):** the long-running live vite process did NOT
+pick up the CSS change on git-checkout — it served the OLD stylesheet while the
+.tsx changes WERE live. Always restart vite (kill by `ss -ltnp` port owner) after
+a CSS-touching deploy, and verify by measuring, not by trusting the tree state.
+
+**Honest boundary:** legacy's step is the bare 22px LI margin; ours is ~34px (the
+residual is the nested bullet gutter). Visually equivalent nesting, not
+pixel-identical — recorded as such in PARITY_AUDIT.
