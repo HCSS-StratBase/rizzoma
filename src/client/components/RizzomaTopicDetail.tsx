@@ -769,11 +769,28 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
               detail: { threadId: newBlipId, parentId: id }
             }));
-            requestAnimationFrame(() => requestAnimationFrame(() => {
+            // Robust edit-entry (ported 2026-07-14 from fix/single-active-editor):
+            // the child's claim closes the TOPIC editor (single-active bridge),
+            // which unmounts the child's first mount (it lived in the topic
+            // editor's BlipThreadNode portal). Keep re-driving until the child's
+            // editor is actually editable in the post-exit view render:
+            // re-EXPAND only if its container left the DOM (toggle is a toggle),
+            // then re-enter edit. Capped ~3.5s.
+            const tryEnterEdit = (attempt: number) => {
+              const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
+              const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
+              if (editable) return;
+              if (!container) {
+                window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+                  detail: { threadId: newBlipId, parentId: id }
+                }));
+              }
               window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
                 detail: { blipId: newBlipId }
               }));
-            }));
+              if (attempt < 8) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 450);
+            };
+            requestAnimationFrame(() => requestAnimationFrame(() => tryEnterEdit(0)));
           } else {
             toast('Subblip created');
             load(true); // Fallback: reload to show the new blip
