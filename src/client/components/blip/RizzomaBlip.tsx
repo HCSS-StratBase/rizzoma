@@ -75,7 +75,7 @@ export interface BlipData {
 }
 
 let globalActiveBlipId: string | null = null;
-const ACTIVE_BLIP_CLAIM_EVENT = 'rizzoma:active-blip-claim' as const;
+export const ACTIVE_BLIP_CLAIM_EVENT = 'rizzoma:active-blip-claim' as const;
 
 export function getGlobalActiveBlipId(): string | null {
   return globalActiveBlipId;
@@ -329,6 +329,8 @@ export function RizzomaBlip({
   // Documented as Task #190 (sweep-state contamination → spine[1] empty).
   const isEditingRef = useRef(false);
   useEffect(() => { isEditingRef.current = isEditing; }, [isEditing]);
+  // Mirrors handleFinishEdit (declared below) for early-registered listeners.
+  const finishEditRef = useRef<(() => void) | null>(null);
   const isTopicRoot = renderMode === 'topic-root';
   // Root blips start expanded by default, but can be collapsed
   // Non-root blips follow the collapse preference
@@ -377,7 +379,15 @@ export function RizzomaBlip({
     const handleActiveClaim = (event: Event) => {
       const targetId = (event as CustomEvent<{ blipId?: string }>).detail?.blipId;
       if (!targetId) return;
-      setIsActive(targetId === blip.id);
+      const mine = targetId === blip.id;
+      setIsActive(mine);
+      // Single-active is about EDIT SURFACES, not just toolbar visibility: a
+      // foreign claim while this blip is editing must FINISH (auto-save) the
+      // edit, exactly like the original Rizzoma. Without this, the previous
+      // editor stayed editable with its toolbar merely hidden.
+      if (!mine && isEditingRef.current) {
+        finishEditRef.current?.();
+      }
     };
     window.addEventListener(ACTIVE_BLIP_CLAIM_EVENT, handleActiveClaim);
     return () => window.removeEventListener(ACTIVE_BLIP_CLAIM_EVENT, handleActiveClaim);
@@ -1048,6 +1058,7 @@ export function RizzomaBlip({
       inlineEditor.setEditable(false);
     }
   }, [autoSaveBlip, editedContent, inlineEditor]);
+  useEffect(() => { finishEditRef.current = handleFinishEdit; }, [handleFinishEdit]);
 
   const handleCreateInlineChildAtCursor = useCallback(() => {
     const editor = inlineEditorRef.current || inlineEditor;
@@ -2078,16 +2089,17 @@ export function RizzomaBlip({
   }, [forceExpanded]);
 
   useEffect(() => {
-    if (isInlineChild) {
-      // Inline children: only auto-activate when entering edit mode.
-      // On initial [+] expand, toolbar stays hidden until user clicks into content.
-      if (isEditing) setIsActive(true);
-    } else {
-      // Original Rizzoma does not expose every expanded blip's chrome. Only
-      // explicit user activation or edit mode should show the per-blip menu.
-      if (isEditing) setIsActive(true);
+    // Entering edit mode claims the single-active slot GLOBALLY (broadcast), not
+    // just locally: without this, a programmatic edit entry (Ctrl+Enter child,
+    // right-panel insert) left the previous surface — e.g. the TOPIC editor —
+    // editable alongside this one (two toolbars, §18b2 violation).
+    if (isEditing) {
+      setIsActive(true);
+      window.dispatchEvent(new CustomEvent(ACTIVE_BLIP_CLAIM_EVENT, {
+        detail: { blipId: blip.id },
+      }));
     }
-  }, [isEditing, isInlineChild]);
+  }, [isEditing, isInlineChild, blip.id]);
 
 
   return (

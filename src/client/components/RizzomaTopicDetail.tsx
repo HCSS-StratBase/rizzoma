@@ -10,7 +10,7 @@ import ExportModal from './ExportModal';
 import { WavePlaybackModal } from './WavePlaybackModal';
 import './RizzomaTopicDetail.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
-import { RizzomaBlip, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
+import { RizzomaBlip, ACTIVE_BLIP_CLAIM_EVENT, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
 import { injectInlineMarkers } from './blip/inlineMarkers';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
@@ -1096,6 +1096,13 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       toast('Sign in to edit', 'error');
       return;
     }
+    // Single-active bridge (ported from fix/single-active-editor, 2026-07-14):
+    // the topic-level editor claims the global active slot under a synthetic
+    // surface id, so every blip drops its chrome/edit state when topic editing
+    // starts — and vice versa (see the release listener below).
+    window.dispatchEvent(new CustomEvent(ACTIVE_BLIP_CLAIM_EVENT, {
+      detail: { blipId: `topic-editor:${id}` },
+    }));
     // BLB: Topic content should always have title as first H1
     // Merge title + existing content, ensuring title is H1 at the start
     let initialContent = '';
@@ -1129,6 +1136,31 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   }, [isAuthed, topic?.title, topic?.content, blips]);
 
   // Finish editing topic
+  // Single-active bridge — release side. While the topic editor is open, a
+  // claim by any FOREIGN surface (a blip entering edit or being clicked)
+  // finishes (auto-saves) the topic edit. A claim carrying the topic ROOT's own
+  // id is a click INSIDE this very editor (it bubbles to the root blip
+  // container), so reassert the surface claim instead of releasing — without
+  // this the editor blurred and died on its own clicks (2026-07-09 lesson).
+  const finishEditingTopicRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (!isEditingTopic || typeof window === 'undefined') return undefined;
+    const surfaceId = `topic-editor:${id}`;
+    const onClaim = (event: Event) => {
+      const claimId = (event as CustomEvent<{ blipId?: string }>).detail?.blipId;
+      if (!claimId || claimId === surfaceId) return;
+      if (claimId === id) {
+        window.dispatchEvent(new CustomEvent(ACTIVE_BLIP_CLAIM_EVENT, {
+          detail: { blipId: surfaceId },
+        }));
+        return;
+      }
+      finishEditingTopicRef.current?.();
+    };
+    window.addEventListener(ACTIVE_BLIP_CLAIM_EVENT, onClaim);
+    return () => window.removeEventListener(ACTIVE_BLIP_CLAIM_EVENT, onClaim);
+  }, [isEditingTopic, id]);
+
   const finishEditingTopic = useCallback(() => {
     // Clear any pending save timeout
     if (topicSaveTimeoutRef.current) {
@@ -1145,6 +1177,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       topicEditor.setEditable(false);
     }
   }, [autoSaveTopicContent, topicContent, topicEditor]);
+  useEffect(() => { finishEditingTopicRef.current = finishEditingTopic; }, [finishEditingTopic]);
 
   if (error) {
     return (
