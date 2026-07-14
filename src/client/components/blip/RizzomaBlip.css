@@ -1417,3 +1417,43 @@
     font-size: 16px; /* prevents iOS zoom on focus */
   }
 }
+
+/* ============================================================
+ * 2026-07-14 DEEP-BLB PARITY (audit severe-failure #1)
+ * Legacy rizzoma.com nests depth-10 as TIGHT boxed blocks: ~22px indent per
+ * level (the LI's own margin), children visually contained in the parent box,
+ * near-full width retained. Our render compounded ~86px/level on the left
+ * (wrapper margin 22 + wrapper padding 8 + row/text body paddings) and lost
+ * ~70px/level on the right (the avatar/meta flex column). Keep ONLY the LI's
+ * 22px step; the wrapper hugs it; the meta column overlays the top-right
+ * corner instead of consuming width.
+ * ============================================================ */
+.rizzoma-parity .inline-child-expanded {
+  margin-left: 0;
+  padding: 0 0 0 6px;
+}
+.rizzoma-parity .inline-child-expanded .blip-content-row {
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+  position: relative;
+}
+.rizzoma-parity .inline-child-expanded .blip-text {
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+/* Legacy boxed-card look for nested children */
+.rizzoma-parity .inline-child-expanded > .blip-container {
+  border: 1px solid #d9d9d9;
+  border-radius: 3px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+/* Meta/avatar column overlays the box corner instead of reserving width */
+.rizzoma-parity .inline-child-expanded .blip-author-info {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  padding-left: 0;
+  margin-left: 0;
+  z-index: 2;
+}
