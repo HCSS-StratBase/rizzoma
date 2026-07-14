@@ -1449,7 +1449,8 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 /* Meta/avatar column overlays the box corner instead of reserving width */
-.rizzoma-parity .inline-child-expanded .blip-author-info {
+.rizzoma-parity .inline-child-expanded .blip-author-info,
+.rizzoma-parity .inline-child-expanded .blip-contributors-info {
   position: absolute;
   right: 2px;
   top: 2px;
