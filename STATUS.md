@@ -4,16 +4,16 @@
 > the latest sweep/audit and the source tree. Six hand-written status files drifted for
 > months before this existed; they are in `docs/deprecated/`.
 
-**Generated:** 2026-07-15 (from HEAD's date — no wall-clock, keeps reruns deterministic)
+**Generated:** 2026-07-16 (from HEAD's date — no wall-clock, keeps reruns deterministic)
 
 ## Code
 
 | | |
 |---|---|
 | **Branch** | `feature/native-fractal-port` |
-| **HEAD** | 0f0b1315 2026-07-15 fix: kill stray wrapper bullet + float avatar top-right (BLB §7a); doc the rule |
+| **HEAD** | 12984319 2026-07-16 Phase 1 (native port): render fractal to full depth from parentId tree |
 | **Unpushed commits** | 0 |
-| **Uncommitted files** | 148 |
+| **Uncommitted files** | 143 |
 
 ## Deployment (see docs/VPS_DEPLOYMENT.md for the reality banner)
 
@@ -39,8 +39,8 @@
 
 | | |
 |---|---|
-| **Source** | 11 files, 2103 LOC in `src/client/native/` |
-| **Unit tests** | 7 test files |
+| **Source** | 12 files, 2185 LOC in `src/client/native/` |
+| **Unit tests** | 8 test files |
 | **Wiring** | **READ-ONLY** — opt-in via `?render=native`; no Edit button, no toolbars. Editing still goes through the React/TipTap hybrid. |
 | **Acceptance** | `HB_RENDER=native node scripts/handbuild_acceptance.mjs` must pass before any cutover |
 
