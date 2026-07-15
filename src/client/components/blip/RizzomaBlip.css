@@ -1465,3 +1465,49 @@
   margin-left: 0;
   z-index: 2;
 }
+
+/* ============================================================
+ * 2026-07-15 — bullets/avatar/top-line parity with old rizzoma.com
+ * (SDS: "the avatar needs no bullet AND also shouldn't be eating any screen
+ * real estate — the first bullet can easily be top-aligned with the avatar —
+ * just check the old Rizzoma: there it is EXACTLY so"). BLB.md §7a.
+ *
+ * (1) The blip body's <ul><li> is the ONLY bullet. The container must NOT
+ *     render a second wrapper bullet on top of it (the stray '•' floating
+ *     above the first list item — the arrows in the 2026-07-15 screenshot).
+ * (2) The contributor avatar carries no bullet and eats ZERO vertical space:
+ *     absolute, top-right, top-aligned with the first bullet.
+ * ============================================================ */
+.rizzoma-parity .blip-view-mode .blip-content-row {
+  position: relative;
+}
+/* Kill the wrapper bullet in EXPANDED view — the list supplies the bullet.
+   (Collapsed rows keep their single .blip-collapsed-row .blip-bullet.) */
+.rizzoma-parity .blip-view-mode > .blip-content-row > .blip-bullet {
+  display: none;
+}
+/* Avatar/date float in the top-right corner, no row of their own. */
+.rizzoma-parity .blip-view-mode > .blip-content-row > .blip-contributors-info {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  margin: 0;
+  padding: 0;
+  z-index: 2;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+.rizzoma-parity .blip-view-mode > .blip-content-row > .blip-contributors-info .blip-author-date {
+  font-size: 10px;
+  line-height: 14px;
+}
+/* Reserve just enough right padding on the text column so long labels don't
+   slide under the avatar. */
+.rizzoma-parity .blip-view-mode > .blip-content-row > .blip-main-content {
+  padding-right: 46px;
+}
+/* First list line hugs the top of the box — no leading gap above bullet 1. */
+.rizzoma-parity .blip-view-mode .blip-text > ul {
+  margin-top: 0;
+}

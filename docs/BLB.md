@@ -105,6 +105,25 @@ with no list structure at all.)*
 - Fold/unfold **never destroys the subtree** — draft text, scroll and focus survive a
   collapse/expand cycle.
 
+### 7a. 🟥 Bullets, the avatar, and the top-line — match old rizzoma.com EXACTLY [NEW/[BOTH]]
+
+The one and only bullet on a line comes from the blip body's `<ul><li>`. The blip container
+must **NOT** render its own separate wrapper bullet on top of it (that produced a stray `•`
+floating 15px above the first list bullet — SDS 2026-07-15, "all THIS weird stuff… the arrows").
+
+- **EVERYTHING is bulleted by default EXCEPT the topic title and the hashtag line under it.**
+  That includes the topic ROOT's own body (the "L1" first content line) — a `<p>` body at the
+  root is a BUG, not a title. Only the `<h1>` title and an optional `#hashtag` line beneath it
+  are un-bulleted.
+- **The contributor avatar carries NO bullet** and must **eat zero vertical space**. It sits
+  `position:absolute` in the **top-right** corner of the blip, **top-aligned with the first
+  bullet** — exactly as old rizzoma.com does it (see
+  `screenshots/260714-legacy-reference-archive/051-fractal-unfold-level-1.png`: the "5 May"
+  avatar thumbnail is top-right, level with `• First label by Claude`). It must never occupy a
+  row of its own above the content.
+- Net: the first rendered line of every blip is `• <label>` with the avatar floated top-right
+  on that same line. No empty leading row, no double bullet, no wasted height.
+
 ## 8. Acceptance [NEW]
 
 No BLB/fractal claim is admissible without a **hand-build through the real UI**:
