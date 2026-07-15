@@ -4,16 +4,16 @@
 > the latest sweep/audit and the source tree. Six hand-written status files drifted for
 > months before this existed; they are in `docs/deprecated/`.
 
-**Generated:** 2026-07-14 (from HEAD's date — no wall-clock, keeps reruns deterministic)
+**Generated:** 2026-07-15 (from HEAD's date — no wall-clock, keeps reruns deterministic)
 
 ## Code
 
 | | |
 |---|---|
 | **Branch** | `feature/native-fractal-port` |
-| **HEAD** | 283e4710 2026-07-14 gate: hand-build evidence now REQUIRED before Rizzoma UI work can close |
+| **HEAD** | 0f0b1315 2026-07-15 fix: kill stray wrapper bullet + float avatar top-right (BLB §7a); doc the rule |
 | **Unpushed commits** | 0 |
-| **Uncommitted files** | 169 |
+| **Uncommitted files** | 148 |
 
 ## Deployment (see docs/VPS_DEPLOYMENT.md for the reality banner)
 
