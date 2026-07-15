@@ -20,8 +20,7 @@ import { useCollaboration } from './editor/useCollaboration';
 import { yjsDocManager } from './editor/YjsDocumentManager';
 import { FEATURES } from '@shared/featureFlags';
 import { NativeWaveView } from './native/NativeWaveView';
-import { parseHtmlToContentArray } from '@client/native/parser';
-import type { ContentArray } from '@client/native/types';
+import { buildNativeContentLookup, type NativeBlipInput } from '@client/native/content-lookup';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -1232,14 +1231,28 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   })();
 
   if (useNativeRender) {
-    const allBlips: Array<{ id: string; content: string }> = [
-      { id: topic.id, content: topic.content || `<h1>${topic.title || 'Untitled'}</h1>` },
-      ...blips.map((b) => ({ id: b.id, content: b.content || '' })),
+    // The `blips` state is a NESTED tree (each BlipData carries `.childBlips`),
+    // and nesting is stored as parentId relationships — NOT as `data-blip-thread`
+    // markers in the HTML (those are injected only at React render time). So the
+    // lookup must be built from the authoritative tree, flattened to every
+    // descendant, with one synthesized BLIP element per child. Feeding the
+    // renderer per-blip parsed HTML alone stopped the fractal at the first level
+    // whose marker happened to be persisted. See native/content-lookup.ts.
+    const flat: NativeBlipInput[] = [
+      {
+        id: topic.id,
+        content: topic.content || `<h1>${topic.title || 'Untitled'}</h1>`,
+        parentId: null,
+      },
     ];
-    const contentMap = new Map<string, ContentArray>(
-      allBlips.map((b) => [b.id, parseHtmlToContentArray(b.content)])
-    );
-    const lookup = (id: string): ContentArray | null => contentMap.get(id) ?? null;
+    const flatten = (arr: BlipData[]): void => {
+      for (const b of arr) {
+        flat.push({ id: b.id, content: b.content || '', parentId: b.parentBlipId || topic.id });
+        if (b.childBlips?.length) flatten(b.childBlips);
+      }
+    };
+    flatten(blips);
+    const lookup = buildNativeContentLookup(topic.id, flat);
 
     return (
       <div className="rizzoma-topic-detail rizzoma-native-mode">
