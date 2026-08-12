@@ -8,6 +8,7 @@
 > | BLB rules (every rule labelled OLD vs NEW; **bullets are IMPOSED in our app**) | **[`docs/BLB.md`](docs/BLB.md)** |
 > | The prescribed fix | [`docs/NATIVE_RENDER_PORT_PLAN.md`](docs/NATIVE_RENDER_PORT_PLAN.md) |
 > | Verification gates | [`docs/VISUAL_SCREENSHOT_SWEEP.md`](docs/VISUAL_SCREENSHOT_SWEEP.md) |
+> | Legacy rizzoma.com write automation | [`docs/BLB.md`](docs/BLB.md#8a-legacy-rizzomacom-mcp-write-gate-old) + gate #94 incident report in the [shared documentation folder](https://drive.google.com/drive/folders/11Rs-D01thAXjqHDIDQfciWbflux4FzSy) |
 > | Anything superseded | [`docs/deprecated/README.md`](docs/deprecated/README.md) — **not authoritative** |
 >
 > A PreToolUse hook DENIES edits to `src/**` until the architecture analysis, the port plan,

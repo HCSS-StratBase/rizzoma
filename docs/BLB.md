@@ -135,6 +135,23 @@ Fixture-expansion, sweep-gate counts and pixel measurements are **not** acceptan
 2026-07-14 all of them passed green while the fractal was dying at depth 3 and every nested
 blip was an unbulleted paragraph. Enforced by `check-rizzoma-parity-gate.mjs`.
 
+### 8a. Legacy rizzoma.com MCP write gate [OLD]
+
+The legacy hosted editor and this modernized app share the same substantive BLB invariant:
+rich material may not be compressed into a polished one-level list and called complete.
+
+Shared MCP gate #94 now refuses substantive one-level writes before browser mutation. A deep
+contract must enumerate and cover every source point, reach at least depth three, justify each
+terminal leaf, specify all three salience tiers, and require persisted, folded, scoped, and visual
+acceptance. Because the current hosted-editor writers execute only one child layer, even a passing
+contract returns `recursive_writer_required` rather than flattening the tree.
+
+The canonical incident report is `RIZZOMA_SUBSTANTIVE_DEPTH_GATE_2026-08-12.md` in the
+[shared claude-hooks documentation folder](https://drive.google.com/drive/folders/11Rs-D01thAXjqHDIDQfciWbflux4FzSy).
+It records the five-bullet spatio-temporal failure, exact thresholds, 18 of 18 behavioural tests,
+6 of 6 documentation-surface tests, live service proof, and the unresolved need for a recursive
+writer and repair of the existing post.
+
 ## 9. Where the details live
 
 - The original's content model (flat `LINE`/`TEXT`/`BLIP` array, one linear walk) and why our
