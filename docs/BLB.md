@@ -143,14 +143,21 @@ rich material may not be compressed into a polished one-level list and called co
 Shared MCP gate #94 now refuses substantive one-level writes before browser mutation. A deep
 contract must enumerate and cover every source point, reach at least depth three, justify each
 terminal leaf, specify all three salience tiers, and require persisted, folded, scoped, and visual
-acceptance. Because the current hosted-editor writers execute only one child layer, even a passing
-contract returns `recursive_writer_required` rather than flattening the tree.
+acceptance. The three hosted-editor one-level writers still return `recursive_writer_required`
+rather than flattening the tree. Complete attributed contracts now route through
+`rizzoma_post_recursive`, which composes the canonical engine parent-before-child and supports a
+verified resume cursor.
+
+An unattended recursive publication must run independently of the MCP daemon in a supervised job
+with an atomic checkpoint after every operation. A second evidence-gated completion orchestrator
+must prove fresh readback, folds, links, all three emphasis tiers, scoped structure and
+vision-inspected PNGs before acceptance. The Maneuver Warfare reference implementation is documented
+in `RuBase/Maneuver warfare/rizzoma/MW_RIZZOMA_RECURSIVE_AUTOMATION_2026-08-13.md` on Drive.
 
 The canonical incident report is `RIZZOMA_SUBSTANTIVE_DEPTH_GATE_2026-08-12.md` in the
 [shared claude-hooks documentation folder](https://drive.google.com/drive/folders/11Rs-D01thAXjqHDIDQfciWbflux4FzSy).
 It records the five-bullet spatio-temporal failure, exact thresholds, 18 of 18 behavioural tests,
-6 of 6 documentation-surface tests, live service proof, and the unresolved need for a recursive
-writer and repair of the existing post.
+6 of 6 documentation-surface tests, live service proof, and the subsequent recursive repair route.
 
 ## 9. Where the details live
 
