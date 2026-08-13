@@ -154,6 +154,21 @@ must prove fresh readback, folds, links, all three emphasis tiers, scoped struct
 vision-inspected PNGs before acceptance. The Maneuver Warfare reference implementation is documented
 in `RuBase/Maneuver warfare/rizzoma/MW_RIZZOMA_RECURSIVE_AUTOMATION_2026-08-13.md` on Drive.
 
+**That pipeline produced its first accepted publication on 2026-08-13**: 141 of 141 contract labels
+at semantic depth five, 37 threads all folded by default, 11 hyperlinks with zero raw URLs and zero
+literal markdown, emphasis resolving to bold 2 / bold+italic 2 / italic 2 with zero cross-tier
+conflicts, zero duplicate labels, zero empty content blips, scoped structure gate PASS, and nine
+medium-resolution PNGs each read with a vision tool. Acceptance record:
+`RuBase/Maneuver warfare/rizzoma/MW_SPATIOTEMPORAL_RIZZOMA_COMPLETION_2026-08-13.md`.
+
+🟥 **A visual-verification trap the acceptance exposed, relevant to any BLB screenshot check here
+too:** the legacy reader's unfold loop clicks *every* fold button, so it re-folds threads it has
+already opened. Text extraction cannot detect this, because it reads the DOM regardless of
+visibility — but a screenshot pass built on it yielded **six byte-identical images of the topic
+head** presented as six different branches. Unfold only threads that are actually `.folded`, and
+**checksum any screenshot set that is supposed to differ**: identical bytes mean the capture failed,
+and "N screenshots exist" is not "N branches were verified".
+
 The canonical incident report is `RIZZOMA_SUBSTANTIVE_DEPTH_GATE_2026-08-12.md` in the
 [shared claude-hooks documentation folder](https://drive.google.com/drive/folders/11Rs-D01thAXjqHDIDQfciWbflux4FzSy).
 It records the five-bullet spatio-temporal failure, exact thresholds, 18 of 18 behavioural tests,
