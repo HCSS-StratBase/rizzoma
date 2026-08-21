@@ -9,6 +9,7 @@
 > | The prescribed fix | [`docs/NATIVE_RENDER_PORT_PLAN.md`](docs/NATIVE_RENDER_PORT_PLAN.md) |
 > | Verification gates | [`docs/VISUAL_SCREENSHOT_SWEEP.md`](docs/VISUAL_SCREENSHOT_SWEEP.md) |
 > | Legacy rizzoma.com write automation | [`docs/BLB.md`](docs/BLB.md#8a-legacy-rizzomacom-mcp-write-gate-old) + gate #94 incident report in the [shared documentation folder](https://drive.google.com/drive/folders/11Rs-D01thAXjqHDIDQfciWbflux4FzSy). Complete rich contracts use `rizzoma_post_recursive`; unattended runs require an independent checkpointed worker and evidence-gated completion orchestrator. |
+> | GitHub-backed project documentation | [`docs/GITHUB_DOCUMENTATION_SPINE.md`](docs/GITHUB_DOCUMENTATION_SPINE.md) — proposed canonical Git → Rizzoma → Tana/HANDOFF authority and synchronization contract |
 > | Anything superseded | [`docs/deprecated/README.md`](docs/deprecated/README.md) — **not authoritative** |
 >
 > A PreToolUse hook DENIES edits to `src/**` until the architecture analysis, the port plan,
