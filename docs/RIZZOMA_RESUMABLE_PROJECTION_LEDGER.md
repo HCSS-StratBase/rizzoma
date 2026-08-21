@@ -14,6 +14,14 @@ Rizzoma publication should become resumable through durable content identity and
 
 The private pilot repository should be `hcss-utils/documentation-spine`. The existing private repositories `hcss-utils/agentic-documents`, `hcss-utils/rizzoma-playback`, and `hcss-utils/rizzoma` solve different problems and should not be repurposed into the ledger.
 
+The Rizzoma projection groups the proposal under three content-derived umbrellas:
+
+- **Ledger design:** core decision, repository topology, and run identity;
+- **Recovery protocol:** verified-effect evidence and resume semantics;
+- **Operationalization:** executor boundaries and pilot acceptance.
+
+These are navigational groupings rather than a prescribed depth. Their branches continue until each terminal statement contains no unexposed sub-thought.
+
 ## Why ordinal recovery is unsafe
 
 An ordinal identifies a position in one rendering of a plan. It does not identify the intended effect. An inserted or reordered job can make “job 18” refer to different content while the command still appears valid.
