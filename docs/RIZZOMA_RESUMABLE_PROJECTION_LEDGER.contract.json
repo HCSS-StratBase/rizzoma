@@ -958,11 +958,6 @@
   },
   "links": [
     {
-      "leaf_prefix": "The pilot should use",
-      "anchor": "hcss-utils/documentation-spine",
-      "url": "https://github.com/hcss-utils"
-    },
-    {
       "leaf_prefix": "Actions never operate",
       "anchor": "durable control plane",
       "url": "https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/RIZZOMA_RESUMABLE_PROJECTION_LEDGER.md"
@@ -990,5 +985,6 @@
     "require_folded_threads": true,
     "require_visual_png": true,
     "require_scoped_structure_probe": true
-  }
+  },
+  "draft_sha256": "af74d3a05038be5fc641880c57811cd07ec1af279baa3ccb09edf824c6c505ce"
 }
