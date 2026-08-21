@@ -195,6 +195,24 @@ Only after this controlled interruption passes should the system backfill the cu
 
 This proposal specifies the repository, identity model, event ledger, resume semantics, executor boundary, and pilot acceptance test. It does not claim that the private repository, schemas, resume implementation, or live pilot already exist.
 
+## Live Rizzoma publication record
+
+The proposal was published on 21 August 2026 beneath the existing attributed root `[GPT-5.6 Sol · Codex] Resumable projection ledger`. The root had survived an interrupted recursive-writer attempt as an empty comment shell, so the fast Markdown-first writer correctly used the shell's direct blip URL and the append-mode content gate instead of creating a duplicate root.
+
+The contract-bound fast run projected 70 source bullets through 31 planned blips. Its measured result was 31 pasted, zero failed, and 29 of 30 newly created child threads Hidden in 267.4 seconds. The remaining `Ledger design` thread was then Hidden with the paste skill's scoped `hide_blip` operation.
+
+Persisted readback exposed one substantive defect that the writer's immediate success counters had missed: `Core decision` had lost its two evidence branches. The repair restored them as `Identity evidence` and `Dedicated private ledger`, each with one compact terminal rationale. This is a deliberate compression of the four original terminal bullets into two evidence statements; the live projection therefore preserves their full decisions and reasoning but not their original one-sentence-per-source-point granularity.
+
+Final acceptance evidence:
+
+- the scoped structure probe passed with 30 threads, 30 folded, two links, three emphasis tiers represented, zero raw URLs, and zero literal Markdown;
+- persisted full-tree readback confirmed the three top-level branches and all other planned branches;
+- medium-resolution folded and repair screenshots were visually inspected;
+- the folded root renders only `Ledger design`, `Recovery protocol`, and `Operationalization`, each with a `[+]` control;
+- the canonical proposal link survived in both rendered locations.
+
+The live target remains the [Rizzoma proposal blip](https://rizzoma.com/topic/62d6bdc5ec1c533e13df57763219272c/0_b_cjjg_cpovf/). The direct child shell used for scoped verification is [the populated projection blip](https://rizzoma.com/topic/62d6bdc5ec1c533e13df57763219272c/0_b_cjjg_cpp36/).
+
 ## Related records
 
 - [GitHub documentation spine](https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/GITHUB_DOCUMENTATION_SPINE.md)
