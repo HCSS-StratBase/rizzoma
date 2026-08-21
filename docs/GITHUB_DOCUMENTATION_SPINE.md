@@ -99,6 +99,52 @@ The unattended workflow must expose four distinct health claims:
 
 Retries are bounded. Contradictions remain visible. A last-known-good snapshot prevents partial output from replacing correct documentation.
 
+## Pilot repository and receipt-backed recovery
+
+The pilot should use a private repository named `hcss-utils/documentation-spine`. Generic writer code, schemas, and synthetic tests may later be mirrored into the public Rizzoma repository, but real drafts, target URLs, project state, and execution receipts remain private.
+
+```text
+documentation-spine/
+├── README.md
+├── schemas/
+│   ├── project.schema.json
+│   ├── projection-manifest.schema.json
+│   ├── checkpoint-event.schema.json
+│   └── final-receipt.schema.json
+├── projects/<project-id>/
+│   ├── project.yaml
+│   ├── RESEARCH_DESIGN.md
+│   ├── PROGRESS.md
+│   ├── DECISIONS.md
+│   ├── EVIDENCE.md
+│   ├── sources.yaml
+│   └── projections/rizzoma.yaml
+├── runs/<project-id>/<run-id>/
+│   ├── manifest.json
+│   ├── plan.json
+│   ├── events.jsonl
+│   ├── checkpoint.json
+│   └── receipt.json
+├── tools/
+│   ├── build_projection_plan.py
+│   ├── validate_projection_run.py
+│   └── resume_projection.py
+├── tests/fixtures/
+└── .github/workflows/validate.yml
+```
+
+`main` holds canonical project documentation, schemas, and completed receipts. Each live projection runs on `projection/<project-id>/<run-id>`, created from the exact canonical commit being projected. Per-operation checkpoint commits stay on that branch. On completion, the branch is tagged and a compact final receipt is merged into `main`; runtime churn therefore does not turn the canonical branch into an event database.
+
+The run manifest binds the exact draft hash, depth-contract hash, canonical Git commit, target Rizzoma URL and blip, normalized parent path, writer version, and expected pre-write readback hash. The plan contains stable job IDs derived from the bound run identity, normalized parent path, and rendered job-body hash. Ordinal retry flags such as `--only=18` are forbidden because order is not identity.
+
+After each browser mutation, the writer must persistently read back the affected subtree before appending a checkpoint event. The event records the stable job ID, affected node IDs, rendered readback hash, fold/link/emphasis evidence, timestamp, and result. It is then committed and pushed with an expected remote head; a concurrent writer or changed branch head fails closed.
+
+`--resume` reloads the manifest and events, revalidates every binding, confirms that already-completed effects still exist on the live Rizzoma page, and executes only missing stable job IDs. Any draft, contract, target, parent-path, canonical-commit, or live-tree drift produces `blocked_drift`; it is never silently reconciled. A final receipt is issued only after full persisted readback, scoped structure probing, fold/link/emphasis checks, and human inspection of medium-resolution PNGs.
+
+GitHub Actions validates schemas, hashes, source-ID coverage, stable-job uniqueness, receipt completeness, and secret exclusions. It does not drive the authenticated Rizzoma browser. A supervised local Windows-CDP orchestrator remains the sole executor and GitHub remains its durable control plane.
+
+The first test must use a disposable Rizzoma blip: intentionally stop after two jobs, restart with `--resume`, and prove that completed jobs are not duplicated and the final receipt covers the complete subtree.
+
 ## Adoption path
 
 1. Select one mature project with rich Progress and Research Design histories.
