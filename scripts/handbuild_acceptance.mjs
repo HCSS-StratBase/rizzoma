@@ -181,7 +181,8 @@ gate('BLB §2: a [+] / folded-thread affordance exists after reload',
 // ---------- expand everything with REAL clicks ----------
 for (let i = 0; i < DEPTH + 8; i++) {
   const clicked = await page.evaluate(() => {
-    const nat = Array.from(document.querySelectorAll('.blip-thread.folded .fold-button, .blip-thread.folded .js-fold-button'));
+    const nat = Array.from(document.querySelectorAll('.blip-thread.folded .fold-button, .blip-thread.folded .js-fold-button'))
+      .filter(el => el.offsetParent !== null);
     if (nat.length) { nat[nat.length - 1].dispatchEvent(new MouseEvent('click', { bubbles: true })); return true; }
     const m = Array.from(document.querySelectorAll('.blip-thread-marker'))
       .filter(el => el.offsetParent !== null && (el.textContent || '').trim() === '+').pop();
@@ -228,10 +229,12 @@ const ctx2 = await browser.newContext({ viewport: { width: 1440, height: 950 }, 
 const page2 = await ctx2.newPage();
 await login(page2);
 await page2.goto(url, { waitUntil: 'domcontentloaded' });
-await sleep(9000);
+await page2.waitForSelector('.blip-thread, .blip-thread-marker', { timeout: 30000 });
+await sleep(3000);
 for (let i = 0; i < DEPTH + 8; i++) {
   const clicked = await page2.evaluate(() => {
-    const nat = Array.from(document.querySelectorAll('.blip-thread.folded .fold-button, .blip-thread.folded .js-fold-button'));
+    const nat = Array.from(document.querySelectorAll('.blip-thread.folded .fold-button, .blip-thread.folded .js-fold-button'))
+      .filter(el => el.offsetParent !== null);
     if (nat.length) { nat[nat.length - 1].dispatchEvent(new MouseEvent('click', { bubbles: true })); return true; }
     const m = Array.from(document.querySelectorAll('.blip-thread-marker'))
       .filter(el => el.offsetParent !== null && (el.textContent || '').trim() === '+').pop();
@@ -240,7 +243,7 @@ for (let i = 0; i < DEPTH + 8; i++) {
     return true;
   });
   if (!clicked) break;
-  await sleep(1100);
+  await sleep(1200);
 }
 n += 1;
 await page2.screenshot({ path: path.join(OUT, `${String(n).padStart(2, '0')}-second-client.png`), fullPage: false });
