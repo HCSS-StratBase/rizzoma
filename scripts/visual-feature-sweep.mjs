@@ -966,14 +966,14 @@ async function enterMainBlipEdit(page, fixture) {
   // Wait for the specific main-blip element to mount — observer page may need
   // a moment after openWave() before the blip data is loaded into the DOM.
   await main.waitFor({ timeout: 25000 });
-  await main.locator('.blip-collapsed-row').click({ timeout: 5000 }).catch(() => {});
-  if (!(await main.locator('[data-testid="blip-menu-edit-surface"]').first().count())) {
-    // Single-active model (2026-07): the read menu only renders on the ACTIVE
-    // blip — activate by clicking the blip content first, then wait for it.
-    await main.locator('.blip-content').first().click({ timeout: 5000 }).catch(() => {});
-    await main.locator('[data-testid="blip-menu-read-surface"]').first().waitFor({ timeout: 25000 });
-    await main.locator('[data-testid="blip-menu-edit"]').first().click();
+  const collapsed = main.locator('.blip-collapsed-row');
+  if (await collapsed.count()) {
+    await collapsed.click();
+  } else if (!(await main.locator('[data-testid="blip-menu-read-surface"]').count())) {
+    await main.locator('.blip-content').first().click().catch(() => {});
   }
+  await main.locator('[data-testid="blip-menu-read-surface"]').first().waitFor({ timeout: 25000 });
+  await main.locator('[data-testid="blip-menu-edit"]').first().click();
   await main.locator('[data-testid="blip-menu-edit-surface"]').first().waitFor({ timeout: 25000 });
   const editor = main.locator('.ProseMirror').first();
   await editor.waitFor({ timeout: 10000 });

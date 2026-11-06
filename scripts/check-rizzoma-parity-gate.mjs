@@ -150,9 +150,9 @@ if (!latestSweep) {
   // close without fresh hand-build evidence.
   const handbuildDirs = fs
     .readdirSync(path.join(repoRoot, 'screenshots'), { withFileTypes: true })
-    .filter((e) => e.isDirectory() && /handbuild-d10/.test(e.name))
+    .filter((e) => e.isDirectory() && /handbuild-(d10|acceptance)/.test(e.name))
     .map((e) => path.join('screenshots', e.name))
-    .sort();
+    .sort((a, b) => mtimeSeconds(a) - mtimeSeconds(b));
   const latestHandbuild = handbuildDirs.at(-1) ?? null;
   if (!latestHandbuild) {
     errors.push(
