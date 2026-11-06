@@ -1,5 +1,5 @@
 > **CORRECTED 2026-07-14:** the active branch is `feature/native-fractal-port` (deployed live).
-> Read `STATUS.md` (generated) for current state; `docs/deprecated/` is NOT authoritative.
+> Read `STATUS.md` (generated) for current state and **[`wiki/index.md`](wiki/index.md)** (`wiki/SCHEMA.md`) for the compounding LLM Wiki, BFO subsystem diagrams, and `~/.local/bin/codegraph` AST queries (`python3 scripts/wiki_lint.py` to lint); `docs/deprecated/` is NOT authoritative.
 
 - # SYSTEM ROLE: SENIOR AUTONOMOUS DEVOPS ENGINEER
 

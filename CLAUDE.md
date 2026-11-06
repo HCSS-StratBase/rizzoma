@@ -10,6 +10,7 @@
 > | Verification gates | [`docs/VISUAL_SCREENSHOT_SWEEP.md`](docs/VISUAL_SCREENSHOT_SWEEP.md) |
 > | Legacy rizzoma.com write automation | [`docs/BLB.md`](docs/BLB.md#8a-legacy-rizzomacom-mcp-write-gate-old) + gate #94 incident report in the [shared documentation folder](https://drive.google.com/drive/folders/11Rs-D01thAXjqHDIDQfciWbflux4FzSy). Complete rich contracts use `rizzoma_post_recursive`; unattended runs require an independent checkpointed worker and evidence-gated completion orchestrator. |
 > | GitHub-backed project documentation | [`docs/GITHUB_DOCUMENTATION_SPINE.md`](docs/GITHUB_DOCUMENTATION_SPINE.md) — proposed canonical Git → Rizzoma → Tana/HANDOFF authority and synchronization contract |
+> | **Compounding LLM Wiki & AST Call Graph (2026-11-06)** | **[`wiki/index.md`](wiki/index.md)** + **[`wiki/SCHEMA.md`](wiki/SCHEMA.md)** — BFO `Continuant TD` / `Occurrent LR` diagrams, `file:line` subsystem guides, active contradictions ([`wiki/decisions/contradictions-and-lint-findings.md`](wiki/decisions/contradictions-and-lint-findings.md)), mechanical linter (`python3 scripts/wiki_lint.py`), and `~/.local/bin/codegraph` AST index |
 > | Anything superseded | [`docs/deprecated/README.md`](docs/deprecated/README.md) — **not authoritative** |
 >
 > A PreToolUse hook DENIES edits to `src/**` until the architecture analysis, the port plan,
@@ -24,7 +25,7 @@
 
 ---
 
-# Rizzoma Project Status (feature/rizzoma-core-features)
+# Rizzoma Project Status (`feature/native-fractal-port`)
 
 > **Session Continuity**: Read `CLAUDE_SESSION.md` first for detailed context from the last working session (recent fixes, test status, gotchas, key files).
 

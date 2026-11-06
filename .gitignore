@@ -1,56 +1,102 @@
-# IDE
-.idea
-.netbeans
-.settings
-.project
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Local settings
-src/server/settings_local.coffee
+# Diagnostic and debug scripts / screenshots
+scripts/debug_*.mjs
+scripts/repro_*.mjs
+scripts/verify_*.mjs
+scripts/check_*.mjs
+scripts/rizzoma_login.bat
+scripts/win_relay.py
+scripts/rizzoma_fast_cdp.py
+scripts/rizzoma-fast*.png
+scripts/rizzoma_export_via_cdp_simple.bat.bak*
+scripts/rizzoma-session-state.json.bak*
+bullets-*.png
+repro-*.png
+verify-*.png
+verify8-*.png
+marker-click-*.png
+our-rizzoma-*.png
+gpu_hog_report.bat
+read_rizzoma.mjs
+tana-tools.json
+tmp_weather_*.json
+tmp/
+.codegraph-wsl/
+.codegraphignore
+android/
+ios/
 
-# Claude Code per-project hooks + state (personal — see .claude/hooks/)
-.claude/settings.local.json
-.claude/state/
-.claude/scheduled_tasks.lock
+# Diagnostic output
+.coverage/
+coverage/
 
-# Other repositories
-.svn
-src/pulse_index.coffee
-src/server/app_roles/web_payment.coffee
-src/server/app_roles/web_pulse.coffee
-src/pages/
-original-rizzoma/
-original-rizzoma-src/
-
-# Build
-lib/*
-node_modules/compiled_modules/current
-src/server/version.coffee
-src/s
-# Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
-.grunt
-
-# Data directiories
-data/*
-data/avatars/*
-
-# Modern build artifacts
+# Dependency directories
 node_modules/
 dist/
-coverage/
-npm-debug.log*
+build/
+
+# Environment variables
 .env
-rizzoma.bundle
+.env.local
+.env.*.local
+!.env.example
 
-# Playwright screenshots
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+
+# Temporary folders
+tmp/
+temp/
+.temp/
+
+# Rizzoma specific
+uploads/
+rizzoma/
+data/
+
+# Tests
+test-results/
+
+# Playwright
+playwright-report/
+blob-report/
+playwright/.cache/
+snapshots/
+original-rizzoma-src/
+original-rizzoma/
+.claude/
 .playwright-mcp/
-
-# Snapshots (default ignored; explicitly include latest published artifacts)
-snapshots/**
-!snapshots/**/.gitkeep
-!snapshots/follow-the-green/1765298128125-*.png
-!snapshots/follow-the-green/1765296401439-*.png
-!snapshots/toolbar-inline/1765298097444-*.png
-!snapshots/perf/**
-
-# Development logs
-*.log
+scripts/rizzoma-session-state.json
+scripts/__pycache__/
