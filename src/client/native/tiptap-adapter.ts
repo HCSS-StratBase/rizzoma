@@ -39,6 +39,8 @@ export interface TipTapAdapterOptions {
   editorProps?: any;
   /** Per-blip context the extensions might need (blipId, waveId, callbacks). */
   extensionOptions?: any;
+  /** Optional callback fired when editor document updates (for auto-save). */
+  onUpdate?: (props: { editor: any; transaction: any }) => void;
 }
 
 /**
@@ -53,6 +55,7 @@ export const makeTipTapFactory = (opts: TipTapAdapterOptions): BlipEditorFactory
       extensions: opts.extensions(opts.extensionOptions),
       editorProps: opts.editorProps,
       autofocus: 'end',
+      onUpdate: opts.onUpdate,
     });
 
     return {
@@ -60,6 +63,7 @@ export const makeTipTapFactory = (opts: TipTapAdapterOptions): BlipEditorFactory
       getHTML: () => editor.getHTML(),
       setContent: (html: string) => editor.commands.setContent(html),
       destroy: () => editor.destroy(),
+      get raw() { return editor; },
     };
   };
 };
