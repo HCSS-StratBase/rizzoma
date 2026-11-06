@@ -48,33 +48,66 @@
 .rizzoma-native-mode .blip-thread .fold-button-container {
   display: inline-block;
   vertical-align: middle;
+  border: 1px solid transparent;
 }
 
-.rizzoma-native-mode .blip-thread .js-fold-button {
-  display: inline-block;
+.rizzoma-native-mode .blip-thread .js-fold-button.fold-button {
+  height: 20px;
   width: 18px;
-  height: 18px;
-  background: #b3b3b3;
-  border-radius: 3px;
-  color: #fff;
-  text-align: center;
-  line-height: 18px;
-  font-weight: bold;
-  font-size: 12px;
-  margin: 0 4px;
-  vertical-align: middle;
+  display: inline-block;
   cursor: pointer;
+  line-height: 0;
+  overflow: hidden;
+  vertical-align: middle;
   user-select: none;
 }
 
-/* Hide the placeholder <img> elements in the fold-button template
- * (their src points at /s/img/* which don't exist in the React bundle).
- * We use a CSS pseudo-element to render the +/- glyph instead. */
-.rizzoma-native-mode .blip-thread .js-fold-button > div { display: none; }
-.rizzoma-native-mode .blip-thread .js-fold-button::before {
-  content: "−";
+.rizzoma-native-mode .blip-thread .fold-button div {
+  background: #b3b3b3;
+  display: inline-block;
 }
-.rizzoma-native-mode .blip-thread.folded .js-fold-button::before {
+
+.rizzoma-native-mode .blip-thread .fold-button.unread div {
+  background: #95d529;
+}
+
+.rizzoma-native-mode .blip-thread .fold-button > div {
+  border-radius: 3px;
+  color: white;
+  height: 16px;
+  position: relative;
+}
+
+.rizzoma-native-mode .blip-thread .fold-button > div > div {
+  width: 7px;
+  height: 7px;
+  position: absolute;
+  z-index: 0;
+  top: 10px;
+  left: 3px;
+  -webkit-transform: rotate(-45deg) skewX(-45deg);
+  transform: rotate(-45deg) skewX(-45deg);
+}
+
+.rizzoma-native-mode .blip-thread .fold-button .plus-minus {
+  left: 0;
+  margin: -17px 0 0 4px;
+  position: absolute;
+  top: 0;
+}
+
+.rizzoma-native-mode .blip-thread.folded > .fold-button-container .plus-minus {
+  margin-top: 0;
+}
+
+/* Fallback if plus_minus.png image is missing or loading */
+.rizzoma-native-mode .blip-thread .fold-button:empty::before {
+  content: "−";
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: bold;
+}
+.rizzoma-native-mode .blip-thread.folded .fold-button:empty::before {
   content: "+";
 }
 
@@ -87,7 +120,7 @@
   display: block;
   margin-left: 22px;
   padding-left: 8px;
-  border-left: 2px solid #e5e7eb;
+  border-left: 1px solid #d6d6d6;
 }
 
 /* No banner — native render is now the default; users can opt out
