@@ -1026,6 +1026,30 @@ export function RizzomaBlip({
     return () => window.removeEventListener('rizzoma:deactivate-blip', handle);
   }, [blip.id]);
 
+  const handleStartEdit = useCallback(() => {
+    if (onStartEdit) {
+      onStartEdit();
+      return;
+    }
+    console.log('handleStartEdit called for blip:', blip.id, 'canEdit:', blip.permissions.canEdit);
+    if (blip.permissions.canEdit) {
+      const nextContent = ensureBulletedBody(
+        injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)
+      );
+      setEditedContent(nextContent);
+      setIsEditing(true);
+      setIsActive(true);
+      // Update inline editor content and make it editable
+      if (inlineEditor) {
+        inlineEditor.commands.setContent(nextContent);
+        inlineEditor.setEditable(true);
+        requestAnimationFrame(() => {
+          inlineEditor.commands.focus();
+        });
+      }
+    }
+  }, [onStartEdit, blip.id, blip.permissions.canEdit, blip.content, inlineChildren, localExpandedInline, inlineEditor]);
+
   // Handle clicks on [+] markers in view mode (inside dangerouslySetInnerHTML content)
   // AND click-to-edit: putting cursor in the blip immediately reveals full editing bar!
   const handleViewContentClick = useCallback((e: React.MouseEvent) => {
@@ -1092,29 +1116,6 @@ export function RizzomaBlip({
     handleToggleExpand();
   };
 
-  const handleStartEdit = () => {
-    if (onStartEdit) {
-      onStartEdit();
-      return;
-    }
-    console.log('handleStartEdit called for blip:', blip.id, 'canEdit:', blip.permissions.canEdit);
-    if (blip.permissions.canEdit) {
-      const nextContent = ensureBulletedBody(
-        injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)
-      );
-      setEditedContent(nextContent);
-      setIsEditing(true);
-      setIsActive(true);
-      // Update inline editor content and make it editable
-      if (inlineEditor) {
-        inlineEditor.commands.setContent(nextContent);
-        inlineEditor.setEditable(true);
-        requestAnimationFrame(() => {
-          inlineEditor.commands.focus();
-        });
-      }
-    }
-  };
 
   const handleFinishEdit = useCallback(() => {
     // Clear any pending auto-save and do a final save
