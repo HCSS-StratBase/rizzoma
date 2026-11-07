@@ -704,6 +704,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         content: '<ul><li><p></p></li></ul>',
         parentId: null, // This is a child of the topic/wave itself (root-level blip)
         anchorPosition: anchorPosition, // The cursor position where this inline comment is anchored
+        isFoldedByDefault: true,
       };
       try {
         const response = await api('/api/blips', {

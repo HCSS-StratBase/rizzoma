@@ -95,8 +95,8 @@ function ensureStorageListener(): void {
       const prevEntry = previous[blipId];
       const nextEntry = next[blipId];
       if (!nextEntry && prevEntry) {
-        // Default to false (not hidden) when preference is cleared
-        const defaultEntry: CollapseEntry = { isCollapsed: false, updatedAt: Date.now() };
+        // Default to true (hidden by default) when preference is cleared
+        const defaultEntry: CollapseEntry = { isCollapsed: true, updatedAt: Date.now() };
         notify(blipId, defaultEntry, 'storage');
         return;
       }
@@ -113,8 +113,8 @@ function ensureStorageListener(): void {
 export function getCollapsePreference(blipId: string): boolean {
   const map = readMap();
   const entry = map[blipId];
-  // Default to false (not hidden) if no explicit preference
-  return typeof entry?.isCollapsed === 'boolean' ? entry.isCollapsed : false;
+  // Default to true (hidden by default) if no explicit preference
+  return typeof entry?.isCollapsed === 'boolean' ? entry.isCollapsed : true;
 }
 
 export function getCollapsePreferenceMetadata(blipId: string): { isCollapsed: boolean; updatedAt: number } | undefined {

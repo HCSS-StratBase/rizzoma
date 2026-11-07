@@ -732,6 +732,7 @@ export function RizzomaBlip({
             // where Ctrl+Enter created a new bulleted thread, not a paragraph.
             content: '<ul><li><p></p></li></ul>',
             anchorPosition, // Store the position where the [+] marker was created
+            isFoldedByDefault: true,
           }),
         });
 
@@ -1163,7 +1164,8 @@ export function RizzomaBlip({
         body: JSON.stringify({
           waveId,
           parentId: blip.id,
-          content: replyContent
+          content: replyContent,
+          isFoldedByDefault: true,
         }),
       });
 

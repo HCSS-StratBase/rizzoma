@@ -172,10 +172,21 @@
 .blip-text ul,
 .topic-content-view ul,
 .topic-blip-content ul,
-.tiptap.ProseMirror ul {
+.tiptap.ProseMirror ul,
+.blip-editor-container .ProseMirror ul {
   list-style: none !important;
+  list-style-type: none !important;
   margin: 0.25em 0;
   padding-left: 0 !important;
+}
+
+.blip-text ul > li::marker,
+.topic-content-view ul > li::marker,
+.topic-blip-content ul > li::marker,
+.tiptap.ProseMirror ul > li::marker,
+.blip-editor-container .ProseMirror ul > li::marker {
+  display: none !important;
+  content: "" !important;
 }
 
 .blip-text ol,
@@ -210,7 +221,8 @@
 .blip-text ul > li::before,
 .topic-content-view ul > li::before,
 .topic-blip-content ul > li::before,
-.tiptap.ProseMirror ul > li::before {
+.tiptap.ProseMirror ul > li::before,
+.blip-editor-container .ProseMirror ul > li::before {
   content: '•';
   position: absolute;
   left: 2px;
@@ -224,7 +236,8 @@
 .blip-text ul ul,
 .topic-content-view ul ul,
 .topic-blip-content ul ul,
-.tiptap.ProseMirror ul ul {
+.tiptap.ProseMirror ul ul,
+.blip-editor-container .ProseMirror ul ul {
   padding-left: 18px !important;
   margin: 0.1em 0;
 }
@@ -232,7 +245,8 @@
 .blip-text ul ul > li::before,
 .topic-content-view ul ul > li::before,
 .topic-blip-content ul ul > li::before,
-.tiptap.ProseMirror ul ul > li::before {
+.tiptap.ProseMirror ul ul > li::before,
+.blip-editor-container .ProseMirror ul ul > li::before {
   content: '◦';
   position: absolute;
   left: 2px;
@@ -246,7 +260,8 @@
 .blip-text ul ul ul,
 .topic-content-view ul ul ul,
 .topic-blip-content ul ul ul,
-.tiptap.ProseMirror ul ul ul {
+.tiptap.ProseMirror ul ul ul,
+.blip-editor-container .ProseMirror ul ul ul {
   padding-left: 18px !important;
   margin: 0.1em 0;
 }
@@ -254,7 +269,8 @@
 .blip-text ul ul ul > li::before,
 .topic-content-view ul ul ul > li::before,
 .topic-blip-content ul ul ul > li::before,
-.tiptap.ProseMirror ul ul ul > li::before {
+.tiptap.ProseMirror ul ul ul > li::before,
+.blip-editor-container .ProseMirror ul ul ul > li::before {
   content: '▪';
   position: absolute;
   left: 3px;
@@ -671,46 +687,69 @@
 .tiptap.ProseMirror ol,
 .rizzoma-parity .tiptap.ProseMirror ul,
 .rizzoma-parity .tiptap.ProseMirror ol {
-  padding-left: 1.5em !important;
-  margin: 0.5em 0;
-  list-style-position: outside;
+  margin: 0.25em 0;
 }
 .tiptap.ProseMirror ul,
-.rizzoma-parity .tiptap.ProseMirror ul { list-style-type: disc; }
+.rizzoma-parity .tiptap.ProseMirror ul {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+}
 .tiptap.ProseMirror ol,
-.rizzoma-parity .tiptap.ProseMirror ol { list-style-type: decimal; }
+.rizzoma-parity .tiptap.ProseMirror ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
+}
 .tiptap.ProseMirror ul ul,
-.rizzoma-parity .tiptap.ProseMirror ul ul { list-style-type: circle; padding-left: 1.5em !important; }
+.rizzoma-parity .tiptap.ProseMirror ul ul {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 18px !important;
+}
 .tiptap.ProseMirror ul ul ul,
-.rizzoma-parity .tiptap.ProseMirror ul ul ul { list-style-type: square; }
+.rizzoma-parity .tiptap.ProseMirror ul ul ul {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 18px !important;
+}
 .tiptap.ProseMirror li,
-.rizzoma-parity .tiptap.ProseMirror li { margin: 0.25em 0; }
+.rizzoma-parity .tiptap.ProseMirror li {
+  position: relative;
+  padding-left: 18px;
+  margin: 0.15em 0;
+  line-height: 22px;
+}
 .tiptap.ProseMirror li p,
-.rizzoma-parity .tiptap.ProseMirror li p { display: inline; margin: 0; }
+.rizzoma-parity .tiptap.ProseMirror li p { display: inline; margin: 0; line-height: 22px; }
 
 /* List styling in editor */
 .blip-editor-container .ProseMirror ul,
 .blip-editor-container .ProseMirror ol {
-  margin: 0.5em 0;
-  padding-left: 1.5em;
-  list-style-position: outside;
+  margin: 0.25em 0;
 }
 
 .blip-editor-container .ProseMirror ul {
-  list-style-type: disc;
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
 }
 
 .blip-editor-container .ProseMirror ol {
-  list-style-type: decimal;
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
 }
 
 .blip-editor-container .ProseMirror li {
-  margin: 0.25em 0;
+  position: relative;
+  padding-left: 18px;
+  margin: 0.15em 0;
+  line-height: 22px;
 }
 
 .blip-editor-container .ProseMirror li p {
   display: inline;
   margin: 0;
+  line-height: 22px;
 }
 
 /* Nested lists - indent further */
@@ -718,16 +757,14 @@
 .blip-editor-container .ProseMirror ol ol,
 .blip-editor-container .ProseMirror ul ol,
 .blip-editor-container .ProseMirror ol ul {
-  margin: 0.25em 0;
-  padding-left: 1.5em;
+  margin: 0.1em 0;
+  padding-left: 18px !important;
 }
 
-.blip-editor-container .ProseMirror ul ul {
-  list-style-type: circle;
-}
-
+.blip-editor-container .ProseMirror ul ul,
 .blip-editor-container .ProseMirror ul ul ul {
-  list-style-type: square;
+  list-style: none !important;
+  list-style-type: none !important;
 }
 
 .blip-editor-container .blip-editor {

@@ -171,7 +171,7 @@ router.post('/', requireAuth, async (req, res): Promise<void> => {
       authorId: userId,
       authorName: (req.body?.authorName as string)?.trim() || fallbackName,
       deleted: false,
-      isFoldedByDefault: false,
+      isFoldedByDefault: typeof req.body?.isFoldedByDefault === 'boolean' ? req.body.isFoldedByDefault : true,
       // Store anchor position for inline blips created via Ctrl+Enter
       ...(typeof anchorPosition === 'number' ? { anchorPosition } : {}),
     } as any;
