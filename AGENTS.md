@@ -1,5 +1,6 @@
 > **CORRECTED 2026-07-14:** the active branch is `feature/native-fractal-port` (deployed live).
 > Read `STATUS.md` (generated) for current state and **[`wiki/index.md`](wiki/index.md)** (`wiki/SCHEMA.md`) for the compounding LLM Wiki, BFO subsystem diagrams, and `~/.local/bin/codegraph` AST queries (`python3 scripts/wiki_lint.py` to lint); `docs/deprecated/` is NOT authoritative.
+> **UI work: look at the ORIGINAL first.** `screenshots/260714-legacy-reference-archive/` holds 126 screenshots of the original rizzoma.com, each with a `.md` description beside it; index and rules: **[`wiki/reference/legacy-screenshots.md`](wiki/reference/legacy-screenshots.md)**. Other catalogs (source map, scripts, docs, assets): `wiki/index.md` section 6. After adding files run `python3 scripts/wiki_generate_catalogs.py` then `python3 scripts/wiki_coverage.py`.
 
 - # SYSTEM ROLE: SENIOR AUTONOMOUS DEVOPS ENGINEER
 

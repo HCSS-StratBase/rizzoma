@@ -17,4 +17,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 if __name__ == "__main__":
     cmd = [sys.executable, str(CANONICAL_TOOL), "--repo", str(REPO_ROOT), *sys.argv[1:]]
-    sys.exit(subprocess.call(cmd))
+    rc = subprocess.call(cmd)
+    cov = subprocess.call([sys.executable, str(REPO_ROOT / "scripts" / "wiki_coverage.py")])
+    sys.exit(rc or cov)

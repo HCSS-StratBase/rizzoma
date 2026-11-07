@@ -74,3 +74,18 @@ source_commit: a4d4d583
   ~/.local/bin/codegraph callers renderContent --path /mnt/c/Rizzoma
   ~/.local/bin/codegraph impact buildNativeContentLookup --path /mnt/c/Rizzoma
   ```
+
+---
+
+## 6. Reference catalogs (generated — `python3 scripts/wiki_generate_catalogs.py`)
+
+| Page | Modality | Last Verified | Summary |
+|---|---|---|---|
+| [`reference/legacy-screenshots.md`](reference/legacy-screenshots.md) | `□` | `2026-11-07` | **Start here for any UI work.** Pointer to the 126 original-Rizzoma reference screenshots (each with its own `.md` description), section counts, and every image linked by name. |
+| [`reference/screenshot-folders-catalog.md`](reference/screenshot-folders-catalog.md) | `□` | `2026-11-07` | All 60 folders under `screenshots/`: image counts, kind (legacy reference / comparison / our sweeps), description files. |
+| [`reference/source-map.md`](reference/source-map.md) | `□` | `2026-11-07` | Every code file under `src/` (client, server, shared, types, tests) with length and header. |
+| [`reference/scripts-catalog.md`](reference/scripts-catalog.md) | `□` | `2026-11-07` | Every file in `scripts/`, every npm script, every project hook. |
+| [`reference/docs-inventory.md`](reference/docs-inventory.md) | `□` | `2026-11-07` | Every markdown doc outside `wiki/` and `screenshots/`, with title and status line. |
+| [`reference/assets-and-snapshots.md`](reference/assets-and-snapshots.md) | `□` | `2026-11-07` | `public/` (legacy sprites under `public/s/`), `snapshots/`, root files. |
+
+**¶ Coverage rule** □ `python3 scripts/wiki_coverage.py` fails when any code file, script, doc, legacy image or screenshot folder is not mentioned by name in `wiki/`. Run the generator, then the check, after adding files.
