@@ -14,7 +14,7 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, 
     <div className="navigation-panel tabs-container">
       <div className="new-topic-buttons">
         <button
-          className="create-wave button"
+          className="create-wave button new-button"
           onClick={onNewClick}
           title="Create new topic"
         >
