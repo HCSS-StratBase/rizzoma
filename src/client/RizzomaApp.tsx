@@ -36,10 +36,10 @@ export function RizzomaApp(): JSX.Element {
   return (
     <div className="rizzoma-app">
       {/* Yellow notification bar like real Rizzoma */}
-      {FEATURES.FOLLOW_GREEN && (
+      {FEATURES.FOLLOW_GREEN && localStorage.getItem('rizzoma_show_cal_banner') === '1' && (
         <div className="notification-bar">
           Have your Rizzoma Tasks copied to your Google Calendar automatically. 
-          <a href="#">Disable extension</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); localStorage.removeItem('rizzoma_show_cal_banner'); window.location.reload(); }}>Disable extension</a>
         </div>
       )}
       
