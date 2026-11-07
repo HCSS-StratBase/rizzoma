@@ -4,9 +4,9 @@ title: "Modernized Rizzoma — LLM Wiki Master Index"
 version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
-last_verified: 2026-11-06
+last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: 12984319
+source_commit: a4d4d583
 ---
 
 # Modernized Rizzoma — LLM Wiki Master Index (`wiki/index.md`)
@@ -39,6 +39,9 @@ source_commit: 12984319
 | [`subsystems/native-render-port.md`](subsystems/native-render-port.md) | `□` / `▷` | `2026-11-06` | Complete module-by-module guide to all 12 files (`2,185 LOC`) in `src/client/native/` (`types.ts`, `parser.ts`, `serializer.ts`, `content-lookup.ts`, `renderer.ts`, `blip-thread.ts`, `blip-view.ts`, `wave-view.ts`, `blip-editor-host.ts`, `tiptap-adapter.ts`, `yjs-binding.ts`, `awareness.ts`) plus `NativeWaveView.tsx` and Phase 1–5 status. |
 | [`subsystems/blb-and-editor-invariants.md`](subsystems/blb-and-editor-invariants.md) | `□` | `2026-11-06` | Normative `[BOTH]` / `[OLD]` / `[NEW]` invariants from `docs/BLB.md`: imposed `<ul><li>` bullets (`ensureBulletedBody`), single active editor per wave (`rizzoma:active-blip-claim` / `BlipEditorHost`), `Ctrl+Enter` inline child creation, and folded `[+]` markers. |
 | [`subsystems/server-collab-and-storage.md`](subsystems/server-collab-and-storage.md) | `□` | `2026-11-06` | Express 5 backend (`src/server/app.ts`), CouchDB Mango views & 13 indexes (`src/server/lib/couch.ts`), Socket.IO + Y.js CRDT state cache (`socket.ts`, `yjsDocCache.ts`, `editorPresence.ts`), OAuth/SAML auth, unread watermarks, and ClamAV upload scanning. |
+
+| [`subsystems/legacy-visual-parity.md`](subsystems/legacy-visual-parity.md) | `□` / `▷` | `2026-11-07` | The 21 commits of 6–7 Nov: legacy chrome, blip edit mode and Done bar, TipsBox, pixel-comparison scripts. Post-change gate result not yet filed. |
+| [`reference-doc-catalog.md`](reference-doc-catalog.md) | `□` | `2026-11-07` | Every non-spine doc (features contract, QUICKSTART, VPS deployment, toolbar parity, projection ledger, worklogs, the superseded Drive repo) and how far to trust it. |
 
 ---
 

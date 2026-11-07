@@ -8,7 +8,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-CANONICAL_TOOL = Path("/mnt/g/My Drive/claude-hooks/tools/wiki_and_security_audit.py")
+_CANDIDATES = [
+    Path("/mnt/g/My Drive/claude-hooks/tools/wiki_and_security_audit.py"),  # WSL
+    Path("G:/My Drive/claude-hooks/tools/wiki_and_security_audit.py"),      # Windows
+]
+CANONICAL_TOOL = next((c for c in _CANDIDATES if c.exists()), _CANDIDATES[0])
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 if __name__ == "__main__":

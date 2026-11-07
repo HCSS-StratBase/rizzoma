@@ -33,3 +33,9 @@ last_verified: 2026-11-06
   2. Logged `RizzomaTopicDetail.tsx:1213-1230` comment-vs-code contradiction (`?render=react` comment vs `?render=native` implementation) in `wiki/decisions/contradictions-and-lint-findings.md`.
   3. Logged `content-lookup.ts:71-76` Phase 1 inline marker stripping and end-of-blip child synthesis gap.
   4. Verified 0 orphan wiki pages, 0 broken Markdown links, 100% BFO `Continuant TD` + `Occurrent LR` diagram compliance, and 0 git-tracked credential leaks.
+
+## [2026-11-07] ingest | Legacy visual parity commits and non-spine doc catalog
+- **Why**: the 2026-11-06 wiki missed 21 later commits (`git log 54626e77..a4d4d583`, 253 files) and 6 doc groups it never listed.
+- **Pages added**: `subsystems/legacy-visual-parity.md`, `reference-doc-catalog.md`; `index.md` updated.
+- **Not done**: existing pages (`architecture/content-array-vs-react-hybrid.md`, `subsystems/blb-and-editor-invariants.md`, `subsystems/native-render-port.md`, `verification/gates-sweeps-and-deployment.md`, `decisions/contradictions-and-lint-findings.md`) were NOT re-verified against the 7 Nov code; their `last_verified` stays 2026-11-06 and the linter's staleness warnings remain until someone re-reads them. No parity gate was run.
+- **Linter**: `scripts/wiki_lint.py` now finds the canonical tool from Windows as well as WSL.
