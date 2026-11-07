@@ -147,12 +147,20 @@
 }
 
 .blip-text {
-  line-height: 1.5;
-  color: #333;
-  padding: 4px;
-  border-radius: 3px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  line-height: 22px;
+  color: #000;
+  padding: 0 4px;
+  border-radius: 0;
   min-height: 24px;
   user-select: text;
+}
+
+.blip-text p {
+  margin: 0;
+  padding: 0;
+  line-height: 22px;
 }
 
 /*

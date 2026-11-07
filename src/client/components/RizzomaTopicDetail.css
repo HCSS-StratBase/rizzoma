@@ -19,49 +19,99 @@
 /* ========================================
    TOPIC COLLABORATION TOOLBAR
    Original Rizzoma: Invite | avatars | +N | Share | gear
+   Source: wave.css (.wave-header), page.css (.button), participants_panel.css (.wave-participants)
 ======================================== */
 .topic-collab-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 20px;
-  background: linear-gradient(to bottom, #f8f8f8, #eee);
-  border-bottom: 1px solid #ddd;
+  height: 50px;
+  padding: 8px 10px 0 10px;
+  background: #B5BEC5;
+  box-sizing: border-box;
   flex-shrink: 0;
+  position: relative;
+  z-index: 4;
 }
 
 .collab-btn {
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 11px;
   font-size: 13px;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(to bottom, #f3f3f3 0%, #dedede 100%);
+  border: 1px solid #859099;
+  border-radius: 3px;
   cursor: pointer;
-  color: #333;
-  transition: all 0.15s ease;
+  color: #364552;
+  text-shadow: white 1px 1px 1px;
+  font-weight: normal;
+  box-sizing: border-box;
+  transition: background 0.15s ease;
+  vertical-align: top;
 }
 
 .collab-btn:hover {
-  background: #f5f5f5;
-  border-color: #bbb;
+  background: linear-gradient(to bottom, #f3f3f3 0%, #c6c6c6 100%);
+  border-color: #758089;
+}
+
+.collab-btn:active {
+  background: #bbc2c7;
 }
 
 .invite-btn {
-  color: #4285f4;
-  font-weight: 500;
+  color: #364552;
+  font-weight: normal;
+  margin-right: 6px;
 }
 
 .share-btn {
-  color: #666;
+  color: #364552;
+  height: 32px;
+  min-width: 69px;
+  text-align: right;
+  padding-right: 10px;
+  padding-left: 28px;
+  position: relative;
+  margin-left: 15px;
+}
+
+.share-btn .share-lock-icon {
+  position: absolute;
+  left: 7px;
+  top: 9px;
+  width: 18px;
+  height: 13px;
+  background: url('/s/img/wave_lock_sprite.png') -6px -8px no-repeat;
+  display: inline-block;
 }
 
 .gear-btn {
-  padding: 6px 10px;
-  font-size: 14px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+}
+
+.gear-btn .gear-icon-sprite {
+  width: 16px;
+  height: 16px;
+  background: url('/s/img/settings-sprite.png') 0 0 no-repeat;
+  display: inline-block;
+}
+
+.gear-btn:hover .gear-icon-sprite {
+  background-position: 0 -19px;
 }
 
 .gear-btn.active {
-  background: #ddd;
+  background: #bbc2c7;
 }
 
 .gear-menu-container {
@@ -73,10 +123,10 @@
   top: 100%;
   right: 0;
   min-width: 180px;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: #F4F4F4;
+  border: 1px solid #E5E5E5;
+  border-radius: 0 0 2px 2px;
+  box-shadow: 2px 4px 9px -6px black;
   z-index: 1000;
   padding: 4px 0;
 }
@@ -84,18 +134,20 @@
 .gear-menu-item {
   display: block;
   width: 100%;
-  padding: 8px 16px;
+  padding: 6px 12px;
   text-align: left;
   background: none;
   border: none;
   cursor: pointer;
   font-size: 13px;
-  color: #333;
+  color: #303030;
+  font-family: Arial, Helvetica, sans-serif;
   transition: background-color 0.15s ease;
 }
 
 .gear-menu-item:hover {
-  background: #f0f0f0;
+  background: #4ea0f1;
+  color: #fff;
 }
 
 .gear-menu-divider {
@@ -107,17 +159,24 @@
 .collab-participants {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex: 1;
 }
 
 .participant-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  border: 2px solid #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  margin-left: -8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 0;
+  border: 1px solid #707478;
+  box-sizing: border-box;
+  margin-left: 0;
+  margin-right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
 }
 
 .participant-avatar.fallback,
@@ -125,8 +184,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #4EA0F1, #2f7ac1);
-  color: #fff;
+  background: #E3EAF0;
+  color: #336699;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.01em;
@@ -141,7 +200,7 @@
 }
 
 .participant-avatar.owner {
-  border-color: #4EA0F1;
+  border-color: #336699;
 }
 
 .participant-avatar.pending {
@@ -153,15 +212,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  background: #e0e0e0;
-  color: #666;
+  width: 30px;
+  height: 30px;
+  border-radius: 0;
+  border: 1px solid #707478;
+  background: #E3EAF0;
+  color: #336699;
   font-size: 11px;
   font-weight: 500;
-  margin-left: -8px;
+  margin-left: 0;
+  margin-right: 2px;
   cursor: default;
+  box-sizing: border-box;
 }
 
 .participant-count {

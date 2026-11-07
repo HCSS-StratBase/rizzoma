@@ -1345,7 +1345,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           title="Share settings"
           onClick={() => setShowShareModal(true)}
         >
-          🔒 Share
+          <span className="share-lock-icon" />Share
         </button>
         <div className="gear-menu-container" ref={gearMenuRef}>
           <button
@@ -1353,7 +1353,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             title="Topic settings"
             onClick={() => setShowGearMenu(!showGearMenu)}
           >
-            ⚙️
+            <span className="gear-icon-sprite" />
           </button>
           {showGearMenu && (
             <div className="gear-dropdown">

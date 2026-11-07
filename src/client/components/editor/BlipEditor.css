@@ -1,12 +1,12 @@
 .blip-editor {
   min-height: 1.5rem;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
+  padding: 0;
+  border-radius: 0;
 }
 
 .blip-editor.editable {
-  border: 1px solid #e5e7eb;
-  background-color: #ffffff;
+  border: none;
+  background-color: transparent;
 }
 
 .blip-editor.read-only {
@@ -16,10 +16,16 @@
 .blip-editor .ProseMirror {
   outline: none;
   min-height: 1.5rem;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  line-height: 22px;
+  color: #000;
 }
 
 .blip-editor .ProseMirror p {
   margin: 0;
+  padding: 0;
+  line-height: 22px;
 }
 
 .blip-editor .ProseMirror h1 {

@@ -1,21 +1,25 @@
-/* Rizzoma Topics List - Original Style */
+/* Authentic Legacy Rizzoma Topics List Styles */
 
 .rizzoma-topics-list {
   height: 100%;
   display: flex;
   flex-direction: column;
   background: #E3EAF0;
+  font-family: Arial, Helvetica, sans-serif;
+  user-select: none;
 }
 
 /* Search Header */
 .topics-header {
+  height: 50px;
   padding: 9px 8px;
+  box-sizing: border-box;
   position: relative;
 }
 
 .search-query-container {
   position: relative;
-  margin: 0 17px 0 0;
+  margin: 0;
 }
 
 .search-query {
@@ -27,7 +31,8 @@
   outline: none;
   padding: 0 40px 0 10px;
   font-size: 13px;
-  background: white;
+  background: #FFF;
+  color: #000;
 }
 
 .search-query:focus {
@@ -42,14 +47,11 @@
   width: 33px;
   border-radius: 0 4px 4px 0;
   cursor: pointer;
-  background: #5DABF7;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
+  background: url('/s/img/search_buttons.png') no-repeat scroll 0 -3px;
 }
 
 .search-icon:hover {
-  background-color: #4A9BE8;
+  background-position: 0 -36px;
 }
 
 /* Topics Container */
@@ -57,7 +59,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  border-top: 1px solid #FFF;
+  background: #E3EAF0;
 }
 
 /* Search Result Item (Topic) */
@@ -70,6 +72,7 @@
   text-decoration: none;
   padding: 17px 10px 13px 15px;
   border-bottom: 1px solid #FFF;
+  box-sizing: border-box;
 }
 
 .search-result-item:hover {
@@ -77,20 +80,25 @@
 }
 
 /* Selected/Active state */
-.search-result-item.active,
+.search-result-item.active {
+  color: #FFF !important;
+  background: #5DABF7 !important;
+  padding-bottom: 13px;
+  padding-top: 17px;
+}
+
 .search-result-item.active .item-snippet {
-  color: white;
-  background: #5DABF7;
+  color: #FFF !important;
 }
 
 .search-result-item.active .last-changed {
-  color: rgba(255, 255, 255, 0.9);
+  color: #FFF !important;
 }
 
 /* Unread indicator bar on left */
 .unread-blips-indicator {
   position: absolute;
-  background: white;
+  background: #FFF;
   width: 3px;
   top: 5px;
   bottom: 5px;
@@ -104,10 +112,10 @@
   bottom: 0;
   left: 0;
   width: 3px;
-  transition: height 0.2s ease;
+  height: 3px;
 }
 
-.search-result-item.active .unread-blips-indicator > div {
+.search-result-item.active > .unread-blips-indicator > div {
   background: #336699;
 }
 
@@ -122,9 +130,11 @@
   overflow: hidden;
   height: 35px;
   line-height: 17px;
+  margin: 0;
+  word-break: break-word;
 }
 
-.search-result-item.unread .wave-title {
+.search-result-item.unread .text-content {
   font-weight: bold;
 }
 
@@ -132,6 +142,7 @@
   color: #7A7A7A;
   font-weight: normal;
   font-size: 12px;
+  line-height: 16px;
 }
 
 /* Wave info area (right side) */
@@ -140,75 +151,44 @@
   right: 5px;
   top: 15px;
   text-align: center;
-  width: 60px;
+  width: 50px;
 }
 
-/* Follow/Unfollow button - hidden by default */
+/* Follow/Unfollow button */
 .wave-info .follow {
   display: none;
   text-align: center;
   margin-top: 4px;
   font-size: 12px;
-  padding: 4px 8px;
-  border: 1px solid #CCD9E5;
-  border-radius: 3px;
-  background: white;
-  cursor: pointer;
-  color: #2C2C2C;
 }
 
-.wave-info .follow:hover {
-  background: #f0f0f0;
-  border-color: #5DABF7;
-}
-
-.search-result-item.active .wave-info .follow {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.search-result-item.active .wave-info .follow:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Info section - avatar and date */
-.wave-info .info {
+.search-result-item.active .follow,
+.search-result-item.show-follow-button .follow {
   display: block;
 }
 
-/* Show follow button, hide info on active or hover */
-.search-result-item.active .wave-info .follow,
-.search-result-item.show-follow-button .wave-info .follow {
-  display: block;
-}
-
-.search-result-item.active .wave-info .info,
-.search-result-item.show-follow-button .wave-info .info {
+.search-result-item.active .info,
+.search-result-item.show-follow-button .info {
   display: none;
 }
 
 /* Avatar */
-.last-editing.avatar {
+.last-editing.avatar,
+.wave-info .last-editing {
   height: 30px;
   width: 30px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  line-height: 30px;
-  background-color: #CCD9E5;
+  display: inline-block;
+  font-size: 15px;
+  line-height: 32px;
   border-radius: 3px;
-  color: white;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  object-fit: cover;
 }
 
 .last-editing.avatar.fallback {
-  background: linear-gradient(135deg, #4EA0F1, #2f7ac1);
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  background: #CCD9E5;
+  color: #FFF;
+  font-weight: bold;
+  text-align: center;
 }
 
 /* Date/time */
@@ -216,6 +196,8 @@
   font-family: 'PT Sans Narrow', Arial, sans-serif;
   font-size: 12px;
   line-height: 13px;
+  width: 50px;
+  text-align: center;
   color: #666;
   margin-top: 2px;
 }
@@ -227,9 +209,4 @@
   padding: 40px 20px;
   color: #706F6F;
   font-size: 16px;
-}
-
-/* Remove the old footer - we don't need it anymore */
-.topics-footer {
-  display: none;
 }
