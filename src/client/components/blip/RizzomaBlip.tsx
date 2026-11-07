@@ -863,11 +863,12 @@ export function RizzomaBlip({
   // The legacy injectInlineMarkers path stays in use for the non-parity branch
   // and for edit mode (where TipTap NodeView still emits portal anchors).
   const parityViewRender = FEATURES.RIZZOMA_PARITY_RENDER && !isEditing;
-  const viewContentHtml = parityViewRender
+  const rawViewHtml = parityViewRender
     ? (blip.content || '')
     : (!isEditing && inlineChildren.length > 0
         ? injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)
         : (blip.content || ''));
+  const viewContentHtml = ensureBulletedBody(rawViewHtml);
 
   // Portal containers for rendering expanded inline children at their marker positions
   const portalContainers = useRef<Map<string, HTMLElement>>(new Map());
@@ -2369,7 +2370,7 @@ export function RizzomaBlip({
                     style={onContentClick ? { cursor: 'pointer' } : undefined}
                   >
                     {renderInlineHtml({
-                      html: blip.content || '',
+                      html: ensureBulletedBody(blip.content || ''),
                       inlineChildren,
                       expandedSet: localExpandedInline,
                       everMountedSet: everMountedInline,
