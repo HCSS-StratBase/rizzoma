@@ -251,20 +251,19 @@
   overflow: hidden;
 }
 
-/* Meta-blip toolbar (like BlipMenu for regular blips) */
+/* Meta-blip toolbar (like BlipMenu for regular blips) - only visible during editing */
 .topic-blip-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: #e6e6e6;
-  border-bottom: 1px solid #cfcfcf;
-  flex-shrink: 0;
+  display: none !important;
 }
 
 .topic-blip-toolbar.editing {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
   background: #d9edf9;
-  border-bottom-color: #bcd7ea;
+  border-bottom: 1px solid #bcd7ea;
+  flex-shrink: 0;
 }
 
 .topic-tb-btn {
@@ -385,11 +384,12 @@
 }
 
 .topic-title {
-  margin: 0;
-  font-size: 18px;
+  margin: 0 0 8px 0;
+  font-size: 24px;
   font-weight: bold;
   color: #222;
-  line-height: 1.3;
+  line-height: 28px;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .topic-title:hover {

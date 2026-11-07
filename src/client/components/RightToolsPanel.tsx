@@ -250,7 +250,7 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
       {/* User Avatar */}
       {user && (
         <div className="user-avatar-section">
-          <div className="user-avatar-large" title={user.email || user.name || 'User'}>
+          <div className="user-avatar-small" title={user.email || user.name || 'User'}>
             {user.avatar && !avatarFailed ? (
               <img
                 src={user.avatar}
@@ -266,85 +266,60 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
               {getInitials(user.name, user.email)}
             </span>
           </div>
-          <div className="user-name">{user.name || user.email?.split('@')[0] || 'User'}</div>
         </div>
       )}
 
       {/* Follow the Green - Next / Next Topic buttons */}
       {unreadCount === 0 && nextTopicAvailable ? (
         <button
-          className="next-button next-topic-button"
+          className="next-unread-blip next-topic-blip"
           onClick={onNextTopic}
           title="Jump to next topic with unread blips"
         >
-          Next Topic
-          <span className="next-arrow">▶▶</span>
+          Next &gt;
         </button>
       ) : (
         <button
-          className={`next-button ${unreadCount > 0 ? 'has-unread' : ''}`}
+          className={`next-unread-blip ${unreadCount > 0 ? '' : 'disabled'}`}
           onClick={handleFollowGreen}
           disabled={unreadCount === 0 || navigating}
           title={unreadCount > 0 ? `${unreadCount} unread - click to navigate` : 'No unread blips'}
         >
-          Next
-          <span className="next-arrow">▶</span>
+          Next &gt;
         </button>
       )}
 
       {/* Fold/Unfold controls */}
       <div className="fold-controls">
         <button
-          className="fold-btn"
+          className="hide-replies"
           onClick={handleHideReplies}
           title="Hide replies (Ctrl+Shift+Up)"
-        >
-          <span className="fold-icon">▲</span>
-        </button>
+        />
         <button
-          className="fold-btn"
+          className="show-replies"
           onClick={handleShowReplies}
           title="Show replies (Ctrl+Shift+Down)"
-        >
-          <span className="fold-icon">▼</span>
-        </button>
+        />
       </div>
 
       {/* View mode toggle */}
       <div className="view-toggle">
         <button
-          className={`view-btn ${viewMode === 'text' ? 'active' : ''}`}
+          className={`text-view ${viewMode === 'text' ? 'active' : ''}`}
           onClick={() => setViewMode('text')}
           title="Text view"
         >
-          <span className="view-icon">☰</span>
+          <span className="view-icon" />
           <span className="view-label">Text view</span>
         </button>
         <button
-          className={`view-btn ${viewMode === 'mindmap' ? 'active' : ''}`}
+          className={`mindmap-view ${viewMode === 'mindmap' ? 'active' : ''}`}
           onClick={() => setViewMode('mindmap')}
           title="Mind map"
         >
-          <span className="view-icon">⟨⟩</span>
+          <span className="view-icon" />
           <span className="view-label">Mind map</span>
-        </button>
-      </div>
-
-      {/* Display mode toggle (short/expanded) */}
-      <div className="display-toggle">
-        <button
-          className={`display-btn ${displayMode === 'short' ? 'active' : ''}`}
-          onClick={() => setDisplayMode('short')}
-          title="Short view"
-        >
-          short
-        </button>
-        <button
-          className={`display-btn ${displayMode === 'expanded' ? 'active' : ''}`}
-          onClick={() => setDisplayMode('expanded')}
-          title="Expanded view"
-        >
-          expanded
         </button>
       </div>
 

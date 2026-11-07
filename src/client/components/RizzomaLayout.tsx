@@ -10,6 +10,7 @@ import { RizzomaTopicDetail } from './RizzomaTopicDetail';
 import { RightToolsPanel } from './RightToolsPanel';
 import { CreateTopicModal } from './CreateTopicModal';
 import { PWAPrompts } from './PWAPrompts';
+import { TipsBox } from './TipsBox';
 import './RizzomaLayout.css';
 import { useWaveUnread } from '../hooks/useWaveUnread';
 import { ensureWaveUnreadJoin } from '../lib/socket';
@@ -249,19 +250,10 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
         ref={listContainerRef}
         className={`tabs-container ${searchPaneCollapsed ? 'collapsed' : ''} ${isMobile && mobileView !== 'list' ? 'mobile-hidden' : ''}`}
       >
-        <div className="tabs-header">
-          <h3>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h3>
-          <button
-            className="collapse-btn"
-            onClick={() => setSearchPaneCollapsed(!searchPaneCollapsed)}
-            title={searchPaneCollapsed ? "Expand" : "Collapse"}
-          >
-            {searchPaneCollapsed ? '▶' : '◀'}
-          </button>
-        </div>
         {!searchPaneCollapsed && (
           <div className="tabs-content">
             {renderSearchPanel()}
+            <TipsBox />
           </div>
         )}
       </div>

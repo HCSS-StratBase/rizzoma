@@ -9,62 +9,41 @@
 
 /* Navigation Panel - Far Left */
 .navigation-container {
-  width: 80px;
-  min-width: 80px;
-  background: #2c3e50;
+  width: 79px;
+  min-width: 79px;
+  max-width: 79px;
+  background: #728AA0;
   color: white;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 1px 0px 16px 0px rgba(0, 0, 0, 0.4);
   z-index: 3;
 }
 
 /* Search/List Panel - Left Center */
 .tabs-container {
-  width: 320px;
-  min-width: 320px;
-  background: #e8e8e8;
+  width: 480px;
+  min-width: 340px;
+  background: #e3eaf0;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
-  transition: width 0.3s ease;
+  position: relative;
   z-index: 2;
+  box-shadow: 1px 0px 8px rgba(0, 0, 0, 0.1);
 }
 
 .tabs-container.collapsed {
-  width: 40px;
-  min-width: 40px;
-}
-
-.tabs-header {
-  height: 48px;
-  background: #d0d0d0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  border-bottom: 1px solid #bbb;
-}
-
-.tabs-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 500;
-}
-
-.collapse-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 8px;
-  font-size: 14px;
-  color: #666;
+  width: 0;
+  min-width: 0;
+  display: none;
 }
 
 .tabs-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 8px;
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
 }
 
 /* Wave/Content Panel - Center Right */

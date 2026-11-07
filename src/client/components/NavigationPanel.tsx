@@ -11,79 +11,83 @@ interface NavigationPanelProps {
 
 export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, unreadCount }: NavigationPanelProps) {
   return (
-    <div className="navigation-panel">
-      <div className="nav-header">
-        <button 
-          className="nav-button new-button"
+    <div className="navigation-panel tabs-container">
+      <div className="new-topic-buttons">
+        <button
+          className="create-wave button"
           onClick={onNewClick}
+          title="Create new topic"
         >
-          <span className="icon">+</span>
-          <span className="label">New</span>
+          + New
         </button>
       </div>
-      
+
       <div className="nav-tabs">
-        <button 
-          className={`nav-tab ${activeTab === 'topics' ? 'active' : ''}`}
+        <div
+          className={`tab topics ${activeTab === 'topics' ? 'active' : ''}`}
           onClick={() => onTabChange('topics')}
+          title="Topics"
         >
-          <span className="icon">📄</span>
-          <span className="label">Topics</span>
-        </button>
-        
+          <span className="pict topics-pict" />
+          <span className="tab-title">Topics</span>
+        </div>
+
         {isAuthed && (
           <>
-            <button 
-              className={`nav-tab ${activeTab === 'mentions' ? 'active' : ''}`}
+            <div
+              className={`tab mentions ${activeTab === 'mentions' ? 'active' : ''}`}
               onClick={() => onTabChange('mentions')}
+              title="Mentions"
             >
-              <span className="icon">@</span>
-              <span className="label">Mentions</span>
-              {(unreadCount ?? 0) > 0 && <span className="badge">{unreadCount}</span>}
-            </button>
-            
-            <button 
-              className={`nav-tab ${activeTab === 'tasks' ? 'active' : ''} ${!FEATURES.TASKS ? 'locked' : ''}`}
+              <span className="pict mentions-pict" />
+              <span className="tab-title">Mentions</span>
+              {(unreadCount ?? 0) > 0 && <span className="unread-mentions-count">{unreadCount}</span>}
+            </div>
+
+            <div
+              className={`tab tasks ${activeTab === 'tasks' ? 'active' : ''} ${!FEATURES.TASKS ? 'locked' : ''}`}
               onClick={() => FEATURES.TASKS && onTabChange('tasks')}
-              title={!FEATURES.TASKS ? 'Tasks available for business accounts' : ''}
+              title={!FEATURES.TASKS ? 'Tasks available for business accounts' : 'Tasks'}
             >
-              <span className="icon">✓</span>
-              <span className="label">Tasks</span>
-              {!FEATURES.TASKS && <span className="lock">🔒</span>}
-            </button>
+              <span className="pict tasks-pict" />
+              <span className="tab-title">Tasks</span>
+            </div>
           </>
         )}
-        
-        <button 
-          className={`nav-tab ${activeTab === 'publics' ? 'active' : ''}`}
+
+        <div
+          className={`tab publics ${activeTab === 'publics' ? 'active' : ''}`}
           onClick={() => onTabChange('publics')}
+          title="Publics"
         >
-          <span className="icon">🌐</span>
-          <span className="label">Publics</span>
-        </button>
-        
-        <button 
-          className={`nav-tab ${activeTab === 'store' ? 'active' : ''}`}
+          <span className="pict publics-pict" />
+          <span className="tab-title">Publics</span>
+        </div>
+
+        <div
+          className={`tab store ${activeTab === 'store' ? 'active' : ''}`}
           onClick={() => onTabChange('store')}
+          title="Store"
         >
-          <span className="icon">🛒</span>
-          <span className="label">Store</span>
-        </button>
-        
-        <button 
-          className={`nav-tab ${activeTab === 'teams' ? 'active' : ''}`}
+          <span className="pict market-pict" />
+          <span className="tab-title">Store</span>
+        </div>
+
+        <div
+          className={`tab teams ${activeTab === 'teams' ? 'active' : ''}`}
           onClick={() => onTabChange('teams')}
+          title="Teams"
         >
-          <span className="icon">👥</span>
-          <span className="label">Teams</span>
-        </button>
+          <span className="pict teams-pict" />
+          <span className="tab-title">Teams</span>
+        </div>
       </div>
-      
-      <div className="nav-footer">
-        <button className="nav-help">
-          <span className="icon">?</span>
-          <span className="label">Help</span>
-        </button>
+
+      <div className="help-tab">
+        <div className="tab help" title="Help">
+          <span className="pict help-pict" />
+          <span className="tab-title">Help</span>
+        </div>
       </div>
     </div>
   );
