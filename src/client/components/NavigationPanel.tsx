@@ -11,7 +11,7 @@ interface NavigationPanelProps {
 
 export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, unreadCount }: NavigationPanelProps) {
   return (
-    <div className="navigation-panel tabs-container">
+    <div className="navigation-panel">
       <div className="new-topic-buttons">
         <button
           className="create-wave button new-button"
