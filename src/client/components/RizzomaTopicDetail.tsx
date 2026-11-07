@@ -1293,9 +1293,20 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const tags = extractTags(topic.content || '');
   const inlineRootBlips = blips.filter(b => typeof b.anchorPosition === 'number');
   const listBlips = blips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
-  const topicContentHtmlBase = topic.content && topic.content.trim().length > 0
-    ? topic.content
-    : `<h1>${topic.title || 'Untitled'}</h1>`;
+  const titleH1 = `<h1>${topic.title || 'Untitled'}</h1>`;
+  let topicContentHtmlBase = titleH1;
+  if (topic.content && topic.content.trim().length > 0) {
+    const contentHasTitle = topic.content.toLowerCase().includes(`<h1>${(topic.title || '').toLowerCase()}</h1>`);
+    if (contentHasTitle) {
+      topicContentHtmlBase = topic.content;
+    } else {
+      let wrapped = topic.content;
+      if (!/<[^>]+>/.test(wrapped)) {
+        wrapped = `<p>${wrapped}</p>`;
+      }
+      topicContentHtmlBase = `${titleH1}${wrapped}`;
+    }
+  }
   // Don't inject markers here — let RizzomaBlip handle it with expanded state tracking
   const topicBlip: BlipData = {
     id: topic.id,

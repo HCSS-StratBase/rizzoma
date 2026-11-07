@@ -730,13 +730,6 @@ export function BlipMenu({
             </>
           )}
 
-          {metaInfo && (
-          <>
-            <span className="blip-menu-spacer" style={{ flex: 1 }} />
-            {metaInfo}
-          </>
-        )}
-
         {/* Mobile menu trigger */}
           {isMobile && (
             <button
