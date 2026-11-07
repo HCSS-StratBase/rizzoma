@@ -323,8 +323,8 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
         </button>
       </div>
 
-      {/* Display mode toggle (hidden visually or minimal for test compatibility) */}
-      <div className="display-toggle" style={{ display: 'none' }}>
+      {/* Display mode toggle (short/expanded view) */}
+      <div className="display-toggle">
         <button
           className={`display-btn ${displayMode === 'short' ? 'active' : ''}`}
           onClick={() => setDisplayMode('short')}
