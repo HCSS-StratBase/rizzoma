@@ -1600,13 +1600,35 @@ export function RizzomaBlip({
     };
   }, [blip.id, isPerfMode]);
 
-  // Handle Ctrl+Enter to create child blip when active (not editing)
+  // Handle Ctrl+E (toggle edit), Shift+Enter (Done), and Ctrl+Enter (reply)
   useEffect(() => {
-    if (!isActive || isEditing || !blip.permissions.canComment) return;
+    if (!isActive) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl+E: Toggle edit mode
+      if ((event.ctrlKey || event.metaKey) && (event.key === 'e' || event.key === 'E')) {
+        if (blipContainerRef.current?.contains(document.activeElement) ||
+            blipContainerRef.current === document.activeElement ||
+            isActive) {
+          event.preventDefault();
+          if (isEditing) {
+            handleFinishEdit();
+          } else if (blip.permissions.canEdit) {
+            handleStartEdit();
+          }
+          return;
+        }
+      }
+
+      // Shift+Enter in edit mode: Finish edit ("Done")
+      if (isEditing && event.shiftKey && event.key === 'Enter') {
+        event.preventDefault();
+        handleFinishEdit();
+        return;
+      }
+
       // Ctrl+Enter: Create child subblip (reply)
-      if (event.key === 'Enter' && event.ctrlKey && !event.shiftKey) {
+      if (!isEditing && blip.permissions.canComment && event.key === 'Enter' && event.ctrlKey && !event.shiftKey) {
         // Check if this blip container is focused or contains focus
         if (blipContainerRef.current?.contains(document.activeElement) ||
             blipContainerRef.current === document.activeElement) {
@@ -1619,7 +1641,7 @@ export function RizzomaBlip({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, isEditing, blip.permissions.canComment]);
+  }, [isActive, isEditing, blip.permissions.canEdit, blip.permissions.canComment, handleFinishEdit, handleStartEdit]);
 
   // Handle insert events from RightToolsPanel
   // Listen when isActive (not just isEditing) so clicks from right panel auto-enter edit mode
@@ -2150,10 +2172,16 @@ export function RizzomaBlip({
   return (
     <div
       ref={blipContainerRef}
-      className={`rizzoma-blip blip-container ${isRoot ? 'root-blip' : 'nested-blip'} ${isTopicRoot ? 'topic-root' : ''} ${!blip.isRead ? 'unread' : ''} ${isActive ? 'active' : ''} ${effectiveExpanded ? 'expanded' : 'collapsed'}`}
+      className={`rizzoma-blip blip-container ${isRoot ? 'root-blip' : 'nested-blip'} ${isTopicRoot ? 'topic-root' : ''} ${!blip.isRead ? 'unread' : ''} ${isActive ? 'active' : ''} ${isEditing ? 'edit-mode' : ''} ${effectiveExpanded ? 'expanded' : 'collapsed'}`}
       data-blip-id={blip.id}
       style={{ marginLeft: isRoot ? 0 : depth * 24, position: 'relative', ...rootStyle }}
       onClick={handleBlipClick}
+      onDoubleClick={(e) => {
+        if (blip.permissions.canEdit && !isEditing) {
+          e.stopPropagation();
+          handleStartEdit();
+        }
+      }}
     >
       {/* Collapsed View - Simple like live Rizzoma: bullet + label + [+] only */}
       {showCollapsedView && (
@@ -2554,6 +2582,33 @@ export function RizzomaBlip({
         )}
       </div>
 
+          {/* Authentic Bottom Blip Menu - Done bar & reply button */}
+          {isEditing && (
+            <div className="bottom-blip-menu js-bottom-blip-menu">
+              <button
+                type="button"
+                className="finish-edit-button js-finish-edit"
+                title="Done (Ctrl+E, Shift+Enter)"
+                onClick={handleFinishEdit}
+              >
+                Done
+              </button>
+              <button
+                type="button"
+                className="blip-reply-button js-blip-reply-button"
+                title="Write a reply to this thread"
+                onClick={() => {
+                  setShowReplyForm(true);
+                  setIsExpanded(true);
+                }}
+              >
+                <div className="text">Write a reply...</div>
+                <div className="avatar" />
+                <div className="gradient" />
+              </button>
+            </div>
+          )}
+
           {/* Collapsed State Indicator - inside expanded view */}
           {childCount > 0 && !isExpanded && (
             <div className="blip-collapsed-info" onClick={handleToggleExpand}>
@@ -2566,22 +2621,39 @@ export function RizzomaBlip({
         </>
       )}
       
-      {/* Selection annotation button (separate from BLB cursor-based inline comments) */}
-      {FEATURES.INLINE_COMMENTS && showInlineCommentBtn && blip.permissions.canComment && !isEditing && selectionCoords && !isInlineCommentFormVisible && (
-        <button
-          className="inline-comment-btn"
+      {/* Authentic Range Menu for selected text */}
+      {FEATURES.INLINE_COMMENTS && showInlineCommentBtn && selectionCoords && !isInlineCommentFormVisible && (
+        <div
+          className="range-menu"
           style={{
             position: 'fixed',
             left: `${selectionCoords.x}px`,
             top: `${selectionCoords.y}px`,
             transform: 'translateX(-50%)'
           }}
-          onClick={handleInlineCommentButton}
-          title="Annotate selected text"
-          type="button"
         >
-          💬 Annotate
-        </button>
+          {blip.permissions.canEdit && !isEditing && (
+            <button
+              type="button"
+              className="button"
+              title="Edit (Ctrl+E)"
+              onClick={handleStartEdit}
+            >
+              <div className="icon edit-icon" />
+            </button>
+          )}
+          {blip.permissions.canComment && (
+            <button
+              type="button"
+              className="button"
+              title="Insert comment (Ctrl+Enter)"
+              onClick={handleInlineCommentButton}
+            >
+              <div className="icon comment-icon" />
+              <span>Comment</span>
+            </button>
+          )}
+        </div>
       )}
 
       {FEATURES.INLINE_COMMENTS && isInlineCommentFormVisible && selectionCoords && selectedRangeData && (

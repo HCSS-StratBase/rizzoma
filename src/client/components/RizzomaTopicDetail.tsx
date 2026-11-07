@@ -11,6 +11,7 @@ import { WavePlaybackModal } from './WavePlaybackModal';
 import './RizzomaTopicDetail.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { RizzomaBlip, ACTIVE_BLIP_CLAIM_EVENT, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
+import { BlipMenu } from './blip/BlipMenu';
 import { injectInlineMarkers } from './blip/inlineMarkers';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
@@ -1195,6 +1196,34 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   }, [autoSaveTopicContent, topicContent, topicEditor]);
   useEffect(() => { finishEditingTopicRef.current = finishEditingTopic; }, [finishEditingTopic]);
 
+  // Topic keyboard shortcuts: Ctrl+E (toggle edit), Shift+Enter (Done)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && (event.key === 'e' || event.key === 'E')) {
+        const target = event.target as HTMLElement | null;
+        const insideChildBlip = target?.closest('.blip-container:not(.topic-meta-blip):not(.root-blip)');
+        if (insideChildBlip) return; // Handled by child blip
+
+        event.preventDefault();
+        if (isEditingTopic) {
+          finishEditingTopic();
+        } else if (isAuthed) {
+          startEditingTopic();
+        }
+      }
+      if (isEditingTopic && event.shiftKey && event.key === 'Enter') {
+        const target = event.target as HTMLElement | null;
+        const insideChildBlip = target?.closest('.blip-container:not(.topic-meta-blip):not(.root-blip)');
+        if (insideChildBlip) return;
+
+        event.preventDefault();
+        finishEditingTopic();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEditingTopic, isAuthed, startEditingTopic, finishEditingTopic]);
+
   if (error) {
     return (
       <div className="rizzoma-topic-detail">
@@ -1286,6 +1315,17 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const topicContentOverride = isEditingTopic ? (
     <div className="topic-content-edit">
       <EditorContent editor={topicEditor} />
+      <div className="bottom-blip-menu js-bottom-blip-menu" style={{ display: 'flex', position: 'relative', bottom: 0, marginTop: '8px' }}>
+        <button
+          type="button"
+          className="finish-edit-button js-finish-edit"
+          title="Done (Ctrl+E, Shift+Enter)"
+          onClick={finishEditingTopic}
+          style={{ display: 'inline-flex' }}
+        >
+          Done
+        </button>
+      </div>
     </div>
   ) : null;
   const topicContentFooter = tags.length > 0 ? (
@@ -1439,64 +1479,27 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           Contains: toolbar + content + child blips + reply input
           Only shown when NOT viewing a subblip
       ======================================== */}
-      {!currentSubblip && (<div className="topic-meta-blip">
-        {/* Meta-blip toolbar (like BlipMenu for regular blips) */}
-        <div className={`topic-blip-toolbar ${isEditingTopic ? 'editing' : ''}`}>
-          <button
-            className={`topic-tb-btn ${isEditingTopic ? 'active primary' : ''}`}
-            title={isEditingTopic ? 'Done editing (changes auto-saved)' : 'Edit topic content'}
-            onClick={() => {
-              if (isEditingTopic) {
-                finishEditingTopic();
-              } else {
-                startEditingTopic();
-              }
+      {!currentSubblip && (
+        <div className={`wave-panel ${isEditingTopic ? 'edit-mode' : ''} active`}>
+          <BlipMenu
+            isActive={true}
+            isEditing={isEditingTopic}
+            canEdit={isAuthed}
+            canComment={isAuthed}
+            editor={topicEditor || undefined}
+            isTopicRoot={true}
+            onStartEdit={startEditingTopic}
+            onFinishEdit={finishEditingTopic}
+            onShowComments={() => {
+              setShowCommentsPanel(true);
+              toast('Comments shown');
             }}
-          >
-            {isEditingTopic ? 'Done' : 'Edit'}
-          </button>
-          <button
-            className={`topic-tb-btn ${showCommentsPanel ? 'active' : ''}`}
-            title={showCommentsPanel ? 'Hide inline comments' : 'Show inline comments'}
-            onClick={() => {
-              setShowCommentsPanel(!showCommentsPanel);
-              toast(showCommentsPanel ? 'Comments hidden' : 'Comments shown');
+            onHideComments={() => {
+              setShowCommentsPanel(false);
+              toast('Comments hidden');
             }}
-          >
-            💬
-          </button>
-          {/* Insert inline comment button - only visible in edit mode */}
-          {isEditingTopic && (
-            <button
-              className="topic-tb-btn insert-comment-btn"
-              title="Insert inline comment at cursor (Ctrl+Enter)"
-              onClick={() => {
-                console.log('[TopicDetail] Insert comment button clicked');
-                console.log('[TopicDetail] topicEditor:', topicEditor);
-                console.log('[TopicDetail] createInlineChildBlipRef.current:', createInlineChildBlipRef.current);
-                // Get cursor position from the editor
-                if (topicEditor) {
-                  const { from } = topicEditor.state.selection;
-                  console.log('[TopicDetail] Cursor position:', from);
-                  if (createInlineChildBlipRef.current) {
-                    console.log('[TopicDetail] Calling createInlineChildBlipRef.current with:', from);
-                    createInlineChildBlipRef.current(from);
-                  } else {
-                    console.error('[TopicDetail] createInlineChildBlipRef.current is not set!');
-                    toast('Comment function not ready', 'error');
-                  }
-                } else {
-                  toast('Editor not ready', 'error');
-                }
-              }}
-            >
-              💬+
-            </button>
-          )}
-          <button
-            className="topic-tb-btn"
-            title="Copy topic link"
-            onClick={() => {
+            areCommentsVisible={showCommentsPanel}
+            onGetLink={() => {
               const url = `${window.location.origin}/#/topic/${id}`;
               navigator.clipboard.writeText(url).then(() => {
                 toast('Topic link copied');
@@ -1504,74 +1507,58 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                 toast('Failed to copy link', 'error');
               });
             }}
-          >
-            🔗
-          </button>
-          {/* Topic edit toolbar gear menu - "Other" options */}
-          <div className="gear-menu-container" ref={editGearMenuRef}>
-            <button
-              className={`topic-tb-btn ${showEditGearMenu ? 'active' : ''}`}
-              title="Other options"
-              onClick={() => setShowEditGearMenu(!showEditGearMenu)}
-            >
-              ⚙️
-            </button>
-            {showEditGearMenu && (
-              <div className="gear-dropdown">
-                <button className="gear-menu-item" onClick={handleMarkTopicRead}>
-                  Mark topic as read
-                </button>
-                <button className="gear-menu-item" onClick={handleToggleFollow}>
-                  {isFollowing ? 'Unfollow topic' : 'Follow topic'}
-                </button>
-                <div className="gear-menu-divider" />
-                <button className="gear-menu-item" onClick={handlePrint}>
-                  Print
-                </button>
-                <button className="gear-menu-item" onClick={handleExportTopic}>
-                  Export topic
-                </button>
-                <button className="gear-menu-item" onClick={handleCopyEmbedCode}>
-                  Get embed code
-                </button>
-                {FEATURES.WAVE_PLAYBACK && (
-                  <>
-                    <div className="gear-menu-divider" />
-                    <button className="gear-menu-item" onClick={handleWavePlayback}>
-                      Wave Timeline
-                    </button>
-                  </>
-                )}
+            onShowHistory={handleWavePlayback}
+            onCreateInlineChild={() => {
+              if (topicEditor && createInlineChildBlipRef.current) {
+                const { from } = topicEditor.state.selection;
+                createInlineChildBlipRef.current(from);
+              }
+            }}
+            topicActions={{
+              isFollowing,
+              onToggleFollow: handleToggleFollow,
+              onMarkAsRead: handleMarkTopicRead,
+              onPrint: handlePrint,
+              onExport: handleExportTopic,
+              onCopyEmbedCode: handleCopyEmbedCode,
+            }}
+            metaInfo={
+              <div className="topic-meta-info" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '8px' }}>
+                <div className="topic-avatars-stack-small">
+                  {(() => {
+                    const owner = participants.find(p => p.role === 'owner');
+                    const others = participants.filter(p => p.role !== 'owner').slice(0, 2);
+                    const allToShow = owner ? [owner, ...others] : participants.slice(0, 3);
+                    if (allToShow.length === 0) {
+                      return <TopicAvatar authorName={topic.authorName} small />;
+                    }
+                    return allToShow.map((p, idx) => (
+                      <TopicAvatar
+                        key={p.id}
+                        participant={p}
+                        small
+                        style={{ zIndex: allToShow.length - idx, marginLeft: idx > 0 ? '-8px' : '0' }}
+                      />
+                    ));
+                  })()}
+                </div>
+                <span className="topic-date-small" style={{ fontSize: '11px', color: isEditingTopic ? '#FFF' : '#888' }}>
+                  {formatDate(topic.updatedAt)}
+                </span>
               </div>
-            )}
-          </div>
-          <span className="topic-toolbar-spacer" />
-          {/* Meta info on right side of toolbar */}
-          <div className="topic-meta-info">
-            <div className="topic-avatars-stack-small">
-              {(() => {
-                const owner = participants.find(p => p.role === 'owner');
-                const others = participants.filter(p => p.role !== 'owner').slice(0, 2);
-                const allToShow = owner ? [owner, ...others] : participants.slice(0, 3);
-                if (allToShow.length === 0) {
-                  return (
-                    <TopicAvatar authorName={topic.authorName} small />
-                  );
-                }
-                return allToShow.map((p, idx) => (
-                  <TopicAvatar
-                    key={p.id}
-                    participant={p}
-                    small
-                    style={{ zIndex: allToShow.length - idx, marginLeft: idx > 0 ? '-8px' : '0' }}
-                  />
-                ));
-              })()}
-            </div>
-            <span className="topic-date-small">{formatDate(topic.updatedAt)}</span>
-          </div>
+            }
+          />
         </div>
-
+      )}
+      {!currentSubblip && (
+        <div
+          className={`topic-meta-blip blip-container root-blip ${isEditingTopic ? 'active edit-mode' : ''}`}
+          onDoubleClick={() => {
+            if (isAuthed && !isEditingTopic) {
+              startEditingTopic();
+            }
+          }}
+        >
         {/* Meta-blip body: topic content + child blips in ONE scrollable container */}
         <div className="topic-blip-body">
           {isPerfLite ? (

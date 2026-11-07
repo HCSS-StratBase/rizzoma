@@ -254,58 +254,10 @@
   overflow: hidden;
 }
 
-/* Meta-blip toolbar (like BlipMenu for regular blips) - only visible during editing */
-.topic-blip-toolbar {
-  display: none !important;
-}
-
-.topic-blip-toolbar.editing {
-  display: flex !important;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: #d9edf9;
-  border-bottom: 1px solid #bcd7ea;
-  flex-shrink: 0;
-}
-
-.topic-tb-btn {
-  padding: 2px 6px;
-  font-size: 12px;
-  background: none;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  color: #555;
-  transition: background-color 0.15s ease;
-}
-
-.topic-tb-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
-}
-
-.topic-tb-btn.primary {
-  background: #5caaf7;
-  color: white;
-  font-weight: 500;
-}
-
-.topic-tb-btn.primary:hover {
-  background: #4A9BE8;
-}
-
-.topic-tb-btn.active {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-/* Insert comment button - styled like original */
-.topic-tb-btn.insert-comment-btn {
-  color: #10B981;
-  font-weight: 500;
-}
-
-.topic-tb-btn.insert-comment-btn:hover {
-  background: rgba(16, 185, 129, 0.1);
+.topic-meta-blip.edit-mode,
+.topic-meta-blip.active.edit-mode {
+  border: 2px solid #57AAD9 !important;
+  border-radius: 4px;
 }
 
 .topic-toolbar-spacer {

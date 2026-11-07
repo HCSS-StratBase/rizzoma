@@ -422,3 +422,175 @@
   font-size: 11px;
   color: #FFF;
 }
+
+/* ========================================================
+   Topic Root Menu Container & Wave Panel Parity
+   ======================================================== */
+.wave-panel {
+  width: 100%;
+  position: relative;
+  z-index: 10;
+  display: block;
+  margin-bottom: 0;
+}
+
+.topic-root-menu-container {
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+  margin-bottom: 0 !important;
+}
+
+.topic-root-menu-container .blip-menu {
+  width: 100% !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================================
+   Authentic Range Menu (Text selection floating toolbar)
+   ======================================================== */
+.range-menu {
+  position: fixed;
+  z-index: 200;
+  border-radius: 4px;
+  border: 1px solid #2E72BB;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(to bottom, #66a9e9 0%, #5092d3 100%);
+}
+
+.range-menu button,
+.range-menu .button {
+  background: linear-gradient(to bottom, #66a9e9 0%, #5092d3 100%);
+  border: none;
+  border-radius: 0;
+  color: white;
+  height: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  text-shadow: none;
+}
+
+.range-menu button:not([disabled]):hover,
+.range-menu .button:not([disabled]):hover {
+  background: #66a9e9;
+}
+
+.range-menu button + button,
+.range-menu .button + .button {
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.range-menu .icon {
+  height: 20px;
+  width: 18px;
+  display: inline-block;
+  background: url(/s/img/wave_buttons.png) no-repeat;
+  vertical-align: middle;
+}
+
+.range-menu .edit-icon {
+  background-position: 0 0;
+}
+
+.range-menu .comment-icon {
+  background-position: -18px 0;
+}
+
+/* ========================================================
+   Authentic Bottom Blip Menu (Done bar & Reply button)
+   ======================================================== */
+.bottom-blip-menu {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  bottom: -16px;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  display: none;
+  z-index: 5;
+  border: 2px solid #D6D6D6;
+  border-top-width: 1px;
+  background: #F2F5F8;
+  overflow: hidden;
+  height: 26px;
+  box-sizing: content-box;
+}
+
+.edit-mode > .bottom-blip-menu,
+.edit-mode .bottom-blip-menu,
+.blip-container.edit-mode > .bottom-blip-menu {
+  border-color: #4EA0F1;
+  display: flex !important;
+  align-items: stretch;
+}
+
+.bottom-blip-menu .finish-edit-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  background: #4EA0F1;
+  color: white;
+  width: 50px;
+  height: 26px;
+  border: none;
+  border-radius: 0;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+.bottom-blip-menu .finish-edit-button:hover {
+  background: #3D93DA;
+}
+
+.bottom-blip-menu .finish-edit-button:active {
+  background: #3089C8;
+}
+
+.bottom-blip-menu .blip-reply-button {
+  background: none;
+  text-align: left;
+  flex: 1;
+  border: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  cursor: pointer;
+  height: 26px;
+}
+
+.bottom-blip-menu .blip-reply-button .text {
+  color: #B8C4CF;
+  font-size: 12px;
+}
+
+.bottom-blip-menu .blip-reply-button .avatar {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: 3px;
+  right: 7px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 2px;
+}
+

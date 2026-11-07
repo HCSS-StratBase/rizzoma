@@ -45,6 +45,16 @@ interface BlipMenuProps {
   isCut?: boolean;
   isDuplicating?: boolean;
   isInlineChild?: boolean;
+  isTopicRoot?: boolean;
+  topicActions?: {
+    isFollowing?: boolean;
+    onToggleFollow?: () => void;
+    onMarkAsRead?: () => void;
+    onPrint?: () => void;
+    onExport?: () => void;
+    onCopyEmbedCode?: () => void;
+  };
+  metaInfo?: React.ReactNode;
 }
 
 export function BlipMenu({
@@ -85,6 +95,9 @@ export function BlipMenu({
   isCut = false,
   isDuplicating: _isDuplicating = false,
   isInlineChild = false,
+  isTopicRoot = false,
+  topicActions,
+  metaInfo,
 }: BlipMenuProps) {
   const [textFormatState, setTextFormatState] = useState({
     bold: false,
@@ -259,6 +272,80 @@ export function BlipMenu({
       <div className="triangle">
         <div />
       </div>
+      {isTopicRoot && topicActions && (
+        <>
+          {topicActions.onMarkAsRead && (
+            <div className="list-menu-button">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  topicActions.onMarkAsRead?.();
+                  setShowOverflow(false);
+                }}
+              >
+                Mark topic as read
+              </button>
+            </div>
+          )}
+          {topicActions.onToggleFollow && (
+            <div className="list-menu-button">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  topicActions.onToggleFollow?.();
+                  setShowOverflow(false);
+                }}
+              >
+                {topicActions.isFollowing ? 'Unfollow topic' : 'Follow topic'}
+              </button>
+            </div>
+          )}
+          {topicActions.onPrint && (
+            <div className="list-menu-button">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  topicActions.onPrint?.();
+                  setShowOverflow(false);
+                }}
+              >
+                Print
+              </button>
+            </div>
+          )}
+          {topicActions.onExport && (
+            <div className="list-menu-button">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  topicActions.onExport?.();
+                  setShowOverflow(false);
+                }}
+              >
+                Export topic
+              </button>
+            </div>
+          )}
+          {topicActions.onCopyEmbedCode && (
+            <div className="list-menu-button">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  topicActions.onCopyEmbedCode?.();
+                  setShowOverflow(false);
+                }}
+              >
+                Get embed code
+              </button>
+            </div>
+          )}
+        </>
+      )}
       <div className="list-menu-button">
         <button
           type="button"
@@ -269,7 +356,7 @@ export function BlipMenu({
             setShowOverflow(false);
           }}
         >
-          Copy comment
+          {isTopicRoot ? 'Copy topic content' : 'Copy comment'}
         </button>
       </div>
       {canComment && onPasteAsReply && (
@@ -376,7 +463,7 @@ export function BlipMenu({
           Playback
         </button>
       </div>
-      {canEdit && onDelete && (
+      {!isTopicRoot && canEdit && onDelete && (
         <div className="list-menu-button">
           <button
             type="button"
@@ -398,7 +485,7 @@ export function BlipMenu({
   // ---------------- EDIT MODE ----------------
   if (isEditing) {
     return (
-      <div className={`blip-menu-container${isMobile ? ' mobile-blip-menu-container' : ''}`}>
+      <div className={`blip-menu-container${isTopicRoot ? ' topic-root-menu-container' : ''}${isMobile ? ' mobile-blip-menu-container' : ''}`}>
         <div
           className={`blip-menu edit-menu${isInlineChild ? ' inline-child-menu' : ''}`}
           data-testid="blip-menu-edit-surface"
@@ -553,7 +640,7 @@ export function BlipMenu({
           </button>
 
           {/* Hide by default */}
-          {canEdit && onToggleCollapseByDefault && (
+          {!isTopicRoot && canEdit && onToggleCollapseByDefault && (
             <button
               className="menu-btn is-folded-by-default delimitered-right js-is-folded-by-default"
               title="Collapse this thread by default"
@@ -566,7 +653,7 @@ export function BlipMenu({
           )}
 
           {/* Delete blip */}
-          {canEdit && onDelete && (
+          {!isTopicRoot && canEdit && onDelete && (
             <button
               className="menu-btn delete-blip delimitered-right icon-button js-delete-blip"
               title="Delete comment"
@@ -636,7 +723,21 @@ export function BlipMenu({
             </span>
           )}
 
-          {/* Mobile menu trigger */}
+          {metaInfo && (
+            <>
+              <span className="blip-menu-spacer" style={{ flex: 1 }} />
+              {metaInfo}
+            </>
+          )}
+
+          {metaInfo && (
+          <>
+            <span className="blip-menu-spacer" style={{ flex: 1 }} />
+            {metaInfo}
+          </>
+        )}
+
+        {/* Mobile menu trigger */}
           {isMobile && (
             <button
               className="menu-btn mobile-menu-btn icon-button"
@@ -658,7 +759,7 @@ export function BlipMenu({
   // ---------------- READ-ONLY MODE ----------------
   // Authentic legacy Rizzoma: Edit | hide comments | show comments | get link | Hide | delete | gear
   return (
-    <div className={`blip-menu-container${isMobile ? ' mobile-blip-menu-container' : ''}`}>
+    <div className={`blip-menu-container${isTopicRoot ? ' topic-root-menu-container' : ''}${isMobile ? ' mobile-blip-menu-container' : ''}`}>
       <div
         className={`blip-menu read-only-menu${isInlineChild ? ' inline-child-menu' : ''}${collapseByDefault ? ' folded-by-default' : ''}`}
         data-testid="blip-menu-read-surface"
@@ -708,7 +809,7 @@ export function BlipMenu({
         </button>
 
         {/* Hide (collapse thread by default) */}
-        {canEdit && onToggleCollapseByDefault && (
+        {!isTopicRoot && canEdit && onToggleCollapseByDefault && (
           <button
             className="menu-btn is-folded-by-default delimitered-right js-is-folded-by-default"
             title="Collapse this thread by default"
@@ -721,7 +822,7 @@ export function BlipMenu({
         )}
 
         {/* Delete blip */}
-        {canEdit && onDelete && (
+        {!isTopicRoot && canEdit && onDelete && (
           <button
             className="menu-btn delete-blip icon-button delimitered-right js-delete-blip"
             title="Delete comment"
@@ -747,6 +848,13 @@ export function BlipMenu({
           </button>
           {showOverflow && renderOtherDropdown('read')}
         </div>
+
+        {metaInfo && (
+          <>
+            <span className="blip-menu-spacer" style={{ flex: 1 }} />
+            {metaInfo}
+          </>
+        )}
 
         {/* Mobile menu trigger */}
         {isMobile && (
