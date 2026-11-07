@@ -400,6 +400,7 @@
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
+.blip-container.expanded:hover > .blip-menu-container,
 .blip-container.active > .blip-menu-container,
 .active > .blip-menu-container {
   opacity: 1;

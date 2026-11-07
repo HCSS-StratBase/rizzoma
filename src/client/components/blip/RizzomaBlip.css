@@ -164,78 +164,104 @@
 }
 
 /*
- * View-mode list styling MUST mirror the edit-mode (.ProseMirror) rules
- * because RizzomaApp.css has a global `* { padding: 0 }` reset. Without
- * these, saved <ul>/<ol>/<li> render as flat unindented lines with no disc
- * markers — the editor looks right while editing, then collapses to flat
- * on save. Reported by Hryhorii 2026-05-04.
+ * View-mode & edit-mode list styling:
+ * Clean single-bullet convention matching legacy Rizzoma.
+ * list-style: none suppresses browser-native ::marker elevated dots.
+ * li::before places a pixel-perfect, vertically centered bullet.
  */
 .blip-text ul,
-.blip-text ol {
-  margin: 0.5em 0;
+.topic-content-view ul,
+.topic-blip-content ul,
+.tiptap.ProseMirror ul {
+  list-style: none !important;
+  margin: 0.25em 0;
+  padding-left: 0 !important;
+}
+
+.blip-text ol,
+.topic-content-view ol,
+.topic-blip-content ol,
+.tiptap.ProseMirror ol {
+  margin: 0.25em 0;
   padding-left: 1.5em;
-  list-style-position: outside;
-}
-
-.blip-text ul {
-  list-style-type: disc;
-}
-
-.blip-text ol {
   list-style-type: decimal;
 }
 
-.blip-text li {
-  margin: 0.25em 0;
+.blip-text li,
+.topic-content-view li,
+.topic-blip-content li,
+.tiptap.ProseMirror li {
+  position: relative;
+  padding-left: 18px;
+  margin: 0.15em 0;
+  line-height: 22px;
 }
 
-.blip-text li p {
+.blip-text li p,
+.topic-content-view li p,
+.topic-blip-content li p,
+.tiptap.ProseMirror li p {
   display: inline;
   margin: 0;
+  line-height: 22px;
 }
 
+/* Level 1 bullet: • */
+.blip-text ul > li::before,
+.topic-content-view ul > li::before,
+.topic-blip-content ul > li::before,
+.tiptap.ProseMirror ul > li::before {
+  content: '•';
+  position: absolute;
+  left: 2px;
+  top: 0;
+  font-size: 14px;
+  line-height: 22px;
+  color: #333;
+}
+
+/* Level 2 bullet: ◦ */
 .blip-text ul ul,
-.blip-text ol ol,
-.blip-text ul ol,
-.blip-text ol ul {
-  margin: 0.25em 0;
-  padding-left: 1.5em;
+.topic-content-view ul ul,
+.topic-blip-content ul ul,
+.tiptap.ProseMirror ul ul {
+  padding-left: 18px !important;
+  margin: 0.1em 0;
 }
 
-/*
- * B1 PARITY (2026-05-05): Match Rizzoma's bulleted-type0 convention —
- * disc bullet at every nesting level (NOT the browser cascade
- * disc→circle→square→disc-again at depth 4+ which breaks at deep
- * fractals). Indentation is via margin-left:22px per LI, exactly like
- * the original's `<li class="bulleted bulleted-type0" margin-left:22px>`.
- * The browser-cascade rules above stay in place so projects that don't
- * opt into parity rendering still get the disc/circle/square hierarchy;
- * the parity overrides only fire when .rizzoma-parity is on the layout
- * root (set by FEAT_RIZZOMA_PARITY_RENDER).
- */
-.rizzoma-parity .blip-text ul,
-.rizzoma-parity .blip-text ul ul,
-.rizzoma-parity .blip-text ul ul ul,
-.rizzoma-parity .blip-text ul ul ul ul {
-  list-style-type: disc;
-  padding-left: 0;
-  margin-left: 0;
+.blip-text ul ul > li::before,
+.topic-content-view ul ul > li::before,
+.topic-blip-content ul ul > li::before,
+.tiptap.ProseMirror ul ul > li::before {
+  content: '◦';
+  position: absolute;
+  left: 2px;
+  top: 0;
+  font-size: 14px;
+  line-height: 22px;
+  color: #555;
 }
 
-.rizzoma-parity .blip-text li {
-  margin-left: 22px;
-  margin-top: 0;
-  margin-bottom: 0;
-  list-style-position: outside;
+/* Level 3 bullet: ▪ */
+.blip-text ul ul ul,
+.topic-content-view ul ul ul,
+.topic-blip-content ul ul ul,
+.tiptap.ProseMirror ul ul ul {
+  padding-left: 18px !important;
+  margin: 0.1em 0;
 }
 
-/* NON-parity defaults (existing browser-cascade behavior) */
-.blip-text ul ul {
-  list-style-type: circle;
-}
-
-.blip-text ul ul ul {
-  list-style-type: square;
+.blip-text ul ul ul > li::before,
+.topic-content-view ul ul ul > li::before,
+.topic-blip-content ul ul ul > li::before,
+.tiptap.ProseMirror ul ul ul > li::before {
+  content: '▪';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  font-size: 10px;
+  line-height: 22px;
+  color: #666;
 }
 
 /* Inline comment button */
@@ -1486,15 +1512,18 @@
  * (2) The contributor avatar carries no bullet and eats ZERO vertical space:
  *     absolute, top-right, top-aligned with the first bullet.
  * ============================================================ */
+.blip-view-mode .blip-content-row,
 .rizzoma-parity .blip-view-mode .blip-content-row {
   position: relative;
 }
 /* Kill the wrapper bullet in EXPANDED view — the list supplies the bullet.
    (Collapsed rows keep their single .blip-collapsed-row .blip-bullet.) */
+.blip-view-mode > .blip-content-row > .blip-bullet,
 .rizzoma-parity .blip-view-mode > .blip-content-row > .blip-bullet {
-  display: none;
+  display: none !important;
 }
 /* Avatar/date float in the top-right corner, no row of their own. */
+.blip-view-mode > .blip-content-row > .blip-contributors-info,
 .rizzoma-parity .blip-view-mode > .blip-content-row > .blip-contributors-info {
   position: absolute;
   top: 0;
@@ -1506,16 +1535,19 @@
   align-items: center;
   gap: 4px;
 }
+.blip-view-mode > .blip-content-row > .blip-contributors-info .blip-author-date,
 .rizzoma-parity .blip-view-mode > .blip-content-row > .blip-contributors-info .blip-author-date {
   font-size: 10px;
   line-height: 14px;
 }
 /* Reserve just enough right padding on the text column so long labels don't
    slide under the avatar. */
+.blip-view-mode > .blip-content-row > .blip-main-content,
 .rizzoma-parity .blip-view-mode > .blip-content-row > .blip-main-content {
   padding-right: 46px;
 }
 /* First list line hugs the top of the box — no leading gap above bullet 1. */
+.blip-view-mode .blip-text > ul,
 .rizzoma-parity .blip-view-mode .blip-text > ul {
   margin-top: 0;
 }

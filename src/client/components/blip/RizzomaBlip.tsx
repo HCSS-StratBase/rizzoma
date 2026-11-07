@@ -267,6 +267,7 @@ interface RizzomaBlipProps {
   contentClassName?: string;
   contentTitle?: string;
   onContentClick?: () => void;
+  onStartEdit?: () => void;
   // BLB: When true, this blip is rendered as an inline-expanded child — hide toolbar, show minimal UI
   isInlineChild?: boolean;
 }
@@ -287,10 +288,18 @@ type UploadUiState = {
 // auto-save OVERWRITES the server's list with a paragraph. Hand-building a
 // depth-10 fractal (2026-07-14) showed every nested level below the first
 // coming back as <p>L4 label</p> — unbulleted, i.e. not BLB.
-const BLB_EMPTY_BODY = '<ul><li><p></p></li></ul>';
-const ensureBulletedBody = (html: string): string => {
+export const BLB_EMPTY_BODY = '<ul><li><p></p></li></ul>';
+export const ensureBulletedBody = (html: string): string => {
+  if (!html || !html.trim()) return BLB_EMPTY_BODY;
   const stripped = (html || '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
   if (stripped.length === 0 && !/<li[\s>]/i.test(html || '')) return BLB_EMPTY_BODY;
+  // If content is not wrapped in a list, wrap paragraphs or text in <ul><li>
+  if (!/<(ul|ol)[\s>]/i.test(html)) {
+    if (/<p[\s>]/i.test(html)) {
+      return `<ul>${html.replace(/<p[^>]*>(.*?)<\/p>/gi, '<li><p>$1</p></li>')}</ul>`;
+    }
+    return `<ul><li><p>${html}</p></li></ul>`;
+  }
   return html;
 };
 
@@ -316,22 +325,24 @@ export function RizzomaBlip({
   contentClassName,
   contentTitle,
   onContentClick,
+  onStartEdit,
   isInlineChild = false,
 }: RizzomaBlipProps) {
   const isPerfMode = typeof window !== 'undefined' && (window.location.hash || '').includes('perf=');
+  const isTopicRoot = renderMode === 'topic-root';
   const initialCollapsePreference = typeof blip.isFoldedByDefault === 'boolean'
     ? blip.isFoldedByDefault
     : typeof blip.isCollapsed === 'boolean'
       ? blip.isCollapsed
       : getCollapsePreference(blip.id);
   const [collapseByDefault, setCollapseByDefault] = useState(initialCollapsePreference);
-  // BLB: ALL blips start COLLAPSED by default (original Rizzoma behavior)
-  // Users must click [+] to expand and see content
-  // But if forceExpanded is true (subblip view), always show expanded
-  const initialExpanded = forceExpanded
+  // BLB: ALL blips start COLLAPSED (hidden) by default (original Rizzoma behavior)
+  // Users must click [+] to expand and see content.
+  // Root blip and forced-expanded blips start expanded.
+  const initialExpanded = forceExpanded || isRoot || isTopicRoot
     ? true
-    : typeof blip.isCollapsed === 'boolean'
-      ? !blip.isCollapsed
+    : expandedBlips
+      ? expandedBlips.has(blip.id)
       : false;
   const [isExpanded, setIsExpanded] = useState(() => initialExpanded);
   const [isEditing, setIsEditing] = useState(false);
@@ -345,7 +356,6 @@ export function RizzomaBlip({
   useEffect(() => { isEditingRef.current = isEditing; }, [isEditing]);
   // Mirrors handleFinishEdit (declared below) for early-registered listeners.
   const finishEditRef = useRef<(() => void) | null>(null);
-  const isTopicRoot = renderMode === 'topic-root';
   // Root blips start expanded by default, but can be collapsed
   // Non-root blips follow the collapse preference
   const effectiveExpanded = isTopicRoot ? true : isExpanded;
@@ -1017,6 +1027,7 @@ export function RizzomaBlip({
   }, [blip.id]);
 
   // Handle clicks on [+] markers in view mode (inside dangerouslySetInnerHTML content)
+  // AND click-to-edit: putting cursor in the blip immediately reveals full editing bar!
   const handleViewContentClick = useCallback((e: React.MouseEvent) => {
     const target = (e.target as HTMLElement).closest('.blip-thread-marker') as HTMLElement | null;
     if (target) {
@@ -1031,9 +1042,20 @@ export function RizzomaBlip({
         return;
       }
     }
+    // If selecting text or clicking a link, do not enter edit mode
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) return;
+    if ((e.target as HTMLElement).closest('a')) return;
+
+    if (blip.permissions.canEdit && !isEditing) {
+      handleStartEdit();
+      requestAnimationFrame(() => {
+        inlineEditorRef.current?.commands.focus();
+      });
+    }
     // Fall through to original onContentClick
     onContentClick?.();
-  }, [inlineChildren, toggleInlineChild, onContentClick]);
+  }, [inlineChildren, toggleInlineChild, onContentClick, blip.permissions.canEdit, isEditing, handleStartEdit]);
 
   const handleToggleExpand = () => {
     const next = !isExpanded;
@@ -1071,6 +1093,10 @@ export function RizzomaBlip({
   };
 
   const handleStartEdit = () => {
+    if (onStartEdit) {
+      onStartEdit();
+      return;
+    }
     console.log('handleStartEdit called for blip:', blip.id, 'canEdit:', blip.permissions.canEdit);
     if (blip.permissions.canEdit) {
       const nextContent = ensureBulletedBody(
@@ -1083,6 +1109,9 @@ export function RizzomaBlip({
       if (inlineEditor) {
         inlineEditor.commands.setContent(nextContent);
         inlineEditor.setEditable(true);
+        requestAnimationFrame(() => {
+          inlineEditor.commands.focus();
+        });
       }
     }
   };
@@ -2327,8 +2356,7 @@ export function RizzomaBlip({
         ) : (
           <div className="blip-view-mode">
             <div className="blip-content-row">
-              {/* Bullet point - original Rizzoma style */}
-              {!isTopicRoot && <span className="blip-bullet">•</span>}
+              {/* List inside blip-main-content supplies the authentic bullet */}
               <div className="blip-main-content">
                 {parityViewRender ? (
                   <div
@@ -2508,6 +2536,9 @@ export function RizzomaBlip({
                         onClick={(e) => {
                           e.stopPropagation();
                           onExpand?.(childBlip.id);
+                          window.dispatchEvent(new CustomEvent(ACTIVE_BLIP_CLAIM_EVENT, {
+                            detail: { blipId: childBlip.id },
+                          }));
                         }}
                       >
                         <span className="blip-bullet">•</span>

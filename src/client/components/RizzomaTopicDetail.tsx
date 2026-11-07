@@ -125,6 +125,32 @@ function TopicAvatar({
   );
 }
 
+export function ensureBulletedTopicContent(html: string, title?: string): string {
+  const titleH1 = `<h1>${title || 'Untitled'}</h1>`;
+  if (!html || !html.trim()) {
+    return `${titleH1}<ul><li><p></p></li></ul>`;
+  }
+  let body = html;
+  let h1Tag = titleH1;
+  const h1Match = body.match(/<h1[^>]*>(.*?)<\/h1>/i);
+  if (h1Match) {
+    h1Tag = h1Match[0];
+    body = body.slice(h1Match.index! + h1Match[0].length).trim();
+  }
+  if (!body) {
+    return `${h1Tag}<ul><li><p></p></li></ul>`;
+  }
+  // Check if body already has list tags
+  if (!/<(ul|ol)[\s>]/i.test(body)) {
+    if (/<p[\s>]/i.test(body)) {
+      body = `<ul>${body.replace(/<p[^>]*>(.*?)<\/p>/gi, '<li><p>$1</p></li>')}</ul>`;
+    } else {
+      body = `<ul><li><p>${body}</p></li></ul>`;
+    }
+  }
+  return `${h1Tag}${body}`;
+}
+
 function extractTags(html: string): string[] {
   const plainText = html.replace(/<[^>]+>/g, ' ');
   const matches = plainText.match(/#[\w-]+/g) || [];
@@ -1120,37 +1146,17 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     window.dispatchEvent(new CustomEvent(ACTIVE_BLIP_CLAIM_EVENT, {
       detail: { blipId: `topic-editor:${id}` },
     }));
-    // BLB: Topic content should always have title as first H1
-    // Merge title + existing content, ensuring title is H1 at the start
-    let initialContent = '';
-    const titleH1 = `<h1>${topic?.title || 'Untitled'}</h1>`;
-
-    if (topic?.content) {
-      // Check if content already starts with the title as H1
-      const contentHasTitle = topic.content.toLowerCase().includes(`<h1>${(topic.title || '').toLowerCase()}</h1>`);
-      if (contentHasTitle) {
-        // Use content as-is
-        initialContent = topic.content;
-      } else {
-        // Wrap content in <p> if it's plain text (no HTML tags)
-        let wrappedContent = topic.content;
-        if (!/<[^>]+>/.test(wrappedContent)) {
-          wrappedContent = `<p>${wrappedContent}</p>`;
-        }
-        // Prepend title as H1 to content
-        initialContent = titleH1 + wrappedContent;
-      }
-    } else {
-      // No content, just use title as H1
-      initialContent = titleH1;
-    }
+    // BLB: Topic content should always have title as first H1 and bulleted list below
+    const initialContent = ensureBulletedTopicContent(topic?.content || '', topic?.title);
     const inlineRootBlips = blips.filter((b) => typeof b.anchorPosition === 'number');
     const nextContent = injectInlineMarkers(initialContent, inlineRootBlips);
     setTopicContent(nextContent);
     lastSavedContentRef.current = nextContent;
     setIsEditingTopic(true);
-    // The useEffect will handle syncing the editor content when isEditingTopic changes
-  }, [isAuthed, topic?.title, topic?.content, blips]);
+    requestAnimationFrame(() => {
+      topicEditor?.commands.focus();
+    });
+  }, [isAuthed, topic?.title, topic?.content, blips, topicEditor, id]);
 
   // Finish editing topic
   // Single-active bridge — release side. While the topic editor is open, a
@@ -1294,18 +1300,9 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const inlineRootBlips = blips.filter(b => typeof b.anchorPosition === 'number');
   const listBlips = blips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
   const titleH1 = `<h1>${topic.title || 'Untitled'}</h1>`;
-  let topicContentHtmlBase = titleH1;
+  let topicContentHtmlBase = `${titleH1}<ul><li><p></p></li></ul>`;
   if (topic.content && topic.content.trim().length > 0) {
-    const contentHasTitle = topic.content.toLowerCase().includes(`<h1>${(topic.title || '').toLowerCase()}</h1>`);
-    if (contentHasTitle) {
-      topicContentHtmlBase = topic.content;
-    } else {
-      let wrapped = topic.content;
-      if (!/<[^>]+>/.test(wrapped)) {
-        wrapped = `<p>${wrapped}</p>`;
-      }
-      topicContentHtmlBase = `${titleH1}${wrapped}`;
-    }
+    topicContentHtmlBase = ensureBulletedTopicContent(topic.content, topic.title);
   }
   // Don't inject markers here — let RizzomaBlip handle it with expanded state tracking
   const topicBlip: BlipData = {
@@ -1580,7 +1577,15 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                     <EditorContent editor={topicEditor} />
                   </div>
                 ) : (
-                  <div className="topic-content-view">
+                  <div
+                    className="topic-content-view"
+                    onClick={() => {
+                      if (isAuthed && !isEditingTopic) {
+                        startEditingTopic();
+                      }
+                    }}
+                    style={{ cursor: isAuthed ? 'pointer' : undefined }}
+                  >
                     {topicContentHtmlBase ? (
                       <div dangerouslySetInnerHTML={{ __html: topicContentHtmlBase }} />
                     ) : (
@@ -1643,8 +1648,13 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               contentContainerClassName="topic-blip-content"
               childContainerClassName="topic-blip-children"
               contentClassName="topic-content-view"
-              contentTitle={undefined}
-              onContentClick={undefined}
+              contentTitle={isAuthed ? 'Click or press Ctrl+E to edit' : undefined}
+              onContentClick={() => {
+                if (isAuthed && !isEditingTopic) {
+                  startEditingTopic();
+                }
+              }}
+              onStartEdit={startEditingTopic}
               contentOverride={topicContentOverride}
               contentFooter={topicContentFooter}
               childFooter={topicChildFooter}
