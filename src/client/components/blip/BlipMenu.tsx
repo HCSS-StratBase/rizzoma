@@ -366,7 +366,7 @@ export function BlipMenu({
         <button
           type="button"
           role="menuitem"
-          className="js-playback-button"
+          className="js-playback-button" data-testid="blip-menu-playback"
           disabled={!onShowHistory}
           onClick={() => {
             onShowHistory?.();
