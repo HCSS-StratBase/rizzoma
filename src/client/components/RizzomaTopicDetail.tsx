@@ -975,7 +975,33 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     const r = await api(`/api/blips/${encodeURIComponent(blipId)}`, { method: 'DELETE' });
     if (r.ok) {
       toast('Deleted');
-      load(true);
+      setExpandedBlips(prev => {
+        const next = new Set(prev);
+        next.delete(blipId);
+        return next;
+      });
+      // Remove blipThread node from topic editor if present
+      const ed = topicEditorRef.current;
+      if (ed && !ed.isDestroyed) {
+        try {
+          const { state } = ed;
+          let nodePos: number | null = null;
+          state.doc.descendants((node, pos) => {
+            if (node.type.name === 'blipThread' && node.attrs.threadId === blipId) {
+              nodePos = pos;
+              return false;
+            }
+            return true;
+          });
+          if (nodePos !== null) {
+            ed.commands.deleteRange({ from: nodePos, to: nodePos + 1 });
+          }
+        } catch {
+          // ignore transient TipTap error
+        }
+      }
+      window.dispatchEvent(new CustomEvent('rizzoma:blip-deleted', { detail: { blipId } }));
+      await load(true);
     } else {
       toast('Delete failed', 'error');
       throw new Error('Delete failed');

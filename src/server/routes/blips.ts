@@ -85,6 +85,38 @@ async function touchTopic(waveId: string): Promise<void> {
   }
 }
 
+async function removeInlineMarkerFromParent(waveId: string, parentId: string | null, blipId: string): Promise<void> {
+  try {
+    const targetDocIds = new Set<string>();
+    if (parentId) targetDocIds.add(parentId);
+    targetDocIds.add(waveId);
+
+    const escapedId = blipId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const markerRegex = new RegExp(
+      `<span[^>]*class="[^"]*blip-thread-host[^"]*"[^>]*>[\\s\\S]*?data-blip-thread="${escapedId}"[\\s\\S]*?<\\/span>\\s*<\\/span>|<span[^>]*data-blip-thread="${escapedId}"[^>]*>[\\s\\S]*?<\\/span>`,
+      'gi'
+    );
+
+    for (const docId of targetDocIds) {
+      try {
+        const doc = await getDoc<any>(docId);
+        if (doc && doc.content && markerRegex.test(doc.content)) {
+          const updatedContent = doc.content.replace(markerRegex, '');
+          await updateDoc({
+            ...doc,
+            content: updatedContent,
+            updatedAt: Date.now(),
+          });
+        }
+      } catch {
+        // Doc might not exist or already updated
+      }
+    }
+  } catch (err) {
+    console.error('Failed to remove inline marker from parent:', err);
+  }
+}
+
 async function markBlipAndDescendantsDeleted(
   blip: Blip & { _id: string; _rev: string },
   userId: string,
@@ -116,6 +148,9 @@ async function markBlipAndDescendantsDeleted(
     for (const doc of toUpdate) {
       await updateDoc(doc as any);
     }
+
+    // Clean up inline marker from parent/root topic content
+    await removeInlineMarkerFromParent(blip.waveId, blip.parentId || null, blip._id);
   } catch (error) {
     console.error('Failed to mark blip descendants as deleted', error);
     throw error;
@@ -302,12 +337,8 @@ router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
       res.status(410).json({ error: 'deleted', requestId: (req as any)?.id });
       return;
     }
-    const isAuthor = !blip.authorId || blip.authorId === userId;
-    if (!isAuthor) {
-      console.warn('[blips] forbidden delete', { blipId: id, userId, ownerId: blip.authorId, requestId: (req as any)?.id });
-      res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
-      return;
-    }
+    // In original Rizzoma collaborative editing, any wave participant with edit access
+    // can delete replies/comments in the wave (only the root wave blip cannot be deleted).
 
     await markBlipAndDescendantsDeleted(blip, userId);
     void touchTopic(blip.waveId);
@@ -319,6 +350,21 @@ router.delete('/:id', requireAuth, async (req, res): Promise<void> => {
       return;
     }
     res.status(500).json({ error: e?.message || 'delete_blip_error', requestId: (req as any)?.id });
+  }
+});
+
+// GET /api/blips/:id/links → { out: [], in: [] }
+router.get('/:id/links', async (req, res): Promise<void> => {
+  const id = req.params['id'] as string;
+  try {
+    const out = (await find<any>({ type: 'link', fromBlipId: id }, { limit: 1000 })).docs || [];
+    const inn = (await find<any>({ type: 'link', toBlipId: id }, { limit: 1000 })).docs || [];
+    res.json({
+      out: out.map((d: any) => ({ fromBlipId: d.fromBlipId, toBlipId: d.toBlipId, waveId: d.waveId })),
+      in: inn.map((d: any) => ({ fromBlipId: d.fromBlipId, toBlipId: d.toBlipId, waveId: d.waveId })),
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'links_error', requestId: (req as any)?.id });
   }
 });
 

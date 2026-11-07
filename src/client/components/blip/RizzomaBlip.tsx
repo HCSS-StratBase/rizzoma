@@ -718,11 +718,9 @@ export function RizzomaBlip({
         const waveId = blip.id.split(':')[0];
         console.log('[RizzomaBlip] Creating child blip for wave:', waveId, 'parent:', blip.id);
 
-        const response = await fetch('/api/blips', {
+        await ensureCsrf();
+        const response = await api('/api/blips', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
           body: JSON.stringify({
             waveId,
             parentId: blip.id,
@@ -736,11 +734,11 @@ export function RizzomaBlip({
           }),
         });
 
-        if (!response.ok) {
+        if (!response.ok || !response.data) {
           throw new Error('Failed to create child blip');
         }
 
-        const newBlip = await response.json();
+        const newBlip = response.data as any;
         const newBlipId = newBlip.id || newBlip._id;
 
         console.log('[RizzomaBlip] Created child blip via Ctrl+Enter:', newBlipId);
@@ -1028,6 +1026,41 @@ export function RizzomaBlip({
     return () => window.removeEventListener('rizzoma:deactivate-blip', handle);
   }, [blip.id]);
 
+  // Clean up inline blipThread node & local expansion if child was deleted
+  useEffect(() => {
+    const handleDeleted = (e: Event) => {
+      const deletedId = (e as CustomEvent).detail?.blipId;
+      if (!deletedId) return;
+      setLocalExpandedInline(prev => {
+        if (!prev.has(deletedId)) return prev;
+        const next = new Set(prev);
+        next.delete(deletedId);
+        return next;
+      });
+      const ed = inlineEditorRef.current;
+      if (ed && !ed.isDestroyed) {
+        try {
+          const { state } = ed;
+          let nodePos: number | null = null;
+          state.doc.descendants((node, pos) => {
+            if (node.type.name === 'blipThread' && node.attrs.threadId === deletedId) {
+              nodePos = pos;
+              return false;
+            }
+            return true;
+          });
+          if (nodePos !== null) {
+            ed.commands.deleteRange({ from: nodePos, to: nodePos + 1 });
+          }
+        } catch {
+          // ignore transient TipTap error
+        }
+      }
+    };
+    window.addEventListener('rizzoma:blip-deleted', handleDeleted);
+    return () => window.removeEventListener('rizzoma:blip-deleted', handleDeleted);
+  }, []);
+
   const handleStartEdit = useCallback(() => {
     if (onStartEdit) {
       onStartEdit();
@@ -1138,10 +1171,10 @@ export function RizzomaBlip({
   useEffect(() => { finishEditRef.current = handleFinishEdit; }, [handleFinishEdit]);
 
   const handleCreateInlineChildAtCursor = useCallback(() => {
+    if (!blip.permissions.canComment) return;
     const editor = inlineEditorRef.current || inlineEditor;
-    if (!editor || !blip.permissions.canComment) return;
-    const { from } = editor.state.selection;
-    stableCreateInlineChildBlip(from);
+    const pos = editor?.state?.selection?.from ?? 0;
+    stableCreateInlineChildBlip(pos);
   }, [blip.permissions.canComment, inlineEditor, stableCreateInlineChildBlip]);
 
   // handleSaveEdit now just finishes editing - auto-save handles the actual saving

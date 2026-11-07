@@ -76,7 +76,10 @@ app.use('/api/topics', topicsRouter);
 app.use('/api', commentsRouter);
 app.use('/api/waves', wavesRouter);
 app.use('/api/editor', editorRouter);
-app.use('/api', linksRouter);
+// BUG #43 (2026-04-21): mount linksRouter at /api/links, NOT /api — a /api
+// mount makes DELETE /:from/:to match /api/blips/<id> (two path segments),
+// so blip deletion silently 404s forever.
+app.use('/api/links', linksRouter);
 app.use('/api/blips', blipsRouter);
 app.use('/api', inlineCommentsRouter);
 app.use('/api/uploads', uploadsRouter);
