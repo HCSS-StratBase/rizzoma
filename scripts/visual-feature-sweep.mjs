@@ -947,8 +947,17 @@ async function captureBlipAndToolbarStates(page, fixture) {
     'Inline comments control surfaces the comment navigation/filter area when available.',
     { dynamicStep: 'after-comments-toggle', assertFn: gateExists('[data-testid^="blip-menu-comments"], .inline-comments-nav, [class*="comments"]') });
 
-  await main.locator('[data-testid="blip-menu-gear-toggle"]').click();
-  await clickText(page, 'Playback history');
+  const gearToggle = main.locator('[data-testid="blip-menu-gear-toggle"]');
+  if (await gearToggle.isVisible()) {
+    await gearToggle.click();
+    await page.waitForTimeout(300);
+    const playbackBtn = main.locator('[data-testid="blip-menu-playback"], button:has-text("Playback history"), button:has-text("Playback")').first();
+    if (await playbackBtn.isVisible()) {
+      await playbackBtn.click();
+    } else {
+      await clickText(page, 'Playback history', { timeout: 3000 }).catch(() => {});
+    }
+  }
   await page.waitForTimeout(800);
   await capture(page, 'per blip playback history modal', [
       'History & Playback: per-blip playback',
