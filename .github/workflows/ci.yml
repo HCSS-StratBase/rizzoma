@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, master, feature/rizzoma-core-features, feature/native-fractal-port ]
+    branches: [ main, master, feature/rizzoma-core-features, feature/native-fractal-port, claude/merge-master-into-fractal-03f408 ]
   pull_request:
 
 jobs:
