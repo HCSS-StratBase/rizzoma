@@ -58,8 +58,8 @@ graph LR
 | `.gitignore` | both | Union. |
 | `src/server/app.ts`, `routes/auth.ts`, `routes/blips.ts`, `routes/topics.ts`, `routes/waves.ts`, `middleware/session.ts`, `types/express-session.d.ts` | master | Role-checked access, OAuth state transactions, password reset, session revocation, Yjs generation checks. The branch had none of these. |
 | `src/server/lib/couch.ts` | both | Union of index lists (branch `idx_participant_by_wave` + master's 15 indexes). |
-| `src/server/config.ts` | master's `host` logic, **port default kept at 8000** | Master reserved 8788; the live deployment, nginx, CI smokes and the branch's vite proxy all use 8000. Revisit as a separate decision. |
-| `src/shared/featureFlags.ts`, `vite.config.ts` | branch | `RIZZOMA_PARITY_RENDER` stays on by default (parity), proxy default 8000. |
+| `src/server/config.ts`, backend port | master: **default 8788** | First attempt kept 8000; CI `Wait for dev stack` (master's step) polls 8788 and master's `socket.ts` connects the browser to 8788 when served from :3000, so 8000 broke browser-smokes. The live deployment must set `PORT`/`VITE_API_TARGET` explicitly or move to 8788; **not verified here**. |
+| `src/shared/featureFlags.ts`, `vite.config.ts` | branch, proxy default 8788 | `RIZZOMA_PARITY_RENDER` stays on by default (parity). |
 | the `tiptap.d.ts` shim (formerly in src/types) | deleted (master) | It shadowed the real TipTap types and hid errors; master's code needs the real types. |
 | `perf-harness.mjs`, `scripts/perf-budget.mjs` | master | Paired; the budget script reads the harness's new output. |
 | `scripts/visual-feature-sweep.mjs`, `scripts/rizzoma_sanity_sweep.mjs` | branch | Selectors for the legacy DOM. |
@@ -90,4 +90,4 @@ See `wiki/log.md` entry of 2026-11-08 for the measured numbers (typecheck, vites
 
 - ▷ Visual parity was **not** re-measured after the merge (no sweep run); master's TopicDetail/Blip logic changed render paths.
 - ▷ `BlipMenu` tests (14) still fail: they assert master's emoji toolbar, the branch has the sprite toolbar. `collapsePreferences` (1) also fails. Both were failing on the branch before the merge.
-- ▷ Port 8788 versus 8000 is unresolved policy.
+- ▷ Backend default port is now 8788 (master's). Anything on this branch's line that assumed 8000 (nginx, systemd, nohup recipe in CLAUDE.md, `scripts/gen_status.mjs`) is unverified.

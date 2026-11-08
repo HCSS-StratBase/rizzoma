@@ -15,10 +15,10 @@ export const config: AppConfig = {
   // listener directly. Development keeps the LAN-friendly bind used by the
   // mobile/device smoke tests. HOST remains an explicit escape hatch.
   host: process.env['HOST'] || (process.env['NODE_ENV'] === 'production' ? '127.0.0.1' : '0.0.0.0'),
-  // Reserved Rizzoma backend port. Master reserved 8788 to avoid the common 8000
+  // Reserved Rizzoma backend port. 8788 was chosen to avoid the common 8000
   // collision with google_workspace_mcp and other dev services. Override with
   // PORT env var only when running multiple Rizzoma backends side by side.
-  port: num(process.env['PORT'], 8000),
+  port: num(process.env['PORT'], 8788),
   couchDbUrl: process.env['COUCHDB_URL'] || 'http://admin:password@localhost:5984',
   couchDbName: process.env['COUCHDB_DB'] || 'project_rizzoma',
 };
