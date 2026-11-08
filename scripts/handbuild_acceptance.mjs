@@ -35,8 +35,13 @@ const BASE = process.env.HB_BASE || 'https://138-201-62-161.nip.io';
 const RENDER = process.env.HB_RENDER || 'react';
 const DEPTH = Number(process.env.HB_DEPTH || 10);
 const OUT = process.env.HB_OUT || `/mnt/c/Rizzoma/screenshots/260714-handbuild-acceptance-${RENDER}`;
-const EMAIL = 'try-owner+try-1783562412806@example.com';
-const PASS = 'Try!Owner-try-1783562412806';
+// Test-account credentials come from the environment, never from source.
+const EMAIL = process.env.HB_EMAIL;
+const PASS = process.env.HB_PASS;
+if (!EMAIL || !PASS) {
+  console.error('[acc] set HB_EMAIL and HB_PASS (test account on the target host) before running');
+  process.exit(2);
+}
 
 fs.mkdirSync(OUT, { recursive: true });
 const log = m => console.log(`[acc] ${m}`);

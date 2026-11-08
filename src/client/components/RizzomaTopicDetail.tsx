@@ -725,6 +725,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             const editor = topicEditorRef.current;
             if (editor) {
               (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
+              const updatedContent = editor.getHTML();
+              setTopicContent(updatedContent);
+              lastSavedContentRef.current = updatedContent;
+              await ensureCsrf();
+              await api(`/api/topics/${encodeURIComponent(id)}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ content: updatedContent }),
+              });
             }
 
             // BLB: Extract blipPath and navigate to the new subblip
@@ -1252,6 +1260,22 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         event.preventDefault();
         finishEditingTopic();
       }
+      // Ctrl+Enter: Create inline child blip in topic root (both view mode and edit mode)
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key === 'Enter') {
+        const target = event.target as HTMLElement | null;
+        const insideChildBlip = target?.closest('.blip-container:not(.topic-meta-blip):not(.root-blip)');
+        if (insideChildBlip) return;
+
+        event.preventDefault();
+        if (isEditingTopic) {
+          createInlineChildBlipRef.current?.(0);
+        } else if (isAuthed) {
+          startEditingTopic();
+          setTimeout(() => {
+            createInlineChildBlipRef.current?.(0);
+          }, 100);
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -1523,6 +1547,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             canComment={isAuthed}
             editor={topicEditor || undefined}
             isTopicRoot={true}
+            collapseByDefault={false}
+            onToggleCollapseByDefault={() => {
+              toast('Root topic cannot be collapsed by default', 'info');
+            }}
             onStartEdit={startEditingTopic}
             onFinishEdit={finishEditingTopic}
             onShowComments={() => {

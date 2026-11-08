@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: 6cf6fc7a
+source_commit: aec16061
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 79 files in `scripts/`, 35 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 81 files in `scripts/`, 35 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -75,7 +75,7 @@ graph LR
 | `snapshots:pull` | `bash scripts ⁄ fetch-latest-snapshots.sh` |
 | `lint:branch-context` | `node scripts ⁄ check-branch-state.cjs` |
 
-## scripts/ (79)
+## scripts/ (81)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -106,7 +106,7 @@ graph LR
 | `scripts/fix-anonymous-authors.cjs` | 188 | Migration script: Fix "Anonymous" author names on blips |
 | `scripts/full-deploy.sh` | 141 | MASTER DEPLOYMENT SCRIPT |
 | `scripts/gen_status.mjs` | 141 | Generate STATUS .md — the SINGLE authoritative current-state doc. |
-| `scripts/handbuild_acceptance.mjs` | 271 | HAND-BUILD ACCEPTANCE — the gate for ALL Rizzoma fractal work (SDS 2026-07-14). |
+| `scripts/handbuild_acceptance.mjs` | 276 | HAND-BUILD ACCEPTANCE — the gate for ALL Rizzoma fractal work (SDS 2026-07-14). |
 | `scripts/handbuild_depth10.mjs` | 109 | HAND-BUILD a depth-10 fractal on the NEW rizzoma through the REAL UI. |
 | `scripts/insert_depth10_spine.mjs` | 123 | Insert a depth-10 spine of blips directly into CouchDB. |
 | `scripts/legacy_archive_crops.mjs` | 154 | LEGACY ARCHIVE PHASE 2 — element-level CROPS keyed to feature-matrix rows, |
@@ -157,6 +157,8 @@ graph LR
 | `scripts/visual-feature-coverage.mjs` | 210 | — |
 | `scripts/visual-feature-sweep.mjs` | 1407 | — |
 | `scripts/visual_sanity_analyze.mjs` | 249 | Visual sanity pass on analyze.rubase.org after today's batch: |
+| `scripts/wiki_coverage.py` | 47 | Fail when the wiki does not mention (by file name) something it must cover. |
+| `scripts/wiki_generate_catalogs.py` | 326 | import json |
 | `scripts/wiki_lint.py` | 23 | Thin wrapper in /mnt/c/Rizzoma/scripts ⁄ wiki_lint.py that invokes the canonical |
 
 ## .claude/hooks/ (10)

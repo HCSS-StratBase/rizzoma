@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: 6cf6fc7a
+source_commit: aec16061
 generated: true
 ---
 
 # Documentation Inventory
 
-**¶1** □ GENERATED. 64 markdown files. Title is the first heading; Status is the first status/updated/verified line in the first 25 lines, if any. Authority notes are in [the doc catalog](../reference-doc-catalog.md); `docs/deprecated/` is NOT authoritative.
+**¶1** □ GENERATED. 65 markdown files. Title is the first heading; Status is the first status/updated/verified line in the first 25 lines, if any. Authority notes are in [the doc catalog](../reference-doc-catalog.md); `docs/deprecated/` is NOT authoritative.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -41,6 +41,7 @@ graph LR
 | [`AGENTS.md`](../../AGENTS.md) |  | Read `STATUS .md` (generated) for current state and **`wiki ⁄ index.md`** (`wiki ⁄ SCHEMA.md`) for the compounding LLM Wiki, BFO subsystem diagrams, and `~/.lo… |
 | [`CHANGELOG.md`](../../CHANGELOG.md) | Changelog |  |
 | [`CLAUDE.md`](../../CLAUDE.md) | CLAUDE .md — Rizzoma (entry point) | \| Current state (branch, deployment, gates, open failures) \| **`STATUS .md`** — GENERATED (`node scripts ⁄ gen_status.mjs`); never hand-write status \| |
+| [`GEMINI.md`](../../GEMINI.md) | GEMINI.md – Rizzoma | 4. Current state: `STATUS .md` (generated, never edit). |
 | [`QUICKSTART.md`](../../QUICKSTART.md) | QUICKSTART | Live/staging topology (nohup tsx + vite behind nginx) is in **`STATUS .md`**. |
 | [`RIZZOMA_FEATURES_STATUS.md`](../../RIZZOMA_FEATURES_STATUS.md) | 🚀 Rizzoma Core Features Implementation Status | Do not cite it as status** — status is generated into `STATUS .md`. |
 | [`STATUS.md`](../../STATUS.md) | STATUS — Rizzoma (GENERATED, do not hand-edit) | STATUS — Rizzoma (GENERATED, do not hand-edit) |

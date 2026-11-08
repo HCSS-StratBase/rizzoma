@@ -217,22 +217,23 @@
   line-height: 22px;
 }
 
-/* Level 1 bullet: • */
+/* Level 1 bullet: clean, perfectly centered real circular disc */
 .blip-text ul > li::before,
 .topic-content-view ul > li::before,
 .topic-blip-content ul > li::before,
 .tiptap.ProseMirror ul > li::before,
 .blip-editor-container .ProseMirror ul > li::before {
-  content: '•';
+  content: '';
   position: absolute;
-  left: 2px;
-  top: 0;
-  font-size: 14px;
-  line-height: 22px;
-  color: #333;
+  left: 5px;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #333333;
 }
 
-/* Level 2 bullet: ◦ */
+/* Level 2 bullet: ◦ circle */
 .blip-text ul ul,
 .topic-content-view ul ul,
 .topic-blip-content ul ul,
@@ -247,16 +248,19 @@
 .topic-blip-content ul ul > li::before,
 .tiptap.ProseMirror ul ul > li::before,
 .blip-editor-container .ProseMirror ul ul > li::before {
-  content: '◦';
+  content: '';
   position: absolute;
-  left: 2px;
-  top: 0;
-  font-size: 14px;
-  line-height: 22px;
-  color: #555;
+  left: 5px;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  border: 1px solid #333333;
+  background: transparent;
+  box-sizing: border-box;
 }
 
-/* Level 3 bullet: ▪ */
+/* Level 3 bullet: ▪ square */
 .blip-text ul ul ul,
 .topic-content-view ul ul ul,
 .topic-blip-content ul ul ul,
@@ -271,13 +275,13 @@
 .topic-blip-content ul ul ul > li::before,
 .tiptap.ProseMirror ul ul ul > li::before,
 .blip-editor-container .ProseMirror ul ul ul > li::before {
-  content: '▪';
+  content: '';
   position: absolute;
-  left: 3px;
-  top: 0;
-  font-size: 10px;
-  line-height: 22px;
-  color: #666;
+  left: 5px;
+  top: 9px;
+  width: 4px;
+  height: 4px;
+  background: #555555;
 }
 
 /* Inline comment button */
@@ -1207,7 +1211,7 @@
 }
 
 .blip-collapsed-row .blip-bullet {
-  margin-right: 6px;
+  display: none !important;
 }
 
 .blip-collapsed-row:hover {
@@ -1234,7 +1238,8 @@
   background: #b3b3b3;
   border: none;
   border-radius: 3px;
-  margin-left: 2px;
+  margin-right: 6px;
+  margin-left: 0;
   vertical-align: middle;
   cursor: pointer;
 }
@@ -1294,7 +1299,6 @@
 
 /* Sub-bullet style for nested blips */
 .blip-container.nested-blip .blip-bullet {
-  content: '◦';
   font-size: 14px;
   color: #888;
 }
@@ -1339,8 +1343,9 @@
   margin-left: 22px;
   border-left: 2px solid #ddd;
   padding-left: 8px;
-  margin-top: 4px;
-  margin-bottom: 4px;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+  clear: both;
   background: #fafafa;
   border-radius: 0 3px 3px 0;
 }
@@ -1359,8 +1364,9 @@
   margin-left: 22px;
   border-left: 1px solid #e0e0e0;  /* thin guide line, not 2px card border */
   padding: 0 0 0 8px;
-  margin-top: 0;
-  margin-bottom: 0;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+  clear: both;
   background: transparent !important;  /* drop the lavender panel */
   border-radius: 0;
 }
@@ -1443,6 +1449,9 @@
 .inline-child-portal {
   display: block;
   list-style: none;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+  clear: both;
 }
 
 /* When the portal has no expanded child, suppress block-level whitespace
@@ -1502,6 +1511,9 @@
 .rizzoma-parity .inline-child-expanded {
   margin-left: 0;
   padding: 0 0 0 2px;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+  clear: both;
 }
 .rizzoma-parity .inline-child-expanded .blip-content-row {
   padding-left: 0 !important;

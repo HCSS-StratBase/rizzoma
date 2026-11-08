@@ -368,8 +368,8 @@ router.get('/:id/links', async (req, res): Promise<void> => {
   }
 });
 
-// GET /api/blips/:id/history - Blip playback history
-router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
+// GET /api/blips/:id/history - Blip playback history (publicly accessible to wave viewers, matching waves.ts)
+router.get('/:id/history', async (req, res): Promise<void> => {
   try {
     const blipId = req.params['id'] as string;
     const result = await find<BlipHistoryDoc>({ type: 'blip_history', blipId }, { limit: 200 });
@@ -377,6 +377,26 @@ router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
       .slice()
       .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
       .map(({ _id, _rev, type, ...rest }) => ({ id: _id, ...rest }));
+    // If no history exists yet, provide baseline from current blip/topic
+    if (history.length === 0) {
+      try {
+        const doc = await getDoc<any>(blipId);
+        if (doc) {
+          history.push({
+            id: `blip_history:${blipId}:${doc.createdAt || Date.now()}`,
+            blipId: blipId,
+            waveId: doc.waveId || (blipId.includes(':') ? blipId.split(':')[0] : blipId),
+            content: doc.content || '',
+            authorId: doc.authorId,
+            authorName: doc.authorName || 'Author',
+            event: 'create',
+            createdAt: doc.createdAt || Date.now(),
+            updatedAt: doc.updatedAt || Date.now(),
+            snapshotVersion: 1,
+          });
+        }
+      } catch {}
+    }
     res.json({ history });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'blip_history_error', requestId: (req as any)?.id });

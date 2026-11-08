@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: 6cf6fc7a
+source_commit: aec16061
 generated: true
 ---
 
@@ -78,7 +78,7 @@ graph LR
 | `src/client/components/RizzomaLayout.css` | 297 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 306 | (no header comment; exports RizzomaLayout) |
 | `src/client/components/RizzomaTopicDetail.css` | 1014 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.tsx` | 1733 | DISABLED: Socket subscription was causing infinite loop |
+| `src/client/components/RizzomaTopicDetail.tsx` | 1753 | DISABLED: Socket subscription was causing infinite loop |
 | `src/client/components/RizzomaTopicsList.css` | 214 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 270 | (no header comment; exports RizzomaTopicsList) |
 | `src/client/components/ShareModal.tsx` | 180 | (no header comment; exports ShareModal) |
@@ -102,10 +102,10 @@ graph LR
 | `src/client/components/blip/BlipHistoryModal.css` | 475 | BlipHistoryModal - Timeline Playback UI |
 | `src/client/components/blip/BlipHistoryModal.tsx` | 322 | (no header comment; exports BlipHistoryModal) |
 | `src/client/components/blip/BlipMenu.css` | 607 | Authentic Legacy Rizzoma Blip Menu Styles |
-| `src/client/components/blip/BlipMenu.tsx` | 870 | (no header comment; exports BlipMenu) |
+| `src/client/components/blip/BlipMenu.tsx` | 872 | (no header comment; exports BlipMenu) |
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 288 | (no header comment; exports InlineHtmlRenderOptions) |
-| `src/client/components/blip/RizzomaBlip.css` | 1598 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 2776 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/RizzomaBlip.css` | 1603 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.tsx` | 2765 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 105 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 73 | (no header comment; exports LocationLike) |
@@ -219,7 +219,7 @@ graph LR
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/server/routes/auth.ts` | 693 | Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable |
-| `src/server/routes/blips.ts` | 638 | — |
+| `src/server/routes/blips.ts` | 658 | — |
 | `src/server/routes/comments.ts` | 113 | — |
 | `src/server/routes/editor.ts` | 314 | Feature flag: set EDITOR_ENABLE=1 to enable endpoints |
 | `src/server/routes/health.ts` | 43 | CouchDB check |
@@ -228,9 +228,9 @@ graph LR
 | `src/server/routes/mentions.ts` | 144 | Mentions Routes |
 | `src/server/routes/notifications.ts` | 221 | Notification Routes |
 | `src/server/routes/tasks.ts` | 177 | Tasks Routes |
-| `src/server/routes/topics.ts` | 474 | User type for lookups |
+| `src/server/routes/topics.ts` | 506 | User type for lookups |
 | `src/server/routes/uploads.ts` | 231 | AWS SDK v3 - optional, loaded dynamically when S3 storage is enabled |
-| `src/server/routes/waves.ts` | 518 | GET /api/waves?limit&offset&q |
+| `src/server/routes/waves.ts` | 612 | GET /api/waves?limit&offset&q |
 
 ## Server lib (9)
 

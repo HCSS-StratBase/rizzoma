@@ -29,6 +29,9 @@ for f in FILES:
         must.append(("root-doc", f))
     elif f.startswith("screenshots/260714-legacy-reference-archive/") and f.lower().endswith(".png"):
         must.append(("legacy-image", f))
+orig = REPO / "original-rizzoma-src" / "src"  # git-ignored vendored original; checked when present
+if orig.is_dir():
+    must += [("original-src", q.relative_to(REPO).as_posix()) for q in sorted(orig.rglob("*.coffee"))]
 dirs = sorted({f.split("/")[1] for f in FILES if f.startswith("screenshots/") and f.count("/") >= 2})
 must += [("screenshot-folder", "screenshots/" + d) for d in dirs]
 

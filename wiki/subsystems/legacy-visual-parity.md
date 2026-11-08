@@ -88,3 +88,24 @@ graph LR
 **¶7** ◇ Compatibility rule learned in these commits: the sweep tests find buttons by selector, so restyling the chrome must keep the old selectors (commits `478d46c0`, `b8d631ce`, `f3a4365c`).
 
 **¶8** ▷ Not yet recorded here: which of the 240 rows of `RIZZOMA_FEATURES_STATUS.md` changed status, and a post-change `parity:gate` result. Re-run the gate and file the numbers in `log.md`.
+
+---
+
+## 4. 2026-11-08 Structural Forensic Fixes for Discrepancies in Topic Pane
+
+**¶9** □ On 2026-11-08, user review of screenshot `2026-11-08_00-27-53.png` identified 7 critical visual and behavioral discrepancies from the original Rizzoma UI (`original-rizzoma-src/` and `screenshots/260714-legacy-reference-archive/`):
+1. **Child Blips Uncollapsed in Topic Root**:
+   - *Original CoffeeScript*: `blip/blip_thread.coffee` executes `@initFold(true)`, ensuring all child threads start folded (`isFolded() == true`).
+   - *Modern Defect*: In `RizzomaBlip.tsx`, an explicit condition `isTopicRoot ? listChildren.map(...) : ...` bypassed all fold checks and rendered full `<RizzomaBlip>` components for root children, forcing reply inputs, child chrome, and author badges (`[jan] Nov 2026`) into the main viewport.
+   - *Fix*: Removed root bypass. All child blips respect `expandedBlips?.has(childBlip.id)`. Unexpanded blips render strictly as collapsed rows (`[+] <label>`).
+2. **Elevated Cross/Diamond Bullets**:
+   - *Original CSS*: `editor/renderer.coffee` / `static/css/blip.css` used standard `<li>` bullet discs with `BULLETED_LIST_START_PADDING = 22px`.
+   - *Modern Defect*: `RizzomaBlip.css` rendered pseudo-element `::before` using Arial unicode character `•` with `top: 0; line-height: 22px;`. Arial's bullet glyph sits high in the em-box, floating 9px above the 22px line height baseline and anti-aliasing into a diamond/cross shape.
+   - *Fix*: Replaced unicode glyph with a mathematically centered 5px disc (`width: 5px; height: 5px; border-radius: 50%; background: #333333; position: absolute; left: 5px; top: 9px;`).
+3. **Double Markers on Collapsed Rows**:
+   - *Modern Defect*: Collapsed blips showed a bullet disc on the left and a fold toggle on the right (`• Title [+]`).
+   - *Fix*: Reordered to authentic legacy layout: `[+] Title` on the left, and suppressed `.blip-bullet` entirely on `.blip-collapsed-row`.
+4. **Authentic Two-State Toolbar and Bottom Done Bar**:
+   - *Original CoffeeScript*: `blip/menu/template.coffee` pairs `.read-only-menu` and `.edit-menu`. The edit ribbon exposes full formatting tools, `is-folded-by-default` toggle, and a green `Done` button (`Ctrl+E`, `Shift+Enter`).
+   - *Fix*: Standardized 2-state toolbar in `BlipMenu.tsx`, restored bottom Done bar, and wired `Hidden` toggle to both blips and root topic menu.
+

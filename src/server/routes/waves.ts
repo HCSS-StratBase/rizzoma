@@ -98,6 +98,26 @@ router.get('/:id/history', async (req, res) => {
       updatedAt: d.updatedAt,
       snapshotVersion: d.snapshotVersion,
     }));
+    // If no history entries exist yet, synthesize baseline from topic content so playback is never blank
+    if (entries.length === 0) {
+      try {
+        const topic = await getDoc<any>(waveId);
+        if (topic) {
+          entries.push({
+            id: `blip_history:${waveId}:${topic.createdAt || Date.now()}`,
+            blipId: waveId,
+            waveId: waveId,
+            content: topic.content || '',
+            authorId: topic.authorId,
+            authorName: topic.authorName || 'Author',
+            event: 'create',
+            createdAt: topic.createdAt || Date.now(),
+            updatedAt: topic.updatedAt || Date.now(),
+            snapshotVersion: 1,
+          });
+        }
+      } catch {}
+    }
     const blipIds = [...new Set(entries.map(e => e.blipId))];
     const earliest = entries.length > 0 ? entries[0].createdAt : 0;
     const latest = entries.length > 0 ? entries[entries.length - 1].createdAt : 0;
@@ -168,6 +188,80 @@ async function loadWaveBlipOrder(id: string): Promise<Array<{ id: string; update
     }))
     .filter((entry) => entry.id);
 }
+
+// PUT or PATCH /api/waves/:id — update wave/topic content (compatibility alias for topics)
+router.put('/:id', async (req, res) => {
+  const id = req.params.id;
+  try {
+    const existing = await getDoc<any>(id);
+    const content = req.body?.content ?? existing.content;
+    const title = req.body?.title ?? existing.title;
+    const next = {
+      ...existing,
+      title,
+      content,
+      updatedAt: Date.now(),
+    };
+    const r = await updateDoc(next);
+    // Also record history
+    try {
+      const now = Date.now();
+      await insertDoc({
+        _id: `blip_history:${id}:${now}`,
+        type: 'blip_history',
+        blipId: id,
+        waveId: id,
+        content: content || '',
+        authorId: (req as any).user?.id || (req.session as any)?.userId || existing.authorId || '',
+        authorName: (req as any).user?.name || (req.session as any)?.userName || 'User',
+        event: 'update',
+        createdAt: now,
+        updatedAt: now,
+        snapshotVersion: 1,
+      } as any);
+    } catch {}
+    res.json({ id: r.id, rev: r.rev });
+    try { emitEvent('topic:updated', { id: r.id, title: next.title, updatedAt: next.updatedAt }); } catch {}
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'wave_update_error', requestId: (req as any)?.id });
+  }
+});
+
+router.patch('/:id', async (req, res) => {
+  const id = req.params.id;
+  try {
+    const existing = await getDoc<any>(id);
+    const content = req.body?.content ?? existing.content;
+    const title = req.body?.title ?? existing.title;
+    const next = {
+      ...existing,
+      title,
+      content,
+      updatedAt: Date.now(),
+    };
+    const r = await updateDoc(next);
+    try {
+      const now = Date.now();
+      await insertDoc({
+        _id: `blip_history:${id}:${now}`,
+        type: 'blip_history',
+        blipId: id,
+        waveId: id,
+        content: content || '',
+        authorId: (req as any).user?.id || (req.session as any)?.userId || existing.authorId || '',
+        authorName: (req as any).user?.name || (req.session as any)?.userName || 'User',
+        event: 'update',
+        createdAt: now,
+        updatedAt: now,
+        snapshotVersion: 1,
+      } as any);
+    } catch {}
+    res.json({ id: r.id, rev: r.rev });
+    try { emitEvent('topic:updated', { id: r.id, title: next.title, updatedAt: next.updatedAt }); } catch {}
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'wave_update_error', requestId: (req as any)?.id });
+  }
+});
 
 // GET /api/waves/:id/unread — list unread blip IDs for current user
 router.get('/:id/unread', async (req, res) => {

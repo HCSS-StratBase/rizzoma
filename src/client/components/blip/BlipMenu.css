@@ -141,8 +141,10 @@
   left: 5px;
 }
 
+.read-only-menu .is-folded-by-default[aria-pressed="true"]::before,
+.read-only-menu.folded-by-default .is-folded-by-default::before,
 .folded-by-default .read-only-menu .is-folded-by-default::before {
-  background-position: 0 -14px;
+  background-position: 0 -14px !important;
 }
 
 /* ---------------- Edit Menu Styling ---------------- */
@@ -269,8 +271,10 @@
   left: 5px;
 }
 
+.edit-menu .is-folded-by-default[aria-pressed="true"]::before,
+.edit-menu.folded-by-default .is-folded-by-default::before,
 .folded-by-default .edit-menu .is-folded-by-default::before {
-  background-position: 0 -42px;
+  background-position: 0 -42px !important;
 }
 
 /* Gearwheel and Dropdown container */

@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: 6cf6fc7a
+source_commit: aec16061
 generated: true
 ---
 

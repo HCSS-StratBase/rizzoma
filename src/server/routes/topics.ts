@@ -226,6 +226,36 @@ router.get('/', async (req, res): Promise<void> => {
   }
 });
 
+async function recordTopicHistory(
+  topicId: string,
+  content: string,
+  action: 'create' | 'update',
+  actorId: string,
+  actorName?: string,
+): Promise<void> {
+  try {
+    const existing = await find<any>({ type: 'blip_history', blipId: topicId }, { limit: 200 });
+    const nextVersion = existing.docs.reduce((max: number, doc: any) => Math.max(max, doc.snapshotVersion || 0), 0) + 1;
+    const now = Date.now();
+    const historyDoc = {
+      _id: `blip_history:${topicId}:${now}`,
+      type: 'blip_history',
+      blipId: topicId,
+      waveId: topicId,
+      content: content || '',
+      authorId: actorId,
+      authorName: actorName,
+      event: action,
+      createdAt: now,
+      updatedAt: now,
+      snapshotVersion: nextVersion,
+    };
+    await insertDoc(historyDoc as any);
+  } catch (err) {
+    console.warn('[topics] recordTopicHistory failed:', err);
+  }
+}
+
 // POST /api/topics
 router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
   const userId = req.user!.id;
@@ -242,6 +272,7 @@ router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => 
     };
     const r = await insertDoc(doc);
     const topicId = r.id;
+    void recordTopicHistory(topicId, doc.content || '', 'create', userId, req.user?.name);
 
     // Handle participants if provided
     const participantEmails = Array.isArray((req.body as any)?.participants)
@@ -437,6 +468,7 @@ router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void>
       updatedAt: Date.now(),
     };
     const r = await updateDoc(next as any);
+    void recordTopicHistory(id, next.content || '', 'update', req.user!.id, req.user?.name);
     res.json({ id: r['id'], rev: r['rev'] });
     try { emitEvent('topic:updated', { id: r['id'], title: next.title, updatedAt: next.updatedAt }); } catch {}
     return;

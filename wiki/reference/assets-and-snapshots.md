@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: 6cf6fc7a
+source_commit: aec16061
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 242 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 47 root files.
+**¶1** □ GENERATED. `public/` 242 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 48 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -40,16 +40,16 @@ graph LR
 | Folder | Files |
 |---|---:|
 | `public` | 4 |
-| `public/icons` | 9 |
-| `public/landing` | 6 |
-| `public/s/img` | 136 |
-| `public/s/img/auth` | 15 |
-| `public/s/img/gdrive` | 33 |
-| `public/s/img/introduce` | 6 |
-| `public/s/img/jquery-lightbox` | 5 |
-| `public/s/img/logo` | 14 |
-| `public/s/img/mail` | 5 |
-| `public/s/img/mail/first-visit` | 9 |
+| `public\icons` | 9 |
+| `public\landing` | 6 |
+| `public\s\img` | 136 |
+| `public\s\img\auth` | 15 |
+| `public\s\img\gdrive` | 33 |
+| `public\s\img\introduce` | 6 |
+| `public\s\img\jquery-lightbox` | 5 |
+| `public\s\img\logo` | 14 |
+| `public\s\img\mail` | 5 |
+| `public\s\img\mail\first-visit` | 9 |
 
 ## snapshots/ by folder
 
@@ -80,6 +80,7 @@ graph LR
 | `Cakefile` | — |
 | `Dockerfile` | — |
 | `Dockerfile.bak` | — |
+| `GEMINI.md` | — |
 | `LICENSE` | — |
 | `MODERNIZATION_STRATEGY.md.bak` | — |
 | `QUICKSTART.md` | — |

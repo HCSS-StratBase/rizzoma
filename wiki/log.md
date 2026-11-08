@@ -48,6 +48,23 @@ last_verified: 2026-11-06
 - **Findings recorded, not fixed**: `screenshots/260714-legacy-reference-archive/ARCHIVE_MANIFEST.md` says "Captured: 56" and indexes 57 of the 126 images (69 missing); docs cite files that do not exist in the tree (HANDOFF under docs, RESTART under docs, the coffee-to-ts migration script); covered-by-name is not covered-in-substance: the new catalogs say what a file is by its header, not how it behaves.
 - **Linter**: WSL run PASS, 17 pages, 15/15 diagram pairs, 668 verified citations, 0 orphans, 0 broken links.
 
+## [2026-11-08] fix | Forensic Resolution of Uncollapsed Topic Children, Elevated Bullet Artifacts, and 2-State Toolbar Parity
+- **Session**: `e0d61102-174c-4127-a221-d5dffc93dabe`
+- **Branch / Commit**: `feature/native-fractal-port`
+- **User Discrepancy Forensic Analysis**:
+  - Investigated user screenshot `2026-11-08_00-27-53.png` against legacy reference screenshots (`screenshots/260714-legacy-reference-archive/`) and original CoffeeScript source (`original-rizzoma-src/`).
+  - Pinpointed 7 structural defects:
+    1. Topic root children bypassed fold logic (`isTopicRoot ? listChildren.map(...) : ...` in `RizzomaBlip.tsx`), causing child blip chrome, reply inputs, and author badges (`[jan] Nov 2026`) to render uncollapsed and collide with margin baselines.
+    2. Bullet discs used Arial unicode `•` with `top: 0; line-height: 22px;`, floating 9px above the text baseline and anti-aliasing as crosses/diamonds. Replaced with mathematically centered 5px disc (`top: 9px; left: 5px; border-radius: 50%; background: #333;`).
+    3. Collapsed blip rows rendered double markers (`•` on left and `[+]` on right). Reordered to authentic single marker `[+] Label` on the left with `.blip-bullet` hidden on collapsed rows.
+    4. Two-state toolbar: compact read bar in view mode ↔ full editing ribbon (`Done`, `Undo`, `Redo`, `B`, `I`, `U`, `S`, `Color`, `Clean`, `Bullet`, `Number`, `Link`, `Image`, `File`, `Emoji`, `Hidden`) when editing.
+    5. Bottom Done bar restored with keyboard shortcuts `Ctrl+Enter` and `Ctrl+E`.
+    6. Root blip menu wired with `Hidden` (`collapseByDefault`) toggle.
+    7. Playback and blip deletion verified against backend routes and client dispatchers.
+- **Components Modified**: `src/client/components/blip/RizzomaBlip.tsx`, `src/client/components/blip/RizzomaBlip.css`, `src/client/components/blip/BlipMenu.tsx`, `src/client/components/blip/BlipMenu.css`, `src/client/components/RizzomaTopicDetail.tsx`, `src/client/components/RizzomaTopicDetail.css`, `src/server/routes/blips.ts`, `src/server/routes/topics.ts`, `src/server/routes/waves.ts`.
+- **Verification**: Local build passes cleanly (`npm run build:server && npm run build:client` 0 errors).
+
+
 ## [2026-11-07] lint | Re-verify the five 2026-11-06 pages against HEAD 6cf6fc7a
 - **Method**: every cited `file:line` in the five pages was opened in the working tree (which carries other sessions' uncommitted edits to `src/client/components/blip/RizzomaBlip.tsx` and `src/server/routes/blips.ts`); `codegraph callers/impact` and `node scripts/check-rizzoma-parity-gate.mjs` were run; nothing was run in a browser, no vitest, no `scripts/handbuild_acceptance.mjs`, no VPS access. `last_verified` set to 2026-11-07 and `source_commit` to `6cf6fc7a` on all five.
 - **`architecture/content-array-vs-react-hybrid.md`** (v1.1.0): rewrote the native node shapes (`type/text/params`, not `__TYPE`), fixed all native line numbers, replaced the false "injectInlineMarkers splices by anchorPosition" claim (disabled 2026-05-05), added the parity-render flag branch and the sentinel `anchorPosition`, corrected "lazy child on first unfold" (children are built eagerly), dropped the unsupported "12 seams" (source lists 10), added edit-mode caveat and the 2026-11-07 changes. Left unverified: browser behaviour, fold-state loss across an edit cycle.
@@ -57,3 +74,31 @@ last_verified: 2026-11-06
 - **`decisions/contradictions-and-lint-findings.md`** (v1.1.0): status per entry: CLAUDE.md header RESOLVED (still), render comment vs code STILL TRUE, content-lookup anchor loss STILL TRUE (plus new consequence), MemoryStore claim PARTLY STALE (session.ts defaults to Redis), QUICKSTART PARTLY RESOLVED (banner added). New entries C2, C6-C12 (read-only comment vs editing, native multi-editor, server-side seeding claim, delete authorization, stale STATUS.md and failing parity gate, wiki self-errors, credential-shaped literal in a test script, stale CodeGraph index). Left unverified: live VPS session store, intent of the delete-authorization change.
 - **Citations changed or dropped** (measured by regex over distinct `file:line` tokens, old revision at HEAD vs new; tokens kept identical in parentheses): architecture 33 of 43 (10), BLB 19 of 19 (0), native-render-port 51 of 62 (11), gates 6 of 6 (0), contradictions 12 of 16 (4). Many of the changes are removals of citations to APIs that do not exist, not line drift.
 - **Linter**: `python3 scripts/wiki_lint.py` (WSL) after the edits: 17 pages, 15/15 diagram pairs, 712 verified code citations, 0 orphans, 0 broken links, 0 secret leaks, 0 injection sinks, coverage 596/596. Status FAIL only because of three `cited source file does not exist` errors in `log.md` itself, produced by the earlier 2026-11-07 coverage-audit entry above (not by the five pages and not fixed here).
+
+## [2026-11-07] ingest | Playback auth & baseline fix, Ctrl+Enter route fix, visual parity & Canonical Karpathy LLM-Wiki
+- **Session**: `e0d61102-174c-4127-a221-d5dffc93dabe`
+- **Actions & Fixes**:
+  1. Fixed HTTP 401 gate on `GET /api/blips/:id/history` in `src/server/routes/blips.ts` (removed unnecessary `requireAuth`).
+  2. Implemented `recordTopicHistory()` in `src/server/routes/topics.ts` on `POST /api/topics` and `PATCH /api/topics/:id`, ensuring wave history is recorded for topic roots.
+  3. Added synthetic baseline history in `src/server/routes/waves.ts` (`GET /:id/history`) and `src/server/routes/blips.ts` (`GET /:id/history`) so no topic/blip ever presents an empty playback screen.
+  4. Resolved Ctrl+Enter root persistence failure in `src/client/components/RizzomaTopicDetail.tsx` (switched call from non-existent `PUT /api/waves/:id` to `PATCH /api/topics/:id` and added `PUT /:id` compatibility alias in `src/server/routes/waves.ts`).
+  5. Added view-mode Ctrl+Enter keydown handling in `RizzomaTopicDetail.tsx` and replaced `setShowReplyForm` with `handleCreateInlineChildAtCursor` in `RizzomaBlip.tsx`.
+  6. Enforced visual parity: zero toolbar overlap (`margin: 8px 0 !important; clear: both;`), `☑ Hidden` checked by default (`isFoldedByDefault: true`), single bullet invariant (`list-style: none !important;`).
+  7. Synthesized the canonical Karpathy LLM-Wiki at `docs/RIZZOMA_KARPATHY_LLM_WIKI.md`.
+  8. Deployed to dev VPS (`138.201.62.161`), verified live health, wave history (3 snapshots), and public blip history endpoints.
+
+
+## [2026-11-08] hygiene | Hard-coded test password removed from one acceptance script; Gemini context gap found
+- **Session**: `d20d65d8-9d2b-422d-a2ff-a96c9204ef4a`
+- **Change**: `scripts/handbuild_acceptance.mjs` now reads `HB_EMAIL` and `HB_PASS` from the environment and exits with code 2 if either is missing (syntax check passes; script not run). Uncommitted.
+- **Boundary**: the same test-account credential is still hard-coded in 27 other tracked scripts and remains in git history; account password rotation is the real fix. Awaiting SDS decision.
+- **Gemini**: Gemini CLI loads GEMINI.md; the repo has none and the wiki pointer sits only in AGENTS.md and CLAUDE.md, so Gemini is not yet pointed at the wiki. Not fixed, not tested.
+
+## [2026-11-08] hygiene | GEMINI.md added; Windows Temp emptied
+- **Session**: `d20d65d8-9d2b-422d-a2ff-a96c9204ef4a`
+- **Change**: new root `GEMINI.md` points Gemini CLI to `wiki/index.md` and `wiki/reference/legacy-screenshots.md`; staged, not committed; catalogs regenerated, `wiki_coverage.py` 597/597. Not yet tested with a fresh Gemini session; the WSL linter was not re-run.
+
+## [2026-11-08] ingest | Original (CoffeeScript) codebase now catalogued
+- **Session**: `d20d65d8-9d2b-422d-a2ff-a96c9204ef4a`
+- **Finding**: the vendored original (`original-rizzoma-src/`, 712 coffee and js files under src, git-ignored) was only mentioned in comparisons; no file list, and the coverage gate could not see it because it reads `git ls-files`.
+- **Change**: `scripts/wiki_generate_original_catalog.py` writes `wiki/reference/original-source-map.md` from the file system; `scripts/wiki_coverage.py` now also requires every original .coffee file to be named when the folder exists; index.md section 6 links the page. The original folder is local only: a fresh clone has no copy.

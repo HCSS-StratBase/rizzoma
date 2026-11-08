@@ -545,7 +545,7 @@
 
 /* Blips list (legacy) */
 .blips-list {
-  list-style: disc;
+  list-style: none !important;
   margin: 0;
   padding: 0 0 0 24px;
 }
@@ -788,14 +788,14 @@
 
 /* Nested children */
 .blip-children {
-  list-style: circle;
+  list-style: none !important;
   margin: 0;
   padding: 8px 0 8px 24px;
   border-top: 1px solid #e0e0e0;
 }
 
 .blip-children .blip-children {
-  list-style: square;
+  list-style: none !important;
 }
 
 /* Reply row at bottom */

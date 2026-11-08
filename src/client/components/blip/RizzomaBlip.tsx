@@ -461,9 +461,9 @@ export function RizzomaBlip({
   const autoSaveBlip = useCallback(async (content: string) => {
     if (content === lastSavedContentRef.current) return;
     try {
-      const response = await fetch(`/api/blips/${blip.id}`, {
+      await ensureCsrf();
+      const response = await api(`/api/blips/${encodeURIComponent(blip.id)}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       });
       if (response.ok) {
@@ -751,10 +751,12 @@ export function RizzomaBlip({
         // cursor at the wrong place. The cursor is still at its original PM
         // position from when Ctrl+Enter fired (async POST doesn't move it), so
         // insertBlipThread inserts at the structurally-correct location.
-        const editor = inlineEditorRef.current;
+        const editor = inlineEditorRef.current || inlineEditor;
         if (editor) {
           (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
-          // The content is auto-saved, so the [+] marker will persist
+          // Save the parent blip content IMMEDIATELY with the new marker so reloads persist it
+          const updatedHtml = editor.getHTML();
+          await autoSaveBlip(updatedHtml);
         }
 
         // BLB: Expand the new child blip inline + navigate into edit mode.
@@ -1172,10 +1174,19 @@ export function RizzomaBlip({
 
   const handleCreateInlineChildAtCursor = useCallback(() => {
     if (!blip.permissions.canComment) return;
+    if (!isEditing) {
+      handleStartEdit();
+      setTimeout(() => {
+        const editor = inlineEditorRef.current || inlineEditor;
+        const pos = editor?.state?.selection?.from ?? 0;
+        stableCreateInlineChildBlip(pos);
+      }, 100);
+      return;
+    }
     const editor = inlineEditorRef.current || inlineEditor;
     const pos = editor?.state?.selection?.from ?? 0;
     stableCreateInlineChildBlip(pos);
-  }, [blip.permissions.canComment, inlineEditor, stableCreateInlineChildBlip]);
+  }, [blip.permissions.canComment, isEditing, handleStartEdit, inlineEditor, stableCreateInlineChildBlip]);
 
   // handleSaveEdit now just finishes editing - auto-save handles the actual saving
   const handleSaveEdit = useCallback(async () => {
@@ -1189,11 +1200,9 @@ export function RizzomaBlip({
       // Extract waveId from the blip id (format: waveId:blipId)
       const waveId = blip.id.split(':')[0];
 
-      const response = await fetch('/api/blips', {
+      await ensureCsrf();
+      const response = await api('/api/blips', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           waveId,
           parentId: blip.id,
@@ -1205,8 +1214,6 @@ export function RizzomaBlip({
       if (!response.ok) {
         throw new Error('Failed to create reply');
       }
-
-      await response.json();
 
       onAddReply?.(blip.id, replyContent);
       setReplyContent('');
@@ -1693,14 +1700,12 @@ export function RizzomaBlip({
         return;
       }
 
-      // Ctrl+Enter: Create child subblip (reply)
-      if (!isEditing && blip.permissions.canComment && event.key === 'Enter' && event.ctrlKey && !event.shiftKey) {
-        // Check if this blip container is focused or contains focus
-        if (blipContainerRef.current?.contains(document.activeElement) ||
-            blipContainerRef.current === document.activeElement) {
+      // Ctrl+Enter in view mode: Create inline child blip (subblip) matching original Rizzoma
+      if (!isEditing && blip.permissions.canComment && event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
+        if (isActive || blipContainerRef.current?.contains(document.activeElement) || blipContainerRef.current === document.activeElement) {
           event.preventDefault();
-          setShowReplyForm(true);
-          setIsExpanded(true);
+          handleCreateInlineChildAtCursor();
+          return;
         }
       }
     };
@@ -2019,9 +2024,9 @@ export function RizzomaBlip({
     if (!blip.permissions.canEdit || isDuplicating) return;
     setIsDuplicating(true);
     try {
-      const response = await fetch(`/api/blips/${encodeURIComponent(blip.id)}/duplicate`, {
+      await ensureCsrf();
+      const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/duplicate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
       });
       if (!response.ok) {
         throw new Error('Failed to duplicate blip');
@@ -2071,9 +2076,9 @@ export function RizzomaBlip({
     }
     try {
       const waveId = blip.id.split(':')[0];
-      const response = await fetch('/api/blips', {
+      await ensureCsrf();
+      const response = await api('/api/blips', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           waveId,
           parentId: blip.id, // Paste as child of current blip
@@ -2086,7 +2091,8 @@ export function RizzomaBlip({
       // If this was a cut operation, delete the original
       if (payload.isCut && payload.blipId) {
         try {
-          await fetch(`/api/blips/${encodeURIComponent(payload.blipId)}`, {
+          await ensureCsrf();
+          await api(`/api/blips/${encodeURIComponent(payload.blipId)}`, {
             method: 'DELETE',
           });
           clearCutState(payload.blipId);
@@ -2249,7 +2255,7 @@ export function RizzomaBlip({
         }
       }}
     >
-      {/* Collapsed View - Simple like live Rizzoma: bullet + label + [+] only */}
+      {/* Collapsed View - Simple like live Rizzoma: [+] Label only */}
       {showCollapsedView && (
         <div
           className="blip-collapsed-row"
@@ -2258,9 +2264,8 @@ export function RizzomaBlip({
             handleToggleExpand();
           }}
         >
-          <span className="blip-bullet">•</span>
-          <span className="blip-collapsed-label-text">{blipLabel}</span>
           <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>+</span>
+          <span className="blip-collapsed-label-text">{blipLabel}</span>
         </div>
       )}
 
@@ -2527,23 +2532,7 @@ export function RizzomaBlip({
         {/* Child Blips (Replies) - BEFORE "Write a reply..." per BLB structure */}
         {(listChildren && listChildren.length > 0) || childFooter ? (
           <div className={`child-blips${childContainerClassName ? ` ${childContainerClassName}` : ''}`}>
-            {listChildren && listChildren.length > 0 && (isTopicRoot ? (
-              listChildren.map((childBlip) => (
-                <RizzomaBlip
-                  key={childBlip.id}
-                  blip={childBlip}
-                  isRoot={false}
-                  depth={depth + 1}
-                  onBlipUpdate={onBlipUpdate}
-                  onAddReply={onAddReply}
-                  onToggleCollapse={onToggleCollapse}
-                  onDeleteBlip={onDeleteBlip}
-                  onBlipRead={onBlipRead}
-                  onExpand={onExpand}
-                  expandedBlips={expandedBlips}
-                />
-              ))
-            ) : (
+            {listChildren && listChildren.length > 0 && (
               listChildren.map((childBlip) => {
                 const childExpanded = expandedBlips?.has(childBlip.id);
                 const childHasUnread = !childBlip.isRead || (childBlip.childBlips?.some((grandchild) => !grandchild.isRead) ?? false);
@@ -2556,8 +2545,6 @@ export function RizzomaBlip({
                     ? `${text.slice(0, 80)}…`
                     : text
                   : (childBlip.authorName || 'Reply');
-                // Format date like parent blips (available for future use)
-                void new Date(childBlip.updatedAt || childBlip.createdAt);
 
                 return (
                   <div
@@ -2565,7 +2552,7 @@ export function RizzomaBlip({
                     className="child-blip-wrapper"
                     data-blip-id={childExpanded ? undefined : childBlip.id}
                   >
-                    {/* Collapsed child blip - simple like live Rizzoma: • Label [+] */}
+                    {/* Collapsed child blip - authentic Rizzoma: [+] Label only */}
                     {!childExpanded && (
                       <div
                         className={`blip-collapsed-row child-blip-collapsed ${childHasUnread ? 'has-unread' : ''}`}
@@ -2578,9 +2565,8 @@ export function RizzomaBlip({
                           }));
                         }}
                       >
-                        <span className="blip-bullet">•</span>
-                        <span className="blip-label-text">{label}</span>
                         <span className={`blip-expand-icon ${childHasUnread ? 'has-unread' : ''}`}>+</span>
+                        <span className="blip-label-text">{label}</span>
                       </div>
                     )}
                     {/* Expanded child blip */}
@@ -2603,7 +2589,7 @@ export function RizzomaBlip({
                   </div>
                 );
               })
-            ))}
+            )}
             {childFooter}
           </div>
         ) : null}

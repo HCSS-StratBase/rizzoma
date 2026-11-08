@@ -487,7 +487,7 @@ export function BlipMenu({
     return (
       <div className={`blip-menu-container${isTopicRoot ? ' topic-root-menu-container' : ''}${isMobile ? ' mobile-blip-menu-container' : ''}`}>
         <div
-          className={`blip-menu edit-menu${isInlineChild ? ' inline-child-menu' : ''}`}
+          className={`blip-menu edit-menu${isInlineChild ? ' inline-child-menu' : ''}${collapseByDefault ? ' folded-by-default' : ''}`}
           data-testid="blip-menu-edit-surface"
         >
           {/* Done button */}
@@ -640,15 +640,16 @@ export function BlipMenu({
           </button>
 
           {/* Hide by default */}
-          {!isTopicRoot && canEdit && onToggleCollapseByDefault && (
+          {canEdit && onToggleCollapseByDefault && (
             <button
-              className="menu-btn is-folded-by-default delimitered-right js-is-folded-by-default"
+              className={`menu-btn is-folded-by-default delimitered-right js-is-folded-by-default ${collapseByDefault ? 'active' : ''}`}
               title="Collapse this thread by default"
               aria-pressed={collapseByDefault ? 'true' : 'false'}
               data-testid="blip-menu-collapse-default"
               onClick={onToggleCollapseByDefault}
+              style={{ fontWeight: collapseByDefault ? 'bold' : 'normal', color: collapseByDefault ? '#2e8b57' : undefined }}
             >
-              Hide
+              Hidden
             </button>
           )}
 
@@ -802,15 +803,16 @@ export function BlipMenu({
         </button>
 
         {/* Hide (collapse thread by default) */}
-        {!isTopicRoot && canEdit && onToggleCollapseByDefault && (
+        {canEdit && onToggleCollapseByDefault && (
           <button
-            className="menu-btn is-folded-by-default delimitered-right js-is-folded-by-default"
+            className={`menu-btn is-folded-by-default delimitered-right js-is-folded-by-default ${collapseByDefault ? 'active' : ''}`}
             title="Collapse this thread by default"
             aria-pressed={collapseByDefault ? 'true' : 'false'}
             data-testid="blip-menu-collapse-default"
             onClick={onToggleCollapseByDefault}
+            style={{ fontWeight: collapseByDefault ? 'bold' : 'normal', color: collapseByDefault ? '#2e8b57' : undefined }}
           >
-            Hide
+            Hidden
           </button>
         )}
 
