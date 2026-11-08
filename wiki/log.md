@@ -144,3 +144,19 @@ last_verified: 2026-11-06
 - **Verification**: Playwright test `scripts/verify_surface4.mjs` against target topic `917d750213736e02a665422fca066d53` on `138-201-62-161.nip.io`. Collapsed and expanded states captured and verified visually with `read_file`:
   - `surface4_collapsed_crop.png`: 3 read grey speech bubbles, 2 unread bright green speech bubbles matching `legacy-240.png`.
   - `surface4_expanded_crop.png`: Marker toggles to `−`, child blip nests inside bullet card, avatar and date stack cleanly in top-right corner.
+
+## [2026-11-08] parity | Surface 5: TipTap Edit Mode & Single-Trigger Ctrl+Enter Child Blip Creation
+- **Why**: Surface 5 in the visual parity plan. Verify TipTap edit mode parity, eliminate duplicate child blip creation on Ctrl+Enter, eliminate "Untitled blip" fallback, suppress stray bullets, and verify seamless child blip creation and editing.
+- **Implemented**:
+  - `RizzomaTopicDetail.tsx`: Fixed double-firing bug where pressing Ctrl+Enter in edit mode triggered TipTap's `BlipKeyboardShortcuts` (`Mod-Enter`) AND simultaneously bubbled to `window.addEventListener('keydown')`, creating two child blips within 22ms. Added `if (isEditingTopic) return;` guard to window handler so TipTap exclusively handles inline child blip insertion at cursor.
+  - Verified TipTap edit toolbar styling and RightToolsPanel tool switching (`↩`, `@`, `~`, `#`, `Gadgets`).
+  - Verified child blip instant focus in edit mode with bullet list (`•`) default.
+  - Verified child blip "Done" action cleanly transitions to view mode without "Untitled blip" artifacts.
+  - Verified speech bubble marker toggling: `+` -> `−` on expand, `−` -> `+` on collapse.
+- **Verification**: Playwright automated visual sweep against `917d750213736e02a665422fca066d53` on `138-201-62-161.nip.io`:
+  - `surface5_1_view_mode.png`: Clean bullet list and topic header in view mode.
+  - `surface5_2_edit_mode.png`: Authentic TipTap toolbar with blue buttons, H1 title, `#tag` chip, and bullets.
+  - `surface5_3_after_ctrl_enter.png`: Single child blip created and auto-focused in edit mode with bullet ready for input.
+  - `surface5_typed_edit_mode.png`: Child editor with typed test comment.
+  - `surface5_child_saved_view.png`: Saved child blip card in view mode with avatar + date and zero "Untitled" text.
+  - `surface5_toggle_expanded.png` & `surface5_toggle_collapsed.png`: Flawless toggle collapse and expand.

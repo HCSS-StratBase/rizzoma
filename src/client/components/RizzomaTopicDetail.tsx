@@ -1260,17 +1260,18 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         event.preventDefault();
         finishEditingTopic();
       }
-      // Ctrl+Enter: Create inline child blip in topic root (both view mode and edit mode)
+      // Ctrl+Enter: Create inline child blip in topic root
       if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key === 'Enter') {
         const target = event.target as HTMLElement | null;
         const insideChildBlip = target?.closest('.blip-container:not(.topic-meta-blip):not(.root-blip)');
         if (insideChildBlip) return;
 
+        // When already editing the topic, TipTap's BlipKeyboardShortcuts extension
+        // handles Mod-Enter directly. Handling it again here causes a duplicate child blip.
+        if (isEditingTopic) return;
+
         event.preventDefault();
-        if (isEditingTopic) {
-          const from = topicEditorRef.current?.state.selection.from ?? 0;
-          createInlineChildBlipRef.current?.(from);
-        } else if (isAuthed) {
+        if (isAuthed) {
           startEditingTopic();
           setTimeout(() => {
             const editor = topicEditorRef.current;
