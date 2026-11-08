@@ -181,3 +181,8 @@ last_verified: 2026-11-06
 - **Change**: `ci.yml` gets a "Create CouchDB database" step (waits for `_up`, PUTs `project_rizzoma`, accepts 201 or 412) in `browser-smokes` and `perf-budgets`, the two jobs that start CouchDB.
 - **Result (CI)**: `browser-smokes` **success** (toolbar + inline, Follow-the-Green desktop and mobile). `build` still fails at Test: 4 files, 19 tests fail, 230 pass, 3 skipped (unchanged). `perf-budgets` and `health-checks` were skipped because `build` failed, so they are unmeasured.
 - **Boundary**: these smokes are a few scripted flows, not the 200-row visual sweep; visual parity is still unverified (0 captures).
+
+## [2026-11-08] ops | .gitattributes added; trial merge of master = 69 conflicts; draft PR #82 opened
+- **Line endings**: `.gitattributes` (`* text=auto eol=lf`, images binary) in 3431b11e; `core.autocrlf=false` set in the clone and in C:\Rizzoma. Modified files in the shared checkout: 139 down to 3 (measured), the rest being Gemini's 2 untracked scripts and wiki/log.md.
+- **Master merge**: `git merge origin/master` in a clean clone conflicts in **69 files** (core UI components, ci.yml, package.json, server routes, docs). Aborted, nothing pushed; needs a human who knows both lines.
+- **PR**: https://github.com/HCSS-StratBase/rizzoma/pull/82 opened as a DRAFT into master, body states the 19 failing tests, the 69 conflicts and that visual parity is unverified. Not mergeable until those are resolved.
