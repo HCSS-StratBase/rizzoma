@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: db1bd6a4
+source_commit: a5185ffe
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 94 files in `scripts/`, 35 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 97 files in `scripts/`, 35 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -75,7 +75,7 @@ graph LR
 | `snapshots:pull` | `bash scripts ⁄ fetch-latest-snapshots.sh` |
 | `lint:branch-context` | `node scripts ⁄ check-branch-state.cjs` |
 
-## scripts/ (94)
+## scripts/ (97)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -108,11 +108,13 @@ graph LR
 | `scripts/fix-anonymous-authors.cjs` | 188 | Migration script: Fix "Anonymous" author names on blips |
 | `scripts/full-deploy.sh` | 141 | MASTER DEPLOYMENT SCRIPT |
 | `scripts/gen_status.mjs` | 141 | Generate STATUS .md — the SINGLE authoritative current-state doc. |
+| `scripts/git-hooks/pre-push` | — | — |
 | `scripts/handbuild_acceptance.mjs` | 276 | HAND-BUILD ACCEPTANCE — the gate for ALL Rizzoma fractal work (SDS 2026-07-14). |
 | `scripts/handbuild_depth10.mjs` | 109 | HAND-BUILD a depth-10 fractal on the NEW rizzoma through the REAL UI. |
 | `scripts/insert_depth10_spine.mjs` | 123 | Insert a depth-10 spine of blips directly into CouchDB. |
 | `scripts/inspect_screenshot_155148.py` | 27 | Find all blue ribbons (#4ea0f1 -> r ~ 78, g ~ 160, b ~ 241) |
 | `scripts/inspect_user_screenshot.py` | 33 | Let's inspect horizontal slices of 20px |
+| `scripts/install-git-hooks.sh` | 5 | Copy the tracked git hooks into this clone's .git/hooks (existing hooks there are kept). |
 | `scripts/legacy_archive_crops.mjs` | 154 | LEGACY ARCHIVE PHASE 2 — element-level CROPS keyed to feature-matrix rows, |
 | `scripts/legacy_archive_p3.mjs` | 128 | LEGACY ARCHIVE PHASE 3 — clip-based crop retakes + settings/help/deep-topic states. |
 | `scripts/legacy_archive_p4.mjs` | 66 | LEGACY ARCHIVE PHASE 4 — mobile nav states, extra widths, public-topic depth. |
@@ -154,6 +156,7 @@ graph LR
 | `scripts/test-live-auth-and-topic.mjs` | 75 | — |
 | `scripts/test_edit_then_ce.mjs` | 31 | — |
 | `scripts/verify-blb-fractal-proof.mjs` | 224 | — |
+| `scripts/verify-fixes-261108.mjs` | 172 | — |
 | `scripts/verify-full-parity-live.mjs` | 205 | — |
 | `scripts/verify-full-parity-live2.mjs` | 187 | — |
 | `scripts/verify-full-parity.mjs` | 173 | — |

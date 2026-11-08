@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: db1bd6a4
+source_commit: a5185ffe
 generated: true
 ---
 
@@ -78,7 +78,7 @@ graph LR
 | `src/client/components/RizzomaLayout.css` | 297 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 306 | (no header comment; exports RizzomaLayout) |
 | `src/client/components/RizzomaTopicDetail.css` | 1014 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.tsx` | 1758 | DISABLED: Socket subscription was causing infinite loop |
+| `src/client/components/RizzomaTopicDetail.tsx` | 1777 | DISABLED: Socket subscription was causing infinite loop |
 | `src/client/components/RizzomaTopicsList.css` | 214 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 270 | (no header comment; exports RizzomaTopicsList) |
 | `src/client/components/ShareModal.tsx` | 180 | (no header comment; exports ShareModal) |
@@ -103,9 +103,9 @@ graph LR
 | `src/client/components/blip/BlipHistoryModal.tsx` | 322 | (no header comment; exports BlipHistoryModal) |
 | `src/client/components/blip/BlipMenu.css` | 607 | Authentic Legacy Rizzoma Blip Menu Styles |
 | `src/client/components/blip/BlipMenu.tsx` | 872 | (no header comment; exports BlipMenu) |
-| `src/client/components/blip/InlineHtmlRenderer.tsx` | 288 | (no header comment; exports InlineHtmlRenderOptions) |
-| `src/client/components/blip/RizzomaBlip.css` | 1603 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 2765 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/InlineHtmlRenderer.tsx` | 322 | (no header comment; exports InlineHtmlRenderOptions) |
+| `src/client/components/blip/RizzomaBlip.css` | 1634 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.tsx` | 2769 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 105 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 73 | (no header comment; exports LocationLike) |
@@ -228,7 +228,7 @@ graph LR
 | `src/server/routes/mentions.ts` | 144 | Mentions Routes |
 | `src/server/routes/notifications.ts` | 221 | Notification Routes |
 | `src/server/routes/tasks.ts` | 177 | Tasks Routes |
-| `src/server/routes/topics.ts` | 506 | User type for lookups |
+| `src/server/routes/topics.ts` | 508 | User type for lookups |
 | `src/server/routes/uploads.ts` | 231 | AWS SDK v3 - optional, loaded dynamically when S3 storage is enabled |
 | `src/server/routes/waves.ts` | 612 | GET /api/waves?limit&offset&q |
 
@@ -295,7 +295,7 @@ graph LR
 | `src/shared/constants/textFormatting.d.ts` | 42 | (no header comment; exports TextFormattingOptions) |
 | `src/shared/constants/textFormatting.js` | 41 | (no header comment; exports TextLevelParams) |
 | `src/shared/constants/textFormatting.ts` | 59 | Text formatting constants from original Rizzoma |
-| `src/shared/featureFlags.ts` | 55 | Feature flags for progressive rollout of Rizzoma core features |
+| `src/shared/featureFlags.ts` | 54 | Feature flags for progressive rollout of Rizzoma core features |
 | `src/shared/types/blips.d.ts` | 13 | (no header comment; exports BlipHistoryEntry) |
 | `src/shared/types/blips.js` | 2 | # sourceMappingURL=blips.js.map |
 | `src/shared/types/blips.ts` | 21 | (no header comment; exports BlipHistoryEntry) |

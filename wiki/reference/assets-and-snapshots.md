@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: db1bd6a4
+source_commit: a5185ffe
 generated: true
 ---
 
@@ -40,16 +40,16 @@ graph LR
 | Folder | Files |
 |---|---:|
 | `public` | 4 |
-| `public\icons` | 9 |
-| `public\landing` | 6 |
-| `public\s\img` | 136 |
-| `public\s\img\auth` | 15 |
-| `public\s\img\gdrive` | 33 |
-| `public\s\img\introduce` | 6 |
-| `public\s\img\jquery-lightbox` | 5 |
-| `public\s\img\logo` | 14 |
-| `public\s\img\mail` | 5 |
-| `public\s\img\mail\first-visit` | 9 |
+| `public/icons` | 9 |
+| `public/landing` | 6 |
+| `public/s/img` | 136 |
+| `public/s/img/auth` | 15 |
+| `public/s/img/gdrive` | 33 |
+| `public/s/img/introduce` | 6 |
+| `public/s/img/jquery-lightbox` | 5 |
+| `public/s/img/logo` | 14 |
+| `public/s/img/mail` | 5 |
+| `public/s/img/mail/first-visit` | 9 |
 
 ## snapshots/ by folder
 
