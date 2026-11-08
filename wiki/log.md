@@ -203,3 +203,8 @@ last_verified: 2026-11-06
 ## [2026-11-08] verification | CI on the merge branch is red: runs 42489115789 and 42490514900
 - **Run 42489115789** (`39cdcb1c`): Test fails (BlipMenu 14, collapsePreferences 1); browser-smokes fails at "Wait for dev stack" because the backend listened on 8000 while master's step polls 8788. Fixed in `aa8082ad` by following master's port.
 - **Run 42490514900** (`aa8082ad`): typecheck, lint step and health-checks pass; Test still fails on the same 15; browser-smokes passes the wait step, then the toolbar+inline smoke times out in chromium, firefox and webkit waiting for `.rizzoma-layout` to be visible. Cause undiagnosed. The branch's smokes passed before the merge, so this is a merge regression and blocks any claim that the merged app works.
+
+## [2026-11-08] fix | Browser-smoke blank layout diagnosed: two CSS defects from the merge, not auth
+- **Cause**: Vite failed to compile `RizzomaTopicDetail.css` ("Unclosed block" at 1754), so the whole client stylesheet pipeline errored and `.rizzoma-layout` never appeared. Defect 1: my appended avatar block copied one line too many from master (a dangling `.topic-date-small {`). Defect 2: my first conflict-resolver treated a run of `=` inside a CSS comment banner as the conflict separator, which truncated `BlipMenu.css` (lost the `.wave-panel` and bottom Done-bar rules and left an unterminated comment).
+- **Fix**: dangling rule removed; `BlipMenu.css` rebuilt from an exact-line resolver (0 branch lines missing). All changed CSS files re-checked for balanced braces and comments; the other resolved files re-derived and compared, no further resolver damage found.
+- **Lesson**: conflict markers must be matched as whole lines, never as substrings.
