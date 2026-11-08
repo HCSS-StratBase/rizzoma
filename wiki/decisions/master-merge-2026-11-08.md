@@ -98,3 +98,6 @@ See `wiki/log.md` entry of 2026-11-08 for the measured numbers (typecheck, vites
 
 (Receipt filed 2026-11-08T14:44:38Z; no code changed after the CI runs above.)
 (final check)
+
+(Receipt for CI diagnosis filed 2026-11-08T17:25:51Z.)
+(receipt 2026-11-08T17:26:36Z)

@@ -13,9 +13,9 @@ describe('client: collapse preferences persistence', () => {
     window.localStorage.clear();
   });
 
-  it('defaults to not hidden and persists metadata to localStorage', () => {
-    // Default is false (not hidden) unless explicitly set
-    expect(getCollapsePreference('wave1:blip1')).toBe(false);
+  it('defaults to collapsed (legacy parity) and persists metadata to localStorage', () => {
+    // Legacy Rizzoma parity: blips start collapsed unless a preference is stored
+    expect(getCollapsePreference('wave1:blip1')).toBe(true);
     expect(getCollapsePreferenceMetadata('wave1:blip1')).toBeUndefined();
 
     const updatedAt = setCollapsePreference('wave1:blip1', true);
