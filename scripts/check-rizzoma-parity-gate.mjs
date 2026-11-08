@@ -112,7 +112,7 @@ if (!latestSweep) {
     const captures = manifest.match(/Captures:\s*(\d+)/)?.[1] ?? 'unknown';
     const passLine = manifest.match(/\*\*(\d+)\s*\/\s*(\d+) programmatic gates PASS\*\*/);
     notes.push(`manifest rows=${rows}, captures=${captures}, pass=${passLine ? `${passLine[1]}/${passLine[2]}` : 'unknown'}`);
-    if (!passLine || passLine[1] !== passLine[2]) {
+    if (!passLine || passLine[1] !== passLine[2] || Number(passLine[2]) === 0) {  // 0/0 is an aborted run, not a pass
       errors.push(`manifest does not show all programmatic gates passing: ${manifestPath}`);
     }
   }

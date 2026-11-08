@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: bb625779
+source_commit: db1bd6a4
 generated: true
 ---
 
@@ -78,7 +78,7 @@ graph LR
 | `src/client/components/RizzomaLayout.css` | 297 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 306 | (no header comment; exports RizzomaLayout) |
 | `src/client/components/RizzomaTopicDetail.css` | 1014 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.tsx` | 1753 | DISABLED: Socket subscription was causing infinite loop |
+| `src/client/components/RizzomaTopicDetail.tsx` | 1758 | DISABLED: Socket subscription was causing infinite loop |
 | `src/client/components/RizzomaTopicsList.css` | 214 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 270 | (no header comment; exports RizzomaTopicsList) |
 | `src/client/components/ShareModal.tsx` | 180 | (no header comment; exports ShareModal) |

@@ -107,3 +107,8 @@ last_verified: 2026-11-06
 - **Session**: `d20d65d8-9d2b-422d-a2ff-a96c9204ef4a`
 - **Change**: `scripts/wiki_first_hook.py` plus `.claude/settings.json`, `.gemini/settings.json`, `.codex/hooks.json`, `.agents/hooks.json`; `.gitignore` now lets `.claude/settings.json` through. Earlier claim that Antigravity has no hook mechanism was wrong: it has `hooks.json` (global `~/.gemini/config/`, workspace `.agents/`), found in its docs.
 - **Boundary**: simulated-payload tests only (26 of 26); no live CLI session was run; folder trust must be granted per CLI. Uncommitted.
+
+## [2026-11-08] verification | Tests made visible: CI trigger, parity gate 0/0, pre-push hook
+- **Session**: `d20d65d8-9d2b-422d-a2ff-a96c9204ef4a`
+- **Finding**: 56 unit test files, ~249 test calls; CI never ran on `feature/native-fractal-port` (not in the trigger list, no PR); no local check; last full pass on record 2026-02-10.
+- **Change**: `.github/workflows/ci.yml` branch list, `scripts/check-rizzoma-parity-gate.mjs` fails on 0/0, `scripts/git-hooks/pre-push` + `scripts/install-git-hooks.sh`. Unit tests did not run here (Windows rollup module missing; WSL worker timeouts on /mnt/c). Details: verification/gates-sweeps-and-deployment.md section 3.7.

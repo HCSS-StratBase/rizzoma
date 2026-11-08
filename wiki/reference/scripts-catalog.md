@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: bb625779
+source_commit: db1bd6a4
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 93 files in `scripts/`, 35 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 94 files in `scripts/`, 35 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -75,7 +75,7 @@ graph LR
 | `snapshots:pull` | `bash scripts ⁄ fetch-latest-snapshots.sh` |
 | `lint:branch-context` | `node scripts ⁄ check-branch-state.cjs` |
 
-## scripts/ (93)
+## scripts/ (94)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -157,7 +157,7 @@ graph LR
 | `scripts/verify-full-parity-live.mjs` | 205 | — |
 | `scripts/verify-full-parity-live2.mjs` | 187 | — |
 | `scripts/verify-full-parity.mjs` | 173 | — |
-| `scripts/verify-parity-all.mjs` | 136 | — |
+| `scripts/verify-parity-all.mjs` | 143 | — |
 | `scripts/verify-ui-delete-and-ctrl-enter.mjs` | 165 | — |
 | `scripts/verify_bug_AB.mjs` | 162 | Verify Bug A (Ctrl+Enter latency) + Bug B (nested mount at depth 2+) on the live VPS dev container. |
 | `scripts/verify_ctrl_enter_dev.mjs` | 75 | — |
@@ -169,6 +169,7 @@ graph LR
 | `scripts/visual-feature-sweep.mjs` | 1407 | — |
 | `scripts/visual_sanity_analyze.mjs` | 249 | Visual sanity pass on analyze.rubase.org after today's batch: |
 | `scripts/wiki_coverage.py` | 50 | Fail when the wiki does not mention (by file name) something it must cover. |
+| `scripts/wiki_first_hook.py` | 216 | Wiki-first gate for ONE repo, shared by every agent CLI that can run hooks. |
 | `scripts/wiki_generate_catalogs.py` | 326 | import json |
 | `scripts/wiki_generate_original_catalog.py` | 49 | Generate wiki/reference ⁄ original-source-map.md: every .coffee and .js file of the vendored ORIGINAL |
 | `scripts/wiki_lint.py` | 23 | Thin wrapper in /mnt/c/Rizzoma/scripts ⁄ wiki_lint.py that invokes the canonical |
