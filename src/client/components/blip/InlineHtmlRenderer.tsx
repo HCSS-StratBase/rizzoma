@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Fragment, createElement } from 'react';
+import '../editor/extensions/BlipThread.css';
 
 type InlineChildLike = {
   id: string;
@@ -188,7 +189,7 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     if (el.classList.contains('blip-thread-marker')) {
       const blipId = el.getAttribute('data-blip-thread') || '';
       const child = childById.get(blipId);
-      const hasUnread = child?.isRead === false;
+      const hasUnread = child ? child.isRead === false : el.classList.contains('has-unread');
       const isExpanded = expandedSet.has(blipId) && knownIds.has(blipId);
       return renderMarker(el, blipId, hasUnread, isExpanded);
     }

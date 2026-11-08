@@ -1405,7 +1405,7 @@
 /* Minimal styling for inline children — no toolbar, clean content display */
 .inline-child-expanded > .blip-container {
   margin-left: 0 !important;
-  padding: 4px 0;
+  padding: 10px 14px !important;
 }
 
 .inline-child-expanded > .blip-container > .blip-content {
@@ -1555,15 +1555,41 @@
   background: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
-/* Meta/avatar column overlays the box corner instead of reserving width */
+/* Meta/avatar column overlays the box corner in authentic vertical stack */
+.rizzoma-parity .inline-child-expanded .blip-view-mode > .blip-content-row > .blip-contributors-info,
 .rizzoma-parity .inline-child-expanded .blip-author-info,
 .rizzoma-parity .inline-child-expanded .blip-contributors-info {
-  position: absolute;
-  right: 2px;
-  top: 2px;
-  padding-left: 0;
-  margin-left: 0;
-  z-index: 2;
+  position: absolute !important;
+  right: 14px !important;
+  top: 10px !important;
+  padding-left: 0 !important;
+  margin: 0 !important;
+  z-index: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+.rizzoma-parity .inline-child-expanded .blip-contributors-stack {
+  width: 28px;
+  height: 28px;
+}
+.rizzoma-parity .inline-child-expanded .blip-contributor-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  border: 1px solid #707478;
+}
+.rizzoma-parity .inline-child-expanded .blip-author-date {
+  font-size: 10px;
+  line-height: 12px;
+  color: #333333;
+  margin-top: 2px;
+  text-align: center;
+  white-space: nowrap;
+}
+.rizzoma-parity .inline-child-expanded .blip-reply-inline {
+  display: none !important;
 }
 
 /* ============================================================
@@ -1688,4 +1714,60 @@
   color: #000000 !important;
   margin: 0 0 6px 0 !important;
   line-height: 22px !important;
+}
+
+/* Nested Child Blip Author Avatar & Date Card (matches 225-crop-expanded-inline-thread.png and blip.css:322-331) */
+.inline-child-expanded .blip-view-mode > .blip-content-row > .blip-contributors-info,
+.inline-child-expanded .blip-contributors-info,
+.inline-child-expanded .blip-container.nested-blip .blip-contributors-info,
+.rizzoma-parity .inline-child-expanded .blip-container.nested-blip .blip-contributors-info,
+.rizzoma-parity .inline-child-expanded .blip-view-mode > .blip-content-row > .blip-contributors-info {
+  position: absolute !important;
+  top: 8px !important;
+  right: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 2 !important;
+  min-width: 36px !important;
+  width: auto !important;
+}
+.inline-child-expanded .blip-text,
+.rizzoma-parity .inline-child-expanded .blip-text {
+  padding-right: 48px !important;
+}
+.inline-child-expanded .blip-contributors-stack,
+.inline-child-expanded .blip-container.nested-blip .blip-contributors-stack,
+.rizzoma-parity .inline-child-expanded .blip-container.nested-blip .blip-contributors-stack,
+.rizzoma-parity .inline-child-expanded .blip-contributors-stack {
+  position: relative !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+}
+.inline-child-expanded .blip-contributor-avatar,
+.inline-child-expanded .blip-container.nested-blip .blip-contributor-avatar,
+.rizzoma-parity .inline-child-expanded .blip-container.nested-blip .blip-contributor-avatar,
+.rizzoma-parity .inline-child-expanded .blip-contributor-avatar {
+  position: static !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 2px !important;
+  border: 1px solid #707478 !important;
+}
+.inline-child-expanded .blip-view-mode > .blip-content-row > .blip-contributors-info .blip-author-date,
+.inline-child-expanded .blip-author-date,
+.inline-child-expanded .blip-container.nested-blip .blip-author-date,
+.rizzoma-parity .inline-child-expanded .blip-container.nested-blip .blip-author-date,
+.rizzoma-parity .inline-child-expanded .blip-author-date {
+  font-size: 10px !important;
+  line-height: 12px !important;
+  color: #333333 !important;
+  margin-top: 2px !important;
+  text-align: center !important;
+  white-space: nowrap !important;
 }

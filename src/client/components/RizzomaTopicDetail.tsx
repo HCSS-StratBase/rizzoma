@@ -1352,8 +1352,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   }
 
   const tags = extractTags(topic.content || '');
-  const inlineRootBlips = blips.filter(b => typeof b.anchorPosition === 'number');
-  const listBlips = blips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
+  const isInlineRootChild = (b: BlipData) =>
+    typeof b.anchorPosition === 'number' || Boolean(topic.content && topic.content.includes(b.id));
+  const inlineRootBlips = blips.filter(isInlineRootChild);
+  const listBlips = blips.filter(b => !isInlineRootChild(b));
   const titleH1 = `<h1>${topic.title || 'Untitled'}</h1>`;
   let topicContentHtmlBase = `${titleH1}<ul><li><p></p></li></ul>`;
   if (topic.content && topic.content.trim().length > 0) {

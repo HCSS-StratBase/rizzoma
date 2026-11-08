@@ -34,6 +34,7 @@ import {
 import { createUploadTask, type UploadResult, type UploadTask } from '../../lib/upload';
 import { INSERT_EVENTS, EDIT_MODE_EVENT, EDITOR_FOCUS_EVENT, EDITOR_BLUR_EVENT, BLIP_ACTIVE_EVENT } from '../RightToolsPanel';
 import './RizzomaBlip.css';
+import '../editor/extensions/BlipThread.css';
 import { injectInlineMarkers } from './inlineMarkers';
 import { renderInlineHtml } from './InlineHtmlRenderer';
 import { useCollaboration } from '../editor/useCollaboration';
@@ -330,7 +331,7 @@ export function RizzomaBlip({
   // BLB: ALL blips start COLLAPSED (hidden) by default (original Rizzoma behavior)
   // Users must click [+] to expand and see content.
   // Root blip and forced-expanded blips start expanded.
-  const initialExpanded = forceExpanded || isRoot || isTopicRoot
+  const initialExpanded = forceExpanded || isRoot || isTopicRoot || isInlineChild
     ? true
     : expandedBlips
       ? expandedBlips.has(blip.id)
@@ -349,7 +350,7 @@ export function RizzomaBlip({
   const finishEditRef = useRef<(() => void) | null>(null);
   // Root blips start expanded by default, but can be collapsed
   // Non-root blips follow the collapse preference (editing blips are NEVER collapsed)
-  const effectiveExpanded = isTopicRoot ? true : (isExpanded || isEditing);
+  const effectiveExpanded = (isTopicRoot || isInlineChild) ? true : (isExpanded || isEditing);
 
   // Listen for global fold-all / unfold-all events (from ▲/▼ buttons)
   useEffect(() => {
@@ -821,8 +822,10 @@ export function RizzomaBlip({
   const childCount = blip.childBlips?.length ?? 0;
   const hasUnread = !blip.isRead || hasUnreadChildren;
   const unreadMarkerActive = hasUnread;
-  const inlineChildren = (blip.childBlips || []).filter((child) => typeof child.anchorPosition === 'number');
-  const listChildren = (blip.childBlips || []).filter((child) => child.anchorPosition === undefined || child.anchorPosition === null);
+  const isChildInline = (child: BlipData) =>
+    typeof child.anchorPosition === 'number' || Boolean(blip.content && blip.content.includes(child.id));
+  const inlineChildren = (blip.childBlips || []).filter(isChildInline);
+  const listChildren = (blip.childBlips || []).filter((child) => !isChildInline(child));
   // Track which inline children are expanded locally (for this blip's inline children)
   const [localExpandedInline, setLocalExpandedInline] = useState<Set<string>>(new Set());
   // Track which inline children have ever been mounted this session — once mounted,
@@ -2211,7 +2214,7 @@ export function RizzomaBlip({
 
   // Determine if this blip should show as collapsed (label only)
   // BLB: ALL blips (including root) can be collapsed
-  const showCollapsedView = !effectiveExpanded && !isTopicRoot;
+  const showCollapsedView = !effectiveExpanded && !isTopicRoot && !isInlineChild;
 
   useEffect(() => {
     if (forceExpanded || (expandedBlips && expandedBlips.has(blip.id))) {
