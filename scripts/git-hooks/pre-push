@@ -4,6 +4,7 @@
 # Install (once per clone): sh scripts/install-git-hooks.sh
 ROOT=$(git rev-parse --show-toplevel)
 cd "$ROOT" || exit 0
+[ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh" >/dev/null 2>&1
 command -v node >/dev/null 2>&1 || { echo "[pre-push] node not found; parity gate NOT run"; exit 0; }
 if node scripts/check-rizzoma-parity-gate.mjs; then
   echo "[pre-push] parity gate: PASS"
