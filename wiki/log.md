@@ -239,3 +239,9 @@ last_verified: 2026-11-06
   - `surface9_settings_page.png`: Settings page styled with authentic `#C2C9CF` background, slate blue header, tab rail, and profile inputs.
 
 
+
+## [2026-11-08] verification | Independent check of the master-merge branch `claude/merge-master-into-fractal-03f408` (head 6e6eefc5)
+- **Verified (by me, from GitHub and a clean clone)**: it is a real merge (9720f306, parents 73e6c6af and 72c54ced = master); `origin/master` is an ancestor; no conflict markers in `src`, `scripts`, `.github`, `package.json`.
+- **CI is red on all four runs; latest 42491172463**: Test 112 of 114 files pass, 676 of 694 tests pass, 15 fail, 3 skipped (master added 58 test files; the earlier 19 failures are down to 15, matching the session's claim). `health-checks` success. `browser-smokes` FAILS: `waiting for locator('.rizzoma-layout') to be visible`; this is a regression, the same smokes passed on `feature/native-fractal-port`. `ci-gate` fails as a consequence.
+- **Not yet good**: the branch is based on fractal 73e6c6af; fractal has since gained at least 5 commits (surface 7 work, c271a1fe) that are not in it. Master's side brings about 15.1M inserted lines, mostly 17k-line HTML files under `screenshots/260413-parity-side-by-side/` that master committed; merging pulls that bloat in.
+- **Boundary**: I did not review the per-file conflict decisions or the UI; PR #82 and `feature/native-fractal-port` untouched.
