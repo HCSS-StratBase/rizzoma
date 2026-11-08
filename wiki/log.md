@@ -176,3 +176,8 @@ last_verified: 2026-11-06
   - `surface6_depth2_saved.png`: Depth 2 card in saved view mode nested cleanly inside Depth 1 card.
   - `surface6_depth2_collapsed.png` & `surface6_depth2_reexpanded.png`: Depth 2 collapse/expand cycle working seamlessly.
 
+
+## [2026-11-08] verification | CI creates the CouchDB database; browser smokes pass for the first time (commit 2cc559de, run 42480474181 on 0466355b)
+- **Change**: `ci.yml` gets a "Create CouchDB database" step (waits for `_up`, PUTs `project_rizzoma`, accepts 201 or 412) in `browser-smokes` and `perf-budgets`, the two jobs that start CouchDB.
+- **Result (CI)**: `browser-smokes` **success** (toolbar + inline, Follow-the-Green desktop and mobile). `build` still fails at Test: 4 files, 19 tests fail, 230 pass, 3 skipped (unchanged). `perf-budgets` and `health-checks` were skipped because `build` failed, so they are unmeasured.
+- **Boundary**: these smokes are a few scripted flows, not the 200-row visual sweep; visual parity is still unverified (0 captures).
