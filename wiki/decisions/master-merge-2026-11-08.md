@@ -91,3 +91,7 @@ See `wiki/log.md` entry of 2026-11-08 for the measured numbers (typecheck, vites
 - ▷ Visual parity was **not** re-measured after the merge (no sweep run); master's TopicDetail/Blip logic changed render paths.
 - ▷ `BlipMenu` tests (14) still fail: they assert master's emoji toolbar, the branch has the sprite toolbar. `collapsePreferences` (1) also fails. Both were failing on the branch before the merge.
 - ▷ Backend default port is now 8788 (master's). Anything on this branch's line that assumed 8000 (nginx, systemd, nohup recipe in CLAUDE.md, `scripts/gen_status.mjs`) is unverified.
+
+## 5. CI status at the end of the session
+
+- ▷ CI is **red** on this branch: runs 42489115789 and 42490514900 (details in `wiki/log.md`). Test fails on the 15 known tests; the toolbar+inline browser smoke times out waiting for `.rizzoma-layout`, a regression against the pre-merge branch. Diagnosing why the merged shell does not render in the smoke is the first task before retargeting PR 82.
