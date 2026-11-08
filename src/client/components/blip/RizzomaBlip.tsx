@@ -90,6 +90,16 @@ const getAvatarInitials = (name?: string, email?: string): string => {
   return source.slice(0, 2).toUpperCase();
 };
 
+export function formatRizzomaDate(timestamp: number | undefined): string {
+  if (!timestamp) return '';
+  const d = new Date(timestamp);
+  const now = new Date();
+  if (d.getFullYear() === now.getFullYear()) {
+    return `${d.getDate()} ${d.toLocaleDateString('en-US', { month: 'short' })}`;
+  }
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
 function ContributorAvatar({
   avatar,
   name,
@@ -108,29 +118,17 @@ function ContributorAvatar({
   const [failed, setFailed] = useState(false);
   const label = name || email || 'Contributor';
   const classes = `blip-contributor-avatar ${role === 'owner' ? 'owner' : ''} ${className}`.trim();
-
-  if (avatar && !failed) {
-    return (
-      <img
-        className={classes}
-        style={style}
-        src={avatar}
-        alt={label}
-        title={label}
-        onError={() => setFailed(true)}
-      />
-    );
-  }
+  const avatarSrc = (avatar && !failed) ? avatar : '/s/img/user/anonim.png';
 
   return (
-    <span
-      className={`${classes} fallback`}
+    <img
+      className={classes}
       style={style}
+      src={avatarSrc}
+      alt={label}
       title={label}
-      aria-label={label}
-    >
-      {getAvatarInitials(name, email)}
-    </span>
+      onError={() => setFailed(true)}
+    />
   );
 }
 
@@ -2452,14 +2450,16 @@ export function RizzomaBlip({
                 )}
               </div>
               {/* Contributors avatars on right side - stacked with owner on top, expandable */}
-              {!isTopicRoot && (
-                <div className="blip-contributors-info">
-                  <BlipContributorsStack contributors={blip.contributors} fallbackAuthor={blip.authorName} fallbackAvatar={blip.authorAvatar} />
-                  <span className="blip-author-date">
-                    {new Date(blip.updatedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                  </span>
-                </div>
-              )}
+              <div className={`blip-contributors-info ${isTopicRoot ? 'topic-root-contributors' : ''}`}>
+                <BlipContributorsStack
+                  contributors={blip.contributors}
+                  fallbackAuthor={blip.authorName}
+                  fallbackAvatar={blip.authorAvatar}
+                />
+                <span className="blip-author-date">
+                  {formatRizzomaDate(blip.updatedAt || blip.createdAt)}
+                </span>
+              </div>
             </div>
           </div>
         )}

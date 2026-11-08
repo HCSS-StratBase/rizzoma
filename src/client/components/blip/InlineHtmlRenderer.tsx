@@ -203,16 +203,16 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     const isBlockAnchor = tag === 'li' || tag === 'p';
     const expandedHere = isBlockAnchor ? mountedMarkersInside(el) : [];
 
-    // Suppress stray empty bullet items in view mode (no text, no markers, no images/embeds)
-    if (tag === 'li' && expandedHere.length === 0) {
+    // Suppress stray empty bullet items or paragraphs in view mode (no text, no markers, no images/embeds)
+    if ((tag === 'li' || tag === 'p') && expandedHere.length === 0) {
       const text = el.textContent?.trim() || '';
       const hasMediaOrMarker = el.querySelector('img, video, iframe, [data-blip-thread], .blip-thread-marker, .blip-tag-container');
       if (text.length === 0 && !hasMediaOrMarker) {
         return null;
       }
-      // If the <li> only contains hashtags (e.g. #RuBase), suppress the bullet disc so it renders as a clean unbulleted tag row
+      // If only contains hashtags (e.g. #RuBase), suppress the bullet disc so it renders as a clean unbulleted tag row
       if (text.length > 0 && text.split(/\s+/).every(token => token.startsWith('#'))) {
-        props['style'] = { ...(props['style'] as any), listStyle: 'none', marginLeft: 0, paddingLeft: 0 };
+        props['style'] = { ...(props['style'] as any), listStyle: 'none', marginLeft: 0, paddingLeft: 0, margin: '4px 0 8px 0' };
         props['className'] = `${props['className'] || ''} blip-tag-line`.trim();
       }
     }

@@ -305,9 +305,9 @@
   white-space: nowrap;
 }
 
-/* Meta-blip content area - unified with children (BLB: one blip container) */
+/* Meta-blip content area - unified with children (BLB: one blip container, matches legacy-240.png padding) */
 .topic-blip-content {
-  padding: 8px 16px 6px;
+  padding: 14px 24px 6px 24px;
   background: white;
   /* No bottom padding - flows directly into children */
 }
@@ -321,7 +321,7 @@
 
 /* Child blips area - seamless continuation of topic content (BLB: unified container) */
 .topic-blip-children {
-  padding: 0 16px 16px;
+  padding: 0 24px 16px 24px;
   background: white;
   /* Same background as content - appears as ONE container */
 }

@@ -1375,6 +1375,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     content: topicContentHtmlBase,
     authorId: topic.authorId,
     authorName: topic.authorName,
+    authorAvatar: topic.authorAvatar || '/s/img/user/anonim.png',
     createdAt: topic.createdAt,
     updatedAt: topic.updatedAt,
     isRead: true,

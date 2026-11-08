@@ -233,6 +233,23 @@
   background: #333333;
 }
 
+/* Suppress pseudo-element bullets on tag lines */
+.blip-text ul > li.blip-tag-line::before,
+.topic-content-view ul > li.blip-tag-line::before,
+.topic-blip-content ul > li.blip-tag-line::before,
+.tiptap.ProseMirror ul > li.blip-tag-line::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Suppress pseudo-element bullets on empty list items */
+.blip-text ul > li:empty::before,
+.topic-content-view ul > li:empty::before,
+.topic-blip-content ul > li:empty::before {
+  display: none !important;
+  content: none !important;
+}
+
 /* Level 2 bullet: ◦ circle */
 .blip-text ul ul,
 .topic-content-view ul ul,
@@ -1605,13 +1622,13 @@
 .blip-tag-container,
 .blip-tag {
   display: inline-block;
+  border-radius: 3px;
 }
 .blip-tag {
   background: #eaeaea;
-  padding: 0 4px;
+  padding: 0 3px;
   height: 20px;
   line-height: 20px;
-  border-radius: 3px;
   font-size: 12px;
 }
 .blip-tag.clickable {
@@ -1621,13 +1638,54 @@
   text-decoration: underline;
 }
 .blip-tag-container {
-  border: 1px solid #dcdcdc;
-  border-radius: 3px;
+  border: 2px solid white;
   margin: 0 3px 0 0;
   vertical-align: middle;
 }
 .blip-tag-text {
-  color: #222222;
-  margin: 0 2px;
-  font-weight: 500;
+  color: #000000;
+  margin: 0 3px 0 0;
+  font-weight: normal;
+}
+
+/* Topic Root Author Avatar & Date Card (matches legacy-240.png) */
+.blip-contributors-info.topic-root-contributors,
+.rizzoma-parity .blip-view-mode > .blip-content-row > .blip-contributors-info.topic-root-contributors {
+  position: absolute;
+  top: 14px;
+  right: 24px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  z-index: 2;
+}
+.blip-contributors-info.topic-root-contributors .blip-contributors-stack {
+  width: 32px;
+  height: 32px;
+}
+.blip-contributors-info.topic-root-contributors .blip-contributor-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
+  border: 1px solid #707478;
+}
+.blip-contributors-info.topic-root-contributors .blip-author-date {
+  font-size: 11px;
+  color: #333333;
+  margin-top: 2px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Topic Root H1 Title Typography (matches legacy-240.png and blip.css:79) */
+.root-blip h1,
+.topic-meta-blip h1 {
+  font-size: 18px !important;
+  font-weight: bold !important;
+  color: #000000 !important;
+  margin: 0 0 6px 0 !important;
+  line-height: 22px !important;
 }
