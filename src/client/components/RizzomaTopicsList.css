@@ -149,23 +149,36 @@
 /* Wave info area (right side) */
 .wave-info {
   position: absolute;
-  right: 5px;
+  right: 8px;
   top: 15px;
   text-align: center;
-  width: 50px;
+  width: 64px;
 }
 
-/* Follow/Unfollow button */
+/* Follow/Unfollow button matching legacy-240.png */
 .wave-info .follow {
   display: none;
-  text-align: center;
-  margin-top: 4px;
-  font-size: 12px;
+  background: #FFF;
+  color: #333;
+  border: 1px solid #C8D7E6;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+  line-height: 16px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  margin-top: 6px;
+  white-space: nowrap;
+}
+
+.wave-info .follow:hover {
+  background: #F4F8FA;
+  border-color: #A0BBD4;
 }
 
 .search-result-item.active .follow,
 .search-result-item.show-follow-button .follow {
-  display: block;
+  display: inline-block;
 }
 
 .search-result-item.active .info,
@@ -179,17 +192,11 @@
   height: 30px;
   width: 30px;
   display: inline-block;
-  font-size: 15px;
-  line-height: 32px;
   border-radius: 3px;
   overflow: hidden;
-}
-
-.last-editing.avatar.fallback {
+  object-fit: cover;
+  vertical-align: middle;
   background: #CCD9E5;
-  color: #FFF;
-  font-weight: bold;
-  text-align: center;
 }
 
 /* Date/time */
@@ -197,7 +204,7 @@
   font-family: 'PT Sans Narrow', Arial, sans-serif;
   font-size: 12px;
   line-height: 13px;
-  width: 50px;
+  width: 64px;
   text-align: center;
   color: #666;
   margin-top: 2px;

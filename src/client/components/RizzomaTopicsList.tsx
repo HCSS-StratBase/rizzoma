@@ -66,28 +66,17 @@ const SHOW_FOLLOW_BUTTON_DELAY = 500; // ms, same as original
 
 function TopicListAvatar({ topic }: { topic: Topic }) {
   const [failed, setFailed] = useState(false);
-  const label = topic.authorName || topic.authorId;
-
-  if (topic.authorAvatar && !failed) {
-    return (
-      <img
-        className="last-editing avatar"
-        src={topic.authorAvatar}
-        alt={label}
-        title={label}
-        onError={() => setFailed(true)}
-      />
-    );
-  }
+  const avatarSrc = (!failed && topic.authorAvatar) ? topic.authorAvatar : '/s/img/user/anonim.png';
+  const label = topic.authorName || 'User';
 
   return (
-    <div
-      className="last-editing avatar fallback"
+    <img
+      className="last-editing avatar"
+      src={avatarSrc}
+      alt={label}
       title={label}
-      aria-label={label}
-    >
-      {getInitials(topic.authorName, topic.authorId)}
-    </div>
+      onError={() => setFailed(true)}
+    />
   );
 }
 

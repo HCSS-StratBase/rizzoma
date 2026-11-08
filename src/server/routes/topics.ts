@@ -130,11 +130,13 @@ router.get('/', async (req, res): Promise<void> => {
 
     const response = enriched.map((topic) => {
       const author = topic.authorId ? authorMap.get(topic.authorId) : undefined;
+      const authorName = author?.name || (author?.email ? author.email.split('@')[0] : 'User');
+      const authorAvatar = author?.avatar || '/s/img/user/anonim.png';
       return {
         ...topic,
         snippet: buildSnippet(topic.content),
-        authorName: author?.name ?? undefined,
-        authorAvatar: author?.avatar ?? undefined,
+        authorName,
+        authorAvatar,
         isFollowed: userId && topic.id ? followedTopics.has(topic.id) : undefined,
       };
     });
