@@ -78,6 +78,19 @@ jobs:
       - name: Start docker services
         if: ${{ steps.install-smoke.outcome == 'success' }}
         run: docker compose up -d couchdb redis
+      - name: Create CouchDB database
+        if: ${{ steps.install-smoke.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          # The app does not create its database; without it every auth call is a 500 "Database does not exist".
+          for attempt in {1..30}; do
+            if curl -fsS http://admin:password@127.0.0.1:5984/_up >/dev/null 2>&1; then break; fi
+            echo "Waiting for CouchDB (attempt ${attempt})..."; sleep 2
+          done
+          curl -sS -X PUT http://admin:password@127.0.0.1:5984/_users >/dev/null || true
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X PUT http://admin:password@127.0.0.1:5984/project_rizzoma)
+          echo "PUT project_rizzoma -> HTTP ${code}"
+          [ "$code" = "201" ] || [ "$code" = "412" ]
       - name: Start dev stack
         if: ${{ steps.install-smoke.outcome == 'success' }}
         run: |
@@ -172,6 +185,19 @@ jobs:
       - name: Start docker services
         if: ${{ steps.install-perf.outcome == 'success' }}
         run: docker compose up -d couchdb redis
+      - name: Create CouchDB database
+        if: ${{ steps.install-perf.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          # The app does not create its database; without it every auth call is a 500 "Database does not exist".
+          for attempt in {1..30}; do
+            if curl -fsS http://admin:password@127.0.0.1:5984/_up >/dev/null 2>&1; then break; fi
+            echo "Waiting for CouchDB (attempt ${attempt})..."; sleep 2
+          done
+          curl -sS -X PUT http://admin:password@127.0.0.1:5984/_users >/dev/null || true
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X PUT http://admin:password@127.0.0.1:5984/project_rizzoma)
+          echo "PUT project_rizzoma -> HTTP ${code}"
+          [ "$code" = "201" ] || [ "$code" = "412" ]
       - name: Start dev stack
         if: ${{ steps.install-perf.outcome == 'success' }}
         run: |
