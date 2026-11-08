@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: a5185ffe
+source_commit: aabef72c
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 242 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 48 root files.
+**¶1** □ GENERATED. `public/` 245 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 49 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -50,6 +50,7 @@ graph LR
 | `public/s/img/logo` | 14 |
 | `public/s/img/mail` | 5 |
 | `public/s/img/mail/first-visit` | 9 |
+| `public/s/img/user` | 3 |
 
 ## snapshots/ by folder
 
@@ -69,6 +70,7 @@ graph LR
 |---|---|
 | `.editorconfig` | — |
 | `.eslintrc.json` | — |
+| `.gitattributes` | — |
 | `.gitignore` | — |
 | `.prettierrc.json` | — |
 | `.server.pid` | — |

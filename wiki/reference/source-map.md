@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: a5185ffe
+source_commit: aabef72c
 generated: true
 ---
 
@@ -77,10 +77,10 @@ graph LR
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
 | `src/client/components/RizzomaLayout.css` | 297 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 306 | (no header comment; exports RizzomaLayout) |
-| `src/client/components/RizzomaTopicDetail.css` | 1014 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.tsx` | 1777 | DISABLED: Socket subscription was causing infinite loop |
-| `src/client/components/RizzomaTopicsList.css` | 214 | Authentic Legacy Rizzoma Topics List Styles |
-| `src/client/components/RizzomaTopicsList.tsx` | 270 | (no header comment; exports RizzomaTopicsList) |
+| `src/client/components/RizzomaTopicDetail.css` | 1021 | RizzomaTopicDetail - Matching real Rizzoma |
+| `src/client/components/RizzomaTopicDetail.tsx` | 1737 | DISABLED: Socket subscription was causing infinite loop |
+| `src/client/components/RizzomaTopicsList.css` | 221 | Authentic Legacy Rizzoma Topics List Styles |
+| `src/client/components/RizzomaTopicsList.tsx` | 249 | (no header comment; exports RizzomaTopicsList) |
 | `src/client/components/ShareModal.tsx` | 180 | (no header comment; exports ShareModal) |
 | `src/client/components/StatusBar.tsx` | 16 | (no header comment; exports StatusBar) |
 | `src/client/components/StorePanel.css` | 144 | — |
@@ -101,11 +101,11 @@ graph LR
 | `src/client/components/WavesList.tsx` | 79 | (no header comment; exports WavesList) |
 | `src/client/components/blip/BlipHistoryModal.css` | 475 | BlipHistoryModal - Timeline Playback UI |
 | `src/client/components/blip/BlipHistoryModal.tsx` | 322 | (no header comment; exports BlipHistoryModal) |
-| `src/client/components/blip/BlipMenu.css` | 607 | Authentic Legacy Rizzoma Blip Menu Styles |
-| `src/client/components/blip/BlipMenu.tsx` | 872 | (no header comment; exports BlipMenu) |
-| `src/client/components/blip/InlineHtmlRenderer.tsx` | 322 | (no header comment; exports InlineHtmlRenderOptions) |
-| `src/client/components/blip/RizzomaBlip.css` | 1634 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 2769 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/BlipMenu.css` | 647 | Authentic Legacy Rizzoma Blip Menu Styles |
+| `src/client/components/blip/BlipMenu.tsx` | 870 | (no header comment; exports BlipMenu) |
+| `src/client/components/blip/InlineHtmlRenderer.tsx` | 323 | (no header comment; exports InlineHtmlRenderOptions) |
+| `src/client/components/blip/RizzomaBlip.css` | 1774 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.tsx` | 2763 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 105 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 73 | (no header comment; exports LocationLike) |
@@ -128,7 +128,7 @@ graph LR
 | `src/client/components/editor/MentionList.tsx` | 77 | (no header comment; exports MentionListProps) |
 | `src/client/components/editor/YjsDocumentManager.ts` | 46 | (no header comment; exports YjsDocumentManager) |
 | `src/client/components/editor/extensions/BlipKeyboardShortcuts.ts` | 188 | Callback to create a child blip at the given anchor position. |
-| `src/client/components/editor/extensions/BlipThread.css` | 75 | BlipThread inline marker styles — unified with .blip-expand-icon (#b3b3b3 gray) |
+| `src/client/components/editor/extensions/BlipThread.css` | 81 | BlipThread inline marker styles — authentic original Rizzoma speech bubble |
 | `src/client/components/editor/extensions/BlipThreadNode.tsx` | 152 | Insert an inline BlipThread marker at the current cursor position. |
 | `src/client/components/editor/extensions/CodeBlockView.css` | 128 | Enhanced Code Block — replaces bare TipTap codeBlock |
 | `src/client/components/editor/extensions/CodeBlockView.tsx` | 87 | (no header comment; exports CodeBlockView) |
@@ -228,9 +228,9 @@ graph LR
 | `src/server/routes/mentions.ts` | 144 | Mentions Routes |
 | `src/server/routes/notifications.ts` | 221 | Notification Routes |
 | `src/server/routes/tasks.ts` | 177 | Tasks Routes |
-| `src/server/routes/topics.ts` | 508 | User type for lookups |
+| `src/server/routes/topics.ts` | 534 | User type for lookups |
 | `src/server/routes/uploads.ts` | 231 | AWS SDK v3 - optional, loaded dynamically when S3 storage is enabled |
-| `src/server/routes/waves.ts` | 612 | GET /api/waves?limit&offset&q |
+| `src/server/routes/waves.ts` | 650 | — |
 
 ## Server lib (9)
 
@@ -314,7 +314,7 @@ graph LR
 | `src/types/tiptap-collaboration.d.ts` | 9 | — |
 | `src/types/tiptap-react.d.ts` | 16 | (no header comment; exports useEditor) |
 | `src/types/tiptap-starter-kit.d.ts` | 9 | — |
-| `src/types/tiptap.d.ts` | 52 | (no header comment; exports Commands) |
+| `src/types/tiptap.d.ts` | 55 | (no header comment; exports Commands) |
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 

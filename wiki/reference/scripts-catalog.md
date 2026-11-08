@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: a5185ffe
+source_commit: aabef72c
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 97 files in `scripts/`, 35 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 99 files in `scripts/`, 35 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -75,7 +75,7 @@ graph LR
 | `snapshots:pull` | `bash scripts ⁄ fetch-latest-snapshots.sh` |
 | `lint:branch-context` | `node scripts ⁄ check-branch-state.cjs` |
 
-## scripts/ (97)
+## scripts/ (99)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -155,6 +155,7 @@ graph LR
 | `scripts/test-delete-blip.mjs` | 164 | — |
 | `scripts/test-live-auth-and-topic.mjs` | 75 | — |
 | `scripts/test_edit_then_ce.mjs` | 31 | — |
+| `scripts/test_surface7_selection.mjs` | 88 | — |
 | `scripts/verify-blb-fractal-proof.mjs` | 224 | — |
 | `scripts/verify-fixes-261108.mjs` | 172 | — |
 | `scripts/verify-full-parity-live.mjs` | 205 | — |
@@ -167,6 +168,7 @@ graph LR
 | `scripts/verify_drift_fix.mjs` | 138 | Verify (3) — anchorPosition value is no longer used for positioning. |
 | `scripts/verify_single_active_editor.mjs` | 150 | Acceptance verification for fix/single-active-editor on the DEV instance. |
 | `scripts/verify_state_survives_collapse.mjs` | 220 | Verify (b): draft text typed into a child blip's editor SURVIVES the |
+| `scripts/verify_surface4.mjs` | 124 | — |
 | `scripts/viewport_sweep_dev.mjs` | 36 | — |
 | `scripts/visual-feature-coverage.mjs` | 210 | — |
 | `scripts/visual-feature-sweep.mjs` | 1407 | — |
