@@ -82,11 +82,18 @@ async function main() {
   await page.screenshot({ path: '/mnt/c/Rizzoma/screenshots/3_child_expanded_read_mode.png' });
   console.log('Saved 3_child_expanded_read_mode.png');
 
-  // Click on the child blip text (put cursor in blip) to enter edit mode!
-  const childBlipText = page.locator('.blip-container.nested-blip .blip-text, .blip-container.expanded .blip-text').first();
-  console.log('Clicking on blip text to trigger click-to-edit...');
-  await childBlipText.click();
-  await page.waitForTimeout(1500);
+  // Click Edit button or blip text to enter edit mode
+  const editBtn = page.locator('[data-testid="blip-menu-edit"], .edit-btn').first();
+  if (await editBtn.isVisible()) {
+    console.log('Clicking Edit button to enter edit mode...');
+    await editBtn.click();
+    await page.waitForTimeout(1500);
+  } else {
+    console.log('Clicking on blip text to trigger click-to-edit...');
+    const childBlipText = page.locator('.blip-container.nested-blip .blip-text, .blip-container.expanded .blip-text, .topic-blip-content').first();
+    await childBlipText.click();
+    await page.waitForTimeout(1500);
+  }
 
   // Capture State 4: Child blip in edit mode - reveals full NEW editing bar with emoji!
   await page.screenshot({ path: '/mnt/c/Rizzoma/screenshots/4_child_edit_mode_full_toolbar.png' });

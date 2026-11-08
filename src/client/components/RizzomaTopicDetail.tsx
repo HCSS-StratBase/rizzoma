@@ -1670,11 +1670,16 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                           : (blip.authorName || 'Blip');
                         const hasUnread = !blip.isRead;
                         return (
-                          <div key={blip.id} className="rizzoma-blip perf-blip-row" data-blip-id={blip.id}>
+                          <div
+                            key={blip.id}
+                            className="rizzoma-blip perf-blip-row"
+                            data-blip-id={blip.id}
+                            onClick={() => handleToggleCollapse(blip.id)}
+                            style={{ cursor: 'pointer' }}
+                          >
                             <div className={`blip-collapsed-row perf-collapsed ${hasUnread ? 'has-unread' : ''}`}>
-                              <span className="blip-bullet">•</span>
-                              <span className="blip-collapsed-label-text">{label}</span>
                               <span className={`blip-expand-icon ${hasUnread ? 'has-unread' : ''}`}>+</span>
+                              <span className="blip-collapsed-label-text">{label}</span>
                             </div>
                           </div>
                         );
