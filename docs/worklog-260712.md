@@ -1,0 +1,374 @@
+# Worklog 2026-07-12 — native-fractal release audit
+
+## Outcome
+
+- Audited the exact release line: `fix/single-active-editor` is a fast-forward descendant of `origin/master` and contains the native-fractal merge plus six July editor fixes.
+- Preserved `origin/master`; the release candidate was not promoted because the full Vitest suite did not return a complete verdict within the available execution window.
+- Refreshed HANDOFF, RESTART, RESTORE_POINT, and TESTING_STATUS so the July live cutover and remaining release boundary are no longer hidden behind March/May snapshots.
+
+## Fixes
+
+- Added a scoped 15-second timeout to the OAuth-provider integration test. Its slow module import caused the default five-second test budget to expire even though the request/assertion path completed; focused rerun passed 3/3.
+- Added an explicit `RequestHandler` return type to `sessionMiddleware()`. This removed non-portable declaration inference through the shared `/mnt/c/Rizzoma/node_modules` path and made the production server build portable.
+
+## Verification
+
+- Branch-context lint: PASS.
+- TypeScript no-emit check: PASS.
+- Production build: PASS; server declarations emitted and Vite transformed 3,297 client modules.
+- Focused OAuth suite: 3/3 PASS.
+- Full suite: not green-certified. Parallel run exposed the OAuth timeout; serialized run continued without an observed assertion failure but exceeded 600 seconds before a final summary.
+
+## Boundary
+
+- Do not fast-forward `master` until CI or a clean local dependency installation completes the full suite and returns a final passing summary.
+- Live/staging topology remains bare `nohup` development processes with MemoryStore sessions, as documented in `VPS_DEPLOYMENT.md`.
+- Draft PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) is the merge vehicle and must remain unmerged until its complete CI verdict is green.
+
+## CI remediation follow-up
+
+- Inspected failed PR checks and separated infrastructure failures from application behavior.
+- Linux build/health/browser jobs had installed with `--no-optional`, which removed Rollup's required platform binary. All four Linux jobs now use deterministic `npm ci` with optional packages enabled and Cypress's binary download disabled separately.
+- The macOS workflow ignored Tiptap collaboration's `y-prosemirror` peer after deleting the lockfile under `legacy-peer-deps`. `y-prosemirror` is now direct, the lockfile carries it as a production dependency, and macOS uses deterministic `npm ci`.
+- Restored Vite's `/api` and `/socket.io` portable default from `:8000` to the reserved backend `:8788`; VPS live/staging targets are now explicit deployment overrides.
+- PR CI now runs the production build and readiness checks probe `/api/health` through Vite as well as the backend, catching dependency and proxy drift before merge.
+- Raised the checked-in iOS project and Podfile deployment target from 14.0 to 15.0, matching Capacitor 8.3.0 and its Status Bar 8.0.2 podspecs; the first repaired macOS run had reached `cap sync` before exposing this native-project drift.
+- Initialized the application database explicitly in both Playwright-backed CI jobs. The first fully-started run proved that a healthy CouchDB server with a missing `project_rizzoma` database produced 500s in every browser and the perf harness.
+- Tightened `/api/health` to check the configured application database rather than only CouchDB's server root, so readiness can no longer return green while every data route is unusable.
+- Removed 22 React Hooks-order lint errors without changing feature behavior by keeping the feature/perf guards in thin exported wrappers and moving hook-bearing implementations into unconditional child components.
+- Updated the collaboration smoke to enter edit mode through `rizzoma:enter-edit-blip`; it still dispatched the retired pre-single-active-editor event and therefore timed out before testing any Y.js synchronization.
+- Restored both client halves of the April Y.js fix that consolidation silently reverted: editable child blips now join their collaboration room before expansion, and only the server-authorized client may seed an empty Y.Doc. The regression left one editor outside the child room while near-simultaneous editors could independently seed divergent CRDT histories; live relay failed until reconnect merged server state.
+- Made the collaboration smoke wait for authoritative initial content on each editor, not merely a mounted ProseMirror element, before exercising bidirectional typing.
+- Replaced fixed collaboration sleeps with bounded waits on socket events, editor convergence, disconnect, reconnect, and catch-up state.
+- Fixed `SocketIOProvider.destroy()` to remove its own Y.Doc and socket callbacks by handler identity. The previous teardown leaked ghost outbound emitters and could remove another provider's same-event listener during editor churn.
+- Verification: workflow YAML PASS; typecheck PASS; production build PASS; complete Vitest PASS at 61 files / 275 passed / 3 skipped / 0 failed.
+
+## Final CI and merge
+
+This section supersedes the initial release boundary above.
+
+- PR [#57](https://github.com/HCSS-StratBase/rizzoma/pull/57) merged to `master` as `8840f552` from source head `daa3f2f3` at 2026-07-12 03:38 CEST.
+- PR [#58](https://github.com/HCSS-StratBase/rizzoma/pull/58) landed the final handoff and inspected evidence as `6db65e20`; the release code checkpoint remains `8840f552`.
+- Final-head [CI 29175331401](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331401) passed build, browser smokes, performance budgets, health checks, and the aggregate gate; [iOS 29175331404](https://github.com/HCSS-StratBase/rizzoma/actions/runs/29175331404) also passed.
+- Final CI measured 62 files / 283 passed / 3 skipped, 3,298 transformed build modules, lint at 0 errors, and 10/10 health checks.
+- The two-browser-process collaboration smoke passed 10/10: 1 ms A-to-B relay, zero receiving-client REST PUTs, bidirectional convergence, reconnect catch-up, stable unread drain, and no-store topic reads.
+- The enforced full-render gate passed 120/120 labels and blips with 101 lazy slots, 394.3 ms landing, 595.6 ms expanded, and 36 MB heap.
+- Rendered evidence and metric payloads are preserved under `screenshots/260712-0313-pr57-release-gates/`; the PNGs were inspected for layout, clipping, toolbar state, and desktop/mobile readability.
+- Boundary: the merged source has not yet been deployed. Production verification, managed services plus Redis-backed sessions, 500/1,000 full-render sweeps, physical iPhone Safari, backup automation, and the 6,363-warning lint backlog remain separate follow-ups.
+- Post-merge backup completed: `rizzoma.bundle` and dated GDrive copy `rizzoma-260712-pr57-native-fractal-release.bundle` are 630 MB, `git bundle verify` reports complete history, and all three copies match SHA-256 `c0cb22744d190426c984217943ff1785983f48f1bdffd4b6705749108a58f327`.
+
+## Production acceptance and PR #60 deployment
+
+This section supersedes the deployment boundary above.
+
+- Corrected the release-state audit: PR #57 source head `daa3f2f3` was already serving the public URL from `/data/large-projects/stephan/rizzoma_260612`; the earlier “not yet deployed” status was wrong.
+- The first strict public acceptance run exposed a real production failure: `/api/waves/:id/unread` returned HTTP 500 because unread/next/previous routes self-fetched a URL assembled from proxy-derived HTTPS metadata and a rewritten plain-HTTP backend host. The former browser smoke hid the failure by accepting a missing/stale button path, mutating the DOM count, using debug/direct-API fallbacks, and swallowing errors.
+- PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60) replaced the self-fetch with shared direct wave-tree loading, reloaded once when remote unread blips had not yet materialized in the observer DOM, exposed the real Next action on mobile, and made the smoke require the actual `button.next-button.has-unread` plus persisted `2 → 1 → 0` state.
+- PR #60 CI was fully green: 62 test files, 284 passed, 3 skipped, 0 failed; typecheck passed; lint had 0 errors and 6,354 warnings; the production build transformed 3,298 modules; browser, health, performance, iOS, and aggregate gates passed. It merged as `fe6988fb`.
+- Promoted the exact merge tree through the accepted staging lane, restarted its API with the public OAuth environment and RedisStore, and switched nginx atomically from Vite `:3000` to Vite `:3100`/API `:8100`. The former public `:3000`/`:8788` lane remains healthy as an immediate rollback target; nginx backup: `/root/rizzoma.conf.pre-pr60-20260712-052206`.
+- Public verification passed: health HTTP 200, correct Google OAuth callback, zero API 5xx responses, RedisStore active, and 32 session keys measured after the acceptance run.
+- Public collaboration passed 10/10 with a 39 ms A-to-B relay, zero receiving-client REST PUTs, bidirectional convergence, reconnect catch-up, unread drain, and no-store topic reads.
+- Public Follow-the-Green passed on desktop and emulated Pixel 5 mobile. The real Next control and endpoint state moved `2 → 1 → 0`; unread reads returned HTTP 200 and individual mark-read writes returned HTTP 201. The visually inspected public evidence, including the 1280/1366/1440/1600 desktop sweep, is under `screenshots/260712-0530-pr60-production-final/`.
+- Remaining boundary: the active Node/Vite processes are not supervised services, the old lane is intentionally retained for rollback, live and staging share CouchDB, physical iPhone Safari remains untested, and 500/1,000-blip full-render sweeps remain open.
+
+## Runtime reality audit and release-label correction
+
+- Rechecked the public URL, health/OAuth, nginx target, active process environments, Vite-transformed feature flags, source checkout, Redis, current API log, GitHub state, and native-render executable path at 05:58 CEST.
+- Corrected the central release claim: public production is the React/TipTap parity path. The live client exposes parity `1` and native unset; `RizzomaTopicDetail` additionally requires `?render=native`, while `NativeWaveView` remains read-only without persistence, edit toolbar, or reply support.
+- Confirmed the API runs with `NODE_ENV=production`, but the public frontend is Vite's development server (`MODE=development`, `DEV=true`) serving source modules. Node and Vite remain bare root-owned processes with no restart supervisor.
+- Measured 395 requests / 0 5xx in the active API log after exactly 2,279 seconds of uptime. This is a short post-cutover sample only, not evidence of sustained reliability.
+- Confirmed the clean release checkout at `3a55155a` differs from running application commit `fe6988fb` only by docs/evidence. The canonical `/mnt/c/Rizzoma` tree remains a separate dirty `feature/native-fractal-port` checkout at `6e988cc` with one tracked modification and 134 untracked entries; it was left untouched.
+- Repository boundary: 3 stale PRs and 7 native-port issues remain open, CI still reports 6,354 warnings, synthetic acceptance topics remain in production, both lanes share CouchDB, and physical iPhone plus 500/1,000-blip full-render coverage remain open.
+
+## Documentation and Tana closeout
+
+- Published the eight-file correction through PR [#62](https://github.com/HCSS-StratBase/rizzoma/pull/62); it merged as `9c4fb68f` after build, browser, health, performance, aggregate, and branch-update checks all passed.
+- Created separate, top-level HCSS output `8mGAbLRiBnne` on the 2026-07-12 daily note with `#Rizzoma modernization`, `#Rizzoma`, human provenance, exact GPT-5.6 Sol / Codex CLI 0.144.1 provenance, six result/boundary bullets, and GitHub artifacts.
+- Renamed and bounded PR #60 discussion `cJolEA2G4Lvb`, cross-linked it to the new output, and clarified that zero 5xx applied to the bounded acceptance run.
+- Marked the 9 July single-active-editor precursor `74Hvd17c3Vfc` complete and added both missing Rizzoma tags so tag searches surface the detailed history.
+- Verified both 12 July entries directly on the HCSS day node, read back fields and tags, and swept the helper-created empty content placeholder while preserving field tuples. Updated the global `HANDOFF.md` to the same final state.
+
+## Sharing authorization implementation
+
+### Outcome
+
+- Built the change on isolated branch `fix/sharing-access-control` from `origin/master` `1241428b`; no production checkout, deployment, or remote branch was changed.
+- Replaced display-only sharing with persisted owner-controlled private/link/public policy plus viewer/commenter/editor/owner capabilities.
+- Centralized authorization across topic/wave listing and reads, topic/blip/comments/links/editor mutations, participants and both invitation endpoints, unread access, and Socket.IO collaboration.
+- Bound the compatibility rule: new topics are private; documents missing both policy shapes and true legacy waves missing metadata remain public read-only, never public-write.
+
+### Security and UI
+
+- Socket.IO now reads identity from the same Express session store and ignores client-supplied user identity. Viewers can sync but cannot publish Yjs or awareness updates; live role/policy changes immediately revoke lost room/write authority.
+- Sharing settings hydrate from the server, disable on load failure, canonicalize edit ⇒ comment, and clear public flags when made private.
+- Invite UI now assigns viewer, commenter, or editor; alternate notification invitations are owner-only as well.
+- Added the read-only `npm run sharing:count-legacy` inventory utility. It reports exact missing-policy counts and samples without stamping or modifying documents.
+
+### Verification
+
+- Full Vitest: 66 files / 346 passed / 3 skipped / 0 failed.
+- Focused authorization suite: 62/62 passed, including the six-identity route matrix and real session-backed Socket.IO spoof/demotion cases.
+- Typecheck and production build passed; ESLint measured 0 errors / 6,664 warnings, and Vite transformed 3,298 modules. The warning backlog remains maintenance debt.
+- Playwright captured Share and Invite modals at 1280, 1366, 1440, and 1600 × 900. All eight PNGs were inspected and showed centered, fully visible controls without clipping or overlap. Evidence: [`screenshots/260712-122218-sharing-access-ui/`](../screenshots/260712-122218-sharing-access-ui/).
+
+### Boundary
+
+- The original implementation branch did not connect to CouchDB or mutate production; a later read-only inventory measured the exact production boundary during stacked integration.
+- The implementation was not deployed. Staging role checks remain required before cutover.
+
+## Sharing authorization stacked on production hardening
+
+### Integration
+
+- Created isolated branch `codex/sharing-access-control-stack` from production-hardening head `dda4d1d5` and cherry-picked sharing commit `888b16fa`.
+- After PR #64 squash-merged and its source branch was deleted, rebased the one resolved sharing commit onto merged commit `2595d2de`. The pre/post tree hash remained identical, so the published PR contains only the 54-file sharing/documentation diff rather than replaying hardening history.
+- Resolved documentation conflicts by preserving the hardening/runtime incident checkpoint and adding the sharing checkpoint. Resolved backend overlaps by retaining the managed shutdown order and layering shared-session Socket.IO authorization on top.
+- The first focused run exposed a duplicate `closeSocket` export from the automatic merge. The duplicate sharing lifecycle hook would also have destroyed the Yjs cache before the hardening flush; it was removed so shutdown remains Socket.IO close → HTTP drain → version-aware Yjs flush → Redis close.
+- Incorporated the read-only production inventory: **26 topic metadata documents / 0 explicit policies / 26 missing-policy legacy / 0 malformed**. No titles, content, or policy documents were read or changed.
+
+### Verification
+
+- Focused authorization suite: **62/62 passed**.
+- Full stacked Vitest: **67 files / 361 passed / 3 skipped / 0 failed**.
+- Typecheck and production build passed; Vite transformed **3,298 modules**.
+- ESLint measured **0 errors / 6,684 warnings**; warnings remain explicit maintenance debt.
+- Independently read all eight checked-in Share/Invite PNGs at 1280, 1366, 1440, and 1600 × 900. Both 500-pixel modals stay centered and fully visible; controls and labels remain unclipped at every width. The exact bounds are in the [visual manifest](../screenshots/260712-122218-sharing-access-ui/manifest.json).
+
+### Boundary
+
+- This stacked branch is not deployed and does not mutate the VPS. Normal CI plus isolated staging/public role and live-demotion acceptance remain release gates.
+
+## Private attachment authorization
+
+### Outcome
+
+- Built isolated branch `codex/private-upload-acl` from committed PR #66 head `9e003d88`; no remote branch, production file, or database document was changed.
+- Replaced public static upload serving with opaque CouchDB metadata plus a per-request wave-read authorization check.
+- Required every upload to name its canonical blip and pass current edit authorization. The metadata wave comes from the stored blip; a conflicting client wave claim is rejected.
+- Kept the existing `/uploads/<id>` HTML contract while making logout and participant revocation effective immediately for known URLs.
+- Failed S3/MinIO closed until object bytes can be proxied through the same ACL; public and pre-signed URLs are not treated as revocable.
+
+### Evidence
+
+- Read-only VPS inventory measured zero files and zero bytes in the active legacy checkout, current public checkout, managed release, and persistent `/var/lib/rizzoma/uploads` directory. There is no live attachment migration boundary.
+- Focused stacked Vitest passed 70/70 across upload lifecycle, central access, and the six-role route matrix. The 14 upload cases include anonymous/private denial, non-editor upload denial, canonical-wave metadata, wave mismatch, local cleanup on metadata failure, no-store/nosniff streaming, and a known URL changing from HTTP-success eligibility to 403 after participant removal.
+- TypeScript no-emit and the production build passed.
+
+### Boundary
+
+- This branch is local-only and must be rebased onto the final sharing/cache head before CI or merge.
+- `public/sw.js` is intentionally untouched here. The companion integration must make `/uploads/*` network-only and purge the old dynamic cache before this route may deploy.
+- Task and mention residue is outside this isolated slice and remains owned by the sharing route-ACL patch.
+
+### Attachment scanner and cancellation hardening
+
+- Made production scanning fail closed: absent configuration, connection/timeout failure, an empty response, and an unrecognized ClamAV response now return `virus_scan_unavailable`; only an explicit terminal `OK` verdict admits bytes, while `FOUND` remains a malware rejection.
+- Added CSRF to the multipart upload route and restricted declared image MIME types to the existing allowlist instead of accepting every `image/*` subtype.
+- Closed the preflight cancellation race in `createUploadTask`: canceling while CSRF setup is pending now rejects as `upload_aborted` without opening or sending the XHR.
+- Verification: **20/20** focused tests passed across upload authorization, scanner protocol verdicts, and pre-CSRF cancellation; full TypeScript typecheck and `git diff --check` passed.
+- Production dependency preflight then started a restart-persistent, loopback-only ClamAV container. Docker reported `healthy`; a raw INSTREAM clean probe returned `OK` and EICAR returned `FOUND`. Evidence is in [`screenshots/260712-1449-clamav-preflight/`](../screenshots/260712-1449-clamav-preflight/). The app is not yet wired to it until final candidate deployment.
+- Closed the remaining same-origin active-content carrier: SVG is no longer an accepted image type, `.html`/`.js`/`.svg` and related active extensions are rejected even when declared as text or image, WebP has byte-signature recognition, and private storage extensions are derived from the admitted MIME/signature rather than the untrusted filename. Authorized downloads still use metadata-controlled MIME, `nosniff`, and attachment disposition for non-raster content.
+- Focused verification after this hardening passed **24/24** across upload authorization, ClamAV protocol, and upload cancellation; typecheck and `git diff --check` passed.
+- Promoted ClamAV into application readiness: `/api/health` now performs a bounded clamd `PING`, reports the scanner check, and returns degraded in production when the scanner is missing or unreachable. The focused health/upload/scanner/cancellation run passed **30/30**, followed by a green typecheck and diff check.
+- Added a client transport regression proving the multipart request carries both canonical `blipId` and optional `waveId` before the route resolves ACLs; the upload client suite now passes **2/2**.
+- Wired the stock production Compose profile to the same mandatory scanner contract: `app-prod` now sets the internal ClamAV host/port and local ACL-backed storage mode, waits for the scanner's image health check, and persists signatures in a restart-persistent volume. A follow-up storage audit also added the shared `uploads-data` volume to development and production containers, so ACL-backed bytes survive container replacement. This prevents a nominal `docker compose --profile prod up` from starting an app whose readiness and every upload fail because `CLAMAV_HOST` is absent, or whose accepted attachments disappear with the container filesystem.
+
+## Full-functional integration and final local gate
+
+### Integration outcome
+
+- Assembled the complete application candidate on
+  `release/preintegration-offline-upload`, leaving the dirty user-owned
+  `/mnt/c/Rizzoma` checkout untouched. Audited application checkpoint:
+  `b3cd054f`.
+- Combined persisted sharing roles, authenticated Socket.IO/Yjs, offline and
+  service-worker account isolation, ACL-backed uploads with mandatory ClamAV,
+  OAuth/registration/logout hardening, password recovery, structural realtime,
+  recursive export, mentions, and durable Tasks.
+- Closed the last Task lifecycle gaps: normal parity view now hydrates from the
+  side document; view→edit writes remain ordered; stale full snapshots cannot
+  overwrite a confirmed different-task toggle; taskless editors do not issue
+  eager reads; denied refreshes revoke authority; and reconnect/access events
+  restore authority without navigation.
+- Closed the account-switch privacy gap: application, layout, topic, editor,
+  and Task state are keyed by authenticated owner. A denied refresh clears
+  loaded topic/blip/participant/draft/editor/modal state, and owner-partitioned
+  load throttles cannot let account A suppress account B's access check.
+
+### Verification
+
+- Exact full Vitest: **107 files / 588 passed / 3 skipped / 0 failed**.
+- Focused combined account/access/Task/offline/realtime/password matrix:
+  **120/120 passed**. Exact Task regressions: **14/14**. Authorization matrix:
+  **72/72**. Account-switch regressions: **2/2**.
+- TypeScript no-emit passed. Full-source ESLint `--quiet` passed. The exact
+  production build transformed **3,314 modules**; only the existing chunk-size
+  advisory remained.
+- Independent adversarial audit returned **GO** on `b3cd054f` after explicitly
+  validating stale-generation ordering, A→B/private-state removal, fail-closed
+  Task authority, and reconnect recovery.
+- Playwright captured **20 Task PNGs** across 1280/1366/1440/1600 and 390 mobile
+  plus **8 Share/Invite PNGs** across the required desktop widths. The Task
+  manifest recorded **0 unexpected console errors** and the sharing manifest
+  kept every modal inside its viewport. Final owner/public/toggle/editor
+  desktop and mobile captures were visually inspected. Evidence:
+  [`screenshots/260712-1928-final-candidate-ui/`](../screenshots/260712-1928-final-candidate-ui/).
+
+### Release boundary
+
+- No production application change was made during this integration gate.
+  Public nginx still serves the earlier parity release.
+- Remaining steps are operational and externally observable: publish the exact
+  candidate through PR #66, require green GitHub CI, refresh and merge the
+  deploy-helper PR, deploy the exact merged SHA to the inactive managed lane,
+  perform the documented zero-overlap drain/cutover, and run full public
+  acceptance including mail, ClamAV/EICAR, restart persistence, two-account
+  collaboration, sharing roles, Tasks, mentions, export, and responsive PNGs.
+
+### CI verified-account fixture correction
+
+- PR #66's first integrated CI run passed build, iOS, and health, but the
+  performance job stopped before measurement: the harness attempted ordinary
+  password registration, which now correctly requires mailbox proof and
+  returned 403; fallback login then returned 401 for the nonexistent account.
+- Reused the existing isolated-E2E fixture contract from the collaboration and
+  Follow-the-Green smokes. Performance and toolbar harnesses now seed a
+  mailbox-verified account directly in the disposable E2E CouchDB and exercise
+  only the normal login route. No production registration bypass or server
+  authorization exception was added.
+- `node --check` and `git diff --check` gate the harness patch locally; the
+  refreshed GitHub perf/browser jobs remain the authoritative end-to-end
+  verification because Docker Desktop is unavailable in this WSL session.
+
+## Managed cutover and login-session race
+
+- PR #68 merged the lockfile-driven production installer as `e21afd04`. The
+  exact private candidate matched all **994** installed package versions to
+  `package-lock.json`, passed `npm ls --omit=dev --all`, health, compiled-asset,
+  and journal gates, and preserved the build aggregate across repeated installs.
+- Captured root-only rollback state at
+  `/root/rizzoma-cutover-20260712-212948`, stopped the old Vite writer, waited
+  for zero API connections, observed no snapshot error, stopped the old API,
+  and switched both nginx vhosts to managed blue `:8101`. Public and dev health
+  returned 200; independent audit confirmed exact SHA `e21afd04`, no old
+  listeners, zero critical logs, and only 22/80/443 externally reachable.
+- The first real-user acceptance run failed after a successful password login:
+  `/api/auth/me` intermittently returned 401. A repeated fresh-browser probe
+  measured **1 failure in 5 attempts**. Header inspection proved `/`, static
+  assets, `/api/auth/me`, and `/api/auth/oauth-status` each set a distinct
+  anonymous `rizzoma.sid`; a late first-load response could overwrite the new
+  login cookie.
+- Hotfix branch `fix/production-auth-session-race` now allows only the dedicated
+  `/api/auth/csrf` request to mint anonymous CSRF/session state. Ordinary page,
+  API, and asset requests remain session-neutral; existing tokens are reissued
+  only by the dedicated endpoint. Ordinary late responses also cannot overwrite
+  the fresh post-login XSRF cookie. Focused verification passed **27/27**
+  auth/CSRF/reset tests, including a real express-session destroyed-SID
+  regression, plus typecheck, the production server build, and touched-file
+  ESLint with zero errors.
+- Boundary: the hotfix is not public until green GitHub CI, exact private-lane
+  deployment, and repeated public login proof. The broader two-user, mail,
+  reset, role, collaboration, export, upload, scanner, restart, and visual
+  matrix remains paused at this gate.
+
+### Public auth proof and topic-root preference follow-up
+
+- PR #69 passed all six checks and merged as `9358b9c5`. The exact green
+  candidate matched all 994 production packages and passed 10/10 private
+  login→identity→authenticated-logout loops while simulated late precache
+  requests ran concurrently. After zero-overlap handover, the same browser flow
+  passed **10/10** publicly with service workers enabled.
+- The first post-auth phase created one private acceptance topic, delivered its
+  real invitation, created a three-level hierarchy, admitted and read back a
+  clean upload, rejected EICAR, and captured the owner UI. It then stopped on
+  two unexpected 404s instead of hiding them.
+- Both 404s were synthetic-topic-root preference reads:
+  `/collapse-default` and `/inline-comments-visibility` were called with the
+  wave id, which is not a persisted blip document. Branch
+  `fix/topic-root-preference-requests` now skips blip-scoped server preference
+  sync for `renderMode="topic-root"`; real nested blips retain it.
+- Focused component verification passed **2/2**, including a new assertion that
+  neither request is made for a topic root. Typecheck and touched-file ESLint
+  at zero errors passed. Boundary: CI, exact inactive-lane deploy, cutover, and
+  resumed phase 1/2 acceptance remain open.
+
+### Public phase-2 acceptance and REST/Yjs coherence repair
+
+- PR #70 passed all seven checks, merged as `04b94622`, and moved public
+  production to managed blue `:8101` through a zero-overlap cutover. Resumed
+  phase 1 passed **15/15** checks: old-session rejection, managed-restart
+  session survival, OAuth redirect/state shape, hierarchy/upload persistence,
+  EICAR rejection, and a console-clean rendered topic.
+- Phase 2 then proved invitation acceptance, editor/viewer/commenter role
+  enforcement, assignee Task authority, ACL upload access, two-browser Yjs
+  relay and reconnect catch-up, persisted Follow-the-Green `2 -> 1 -> 0`, three
+  recursive exports, public read-only/private restoration, and participant
+  revocation. The final revoked Task toggle returned 500 because its side-doc
+  had disappeared.
+- Readback and the production journal isolated the real data-loss path: a
+  direct REST save created task-bearing HTML and the Task document, but an
+  older in-memory/persisted Yjs state remained authoritative. The next
+  collaborative edit projected old-plus-edit HTML, so reference reconciliation
+  removed the Task. Clearing only cache or only snapshot is unsafe because a
+  retained client Y.Doc can restore the old history.
+- Branch `fix/rest-yjs-content-coherence` now serializes REST replacement/
+  projection, Yjs joins/updates, and snapshot persistence per blip. Normal UI
+  projections carry the exact Yjs state vector and are accepted only from the
+  matching writable HTTP session; stale projections retry from current merged
+  HTML. Active out-of-band replacements return 409, while quiescent
+  replacements clear cache, dirty state, every snapshot, and seed authority.
+  The elected seeder receives current server HTML; topic root now obeys the
+  same `shouldSeed` contract as nested blips. Missing Task docs map to 404.
+- Verification: focused **137/137**, full **107 files / 600 passed / 3 skipped**,
+  typecheck, full-source ESLint `--quiet`, `git diff --check`, and a
+  **3,315-module** production build. Docker Desktop is not integrated into this
+  WSL distro, so the real collaboration smoke is deferred to the exact private
+  managed lane after CI. No canonical `/mnt/c/Rizzoma` files were touched.
+
+### Generation-safe collaboration and auth closeout
+
+- Replaced REST/Yjs dual authority with a durable per-blip generation spanning
+  Couch content, browser documents, cache entries, persisted snapshots, socket
+  joins, and updates. Collaborative projections now prove the writable HTTP
+  session, exact generation, and SHA-256 digest of the full Yjs state.
+- Serialized replacement, socket mutation, tombstone discard, and snapshot
+  persistence. The server now persists the exact snapshot before projecting
+  HTML, refuses to overwrite acknowledged dirty state, and self-heals derived
+  references even when the incoming HTML is byte-identical.
+- Closed the final adversarial races: authorization and generation are
+  rechecked inside the mutation lock; queued updates cannot survive demotion or
+  deletion; seeding is claimed by one socket and re-elects only when that
+  claimant leaves; and legacy-editor snapshots are isolated from modern blips.
+- The independent final audit found two additional wait-boundary defects and
+  blocked publication. A join now revalidates the session, permission,
+  tombstone, and generation after snapshot loading before publishing any room
+  or write authority; editor search now rejects unscoped/stale snapshots unless
+  their generation exactly matches the locked live blip.
+- A second audit then found the remaining lookup-level TOCTOU. Synchronous
+  per-wave policy epochs now invalidate pending collaboration, presence, and
+  unread joins on policy refresh or topic deletion; overlapping old refreshes
+  cannot re-grant access; and the browser retries `access_changed` twice on
+  later macrotasks while all editing gates remain closed.
+- Sharing, participant role/removal, and invitation-acceptance routes now run a
+  failure-safe authority refresh when a CouchDB write may have partially
+  persisted before a later write failed. The original HTTP error remains
+  authoritative and refresh cleanup cannot double-send a response.
+- The absolute-final audit blocked a fail-open snapshot lookup: a transient
+  Couch query error could previously look identical to “no snapshot” and let
+  older HTML reseed over an acknowledged edit after restart. Lookup/decode
+  errors now remove only the clean empty cache entry created by that attempt,
+  propagate to a no-room/no-ref/no-seed acknowledgement, and receive two
+  paused client retries at 250/500 ms before an explicit unavailable state.
+- A follow-up adversarial check proved Yjs decoding is non-atomic: truncating a
+  large update can mutate a target document before throwing. Snapshot bytes now
+  decode in a disposable Y.Doc and only a completely validated state merges
+  into the authoritative cache. Corrupt-then-valid retry tests prove the cache
+  remains clean and the newer exact state wins without HTML reseeding.
+- Closed residual auth edges with verifier-bound native tickets, an OAuth merge
+  preclaim check on insert conflicts, and failure-safe synchronous logout.
+- Final measured local gates: **108 test files / 647 passed / 3 skipped / 0
+  failed**; cache/socket/provider **80/80** and authorization matrix **80/80** focused;
+  typecheck; full-source ESLint
+  `--quiet`; `git diff --check`; and a **3,315-module** production build. Public
+  remains on exact `04b94622`; CI, private deployment, and resumed acceptance
+  through a managed restart remain open.

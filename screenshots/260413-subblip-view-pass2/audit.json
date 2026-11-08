@@ -1,0 +1,32 @@
+{
+  "topicId": "ff955fcd14cbbf6212be3a9f700618f5",
+  "rootReply": "ff955fcd14cbbf6212be3a9f700618f5:b1776101072793",
+  "midReply": "ff955fcd14cbbf6212be3a9f700618f5:b1776101072861",
+  "deepReply": "ff955fcd14cbbf6212be3a9f700618f5:b1776101072919",
+  "audit": {
+    "navPanel": true,
+    "topicsList": true,
+    "rightToolsPanel": true,
+    "subblipView": true,
+    "subblipNavBar": true,
+    "subblipHideBtn": true,
+    "subblipBreadcrumb": true,
+    "subblipSiblingNav": false,
+    "subblipSiblingCounter": null,
+    "subblipStage": true,
+    "subblipParentContext": true,
+    "subblipParentContextLabel": "Parent thread · 3 replies in this thread",
+    "subblipFocusShell": true,
+    "subblipFocusBlipCount": 1,
+    "parentContextBlipRendered": true,
+    "breadcrumbText": "HCSS Rizzoma Business Topic → P1 seems right. The regression only surfaces on iOS Safari 17 when pull-to-refresh is active. I can reproduce on iPhone 15 Pro running 17.2 — happy to drive the fix."
+  },
+  "gates": {
+    "appShellOk": true,
+    "subblipViewMounted": true,
+    "breadcrumbPresent": true,
+    "parentContextPresent": true,
+    "focusShellPopulated": true
+  },
+  "result": "PASS"
+}

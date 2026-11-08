@@ -232,6 +232,12 @@ export function useWaveUnread(waveId: string | null): WaveUnreadState {
         throw new Error(typeof resp.data === 'string' ? resp.data : 'mark_read_failed');
       }
       dbg('markBlipRead:success', { waveId, blipId });
+      // Notify the left topics sidebar so its unread badges
+      // refresh — previously the badge kept showing the old count
+      // until the 60-second poll fired. 2026-04-14 task #39.
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+      }
       return { ok: true };
     } catch (error) {
       console.error('Failed to mark blip read', error);
@@ -266,6 +272,11 @@ export function useWaveUnread(waveId: string | null): WaveUnreadState {
       const resp = await api(`/api/waves/${encodeURIComponent(waveId)}/read`, { method: 'POST', body: JSON.stringify({ blipIds }) });
       if (!resp.ok) {
         throw new Error(typeof resp.data === 'string' ? resp.data : 'mark_read_failed');
+      }
+      // Same sidebar-refresh trigger for the bulk mark-read path
+      // (used by Mark-topic-as-read + Follow-the-Green Next).
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
       }
       return { ok: true };
     } catch (error) {

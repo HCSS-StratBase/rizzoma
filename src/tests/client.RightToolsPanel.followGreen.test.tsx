@@ -35,6 +35,7 @@ describe('client: RightToolsPanel Follow-the-Green', () => {
 
   afterEach(() => {
     document.body.innerHTML = '';
+    delete (window as unknown as { __rizzomaTopicReload?: () => Promise<void> }).__rizzomaTopicReload;
     vi.resetAllMocks();
     (FEATURES as any).FOLLOW_GREEN = originalFollowGreen;
   });
@@ -118,6 +119,49 @@ describe('client: RightToolsPanel Follow-the-Green', () => {
 
     // Since no unread blip element exists in DOM, markBlipRead should not be called
     expect(markBlipRead).not.toHaveBeenCalled();
+
+    act(() => root.unmount());
+    container.remove();
+  });
+
+  it('reloads the topic once when a remote unread blip is not yet rendered', async () => {
+    (FEATURES as any).FOLLOW_GREEN = true;
+    const scrollSpy = vi.fn();
+    const reload = vi.fn(async () => {
+      const unreadBlip = document.createElement('div');
+      unreadBlip.className = 'rizzoma-blip unread';
+      unreadBlip.setAttribute('data-blip-id', 'remote-blip');
+      (unreadBlip as any).scrollIntoView = scrollSpy;
+      document.body.appendChild(unreadBlip);
+    });
+    (window as unknown as { __rizzomaTopicReload?: () => Promise<void> }).__rizzomaTopicReload = reload;
+    const markBlipRead = vi.fn(async () => ({ ok: true }));
+    const unreadState: UnreadStateStub = {
+      waveId: 'wave-remote',
+      unreadIds: ['remote-blip'],
+      unreadSet: new Set(['remote-blip']),
+      total: 1,
+      readCount: 0,
+      loading: false,
+      error: null,
+      version: 1,
+      refresh: async () => {},
+      markBlipRead,
+      markBlipsRead: async () => ({ ok: true }),
+    };
+
+    const { container, root } = renderElement(
+      <RightToolsPanel isAuthed={true} unreadState={unreadState as WaveUnreadState} />,
+    );
+    const button = container.querySelector('.next-button') as HTMLButtonElement;
+    await act(async () => {
+      button.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(scrollSpy).toHaveBeenCalled();
+    expect(markBlipRead).toHaveBeenCalledWith('remote-blip');
 
     act(() => root.unmount());
     container.remove();

@@ -1,10 +1,18 @@
 .rizzoma-layout {
+  position: relative;
   display: flex;
   height: 100vh;
   height: 100dvh; /* dynamic viewport height — accounts for mobile address bar */
   width: 100%;
-  background: #f5f5f5;
+  background:
+    radial-gradient(circle at top left, rgba(76, 145, 255, 0.14), transparent 28%),
+    linear-gradient(180deg, #edf3fa 0%, #e6edf6 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  color: #203247;
+}
+
+.rizzoma-layout.offline-readonly {
+  padding-top: 48px;
 }
 
 /* Navigation Panel - Far Left */
@@ -18,6 +26,35 @@
   flex-direction: column;
   box-shadow: 1px 0px 16px 0px rgba(0, 0, 0, 0.4);
   z-index: 3;
+}
+
+.mobile-shell-auth-dock {
+  display: none;
+}
+
+.offline-readonly-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1200;
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(164, 103, 19, 0.38);
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: rgba(255, 247, 224, 0.98);
+  padding: 9px 13px;
+  color: #5f4218;
+  box-shadow: 0 6px 16px rgba(62, 45, 20, 0.12);
+  font-size: 12px;
+}
+
+.offline-readonly-banner strong {
+  flex: 0 0 auto;
+  color: #7a4b0c;
 }
 
 /* Search/List Panel - Left Center */
@@ -49,12 +86,13 @@
 /* Wave/Content Panel - Center Right */
 .wave-container {
   flex: 1;
-  background: white;
+  background: linear-gradient(180deg, rgba(248, 251, 255, 0.84), rgba(235, 242, 249, 0.92));
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
   z-index: 1;
+  overflow: hidden;
 }
 
 .inner-wave-container {
@@ -62,6 +100,9 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(93, 171, 247, 0.12), transparent 26%),
+    linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0));
 }
 
 /* No Topic Selected */
@@ -133,6 +174,25 @@
 }
 
 @media (max-width: 768px) {
+  .mobile-shell-auth-dock {
+    position: fixed;
+    right: 12px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    z-index: 100;
+    display: block;
+  }
+
+  .offline-readonly-banner {
+    min-height: 62px;
+    align-items: center;
+    gap: 4px;
+    flex-direction: column;
+  }
+
+  .rizzoma-layout.offline-readonly {
+    padding-top: 62px;
+  }
+
   .navigation-container {
     width: 60px;
     min-width: 60px;
@@ -168,6 +228,23 @@
     max-width: 100%;
     display: flex;
     flex-direction: column;
+    /* Take remaining vertical space after .mobile-header and allow
+       children with `overflow-y: auto` (the .topics-container list)
+       to actually bound — the classic flexbox-inside-flexbox scroll
+       fix. Without min-height: 0, the inner list grows to content
+       height and the whole body scrolls instead of the list. User
+       smoke test 2026-04-14: "can't scroll topics on phone". */
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  /* iOS momentum scrolling + make sure the topics list honors
+     vertical touch-pan so useSwipe's right-swipe-back doesn't
+     intercept downward drags. */
+  .mobile-layout .topics-container {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
   }
 
   .mobile-layout .tabs-container.mobile-hidden {
@@ -186,9 +263,57 @@
     display: none !important;
   }
 
-  /* Hide right panel on mobile */
-  .mobile-layout .right-tools-panel {
+  /* Keep Follow-the-Green reachable on mobile as a compact floating action.
+     The full desktop tool rail remains hidden; only its real Next control is
+     exposed, so mobile and desktop exercise the same navigation handler. */
+  .mobile-layout .right-tools-container {
+    position: fixed;
+    right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    z-index: 50;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    height: auto;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .mobile-layout .right-tools-collapse-btn,
+  .mobile-layout .pane-resizer-right {
     display: none;
+  }
+
+  .mobile-layout .right-tools-panel {
+    display: flex;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    gap: 0;
+    background: transparent;
+  }
+
+  .mobile-layout .right-tools-panel > *:not(.next-button) {
+    display: none;
+  }
+
+  .mobile-layout .right-tools-panel > .next-button {
+    display: flex;
+    flex-direction: row;
+    width: auto;
+    min-width: 96px;
+    min-height: 48px;
+    margin: 0;
+    padding: 12px 16px;
+    gap: 8px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.24);
   }
 
   /* Mobile header for back navigation */

@@ -1,0 +1,23 @@
+## Session Update — 2026-03-30 (first in-topic sandboxed app)
+
+- Added the first real manifest-backed app gadget to the live palette:
+  - `kanbanApp`
+- Added the topic app node/view path:
+  - `AppFrameGadget` in `src/client/components/editor/extensions/GadgetNodes.ts`
+  - `SandboxAppGadgetView.tsx`
+- Added the first sandboxed preview app shell at:
+  - `public/gadgets/apps/kanban-board/index.html`
+- The first app preview now uses a minimal host bridge over `postMessage`:
+  - `host.getNodeData`
+  - `host.getUserContext`
+  - `host.resize`
+  - `host.updateNodeData`
+- Added `src/tests/client.gadgets.insert.test.ts`.
+- Focused app tests pass:
+  - `npm test -- --run src/tests/client.gadgets.appsCatalog.test.ts src/tests/client.gadgets.insert.test.ts`
+  - result: 4 tests passed
+- Accepted fresh live in-topic app artifacts from `http://127.0.0.1:4182`:
+  - `screenshots/260330-app-runtime/live-topic-kanban-v3.png`
+  - `screenshots/260330-app-runtime/live-topic-kanban-v3.html`
+- The Playwright verifier now clicks `Add sample card` inside the iframe before capture, so the accepted artifact proves the host/app bridge is alive rather than just mounted.
+- Next Rizzoma step: generalize the app-frame shell and host bridge so more preview apps can mount without duplicating app-specific plumbing.

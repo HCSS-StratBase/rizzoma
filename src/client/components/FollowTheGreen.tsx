@@ -11,7 +11,15 @@ interface FollowTheGreenProps {
   statusTone?: 'info' | 'error';
 }
 
-export function FollowTheGreen({
+export function FollowTheGreen(props: FollowTheGreenProps) {
+  if (!FEATURES.FOLLOW_GREEN) {
+    return null;
+  }
+
+  return <FollowTheGreenContent {...props} />;
+}
+
+function FollowTheGreenContent({
   unreadCount = 0,
   onNavigate,
   disabled = false,
@@ -19,10 +27,6 @@ export function FollowTheGreen({
   statusMessage = null,
   statusTone = 'info',
 }: FollowTheGreenProps) {
-  if (!FEATURES.FOLLOW_GREEN) {
-    return null;
-  }
-
   // Expose a debug hook for tests to call directly.
   if (typeof window !== 'undefined') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

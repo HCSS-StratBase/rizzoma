@@ -22,7 +22,6 @@ jobs:
           npm config set legacy-peer-deps true
       - name: Install dependencies (skip Cypress binary)
         id: install
-        continue-on-error: true
         env:
           CYPRESS_INSTALL_BINARY: '0'
         run: |
@@ -31,17 +30,14 @@ jobs:
         if: ${{ steps.install.outcome == 'success' }}
         run: npm run typecheck
       - name: Lint (non-blocking)
-        if: ${{ steps.install.outcome == 'success' }}
         continue-on-error: true
         run: npm run lint
-      - name: Test
-        if: ${{ steps.install.outcome == 'success' }}
+      - name: Test (hard gate — vitest suite must pass)
         run: npm test
-      - name: Build (push-only)
-        if: ${{ steps.install.outcome == 'success' && github.event_name != 'pull_request' }}
+      - name: Build (hard gate)
         run: npm run build
       - name: Build Docker image (push-only)
-        if: ${{ steps.install.outcome == 'success' && github.event_name != 'pull_request' }}
+        if: ${{ github.event_name != 'pull_request' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -102,7 +98,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in {1..40}; do
-            if curl -fsS http://127.0.0.1:3000 >/dev/null 2>&1 && curl -fsS http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null 2>&1 && curl -fsS http://127.0.0.1:8788/api/health >/dev/null 2>&1; then
               echo "Dev stack is ready"
               exit 0
             fi
@@ -131,6 +127,16 @@ jobs:
           RIZZOMA_SNAPSHOT_DIR: snapshots/follow-the-green-mobile
           RIZZOMA_E2E_PROFILES: mobile
         run: npm run test:follow-green
+      - name: Run real-time collab smoke (two-process Y.js sync)
+        # Two-browser-process Playwright test that catches regressions
+        # in BUG #56 (sidebar cache), #57 (Y.js editor binding + seed
+        # lock), and #58 (FEAT_ALL default in production builds).
+        # If this step starts failing the regression is likely back.
+        # See test-collab-smoke.mjs for the full check list.
+        if: ${{ steps.install-smoke.outcome == 'success' }}
+        env:
+          RIZZOMA_BASE_URL: http://127.0.0.1:3000
+        run: npm run test:collab
       - name: Upload smoke snapshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -209,7 +215,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in {1..40}; do
-            if curl -fsS http://127.0.0.1:3000 >/dev/null 2>&1 && curl -fsS http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null 2>&1 && curl -fsS http://127.0.0.1:8788/api/health >/dev/null 2>&1; then
               echo "Dev stack is ready"
               exit 0
             fi
@@ -222,8 +228,13 @@ jobs:
         if: ${{ steps.install-perf.outcome == 'success' }}
         env:
           RIZZOMA_BASE_URL: http://127.0.0.1:3000
-          RIZZOMA_PERF_BLIPS: 50
-          RIZZOMA_PERF_ENFORCE_BUDGETS: 0
+          # Cross the 100-child lazy-mount threshold so CI continuously proves
+          # both lightweight off-screen slots and a real expanded RizzomaBlip.
+          RIZZOMA_PERF_BLIPS: 120
+          # Make the real full-render path and its 3s/100MB budgets
+          # release-blocking. Lite mode remains diagnostic-only.
+          RIZZOMA_PERF_RENDER: full
+          RIZZOMA_PERF_ENFORCE_BUDGETS: 1
           RIZZOMA_SNAPSHOT_DIR: snapshots/perf
         run: npm run perf:harness
       - name: Upload perf snapshots
@@ -252,6 +263,7 @@ jobs:
           docker compose down || true
 
   health-checks:
+    if: ${{ always() }}
     runs-on: ubuntu-24.04
     needs: build
     steps:
@@ -278,3 +290,47 @@ jobs:
           FEAT_ALL: 1
           EDITOR_ENABLE: 1
         run: npm run test:health
+
+  ci-gate:
+    # Hard Gap #19 (2026-04-13): single aggregator job that GitHub branch
+    # protection can require as the lone "all CI gates passed" check. Lists
+    # every other job as a dependency and fails if ANY of them failed,
+    # cancelled, or were skipped due to a failure upstream. Configure
+    # branch protection on master to require this job (Settings → Branches
+    # → master → Require status checks → "ci-gate") so a merge cannot land
+    # if build, browser-smokes, perf-budgets, or health-checks regressed.
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs: [build, browser-smokes, perf-budgets, health-checks]
+    steps:
+      - name: Verify all upstream jobs succeeded
+        run: |
+          set -euo pipefail
+          declare -A results
+          results[build]='${{ needs.build.result }}'
+          results[browser-smokes]='${{ needs.browser-smokes.result }}'
+          results[perf-budgets]='${{ needs.perf-budgets.result }}'
+          results[health-checks]='${{ needs.health-checks.result }}'
+          # build is the required typecheck + vitest gate; it must be "success".
+          # downstream jobs (browser-smokes, perf-budgets, health-checks) may
+          # be "skipped" if they were gated on build succeeding and did not run.
+          declare -A allow_skipped
+          allow_skipped[browser-smokes]=1
+          allow_skipped[perf-budgets]=1
+          allow_skipped[health-checks]=1
+          failed=0
+          for job in "${!results[@]}"; do
+            outcome="${results[$job]}"
+            echo "  $job: $outcome"
+            if [[ "$outcome" != "success" ]]; then
+              if [[ "$outcome" == "skipped" && "${allow_skipped[$job]:-0}" == "1" ]]; then
+                continue
+              fi
+              failed=1
+            fi
+          done
+          if [[ "$failed" == "1" ]]; then
+            echo "::error::One or more CI gates failed. Block the merge until they pass."
+            exit 1
+          fi
+          echo "All CI gates passed."

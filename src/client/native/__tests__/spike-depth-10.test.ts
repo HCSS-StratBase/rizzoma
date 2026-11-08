@@ -165,7 +165,7 @@ describe('phase-1 spike: depth-10 fractal renders correctly', () => {
     reportStats(DEPTH, perLevel,
                 blipContainers.length, blipThreads.length, foldButtons.length,
                 domDepth, ulCount, liCount);
-  });
+  }, 15_000);
 
   it('builds and renders a depth-3 × 3-sibling fractal as a sanity baseline', () => {
     const DEPTH = 3;

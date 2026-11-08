@@ -126,9 +126,17 @@ export const BlipThreadNode = Node.create({
  * Set up click handler for BlipThread markers.
  * This should be called once to add event delegation for all markers.
  *
- * BLB: Clicking [+] dispatches a custom event to toggle inline expansion.
- * The parent RizzomaBlip listens for this event and expands/collapses the child inline.
+ * BLB: Clicking [+] navigates into the anchored child blip.
  */
+// Legacy Rizzoma BLB behavior: clicking a [+] marker expands the
+// anchored inline comment IN PLACE, below the marker line — it does
+// NOT navigate away to a drill-down surface. RizzomaBlip listens for
+// `rizzoma:toggle-inline-blip` and toggles a local expanded-set, then
+// renders the child as a real <RizzomaBlip> below the marker's line.
+// The previous implementation here set `window.location.hash` to
+// `#/topic/.../${blipPath}/` which took the user OUT of the topic
+// and into the subblip drill-down surface — surprising and wrong
+// for the common "peek at a comment" case (task #9 / #11 discovery).
 export function setupBlipThreadClickHandler(): () => void {
   const handler = (e: MouseEvent) => {
     const target = (e.target as HTMLElement).closest('.blip-thread-marker') as HTMLElement | null;
@@ -140,10 +148,11 @@ export function setupBlipThreadClickHandler(): () => void {
     e.preventDefault();
     e.stopPropagation();
 
-    // Dispatch custom event for inline expansion (instead of navigating away)
-    window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
-      detail: { threadId },
-    }));
+    window.dispatchEvent(
+      new CustomEvent('rizzoma:toggle-inline-blip', {
+        detail: { threadId },
+      }),
+    );
   };
 
   document.addEventListener('click', handler, true);

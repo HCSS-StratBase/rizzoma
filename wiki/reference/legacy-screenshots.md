@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: feature/native-fractal-port
-source_commit: a5185ffe
+source_branch: claude/merge-master-into-fractal-03f408
+source_commit: 73e6c6af
 generated: true
 ---
 

@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { api, ensureCsrf } from '../lib/api';
-// DISABLED: Socket subscription was causing infinite loop
-// import { subscribeTopicDetail } from '../lib/socket';
+import { isSafeRichUrl, sanitizeRichHtml } from '../lib/sanitizeRichHtml';
+import { insertGadget } from '../gadgets/insert';
+import type { GadgetInsertDetail } from '../gadgets/types';
 import { toast } from './Toast';
 import { InviteModal } from './InviteModal';
 import { ShareModal } from './ShareModal';
@@ -22,13 +23,61 @@ import { yjsDocManager } from './editor/YjsDocumentManager';
 import { FEATURES } from '@shared/featureFlags';
 import { NativeWaveView } from './native/NativeWaveView';
 import { buildNativeContentLookup, type NativeBlipInput } from '@client/native/content-lookup';
+import { ActiveBlipProvider, EditSurfaceActiveBridge } from './blip/ActiveBlipContext';
+import { useAuthenticatedCollaborationUser } from './editor/useAuthenticatedCollaborationUser';
+import { useAuth } from '../hooks/useAuth';
+import { requestTaskCompletionHydration } from './editor/extensions/TaskWidget';
+import { collectBlipPages } from '../lib/blipPagination';
+import { subscribeBlipEvents, subscribeTopicDetail } from '../lib/socket';
+import { collaborationProjectionHeaders } from '../lib/collaborationProjection';
+import {
+  EMPTY_BLB_HTML,
+  ensureTopicBlbHtml,
+  plainTextToBlbHtml,
+} from '@shared/blbContent';
+import {
+  currentTopicEditorTitle,
+  needsBlbSeedProjection,
+  normalizeBlbEditorDocument,
+  seedEmptyBlbYdoc,
+  selectionIsInTopicHeading,
+  setBlbEditorBaseline,
+} from './editor/blbEditorInvariant';
+import { isCanonicalBlbDocument } from './editor/extensions/BlipKeyboardShortcuts';
+import { readCreatedBlip } from '../lib/blipCreateResponse';
+import { nextInlineChildHandoffAction } from '../lib/inlineChildHandoff';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
 const LOAD_THROTTLE_MS = 5000; // Minimum time between loads
 const SOCKET_COOLDOWN_MS = 10000; // Cooldown period after load to ignore socket events
 
+export function shouldThrottleSocketTopicLoad({
+  force,
+  fromSocket,
+  lastCompleteTime,
+  now,
+}: {
+  force: boolean;
+  fromSocket: boolean;
+  lastCompleteTime: number;
+  now: number;
+}): boolean {
+  return !force
+    && fromSocket
+    && lastCompleteTime > 0
+    && now - lastCompleteTime < SOCKET_COOLDOWN_MS;
+}
+
 type LoadingState = { isLoading: boolean; lastLoadTime: number; lastCompleteTime: number };
+
+function asReadOnlyBlip(blip: BlipData): BlipData {
+  return {
+    ...blip,
+    permissions: { canRead: true, canEdit: false, canComment: false },
+    childBlips: blip.childBlips?.map(asReadOnlyBlip),
+  };
+}
 declare global {
   interface Window {
     __rizzomaLoadingState?: Map<string, LoadingState>;
@@ -46,12 +95,12 @@ function getLoadingState(): Map<string, LoadingState> {
   return new Map();
 }
 
-function getPerfBlipLimit(): number {
-  if (typeof window === 'undefined') return 500;
+function getPerfBlipLimit(): number | null {
+  if (typeof window === 'undefined') return null;
   const hash = window.location.hash || '';
   const query = hash.split('?')[1] || '';
   const params = new URLSearchParams(query);
-  if (!params.has('perf')) return 500;
+  if (!params.has('perf')) return null;
   const rawLimit = Number(params.get('perfLimit') || '');
   const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 2000;
   return Math.max(500, Math.min(limit, 5000));
@@ -73,87 +122,77 @@ type TopicFull = {
   content?: string;
   createdAt: number;
   updatedAt: number;
-  authorId?: string;
-  authorName?: string;
+  yjsGeneration?: number;
+  authorId: string;
+  authorName: string;
   authorAvatar?: string;
+  permissions?: {
+    role: 'outsider' | 'viewer' | 'commenter' | 'editor' | 'owner';
+    canRead: boolean;
+    canComment: boolean;
+    canEdit: boolean;
+    canManage: boolean;
+  };
 };
 
-type Participant = {
+export type Participant = {
   id: string;
   userId: string;
-  email: string;
+  email?: string;
   name?: string;
   avatar?: string;
-  role: 'owner' | 'editor' | 'viewer';
+  role: 'owner' | 'editor' | 'commenter' | 'viewer';
   status: 'pending' | 'accepted' | 'declined';
   invitedAt: number;
   acceptedAt?: number;
 };
 
-function TopicAvatar({
+function getTopicAvatarInitials(name?: string, email?: string): string {
+  const source = name?.trim() || email?.split('@')[0]?.trim() || 'U';
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  return source.slice(0, 2).toUpperCase();
+}
+
+export function TopicAvatar({
   participant,
   authorName,
-  authorAvatar,
   small = false,
   style,
 }: {
   participant?: Participant;
   authorName?: string;
-  authorAvatar?: string;
   small?: boolean;
   style?: CSSProperties;
 }) {
-  const label = participant?.name || participant?.email || authorName || 'User';
-  const avatarSrc = participant?.avatar || authorAvatar || '/s/img/user/anonim.png';
+  const label = participant?.name || participant?.email || authorName || 'Author';
+  const initials = getTopicAvatarInitials(participant?.name || authorName, participant?.email);
+  const avatar = participant?.avatar && isSafeRichUrl(participant.avatar, 'src') ? participant.avatar : undefined;
   const roleClass = participant?.role === 'owner' ? 'owner' : '';
   const pendingClass = participant?.status === 'pending' ? 'pending' : '';
   const className = `${small ? 'topic-avatar-small' : 'participant-avatar'} ${roleClass} ${pendingClass}`.trim();
 
   return (
     <span
-      className={className}
+      className={`${className} fallback`}
       style={style}
       title={`${label}${participant?.role === 'owner' ? ' (owner)' : ''}${participant?.status === 'pending' ? ' (invited)' : ''}`}
       aria-label={label}
     >
-      <img
-        src={avatarSrc}
-        alt={label}
-        className="participant-avatar-img"
-        onError={(e) => {
-          (e.currentTarget as HTMLImageElement).src = '/s/img/user/anonim.png';
-        }}
-      />
+      <span className="topic-avatar-initials">{initials}</span>
+      {avatar && (
+        <img
+          className="topic-avatar-image"
+          src={avatar}
+          alt=""
+          referrerPolicy="no-referrer"
+          onError={(event) => { event.currentTarget.style.display = 'none'; }}
+        />
+      )}
     </span>
   );
-}
-
-export function ensureBulletedTopicContent(html: string, title?: string): string {
-  const titleH1 = `<h1>${title || 'Untitled'}</h1>`;
-  if (!html || !html.trim()) {
-    return `${titleH1}<ul><li><p></p></li></ul>`;
-  }
-  let body = html;
-  let h1Tag = titleH1;
-  const h1Match = body.match(/<h1[^>]*>(.*?)<\/h1>/i);
-  if (h1Match) {
-    h1Tag = h1Match[0];
-    body = body.slice(h1Match.index! + h1Match[0].length).trim();
-  }
-  if (!body) {
-    return `${h1Tag}<ul><li><p></p></li></ul>`;
-  }
-  // Strip redundant empty leading bullet item when real list items follow (kills stray bullets)
-  body = body.replace(/<ul>\s*<li>\s*<p>\s*<\/p>\s*<\/li>(?=\s*<li)/gi, '<ul>');
-  // Check if body already has list tags
-  if (!/<(ul|ol)[\s>]/i.test(body)) {
-    if (/<p[\s>]/i.test(body)) {
-      body = `<ul>${body.replace(/<p[^>]*>(.*?)<\/p>/gi, '<li><p>$1</p></li>')}</ul>`;
-    } else {
-      body = `<ul><li><p>${body}</p></li></ul>`;
-    }
-  }
-  return `${h1Tag}${body}`;
 }
 
 function extractTags(html: string): string[] {
@@ -195,14 +234,57 @@ function extractTitleFromContent(html: string): string {
   return text.trim().split('\n')[0] || '';
 }
 
-export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unreadState }: { id: string; blipPath?: string | null; isAuthed?: boolean; unreadState?: WaveUnreadState | null }) {
+type RizzomaTopicDetailProps = {
+  id: string;
+  blipPath?: string | null;
+  isAuthed?: boolean;
+  unreadState?: WaveUnreadState | null;
+};
+
+/**
+ * Topic data, editors, participants, and drafts are all owner-scoped. Key the
+ * stateful implementation here as well as at the app shell so alternate
+ * entry-points and tests cannot accidentally carry a private A-owned tree into
+ * a B-owned render.
+ */
+export function RizzomaTopicDetail(props: RizzomaTopicDetailProps) {
+  const { user } = useAuth();
+  const ownerKey = user?.id
+    ? `authenticated:${user.id}`
+    : props.isAuthed
+      ? 'authenticated:unresolved'
+      : 'anonymous';
+  return (
+    <RizzomaTopicDetailState
+      key={`${ownerKey}:${props.id}`}
+      {...props}
+      accessOwnerKey={ownerKey}
+    />
+  );
+}
+
+function RizzomaTopicDetailState({
+  id,
+  blipPath = null,
+  isAuthed = false,
+  unreadState,
+  accessOwnerKey,
+}: RizzomaTopicDetailProps & { accessOwnerKey: string }) {
+  const collaborationUser = useAuthenticatedCollaborationUser();
   const perfRenderMode = getPerfRenderMode();
   const isPerfLite = perfRenderMode === 'lite';
+  const loadingStateKey = `${accessOwnerKey}:${id}`;
   const [topic, setTopic] = useState<TopicFull | null>(null);
   const [blips, setBlips] = useState<BlipData[]>([]);
   const [allBlipsMap, setAllBlipsMap] = useState<Map<string, BlipData>>(new Map());
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Server permissions are authoritative. Keep controls and collaboration
+  // disabled until the access-checked topic response has arrived.
+  const topicCanRead = topic?.permissions?.canRead ?? false;
+  const topicCanComment = topic?.permissions?.canComment ?? false;
+  const topicCanEdit = topic?.permissions?.canEdit ?? false;
+  const topicCanManage = topic?.permissions?.canManage ?? false;
 
   // BLB: Ref to store newly created blips for immediate access (avoids race condition with state updates)
   const pendingBlipsRef = useRef<Map<string, BlipData>>(new Map());
@@ -227,17 +309,42 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const [showWavePlayback, setShowWavePlayback] = useState(false);
   const [showCommentsPanel, setShowCommentsPanel] = useState(true);
 
+  useEffect(() => {
+    if (isAuthed) return;
+    setShowInviteModal(false);
+    setShowShareModal(false);
+    setShowGearMenu(false);
+    setShowEditGearMenu(false);
+  }, [isAuthed]);
+
   // Topic content editing state (BLB: topic is meta-blip, title is first line)
   const [isEditingTopic, setIsEditingTopic] = useState(false);
+  const isEditingTopicRef = useRef(isEditingTopic);
+  isEditingTopicRef.current = isEditingTopic;
   const [topicContent, setTopicContent] = useState('');
   const topicSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const topicProjectionActiveRef = useRef(true);
   const lastSavedContentRef = useRef<string>('');
+  const topicYjsGeneration = topic?.yjsGeneration ?? 0;
+  const topicProjectionIdentity = `${id}:${topicYjsGeneration}`;
+  const topicProjectionIdentityRef = useRef(topicProjectionIdentity);
+  if (topicProjectionIdentityRef.current !== topicProjectionIdentity) {
+    topicProjectionIdentityRef.current = topicProjectionIdentity;
+  }
+  const autoSaveTopicContentRef = useRef<(
+    content: string,
+    attempt?: number,
+    force?: boolean,
+  ) => Promise<void>>(async () => {});
 
   // Ref-based callback for creating inline child blips
   // Using a ref so the TipTap extension always gets the latest version
   const createInlineChildBlipRef = useRef<((anchorPosition: number) => Promise<void>) | null>(null);
   // Ref to hold the editor instance (avoids stale closures in callbacks)
   const topicEditorRef = useRef<Editor | null>(null);
+  const topicTitleRef = useRef(topic?.title || 'Untitled');
+  topicTitleRef.current = topic?.title || 'Untitled';
+  const topicBlbNormalizationPendingRef = useRef(false);
 
   // Stable callback wrapper that delegates to the ref
   const stableCreateInlineChildBlip = useCallback((anchorPosition: number) => {
@@ -248,48 +355,125 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
   // --- Real-time collaboration for topic root blip ---
   // RizzomaBlip skips collab for topic root (isTopicRoot), so this is the sole owner.
-  const topicCollabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && isAuthed);
+  const topicCollabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && topicCanEdit);
   const topicYdoc = useMemo(
-    () => topicCollabEnabled ? yjsDocManager.getDocument(id) : undefined,
-    [id, topicCollabEnabled]
+    () => topicCollabEnabled
+      ? yjsDocManager.getDocument(id, collaborationUser?.id, topicYjsGeneration)
+      : undefined,
+    [collaborationUser?.id, id, topicCollabEnabled, topicYjsGeneration]
   );
-  const topicCollabProvider = useCollaboration(topicYdoc, id, topicCollabEnabled);
+  const topicCollabProvider = useCollaboration(
+    topicYdoc,
+    id,
+    topicCollabEnabled,
+    collaborationUser,
+    topicYjsGeneration,
+  );
   const topicCollabActive = topicCollabEnabled && !!topicYdoc && !!topicCollabProvider;
+  const [syncedTopicCollabProvider, setSyncedTopicCollabProvider] = useState(
+    topicCollabProvider?.synced ? topicCollabProvider : null,
+  );
+  const topicCollabReady = !topicCollabActive
+    || Boolean(topicCollabProvider?.mutationReady && syncedTopicCollabProvider === topicCollabProvider);
+  const topicCollabActiveRef = useRef(topicCollabActive);
+  const topicCollabProviderRef = useRef(topicCollabProvider);
+  topicCollabActiveRef.current = topicCollabActive;
+  topicCollabProviderRef.current = topicCollabProvider;
+
+  useEffect(() => {
+    if (!topicCollabActive || !topicCollabProvider) {
+      setSyncedTopicCollabProvider(null);
+      return;
+    }
+    return topicCollabProvider.onSyncStateChange((synced) => {
+      setSyncedTopicCollabProvider(synced ? topicCollabProvider : null);
+    });
+  }, [topicCollabActive, topicCollabProvider]);
+
+  const canMutateTopicEditorNow = useCallback(() => {
+    const editor = topicEditorRef.current;
+    if (!isEditingTopicRef.current || !editor || (editor as any).isDestroyed) return false;
+    if (!topicCollabActiveRef.current) return true;
+    return Boolean(topicCollabProviderRef.current?.mutationReady);
+  }, []);
   const seedingTopicYdocRef = useRef(false);
+  const acceptedEditorRoster = participants
+    .filter((participant) => participant.status === 'accepted' || !participant.status)
+    .filter((participant) => !participant.userId.startsWith('invite:'))
+    .map((participant) => ({
+      id: participant.userId,
+      label: participant.name || participant.email || participant.userId,
+      email: participant.email,
+    }));
+  const topicRosterKey = acceptedEditorRoster.map((participant) => `${participant.id}:${participant.label}`).join('|');
 
   // TipTap editor for topic content (meta-blip editing)
-  const topicEditor = useEditor({
+  const useTopicEditorWithDeps = useEditor as unknown as (
+    options: Parameters<typeof useEditor>[0],
+    deps: unknown[],
+  ) => Editor | null;
+  const topicEditor = useTopicEditorWithDeps({
     extensions: getEditorExtensions(
       topicCollabActive ? topicYdoc : undefined,
       topicCollabActive ? topicCollabProvider : undefined,
       {
         waveId: id,
+        isTopicRoot: true,
         onCreateInlineChildBlip: stableCreateInlineChildBlip,
+        currentUser: collaborationUser ? { id: collaborationUser.id, label: collaborationUser.name } : null,
+        participants: acceptedEditorRoster,
       }
     ),
-    content: '',
+    // Collaboration must begin from the server Y.Doc alone. Supplying even an
+    // empty local document here can be normalized before sync and then merged
+    // beside the authoritative snapshot as a second H1+UL root.
+    content: topicCollabActive ? undefined : '',
     editable: false,
     editorProps: defaultEditorProps,
-    onUpdate: ({ editor, transaction }: { editor: Editor; transaction: any }) => {
+    onUpdate: ({ editor }: { editor: Editor }) => {
       // Skip auto-save during Y.Doc seeding
       if (seedingTopicYdocRef.current) return;
+      if (topicBlbNormalizationPendingRef.current) return;
+      if (topicCollabActive && !topicCollabProvider?.synced) return;
 
       const html = editor.getHTML();
+      if (!isCanonicalBlbDocument(editor.state.doc, true)) {
+        topicBlbNormalizationPendingRef.current = true;
+        queueMicrotask(() => {
+          if ((editor as any).isDestroyed) {
+            topicBlbNormalizationPendingRef.current = false;
+            return;
+          }
+          const repairTitle = currentTopicEditorTitle(editor, topicTitleRef.current);
+          const repaired = normalizeBlbEditorDocument(editor, {
+            kind: 'topic',
+            title: repairTitle,
+          }).html;
+          topicBlbNormalizationPendingRef.current = false;
+          setTopicContent(repaired);
+          if (topicSaveTimeoutRef.current) clearTimeout(topicSaveTimeoutRef.current);
+          topicSaveTimeoutRef.current = setTimeout(() => {
+            // A nonempty invalid collaborative snapshot needs a forced Couch
+            // materialization; local equality may reflect only lazy rendering.
+            void autoSaveTopicContent(repaired, 0, true);
+          }, 300);
+        });
+        return;
+      }
       setTopicContent(html);
 
-      // Skip auto-save for remote Y.Doc sync updates (origin is ySyncPlugin object)
-      const isRemoteSync = transaction?.origin != null && typeof transaction.origin === 'object';
-      if (isRemoteSync) return;
-
-      // Debounced auto-save (300ms delay)
+      // Materialize both local and remote convergence. The callback reads the
+      // latest editor HTML and full-state Yjs digest when the timer fires, and the
+      // server rejects a projection that raced a newer CRDT update.
       if (topicSaveTimeoutRef.current) {
         clearTimeout(topicSaveTimeoutRef.current);
       }
       topicSaveTimeoutRef.current = setTimeout(() => {
-        autoSaveTopicContent(html);
+        const latestHtml = topicEditorRef.current?.getHTML() || html;
+        void autoSaveTopicContent(latestHtml);
       }, 300);
     },
-  });
+  }, [id, topicCollabActive, topicYdoc, topicCollabProvider, stableCreateInlineChildBlip, collaborationUser?.id, collaborationUser?.name, topicRosterKey]);
 
   // Keep editor ref updated for use in callbacks
   topicEditorRef.current = topicEditor;
@@ -307,15 +491,32 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   // Notify RightToolsPanel of edit mode changes
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing: isEditingTopic } }));
-  }, [isEditingTopic]);
+    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, {
+      detail: { isEditing: isEditingTopic && topicCollabReady, blipId: id },
+    }));
+  }, [id, isEditingTopic, topicCollabReady]);
+
+  // Connectivity is folded into `isAuthed` by RizzomaLayout. If it drops
+  // while this editor is active, freeze the surface without issuing a REST
+  // save. The Y.Doc/provider retains and retries any acknowledged-pending
+  // local state after the authorized reconnect.
+  useEffect(() => {
+    if (isAuthed || !isEditingTopic) return;
+    if (topicSaveTimeoutRef.current) {
+      clearTimeout(topicSaveTimeoutRef.current);
+      topicSaveTimeoutRef.current = null;
+    }
+    setIsEditingTopic(false);
+    topicEditor?.setEditable(false);
+  }, [isAuthed, isEditingTopic, topicEditor]);
 
   // Handle insert events from RightToolsPanel when topic editor is active
   useEffect(() => {
-    if (!isEditingTopic || !topicEditor) return;
+    if (!isEditingTopic || !topicEditor || !topicCollabReady) return;
 
     // Helper: insert trigger char with space prefix if needed (suggestion plugins require allowedPrefixes=[' '])
     const insertTrigger = (char: string) => {
+      if (!canMutateTopicEditorNow()) return;
       topicEditor.commands['focus']();
       const { from } = topicEditor.state.selection;
       const $from = topicEditor.state.doc.resolve(from);
@@ -327,45 +528,17 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     const handleInsertTask = () => insertTrigger('~');
     const handleInsertTag = () => insertTrigger('#');
     const handleInsertReply = () => {
+      if (!canMutateTopicEditorNow()) return;
       const { from } = topicEditor.state.selection;
       createInlineChildBlipRef.current?.(from);
     };
     const handleInsertGadget = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { type?: string; url?: string } | undefined;
-      const gadgetType = detail?.type || 'iframe';
-      const url = detail?.url;
-      switch (gadgetType) {
-        case 'youtube': {
-          if (!url) return;
-          let embedUrl = url;
-          const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
-          if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
-          topicEditor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
-          break;
-        }
-        case 'code':
-          topicEditor.chain().focus().toggleCodeBlock().run(); break;
-        case 'poll':
-          topicEditor.chain().focus().insertContent({
-            type: 'pollGadget',
-            attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
-          }).run();
-          break;
-        case 'latex':
-          topicEditor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run(); break;
-        case 'iframe':
-        case 'spreadsheet':
-        case 'image': {
-          if (!url) return;
-          if (gadgetType === 'image') {
-            topicEditor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
-          } else {
-            topicEditor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
-          }
-          break;
-        }
-        default:
-          topicEditor.chain().focus().insertContent(`[${gadgetType} gadget]`).run(); break;
+      if (!canMutateTopicEditorNow()) return;
+      const detail = (e as CustomEvent<GadgetInsertDetail>).detail;
+      try {
+        insertGadget(topicEditor as any, detail || null);
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Invalid gadget source', 'error');
       }
     };
 
@@ -381,16 +554,18 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       window.removeEventListener(INSERT_EVENTS.REPLY, handleInsertReply);
       window.removeEventListener(INSERT_EVENTS.GADGET, handleInsertGadget);
     };
-  }, [isEditingTopic, topicEditor]);
+  }, [canMutateTopicEditorNow, isEditingTopic, topicCollabReady, topicEditor]);
 
   // Sync editor content and editable state when entering edit mode.
   // With Collaboration, wait for server sync before seeding — only seed if Y.Doc is empty.
   useEffect(() => {
     if (topicEditor && isEditingTopic && topicContent && !hasSetInitialContentRef.current) {
       const setContentAndFocus = () => {
-        if ((topicEditor as any).isDestroyed) return;
+        if ((topicEditor as any).isDestroyed || !canMutateTopicEditorNow()) return;
         topicEditor.setEditable(true);
-        setTimeout(() => { topicEditor.commands['focus']('end'); }, 50);
+        setTimeout(() => {
+          if (canMutateTopicEditorNow()) topicEditor.commands['focus']('end');
+        }, 50);
       };
 
       if (topicCollabActive && topicYdoc && topicCollabProvider) {
@@ -398,24 +573,56 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         hasSetInitialContentRef.current = true;
         topicCollabProvider.onSynced(() => {
           if ((topicEditor as any).isDestroyed) return;
-          const frag = topicYdoc!.getXmlFragment('default');
-          if (frag.length === 0) {
+          if (topicCollabProvider.shouldSeed) {
+            if (topicYdoc.getXmlFragment('default').length > 0) {
+              setContentAndFocus();
+              return;
+            }
+            const durableSeedContent = sanitizeRichHtml(
+              topicCollabProvider.seedContent ?? topic?.content ?? topicContent,
+            );
+            const authoritativeSeed = sanitizeRichHtml(ensureTopicBlbHtml(
+              topicTitleRef.current,
+              durableSeedContent,
+            ));
+            const needsMigration = needsBlbSeedProjection(durableSeedContent, authoritativeSeed);
             seedingTopicYdocRef.current = true;
-            topicEditor.commands.setContent(topicContent);
-            seedingTopicYdocRef.current = false;
+            try {
+              seedEmptyBlbYdoc(topicEditor, topicYdoc, authoritativeSeed);
+            } finally {
+              seedingTopicYdocRef.current = false;
+            }
+            setTopicContent(authoritativeSeed);
+            if (needsMigration) {
+              if (topicSaveTimeoutRef.current) clearTimeout(topicSaveTimeoutRef.current);
+              // Seeding suppresses onUpdate; explicitly migrate only a changed
+              // canonical shared document through the digest-backed projection.
+              topicSaveTimeoutRef.current = setTimeout(() => {
+                void autoSaveTopicContentRef.current(authoritativeSeed, 0, true);
+              }, 0);
+            }
           }
           setContentAndFocus();
         });
       } else {
         // No collab: set content directly
         hasSetInitialContentRef.current = true;
-        topicEditor.commands.setContent(topicContent);
+        setBlbEditorBaseline(topicEditor, sanitizeRichHtml(ensureTopicBlbHtml(
+          topicTitleRef.current,
+          topicContent,
+        )));
         setContentAndFocus();
       }
     } else if (topicEditor && !isEditingTopic) {
       topicEditor.setEditable(false);
     }
-  }, [topicEditor, isEditingTopic, topicContent, topicCollabActive, topicYdoc, topicCollabProvider]);
+  }, [canMutateTopicEditorNow, topicEditor, isEditingTopic, topicContent, topic?.content, topicCollabActive, topicYdoc, topicCollabProvider]);
+
+  useEffect(() => {
+    if (!topicEditor || (topicEditor as any).isDestroyed) return;
+    const editable = isEditingTopic && topicCollabReady;
+    topicEditor.setEditable(editable);
+  }, [isEditingTopic, topicCollabReady, topicEditor]);
 
   // Use refs to avoid dependency issues in callbacks
   const unreadStateRef = useRef(unreadState);
@@ -455,21 +662,50 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     setAllBlipsMap(nextMap);
   }, [unreadState?.version, blips, allBlipsMap]);
 
-  // Initialize global loading state for this topic
+  const clearLoadedTopicState = useCallback(() => {
+    if (topicSaveTimeoutRef.current) {
+      clearTimeout(topicSaveTimeoutRef.current);
+      topicSaveTimeoutRef.current = null;
+    }
+    const mountedEditor = topicEditorRef.current;
+    if (mountedEditor && !mountedEditor.isDestroyed) {
+      mountedEditor.setEditable(false);
+    }
+    pendingBlipsRef.current.clear();
+    lastSavedContentRef.current = '';
+    setTopic(null);
+    setBlips([]);
+    setAllBlipsMap(new Map());
+    setParticipants([]);
+    setCurrentSubblip(null);
+    setExpandedBlips(new Set());
+    setNewBlipContent('');
+    setTopicContent('');
+    setIsEditingTopic(false);
+    setShowInviteModal(false);
+    setShowShareModal(false);
+    setShowExportModal(false);
+    setShowWavePlayback(false);
+    setShowGearMenu(false);
+    setShowEditGearMenu(false);
+  }, []);
+
+  // Loading/throttle state is owner-partitioned. An in-flight request from A
+  // must never suppress B's first access-checked request for the same topic.
   useEffect(() => {
     const loadingState = getLoadingState();
-    if (!loadingState.has(id)) {
-      loadingState.set(id, { isLoading: false, lastLoadTime: 0, lastCompleteTime: 0 });
+    if (!loadingState.has(loadingStateKey)) {
+      loadingState.set(loadingStateKey, { isLoading: false, lastLoadTime: 0, lastCompleteTime: 0 });
     }
-  }, [id]);
+  }, [loadingStateKey]);
 
   const load = useCallback(async (force = false, fromSocket = false): Promise<void> => {
-    // Get or create global state for this topic
+    // Get or create global state for this owner + topic pair.
     const loadingState = getLoadingState();
-    let state = loadingState.get(id);
+    let state = loadingState.get(loadingStateKey);
     if (!state) {
       state = { isLoading: false, lastLoadTime: 0, lastCompleteTime: 0 };
-      loadingState.set(id, state);
+      loadingState.set(loadingStateKey, state);
     }
 
     // Prevent concurrent loads — UNLESS force=true. The Ctrl+Enter create
@@ -487,7 +723,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
     // Socket-triggered loads have a longer cooldown after the last completed load
     // This breaks the feedback loop where load -> socket event -> load
-    if (fromSocket && state.lastCompleteTime > 0 && (now - state.lastCompleteTime) < SOCKET_COOLDOWN_MS) {
+    if (shouldThrottleSocketTopicLoad({ force, fromSocket, lastCompleteTime: state.lastCompleteTime, now })) {
       return;
     }
 
@@ -504,34 +740,51 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       // Was 3 sequential awaits (~90-250ms total); now ~max of the three
       // (~30-100ms). Saves ~100ms on every load(), including the one
       // gating Ctrl+Enter latency.
-      const blipLimit = getPerfBlipLimit();
+      const perfBlipLimit = getPerfBlipLimit();
+      const blipPageSize = Math.min(perfBlipLimit || 500, 500);
       const [r, participantsResponse, blipsResponse] = await Promise.all([
         api(`/api/topics/${encodeURIComponent(id)}`),
         api(`/api/waves/${encodeURIComponent(id)}/participants`),
-        api(`/api/blips?waveId=${encodeURIComponent(id)}&limit=${blipLimit}`),
+        api(`/api/blips?waveId=${encodeURIComponent(id)}&limit=${blipPageSize}`),
       ]);
       if (r.ok) {
-        setTopic(r.data as TopicFull);
+        const loadedTopic = r.data as TopicFull;
+        setTopic(loadedTopic);
 
         let loadedParticipants: Participant[] = [];
         if (participantsResponse.ok && participantsResponse.data?.participants) {
           loadedParticipants = participantsResponse.data.participants as Participant[];
-          setParticipants(loadedParticipants);
         }
+        // A demotion can make the participant endpoint inaccessible while the
+        // topic itself remains readable. Never retain the earlier roster.
+        setParticipants(loadedParticipants);
 
         // Convert participants to contributor format for blips
-        const contributors: BlipContributor[] = loadedParticipants.map(p => ({
+        const contributors: BlipContributor[] = loadedParticipants
+          .filter((participant) => participant.status === 'accepted' || !participant.status)
+          .filter((participant) => !participant.userId.startsWith('invite:'))
+          .map(p => ({
           id: p.userId,
-          email: p.email,
-          name: p.email.split('@')[0],
+          email: p.email || '',
+          name: p.name || (p.email || p.userId).split('@')[0],
+          avatar: p.avatar,
           role: p.role,
-        }));
+          }));
 
         if (blipsResponse.ok && blipsResponse.data?.blips) {
-          const rawBlips = blipsResponse.data.blips as Array<any>;
+          const rawBlips = await collectBlipPages<any>(
+            blipsResponse.data as { blips?: any[]; nextBookmark?: string | null },
+            async (bookmark) => {
+              const next = await api(
+                `/api/blips?waveId=${encodeURIComponent(id)}&limit=${blipPageSize}&bookmark=${encodeURIComponent(bookmark)}`,
+              );
+              if (!next.ok || !next.data) throw new Error('blip_page_load_failed');
+              return next.data as { blips?: any[]; nextBookmark?: string | null };
+            },
+            { maxItems: perfBlipLimit ?? Number.POSITIVE_INFINITY },
+          );
           const unreadSet = unreadStateRef.current?.unreadSet ?? new Set<string>();
           const blipMap = new Map<string, BlipData>();
-          const currentIsAuthed = isAuthed;
           rawBlips.forEach(raw => {
             // Generate blipPath from id (e.g., "waveId:b1234567" -> "b1234567")
             const rawId = raw._id || raw.id;
@@ -544,15 +797,15 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               authorName: raw.authorName || 'Unknown',
               createdAt: raw.createdAt || Date.now(),
               updatedAt: raw.updatedAt || raw.createdAt || Date.now(),
+              yjsGeneration: raw.yjsGeneration ?? 0,
               isRead: !unreadSet.has(rawId),
               parentBlipId: raw.parentId || null,
               childBlips: [],
               isFoldedByDefault: typeof raw.isFoldedByDefault === 'boolean' ? raw.isFoldedByDefault : undefined,
-              // Permissions - if user is authed, they can edit/comment
-              permissions: {
-                canEdit: currentIsAuthed,
-                canComment: currentIsAuthed,
-                canRead: true,
+              permissions: raw.permissions || {
+                canEdit: loadedTopic.permissions?.canEdit ?? false,
+                canComment: loadedTopic.permissions?.canComment ?? false,
+                canRead: loadedTopic.permissions?.canRead ?? false,
               },
               // Attach topic participants as contributors to each blip
               contributors: contributors,
@@ -581,6 +834,11 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           sortBlips(rootBlips);
           setBlips(rootBlips);
           setAllBlipsMap(blipMap); // Store for subblip navigation
+        } else {
+          // Fail closed if a partial access check denies the blip collection.
+          setBlips([]);
+          setAllBlipsMap(new Map());
+          setCurrentSubblip(null);
         }
 
         // DISABLED: Refreshing unread state here was contributing to infinite loop
@@ -590,19 +848,27 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         // }
         setError(null);
       } else {
-        setError('Failed to load topic');
+        if (r.status === 401 || r.status === 403) {
+          clearLoadedTopicState();
+          setError(r.status === 401 ? 'Sign in to view this topic' : 'You do not have access to this topic');
+        } else {
+          setError('Failed to load topic');
+        }
       }
     } catch {
+      // The response may have failed after an auth transition or mid-page
+      // revocation. The error UI already replaces the topic; erase the backing
+      // private state too so Retry can only repopulate it through a fresh,
+      // access-checked response.
+      clearLoadedTopicState();
       setError('Failed to load topic');
     } finally {
       state.isLoading = false;
       state.lastCompleteTime = Date.now();
     }
-  }, [id, isAuthed]);
+  }, [clearLoadedTopicState, id, loadingStateKey]);
 
-  // Initial load + reload when auth state changes
-  // load depends on [id, isAuthed], so when isAuthed changes (false→true after auth check),
-  // load is recreated and this effect re-fires, reloading with correct permissions
+  // Initial load + reload when the owner-scoped implementation is remounted.
   useEffect(() => { load(); }, [load]);
 
   // BLB: Find and set the current subblip when blipPath changes
@@ -687,8 +953,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   // BLB: Creates a subblip and navigates into it
   useEffect(() => {
     createInlineChildBlipRef.current = async (anchorPosition: number) => {
-      if (!isAuthed) {
-        toast('Sign in to create comments', 'error');
+      const editor = topicEditorRef.current;
+      if (!canMutateTopicEditorNow()) return;
+      if (editor && selectionIsInTopicHeading(editor)) {
+        toast('Create a child from a bulleted label, not the topic title', 'error');
+        return;
+      }
+      if (!topicCanComment) {
+        toast(isAuthed ? 'You do not have permission to comment' : 'Sign in to create comments', 'error');
         return;
       }
       await ensureCsrf();
@@ -696,7 +968,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         waveId: id,
         // BLB: new blips default to a bulleted list (every blip body is BLB-shaped).
         // Matches original Rizzoma where Ctrl+Enter created a bulleted thread.
-        content: '<ul><li><p></p></li></ul>',
+        content: EMPTY_BLB_HTML,
         parentId: null, // This is a child of the topic/wave itself (root-level blip)
         anchorPosition: anchorPosition, // The cursor position where this inline comment is anchored
         isFoldedByDefault: false, // In original Rizzoma, newly created child blips open unfolded and ready for editing
@@ -707,27 +979,34 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           body: JSON.stringify(requestBody)
         });
         if (response.ok && response.data) {
-          const newBlip = response.data as { id?: string; _id?: string; content?: string; authorId?: string; authorName?: string; createdAt?: number; updatedAt?: number };
-          const newBlipId = newBlip.id || newBlip._id;
+          const createdBlip = readCreatedBlip(response.data);
+          const newBlipId = createdBlip?.id;
 
-          if (newBlipId) {
+          if (createdBlip && newBlipId) {
             // BLB: Insert [+] marker at cursor position in the topic content.
             // No setTextSelection: anchorPosition is now a TEXT-character offset
             // (not a PM doc position). The cursor is still at the original
             // selection from the Ctrl+Enter keypress, which is the correct
             // structural anchor — matches original Rizzoma's blip-thread
             // positioning model (renderer.coffee:107-113).
-            const editor = topicEditorRef.current;
-            if (editor) {
+            if (editor && canMutateTopicEditorNow()) {
               (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
-              const updatedContent = editor.getHTML();
-              setTopicContent(updatedContent);
-              lastSavedContentRef.current = updatedContent;
-              await ensureCsrf();
-              await api(`/api/topics/${encodeURIComponent(id)}`, {
-                method: 'PATCH',
-                body: JSON.stringify({ content: updatedContent }),
-              });
+              const nextTopicContent = editor.getHTML();
+              if (topicSaveTimeoutRef.current) {
+                clearTimeout(topicSaveTimeoutRef.current);
+                topicSaveTimeoutRef.current = null;
+              }
+              setTopicContent(nextTopicContent);
+              await autoSaveTopicContentRef.current(nextTopicContent);
+              setIsEditingTopic(false);
+              editor.setEditable(false);
+            } else {
+              // The durable child already records its anchor. Preserve it and
+              // let the authoritative reload attach it after collaboration
+              // resynchronizes; never mutate the disconnected topic Y.Doc.
+              window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+              toast('Child created; reconnecting before attaching it.', 'info');
+              return;
             }
 
             // BLB: Extract blipPath and navigate to the new subblip
@@ -737,17 +1016,18 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             const newBlipData: BlipData = {
               id: newBlipId,
               blipPath: blipPathSegment,
-              content: newBlip.content || '<ul><li><p></p></li></ul>',
-              authorId: newBlip.authorId || '',
-              authorName: newBlip.authorName || 'Anonymous',
-              createdAt: newBlip.createdAt || Date.now(),
-              updatedAt: newBlip.updatedAt || Date.now(),
+              content: createdBlip.content,
+              authorId: createdBlip.authorId,
+              authorName: createdBlip.authorName,
+              createdAt: createdBlip.createdAt,
+              updatedAt: createdBlip.updatedAt,
+              yjsGeneration: 0,
               isRead: true,
               isFoldedByDefault: false,
               isCollapsed: false,
               parentBlipId: undefined,
               childBlips: [],
-              permissions: { canEdit: true, canComment: true, canRead: true },
+              permissions: { canEdit: topicCanEdit, canComment: topicCanComment, canRead: topicCanRead },
               contributors: [],
             };
 
@@ -770,14 +1050,11 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             const optimisticBlip: BlipData = {
               ...newBlipData,
               anchorPosition: anchorPosition,
-              isFoldedByDefault: false,
-              isCollapsed: false,
             };
             setBlips(prev => {
               if (prev.some(b => b.id === newBlipId)) return prev;
               return [...prev, optimisticBlip];
             });
-            setExpandedBlips(prev => new Set([...prev, newBlipId]));
 
             // BLB: Expand the new child inline + auto-enter edit mode so user
             // can type immediately. Order matters and timing is tricky:
@@ -801,29 +1078,44 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               // load() rarely fails; if it does the optimistic state above
               // still lets the toggle render.
             }
-            window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+            window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
               detail: { threadId: newBlipId, parentId: id }
             }));
-            // Robust edit-entry (ported 2026-07-14 from fix/single-active-editor):
-            // the child's claim closes the TOPIC editor (single-active bridge),
-            // which unmounts the child's first mount (it lived in the topic
-            // editor's BlipThreadNode portal). Keep re-driving until the child's
-            // editor is actually editable in the post-exit view render:
-            // re-EXPAND only if its container left the DOM (toggle is a toggle),
-            // then re-enter edit. Capped ~3.5s.
+            // Robust edit-entry (2026-07-09): under the single-active model the
+            // child's claim closes the TOPIC editor, which unmounts the child's
+            // first mount (it lived inside the editor's BlipThreadNode portal).
+            // Keep re-driving until the child's editor is actually editable.
+            // Claiming the child closes the topic editor, which temporarily
+            // removes the portal container. The topic-root RizzomaBlip may also
+            // remount and lose its local expanded-child state, so retries must
+            // re-assert expansion idempotently. They must never toggle.
             const tryEnterEdit = (attempt: number) => {
               const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
               const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
-              if (editable) return;
-              if (!container) {
-                window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+              const action = nextInlineChildHandoffAction(Boolean(container), Boolean(editable));
+              if (action === 'done') return;
+              if (action === 'ensure-expanded' || !editable) {
+                window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
                   detail: { threadId: newBlipId, parentId: id }
                 }));
+                // The state event can race the topic-root RizzomaBlip's first
+                // listener/effect commit. Once the durable marker is present,
+                // fall back to the exact user path (marker click) to force the
+                // inline thread open instead of silently timing out with a
+                // saved but invisible child.
+                const marker = document.querySelector<HTMLElement>(
+                  `[data-blip-thread="${CSS.escape(newBlipId)}"]`
+                );
+                if (marker && marker.textContent !== '−') {
+                  marker.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                }
               }
-              window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
-                detail: { blipId: newBlipId }
-              }));
-              if (attempt < 8) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 450);
+              if (action === 'enter-edit') {
+                window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
+                  detail: { blipId: newBlipId }
+                }));
+              }
+              if (attempt < 60) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 400);
             };
             requestAnimationFrame(() => requestAnimationFrame(() => tryEnterEdit(0)));
           } else {
@@ -838,7 +1130,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         toast('Failed to create comment', 'error');
       }
     };
-  }, [isAuthed, id, load]);
+  }, [canMutateTopicEditorNow, isAuthed, topicCanRead, topicCanComment, topicCanEdit, id, load]);
 
   // Debounced load for socket/event-triggered reloads
   // These pass fromSocket=true so they respect the longer socket cooldown period
@@ -851,15 +1143,23 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     }, 500);
   }, [load]);
 
-  // DISABLED: Socket-triggered reloads were causing infinite API call loops
-  // The socket events trigger after each load, creating a feedback loop
-  // User actions (edit, reply, delete) will still trigger reloads via their handlers
+  // Reload from authoritative storage when collaborators change this topic.
+  // GET-only reloads do not emit mutation events; the debounce and socket
+  // cooldown coalesce bursts without disabling collaboration updates.
   useEffect(() => {
     if (!id) return;
-    // Temporarily disabled to fix infinite loop
-    // const unsub = subscribeTopicDetail(id, () => debouncedLoad());
-    // return () => unsub();
-    return () => {};
+    const unsubscribeTopic = subscribeTopicDetail(id, () => debouncedLoad());
+    const unsubscribeBlips = subscribeBlipEvents(id, (event) => {
+      if (event.action !== 'read') debouncedLoad();
+    });
+    return () => {
+      unsubscribeTopic();
+      unsubscribeBlips();
+      if (debouncedLoadRef.current) {
+        clearTimeout(debouncedLoadRef.current);
+        debouncedLoadRef.current = null;
+      }
+    };
   }, [id, debouncedLoad]);
 
   // Listen for refresh events from RizzomaBlip (e.g., after duplicate/paste)
@@ -872,6 +1172,16 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     window.addEventListener('rizzoma:refresh-topics', handleRefresh);
     return () => window.removeEventListener('rizzoma:refresh-topics', handleRefresh);
   }, [load]);
+
+  useEffect(() => {
+    const handleAccessChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ waveId?: string }>).detail;
+      if (!detail?.waveId || detail.waveId !== id) return;
+      void load(true);
+    };
+    window.addEventListener('rizzoma:access-changed', handleAccessChanged);
+    return () => window.removeEventListener('rizzoma:access-changed', handleAccessChanged);
+  }, [id, load]);
 
   // Bug A perf fix (2026-05-07): expose an awaitable reload so child blips
   // can do `await window.__rizzomaTopicReload()` instead of dispatching
@@ -953,19 +1263,19 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
   const createRootBlip = useCallback(async () => {
     if (!newBlipContent.trim() || busy) return;
-    if (!isAuthed) { toast('Sign in to create blips', 'error'); return; }
+    if (!topicCanComment) { toast(isAuthed ? 'You do not have permission to comment' : 'Sign in to create blips', 'error'); return; }
     await ensureCsrf();
     setBusy(true);
     try {
       const r = await api('/api/blips', {
         method: 'POST',
-        body: JSON.stringify({ waveId: id, content: newBlipContent.trim() })
+        body: JSON.stringify({ waveId: id, content: plainTextToBlbHtml(newBlipContent) })
       });
       if (r.ok) { toast('Blip created'); setNewBlipContent(''); load(true); }
       else { toast('Failed to create blip', 'error'); }
     } catch { toast('Failed to create blip', 'error'); }
     setBusy(false);
-  }, [newBlipContent, busy, isAuthed, id, load]);
+  }, [newBlipContent, busy, isAuthed, topicCanComment, id, load]);
 
   // Handlers for RizzomaBlip component
   const handleBlipUpdate = useCallback((_blipId: string, _content: string) => {
@@ -1145,53 +1455,121 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   };
 
   // Auto-save topic content (BLB: extracts title from first H1/line)
-  const autoSaveTopicContent = useCallback(async (content: string) => {
-    if (content === lastSavedContentRef.current) {
-      return;
-    }
+  const autoSaveTopicContent = useCallback(async (
+    content: string,
+    attempt = 0,
+    force = false,
+  ): Promise<void> => {
+    if (
+      !topicProjectionActiveRef.current
+      || topicProjectionIdentityRef.current !== topicProjectionIdentity
+    ) return;
     try {
-      const extractedTitle = extractTitleFromContent(content);
-      if (!extractedTitle) return;
-
       await ensureCsrf();
+      if (
+        !topicProjectionActiveRef.current
+        || topicProjectionIdentityRef.current !== topicProjectionIdentity
+      ) return;
+      const latestContent = topicEditorRef.current?.getHTML() || content;
+      if (!force && latestContent === lastSavedContentRef.current) return;
+      const extractedTitle = extractTitleFromContent(latestContent);
+      if (!extractedTitle) return;
+      const headers = topicCollabActive
+        ? await collaborationProjectionHeaders(topicYdoc, topicYjsGeneration)
+        : undefined;
+      if (
+        !topicProjectionActiveRef.current
+        || topicProjectionIdentityRef.current !== topicProjectionIdentity
+      ) return;
       const response = await api(`/api/topics/${encodeURIComponent(id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({ title: extractedTitle, content: content })
+        headers,
+        body: JSON.stringify({ title: extractedTitle, content: latestContent })
       });
       if (response.ok) {
-        lastSavedContentRef.current = content;
-        setTopic(prev => prev ? { ...prev, title: extractedTitle, content: content } : prev);
+        if (
+          !topicProjectionActiveRef.current
+          || topicProjectionIdentityRef.current !== topicProjectionIdentity
+        ) return;
+        lastSavedContentRef.current = latestContent;
+        setTopic(prev => prev ? { ...prev, title: extractedTitle, content: latestContent } : prev);
+        // Topic-root task side-documents are derived by this successful save,
+        // never by the client. Refresh so a newly inserted task becomes
+        // interactable in the same edit session when canToggle permits it.
+        requestTaskCompletionHydration(topicEditorRef.current);
         // No toast for auto-save - it's real-time
+      } else if (
+        topicProjectionActiveRef.current
+        && topicProjectionIdentityRef.current === topicProjectionIdentity
+        && (
+          response.status === 408
+          || response.status === 409
+          || response.status === 425
+          || response.status === 429
+          || response.status >= 500
+        )
+        && attempt < 8
+      ) {
+        topicSaveTimeoutRef.current = setTimeout(() => {
+          const latestContent = topicEditorRef.current?.getHTML() || content;
+          void autoSaveTopicContent(latestContent, attempt + 1, force);
+        }, Math.min(2_000, 150 * (2 ** attempt)));
       }
     } catch {
-      // Silent fail for auto-save - will retry on next change
+      if (
+        topicProjectionActiveRef.current
+        && topicProjectionIdentityRef.current === topicProjectionIdentity
+        && attempt < 8
+      ) {
+        topicSaveTimeoutRef.current = setTimeout(() => {
+          const latestContent = topicEditorRef.current?.getHTML() || content;
+          void autoSaveTopicContent(latestContent, attempt + 1, force);
+        }, Math.min(2_000, 150 * (2 ** attempt)));
+      }
     }
+  }, [id, topicCollabActive, topicProjectionIdentity, topicYdoc, topicYjsGeneration]);
+  autoSaveTopicContentRef.current = autoSaveTopicContent;
+
+  useEffect(() => {
+    topicProjectionActiveRef.current = true;
+    return () => {
+      topicProjectionActiveRef.current = false;
+      if (topicSaveTimeoutRef.current) {
+        clearTimeout(topicSaveTimeoutRef.current);
+        topicSaveTimeoutRef.current = null;
+      }
+    };
   }, [id]);
 
   // Start editing topic (BLB: topic is meta-blip)
   const startEditingTopic = useCallback(() => {
-    if (!isAuthed) {
-      toast('Sign in to edit', 'error');
+    if (!topicCanEdit) {
+      toast(isAuthed ? 'You do not have permission to edit this topic' : 'Sign in to edit', 'error');
       return;
     }
-    // Single-active bridge (ported from fix/single-active-editor, 2026-07-14):
-    // the topic-level editor claims the global active slot under a synthetic
-    // surface id, so every blip drops its chrome/edit state when topic editing
-    // starts — and vice versa (see the release listener below).
-    window.dispatchEvent(new CustomEvent(ACTIVE_BLIP_CLAIM_EVENT, {
-      detail: { blipId: `topic-editor:${id}` },
-    }));
-    // BLB: Topic content should always have title as first H1 and bulleted list below
-    const initialContent = ensureBulletedTopicContent(topic?.content || '', topic?.title);
+    // Seed the editor with the canonical title plus an outer bullet list. This
+    // also lazily migrates legacy flat topic bodies before any local/Yjs edit.
+    const initialContent = sanitizeRichHtml(ensureTopicBlbHtml(
+      topic?.title || 'Untitled',
+      sanitizeRichHtml(topic?.content || ''),
+    ));
     const inlineRootBlips = blips.filter((b) => typeof b.anchorPosition === 'number');
     const nextContent = injectInlineMarkers(initialContent, inlineRootBlips);
     setTopicContent(nextContent);
-    lastSavedContentRef.current = nextContent;
+    // Track the actual durable REST projection, not its lazy canonicalization,
+    // so entering edit mode can migrate a flat legacy topic even before typing.
+    lastSavedContentRef.current = injectInlineMarkers(
+      sanitizeRichHtml(topic?.content || ''),
+      inlineRootBlips,
+    );
+    // The topic editor is created empty and survives view mode. Requesting
+    // before setContent is intentionally request-free on first entry; the
+    // plugin hydrates when task nodes arrive. Later entries refresh existing
+    // task IDs after any confirmed parity-view toggle.
+    requestTaskCompletionHydration(topicEditor);
     setIsEditingTopic(true);
-    requestAnimationFrame(() => {
-      topicEditor?.commands.focus();
-    });
-  }, [isAuthed, topic?.title, topic?.content, blips, topicEditor, id]);
+    // The useEffect will handle syncing the editor content when isEditingTopic changes
+  }, [isAuthed, topicCanEdit, topic?.title, topic?.content, blips, topicEditor]);
 
   // Finish editing topic
   // Single-active bridge — release side. While the topic editor is open, a
@@ -1227,8 +1605,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     }
     // Final save if content changed
     const currentContent = topicEditor?.getHTML() || topicContent;
-    if (currentContent !== lastSavedContentRef.current) {
-      autoSaveTopicContent(currentContent);
+    if (canMutateTopicEditorNow() && currentContent !== lastSavedContentRef.current) {
+      void autoSaveTopicContent(currentContent);
     }
     setIsEditingTopic(false);
     if (topicEditor) {
@@ -1353,15 +1731,18 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   }
 
   const tags = extractTags(topic.content || '');
-  const isInlineRootChild = (b: BlipData) =>
-    typeof b.anchorPosition === 'number' || Boolean(topic.content && topic.content.includes(b.id));
-  const inlineRootBlips = blips.filter(isInlineRootChild);
-  const listBlips = blips.filter(b => !isInlineRootChild(b));
-  const titleH1 = `<h1>${topic.title || 'Untitled'}</h1>`;
-  let topicContentHtmlBase = `${titleH1}<ul><li><p></p></li></ul>`;
-  if (topic.content && topic.content.trim().length > 0) {
-    topicContentHtmlBase = ensureBulletedTopicContent(topic.content, topic.title);
-  }
+  // Revoke the already-loaded tree synchronously when auth/connectivity drops;
+  // waiting for the async reload would leave a brief editable window.
+  const renderedBlips = isAuthed ? blips : blips.map(asReadOnlyBlip);
+  const renderedCurrentSubblip = currentSubblip && !isAuthed
+    ? asReadOnlyBlip(currentSubblip)
+    : currentSubblip;
+  const inlineRootBlips = renderedBlips.filter(b => typeof b.anchorPosition === 'number');
+  const listBlips = renderedBlips.filter(b => b.anchorPosition === undefined || b.anchorPosition === null);
+  const topicContentHtmlBase = sanitizeRichHtml(ensureTopicBlbHtml(
+    topic.title || 'Untitled',
+    sanitizeRichHtml(topic.content || ''),
+  ));
   // Don't inject markers here — let RizzomaBlip handle it with expanded state tracking
   const topicBlip: BlipData = {
     id: topic.id,
@@ -1371,11 +1752,12 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
     authorAvatar: topic.authorAvatar || '/s/img/user/anonim.png',
     createdAt: topic.createdAt,
     updatedAt: topic.updatedAt,
+    yjsGeneration: topicYjsGeneration,
     isRead: true,
     permissions: {
-      canEdit: isAuthed,
-      canComment: isAuthed,
-      canRead: true,
+      canEdit: topicCanEdit,
+      canComment: topicCanComment,
+      canRead: topicCanRead,
     },
     childBlips: [...listBlips, ...inlineRootBlips],
   };
@@ -1395,8 +1777,12 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       </div>
     </div>
   ) : null;
-  const topicContentFooter = null;
-  const topicChildFooter = isAuthed ? (
+  const topicContentFooter = tags.length > 0 ? (
+    <div className="topic-tags">
+      {tags.map((tag, i) => <span key={i} className="topic-tag">{tag}</span>)}
+    </div>
+  ) : null;
+  const topicChildFooter = topicCanComment ? (
     <div className="write-reply-section">
       <input
         type="text"
@@ -1410,19 +1796,28 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   ) : null;
 
   return (
+    <ActiveBlipProvider>
+    <EditSurfaceActiveBridge
+      editing={isEditingTopic && topicCollabReady}
+      surfaceId={`topic-editor:${id}`}
+      hostBlipId={id}
+      onRelease={finishEditingTopic}
+    />
     <div className="rizzoma-topic-detail">
       {/* ========================================
           TOPIC COLLABORATION BAR (outside meta-blip)
           Original Rizzoma: Invite | avatars | +N | Share | gear
       ======================================== */}
       <div className="topic-collab-toolbar">
-        <button
-          className="collab-btn invite-btn"
-          title="Invite participants"
-          onClick={() => setShowInviteModal(true)}
-        >
-          Invite
-        </button>
+        {topicCanManage && (
+          <button
+            className="collab-btn invite-btn"
+            title="Invite participants"
+            onClick={() => setShowInviteModal(true)}
+          >
+            Invite
+          </button>
+        )}
         <div className="collab-participants">
           {/* Participant avatars */}
           {participants.length > 0 ? (
@@ -1434,22 +1829,24 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                 />
               ))}
               {participants.length > 5 && (
-                <span className="participant-overflow" title={participants.slice(5).map(p => p.email).join(', ')}>
+                <span className="participant-overflow" title={participants.slice(5).map(p => p.name || p.email || p.userId).join(', ')}>
                   +{participants.length - 5}
                 </span>
               )}
             </>
           ) : (
-            <TopicAvatar authorName={topic.authorName} authorAvatar={topic.authorAvatar} />
+            <TopicAvatar authorName={topic.authorName} />
           )}
         </div>
-        <button
-          className="collab-btn share-btn"
-          title="Share settings"
-          onClick={() => setShowShareModal(true)}
-        >
-          <span className="share-lock-icon" />Share
-        </button>
+        {topicCanManage && (
+          <button
+            className="collab-btn share-btn"
+            title="Share settings"
+            onClick={() => setShowShareModal(true)}
+          >
+            🔒 Share
+          </button>
+        )}
         <div className="gear-menu-container" ref={gearMenuRef}>
           <button
             className={`collab-btn gear-btn ${showGearMenu ? 'active' : ''}`}
@@ -1460,10 +1857,10 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           </button>
           {showGearMenu && (
             <div className="gear-dropdown">
-              <button className="gear-menu-item" onClick={handleMarkTopicRead}>
+              <button className="gear-menu-item" onClick={handleMarkTopicRead} disabled={!isAuthed}>
                 Mark topic as read
               </button>
-              <button className="gear-menu-item" onClick={handleToggleFollow}>
+              <button className="gear-menu-item" onClick={handleToggleFollow} disabled={!isAuthed}>
                 {isFollowing ? 'Unfollow topic' : 'Follow topic'}
               </button>
               <div className="gear-menu-divider" />
@@ -1493,7 +1890,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           BLB SUBBLIP VIEW - When navigated into a subblip
           Shows: Hide button + subblip content + child blips
       ======================================== */}
-      {currentSubblip && (
+      {renderedCurrentSubblip && (
         <div className="subblip-view">
           {/* Subblip navigation bar */}
           <div className="subblip-nav-bar">
@@ -1510,7 +1907,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               </a>
               {' → '}
               <span className="current-blip-label">
-                {extractTitleFromContent(currentSubblip.content) || 'Subblip'}
+                {extractTitleFromContent(renderedCurrentSubblip.content) || 'Subblip'}
               </span>
             </span>
           </div>
@@ -1518,8 +1915,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           {/* Subblip content rendered as root */}
           <div className="subblip-content">
             <RizzomaBlip
-              key={currentSubblip.id}
-              blip={currentSubblip}
+              key={renderedCurrentSubblip.id}
+              blip={renderedCurrentSubblip}
               isRoot={true}
               depth={0}
               onBlipUpdate={handleBlipUpdate}
@@ -1721,6 +2118,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         onClose={() => setShowExportModal(false)}
         topicTitle={topic?.title || 'Untitled'}
         topicId={id}
+        topicContent={topic?.content || ''}
         blips={blips}
       />
       {showWavePlayback && (
@@ -1732,5 +2130,6 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         />
       )}
     </div>
+    </ActiveBlipProvider>
   );
 }

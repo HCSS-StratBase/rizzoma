@@ -1,0 +1,18 @@
+{
+  "navPanel": true,
+  "topicsList": true,
+  "topicsContainer": true,
+  "topicsCount": 20,
+  "waveContainer": true,
+  "rightToolsPanel": true,
+  "rizzomaLayout": true,
+  "topicCollabToolbar": true,
+  "collabParticipants": 1,
+  "blipAuthorDates": 0,
+  "blipContributorsStack": 0,
+  "rizzomaBrandingLogo": false,
+  "viewportWidth": 1440,
+  "viewportHeight": 900,
+  "bodyScrollWidth": 1440,
+  "bodyScrollHeight": 948
+}

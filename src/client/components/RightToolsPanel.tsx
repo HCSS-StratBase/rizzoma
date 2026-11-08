@@ -3,6 +3,7 @@ import './RightToolsPanel.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { emitWaveUnread } from '../lib/socket';
 import { GadgetPalette, type GadgetType } from './GadgetPalette';
+import { ShellAuthControls } from './ShellAuthControls';
 
 // Custom events for insert shortcuts - these are dispatched globally
 // and picked up by the active blip editor
@@ -31,8 +32,15 @@ export function dispatchInsertEvent(eventType: string, data?: Record<string, unk
   window.dispatchEvent(new CustomEvent(eventType, { detail: data }));
 }
 
+// Performance/Test helper: Expose events to window
+if (typeof window !== 'undefined') {
+  (window as any).RIZZOMA_INSERT_EVENTS = INSERT_EVENTS;
+  (window as any).rizzomaDispatchInsertEvent = dispatchInsertEvent;
+}
+
 interface RightToolsPanelProps {
   isAuthed: boolean;
+  showShellAuth?: boolean;
   user?: { id?: string; email?: string; name?: string; avatar?: string } | null;
   unreadState?: WaveUnreadState | null;
   onNextTopic?: () => void;
@@ -54,7 +62,7 @@ function getInitials(name?: string, email?: string): string {
   return '??';
 }
 
-export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvailable }: RightToolsPanelProps) {
+export function RightToolsPanel(props: RightToolsPanelProps) {
   const isPerfMode = (() => {
     try {
       if (typeof window === 'undefined') return false;
@@ -72,8 +80,27 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
     return null;
   }
 
+  return <RightToolsPanelContent {...props} />;
+}
+
+function RightToolsPanelContent({
+  isAuthed,
+  showShellAuth = true,
+  user,
+  unreadState,
+  onNextTopic,
+  nextTopicAvailable,
+}: RightToolsPanelProps) {
   const [viewMode, setViewMode] = useState<'text' | 'mindmap'>('text');
+  // `navigating` (state) controls the button's disabled prop for visual
+  // feedback. `navigatingRef` is the synchronous lock that prevents
+  // rapid-fire clicks from racing past each other before React has a
+  // chance to propagate the disabled prop. Without the ref, two clicks
+  // fired in the same React render frame both pass the
+  // `if (navigating) return` guard because the state setter is
+  // asynchronous. Task #72 (2026-04-15).
   const [navigating, setNavigating] = useState(false);
+  const navigatingRef = useRef(false);
   const [displayMode, setDisplayMode] = useState<'short' | 'expanded'>('expanded');
   const [isEditMode, setIsEditMode] = useState(false);
   const [isBlipActiveEditable, setIsBlipActiveEditable] = useState(false);
@@ -143,14 +170,13 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
   const lastExpandedRef = useRef<{ blipId: string; isInline: boolean } | null>(null);
 
   const handleFollowGreen = async () => {
-    if (navigating) return;
+    // Synchronous lock first — guarantees no two clicks race past
+    // each other inside the same React render frame. The state-based
+    // `navigating` is set immediately after for the disabled prop
+    // visual feedback, but it's not load-bearing for correctness.
+    if (navigatingRef.current) return;
+    navigatingRef.current = true;
     setNavigating(true);
-
-    const nextUnreadId = unreadState?.unreadIds[0] ?? null;
-    if (!nextUnreadId) {
-      setNavigating(false);
-      return;
-    }
 
     const cssEscape = (val: string) => {
       if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(val);
@@ -160,9 +186,7 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
     // Collapse the previously expanded blip before jumping to next
     if (lastExpandedRef.current) {
       const prev = lastExpandedRef.current;
-      // Deactivate toolbar
       window.dispatchEvent(new CustomEvent('rizzoma:deactivate-blip', { detail: { blipId: prev.blipId } }));
-      // Collapse
       if (prev.isInline) {
         window.dispatchEvent(new CustomEvent('rizzoma:collapse-inline-blip', { detail: { threadId: prev.blipId } }));
       } else {
@@ -170,35 +194,36 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
       }
     }
 
-    // 1. Try finding already-rendered blip element (list children or expanded inline children)
-    let target: HTMLElement | null =
-      document.querySelector(`[data-blip-id="${cssEscape(nextUnreadId)}"]`) as HTMLElement | null;
+    // Walk unreadIds in order until we find one that's either already
+    // rendered or findable by expanding its anchor marker. Remote create
+    // events can update unread state before RizzomaTopicDetail has loaded the
+    // corresponding blip into the DOM, so a miss gets one awaited topic
+    // reload and a second lookup before we report it as unreachable.
+    const locateUnreadTarget = async (): Promise<{
+      nextUnreadId: string | null;
+      target: HTMLElement | null;
+      wasInline: boolean;
+    }> => {
+      for (const candidate of unreadState?.unreadIds || []) {
+        const rendered = document.querySelector(
+          `[data-blip-id="${cssEscape(candidate)}"]`
+        ) as HTMLElement | null;
+        if (rendered) return { nextUnreadId: candidate, target: rendered, wasInline: false };
 
-    // 2. If not found, the blip is likely a collapsed inline child ([+] marker).
-    //    Find its thread marker and expand it.
-    let wasInline = false;
-    if (!target) {
-      const marker = document.querySelector(
-        `[data-blip-thread="${cssEscape(nextUnreadId)}"]`
-      ) as HTMLElement | null;
-
-      if (marker) {
-        wasInline = true;
-        // Scroll the marker into view first so user sees it
+        const marker = document.querySelector(
+          `[data-blip-thread="${cssEscape(candidate)}"]`
+        ) as HTMLElement | null;
+        if (!marker) continue;
         marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // Dispatch toggle event to expand the inline child
         window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
-          detail: { threadId: nextUnreadId },
+          detail: { threadId: candidate },
         }));
-
-        // Wait for the expanded blip element to render (poll up to ~500ms)
-        target = await new Promise<HTMLElement | null>((resolve) => {
+        const target = await new Promise<HTMLElement | null>((resolve) => {
           let attempts = 0;
           const check = () => {
             attempts++;
             const el = document.querySelector(
-              `[data-blip-id="${cssEscape(nextUnreadId)}"]`
+              `[data-blip-id="${cssEscape(candidate)}"]`
             ) as HTMLElement | null;
             if (el) resolve(el);
             else if (attempts > 30) resolve(null);
@@ -206,10 +231,31 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
           };
           requestAnimationFrame(check);
         });
+        if (target) return { nextUnreadId: candidate, target, wasInline: true };
+      }
+      return { nextUnreadId: null, target: null, wasInline: false };
+    };
+
+    let { nextUnreadId, target, wasInline } = await locateUnreadTarget();
+    if (!target || !nextUnreadId) {
+      const reload = (window as unknown as { __rizzomaTopicReload?: () => Promise<void> }).__rizzomaTopicReload;
+      if (typeof reload === 'function') {
+        await reload();
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        });
+        ({ nextUnreadId, target, wasInline } = await locateUnreadTarget());
       }
     }
 
-    if (!target) {
+    if (!target || !nextUnreadId) {
+      // Surface a toast so the user knows FtG tried but couldn't
+      // reach any unread blip (e.g. all are inside collapsed ancestor
+      // chains we can't auto-expand yet).
+      window.dispatchEvent(new CustomEvent('toast', {
+        detail: { message: 'No reachable unread blip — try scrolling or refresh', type: 'info' },
+      }));
+      navigatingRef.current = false;
       setNavigating(false);
       return;
     }
@@ -233,6 +279,7 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
       if (unreadState.waveId) emitWaveUnread(unreadState.waveId);
     }
 
+    navigatingRef.current = false;
     setNavigating(false);
   };
 
@@ -269,10 +316,12 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
         </div>
       )}
 
+      {showShellAuth && <ShellAuthControls showIdentity={false} />}
+
       {/* Follow the Green - Next / Next Topic buttons */}
       {unreadCount === 0 && nextTopicAvailable ? (
         <button
-          className="next-unread-blip next-topic-blip"
+          className="next-unread-blip next-topic-blip next-button"
           onClick={onNextTopic}
           title="Jump to next topic with unread blips"
         >
@@ -280,7 +329,7 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
         </button>
       ) : (
         <button
-          className={`next-unread-blip ${unreadCount > 0 ? '' : 'disabled'}`}
+          className={`next-unread-blip next-button ${unreadCount > 0 ? '' : 'disabled'}`}
           onClick={handleFollowGreen}
           disabled={unreadCount === 0 || navigating}
           title={unreadCount > 0 ? `${unreadCount} unread - click to navigate` : 'No unread blips'}
@@ -342,12 +391,16 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
       </div>
 
       {/* Insert shortcuts - visible when editing or when an editable blip is active */}
-      {(isEditMode || isBlipActiveEditable) && <div className="insert-shortcuts">
+      {isAuthed && (isEditMode || isBlipActiveEditable) && <div className="insert-shortcuts">
+          <div className="insert-shortcuts-header">
+            <div className="insert-shortcuts-title">Insert</div>
+            <div className="insert-shortcuts-subtitle">into active blip</div>
+          </div>
           <button
             className="insert-btn"
             onMouseDown={e => e.preventDefault()}
             onClick={handleInsertReply}
-            title="Insert reply (Ctrl+Enter)"
+            title="Insert comment (Ctrl+Enter)"
           >
             <span className="insert-icon">↵</span>
           </button>
@@ -379,8 +432,10 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
             className="insert-btn gadget-btn"
             onMouseDown={e => e.preventDefault()}
             onClick={handleInsertGadget}
-            title="Insert gadget"
+            title="Open gadget palette for active blip"
+            data-testid="right-tools-insert-gadget"
           >
+            <span className="insert-icon gadget-insert-icon">▦</span>
             <span className="insert-label">Gadgets</span>
           </button>
           {showGadgetPalette && (

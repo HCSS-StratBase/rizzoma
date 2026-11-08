@@ -1,0 +1,107 @@
+➡️  [follow-green] Starting Follow-the-Green multi-user smoke
+➡️  [follow-green] Running profile: desktop
+➡️  [follow-green] [desktop] Owner: signing in
+➡️  [follow-green] [desktop] Owner: registered new account for follow-owner+desktop+1783826559554@example.com
+➡️  [follow-green] [desktop] Owner: authenticated
+➡️  [follow-green] Created wave 0b997d49bf636cdd371819e13605a33c
+➡️  [follow-green] Root blip visible
+➡️  [follow-green] Child blip visible
+➡️  [follow-green] [desktop] Observer: signing in
+➡️  [follow-green] [desktop] Observer: registered new account for follow-observer+desktop+1783826559554@example.com
+➡️  [follow-green] [desktop] Observer: authenticated
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Root blip visible
+➡️  [follow-green] Child blip visible
+➡️  [follow-green] markWaveRead [owner] starting...
+➡️  [follow-green] markWaveRead [owner] complete: marked_1
+➡️  [follow-green] markWaveRead [observer] starting...
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer request: POST https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/read
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/read
+➡️  [follow-green] markWaveRead [observer] complete: marked_1
+➡️  [follow-green] Cleared initial unread state
+➡️  [follow-green] Owner created blip 0b997d49bf636cdd371819e13605a33c:b1783826569837
+➡️  [follow-green] Owner created blip 0b997d49bf636cdd371819e13605a33c:b1783826569901
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer: real Next button shows 2 unread
+➡️  [follow-green] Saved snapshot screenshots/260712-0530-pr60-production-final/1783826559554-desktop-two-unread.png
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer request: POST https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/blips/0b997d49bf636cdd371819e13605a33c%3Ab1783826569837/read
+➡️  [follow-green] Observer response: 201 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/blips/0b997d49bf636cdd371819e13605a33c%3Ab1783826569837/read
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer: real Next button shows 1 unread
+➡️  [follow-green] Observer real Next click drained 2 → 1
+➡️  [follow-green] Observer request: POST https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/blips/0b997d49bf636cdd371819e13605a33c%3Ab1783826569901/read
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer response: 201 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/blips/0b997d49bf636cdd371819e13605a33c%3Ab1783826569901/read
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605a33c/unread
+➡️  [follow-green] Observer real Next click drained 1 → 0
+➡️  [follow-green] Saved snapshot screenshots/260712-0530-pr60-production-final/1783826559554-desktop-all-read.png
+➡️  [follow-green] ✅ Follow-the-Green smoke completed successfully for desktop
+➡️  [follow-green] Saved console log screenshots/260712-0530-pr60-production-final/1783826559554-desktop-owner-console.log
+➡️  [follow-green] Saved console log screenshots/260712-0530-pr60-production-final/1783826559554-desktop-observer-console.log
+➡️  [follow-green] Running profile: mobile
+➡️  [follow-green] [mobile] Owner: signing in
+➡️  [follow-green] [mobile] Owner: registered new account for follow-owner+mobile+1783826559554@example.com
+➡️  [follow-green] [mobile] Owner: authenticated
+➡️  [follow-green] Created wave 0b997d49bf636cdd371819e13605b6a6
+➡️  [follow-green] Root blip visible
+➡️  [follow-green] Child blip visible
+➡️  [follow-green] [mobile] Observer: signing in
+➡️  [follow-green] [mobile] Observer: registered new account for follow-observer+mobile+1783826559554@example.com
+➡️  [follow-green] [mobile] Observer: authenticated
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Root blip visible
+➡️  [follow-green] Child blip visible
+➡️  [follow-green] markWaveRead [owner] starting...
+➡️  [follow-green] markWaveRead [owner] complete: marked_1
+➡️  [follow-green] markWaveRead [observer] starting...
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer request: POST https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/read
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/read
+➡️  [follow-green] markWaveRead [observer] complete: marked_1
+➡️  [follow-green] Cleared initial unread state
+➡️  [follow-green] Owner created blip 0b997d49bf636cdd371819e13605b6a6:b1783826582175
+➡️  [follow-green] Owner created blip 0b997d49bf636cdd371819e13605b6a6:b1783826582254
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer: real Next button shows 2 unread
+➡️  [follow-green] Saved snapshot screenshots/260712-0530-pr60-production-final/1783826559554-mobile-two-unread.png
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer request: POST https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/blips/0b997d49bf636cdd371819e13605b6a6%3Ab1783826582175/read
+➡️  [follow-green] Observer response: 201 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/blips/0b997d49bf636cdd371819e13605b6a6%3Ab1783826582175/read
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer: real Next button shows 1 unread
+➡️  [follow-green] Observer real Next click drained 2 → 1
+➡️  [follow-green] Observer request: POST https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/blips/0b997d49bf636cdd371819e13605b6a6%3Ab1783826582254/read
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer response: 201 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/blips/0b997d49bf636cdd371819e13605b6a6%3Ab1783826582254/read
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer request: GET https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Observer real Next click drained 1 → 0
+➡️  [follow-green] Observer response: 200 https://138-201-62-161.nip.io/api/waves/0b997d49bf636cdd371819e13605b6a6/unread
+➡️  [follow-green] Saved snapshot screenshots/260712-0530-pr60-production-final/1783826559554-mobile-all-read.png
+➡️  [follow-green] ✅ Follow-the-Green smoke completed successfully for mobile
+➡️  [follow-green] Saved console log screenshots/260712-0530-pr60-production-final/1783826559554-mobile-owner-console.log
+➡️  [follow-green] Saved console log screenshots/260712-0530-pr60-production-final/1783826559554-mobile-observer-console.log

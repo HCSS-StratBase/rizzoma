@@ -1,22 +1,132 @@
 import { Router } from 'express';
-import { find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
-import { emitEvent } from '../lib/socket.js';
+import { find, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
+import { emitEvent, refreshWaveSocketAccess } from '../lib/socket.js';
 import type { Blip, Wave, BlipRead, WaveParticipant } from '../schemas/wave.js';
-import { computeWaveUnreadCounts } from '../lib/unread.js';
+import { computeWaveUnreadCounts, invalidateUnreadCache } from '../lib/unread.js';
+import { upsertBlipReadMarker } from '../lib/readMarkers.js';
 import { sendInviteEmail } from '../services/email.js';
-
-type User = {
-  _id?: string;
-  type: 'user';
-  email: string;
-  name?: string | null;
-  avatar?: string;
-  createdAt?: number;
-  updatedAt?: number;
-};
+import { noStore } from '../middleware/noStore.js';
+import { requireAuth } from '../middleware/auth.js';
+import { csrfProtect } from '../middleware/csrf.js';
+import { z } from 'zod';
+import { inviteRateLimit } from '../middleware/inviteRateLimit.js';
+import {
+  buildAccessibleTopicSelector,
+  identityFromRequest,
+  isDeletedWave,
+  normalizeSharingPolicy,
+  requireWaveAccess,
+  resolveWaveAccess,
+} from '../lib/access.js';
+import {
+  buildInviteUrl,
+  createInviteToken,
+  hashInviteToken,
+  invitationTokenDocId,
+  resolveInviteBaseUrl,
+  sortParticipantCandidates,
+} from '../lib/invitations.js';
 
 const router = Router();
 type FlatBlip = { id: string; updatedAt: number; createdAt?: number; content?: string; children?: FlatBlip[] };
+
+const participantEmail = (participant: Partial<WaveParticipant>) => String(participant.email || '').trim().toLowerCase();
+
+type InvitationTokenDoc = {
+  _id: string;
+  _rev?: string;
+  type: 'invitation_token';
+  tokenHash: string;
+  participantId: string;
+  waveId: string;
+  email: string;
+  status: 'pending_delivery' | 'sent' | 'failed' | 'used' | 'revoked';
+  createdAt: number;
+  expiresAt: number;
+  deliveredAt?: number;
+  failedAt?: number;
+  usedAt?: number;
+  usedBy?: string;
+};
+const sameParticipantIdentity = (left: Partial<WaveParticipant>, right: Partial<WaveParticipant>) => (
+  Boolean(left.userId && right.userId && left.userId === right.userId)
+  || Boolean(participantEmail(left) && participantEmail(left) === participantEmail(right))
+);
+
+async function participantDuplicates(
+  waveId: string,
+  participant: Partial<WaveParticipant>,
+): Promise<Array<WaveParticipant & { _id: string; _rev?: string }>> {
+  const result = await find<WaveParticipant & { _id: string; _rev?: string }>(
+    { type: 'participant', waveId },
+    { limit: 500 },
+  ).catch(() => ({ docs: [] as Array<WaveParticipant & { _id: string; _rev?: string }> }));
+  return (result.docs || []).filter((candidate) => sameParticipantIdentity(candidate, participant));
+}
+
+const sharingPolicySchema = z.object({
+  shareLevel: z.enum(['private', 'link', 'public']),
+  allowComments: z.boolean(),
+  allowEdits: z.boolean(),
+}).transform((policy) => ({
+  ...policy,
+  // Editing necessarily includes replying/commenting; persist the canonical
+  // implication so the UI and effective role never disagree.
+  allowComments: policy.shareLevel === 'private' ? false : policy.allowComments || policy.allowEdits,
+  allowEdits: policy.shareLevel === 'private' ? false : policy.allowEdits,
+}));
+
+function flattenBlips(blips: FlatBlip[]): Array<{ id: string; updatedAt: number }> {
+  const out: Array<{ id: string; updatedAt: number }> = [];
+  const visit = (n: FlatBlip) => {
+    if (n && n.id) {
+      const updatedAt = Number(n.updatedAt ?? n.createdAt ?? 0);
+      out.push({ id: String(n.id), updatedAt });
+    }
+    (n.children || []).forEach(visit);
+  };
+  (blips || []).forEach(visit);
+  return out;
+}
+
+async function loadWaveBlipTree(waveId: string): Promise<{ blips: Blip[]; roots: FlatBlip[] }> {
+  const result = await find<Blip>(
+    { type: 'blip', waveId },
+    { limit: 20000, sort: [{ createdAt: 'asc' }] },
+  ).catch(async () => find<Blip>({ type: 'blip', waveId }, { limit: 20000 }));
+
+  let blips = (result.docs || []).map((blip) => ({
+    ...blip,
+    createdAt: (blip as any).createdAt || (blip as any).contentTimestamp || 0,
+  }));
+
+  if (blips.length === 0) {
+    const legacy = await view<any>('nonremoved_blips_by_wave_id', 'get', {
+      include_docs: true as any,
+      key: waveId as any,
+    }).catch(() => ({ rows: [] as any[] }));
+    blips = (legacy.rows || []).map((row: any) => ({
+      ...(row.doc || {}),
+      createdAt: (row.doc && (row.doc.createdAt || row.doc.contentTimestamp)) || 0,
+    }));
+  }
+
+  const byParent = new Map<string | null, Blip[]>();
+  for (const blip of blips) {
+    const parentId = (blip.parentId ?? null) as string | null;
+    if (!byParent.has(parentId)) byParent.set(parentId, []);
+    byParent.get(parentId)!.push(blip as Blip);
+  }
+  const toNode = (blip: Blip): FlatBlip => ({
+    id: (blip as any)._id,
+    content: (blip as any).content || '',
+    createdAt: (blip as any).createdAt,
+    updatedAt: (blip as any).updatedAt || (blip as any).createdAt || 0,
+    children: (byParent.get((blip as any)._id || '') || []).map(toNode),
+  });
+
+  return { blips, roots: (byParent.get(null) || []).map(toNode) };
+}
 
 // GET /api/waves?limit&offset&q
 router.get('/', async (req, res) => {
@@ -24,8 +134,15 @@ router.get('/', async (req, res) => {
   const offset = Math.max(parseInt(String((req.query as any).offset ?? '0'), 10) || 0, 0);
   const q = String((req.query as any).q ?? '').trim();
   try {
-    const selector: any = { type: 'wave' };
-    if (q) selector.title = { $regex: `(?i).*${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*` };
+    const accessSelector = await buildAccessibleTopicSelector(identityFromRequest(req), false, 'wave');
+    const selector: any = q
+      ? {
+          $and: [
+            accessSelector,
+            { title: { $regex: `(?i).*${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*` } },
+          ],
+        }
+      : accessSelector;
     let r: { docs: Wave[] };
     try {
       r = await find<Wave>(selector, { limit: limit + 1, skip: offset, sort: [{ createdAt: 'desc' }] });
@@ -35,12 +152,6 @@ router.get('/', async (req, res) => {
     let docs = r.docs || [];
     let list = docs.slice(0, limit).map((w) => ({ id: w._id, title: w.title, createdAt: w.createdAt }));
     let hasMore = docs.length > limit;
-    if (list.length === 0) {
-      // Fallback to legacy view by creation date
-      const legacy = await view('waves_by_creation_date', 'get', { descending: true, limit });
-      list = legacy.rows.map((row) => ({ id: String(row.value), title: `Wave ${String(row.value).slice(0, 6)}`, createdAt: Number(row.key) || Date.now() }));
-      hasMore = false;
-    }
     res.json({ waves: list, hasMore });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'waves_error', requestId: (req as any)?.id });
@@ -48,21 +159,105 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/waves/unread_counts?ids=w1,w2,... — per-wave unread/total for current user
-router.get('/unread_counts', async (req, res) => {
+// noStore: per-user dynamic response; prevents weak-ETag 304 replay (see middleware/noStore.ts, BUG #56)
+router.get('/unread_counts', noStore, async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
   try {
     const idsParam = String((req.query as any).ids || '').trim();
     const ids = idsParam ? idsParam.split(',').map(s => s.trim()).filter(Boolean).slice(0, 200) : [];
-    const counts = await computeWaveUnreadCounts(userId, ids);
-    const results = ids.map((waveId) => {
+    const identity = identityFromRequest(req);
+    const accessibleIds = (await Promise.all(ids.map(async (waveId) => {
+      try {
+        const access = await resolveWaveAccess(waveId, identity);
+        return access.canRead ? waveId : null;
+      } catch {
+        return null;
+      }
+    }))).filter((waveId): waveId is string => Boolean(waveId));
+    const counts = await computeWaveUnreadCounts(userId, accessibleIds);
+    const results = accessibleIds.map((waveId) => {
       const entry = counts[waveId] || { total: 0, unread: 0, read: 0 };
       return { waveId, total: entry.total, unread: entry.unread, read: entry.read };
     });
     res.json({ counts: results });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'unread_counts_error', requestId: (req as any)?.id });
+  }
+});
+
+// GET/PATCH /api/waves/:id/sharing — persisted topic sharing policy.
+// Legacy documents with no policy remain public-read-only for compatibility;
+// newly-created topics always persist an explicit private policy.
+router.get('/:id/sharing', noStore, async (req, res) => {
+  const waveId = String(req.params['id'] || '');
+  try {
+    const wave = await getDoc<any>(waveId);
+    const access = await requireWaveAccess(req, res, waveId, 'read', wave);
+    if (!access) return;
+    res.json({
+      sharing: normalizeSharingPolicy(wave),
+      role: access.role,
+      canManage: access.canManage,
+    });
+  } catch (e: any) {
+    if (String(e?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'sharing_read_error', requestId: (req as any)?.id });
+  }
+});
+
+router.patch('/:id/sharing', requireAuth, csrfProtect(), async (req, res) => {
+  const waveId = String(req.params['id'] || '');
+  let accessMutationAttempted = false;
+  let accessRefreshCompleted = false;
+  try {
+    const policy = sharingPolicySchema.parse(req.body || {});
+    const wave = await getDoc<any>(waveId);
+    const access = await requireWaveAccess(req, res, waveId, 'manage', wave);
+    if (!access) return;
+    const now = Date.now();
+    const next = {
+      ...wave,
+      ...policy,
+      sharingUpdatedAt: now,
+      sharingUpdatedBy: req.user!.id,
+      updatedAt: Math.max(Number(wave.updatedAt || 0), now),
+    };
+    accessMutationAttempted = true;
+    const result = await updateDoc(next);
+    await refreshWaveSocketAccess(waveId);
+    accessRefreshCompleted = true;
+    res.json({
+      id: result.id,
+      rev: result.rev,
+      sharing: policy,
+    });
+    try {
+      emitEvent('sharing:updated', { waveId, sharing: policy, updatedAt: now });
+    } catch {}
+  } catch (e: any) {
+    if (e?.issues) {
+      res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id });
+      return;
+    }
+    if (String(e?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'sharing_update_error', requestId: (req as any)?.id });
+  } finally {
+    if (accessMutationAttempted && !accessRefreshCompleted) {
+      await refreshWaveSocketAccess(waveId).catch((refreshError: any) => {
+        console.error('[waves] sharing access refresh failed after mutation error', {
+          waveId,
+          error: refreshError?.message || String(refreshError),
+        });
+      });
+    }
   }
 });
 
@@ -73,6 +268,8 @@ router.get('/:id/history', async (req, res) => {
   const after = parseInt(String((req.query as any).after ?? '0'), 10) || 0;
   const before = parseInt(String((req.query as any).before ?? '0'), 10) || 0;
   try {
+    const access = await requireWaveAccess(req, res, waveId, 'read');
+    if (!access) return;
     type BlipHistoryDoc = {
       _id: string;
       type: 'blip_history';
@@ -148,34 +345,17 @@ router.get('/:id', async (req, res) => {
       // ignore 404; treat as legacy-only wave id
       if (!String(e?.message || '').startsWith('404')) throw e;
     }
-    // fetch blips (works for both modern and legacy data)
-    const r = await find<Blip>(
-      { type: 'blip', waveId: id },
-      { limit: 20000, sort: [{ createdAt: 'asc' }] },
-    ).catch(async () => {
-      return find<Blip>({ type: 'blip', waveId: id }, { limit: 20000 });
-    });
-    let blips = (r.docs || []).map((b) => ({ ...b, createdAt: (b as any).createdAt || (b as any).contentTimestamp || 0 }));
-    // If no blips found try legacy view with include_docs
-    if (blips.length === 0) {
-      const legacy = await view<any>('nonremoved_blips_by_wave_id', 'get', { include_docs: true as any, key: id as any }).catch(() => ({ rows: [] as any[] }));
-      blips = (legacy.rows || []).map((row: any) => ({ ...(row.doc || {}), createdAt: (row.doc && (row.doc.createdAt || row.doc.contentTimestamp)) || 0 }));
+    if (isDeletedWave(wave)) {
+      res.status(410).json({ error: 'wave_deleted', requestId: (req as any)?.id });
+      return;
     }
-    // Build tree
-    const byParent = new Map<string | null, Blip[]>();
-    for (const b of blips) {
-      const p = (b.parentId ?? null) as string | null;
-      if (!byParent.has(p)) byParent.set(p, []);
-      byParent.get(p)!.push(b as any);
+    const access = await requireWaveAccess(req, res, id, 'read', wave);
+    if (!access) return;
+    const { blips, roots } = await loadWaveBlipTree(id);
+    if (!wave && blips.length === 0) {
+      res.status(404).json({ error: 'wave_not_found', requestId: (req as any)?.id });
+      return;
     }
-    const toNode = (b: Blip): FlatBlip => ({
-      id: (b as any)._id,
-      content: (b as any).content || '',
-      createdAt: (b as any).createdAt,
-      updatedAt: (b as any).updatedAt || (b as any).createdAt || 0,
-      children: (byParent.get(((b as any)._id) || '') || []).map(toNode),
-    } as any);
-    const roots = (byParent.get(null) || []).concat(byParent.get(undefined as any) || []).map(toNode);
     const title = wave?.title || `(legacy) wave ${id.slice(0, 6)}`;
     const createdAt = wave?.createdAt || (blips[0]?.createdAt || Date.now());
     res.json({ id, title, createdAt, blips: roots });
@@ -185,102 +365,18 @@ router.get('/:id', async (req, res) => {
 });
 
 // compute a depth-first order of blips (preorder) including timestamps
-async function loadWaveBlipOrder(id: string): Promise<Array<{ id: string; updatedAt: number }>> {
-  const r = await find<Blip>(
-    { type: 'blip', waveId: id },
-    { limit: 20000, sort: [{ type: 'asc' }, { waveId: 'asc' }, { createdAt: 'asc' }] },
-  ).catch(async () => find<Blip>({ type: 'blip', waveId: id }, { limit: 20000 }));
-  return (r.docs || [])
-    .filter((doc) => !(doc as any).deleted)
-    .map((doc) => ({
-      id: String((doc as any)._id || ''),
-      updatedAt: Number((doc as any).updatedAt ?? (doc as any).createdAt ?? 0),
-    }))
-    .filter((entry) => entry.id);
-}
-
-// PUT or PATCH /api/waves/:id — update wave/topic content (compatibility alias for topics)
-router.put('/:id', async (req, res) => {
-  const id = req.params.id;
-  try {
-    const existing = await getDoc<any>(id);
-    const content = req.body?.content ?? existing.content;
-    const title = req.body?.title ?? existing.title;
-    const next = {
-      ...existing,
-      title,
-      content,
-      updatedAt: Date.now(),
-    };
-    const r = await updateDoc(next);
-    // Also record history
-    try {
-      const now = Date.now();
-      await insertDoc({
-        _id: `blip_history:${id}:${now}`,
-        type: 'blip_history',
-        blipId: id,
-        waveId: id,
-        content: content || '',
-        authorId: (req as any).user?.id || (req.session as any)?.userId || existing.authorId || '',
-        authorName: (req as any).user?.name || (req.session as any)?.userName || 'User',
-        event: 'update',
-        createdAt: now,
-        updatedAt: now,
-        snapshotVersion: 1,
-      } as any);
-    } catch {}
-    res.json({ id: r.id, rev: r.rev });
-    try { emitEvent('topic:updated', { id: r.id, title: next.title, updatedAt: next.updatedAt }); } catch {}
-  } catch (e: any) {
-    res.status(500).json({ error: e?.message || 'wave_update_error', requestId: (req as any)?.id });
-  }
-});
-
-router.patch('/:id', async (req, res) => {
-  const id = req.params.id;
-  try {
-    const existing = await getDoc<any>(id);
-    const content = req.body?.content ?? existing.content;
-    const title = req.body?.title ?? existing.title;
-    const next = {
-      ...existing,
-      title,
-      content,
-      updatedAt: Date.now(),
-    };
-    const r = await updateDoc(next);
-    try {
-      const now = Date.now();
-      await insertDoc({
-        _id: `blip_history:${id}:${now}`,
-        type: 'blip_history',
-        blipId: id,
-        waveId: id,
-        content: content || '',
-        authorId: (req as any).user?.id || (req.session as any)?.userId || existing.authorId || '',
-        authorName: (req as any).user?.name || (req.session as any)?.userName || 'User',
-        event: 'update',
-        createdAt: now,
-        updatedAt: now,
-        snapshotVersion: 1,
-      } as any);
-    } catch {}
-    res.json({ id: r.id, rev: r.rev });
-    try { emitEvent('topic:updated', { id: r.id, title: next.title, updatedAt: next.updatedAt }); } catch {}
-  } catch (e: any) {
-    res.status(500).json({ error: e?.message || 'wave_update_error', requestId: (req as any)?.id });
-  }
-});
-
 // GET /api/waves/:id/unread — list unread blip IDs for current user
-router.get('/:id/unread', async (req, res) => {
+// noStore: per-user dynamic (unread list is per-user, not part of the wave doc)
+router.get('/:id/unread', noStore, async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
-  const id = req.params.id;
+  const id = req.params['id'] as string;
   try {
-    const order = await loadWaveBlipOrder(id);
+    const access = await requireWaveAccess(req, res, id, 'read');
+    if (!access) return;
+    const { roots } = await loadWaveBlipTree(id);
+    const order = flattenBlips(roots);
 
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
@@ -293,14 +389,18 @@ router.get('/:id/unread', async (req, res) => {
 });
 
 // GET /api/waves/:id/next?after=blipId — next unread blip id
-router.get('/:id/next', async (req, res) => {
+// noStore: per-user dynamic (next unread is per-user)
+router.get('/:id/next', noStore, async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
-  const id = req.params.id;
+  const id = req.params['id'] as string;
   const after = String((req.query as any).after || '');
   try {
-    const order = await loadWaveBlipOrder(id);
+    const access = await requireWaveAccess(req, res, id, 'read');
+    if (!access) return;
+    const { roots } = await loadWaveBlipTree(id);
+    const order = flattenBlips(roots);
 
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
@@ -314,14 +414,18 @@ router.get('/:id/next', async (req, res) => {
 });
 
 // GET /api/waves/:id/prev?before=blipId — previous unread blip id
-router.get('/:id/prev', async (req, res) => {
+// noStore: per-user dynamic
+router.get('/:id/prev', noStore, async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
-  const id = req.params.id;
+  const id = req.params['id'] as string;
   const before = String((req.query as any).before || '');
   try {
-    const order = await loadWaveBlipOrder(id);
+    const access = await requireWaveAccess(req, res, id, 'read');
+    if (!access) return;
+    const { roots } = await loadWaveBlipTree(id);
+    const order = flattenBlips(roots);
 
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
@@ -343,68 +447,66 @@ router.get('/:id/prev', async (req, res) => {
   }
 });
 // POST /api/waves/:waveId/blips/:blipId/read — mark one blip as read
-router.post('/:waveId/blips/:blipId/read', async (req, res) => {
+router.post('/:waveId/blips/:blipId/read', csrfProtect(), async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
   const waveId = req.params.waveId;
   const blipId = req.params.blipId;
   try {
+    const access = await requireWaveAccess(req, res, waveId, 'read');
+    if (!access) return;
     try { console.log('[waves] mark one read', { waveId, blipId, userId }); } catch {}
-    const keyId = `read:user:${userId}:wave:${waveId}:blip:${blipId}`;
-      const now = Date.now();
-      const existing = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId, blipId }).catch(() => null);
-      if (existing && existing._id && existing._rev) {
-        const r = await updateDoc({ ...existing, readAt: now } as any);
-        try { console.log('[waves] emit wave:unread (single)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
-        res.json({ ok: true, id: r.id, rev: r.rev, readAt: now });
-        return;
-      }
-      const doc: BlipRead = { _id: keyId, type: 'read', userId, waveId, blipId, readAt: now };
-      try {
-        const r = await insertDoc(doc as any);
-        try { console.log('[waves] emit wave:unread (single insert)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
-        res.status(201).json({ ok: true, id: r.id, rev: r.rev, readAt: now });
-      } catch (insertErr: any) {
-        // Handle 409 conflict from concurrent insert — re-fetch and update
-        if (insertErr?.message?.startsWith('409')) {
-          const retried = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId, blipId }).catch(() => null);
-          if (retried && retried._id && retried._rev) {
-            const r = await updateDoc({ ...retried, readAt: now } as any);
-            try { emitEvent('blip:read', { waveId, blipId, userId, readAt: now }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
-            res.json({ ok: true, id: r.id, rev: r.rev, readAt: now });
-            return;
-          }
-        }
-        throw insertErr;
-      }
-    } catch (e: any) {
-      res.status(500).json({ error: e?.message || 'read_mark_error', requestId: (req as any)?.id });
-    }
-  });
+    const result = await upsertBlipReadMarker(userId, waveId, blipId);
+    invalidateUnreadCache(userId);
+    try { console.log('[waves] emit wave:unread (single)', { waveId, blipId, userId }); emitEvent('blip:read', { waveId, blipId, userId, readAt: result.readAt }); emitEvent('wave:unread', { waveId, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); }
+    res.status(result.created ? 201 : 200).json({ ok: true, id: result.id, rev: result.rev, readAt: result.readAt });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'read_mark_error', requestId: (req as any)?.id });
+  }
+});
 
 // POST /api/waves/:id/read — mark multiple blips as read { blipIds: [] }
-router.post('/:id/read', async (req, res) => {
+router.post('/:id/read', csrfProtect(), async (req, res) => {
   // @ts-ignore
   const userId = req.session?.userId as string | undefined;
   if (!userId) { res.status(401).json({ error: 'unauthenticated', requestId: (req as any)?.id }); return; }
   const id = req.params.id;
-  const blipIds = Array.isArray((req.body || {}).blipIds) ? (req.body as any).blipIds.map((s: any) => String(s)) : [];
+  let blipIds = Array.isArray((req.body || {}).blipIds) ? (req.body as any).blipIds.map((s: any) => String(s)) : [];
+
+  const access = await requireWaveAccess(req, res, id, 'read');
+  if (!access) return;
+
+  // "Mark entire topic as read" path: when no specific blipIds are
+  // passed, load every blip in the wave and mark all of them read.
+  // Previously this endpoint would silently no-op on an empty body
+  // and return `{ok:true, count:0}` — the gear-menu "Mark topic as
+  // read" used POST with no body, so the user saw a "Topic marked
+  // as read" toast while the green unread indicators stayed lit.
+  if (blipIds.length === 0) {
+    try {
+      const r = await find<{ _id: string }>(
+        { type: 'blip', waveId: id },
+        { limit: 5000 }
+      );
+      blipIds = (r.docs || []).map((d) => String(d._id || '')).filter(Boolean);
+      try { console.log('[waves] mark ALL read — expanded to', blipIds.length, 'blips', { waveId: id, userId }); } catch {}
+    } catch (e) {
+      console.error('[waves] mark ALL read — failed to enumerate blips', e);
+    }
+  }
+
   const results: Array<{ id: string; ok: boolean }> = [];
    try { console.log('[waves] mark many read', { waveId: id, count: blipIds.length, userId }); } catch {}
+  // Invalidate the unread-count cache up-front so the topic sidebar
+  // reflects the new state the moment the first blip write lands,
+  // not after the 30 s TTL expires.
+  invalidateUnreadCache(userId);
   for (const bid of blipIds) {
     try {
-      const keyId = `read:user:${userId}:wave:${id}:blip:${bid}`;
-      const now = Date.now();
-      const existing = await findOne<BlipRead & { _rev?: string }>({ type: 'read', userId, waveId: id, blipId: bid }).catch(() => null);
-      if (existing && existing._id && existing._rev) {
-        const r = await updateDoc({ ...existing, readAt: now } as any);
-        if (r?.ok) { results.push({ id: bid, ok: true }); try { console.log('[waves] emit wave:unread (bulk update)', { waveId: id, blipId: bid, userId }); emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); emitEvent('wave:unread', { waveId: id, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); } }
-        else results.push({ id: bid, ok: false });
-        continue;
-      }
-      const r = await insertDoc({ _id: keyId, type: 'read', userId, waveId: id, blipId: bid, readAt: now } as any);
-      if (r?.ok) { results.push({ id: bid, ok: true }); try { console.log('[waves] emit wave:unread (bulk insert)', { waveId: id, blipId: bid, userId }); emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: now }); emitEvent('wave:unread', { waveId: id, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); } } else results.push({ id: bid, ok: false });
+      const result = await upsertBlipReadMarker(userId, id, bid);
+      if (result.ok) { results.push({ id: bid, ok: true }); try { console.log('[waves] emit wave:unread (bulk)', { waveId: id, blipId: bid, userId }); emitEvent('blip:read', { waveId: id, blipId: bid, userId, readAt: result.readAt }); emitEvent('wave:unread', { waveId: id, userId }); } catch (e) { console.error('[waves] emit wave:unread failed', e); } }
+      else results.push({ id: bid, ok: false });
     } catch {
       results.push({ id: bid, ok: false });
     }
@@ -416,69 +518,370 @@ router.post('/:id/read', async (req, res) => {
 router.get('/:id/participants', async (req, res) => {
   const id = req.params.id;
   try {
+    const access = await requireWaveAccess(req, res, id, 'read');
+    if (!access) return;
+    // Task #192 (2026-05-11): explicitly use idx_participant_by_wave —
+    // without it CouchDB Mango may pick a different (slower) index or do
+    // a full table scan. Per memory: "Mango IGNORES use_index if sort
+    // doesn't match index fields" — here we have no sort, so use_index
+    // is honored.
     const r = await find<WaveParticipant>(
       { type: 'participant', waveId: id },
-      { limit: 200, use_index: 'idx_participant_by_wave' },
+      { limit: 200, use_index: 'idx_participant_wave_user' },
     );
-    let rawDocs = r.docs || [];
-    if (rawDocs.length === 0) {
-      try {
-        const topic = await getDoc<any>(id);
-        if (topic?.authorId) {
-          rawDocs = [{
-            _id: `part_${id}_${topic.authorId}`,
-            type: 'participant',
-            waveId: id,
-            userId: topic.authorId,
-            role: 'owner',
-            status: 'accepted',
-            invitedAt: topic.createdAt || Date.now(),
-          } as any];
+    const visible = access.canManage
+      ? (r.docs || [])
+      : (r.docs || []).filter((participant) => (
+          (participant.status === 'accepted' || participant.status === undefined)
+          && !String(participant.userId || '').startsWith('invite:')
+        ));
+    const participants = await Promise.all(visible.map(async (participant) => {
+      if (access.canManage) {
+        return {
+          id: participant._id,
+          userId: participant.userId,
+          email: participant.email,
+          role: participant.role,
+          status: participant.status,
+        };
+      }
+      const user = await getDoc<any>(participant.userId).catch(() => null);
+      return {
+        id: participant._id,
+        userId: participant.userId,
+        name: user?.name || undefined,
+        avatar: user?.avatar || undefined,
+        role: participant.role,
+        status: participant.status,
+      };
+    }));
+    res.json({ participants });
+  } catch (error: any) {
+    const message = String(error?.message || '');
+    if (message.startsWith('404')) {
+      res.status(404).json({ error: 'wave_not_found', requestId: (req as any)?.id });
+      return;
+    }
+    // Fail closed: a storage outage is not an empty roster. Owners must not
+    // make access decisions from a fabricated successful response.
+    res.status(500).json({ error: 'participants_load_error', requestId: (req as any)?.id });
+  }
+});
+
+router.patch('/:id/participants/:participantId', requireAuth, csrfProtect(), async (req, res) => {
+  const waveId = String(req.params['id'] || '');
+  const participantId = String(req.params['participantId'] || '');
+  let accessMutationAttempted = false;
+  let accessRefreshCompleted = false;
+  try {
+    const access = await requireWaveAccess(req, res, waveId, 'manage');
+    if (!access) return;
+    const payload = z.object({
+      role: z.enum(['editor', 'commenter', 'viewer']),
+    }).parse(req.body || {});
+    const participant = await getDoc<WaveParticipant & { _id: string; _rev: string }>(participantId);
+    if (participant.type !== 'participant' || participant.waveId !== waveId) {
+      res.status(404).json({ error: 'participant_not_found' });
+      return;
+    }
+    if (participant.role === 'owner') {
+      res.status(400).json({ error: 'owner_role_immutable' });
+      return;
+    }
+    const duplicates = await participantDuplicates(waveId, participant);
+    const mutable = duplicates.filter((candidate) => candidate.role !== 'owner');
+    if (duplicates.some((candidate) => candidate.role === 'owner')) {
+      res.status(400).json({ error: 'owner_role_immutable' });
+      return;
+    }
+    accessMutationAttempted = true;
+    const updates = await Promise.all(mutable.map((candidate) => updateDoc({ ...candidate, role: payload.role } as any)));
+    const result = updates.find((entry) => entry.id === participantId) || updates[0];
+    await refreshWaveSocketAccess(waveId);
+    accessRefreshCompleted = true;
+    res.json({ id: result?.id || participantId, rev: result?.rev, role: payload.role, updated: mutable.length });
+  } catch (e: any) {
+    if (e?.issues) {
+      res.status(400).json({ error: 'validation_error', issues: e.issues });
+      return;
+    }
+    if (String(e?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'participant_not_found' });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'participant_update_error' });
+  } finally {
+    if (accessMutationAttempted && !accessRefreshCompleted) {
+      await refreshWaveSocketAccess(waveId).catch((refreshError: any) => {
+        console.error('[waves] participant update access refresh failed after mutation error', {
+          waveId,
+          participantId,
+          error: refreshError?.message || String(refreshError),
+        });
+      });
+    }
+  }
+});
+
+router.delete('/:id/participants/:participantId', requireAuth, csrfProtect(), async (req, res) => {
+  const waveId = String(req.params['id'] || '');
+  const participantId = String(req.params['participantId'] || '');
+  let accessMutationAttempted = false;
+  let accessRefreshCompleted = false;
+  try {
+    const access = await requireWaveAccess(req, res, waveId, 'manage');
+    if (!access) return;
+    const participant = await getDoc<WaveParticipant & { _id: string; _rev: string }>(participantId);
+    if (participant.type !== 'participant' || participant.waveId !== waveId) {
+      res.status(404).json({ error: 'participant_not_found' });
+      return;
+    }
+    if (participant.role === 'owner') {
+      res.status(400).json({ error: 'owner_removal_forbidden' });
+      return;
+    }
+    const duplicates = await participantDuplicates(waveId, participant);
+    if (duplicates.some((candidate) => candidate.role === 'owner')) {
+      res.status(400).json({ error: 'owner_removal_forbidden' });
+      return;
+    }
+    const now = Date.now();
+    accessMutationAttempted = true;
+    const updates = await Promise.all(duplicates.map((candidate) => updateDoc({
+        ...candidate,
+        status: 'declined',
+        declinedAt: now,
+        declinedBy: req.user!.id,
+        inviteTokenHash: undefined,
+        inviteExpiresAt: undefined,
+        acceptedInviteTokenHash: undefined,
+        acceptedInviteExpiresAt: undefined,
+      } as any)));
+    const result = updates.find((entry) => entry.id === participantId) || updates[0];
+    const tokens = await find<InvitationTokenDoc>({
+      type: 'invitation_token',
+      waveId,
+      email: participantEmail(participant),
+    }, { limit: 500 }).catch(() => ({ docs: [] as InvitationTokenDoc[] }));
+    await Promise.all((tokens.docs || [])
+      .filter((token) => token.status !== 'used' && token.status !== 'revoked')
+      .map((token) => updateDoc({ ...token, status: 'revoked', revokedAt: now } as any)));
+    await refreshWaveSocketAccess(waveId);
+    accessRefreshCompleted = true;
+    res.json({ id: result?.id || participantId, rev: result?.rev, removed: true, status: 'declined', updated: duplicates.length });
+  } catch (e: any) {
+    if (String(e?.message || '').startsWith('404')) {
+      res.status(404).json({ error: 'participant_not_found' });
+      return;
+    }
+    res.status(500).json({ error: e?.message || 'participant_remove_error' });
+  } finally {
+    if (accessMutationAttempted && !accessRefreshCompleted) {
+      await refreshWaveSocketAccess(waveId).catch((refreshError: any) => {
+        console.error('[waves] participant removal access refresh failed after mutation error', {
+          waveId,
+          participantId,
+          error: refreshError?.message || String(refreshError),
+        });
+      });
+    }
+  }
+});
+
+// Redeem a one-time invitation after authentication. The token proves access
+// to the invitation email; merely registering the guessed address never does.
+router.post('/invitations/accept', requireAuth, csrfProtect(), async (req, res) => {
+  const token = String((req.body || {}).token || '').trim();
+  if (token.length < 32) {
+    res.status(400).json({ error: 'invalid_invite_token' });
+    return;
+  }
+  const tokenHash = hashInviteToken(token);
+  let accessMutationWaveId: string | null = null;
+  let accessRefreshCompleted = false;
+  try {
+    const tokenDoc = await getDoc<InvitationTokenDoc>(invitationTokenDocId(tokenHash)).catch(() => null);
+    if (tokenDoc) {
+      if (Number(tokenDoc.expiresAt || 0) <= Date.now()) {
+        res.status(410).json({ error: 'invite_expired' });
+        return;
+      }
+      const sessionEmail = String(req.user?.email || '').trim().toLowerCase();
+      if (!sessionEmail || sessionEmail !== tokenDoc.email.trim().toLowerCase()) {
+        res.status(403).json({ error: 'invite_email_mismatch' });
+        return;
+      }
+      if (tokenDoc.status === 'used') {
+        if (tokenDoc.usedBy === req.user!.id) {
+          res.json({ id: tokenDoc.participantId, waveId: tokenDoc.waveId, accepted: true, alreadyAccepted: true });
+          return;
         }
-      } catch {}
+        res.status(403).json({ error: 'invite_email_mismatch' });
+        return;
+      }
+      if (tokenDoc.status === 'failed' || tokenDoc.status === 'revoked') {
+        res.status(404).json({ error: 'invite_not_found' });
+        return;
+      }
     }
 
-    const userIds = [...new Set(rawDocs.map(p => p.userId).filter(Boolean))];
-    const userMap = new Map<string, User>();
-    await Promise.all(
-      userIds.map(async (uid) => {
-        try {
-          const u = await getDoc<User>(uid);
-          if (u) userMap.set(uid, u);
-        } catch {}
-      })
+    const pendingResult = tokenDoc ? null : await find<WaveParticipant & {
+      _id: string;
+      _rev: string;
+      inviteTokenHash?: string;
+      inviteExpiresAt?: number;
+      email?: string;
+    }>({ type: 'participant', inviteTokenHash: tokenHash }, { limit: 2 });
+    let participant = tokenDoc
+      ? await getDoc<WaveParticipant & { _id: string; _rev: string }>(tokenDoc.participantId).catch(() => null)
+      : pendingResult?.docs?.[0];
+    if (!participant) {
+      const acceptedResult = tokenDoc ? { docs: [] as Array<WaveParticipant & { _id: string; _rev: string; acceptedInviteExpiresAt?: number }> } : await find<WaveParticipant & { _id: string; _rev: string; acceptedInviteExpiresAt?: number }>(
+        { type: 'participant', acceptedInviteTokenHash: tokenHash },
+        { limit: 2 },
+      ).catch(() => ({ docs: [] as Array<WaveParticipant & { _id: string; _rev: string; acceptedInviteExpiresAt?: number }> }));
+      const accepted = acceptedResult.docs?.[0];
+      const sameAccount = accepted?.status === 'accepted'
+        && accepted.userId === req.user!.id
+        && participantEmail(accepted) === String(req.user?.email || '').trim().toLowerCase()
+        && Number(accepted.acceptedInviteExpiresAt || 0) > Date.now();
+      if (accepted && !sameAccount) {
+        res.status(403).json({ error: 'invite_email_mismatch' });
+        return;
+      }
+      if (sameAccount) {
+        res.json({ id: accepted!._id, waveId: accepted!.waveId, role: accepted!.role, accepted: true, alreadyAccepted: true });
+        return;
+      }
+      res.status(404).json({ error: 'invite_not_found' });
+      return;
+    }
+    if (
+      tokenDoc
+      && participant.status === 'accepted'
+      && participant.userId === req.user!.id
+      && participantEmail(participant) === String(req.user?.email || '').trim().toLowerCase()
+    ) {
+      await updateDoc({ ...tokenDoc, status: 'used', usedAt: Date.now(), usedBy: req.user!.id } as any).catch(() => undefined);
+      res.json({ id: participant._id, waveId: participant.waveId, role: participant.role, accepted: true, alreadyAccepted: true });
+      return;
+    }
+    if (participant.status !== 'pending') {
+      res.status(404).json({ error: 'invite_not_found' });
+      return;
+    }
+    if (Number(tokenDoc?.expiresAt || participant.inviteExpiresAt || 0) <= Date.now()) {
+      res.status(410).json({ error: 'invite_expired' });
+      return;
+    }
+    const sessionEmail = String(req.user?.email || '').trim().toLowerCase();
+    if (!sessionEmail || sessionEmail !== String(participant.email || '').trim().toLowerCase()) {
+      res.status(403).json({ error: 'invite_email_mismatch' });
+      return;
+    }
+    const now = Date.now();
+    const originalExpiry = Number(tokenDoc?.expiresAt || participant.inviteExpiresAt || 0);
+    const {
+      inviteTokenHash: _usedInviteTokenHash,
+      inviteExpiresAt: _usedInviteExpiresAt,
+      ...participantWithoutToken
+    } = participant;
+    const next = {
+      ...participantWithoutToken,
+      userId: req.user!.id,
+      status: 'accepted' as const,
+      acceptedAt: now,
+      acceptedInviteTokenHash: tokenHash,
+      acceptedInviteExpiresAt: originalExpiry,
+    };
+    const duplicates = await participantDuplicates(participant.waveId, next);
+    const canonicalCandidates = sortParticipantCandidates(
+      [...duplicates.filter((candidate) => candidate._id !== participant!._id), next as any],
+      req.user!.id,
     );
-
-    const participants = rawDocs.map(p => {
-      const u = p.userId ? userMap.get(p.userId) : undefined;
-      return {
-        id: p._id,
-        userId: p.userId,
-        email: p.email || u?.email || '',
-        name: u?.name || (p.email ? p.email.split('@')[0] : 'User'),
-        avatar: u?.avatar || '/s/img/user/anonim.png',
-        role: p.role,
-        status: p.status,
-      };
+    const canonical = canonicalCandidates[0] as WaveParticipant & { _id: string; _rev?: string };
+    const {
+      inviteTokenHash: _canonicalInviteTokenHash,
+      inviteExpiresAt: _canonicalInviteExpiresAt,
+      ...canonicalWithoutActiveToken
+    } = canonical;
+    const canonicalNext = {
+      ...canonicalWithoutActiveToken,
+      userId: req.user!.id,
+      email: participant.email,
+      status: 'accepted' as const,
+      acceptedAt: canonical.acceptedAt || now,
+      acceptedInviteTokenHash: tokenHash,
+      acceptedInviteExpiresAt: originalExpiry,
+    };
+    accessMutationWaveId = participant.waveId;
+    const updated = await updateDoc(canonicalNext as any);
+    for (const duplicate of canonicalCandidates.slice(1)) {
+      await updateDoc({
+        ...duplicate,
+        status: 'declined',
+        declinedAt: now,
+        declinedBy: req.user!.id,
+        inviteTokenHash: undefined,
+        inviteExpiresAt: undefined,
+        acceptedInviteTokenHash: undefined,
+        acceptedInviteExpiresAt: undefined,
+      } as any);
+    }
+    if (tokenDoc) {
+      await updateDoc({ ...tokenDoc, status: 'used', usedAt: now, usedBy: req.user!.id } as any);
+      const siblingTokens = await find<InvitationTokenDoc>({
+        type: 'invitation_token',
+        waveId: participant.waveId,
+        email: participantEmail(participant),
+      }, { limit: 500 }).catch(() => ({ docs: [] as InvitationTokenDoc[] }));
+      for (const sibling of siblingTokens.docs || []) {
+        if (sibling._id === tokenDoc._id || sibling.status === 'used' || sibling.status === 'revoked') continue;
+        await updateDoc({ ...sibling, status: 'revoked', revokedAt: now } as any);
+      }
+    }
+    await refreshWaveSocketAccess(participant.waveId);
+    accessRefreshCompleted = true;
+    res.json({
+      id: updated.id,
+      rev: updated.rev,
+      waveId: participant.waveId,
+      role: canonicalNext.role,
+      accepted: true,
     });
-    res.json({ participants });
-  } catch {
-    res.json({ participants: [] });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'invite_accept_error' });
+  } finally {
+    if (accessMutationWaveId && !accessRefreshCompleted) {
+      await refreshWaveSocketAccess(accessMutationWaveId).catch((refreshError: any) => {
+        console.error('[waves] invitation acceptance access refresh failed after mutation error', {
+          waveId: accessMutationWaveId,
+          error: refreshError?.message || String(refreshError),
+        });
+      });
+    }
   }
 });
 
 // POST /api/waves/:id/participants — invite participants by email
-router.post('/:id/participants', async (req, res) => {
-  const userId = req.session?.userId as string | undefined;
-  if (!userId) { res.status(401).json({ error: 'unauthenticated' }); return; }
-
-  const waveId = req.params.id;
-  const { emails, message } = req.body as { emails?: string[]; message?: string };
-
-  if (!emails || !Array.isArray(emails) || emails.length === 0) {
-    res.status(400).json({ error: 'emails array required' });
+router.post('/:id/participants', requireAuth, csrfProtect(), inviteRateLimit, async (req, res) => {
+  const userId = req.user!.id;
+  const waveId = String(req.params['id'] || '');
+  const parsedInvite = z.object({
+    emails: z.array(z.string().trim().email().max(320).transform((email) => email.toLowerCase())).min(1).max(20),
+    message: z.string().max(2_000).optional(),
+    role: z.enum(['editor', 'commenter', 'viewer']).default('editor'),
+  }).safeParse(req.body || {});
+  if (!parsedInvite.success) {
+    res.status(400).json({ error: 'invalid_invite_request', issues: parsedInvite.error.issues });
     return;
   }
+  const { emails, message, role } = parsedInvite.data;
+
+  const access = await requireWaveAccess(req, res, waveId, 'manage');
+  if (!access) return;
+
+  const normalizedEmails = [...new Set(emails)];
 
   // Look up inviter info
   let inviterName = 'A Rizzoma user';
@@ -489,6 +892,11 @@ router.post('/:id/participants', async (req, res) => {
     inviterEmail = inviter.email || '';
   } catch {}
 
+  if (inviterEmail && normalizedEmails.includes(inviterEmail.trim().toLowerCase())) {
+    res.status(400).json({ error: 'owner_already_participant' });
+    return;
+  }
+
   // Look up topic title from the wave doc
   let topicTitle = 'Untitled Topic';
   try {
@@ -496,12 +904,17 @@ router.post('/:id/participants', async (req, res) => {
     topicTitle = wave.title || topicTitle;
   } catch {}
 
-  const baseUrl = process.env['APP_BASE_URL'] || 'http://localhost:3000';
-  const topicUrl = `${baseUrl}/#/topic/${waveId}`;
+  let baseUrl: string;
+  try {
+    baseUrl = resolveInviteBaseUrl(req);
+  } catch (error: any) {
+    res.status(500).json({ error: error?.message || 'invite_url_configuration_error' });
+    return;
+  }
   const now = Date.now();
-  const results: { email: string; ok: boolean; error?: string }[] = [];
+  const results: { email: string; ok: boolean; error?: string; status: 'accepted' | 'pending' | 'delivery_failed' | 'error' }[] = [];
 
-  for (const email of emails) {
+  for (const email of normalizedEmails) {
     try {
       // Find or reference user by email
       let targetUserId = `invite:${email}`;
@@ -512,46 +925,114 @@ router.post('/:id/participants', async (req, res) => {
         }
       } catch {}
 
-      // Check if participant already exists
-      const participantId = `participant:wave:${waveId}:user:${targetUserId}`;
-      let alreadyExists = false;
-      try {
-        await getDoc<WaveParticipant>(participantId);
-        alreadyExists = true;
-      } catch {}
+      // Reuse a prior email-only invitation after it has been redeemed and its
+      // userId changed. Keying only by the newly-resolved user id would create
+      // a duplicate participant with competing role precedence.
+      const participantCandidates = await find<WaveParticipant & { _id: string; _rev?: string }>(
+        { type: 'participant', waveId },
+        { limit: 500 },
+      ).catch(() => ({ docs: [] as Array<WaveParticipant & { _id: string; _rev?: string }> }));
+      const allMatchingParticipants = (participantCandidates.docs || []).filter((candidate) => (
+        candidate.userId === targetUserId || String(candidate.email || '').trim().toLowerCase() === email
+      ));
+      if (allMatchingParticipants.some((candidate) => candidate.role === 'owner')) {
+        results.push({ email, ok: false, error: 'owner_already_participant', status: 'error' });
+        continue;
+      }
+      const matchingParticipants = sortParticipantCandidates(
+        allMatchingParticipants.filter((candidate) => candidate.role !== 'owner'),
+        targetUserId,
+      );
+      const reusableParticipant = matchingParticipants[0];
+      const participantId = reusableParticipant?._id || `participant:wave:${waveId}:user:${targetUserId}`;
+      if (reusableParticipant?.status === 'accepted') {
+        results.push({ email, ok: true, status: 'accepted' });
+        continue;
+      }
+      const invite = createInviteToken(now);
+      const alreadyExists = Boolean(reusableParticipant);
 
-      if (!alreadyExists) {
-        // Create participant record
-        await insertDoc({
+      const nextParticipant = !alreadyExists
+        ? {
           _id: participantId,
           type: 'participant',
           waveId,
           userId: targetUserId,
           email,
-          role: 'editor',
+          role,
           invitedBy: userId,
           invitedAt: now,
-          status: 'pending',
-        } as WaveParticipant);
+          status: 'pending' as const,
+          inviteTokenHash: invite.tokenHash,
+          inviteExpiresAt: invite.expiresAt,
+        }
+        : {
+            ...reusableParticipant!,
+            userId: targetUserId,
+            email,
+            role,
+            status: 'pending' as const,
+            acceptedAt: undefined,
+            inviteTokenHash: invite.tokenHash,
+            inviteExpiresAt: invite.expiresAt,
+          };
+
+      // Persist a non-authorizing pending participant plus a token outbox doc
+      // before SMTP. If mail succeeds but the final status write fails, the
+      // delivered token is still redeemable; older token docs remain valid
+      // until one is consumed or the participant is revoked.
+      if (alreadyExists) await updateDoc(nextParticipant as any);
+      else await insertDoc(nextParticipant as WaveParticipant);
+      const tokenDoc: InvitationTokenDoc = {
+        _id: invitationTokenDocId(invite.tokenHash),
+        type: 'invitation_token',
+        tokenHash: invite.tokenHash,
+        participantId,
+        waveId,
+        email,
+        status: 'pending_delivery',
+        createdAt: now,
+        expiresAt: invite.expiresAt,
+      };
+      const tokenInsert = await insertDoc(tokenDoc as any);
+      tokenDoc._rev = tokenInsert.rev;
+      for (const duplicate of matchingParticipants.slice(1)) {
+        await updateDoc({
+          ...duplicate,
+          status: 'declined',
+          declinedAt: now,
+          declinedBy: userId,
+          inviteTokenHash: undefined,
+          inviteExpiresAt: undefined,
+          acceptedInviteTokenHash: undefined,
+          acceptedInviteExpiresAt: undefined,
+        } as any);
       }
 
-      // Send invite email
+      const inviteUrl = buildInviteUrl(baseUrl, waveId, invite.token);
       const emailResult = await sendInviteEmail({
         inviterName,
         inviterEmail,
         topicTitle,
-        topicUrl,
+        topicUrl: inviteUrl,
         recipientEmail: email,
         message: message || undefined,
       });
+      if (!emailResult.success) {
+        await updateDoc({ ...tokenDoc, status: 'failed', failedAt: Date.now() } as any).catch(() => undefined);
+        results.push({ email, ok: false, error: emailResult.error, status: 'delivery_failed' });
+        continue;
+      }
+      await updateDoc({ ...tokenDoc, status: 'sent', deliveredAt: Date.now() } as any).catch(() => undefined);
 
-      results.push({ email, ok: emailResult.success, error: emailResult.error });
+      results.push({ email, ok: true, status: 'pending' });
     } catch (err: any) {
       console.error('[waves] invite participant failed', { email, error: err.message });
-      results.push({ email, ok: false, error: err.message });
+      results.push({ email, ok: false, error: err.message, status: 'error' });
     }
   }
 
+  await refreshWaveSocketAccess(waveId);
   res.json({ ok: true, invited: results });
 });
 
@@ -560,7 +1041,7 @@ export default router;
 // Dev-only materialization endpoints
 if (process.env['NODE_ENV'] !== 'production') {
   // POST /api/waves/materialize/:id — create minimal wave doc if missing (title + createdAt)
-  router.post('/materialize/:id', async (req, res) => {
+  router.post('/materialize/:id', csrfProtect(), async (req, res) => {
     const id = req.params.id;
     try {
       // check if exists
@@ -580,7 +1061,7 @@ if (process.env['NODE_ENV'] !== 'production') {
     }
   });
   // POST /api/waves/materialize — bulk-create minimal wave docs for recent legacy waves
-  router.post('/materialize', async (req, res) => {
+  router.post('/materialize', csrfProtect(), async (req, res) => {
     const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 500);
     try {
       const legacy = await view<any>('waves_by_creation_date', 'get', { descending: true as any, limit });
@@ -611,7 +1092,7 @@ if (process.env['NODE_ENV'] !== 'production') {
   });
 
   // POST /api/waves/seed_sample?depth=2&breadth=2 — create a demo wave with nested blips (dev only)
-  router.post('/seed_sample', async (req, res) => {
+  router.post('/seed_sample', csrfProtect(), async (req, res) => {
     try {
       const depth = Math.min(Math.max(parseInt(String((req.query as any).depth ?? '2'), 10) || 2, 1), 5);
       const breadth = Math.min(Math.max(parseInt(String((req.query as any).breadth ?? '2'), 10) || 2, 1), 5);

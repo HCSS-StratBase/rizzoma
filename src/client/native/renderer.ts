@@ -29,6 +29,7 @@ import {
   TextEl,
   TextParams,
 } from './types';
+import { isSafeRichUrl } from '../lib/sanitizeRichHtml';
 
 export interface RenderOptions {
   /**
@@ -42,13 +43,14 @@ export interface RenderOptions {
 
 /** Build a styled inline span (or plain text node) for a TEXT element. */
 const renderTextElement = (el: TextEl): Node => {
-  if (!hasStyling(el.params) && !el.params.url) {
+  const safeLink = el.params.url && isSafeRichUrl(el.params.url, 'href') ? el.params.url : undefined;
+  if (!hasStyling(el.params) && !safeLink) {
     return document.createTextNode(el.text);
   }
   let node: HTMLElement = document.createElement('span');
-  if (el.params.url) {
+  if (safeLink) {
     const a = document.createElement('a');
-    a.href = el.params.url;
+    a.href = safeLink;
     a.textContent = el.text;
     node = a;
   } else {
@@ -214,6 +216,7 @@ export const renderContent = (
 
     if (isAttachment(element)) {
       // Phase 1: emit a simple <img>; full attachment lifecycle in phase 2.
+      if (!isSafeRichUrl(element.params.url, 'src')) continue;
       const img = document.createElement('img');
       img.src = element.params.url;
       img.alt = '';

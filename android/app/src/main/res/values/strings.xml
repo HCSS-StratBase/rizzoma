@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rizzoma</string>
+    <string name="title_activity_main">Rizzoma</string>
+    <string name="package_name">work.hcss.rizzoma</string>
+    <string name="custom_url_scheme">work.hcss.rizzoma</string>
+</resources>

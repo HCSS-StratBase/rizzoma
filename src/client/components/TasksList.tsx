@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { api } from '../lib/api';
+import { api, ensureCsrf } from '../lib/api';
 import './TasksList.css';
 
 interface TasksListProps {
   isAuthed: boolean;
-  onSelectTask: (topicId: string) => void;
+  onSelectTask: (topicId: string, blipId: string) => void;
 }
 
 interface Task {
   id: string;
   topicId: string;
   topicTitle: string;
+  blipId: string;
   taskText: string;
   assignee?: string;
   authorName: string;
@@ -24,29 +25,45 @@ interface TasksResponse {
   total: number;
   pendingCount: number;
   completedCount: number;
+  hasMore: boolean;
+  nextOffset: number;
 }
 
 export function TasksList({ isAuthed, onSelectTask }: TasksListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [pendingCount, setPendingCount] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextOffset, setNextOffset] = useState(0);
 
-  const loadTasks = useCallback(async () => {
+  const loadTasks = useCallback(async (offset = 0, append = false) => {
     try {
-      setLoading(true);
-      const response = await api<TasksResponse>(`/api/tasks?filter=${filter}`);
+      if (append) setLoadingMore(true);
+      else setLoading(true);
+      const response = await api<TasksResponse>(`/api/tasks?filter=${filter}&limit=50&offset=${offset}`);
       if (response.ok && response.data && typeof response.data === 'object') {
         const data = response.data as TasksResponse;
-        setTasks(data.tasks);
+        setTasks((previous) => {
+          if (!append) return data.tasks;
+          const byId = new Map(previous.map((task) => [task.id, task]));
+          data.tasks.forEach((task) => byId.set(task.id, task));
+          return [...byId.values()];
+        });
         setPendingCount(data.pendingCount);
         setCompletedCount(data.completedCount);
+        setTotal(data.total);
+        setHasMore(Boolean(data.hasMore));
+        setNextOffset(Number.isFinite(data.nextOffset) ? data.nextOffset : offset + data.tasks.length);
       }
     } catch (error) {
       console.error('Failed to load tasks:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [filter]);
 
@@ -56,13 +73,14 @@ export function TasksList({ isAuthed, onSelectTask }: TasksListProps) {
       return;
     }
 
-    loadTasks();
+    void loadTasks(0, false);
   }, [isAuthed, loadTasks]);
 
   const toggleTask = async (taskId: string, _currentStatus: boolean) => {
     try {
+      await ensureCsrf();
       const response = await api<{ isCompleted: boolean }>(`/api/tasks/${taskId}/toggle`, { method: 'POST' });
-      if (response.ok && response.data && typeof response.data === 'object') {
+      if (response.ok && !response.queued && response.status === 200 && response.data && typeof response.data === 'object') {
         const data = response.data as { isCompleted: boolean };
         setTasks(prev => prev.map(t =>
           t.id === taskId ? { ...t, isCompleted: data.isCompleted } : t
@@ -129,7 +147,7 @@ export function TasksList({ isAuthed, onSelectTask }: TasksListProps) {
           className={filter === 'all' ? 'active' : ''}
           onClick={() => setFilter('all')}
         >
-          All ({tasks.length})
+          All ({total})
         </button>
         <button 
           className={filter === 'pending' ? 'active' : ''}
@@ -157,7 +175,7 @@ export function TasksList({ isAuthed, onSelectTask }: TasksListProps) {
             <div 
               key={task.id}
               className={`task-item ${task.isCompleted ? 'completed' : ''}`}
-              onClick={() => onSelectTask(task.topicId)}
+              onClick={() => onSelectTask(task.topicId, task.blipId)}
             >
               <div className="task-checkbox">
                 <input
@@ -182,6 +200,16 @@ export function TasksList({ isAuthed, onSelectTask }: TasksListProps) {
           ))
         )}
       </div>
+      {hasMore && (
+        <button
+          type="button"
+          className="tasks-load-more"
+          disabled={loadingMore}
+          onClick={() => void loadTasks(nextOffset, true)}
+        >
+          {loadingMore ? 'Loading…' : 'Load more'}
+        </button>
+      )}
     </div>
   );
 }

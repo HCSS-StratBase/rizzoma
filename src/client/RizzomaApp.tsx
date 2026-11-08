@@ -3,20 +3,35 @@ import { api } from './lib/api';
 import { RizzomaLayout } from './components/RizzomaLayout';
 import { Toast } from './components/Toast';
 import { FEATURES } from '@shared/featureFlags';
+import { AuthProvider, type User } from './hooks/useAuth';
+import { useCollaborationUnloadGuard } from './hooks/useCollaborationPending';
 import './RizzomaApp.css';
 
-type AuthedUser = { id: string; email?: string } | null;
+type AuthedUser = User | null;
+
+const CALENDAR_BANNER_DISMISSED_KEY = 'rizzoma:calendarBannerDismissed';
 
 export function RizzomaApp(): JSX.Element {
+  useCollaborationUnloadGuard();
   const [me, setMe] = useState<AuthedUser>(null);
   const [loading, setLoading] = useState(true);
+  const [showCalendarBanner, setShowCalendarBanner] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return window.localStorage.getItem(CALENDAR_BANNER_DISMISSED_KEY) !== '1';
+    } catch {
+      return true;
+    }
+  });
 
   // Bootstrap auth state
   useEffect(() => {
     void (async () => {
       try {
         const r = await api('/api/auth/me');
-        if (r.ok) setMe(r.data as AuthedUser);
+        if (r.ok) {
+          setMe(r.data as AuthedUser);
+        }
       } catch (error) {
         console.error('Auth check failed:', error);
       } finally {
@@ -24,6 +39,15 @@ export function RizzomaApp(): JSX.Element {
       }
     })();
   }, []);
+
+  const dismissCalendarBanner = () => {
+    setShowCalendarBanner(false);
+    try {
+      window.localStorage.setItem(CALENDAR_BANNER_DISMISSED_KEY, '1');
+    } catch {
+      // Best-effort persist; banner will reappear next session.
+    }
+  };
 
   if (loading) {
     return (
@@ -34,17 +58,37 @@ export function RizzomaApp(): JSX.Element {
   }
 
   return (
-    <div className="rizzoma-app">
-      {/* Yellow notification bar like real Rizzoma */}
-      {FEATURES.FOLLOW_GREEN && localStorage.getItem('rizzoma_show_cal_banner') === '1' && (
-        <div className="notification-bar">
-          Have your Rizzoma Tasks copied to your Google Calendar automatically. 
-          <a href="#" onClick={(e) => { e.preventDefault(); localStorage.removeItem('rizzoma_show_cal_banner'); window.location.reload(); }}>Disable extension</a>
-        </div>
-      )}
-      
-      <RizzomaLayout isAuthed={!!me} />
-      <Toast />
-    </div>
+    <AuthProvider user={me} onUserChange={setMe}>
+      <div className="rizzoma-app">
+        {/* Yellow notification bar like real Rizzoma — now with a
+            persistent dismiss (×) button mirroring the Install /
+            Notifications toast affordance. Dismissal stored in
+            localStorage so it sticks across reloads. */}
+        {FEATURES.FOLLOW_GREEN && showCalendarBanner && (
+          <div className="notification-bar">
+            <span className="notification-bar-text">
+              Have your Rizzoma Tasks copied to your Google Calendar automatically.{' '}
+              <a href="#">Disable extension</a>
+            </span>
+            <button
+              type="button"
+              className="notification-bar-dismiss"
+              aria-label="Dismiss calendar banner"
+              title="Dismiss"
+              onClick={dismissCalendarBanner}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        <RizzomaLayout
+          key={me?.id ? `authenticated:${me.id}` : 'anonymous'}
+          isAuthed={!!me}
+          user={me}
+        />
+        <Toast />
+      </div>
+    </AuthProvider>
   );
 }

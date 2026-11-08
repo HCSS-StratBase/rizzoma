@@ -1,0 +1,36 @@
+{
+  "topicId": "ff955fcd14cbbf6212be3a9f7001825a",
+  "base": "http://127.0.0.1:3000",
+  "timestamp": "2026-04-13T01:48:50.268Z",
+  "seeded": {
+    "threads": 5,
+    "rootReplies": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "totalBlipsCreated": 21
+  },
+  "initialState": {
+    "topLevelReplyCount": 0,
+    "totalBlipCount": 6,
+    "unreadCount": 8,
+    "collapsedRowCount": 5,
+    "nestedRailCount": 1
+  },
+  "finalState": {
+    "totalBlipCount": 7,
+    "expandedReplies": 2,
+    "deepestNestingLevel": 3
+  },
+  "assertions": {
+    "atLeastFiveRootThreads": false,
+    "seededBlipsPresent": false,
+    "someUnreadPresent": true,
+    "indentRailsRendered": true,
+    "expansionCreatesMoreBlips": true,
+    "deepNestingVisible": true
+  }
+}

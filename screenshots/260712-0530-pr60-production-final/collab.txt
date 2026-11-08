@@ -1,0 +1,20 @@
+➡️  [collab] base URL: https://138-201-62-161.nip.io
+➡️  [collab] user A: collab-a-1783826538530@example.com
+➡️  [collab] user B: collab-b-1783826538530@example.com
+➡️  [collab] A: signing in as collab-a-1783826538530@example.com
+➡️  [collab] A: register OK
+➡️  [collab] B: signing in as collab-b-1783826538530@example.com
+➡️  [collab] B: register OK
+➡️  [collab] created topic 36058a62 blip 26547255
+✅ [collab] Sockets connected on both contexts (BUG #58 — feature flags reachable)
+✅ [collab] A typed → 2 blip:update emits (BUG #57a — Y.js binding wired)
+✅ [collab] B received 1 new blip:update relay event(s)
+✅ [collab] A → B relay latency 39ms (budget ≤5000ms)
+✅ [collab] B's editor text reflects A's typing (BUG #57b — seed lock prevents divergence). Got: "Initial blip contentA"
+✅ [collab] B emitted 0 REST PUTs for A's remote edit
+✅ [collab] A's editor text reflects B's typing (bidirectional sync). Got: "Initial blip contentAB"
+✅ [collab] B caught up after reconnect (Z appears). Got: "Initial blip contentABZ"
+✅ [collab] B marked-read drained unread to 0 (was 1, now 0; BUG #56 fix)
+✅ [collab] Cache-Control: no-store on /api/topics. Got: "no-store"
+
+[collab] 10/10 checks passed

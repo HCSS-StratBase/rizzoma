@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendar Planner Preview</title>
+    <link rel="stylesheet" href="../shared-styles.css" />
+    <style>
+      body {
+        background:
+          radial-gradient(circle at top right, rgba(37, 99, 235, 0.14), transparent 28%),
+          linear-gradient(180deg, #f8fbfd, #eef3fb);
+      }
+      .timeline { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+      .milestone { display: grid; grid-template-columns: 92px 1fr; gap: 14px; align-items: center; padding: 14px; border-radius: 18px; background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(136, 156, 178, 0.18); box-shadow: 0 16px 30px rgba(15, 23, 42, 0.06); }
+      .when { display: inline-flex; align-items: center; justify-content: center; padding: 10px 0; border-radius: 14px; background: rgba(37, 99, 235, 0.12); color: #1d4ed8; font-weight: 800; }
+      .title { font-size: 15px; font-weight: 700; color: #183247; }
+      .meta { margin-top: 4px; font-size: 12px; color: #63778a; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script type="module">
+      import { createPreviewApp } from '../app-shell.js';
+
+      function renderTimeline(container, data) {
+        const timeline = document.createElement('div');
+        timeline.className = 'timeline';
+        const milestones = Array.isArray(data.milestones) ? data.milestones : [];
+        milestones.forEach((milestone) => {
+          const row = document.createElement('section');
+          row.className = 'milestone';
+          row.innerHTML = `
+            <div class="when">${milestone.when}</div>
+            <div>
+              <div class="title">${milestone.title}</div>
+              <div class="meta">Shared app shell milestone · ${milestone.id}</div>
+            </div>
+          `;
+          timeline.appendChild(row);
+        });
+        container.appendChild(timeline);
+      }
+
+      createPreviewApp({
+        title: 'Calendar Planner',
+        accent: '#2563eb',
+        description: 'This preview now uses the shared app-shell bootstrap instead of a hand-rolled bridge setup.',
+        toolbarNote: 'One small interaction updates the planner through the shared host bridge.',
+        actionLabel: 'Delay final milestone',
+        initialHeight: 500,
+        initialData: { milestones: [] },
+        render: renderTimeline,
+        onAction(data) {
+          const milestones = Array.isArray(data.milestones) ? data.milestones : [];
+          return {
+            milestones: milestones.map((milestone, idx) => (
+              idx === milestones.length - 1
+                ? { ...milestone, when: '16:30', title: `${milestone.title} (delayed)` }
+                : milestone
+            )),
+          };
+        },
+      });
+    </script>
+  </body>
+</html>

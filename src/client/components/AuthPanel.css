@@ -198,3 +198,10 @@
     min-height: 44px;
   }
 }
+
+@media (max-width: 600px) {
+  .auth-panel {
+    box-sizing: border-box;
+    padding-inline: 1rem;
+  }
+}

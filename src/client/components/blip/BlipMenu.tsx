@@ -5,6 +5,7 @@ import { DEFAULT_BG_COLORS } from '@shared/constants/textFormatting';
 import { useMobileContextSafe } from '../../contexts/MobileContext';
 import { BottomSheetMenu, createBlipMenuItems } from '../mobile/BottomSheetMenu';
 import './BlipMenu.css';
+import { runBlbSafeListAction } from '../editor/blbEditorInvariant';
 
 interface BlipMenuProps {
   isActive: boolean;
@@ -178,8 +179,8 @@ export function BlipMenu({
   const handleItalic = () => editor?.chain().focus().toggleItalic().run();
   const handleUnderline = () => editor?.chain().focus().toggleUnderline().run();
   const handleStrike = () => editor?.chain().focus().toggleStrike().run();
-  const handleBulletList = () => editor?.chain().focus().toggleBulletList().run();
-  const handleOrderedList = () => editor?.chain().focus().toggleOrderedList().run();
+  const handleBulletList = () => { if (editor) runBlbSafeListAction(editor, 'bullet'); };
+  const handleOrderedList = () => { if (editor) runBlbSafeListAction(editor, 'ordered'); };
   const handleUndo = () => editor?.chain().focus().undo().run();
   const handleRedo = () => editor?.chain().focus().redo().run();
   const handleClearFormat = () => editor?.chain().focus().clearNodes().unsetAllMarks().run();
@@ -209,7 +210,7 @@ export function BlipMenu({
   };
   const handleHighlight = (color: string) => {
     const chain = editor?.chain?.().focus?.();
-    const command = (chain as any)?.setHighlight ? chain.setHighlight({ color }) : null;
+    const command = (chain as any)?.setHighlight ? (chain as any).setHighlight({ color }) : null;
     if (command && typeof command.run === 'function') {
       command.run();
     }

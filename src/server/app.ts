@@ -14,26 +14,40 @@ import { requestId } from './middleware/requestId.js';
 import { csrfInit } from './middleware/csrf.js';
 import { sessionMiddleware } from './middleware/session.js';
 import http from 'http';
-import { initSocket } from './lib/socket.js';
+import { closeSocket, initSocket } from './lib/socket.js';
+import { yjsDocCache } from './lib/yjsDocCache.js';
+import { closeSessionStore } from './middleware/session.js';
+import { drainAndFlushForShutdown } from './lib/gracefulShutdown.js';
 import commentsRouter from './routes/comments.js';
 import wavesRouter from './routes/waves.js';
 import editorRouter from './routes/editor.js';
 import linksRouter from './routes/links.js';
 import blipsRouter from './routes/blips.js';
 import { inlineCommentsRouter } from './routes/inlineComments.js';
-import { uploadsPath, uploadsRouter } from './routes/uploads.js';
+import { uploadFilesRouter, uploadsRouter } from './routes/uploads.js';
 import healthRouter from './routes/health.js';
 import notificationsRouter from './routes/notifications.js';
+import gadgetsRouter from './routes/gadgets.js';
 import mentionsRouter from './routes/mentions.js';
 import tasksRouter from './routes/tasks.js';
+import { sessionCredentialGuard } from './middleware/sessionCredentials.js';
 
 const app = express();
+const isProd = process.env['NODE_ENV'] === 'production';
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      objectSrc: ["'none'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https:', ...(!isProd ? ['http:'] : [])],
+      frameSrc: ["'self'", 'https:', ...(!isProd ? ['http:'] : [])],
+    },
+  },
+}));
 // reflect origin from allowlist for credentialed requests
-const isProd = process.env['NODE_ENV'] === 'production';
-const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002,http://127.0.0.1:3003,http://127.0.0.1:3004,http://127.0.0.1:3005')
+const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://localhost:8788,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002,http://127.0.0.1:3003,http://127.0.0.1:3004,http://127.0.0.1:3005,http://127.0.0.1:8788')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
@@ -53,8 +67,11 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-// Sessions across API routes (auth, topics, comments)
-app.use(sessionMiddleware());
+// One shared session middleware instance backs both Express and Socket.IO.
+// Creating a second instance would create a second MemoryStore in local/test
+// mode, making authenticated HTTP and WebSocket identities disagree.
+const sharedSessionMiddleware = sessionMiddleware();
+app.use(sharedSessionMiddleware);
 app.use(requestId());
 app.use(requestLogger());
 app.use(csrfInit());
@@ -72,51 +89,118 @@ app.get('/api/deps', async (_req, res) => {
 
 // API routes
 app.use('/api/auth', authRouter);
+// Password reset increments a user credential generation atomically with the
+// password hash. Validate that generation before every non-auth data route so
+// old sessions fail closed even if eager Redis deletion is unavailable.
+app.use('/api', sessionCredentialGuard());
 app.use('/api/topics', topicsRouter);
 app.use('/api', commentsRouter);
 app.use('/api/waves', wavesRouter);
 app.use('/api/editor', editorRouter);
 // BUG #43 (2026-04-21): mount linksRouter at /api/links, NOT /api — a /api
-// mount makes DELETE /:from/:to match /api/blips/<id> (two path segments),
-// so blip deletion silently 404s forever.
+// mount made DELETE /:from/:to match /api/blips/<id> (two path segments),
+// so the gear-menu "Delete blip" silently 404'd forever. Keep this mount
+// specific.
 app.use('/api/links', linksRouter);
 app.use('/api/blips', blipsRouter);
 app.use('/api', inlineCommentsRouter);
 app.use('/api/uploads', uploadsRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/gadgets', gadgetsRouter);
 app.use('/api/mentions', mentionsRouter);
 app.use('/api/tasks', tasksRouter);
 
-// Static assets in production
+// Static assets and SPA fallback
 const staticDir = path.resolve(process.cwd(), 'dist', 'client');
+
 if (process.env['NODE_ENV'] === 'production') {
   app.use(express.static(staticDir));
 }
 
-app.get('/', (_req, res) => {
+// Upload bytes are guarded against the current wave role on every request.
+// Never expose the storage directory via express.static: a known URL must stop
+// working as soon as its reader logs out or loses access.
+app.use('/uploads', sessionCredentialGuard(), uploadFilesRouter);
+
+// SPA navigation handler (last registered — catch-all for non-/api, non-/uploads
+// GET requests). Uses the Express 5 / path-to-regexp v8 named-wildcard syntax
+// `/{*path}` which is the canonical form under the current stack — bare `*`
+// was dropped in path-to-regexp v8 and is no longer supported. This is not
+// a workaround; it's the correct syntax. See also Hard Gap #29 (2026-04-13).
+app.get('/{*path}', (_req, res, next) => {
+  // /api paths fall through to the API sub-routers mounted above. If none
+  // of them match, let Express's default 404 handler deal with it rather
+  // than swallow the request inside the SPA fallback.
+  if (_req.path.startsWith('/api')) {
+    return next();
+  }
+
   if (process.env['NODE_ENV'] === 'production') {
     res.sendFile(path.join(staticDir, 'index.html'));
-    return;
+  } else {
+    // In development, if they hit the reserved Rizzoma backend port, redirect
+    // them to the Vite UI port. 8788 is the canonical Rizzoma backend port
+    // (see src/server/config.ts and CLAUDE.md "Reserved Ports" section).
+    const host = _req.get('host') || 'localhost';
+    if (host.includes(':8788')) {
+      return res.redirect(`http://${host.replace(':8788', ':3000')}${_req.originalUrl}`);
+    }
+    // Fallback if not on the Rizzoma backend port but still in dev
+    res.status(404).send('Rizzoma Dev Server: Please use port 3000 for the UI');
   }
-  res.type('text').send('Rizzoma modern server running');
 });
-app.use('/uploads', express.static(uploadsPath, {
-  fallthrough: false,
-  maxAge: '1d',
-}));
 
 // Create HTTP server and bind socket.io for realtime events
 const server = http.createServer(app);
 
 // Initialize socket.io with same CORS policy as HTTP
-initSocket(server, allowedOrigins);
+initSocket(server, allowedOrigins, sharedSessionMiddleware);
 
-server.listen(config.port, () => {
+server.listen(config.port, config.host, () => {
   // eslint-disable-next-line no-console
-  console.log(`[server] listening on http://localhost:${config.port}`);
+  console.log(`[server] listening on http://${config.host}:${config.port}`);
   // Ensure CouchDB indexes exist (non-blocking, logged)
   ensureAllIndexes().catch(() => {});
 });
+
+let shuttingDown = false;
+async function shutdown(signal: NodeJS.Signals) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  // eslint-disable-next-line no-console
+  console.log(`[server] ${signal} received; draining connections and flushing collaborative state`);
+
+  const forceExit = setTimeout(() => {
+    // eslint-disable-next-line no-console
+    console.error('[server] graceful shutdown timed out');
+    process.exit(1);
+  }, 40_000);
+  forceExit.unref();
+
+  try {
+    const httpClosed = new Promise<void>((resolve, reject) => {
+      server.close(error => error ? reject(error) : resolve());
+    });
+    await drainAndFlushForShutdown({
+      closeSocket,
+      httpClosed,
+      flushCollaborativeState: () => yjsDocCache.shutdown(),
+      closeSessionStore,
+    });
+    clearTimeout(forceExit);
+    // eslint-disable-next-line no-console
+    console.log('[server] graceful shutdown complete');
+    process.exit(0);
+  } catch (error) {
+    clearTimeout(forceExit);
+    // eslint-disable-next-line no-console
+    console.error('[server] graceful shutdown failed:', error);
+    process.exit(1);
+  }
+}
+
+process.once('SIGTERM', () => { void shutdown('SIGTERM'); });
+process.once('SIGINT', () => { void shutdown('SIGINT'); });
 
 // Error handler must be last
 app.use(errorHandler);

@@ -1,12 +1,45 @@
 import { Router } from 'express';
 import { deleteDoc, find, findOne, getDoc, insertDoc, updateDoc, view } from '../lib/couch.js';
-import { emitEvent } from '../lib/socket.js';
+import {
+  clearBlipSeedAuthority,
+  disconnectWaveSockets,
+  emitEvent,
+  hasWritableBlipSocket,
+} from '../lib/socket.js';
 import { csrfProtect } from '../middleware/csrf.js';
+import { noStore } from '../middleware/noStore.js';
 import { requireAuth } from '../middleware/auth.js';
 import { CreateTopicSchema, UpdateTopicSchema } from '../schemas/topic.js';
+import { stampInitialAttribution, diffAndStampAttribution } from '../lib/sectionAttribution.js';
 import { computeWaveUnreadCounts } from '../lib/unread.js';
 import { sendInviteEmail } from '../services/email.js';
 import type { WaveParticipant } from '../schemas/wave.js';
+import {
+  buildAccessibleTopicSelector,
+  identityFromRequest,
+  normalizeSharingPolicy,
+  requireWaveAccess,
+} from '../lib/access.js';
+import { buildInviteUrl, createInviteToken, invitationTokenDocId, resolveInviteBaseUrl } from '../lib/invitations.js';
+import { inviteRateLimit } from '../middleware/inviteRateLimit.js';
+import {
+  reconcileStoredContentReferences,
+  validateStoredContentReferences,
+} from '../lib/contentReferences.js';
+import { readCollaborationProjection } from '../lib/collaborationProjection.js';
+import { yjsDocCache } from '../lib/yjsDocCache.js';
+import { ensureTopicBlbHtml, isTopicBlbHtml } from '../../shared/blbContent.js';
+
+const CONTENT_REFERENCE_ERRORS = new Set([
+  'invalid_mention_target',
+  'invalid_task_assignee',
+  'invalid_task_reference',
+  'task_reference_conflict',
+]);
+
+function yjsGenerationOf(value: unknown): number {
+  return Number.isSafeInteger(value) && Number(value) >= 0 ? Number(value) : 0;
+}
 
 // User type for lookups
 type User = {
@@ -23,6 +56,11 @@ const router = Router();
 
 // Schemas moved to ../schemas/topic
 
+type SectionAttributionEntry = {
+  authorId: string;
+  updatedAt: number;
+};
+
 type Topic = {
   _id?: string;
   type: 'topic';
@@ -31,7 +69,78 @@ type Topic = {
   authorId?: string;
   createdAt: number; // epoch millis
   updatedAt: number; // epoch millis
+  yjsGeneration?: number;
+  sectionAttribution?: Record<string, SectionAttributionEntry>;
+  shareLevel?: 'private' | 'link' | 'public';
+  allowComments?: boolean;
+  allowEdits?: boolean;
 };
+
+async function loadLiveTopic(id: string): Promise<Topic & { _id: string; _rev?: string }> {
+  const doc = await getDoc<unknown>(id) as (
+    Omit<Partial<Topic>, 'type'>
+    & { type?: unknown; _rev?: unknown; deleted?: unknown }
+  ) | null;
+  if (doc?.type === 'topic_tombstone' || doc?.deleted === true) throw new Error('410 topic_deleted');
+  if (
+    !doc
+    || doc.type !== 'topic'
+    || typeof doc._id !== 'string'
+    || typeof doc.title !== 'string'
+    || typeof doc.createdAt !== 'number'
+    || typeof doc.updatedAt !== 'number'
+  ) {
+    throw new Error('404 not_a_topic');
+  }
+  return doc as Topic & { _id: string; _rev?: string };
+}
+
+function respondTopicLookupFailure(error: unknown, res: any, requestId?: string): boolean {
+  const message = String((error as any)?.message || '');
+  if (message.startsWith('404')) {
+    res.status(404).json({ error: 'not_found', requestId });
+    return true;
+  }
+  if (message.startsWith('410')) {
+    res.status(410).json({ error: 'topic_deleted', requestId });
+    return true;
+  }
+  return false;
+}
+
+function isCouchRevisionConflict(error: unknown): boolean {
+  const err = error as { status?: unknown; statusCode?: unknown; message?: unknown; error?: unknown; reason?: unknown };
+  const status = Number(err?.statusCode ?? err?.status);
+  if (status === 409) return true;
+  const text = `${String(err?.message || '')} ${String(err?.error || '')} ${String(err?.reason || '')}`.toLowerCase();
+  return /\b409\b/.test(text) && text.includes('conflict');
+}
+
+type TopicTombstone = Omit<Topic, 'type'> & {
+  type: 'topic_tombstone';
+  _id: string;
+  _rev: string;
+  deleted: true;
+  deletedAt: number;
+  deletedBy: string;
+};
+
+async function cascadeDeletedTopicBlips(topicId: string, userId: string, deletedAt: number): Promise<number> {
+  const result = await find<any>({ type: 'blip', waveId: topicId }, { limit: 20000 });
+  let updated = 0;
+  for (const blip of result.docs || []) {
+    if (!blip?._id || blip.deleted) continue;
+    await updateDoc({
+      ...blip,
+      deleted: true,
+      deletedAt,
+      deletedBy: userId,
+      updatedAt: Math.max(Number(blip.updatedAt || 0), deletedAt),
+    });
+    updated += 1;
+  }
+  return updated;
+}
 
 type TopicFollow = {
   _id?: string;
@@ -52,7 +161,6 @@ type TopicListItem = {
 };
 
 const MAX_SNIPPET_LENGTH = 140;
-
 function stripHtml(input: string): string {
   return input.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
@@ -67,7 +175,12 @@ function buildSnippet(content?: string): string | undefined {
 }
 
 // GET /api/topics?limit=20
-router.get('/', async (req, res): Promise<void> => {
+router.get('/', noStore, async (req, res): Promise<void> => {
+  // no-store is required: this response embeds per-user unreadCount /
+  // totalCount fields that can change without the underlying topic
+  // documents changing, and Express's weak ETag would otherwise cause
+  // 304 replay of a stale cached body. See middleware/noStore.ts and
+  // the BUG #56 write-up (2026-04-15) for the full story.
   const limit = Math.min(Math.max(parseInt(String((req.query as any).limit ?? '20'), 10) || 20, 1), 100);
   const offset = Math.max(parseInt(String((req.query as any).offset ?? '0'), 10) || 0, 0);
   const bookmark = String((req.query as any).bookmark || '').trim() || undefined;
@@ -146,9 +259,8 @@ router.get('/', async (req, res): Promise<void> => {
 
   try {
     // Prefer modern topics docs via Mango query; create minimal index for sort
-    const sessUser = (req as any).session?.userId as string | undefined;
-    const selector: any = { type: 'topic' };
-    if (myOnly && sessUser) selector.authorId = sessUser;
+    const identity = identityFromRequest(req);
+    const selector: any = await buildAccessibleTopicSelector(identity, myOnly);
 
     let topics: Array<{ id: string | undefined; title: string; createdAt: number; updatedAt?: number }> = [];
     let hasMore = false;
@@ -261,31 +373,63 @@ async function recordTopicHistory(
 }
 
 // POST /api/topics
-router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
+router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): Promise<void> => {
   const userId = req.user!.id;
   try {
     const parsed = CreateTopicSchema.parse(req.body ?? {});
+    const initialContent = ensureTopicBlbHtml(parsed.title, parsed.content);
+    const participantEmails = [...new Set<string>(parsed.participants || [])];
+    const ownerEmail = String(req.user?.email || '').trim().toLowerCase();
+    if (ownerEmail && participantEmails.includes(ownerEmail)) {
+      res.status(400).json({ error: 'owner_already_participant' });
+      return;
+    }
     const now = Date.now();
+    // Seed initial sectionAttribution so a freshly-created topic
+    // already has per-block author entries. First edit after create
+    // will diff against this and only re-stamp changed blocks.
+    const initialAttribution = stampInitialAttribution({ html: initialContent, authorId: userId, now });
     const doc: Topic = {
       type: 'topic',
       title: parsed.title,
-      content: parsed.content,
+      content: initialContent,
       authorId: userId,
+      shareLevel: 'private',
+      allowComments: false,
+      allowEdits: false,
       createdAt: now,
       updatedAt: now,
+      yjsGeneration: 0,
+      sectionAttribution: initialAttribution,
     };
     const r = await insertDoc(doc);
     const topicId = r.id;
     void recordTopicHistory(topicId, doc.content || '', 'create', userId, req.user?.name);
 
-    // Handle participants if provided
-    const participantEmails = Array.isArray((req.body as any)?.participants)
-      ? (req.body as any).participants
-          .map((e: string) => String(e).trim().toLowerCase())
-          .filter((e: string) => e.length > 0 && e.includes('@'))
-      : [];
+    // Every topic has an explicit owner participant, even when the creator
+    // did not invite anyone during creation. Authorization must not depend on
+    // whether the optional participants input happened to be non-empty.
+    const ownerParticipantId = `participant:wave:${topicId}:user:${userId}`;
+    const ownerParticipant: WaveParticipant = {
+      _id: ownerParticipantId,
+      type: 'participant',
+      waveId: topicId,
+      userId,
+      email: req.user?.email || '',
+      role: 'owner',
+      invitedAt: now,
+      acceptedAt: now,
+      status: 'accepted',
+    };
+    await insertDoc(ownerParticipant as any).catch(() => undefined);
 
     let invitedCount = 0;
+    const invitations: Array<{
+      email: string;
+      ok: boolean;
+      status: 'sent' | 'delivery_failed' | 'error';
+      error?: string;
+    }> = [];
     if (participantEmails.length > 0) {
       // Get inviter info
       const inviterUser = await findOne<User>({ type: 'user', _id: userId }).catch(() => null)
@@ -293,80 +437,75 @@ router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => 
       const inviterName = inviterUser?.name || inviterUser?.email?.split('@')[0] || 'Someone';
       const inviterEmail = inviterUser?.email || '';
 
-      const baseUrl = process.env['APP_BASE_URL'] || `${req.protocol}://${req.headers.host}`;
-      const topicUrl = `${baseUrl}/#/topic/${topicId}`;
-
-      // Create owner participant record for the creator
-      const ownerParticipantId = `participant:wave:${topicId}:user:${userId}`;
-      const ownerParticipant: WaveParticipant = {
-        _id: ownerParticipantId,
-        type: 'participant',
-        waveId: topicId,
-        userId: userId,
-        email: inviterEmail,
-        role: 'owner',
-        invitedAt: now,
-        acceptedAt: now,
-        status: 'accepted',
-      };
-      await insertDoc(ownerParticipant as any).catch(() => undefined);
-
+      const baseUrl = resolveInviteBaseUrl(req);
       // Invite each participant
       for (const email of participantEmails) {
         try {
-          // Find or create user
-          let user = await findOne<User>({ type: 'user', email }).catch(() => null);
-          let newUser = false;
-
-          if (!user) {
-            const newUserDoc: User = {
-              type: 'user',
-              email,
-              name: email.split('@')[0],
-              createdAt: now,
-              updatedAt: now,
-            };
-            const userResult = await insertDoc(newUserDoc as any);
-            user = { ...newUserDoc, _id: userResult.id };
-            newUser = true;
-          }
+          // Resolve an existing account when possible. Do not create a
+          // credential-less `type:user` placeholder: that used to block the
+          // invitee's later registration with `email_in_use`.
+          const user = await findOne<User>({ type: 'user', email }).catch(() => null);
+          const targetUserId = user?._id || `invite:${email}`;
+          const invite = createInviteToken(now);
+          const topicUrl = buildInviteUrl(baseUrl, topicId, invite.token);
 
           // Create participant record
-          const participantId = `participant:wave:${topicId}:user:${user._id}`;
+          const participantId = `participant:wave:${topicId}:user:${targetUserId}`;
           const participant: WaveParticipant = {
             _id: participantId,
             type: 'participant',
             waveId: topicId,
-            userId: user._id!,
+            userId: targetUserId,
             email,
             role: 'editor',
             invitedBy: userId,
             invitedAt: now,
-            status: newUser ? 'pending' : 'accepted',
-            acceptedAt: newUser ? undefined : now,
+            status: 'pending',
+            inviteTokenHash: invite.tokenHash,
+            inviteExpiresAt: invite.expiresAt,
           };
-          await insertDoc(participant as any);
 
-          // Send invite email
-          await sendInviteEmail({
+          await insertDoc(participant as any);
+          const tokenDoc: any = {
+            _id: invitationTokenDocId(invite.tokenHash),
+            type: 'invitation_token',
+            tokenHash: invite.tokenHash,
+            participantId,
+            waveId: topicId,
+            email,
+            status: 'pending_delivery',
+            createdAt: now,
+            expiresAt: invite.expiresAt,
+          };
+          const tokenInsert = await insertDoc(tokenDoc);
+          tokenDoc._rev = tokenInsert.rev;
+
+          const delivery = await sendInviteEmail({
             inviterName,
             inviterEmail,
             topicTitle: doc.title,
             topicUrl,
             recipientEmail: email,
-            recipientName: user.name || undefined,
-          }).catch((err) => {
-            console.warn('[topics] invite email failed', { email, error: err?.message });
-          });
+            recipientName: user?.name || undefined,
+          }).catch((err) => ({ success: false, error: err?.message }));
+          if (!delivery.success) {
+            await updateDoc({ ...tokenDoc, status: 'failed', failedAt: Date.now() } as any).catch(() => undefined);
+            console.warn('[topics] invite email failed', { email, error: delivery.error });
+            invitations.push({ email, ok: false, status: 'delivery_failed', error: 'delivery_failed' });
+            continue;
+          }
+          await updateDoc({ ...tokenDoc, status: 'sent', deliveredAt: Date.now() } as any).catch(() => undefined);
 
           invitedCount++;
+          invitations.push({ email, ok: true, status: 'sent' });
         } catch (err: any) {
           console.error('[topics] invite participant error', { email, error: err?.message });
+          invitations.push({ email, ok: false, status: 'error', error: 'invite_setup_failed' });
         }
       }
     }
 
-    res.status(201).json({ id: topicId, rev: r.rev, participantsInvited: invitedCount });
+    res.status(201).json({ id: topicId, rev: r.rev, participantsInvited: invitedCount, invitations });
     try { emitEvent('topic:created', { id: topicId, title: doc.title, createdAt: doc.createdAt }); } catch {}
     return;
   } catch (e: any) {
@@ -383,48 +522,93 @@ router.post('/', csrfProtect(), requireAuth, async (req, res): Promise<void> => 
 router.get('/:id', async (req, res): Promise<void> => {
   try {
     const id = req.params['id'] as string;
-    const doc = await getDoc<Topic>(id);
-    let authorName = 'User';
-    let authorAvatar = '/s/img/user/anonim.png';
+    const doc = await loadLiveTopic(id);
+    const access = await requireWaveAccess(req, res, id, 'read', doc);
+    if (!access) return;
+    let authorName: string | undefined;
+    let authorAvatar: string | undefined;
     if (doc.authorId) {
       try {
         const author = await getDoc<User>(doc.authorId);
-        if (author?.name) {
-          authorName = author.name;
-        } else if (author?.email) {
-          authorName = author.email.split('@')[0];
+        if (author && author.type === 'user') {
+          authorName = author.name || (author.email ? author.email.split('@')[0] : undefined);
+          authorAvatar = author.avatar ?? undefined;
         }
-        if (author?.avatar) {
-          authorAvatar = author.avatar;
-        }
-      } catch {}
+      } catch { /* ignore */ }
+    }
+    // Hydrate section attribution with per-authorId name lookups so the
+    // client can render each block badge without N round-trips.
+    let sectionAttributionHydrated:
+      | Record<string, { authorId: string; authorName?: string; authorAvatar?: string; updatedAt: number }>
+      | undefined;
+    if (doc.sectionAttribution && Object.keys(doc.sectionAttribution).length > 0) {
+      const uniqueAuthorIds = Array.from(new Set(Object.values(doc.sectionAttribution).map((e) => e.authorId).filter(Boolean)));
+      const authorLookupEntries = await Promise.all(
+        uniqueAuthorIds.map(async (aid) => {
+          try {
+            const u = await getDoc<User>(aid);
+            if (u && u.type === 'user') {
+              return [aid, {
+                name: u.name || (u.email ? u.email.split('@')[0] : undefined),
+                avatar: u.avatar ?? undefined,
+              }] as const;
+            }
+          } catch { /* ignore */ }
+          return [aid, { name: undefined, avatar: undefined }] as const;
+        })
+      );
+      const authorLookup = Object.fromEntries(authorLookupEntries);
+      sectionAttributionHydrated = {};
+      for (const [blockHash, entry] of Object.entries(doc.sectionAttribution)) {
+        const lookup = authorLookup[entry.authorId];
+        sectionAttributionHydrated[blockHash] = {
+          authorId: entry.authorId,
+          authorName: lookup?.name,
+          authorAvatar: lookup?.avatar,
+          updatedAt: entry.updatedAt,
+        };
+      }
     }
     res.json({
       id: doc._id,
       title: doc.title,
       content: doc.content,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      yjsGeneration: yjsGenerationOf(doc.yjsGeneration),
       authorId: doc.authorId,
       authorName,
       authorAvatar,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
+      sectionAttribution: sectionAttributionHydrated,
+      sharing: normalizeSharingPolicy(doc),
+      permissions: {
+        role: access.role,
+        canRead: access.canRead,
+        canComment: access.canComment,
+        canEdit: access.canEdit,
+        canManage: access.canManage,
+      },
     });
     return;
   } catch (e: any) {
-    if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
-    res.status(500).json({ error: e?.message || 'couch_error', requestId: (req as any)?.id });
+    if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
+    res.status(500).json({ error: e?.message || 'topic_read_error', requestId: (req as any)?.id });
     return;
   }
 });
 
 // POST /api/topics/:id/follow
-router.post('/:id/follow', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
+router.post('/:id/follow', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const topicId = req.params['id'] as string;
   try {
-    await getDoc<Topic>(topicId);
+    const topic = await loadLiveTopic(topicId);
+    const access = await requireWaveAccess(req, res, topicId, 'read', topic);
+    if (!access) return;
   } catch (e: any) {
-    if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
+    if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
+    res.status(500).json({ error: e?.message || 'follow_access_error', requestId: (req as any)?.id });
+    return;
   }
 
   const followId = `topic_follow:${userId}:${topicId}`;
@@ -458,12 +642,15 @@ router.post('/:id/follow', csrfProtect(), requireAuth, async (req, res): Promise
 });
 
 // POST /api/topics/:id/unfollow
-router.post('/:id/unfollow', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
+router.post('/:id/unfollow', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   const userId = req.user!.id;
   const topicId = req.params['id'] as string;
   const followId = `topic_follow:${userId}:${topicId}`;
 
   try {
+    const topic = await loadLiveTopic(topicId);
+    const access = await requireWaveAccess(req, res, topicId, 'read', topic);
+    if (!access) return;
     const existing = await getDoc<TopicFollow & { _rev?: string }>(followId).catch(() => null);
     if (!existing || !existing._rev) {
       res.json({ ok: true, topicId, isFollowed: false });
@@ -473,58 +660,188 @@ router.post('/:id/unfollow', csrfProtect(), requireAuth, async (req, res): Promi
     res.json({ ok: true, topicId, isFollowed: false });
     return;
   } catch (e: any) {
-    if (String(e?.message).startsWith('404')) {
-      res.json({ ok: true, topicId, isFollowed: false });
-      return;
-    }
+    if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
     res.status(500).json({ error: e?.message || 'unfollow_error', requestId: (req as any)?.id });
     return;
   }
 });
 
 // PATCH /api/topics/:id
-router.patch('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
+router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   try {
     const id = req.params['id'] as string;
     const payload = UpdateTopicSchema.parse(req.body ?? {});
-    const existing = await getDoc<Topic & { _rev: string }>(id);
-    // All authenticated users can edit topics (collaborative editing, like original Rizzoma)
-    const next: Topic & { _rev?: string } = {
-      ...existing,
-      title: payload.title ?? existing.title,
-      content: payload.content ?? existing.content,
-      updatedAt: Date.now(),
-    };
-    const r = await updateDoc(next as any);
-    void recordTopicHistory(id, next.content || '', 'update', req.user!.id, req.user?.name);
+    const collaborationProjection = payload.content !== undefined
+      ? readCollaborationProjection(req)
+      : null;
+    const accessTopic = await loadLiveTopic(id);
+    const access = await requireWaveAccess(req, res, id, 'edit', accessTopic);
+    if (!access) return;
+    const result = await yjsDocCache.runExclusive(id, async () => {
+      const existing = await loadLiveTopic(id);
+      const nextTitle = payload.title ?? existing.title;
+      // The title has one source of truth: topic.title. A title-only patch
+      // therefore also rewrites the document H1 and is an external content
+      // replacement subject to the same Yjs generation boundary.
+      const contentReplacementRequested = payload.content !== undefined || nextTitle !== existing.title;
+      const requestedContent = payload.content ?? existing.content ?? '';
+      if (
+        payload.content !== undefined
+        && collaborationProjection !== null
+        && !isTopicBlbHtml(nextTitle, requestedContent)
+      ) {
+        throw new Error('invalid_blb_structure');
+      }
+      const nextContent = contentReplacementRequested
+        ? (
+          collaborationProjection !== null
+            ? requestedContent
+            : ensureTopicBlbHtml(nextTitle, requestedContent)
+        )
+        : (existing.content ?? '');
+      const references = contentReplacementRequested
+        ? await validateStoredContentReferences(id, id, nextContent)
+        : null;
+      const currentGeneration = yjsGenerationOf(existing.yjsGeneration);
+      let nextGeneration = currentGeneration;
+      if (contentReplacementRequested) {
+        const liveProjection = collaborationProjection !== null
+          && hasWritableBlipSocket(id, String((req as any).sessionID || ''), currentGeneration);
+        if (collaborationProjection !== null && !liveProjection) {
+          throw new Error('collaboration_projection_session_missing');
+        } else if (collaborationProjection !== null) {
+          if (collaborationProjection.generation !== currentGeneration) {
+            throw new Error('collaboration_generation_mismatch');
+          }
+          if (!yjsDocCache.matchesStateDigest(
+            id,
+            collaborationProjection.digest,
+            currentGeneration,
+          )) {
+            throw new Error('collaboration_projection_stale');
+          }
+          await yjsDocCache.persistCurrentLocked(id, currentGeneration);
+        } else {
+          await yjsDocCache.clearForExternalReplacement(id);
+          clearBlipSeedAuthority(id);
+          nextGeneration = currentGeneration + 1;
+        }
+      }
+      const contentChanged = nextContent !== existing.content;
+      const titleChanged = nextTitle !== existing.title;
+      const generationChanged = nextGeneration !== currentGeneration;
+      if (!titleChanged && !contentChanged && !generationChanged) {
+        if (references) await reconcileStoredContentReferences(id, id, references, req.user!);
+        return { r: { id: existing._id, rev: existing._rev }, next: existing, changed: false };
+      }
+      const nowPatch = Date.now();
+      // Authorship is server authority. Ignore any unknown client sidecar and
+      // derive changed blocks from the stored old/new content plus this session.
+      let nextSectionAttribution = existing.sectionAttribution;
+      if (contentChanged) {
+        nextSectionAttribution = diffAndStampAttribution({
+          prevAttribution: existing.sectionAttribution,
+          oldHtml: existing.content || '',
+          newHtml: nextContent,
+          currentUserId: req.user!.id,
+          now: nowPatch,
+        });
+      }
+      const next: Topic & { _rev?: string } = {
+        ...existing,
+        title: nextTitle,
+        content: nextContent,
+        yjsGeneration: nextGeneration,
+        sectionAttribution: nextSectionAttribution,
+        updatedAt: nowPatch,
+      };
+      const r = await updateDoc(next as any);
+      if (references) await reconcileStoredContentReferences(id, id, references, req.user!);
+      return { r, next, changed: titleChanged || contentChanged };
+    });
+    const { r, next, changed } = result;
     res.json({ id: r['id'], rev: r['rev'] });
-    try { emitEvent('topic:updated', { id: r['id'], title: next.title, updatedAt: next.updatedAt }); } catch {}
+    if (changed) {
+      try { emitEvent('topic:updated', { id: r['id'], title: next.title, updatedAt: next.updatedAt }); } catch {}
+    }
     return;
   } catch (e: any) {
+    if (
+      String(e?.message) === 'invalid_collaboration_state_digest'
+      || String(e?.message) === 'invalid_collaboration_generation'
+      || String(e?.message) === 'invalid_blb_structure'
+    ) {
+      res.status(400).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
+    if (
+      String(e?.message) === 'collaboration_active'
+      || String(e?.message) === 'collaboration_pending_projection'
+      || String(e?.message) === 'collaboration_projection_stale'
+      || String(e?.message) === 'collaboration_projection_session_missing'
+      || String(e?.message) === 'collaboration_generation_mismatch'
+    ) {
+      res.status(409).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
     if (e?.issues) { res.status(400).json({ error: 'validation_error', issues: e.issues, requestId: (req as any)?.id }); return; }
-    if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
+    if (CONTENT_REFERENCE_ERRORS.has(String(e?.message || ''))) {
+      res.status(400).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
+    if (isCouchRevisionConflict(e)) {
+      res.status(409).json({ error: 'topic_revision_conflict', requestId: (req as any)?.id });
+      return;
+    }
+    if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
     res.status(500).json({ error: e?.message || 'update_error', requestId: (req as any)?.id });
     return;
   }
 });
 
 // DELETE /api/topics/:id
-router.delete('/:id', csrfProtect(), requireAuth, async (req, res): Promise<void> => {
-  const userId = req.user!.id;
+router.delete('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
   try {
     const id = req.params['id'] as string;
-    const doc = await getDoc<{ _rev: string } & Topic>(id);
-    if ((doc as any).authorId && (doc as any).authorId !== userId) {
-      console.warn('[topics] forbidden delete', { topicId: id, userId, ownerId: (doc as any).authorId, requestId: (req as any)?.id });
-      res.status(403).json({ error: 'forbidden', requestId: (req as any)?.id });
+    const doc = await loadLiveTopic(id);
+    if (!doc._rev) {
+      res.status(409).json({ error: 'topic_revision_missing', requestId: (req as any)?.id });
       return;
     }
-    const r = await deleteDoc(id, (doc as any)._rev);
-    res.json({ id: r['id'], rev: r['rev'] });
-    try { emitEvent('topic:deleted', { id: r['id'] }); } catch {}
+    const access = await requireWaveAccess(req, res, id, 'manage', doc);
+    if (!access) return;
+    const deletedAt = Date.now();
+    // Do not physically delete the metadata document. `resolveWaveAccess`
+    // intentionally maps a missing wave document to legacy public-read-only;
+    // retaining this explicit private tombstone prevents surviving blips from
+    // ever crossing that compatibility boundary after deletion.
+    const tombstone: TopicTombstone = {
+      ...(doc as any),
+      _id: id,
+      _rev: (doc as any)._rev,
+      type: 'topic_tombstone',
+      deleted: true,
+      deletedAt,
+      deletedBy: req.user!.id,
+      title: '',
+      content: '',
+      sectionAttribution: undefined,
+      shareLevel: 'private',
+      allowComments: false,
+      allowEdits: false,
+      updatedAt: deletedAt,
+    };
+    const r = await updateDoc(tombstone as any);
+    disconnectWaveSockets(id);
+    // The tombstone is the security boundary. Cascade after it has landed so
+    // even an interrupted cleanup cannot expose a leftover blip. A failed
+    // cascade is surfaced as an error, while the topic remains inaccessible.
+    const deletedBlips = await cascadeDeletedTopicBlips(id, req.user!.id, deletedAt);
+    res.json({ id: r['id'], rev: r['rev'], deleted: true, deletedBlips });
+    try { emitEvent('topic:deleted', { id: r['id'], deletedAt }); } catch {}
     return;
   } catch (e: any) {
-    if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
+    if (respondTopicLookupFailure(e, res, (req as any)?.id)) return;
     res.status(500).json({ error: e?.message || 'delete_error', requestId: (req as any)?.id });
     return;
   }

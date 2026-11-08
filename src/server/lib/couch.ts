@@ -11,9 +11,22 @@ function buildAuth(urlString: string): { base: string; header?: string } {
   return { base: urlString.replace(/\/$/, ''), header: undefined };
 }
 
-async function httpJson<T>(method: string, url: string, body?: unknown, authHeader?: string): Promise<T> {
+function requestTimeoutMs(override?: number): number {
+  if (override !== undefined) return override;
+  const configured = Number(process.env['COUCHDB_REQUEST_TIMEOUT_MS'] || 30_000);
+  return Number.isFinite(configured) && configured > 0 ? configured : 30_000;
+}
+
+async function httpJson<T>(
+  method: string,
+  url: string,
+  body?: unknown,
+  authHeader?: string,
+  timeoutMs?: number,
+): Promise<T> {
   const res = await fetch(url, {
     method,
+    signal: AbortSignal.timeout(requestTimeoutMs(timeoutMs)),
     headers: {
       'content-type': 'application/json',
       ...(authHeader ? { Authorization: authHeader } : {}),
@@ -35,6 +48,12 @@ export async function couchDbInfo() {
   return httpJson<any>('GET', base, undefined, header);
 }
 
+export async function couchDatabaseInfo(timeoutMs?: number) {
+  const { base, header } = buildAuth(config.couchDbUrl);
+  const url = `${base}/${encodeURIComponent(config.couchDbName)}`;
+  return httpJson<{ db_name?: string }>('GET', url, undefined, header, timeoutMs);
+}
+
 export async function view<T = any>(design: string, viewName: string, params?: Record<string, string | number | boolean>) {
   const { base, header } = buildAuth(config.couchDbUrl);
   const qp = params
@@ -44,15 +63,16 @@ export async function view<T = any>(design: string, viewName: string, params?: R
   return httpJson<{ rows: Array<{ id: string; key: any; value: any; doc?: T }> }>('GET', url, undefined, header);
 }
 
-export async function insertDoc<T extends Record<string, any>>(doc: T) {
+export async function insertDoc<T extends Record<string, any>>(doc: T, timeoutMs?: number) {
   const { base, header } = buildAuth(config.couchDbUrl);
   const url = `${base}/${encodeURIComponent(config.couchDbName)}`;
-  return httpJson<{ ok: boolean; id: string; rev: string }>('POST', url, doc, header);
+  return httpJson<{ ok: boolean; id: string; rev: string }>('POST', url, doc, header, timeoutMs);
 }
 
 export async function find<T = any>(
   selector: Record<string, any>,
-  options?: { limit?: number; skip?: number; sort?: Array<Record<string, 'asc' | 'desc'>>; bookmark?: string; use_index?: string | [string, string] }
+  options?: { limit?: number; skip?: number; sort?: Array<Record<string, 'asc' | 'desc'>>; bookmark?: string; use_index?: string | [string, string] },
+  timeoutMs?: number,
 ) {
   const { base, header } = buildAuth(config.couchDbUrl);
   const url = `${base}/${encodeURIComponent(config.couchDbName)}/_find`;
@@ -62,7 +82,7 @@ export async function find<T = any>(
   if (options?.sort) body.sort = options.sort;
   if (options?.bookmark) body.bookmark = options.bookmark;
   if (options?.use_index) body.use_index = options.use_index;
-  return httpJson<{ docs: T[]; bookmark?: string }>('POST', url, body, header);
+  return httpJson<{ docs: T[]; bookmark?: string }>('POST', url, body, header, timeoutMs);
 }
 
 export async function createIndex(fields: string[], name?: string) {
@@ -93,6 +113,22 @@ const ALL_INDEXES: Array<{ fields: string[]; name: string }> = [
   // Profile showed 271ms for this single query — the dominant chunk of
   // Bug A's 322ms Ctrl+Enter latency. Adding the index drops it to <30ms.
   { fields: ['type', 'waveId'], name: 'idx_participant_by_wave' },
+  { fields: ['type', 'blipId'], name: 'idx_inline_comment_blip' },
+  { fields: ['type', 'mentionedUserId', 'createdAt'], name: 'idx_mention_user_createdAt' },
+  { fields: ['type', 'mentionedUserId', 'isRead'], name: 'idx_mention_user_isRead' },
+  { fields: ['type', 'mentionedUserId', 'isRead', 'createdAt'], name: 'idx_mention_user_isRead_createdAt' },
+  { fields: ['type', 'blipId'], name: 'idx_mention_blip' },
+  { fields: ['type', 'assigneeId', 'createdAt'], name: 'idx_task_assignee_createdAt' },
+  { fields: ['type', 'assigneeId', 'isCompleted'], name: 'idx_task_assignee_isCompleted' },
+  { fields: ['type', 'assigneeId', 'isCompleted', 'createdAt'], name: 'idx_task_assignee_isCompleted_createdAt' },
+  { fields: ['type', 'blipId', 'createdAt'], name: 'idx_task_blip_createdAt' },
+  { fields: ['type', 'waveId', 'blipId', 'createdAt'], name: 'idx_task_wave_blip_createdAt' },
+  { fields: ['type', 'waveId', 'userId'], name: 'idx_participant_wave_user' },
+  { fields: ['type', 'waveId', 'email'], name: 'idx_participant_wave_email' },
+  { fields: ['type', 'userId', 'waveId'], name: 'idx_participant_user_wave' },
+  { fields: ['type', 'email', 'waveId'], name: 'idx_participant_email_wave' },
+  { fields: ['type', 'shareLevel', 'updatedAt'], name: 'idx_topic_share_updatedAt' },
+  { fields: ['type', 'passwordReset.tokenHash'], name: 'idx_user_password_reset_token' },
 ];
 
 /**
@@ -115,16 +151,38 @@ export async function getDoc<T = any>(id: string) {
   return httpJson<T>('GET', url, undefined, header);
 }
 
-export async function findOne<T = any>(selector: Record<string, any>) {
-  const r = await find<T>(selector, { limit: 1 });
+/**
+ * Batch-fetch multiple docs by ID in a single `_all_docs?include_docs=true`
+ * request. Missing IDs are silently omitted from the result. Useful for
+ * hydrating join-like lookups (e.g. topic titles for a list of mentions)
+ * without firing N serial GETs.
+ */
+export async function getDocsById<T = any>(ids: string[]): Promise<Record<string, T>> {
+  if (!ids.length) return {};
+  const unique = [...new Set(ids)];
+  const { base, header } = buildAuth(config.couchDbUrl);
+  const url = `${base}/${encodeURIComponent(config.couchDbName)}/_all_docs?include_docs=true`;
+  const body = { keys: unique };
+  const resp = await httpJson<{ rows: Array<{ id: string; doc: T | null; error?: string }> }>(
+    'POST', url, body, header,
+  );
+  const out: Record<string, T> = {};
+  for (const row of resp.rows || []) {
+    if (row.doc && !row.error) out[row.id] = row.doc;
+  }
+  return out;
+}
+
+export async function findOne<T = any>(selector: Record<string, any>, timeoutMs?: number) {
+  const r = await find<T>(selector, { limit: 1 }, timeoutMs);
   return r.docs[0] || null;
 }
 
-export async function updateDoc<T extends { _id?: string; _rev?: string }>(doc: T) {
+export async function updateDoc<T extends { _id?: string; _rev?: string }>(doc: T, timeoutMs?: number) {
   if (!doc._id) throw new Error('missing _id');
   const { base, header } = buildAuth(config.couchDbUrl);
   const url = `${base}/${encodeURIComponent(config.couchDbName)}/${encodeURIComponent(doc._id)}`;
-  return httpJson<{ ok: boolean; id: string; rev: string }>('PUT', url, doc, header);
+  return httpJson<{ ok: boolean; id: string; rev: string }>('PUT', url, doc, header, timeoutMs);
 }
 
 export async function deleteDoc(id: string, rev: string) {

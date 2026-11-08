@@ -1,12 +1,14 @@
 /* RizzomaTopicDetail - Matching real Rizzoma */
 
 .rizzoma-topic-detail {
-  background: white;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.98), rgba(241, 247, 252, 0.94) 30%, rgba(226, 235, 244, 0.98) 100%);
   height: 100%;
   display: flex;
   flex-direction: column;
   font-size: 14px;
-  color: #333;
+  color: #223447;
+  padding-bottom: 20px;
 }
 
 .rizzoma-topic-detail.loading {
@@ -31,6 +33,25 @@
   flex-shrink: 0;
   position: relative;
   z-index: 4;
+}
+
+.topic-attribution-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.topic-attribution-name {
+  font-weight: 600;
+  color: #334155;
+}
+
+.topic-attribution-date {
+  color: #8a9aad;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 .collab-btn {
@@ -251,14 +272,21 @@
    Contains: toolbar + content + child blips + reply input
 ======================================== */
 .topic-meta-blip {
-  flex: 1;
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
   background: transparent;
   border: none;
   border-radius: 0;
-  margin: 0;
+  width: min(1160px, calc(100% - 24px));
+  margin: 12px auto 16px;
   overflow: hidden;
+  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.09);
+  border: 1px solid rgba(148, 169, 192, 0.24);
+  background: linear-gradient(180deg, rgba(255,255,255,0.99), rgba(246,250,253,0.97));
+  backdrop-filter: blur(4px);
+  border-radius: 10px;
+  max-height: calc(100vh - 120px);
 }
 
 .topic-meta-blip.edit-mode,
@@ -286,9 +314,31 @@
 .topic-avatar-small {
   width: 24px;
   height: 24px;
-  border-radius: 3px;
+  border-radius: 8px;
   border: 1px solid #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(15,23,42,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.topic-avatar-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.topic-avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.topic-avatar-small.fallback {
+  font-size: 10px;
 }
 
 .topic-avatar-small.fallback {
@@ -301,7 +351,7 @@
 
 .topic-date-small {
   font-size: 11px;
-  color: #888;
+  color: #7b8ca0;
   white-space: nowrap;
 }
 
@@ -314,9 +364,16 @@
 
 /* Meta-blip body - one scrollable container for topic + children */
 .topic-blip-body {
-  flex: 1;
+  flex: 0 1 auto;
   overflow-y: auto;
-  background: white;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.985), rgba(248, 251, 254, 0.98));
+  min-height: 0;
+  border: 1px solid rgba(173, 190, 208, 0.34);
+  border-radius: 18px;
+  box-shadow:
+    0 18px 38px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
 /* Child blips area - seamless continuation of topic content (BLB: unified container) */
@@ -324,6 +381,53 @@
   padding: 0 24px 16px 24px;
   background: white;
   /* Same background as content - appears as ONE container */
+}
+
+/* Hide the leading `•` glyph on reply/collapsed rows rendered
+   under the topic body. The topic content above already renders
+   disc bullets for its own <li> items via list-style, so an
+   additional hard-coded bullet span on each reply row reads as
+   an "orphan bullet" floating under the indented list (2026-04-14
+   task #39 user smoke test). Scoped tightly so it only applies
+   inside the topic reply area — regular subblip contexts keep
+   their bullet prefix. */
+.topic-blip-children .blip-collapsed-row .blip-bullet {
+  display: none;
+}
+
+/* Same orphan-bullet cleanup for the EXPANDED inline child view.
+   RizzomaBlip renders a hard-coded `•` span inside .blip-content-row
+   of every non-root blip (see RizzomaBlip.tsx:2072). When an inline
+   child is expanded inside the topic body via .inline-child-portal,
+   that bullet sits to the left of the child's actual content list
+   and reads as another stray glyph next to the child's own <ul>
+   markers. Hide it for any inline-child-expanded anywhere. */
+.inline-child-expanded .blip-content-row > .blip-bullet {
+  display: none;
+}
+
+/* Expanded inline child's own bulleted content should render as a
+   LEVEL-1 list (disc markers, minimal indent) instead of
+   inheriting nested-depth styling (circle markers, cumulative
+   padding). The child lives inside `.inline-child-expanded` which
+   is a DOM descendant of the parent <li>, so CSS sees it as depth
+   2, but the user reads the expansion as a new standalone thread
+   at the parent line's own level — "don't indent the child's
+   content further than the line it's anchored to". */
+.inline-child-expanded .blip-text ul,
+.inline-child-expanded .blip-text ol {
+  padding-left: 28px;
+  margin: 0;
+  list-style-type: disc;
+}
+.inline-child-expanded .blip-text ol {
+  list-style-type: decimal;
+}
+.inline-child-expanded .blip-text ul ul,
+.inline-child-expanded .blip-text ol ol,
+.inline-child-expanded .blip-text ul ol,
+.inline-child-expanded .blip-text ol ul {
+  list-style-type: circle;
 }
 
 .empty-state-inline {
@@ -389,12 +493,15 @@
 /* BLB: Topic content editing (topic is meta-blip) */
 .topic-content-edit {
   width: 100%;
-  border: 1px solid #5CAAF7;
-  border-radius: 3px;
-  padding: 8px 12px;
-  background: #fafbfc;
+  border: 1px solid rgba(92, 170, 247, 0.64);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.998), rgba(244,249,253,0.992));
   box-sizing: border-box;
   min-height: 40px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    0 8px 18px rgba(69, 126, 173, 0.08);
 }
 
 .topic-content-edit:focus-within {
@@ -402,24 +509,51 @@
   box-shadow: 0 0 0 3px rgba(92, 170, 247, 0.2);
 }
 
+.topic-content-edit .editor-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: -12px -14px 10px -14px;
+  border-radius: 12px 12px 0 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
 .topic-content-edit .ProseMirror {
   outline: none;
   min-height: 24px;
+  color: #1e3448;
 }
 
 .topic-content-edit .ProseMirror h1 {
   margin: 0;
-  font-size: 18px;
+  font-size: 21px;
   font-weight: bold;
-  color: #222;
-  line-height: 1.3;
+  color: #18324a;
+  line-height: 1.24;
 }
 
 .topic-content-edit .ProseMirror p {
-  margin: 8px 0 0 0;
+  margin: 9px 0 0 0;
   font-size: 14px;
-  color: #333;
-  line-height: 1.5;
+  color: #294158;
+  line-height: 1.58;
+}
+
+.topic-content-edit .ProseMirror ul,
+.topic-content-edit .ProseMirror ol {
+  margin: 12px 0 0;
+  padding-left: 28px;
+  color: #223b51;
+}
+
+.topic-content-edit .ProseMirror li {
+  margin: 5px 0;
+}
+
+.topic-content-edit .ProseMirror li p {
+  margin: 0;
 }
 
 .topic-content-edit .ProseMirror p:first-child {
@@ -429,45 +563,297 @@
 /* Topic content view (read-only mode) */
 .topic-content-view {
   width: 100%;
+  padding: 10px 0 16px;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(250, 253, 255, 0.985), rgba(242, 248, 252, 0.96));
+  border: 1px solid rgba(186, 202, 220, 0.52);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.94);
 }
 
-.topic-content-view:hover {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 4px;
+/* Parity fix (2026-04-13): per-section author badges on the topic body.
+   Each top-level section of the rendered topic.content HTML is wrapped
+   in .topic-section-wrapped after mount (see RizzomaTopicDetail.tsx
+   innerHTML effect). The wrapper is a flex row with the section content
+   on the left and a small author-column badge on the right — matches
+   the legacy Rizzoma reply-row pattern. Works on the current
+   single-author topic data model; when we add per-paragraph attribution
+   via Y.js awareness, the data source changes but this CSS stays. */
+.topic-section-wrapped {
+  position: relative;
+  margin: 4px 0;
+  /* Left padding keeps 18px for body alignment with the frame edge;
+     right padding reserves the 44px right column where the author
+     badge sits absolutely positioned at right:0. Using absolute
+     positioning for the badge (rather than a flex end-slot) gives
+     every wrapped section the same right-column X position, so
+     avatars line up vertically across all rows no matter how short
+     or long the paragraph content is. */
+  padding: 0 44px 0 18px;
 }
 
+.topic-section-wrapped > .topic-section-author {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+/* Collapse right padding on EVERY stacked parent between the
+   topic card border and the `.topic-content-view` so the per-row
+   author-badge column can sit flush against the card edge. Without
+   this, ~38-43px of cumulative padding (.topic-content-view 12px +
+   .blip-content-row 12px + .topic-blip-content 14px) was pulling
+   the badge column visibly inward despite per-row right:0 already
+   being honored. This override is scoped to topic-root renders
+   only (`.topic-blip-content` isn't used outside topic-root) so
+   regular blip chrome elsewhere still keeps its padding. */
+/* Boost specificity so this override wins against the more-
+   specific `.blip-content { padding: 12px 14px 14px }` rule in
+   RizzomaBlip.css (both are single-class but RizzomaBlip.css
+   loads later in the import chain, so its padding-right wins on
+   source-order tiebreaks). Compound selectors give us the
+   specificity bump. */
+.topic-blip-body .topic-blip-content,
+.topic-blip-body .topic-blip-content .blip-content-row,
+.topic-blip-body .topic-blip-content .blip-text.topic-content-view,
+/* topic-blip-children has padding-right: 22px by default, which
+   inset every reply row's author column 22px inside the topic
+   card. Collapsing that padding lets replies share the same right
+   edge as the topic body for a consistent author-column strip. */
+.topic-blip-body .topic-blip-children {
+  padding-right: 0;
+}
+
+/* Topic-level title section gets a bit more breathing room so the
+   per-title author badge doesn't visually collide with the h1.
+   Right padding stays at the unified 44px so the title badge lines
+   up vertically with every other row's badge; the 6px I'd added
+   earlier offset the title badge by 6px from the other rows. */
+.topic-section-wrapped-title {
+  margin: 2px 0 8px 0;
+}
+
+.topic-section-wrapped-title > h1 {
+  padding: 0;
+}
+
+.topic-section-wrapped > *:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* Remove the per-element horizontal padding so the flex row owns it */
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Legacy Rizzoma stacks the author avatar ABOVE the date in a small
+   right-edge column (see rizzoma-blips-nested.png: each section row
+   has a ~24px avatar with a date like "Feb 2020" or "Dec 2017"
+   directly below it). Stacking vertically keeps the column narrow
+   (~28px wide) so it doesn't cannibalize horizontal reading space. */
+.topic-section-author {
+  flex: 0 0 auto;
+  display: inline-flex;
+  flex-direction: column;
+  /* Center-align so the avatar and the date share the same
+     vertical center axis — the 22px avatar is narrower than the
+     "Apr 2026" date text, and with center alignment both
+     elements' geometric centers line up on the column's centerline.
+     Column width is 40px to comfortably contain the wider date
+     label without overflow. */
+  align-items: center;
+  gap: 1px;
+  padding-top: 2px;
+  padding-right: 2px;
+  width: 40px;
+}
+
+.topic-section-author-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.topic-section-author-date {
+  font-size: 9px;
+  color: #8a9aad;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* Per-<li> badges: legacy Rizzoma shows an author column on every list
+   item (Oneliner, each sub-bullet, each numbered step). We append a
+   .topic-section-author span inside every <li> in the useMemo and then
+   turn each <li> into a flex row that pushes the badge to the far right
+   via margin-left: auto. Keeping the bullet marker visible means we
+   don't touch display on the <li> directly — instead we make the
+   badge absolute-ish-ly float right via margin-left:auto inside the
+   flexible child layout from <p>. Works because TipTap wraps <li>
+   content in <p>, so we style <li> as a flex row and the <p> stays
+   at flex: 1. */
+/* Right-gutter layout: each list item reserves a 44px slot on its
+   right for the author badge and anchors that badge with `right: 0`
+   so it sits FLUSH against the content-view's right padding. The
+   surrounding <ul>/<ol> keeps its 38px left padding (for the bullet)
+   but its right padding is collapsed to 0 so the `<li>` can extend
+   all the way to the topic frame edge. Without this collapse the
+   badge was floating ~18px inside the card, visibly "not
+   right-aligned" even though it was flush with its own list item. */
+/* <li> reserves 44px of padding-right so the body text wraps
+   before it hits the badge column. The badge is absolutely
+   positioned with `right: -44px` so it overshoots the padding
+   and sits in the ul's right gutter, aligning vertically with
+   the top-level wrapped section badges (which use absolute
+   right: 0 in a wrapper that extends the full content width). */
+.topic-content-view li {
+  position: relative;
+  padding-right: 44px;
+}
+
+.topic-content-view li > .topic-section-author {
+  position: absolute;
+  top: 0;
+  /* `right: -44px` pulls the absolutely positioned badge 44px past
+     the containing li's padding-right edge so it sits in the
+     surrounding ul's right gutter. This makes per-li badges
+     right-align with the wrapper badges (H1, paragraphs) that use
+     the .topic-section-wrapped absolute `right: 0` against a
+     44px-right-padded wrapper. The 44px value matches the
+     padding-right reserved on .topic-content-view li. */
+  right: -44px;
+}
+
+/* Hard Gap #10 (2026-04-13): the topic title must read as the first line
+   of the same meta-blip content surface, not as a detached card header.
+   Original Rizzoma's title is ~17px / 600 weight, sits inline with the body
+   typography rhythm, and flows directly into the next paragraph with only a
+   single line of spacing — no oversized banner, no negative letter-spacing,
+   no enlarged line-height. */
 .topic-content-view h1 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: bold;
-  color: #222;
-  line-height: 1.3;
+  margin: 0 0 4px 0;
+  padding: 0 18px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #12273d;
+  line-height: 1.35;
+  letter-spacing: 0;
 }
 
 .topic-content-view p {
-  margin: 8px 0 0 0;
+  margin: 4px 0 0 0;
+  padding: 0 18px;
   font-size: 14px;
-  color: #333;
-  line-height: 1.5;
+  color: #253d53;
+  line-height: 1.55;
 }
 
 .topic-content-view p:first-child {
   margin-top: 0;
 }
 
+.topic-content-view ul,
+.topic-content-view ol {
+  margin: 12px 0 0;
+  /* Match .topic-content-edit .ProseMirror ul padding-left (28px)
+     so view and edit modes render the bulleted list at the same
+     indent — user pointed out edit mode looked "much better"
+     because the list was less indented. 2026-04-14 task #39. */
+  padding: 0 0 0 28px;
+  color: #243b53;
+}
+
+.topic-content-view li {
+  margin: 5px 0;
+  line-height: 1.55;
+}
+
+.topic-content-view li > p {
+  margin: 0;
+}
+
+.topic-content-view ul ul,
+.topic-content-view ol ol,
+.topic-content-view ul ol,
+.topic-content-view ol ul {
+  margin-top: 4px;
+}
+
+.topic-content-view .blip-thread-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 14px;
+  margin-left: 2px;
+  border-radius: 3px;
+  border: none;
+  background: #b3b3b3;
+  color: #ffffff;
+  /* font-size: 0 hides the marker's own textContent ("+") so only
+     the ::after pseudo-element (which carries the +/− symbol in
+     BlipThread.css) paints the visible glyph. Without this the
+     marker would render BOTH the textContent and the ::after,
+     producing a double "+" — the "why do I see two greens" bug. */
+  font-size: 0;
+  font-weight: 700;
+  vertical-align: middle;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.topic-content-view .blip-thread-marker::after {
+  font-size: 10px;
+}
+
+.topic-content-view .blip-thread-marker:hover {
+  background: #999999;
+}
+
+.topic-content-view .blip-thread-marker.has-unread {
+  background: #2e8b57;
+}
+
+.topic-content-view .blip-thread-marker.has-unread:hover {
+  background: #246b46;
+}
+
+.topic-content-view figure[data-gadget-type="app-frame"] {
+  margin: 16px 0 0;
+}
+
+.topic-content-view figure[data-gadget-type="app-frame"] .gadget-header,
+.topic-content-view figure[data-gadget-type="app-frame"] .gadget-preview {
+  display: none;
+}
+
+.topic-content-view figure[data-gadget-type="app-frame"] .gadget-body {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.topic-content-view figure[data-gadget-type="app-frame"] iframe {
+  display: block;
+  width: 100%;
+}
+
 .topic-tags {
-  margin-top: 8px;
+  margin-top: 16px;
+  padding: 0 14px;
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
 }
 
 .topic-tag {
-  background: #e8e8e8;
-  color: #555;
-  padding: 2px 10px;
-  border-radius: 3px;
-  font-size: 13px;
+  background: rgba(92, 170, 247, 0.14);
+  color: #2d5f89;
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .topic-header-right {
@@ -889,19 +1275,20 @@
 
 /* Write a reply section - minimal like real Rizzoma */
 .write-reply-section {
-  margin-top: 12px;
+  margin-top: 16px;
+  padding-top: 8px;
   padding: 0;
 }
 
 .write-reply-input {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
+  padding: 11px 14px;
+  border: 1px solid rgba(132, 148, 166, 0.24);
+  border-radius: 12px;
   font-size: 13px;
   font-family: inherit;
-  color: #666;
-  background: #fafafa;
+  color: #5f7084;
+  background: rgba(255,255,255,0.86);
   box-sizing: border-box;
 }
 
@@ -910,6 +1297,7 @@
   border-color: #5CAAF7;
   background: white;
   color: #333;
+  box-shadow: 0 0 0 4px rgba(92, 170, 247, 0.14);
 }
 
 .write-reply-input::placeholder {
@@ -952,69 +1340,416 @@
    Shown when navigating into a subblip
 ======================================== */
 .subblip-view {
-  flex: 1;
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  width: min(1160px, calc(100% - 24px));
+  margin: 12px auto 16px;
+  border: 1px solid rgba(148, 169, 192, 0.24);
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(246, 250, 253, 0.97));
+  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.09);
+  backdrop-filter: blur(4px);
+  max-height: calc(100vh - 120px);
+}
+
+.subblip-view-legacy-bg {
+  display: none;
+  background:
+    radial-gradient(circle at top right, rgba(104, 188, 255, 0.06), transparent 24%),
+    linear-gradient(180deg, rgba(246,250,254,0.99), rgba(228,238,248,0.95));
 }
 
 .subblip-nav-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  background: linear-gradient(to bottom, #f8f9fa, #e8e9ea);
-  border-bottom: 1px solid #ddd;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 8px 14px;
+  background: linear-gradient(180deg, rgba(242, 248, 254, 0.995), rgba(220, 234, 246, 0.985));
+  border: none;
+  border-bottom: 1px solid rgba(138, 156, 176, 0.32);
   flex-shrink: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    inset 0 -1px 0 rgba(173, 192, 210, 0.44);
+  --subblip-nav-bar-legacy-border: 1px solid rgba(137, 164, 189, 0.28);
+  border-bottom-color: rgba(124, 151, 177, 0.38);
+  border-radius: 12px;
 }
 
 .subblip-hide-btn {
-  padding: 6px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  background: #4ea0f1;
-  color: white;
-  border: none;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(157, 180, 203, 0.44);
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.15s ease;
+  color: #2f506e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .subblip-hide-btn:hover {
-  background: #3d8fd8;
+  background: rgba(255, 255, 255, 0.86);
+  border-color: rgba(110, 145, 178, 0.62);
+  color: #1f3c58;
 }
 
 .subblip-breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
-  color: #666;
+  font-size: 12px;
+  color: #657b90;
   flex-wrap: wrap;
+  text-transform: none;
 }
 
 .subblip-breadcrumb a {
-  color: #4285f4;
+  color: #4a7fbd;
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, opacity 0.15s ease;
+  font-weight: 600;
 }
 
 .subblip-breadcrumb a:hover {
-  color: #1a73e8;
-  text-decoration: underline;
+  color: #3369aa;
+  opacity: 1;
 }
 
 .current-blip-label {
-  color: #333;
-  font-weight: 500;
-  max-width: 300px;
+  color: #1f3c58;
+  font-weight: 700;
+  max-width: 720px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.subblip-content {
+.subblip-stage {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
   flex: 1;
-  padding: 16px;
+  min-height: 0;
   overflow-y: auto;
 }
+
+.subblip-parent-context {
+  padding: 10px 18px 10px 22px;
+  background: linear-gradient(180deg, rgba(248, 251, 253, 0.99), rgba(238, 245, 250, 0.985));
+  border-bottom: 1px solid rgba(153, 176, 198, 0.28);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.subblip-parent-context-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6c8297;
+  margin-bottom: 6px;
+}
+
+.subblip-parent-context-meta {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #8aa0b6;
+}
+
+/* When the parent context renders a real RizzomaBlip preview (hideChildBlips=true)
+   instead of the legacy title+snippet fallback, flatten the embedded blip chrome
+   so it reads as a quiet thread continuation, not a competing card. */
+.subblip-parent-context-blip {
+  padding: 8px 18px 10px 22px;
+}
+
+.subblip-parent-context-blip .rizzoma-blip {
+  margin: 0;
+  padding-left: 0;
+  border-left: none;
+  background: transparent;
+}
+
+.subblip-parent-context-blip .rizzoma-blip .blip-content {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 4px 0 0 0;
+  border-radius: 0;
+}
+
+.subblip-parent-context-blip .rizzoma-blip .blip-text {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #3f5872;
+  max-height: 4.5em;
+  overflow: hidden;
+}
+
+.subblip-parent-context-blip .blip-menu-container {
+  display: none;
+}
+
+.subblip-parent-context-blip .blip-author-info,
+.subblip-parent-context-blip .blip-contributors-info,
+.subblip-parent-context-blip .blip-author-date {
+  font-size: 10px;
+  color: #6c8297;
+}
+
+.subblip-parent-context-blip .blip-collapsed-info,
+.subblip-parent-context-blip .blip-reply-inline {
+  display: none;
+}
+
+/* Topic-context fallback: when the focused subblip is anchored directly under
+   the topic root (no resolvable parent blip in allBlipsMap), render the topic
+   title + topic body HTML as a compact, read-only preview block. This is the
+   common case for inline comments on the topic-meta-blip itself. */
+.subblip-parent-context-topic {
+  padding: 8px 18px 12px 22px;
+}
+
+.subblip-parent-topic-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #163149;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.subblip-parent-topic-content {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #3f5872;
+  max-height: 6.5em;
+  overflow: hidden;
+  position: relative;
+}
+
+.subblip-parent-topic-content::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.4em;
+  background: linear-gradient(180deg, rgba(248, 251, 253, 0), rgba(238, 245, 250, 0.985));
+  pointer-events: none;
+}
+
+.subblip-parent-topic-content > * {
+  margin: 0 0 4px 0;
+}
+
+.subblip-parent-topic-content h1,
+.subblip-parent-topic-content h2,
+.subblip-parent-topic-content h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f3c58;
+  margin: 0 0 4px 0;
+}
+
+.subblip-parent-topic-content ul,
+.subblip-parent-topic-content ol {
+  margin: 0 0 4px 18px;
+  padding: 0;
+}
+
+.subblip-parent-topic-content li {
+  margin: 0 0 2px 0;
+}
+
+.subblip-parent-topic-content .blip-thread-marker {
+  display: none;
+}
+
+.subblip-parent-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f3c58;
+  margin-bottom: 2px;
+  line-height: 1.35;
+}
+
+.subblip-parent-snippet {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #56708a;
+  max-width: 920px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Sibling navigation in the subblip nav bar — flat gray buttons matching
+   the legacy utility-strip texture. Only rendered when there is more than
+   one anchored sibling under the same parent. */
+.subblip-sibling-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(157, 180, 203, 0.35);
+}
+
+.subblip-sibling-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(157, 180, 203, 0.44);
+  border-radius: 4px;
+  color: #2f506e;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.subblip-sibling-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: rgba(110, 145, 178, 0.62);
+  color: #1f3c58;
+}
+
+.subblip-sibling-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.subblip-sibling-counter {
+  font-size: 11px;
+  font-weight: 600;
+  color: #56708a;
+  padding: 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.subblip-focus-shell {
+  position: relative;
+  padding: 14px 22px 18px 22px;
+  background: transparent;
+}
+
+.subblip-focus-shell > .rizzoma-blip {
+  width: 100%;
+  margin-top: 0;
+}
+
+.subblip-focus-shell > .rizzoma-blip.nested-blip {
+  border-left: none;
+  padding-left: 0;
+}
+
+.subblip-focus-shell > .rizzoma-blip.expanded {
+  min-height: 0;
+}
+
+.subblip-focus-shell .blip-menu-container {
+  margin: 0 0 6px 0;
+}
+
+.subblip-focus-shell .blip-content {
+  border-radius: 0;
+  padding: 8px 0 6px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.subblip-focus-shell .blip-text {
+  padding: 0;
+  line-height: 1.58;
+  background: transparent;
+  border-radius: 0;
+  border: 0;
+}
+
+.subblip-focus-shell .blip-author-date {
+  color: #6f859a;
+  margin-top: 3px;
+}
+
+.subblip-focus-shell .reply-input {
+  margin-top: 10px;
+}
+
+.subblip-focus-shell .blip-content-row {
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.subblip-focus-shell .blip-author-info,
+.subblip-focus-shell .blip-contributors-info {
+  padding-left: 10px;
+}
+
+.subblip-focus-shell .blip-bullet {
+  color: #4d6177;
+}
+
+.subblip-focus-shell .child-blips {
+  margin-top: 10px;
+  padding-top: 4px;
+}
+
+/* merge-master: avatar image/initials fallback (security-hardened TopicAvatar) */
+.topic-avatar-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 1px solid #fff;
+  box-shadow: 0 4px 10px rgba(15,23,42,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.topic-avatar-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.topic-avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.topic-avatar-small.fallback {
+  font-size: 10px;
+}
+
+.topic-avatar-small.owner {
+  border-color: #4EA0F1;
+}
+
+.topic-date-small {
+  font-size: 11px;
