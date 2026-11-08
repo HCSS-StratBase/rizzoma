@@ -720,7 +720,7 @@ async function captureTopicChrome(page) {
         });
         return { pass: has.open && has.items >= 1, detail: 'open=' + has.open + ' items=' + has.items };
       } });
-  await clickText(page, 'Export topic');
+  await clickText(page, /Export( single)? topic/i);  // Surface 9 renamed the item to 'Export single topic'
   await capture(page, 'export topic modal open', ['History: export topic', 'User Interface: export modal'],
     'Export topic action opens format-selection modal.', { dynamicStep: 'after-export-click', assertFn: modalOpen });
   await closeOpenModal(page);
