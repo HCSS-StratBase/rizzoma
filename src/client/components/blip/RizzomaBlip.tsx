@@ -260,6 +260,7 @@ interface RizzomaBlipProps {
   renderMode?: 'default' | 'topic-root';
   // Allow external render overrides for content or footers
   contentOverride?: ReactNode;
+  contentHeader?: ReactNode;
   contentFooter?: ReactNode;
   childFooter?: ReactNode;
   contentContainerClassName?: string;
@@ -318,6 +319,7 @@ export function RizzomaBlip({
   forceExpanded = false,
   renderMode = 'default',
   contentOverride,
+  contentHeader,
   contentFooter,
   childFooter,
   contentContainerClassName,
@@ -2213,7 +2215,7 @@ export function RizzomaBlip({
     const text = blip.content
       ? blip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
       : '';
-    if (!text) return 'Untitled blip';
+    if (!text) return blip.authorName || '';
     return text.length > 100 ? `${text.slice(0, 100)}…` : text;
   })();
 
@@ -2400,6 +2402,7 @@ export function RizzomaBlip({
             <div className="blip-content-row">
               {/* List inside blip-main-content supplies the authentic bullet */}
               <div className="blip-main-content">
+                {contentHeader}
                 {parityViewRender ? (
                   <div
                     ref={contentRef}

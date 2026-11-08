@@ -1600,3 +1600,34 @@
 .rizzoma-parity .blip-view-mode .blip-text > ul {
   margin-top: 0;
 }
+
+/* Authentic Rizzoma #tag chip styling (matches src/static/css/blip.css:560-618) */
+.blip-tag-container,
+.blip-tag {
+  display: inline-block;
+}
+.blip-tag {
+  background: #eaeaea;
+  padding: 0 4px;
+  height: 20px;
+  line-height: 20px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.blip-tag.clickable {
+  cursor: pointer;
+}
+.blip-tag.clickable:hover {
+  text-decoration: underline;
+}
+.blip-tag-container {
+  border: 1px solid #dcdcdc;
+  border-radius: 3px;
+  margin: 0 3px 0 0;
+  vertical-align: middle;
+}
+.blip-tag-text {
+  color: #222222;
+  margin: 0 2px;
+  font-weight: 500;
+}

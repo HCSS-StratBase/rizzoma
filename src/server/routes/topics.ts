@@ -59,7 +59,9 @@ function stripHtml(input: string): string {
 
 function buildSnippet(content?: string): string | undefined {
   if (!content) return undefined;
-  const text = stripHtml(String(content));
+  // Remove H1 title so snippet only contains lines after the title (matches original Rizzoma's @_getLinesText(1))
+  const withoutTitle = String(content).replace(/<h1[^>]*>.*?<\/h1>/i, '').trim();
+  const text = stripHtml(withoutTitle || String(content));
   if (!text) return undefined;
   return text.length > MAX_SNIPPET_LENGTH ? `${text.slice(0, MAX_SNIPPET_LENGTH)}…` : text;
 }

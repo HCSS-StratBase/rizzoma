@@ -151,7 +151,27 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
 
   const walkNode = (node: Node): ReactNode => {
     if (node.nodeType === Node.TEXT_NODE) {
-      return node.nodeValue;
+      const val = node.nodeValue || '';
+      if (!val.includes('#')) {
+        return val;
+      }
+      // Match #tag tokens (letters, digits, underscores, dashes, including Cyrillic / international characters)
+      const parts = val.split(/(#[\w\u0400-\u04FF-]+)/g);
+      if (parts.length <= 1) return val;
+      return parts.map((part, idx) => {
+        if (part.startsWith('#') && part.length > 1) {
+          return createElement(
+            'span',
+            { key: `tag-${idx}`, className: 'blip-tag-container' },
+            createElement(
+              'span',
+              { className: 'js-blip-tag blip-tag clickable' },
+              createElement('span', { className: 'blip-tag-text' }, part),
+            ),
+          );
+        }
+        return part;
+      });
     }
     if (node.nodeType !== Node.ELEMENT_NODE) {
       return null;
@@ -182,6 +202,15 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     // children are [li, child1, child2, ...].
     const isBlockAnchor = tag === 'li' || tag === 'p';
     const expandedHere = isBlockAnchor ? mountedMarkersInside(el) : [];
+
+    // Suppress stray empty bullet items in view mode (no text, no markers, no images/embeds)
+    if (tag === 'li' && expandedHere.length === 0) {
+      const text = el.textContent?.trim() || '';
+      const hasMediaOrMarker = el.querySelector('img, video, iframe, [data-blip-thread], .blip-thread-marker, .blip-tag-container');
+      if (text.length === 0 && !hasMediaOrMarker) {
+        return null;
+      }
+    }
     // Mark THESE markers as placed BEFORE walking children so nested block
     // anchors (e.g. a <p> inside an <li>) don't re-place the same child.
     // Without this, the marker is found by both the LI walker and the inner P

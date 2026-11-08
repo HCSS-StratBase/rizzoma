@@ -140,6 +140,8 @@ export function ensureBulletedTopicContent(html: string, title?: string): string
   if (!body) {
     return `${h1Tag}<ul><li><p></p></li></ul>`;
   }
+  // Strip redundant empty leading bullet item when real list items follow (kills stray bullets)
+  body = body.replace(/<ul>\s*<li>\s*<p>\s*<\/p>\s*<\/li>(?=\s*<li)/gi, '<ul>');
   // Check if body already has list tags
   if (!/<(ul|ol)[\s>]/i.test(body)) {
     if (/<p[\s>]/i.test(body)) {
@@ -704,7 +706,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         content: '<ul><li><p></p></li></ul>',
         parentId: null, // This is a child of the topic/wave itself (root-level blip)
         anchorPosition: anchorPosition, // The cursor position where this inline comment is anchored
-        isFoldedByDefault: true,
+        isFoldedByDefault: false, // In original Rizzoma, newly created child blips open unfolded and ready for editing
       };
       try {
         const response = await api('/api/blips', {
@@ -742,12 +744,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             const newBlipData: BlipData = {
               id: newBlipId,
               blipPath: blipPathSegment,
-              content: newBlip.content || '<p></p>',
+              content: newBlip.content || '<ul><li><p></p></li></ul>',
               authorId: newBlip.authorId || '',
               authorName: newBlip.authorName || 'Anonymous',
               createdAt: newBlip.createdAt || Date.now(),
               updatedAt: newBlip.updatedAt || Date.now(),
               isRead: true,
+              isFoldedByDefault: false,
+              isCollapsed: false,
               parentBlipId: undefined,
               childBlips: [],
               permissions: { canEdit: true, canComment: true, canRead: true },
@@ -773,11 +777,14 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             const optimisticBlip: BlipData = {
               ...newBlipData,
               anchorPosition: anchorPosition,
+              isFoldedByDefault: false,
+              isCollapsed: false,
             };
             setBlips(prev => {
               if (prev.some(b => b.id === newBlipId)) return prev;
               return [...prev, optimisticBlip];
             });
+            setExpandedBlips(prev => new Set([...prev, newBlipId]));
 
             // BLB: Expand the new child inline + auto-enter edit mode so user
             // can type immediately. Order matters and timing is tricky:
@@ -1268,11 +1275,13 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
 
         event.preventDefault();
         if (isEditingTopic) {
-          createInlineChildBlipRef.current?.(0);
+          const from = topicEditorRef.current?.state.selection.from ?? 0;
+          createInlineChildBlipRef.current?.(from);
         } else if (isAuthed) {
           startEditingTopic();
           setTimeout(() => {
-            createInlineChildBlipRef.current?.(0);
+            const from = topicEditorRef.current?.state.selection.from ?? 0;
+            createInlineChildBlipRef.current?.(from);
           }, 100);
         }
       }
@@ -1387,11 +1396,18 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
       </div>
     </div>
   ) : null;
-  const topicContentFooter = tags.length > 0 ? (
-    <div className="topic-tags">
-      {tags.map((tag, i) => <span key={i} className="topic-tag">{tag}</span>)}
+  const topicContentHeader = tags.length > 0 ? (
+    <div className="topic-tags" style={{ margin: '4px 0 10px 0' }}>
+      {tags.map((tag, i) => (
+        <span key={i} className="blip-tag-container">
+          <span className="js-blip-tag blip-tag clickable">
+            <span className="blip-tag-text">{tag.startsWith('#') ? tag : `#${tag}`}</span>
+          </span>
+        </span>
+      ))}
     </div>
   ) : null;
+  const topicContentFooter = null;
   const topicChildFooter = isAuthed ? (
     <div className="write-reply-section">
       <input
@@ -1716,6 +1732,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               }}
               onStartEdit={startEditingTopic}
               contentOverride={topicContentOverride}
+              contentHeader={topicContentHeader}
               contentFooter={topicContentFooter}
               childFooter={topicChildFooter}
               // BLB: NO navigation - expand/collapse INLINE like original Rizzoma
