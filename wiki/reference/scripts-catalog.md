@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: aec16061
+source_commit: bb625779
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 81 files in `scripts/`, 35 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 93 files in `scripts/`, 35 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -75,7 +75,7 @@ graph LR
 | `snapshots:pull` | `bash scripts ⁄ fetch-latest-snapshots.sh` |
 | `lint:branch-context` | `node scripts ⁄ check-branch-state.cjs` |
 
-## scripts/ (81)
+## scripts/ (93)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -90,6 +90,8 @@ graph LR
 | `scripts/build_try_step_by_step_new.mjs` | 337 | Build a fresh Try topic in the NEW Rizzoma step-by-step via Ctrl+Enter, |
 | `scripts/build_try_topic.mjs` | 158 | Build a "Try" topic on our Rizzoma matching the rizzoma.com Try fractal exactly: |
 | `scripts/build_zoomed_parity_comparisons.py` | 76 | Build true zoomed component-level side-by-side comparison sheets. |
+| `scripts/capture-child-blip-edit.mjs` | 90 | — |
+| `scripts/capture-edit-mode.mjs` | 76 | — |
 | `scripts/capture-exact-legacy-viewport.mjs` | 97 | — |
 | `scripts/capture_realtime_pair.mjs` | 107 | Standalone two-client realtime capture → 041-real-time-cursor-and-typing-indicator-visible.png |
 | `scripts/check-branch-state.cjs` | 80 | Guardrail: ensure branch-specific status notes mention the active branch. |
@@ -109,6 +111,8 @@ graph LR
 | `scripts/handbuild_acceptance.mjs` | 276 | HAND-BUILD ACCEPTANCE — the gate for ALL Rizzoma fractal work (SDS 2026-07-14). |
 | `scripts/handbuild_depth10.mjs` | 109 | HAND-BUILD a depth-10 fractal on the NEW rizzoma through the REAL UI. |
 | `scripts/insert_depth10_spine.mjs` | 123 | Insert a depth-10 spine of blips directly into CouchDB. |
+| `scripts/inspect_screenshot_155148.py` | 27 | Find all blue ribbons (#4ea0f1 -> r ~ 78, g ~ 160, b ~ 241) |
+| `scripts/inspect_user_screenshot.py` | 33 | Let's inspect horizontal slices of 20px |
 | `scripts/legacy_archive_crops.mjs` | 154 | LEGACY ARCHIVE PHASE 2 — element-level CROPS keyed to feature-matrix rows, |
 | `scripts/legacy_archive_p3.mjs` | 128 | LEGACY ARCHIVE PHASE 3 — clip-based crop retakes + settings/help/deep-topic states. |
 | `scripts/legacy_archive_p4.mjs` | 66 | LEGACY ARCHIVE PHASE 4 — mobile nav states, extra widths, public-topic depth. |
@@ -145,9 +149,16 @@ graph LR
 | `scripts/start-all.sh` | 105 | Colors for output |
 | `scripts/stop-all.sh` | 31 | Colors for output |
 | `scripts/sweep_try_topic.mjs` | 215 | Exhaustive visual sweep of the "Try" topic on our Rizzoma. Captures: |
+| `scripts/test-ctrl-enter-live.mjs` | 149 | — |
+| `scripts/test-delete-blip.mjs` | 164 | — |
+| `scripts/test-live-auth-and-topic.mjs` | 75 | — |
 | `scripts/test_edit_then_ce.mjs` | 31 | — |
 | `scripts/verify-blb-fractal-proof.mjs` | 224 | — |
 | `scripts/verify-full-parity-live.mjs` | 205 | — |
+| `scripts/verify-full-parity-live2.mjs` | 187 | — |
+| `scripts/verify-full-parity.mjs` | 173 | — |
+| `scripts/verify-parity-all.mjs` | 136 | — |
+| `scripts/verify-ui-delete-and-ctrl-enter.mjs` | 165 | — |
 | `scripts/verify_bug_AB.mjs` | 162 | Verify Bug A (Ctrl+Enter latency) + Bug B (nested mount at depth 2+) on the live VPS dev container. |
 | `scripts/verify_ctrl_enter_dev.mjs` | 75 | — |
 | `scripts/verify_drift_fix.mjs` | 138 | Verify (3) — anchorPosition value is no longer used for positioning. |
@@ -157,8 +168,9 @@ graph LR
 | `scripts/visual-feature-coverage.mjs` | 210 | — |
 | `scripts/visual-feature-sweep.mjs` | 1407 | — |
 | `scripts/visual_sanity_analyze.mjs` | 249 | Visual sanity pass on analyze.rubase.org after today's batch: |
-| `scripts/wiki_coverage.py` | 47 | Fail when the wiki does not mention (by file name) something it must cover. |
+| `scripts/wiki_coverage.py` | 50 | Fail when the wiki does not mention (by file name) something it must cover. |
 | `scripts/wiki_generate_catalogs.py` | 326 | import json |
+| `scripts/wiki_generate_original_catalog.py` | 49 | Generate wiki/reference ⁄ original-source-map.md: every .coffee and .js file of the vendored ORIGINAL |
 | `scripts/wiki_lint.py` | 23 | Thin wrapper in /mnt/c/Rizzoma/scripts ⁄ wiki_lint.py that invokes the canonical |
 
 ## .claude/hooks/ (10)

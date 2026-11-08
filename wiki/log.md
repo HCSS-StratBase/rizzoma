@@ -102,3 +102,8 @@ last_verified: 2026-11-06
 - **Session**: `d20d65d8-9d2b-422d-a2ff-a96c9204ef4a`
 - **Finding**: the vendored original (`original-rizzoma-src/`, 712 coffee and js files under src, git-ignored) was only mentioned in comparisons; no file list, and the coverage gate could not see it because it reads `git ls-files`.
 - **Change**: `scripts/wiki_generate_original_catalog.py` writes `wiki/reference/original-source-map.md` from the file system; `scripts/wiki_coverage.py` now also requires every original .coffee file to be named when the folder exists; index.md section 6 links the page. The original folder is local only: a fresh clone has no copy.
+
+## [2026-11-08] hook | Wiki-first hook wired for Claude Code, Grok, Gemini, Codex and Antigravity
+- **Session**: `d20d65d8-9d2b-422d-a2ff-a96c9204ef4a`
+- **Change**: `scripts/wiki_first_hook.py` plus `.claude/settings.json`, `.gemini/settings.json`, `.codex/hooks.json`, `.agents/hooks.json`; `.gitignore` now lets `.claude/settings.json` through. Earlier claim that Antigravity has no hook mechanism was wrong: it has `hooks.json` (global `~/.gemini/config/`, workspace `.agents/`), found in its docs.
+- **Boundary**: simulated-payload tests only (26 of 26); no live CLI session was run; folder trust must be granted per CLI. Uncommitted.

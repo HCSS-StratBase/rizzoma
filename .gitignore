@@ -96,7 +96,8 @@ playwright/.cache/
 snapshots/
 original-rizzoma-src/
 original-rizzoma/
-.claude/
+.claude/*
+!.claude/settings.json
 .playwright-mcp/
 scripts/rizzoma-session-state.json
 scripts/__pycache__/

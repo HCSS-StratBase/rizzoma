@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: aec16061
+source_commit: bb625779
 generated: true
 ---
 
 # Documentation Inventory
 
-**¶1** □ GENERATED. 65 markdown files. Title is the first heading; Status is the first status/updated/verified line in the first 25 lines, if any. Authority notes are in [the doc catalog](../reference-doc-catalog.md); `docs/deprecated/` is NOT authoritative.
+**¶1** □ GENERATED. 68 markdown files. Title is the first heading; Status is the first status/updated/verified line in the first 25 lines, if any. Authority notes are in [the doc catalog](../reference-doc-catalog.md); `docs/deprecated/` is NOT authoritative.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -51,6 +51,7 @@ graph LR
 | [`docs/GITHUB_DOCUMENTATION_SPINE.md`](../../docs/GITHUB_DOCUMENTATION_SPINE.md) | GitHub Documentation Spine and Rizzoma Synchronization | Status: proposed architecture; the first human-facing design is published and verified, but the synchronizer and cross-project repository have not been impleme… |
 | [`docs/NATIVE_RENDER_PORT_PLAN.md`](../../docs/NATIVE_RENDER_PORT_PLAN.md) | Native fractal-render port: detailed plan |  |
 | [`docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md`](../../docs/ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md) | Original Rizzoma's fractal blip-nesting logic — and why our React/TipTap hybrid keeps cra… |  |
+| [`docs/RIZZOMA_KARPATHY_LLM_WIKI.md`](../../docs/RIZZOMA_KARPATHY_LLM_WIKI.md) | Rizzoma Complete Architectural & Behavioral LLM-Wiki | Status: CANONICAL REFERENCE & UNIVERSAL GROUNDING WIKI |
 | [`docs/RIZZOMA_RESUMABLE_PROJECTION_LEDGER.blb.md`](../../docs/RIZZOMA_RESUMABLE_PROJECTION_LEDGER.blb.md) |  |  |
 | [`docs/RIZZOMA_RESUMABLE_PROJECTION_LEDGER.md`](../../docs/RIZZOMA_RESUMABLE_PROJECTION_LEDGER.md) | Resumable Projection Ledger | Status: implementation proposal |
 | [`docs/RIZZOMA_RESUMABLE_PROJECTION_LEDGER.shell.blb.md`](../../docs/RIZZOMA_RESUMABLE_PROJECTION_LEDGER.shell.blb.md) |  |  |
@@ -102,4 +103,6 @@ graph LR
 | [`docs/worklog-260612.md`](../../docs/worklog-260612.md) | Worklog 2026-06-12 — Fishman topic skeleton and Rizzoma skill extension |  |
 | [`docs/worklog-260713.md`](../../docs/worklog-260713.md) | Worklog — 2026-07-13 | updated `src/tests ⁄ routes.waves.prev.test.ts` for the direct CouchDB `_find` path and fixed the empty-order `/prev` edge case |
 | [`docs/worklog-260714.md`](../../docs/worklog-260714.md) | Worklog — 2026-07-14 | Status/doc/VPS sync after parity-gate checkpoint |
+| [`docs/worklog-261107.md`](../../docs/worklog-261107.md) | Worklog: 2026-11-07 — Playback, Ctrl+Enter, Visual Parity & Canonical Karpathy LLM-Wiki |  |
+| [`docs/worklog-261108.md`](../../docs/worklog-261108.md) | Worklog — 2026-11-08 (Structural Parity & Visual Regression Elimination) |  |
 | [`public/s/img/gdrive/README.md`](../../public/s/img/gdrive/README.md) |  |  |
