@@ -52,16 +52,6 @@ function formatSmartDate(timestamp: number): string {
   }
 }
 
-// Get user initials from name or email
-function getInitials(name?: string, email?: string): string {
-  const source = name || email || 'U';
-  const parts = source.split(/[\s@]+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-  return source.slice(0, 2).toUpperCase();
-}
-
 const SHOW_FOLLOW_BUTTON_DELAY = 500; // ms, same as original
 
 function TopicListAvatar({ topic }: { topic: Topic }) {

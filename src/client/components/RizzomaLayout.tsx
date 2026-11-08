@@ -56,7 +56,7 @@ export function RizzomaLayout({ isAuthed, user }: RizzomaLayoutProps) {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [currentBlipPath, setCurrentBlipPath] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('topics');
-  const [searchPaneCollapsed, setSearchPaneCollapsed] = useState(false);
+  const [searchPaneCollapsed] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [perfSkipTopics, setPerfSkipTopics] = useState(getInitialPerfSkip);
   const unreadState = useWaveUnread(selectedTopicId);

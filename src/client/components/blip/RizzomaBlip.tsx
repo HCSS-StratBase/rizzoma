@@ -81,15 +81,6 @@ export function getGlobalActiveBlipId(): string | null {
   return globalActiveBlipId;
 }
 
-const getAvatarInitials = (name?: string, email?: string): string => {
-  const source = name?.trim() || email?.split('@')[0]?.trim() || 'U';
-  const parts = source.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-  }
-  return source.slice(0, 2).toUpperCase();
-};
-
 export function formatRizzomaDate(timestamp: number | undefined): string {
   if (!timestamp) return '';
   const d = new Date(timestamp);
@@ -1045,7 +1036,7 @@ export function RizzomaBlip({
         try {
           const { state } = ed;
           let nodePos: number | null = null;
-          state.doc.descendants((node, pos) => {
+          state.doc.descendants((node: any, pos: number) => {
             if (node.type.name === 'blipThread' && node.attrs.threadId === deletedId) {
               nodePos = pos;
               return false;

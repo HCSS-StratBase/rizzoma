@@ -195,16 +195,6 @@ function extractTitleFromContent(html: string): string {
   return text.trim().split('\n')[0] || '';
 }
 
-function formatDate(timestamp: number): string {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-  if (isToday) {
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-  }
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-}
-
 export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unreadState }: { id: string; blipPath?: string | null; isAuthed?: boolean; unreadState?: WaveUnreadState | null }) {
   const perfRenderMode = getPerfRenderMode();
   const isPerfLite = perfRenderMode === 'lite';
@@ -1004,7 +994,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         try {
           const { state } = ed;
           let nodePos: number | null = null;
-          state.doc.descendants((node, pos) => {
+          state.doc.descendants((node: any, pos: number) => {
             if (node.type.name === 'blipThread' && node.attrs.threadId === blipId) {
               nodePos = pos;
               return false;
@@ -1373,8 +1363,8 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
   const topicBlip: BlipData = {
     id: topic.id,
     content: topicContentHtmlBase,
-    authorId: topic.authorId,
-    authorName: topic.authorName,
+    authorId: topic.authorId ?? '',
+    authorName: topic.authorName ?? '',
     authorAvatar: topic.authorAvatar || '/s/img/user/anonim.png',
     createdAt: topic.createdAt,
     updatedAt: topic.updatedAt,
@@ -1400,17 +1390,6 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
           Done
         </button>
       </div>
-    </div>
-  ) : null;
-  const topicContentHeader = tags.length > 0 ? (
-    <div className="topic-tags" style={{ margin: '4px 0 10px 0' }}>
-      {tags.map((tag, i) => (
-        <span key={i} className="blip-tag-container">
-          <span className="js-blip-tag blip-tag clickable">
-            <span className="blip-tag-text">{tag.startsWith('#') ? tag : `#${tag}`}</span>
-          </span>
-        </span>
-      ))}
     </div>
   ) : null;
   const topicContentFooter = null;

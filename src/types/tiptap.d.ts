@@ -9,6 +9,8 @@ declare module '@tiptap/core' {
   export interface EditorCommands {
     setContent: (...args: any[]) => any;
     setTextSelection: (...args: any[]) => any;
+    deleteRange: (...args: any[]) => any;
+    focus: (...args: any[]) => any;
     clearNodes: (...args: any[]) => any;
     unsetAllMarks: (...args: any[]) => any;
     [command: string]: (...args: any[]) => any;
@@ -32,6 +34,7 @@ declare module '@tiptap/core' {
       dispatch: (tr: any) => void;
     };
     isEditable: boolean;
+    isDestroyed: boolean;
     getHTML(): string;
     getText(): string;
     setEditable(editable: boolean): void;
