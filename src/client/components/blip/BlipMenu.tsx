@@ -640,7 +640,7 @@ export function BlipMenu({
           </button>
 
           {/* Hide by default */}
-          {canEdit && onToggleCollapseByDefault && (
+          {!isTopicRoot && canEdit && onToggleCollapseByDefault && (
             <button
               className={`menu-btn is-folded-by-default delimitered-right js-is-folded-by-default ${collapseByDefault ? 'active' : ''}`}
               title="Collapse this thread by default"
@@ -803,7 +803,7 @@ export function BlipMenu({
         </button>
 
         {/* Hide (collapse thread by default) */}
-        {canEdit && onToggleCollapseByDefault && (
+        {!isTopicRoot && canEdit && onToggleCollapseByDefault && (
           <button
             className={`menu-btn is-folded-by-default delimitered-right js-is-folded-by-default ${collapseByDefault ? 'active' : ''}`}
             title="Collapse this thread by default"

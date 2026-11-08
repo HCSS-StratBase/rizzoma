@@ -5,6 +5,16 @@ import type { Blip, Wave, BlipRead, WaveParticipant } from '../schemas/wave.js';
 import { computeWaveUnreadCounts } from '../lib/unread.js';
 import { sendInviteEmail } from '../services/email.js';
 
+type User = {
+  _id?: string;
+  type: 'user';
+  email: string;
+  name?: string | null;
+  avatar?: string;
+  createdAt?: number;
+  updatedAt?: number;
+};
+
 const router = Router();
 type FlatBlip = { id: string; updatedAt: number; createdAt?: number; content?: string; children?: FlatBlip[] };
 
@@ -406,25 +416,53 @@ router.post('/:id/read', async (req, res) => {
 router.get('/:id/participants', async (req, res) => {
   const id = req.params.id;
   try {
-    // Task #192 (2026-05-11): explicitly use idx_participant_by_wave —
-    // without it CouchDB Mango may pick a different (slower) index or do
-    // a full table scan. Per memory: "Mango IGNORES use_index if sort
-    // doesn't match index fields" — here we have no sort, so use_index
-    // is honored.
     const r = await find<WaveParticipant>(
       { type: 'participant', waveId: id },
       { limit: 200, use_index: 'idx_participant_by_wave' },
     );
-    const participants = (r.docs || []).map(p => ({
-      id: p._id,
-      userId: p.userId,
-      email: p.email,
-      role: p.role,
-      status: p.status,
-    }));
+    let rawDocs = r.docs || [];
+    if (rawDocs.length === 0) {
+      try {
+        const topic = await getDoc<any>(id);
+        if (topic?.authorId) {
+          rawDocs = [{
+            _id: `part_${id}_${topic.authorId}`,
+            type: 'participant',
+            waveId: id,
+            userId: topic.authorId,
+            role: 'owner',
+            status: 'accepted',
+            invitedAt: topic.createdAt || Date.now(),
+          } as any];
+        }
+      } catch {}
+    }
+
+    const userIds = [...new Set(rawDocs.map(p => p.userId).filter(Boolean))];
+    const userMap = new Map<string, User>();
+    await Promise.all(
+      userIds.map(async (uid) => {
+        try {
+          const u = await getDoc<User>(uid);
+          if (u) userMap.set(uid, u);
+        } catch {}
+      })
+    );
+
+    const participants = rawDocs.map(p => {
+      const u = p.userId ? userMap.get(p.userId) : undefined;
+      return {
+        id: p._id,
+        userId: p.userId,
+        email: p.email || u?.email || '',
+        name: u?.name || (p.email ? p.email.split('@')[0] : 'User'),
+        avatar: u?.avatar || '/s/img/user/anonim.png',
+        role: p.role,
+        status: p.status,
+      };
+    });
     res.json({ participants });
   } catch {
-    // No participants found — return empty list
     res.json({ participants: [] });
   }
 });

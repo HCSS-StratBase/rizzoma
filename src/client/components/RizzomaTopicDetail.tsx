@@ -73,54 +73,57 @@ type TopicFull = {
   content?: string;
   createdAt: number;
   updatedAt: number;
-  authorId: string;
-  authorName: string;
+  authorId?: string;
+  authorName?: string;
+  authorAvatar?: string;
 };
 
 type Participant = {
   id: string;
   userId: string;
   email: string;
+  name?: string;
+  avatar?: string;
   role: 'owner' | 'editor' | 'viewer';
   status: 'pending' | 'accepted' | 'declined';
   invitedAt: number;
   acceptedAt?: number;
 };
 
-function getTopicAvatarInitials(name?: string, email?: string): string {
-  const source = name?.trim() || email?.split('@')[0]?.trim() || 'U';
-  const parts = source.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-  }
-  return source.slice(0, 2).toUpperCase();
-}
-
 function TopicAvatar({
   participant,
   authorName,
+  authorAvatar,
   small = false,
   style,
 }: {
   participant?: Participant;
   authorName?: string;
+  authorAvatar?: string;
   small?: boolean;
   style?: CSSProperties;
 }) {
-  const label = participant?.email || authorName || 'Author';
-  const initials = getTopicAvatarInitials(authorName, participant?.email);
+  const label = participant?.name || participant?.email || authorName || 'User';
+  const avatarSrc = participant?.avatar || authorAvatar || '/s/img/user/anonim.png';
   const roleClass = participant?.role === 'owner' ? 'owner' : '';
   const pendingClass = participant?.status === 'pending' ? 'pending' : '';
   const className = `${small ? 'topic-avatar-small' : 'participant-avatar'} ${roleClass} ${pendingClass}`.trim();
 
   return (
     <span
-      className={`${className} fallback`}
+      className={className}
       style={style}
       title={`${label}${participant?.role === 'owner' ? ' (owner)' : ''}${participant?.status === 'pending' ? ' (invited)' : ''}`}
       aria-label={label}
     >
-      {initials}
+      <img
+        src={avatarSrc}
+        alt={label}
+        className="participant-avatar-img"
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).src = '/s/img/user/anonim.png';
+        }}
+      />
     </span>
   );
 }
@@ -1454,7 +1457,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               )}
             </>
           ) : (
-            <TopicAvatar authorName={topic.authorName} />
+            <TopicAvatar authorName={topic.authorName} authorAvatar={topic.authorAvatar} />
           )}
         </div>
         <button
@@ -1566,9 +1569,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
             editor={topicEditor || undefined}
             isTopicRoot={true}
             collapseByDefault={false}
-            onToggleCollapseByDefault={() => {
-              toast('Root topic cannot be collapsed by default', 'info');
-            }}
+            onToggleCollapseByDefault={undefined}
             onStartEdit={startEditingTopic}
             onFinishEdit={finishEditingTopic}
             onShowComments={() => {
@@ -1603,31 +1604,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               onExport: handleExportTopic,
               onCopyEmbedCode: handleCopyEmbedCode,
             }}
-            metaInfo={
-              <div className="topic-meta-info" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '8px' }}>
-                <div className="topic-avatars-stack-small">
-                  {(() => {
-                    const owner = participants.find(p => p.role === 'owner');
-                    const others = participants.filter(p => p.role !== 'owner').slice(0, 2);
-                    const allToShow = owner ? [owner, ...others] : participants.slice(0, 3);
-                    if (allToShow.length === 0) {
-                      return <TopicAvatar authorName={topic.authorName} small />;
-                    }
-                    return allToShow.map((p, idx) => (
-                      <TopicAvatar
-                        key={p.id}
-                        participant={p}
-                        small
-                        style={{ zIndex: allToShow.length - idx, marginLeft: idx > 0 ? '-8px' : '0' }}
-                      />
-                    ));
-                  })()}
-                </div>
-                <span className="topic-date-small" style={{ fontSize: '11px', color: isEditingTopic ? '#FFF' : '#888' }}>
-                  {formatDate(topic.updatedAt)}
-                </span>
-              </div>
-            }
+            metaInfo={undefined}
           />
         </div>
       )}

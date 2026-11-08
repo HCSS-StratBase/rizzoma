@@ -384,7 +384,31 @@ router.get('/:id', async (req, res): Promise<void> => {
   try {
     const id = req.params['id'] as string;
     const doc = await getDoc<Topic>(id);
-    res.json({ id: doc._id, title: doc.title, content: doc.content, createdAt: doc.createdAt, updatedAt: doc.updatedAt });
+    let authorName = 'User';
+    let authorAvatar = '/s/img/user/anonim.png';
+    if (doc.authorId) {
+      try {
+        const author = await getDoc<User>(doc.authorId);
+        if (author?.name) {
+          authorName = author.name;
+        } else if (author?.email) {
+          authorName = author.email.split('@')[0];
+        }
+        if (author?.avatar) {
+          authorAvatar = author.avatar;
+        }
+      } catch {}
+    }
+    res.json({
+      id: doc._id,
+      title: doc.title,
+      content: doc.content,
+      authorId: doc.authorId,
+      authorName,
+      authorAvatar,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+    });
     return;
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: (req as any)?.id }); return; }
