@@ -186,3 +186,7 @@ last_verified: 2026-11-06
 - **Line endings**: `.gitattributes` (`* text=auto eol=lf`, images binary) in 3431b11e; `core.autocrlf=false` set in the clone and in C:\Rizzoma. Modified files in the shared checkout: 139 down to 3 (measured), the rest being Gemini's 2 untracked scripts and wiki/log.md.
 - **Master merge**: `git merge origin/master` in a clean clone conflicts in **69 files** (core UI components, ci.yml, package.json, server routes, docs). Aborted, nothing pushed; needs a human who knows both lines.
 - **PR**: https://github.com/HCSS-StratBase/rizzoma/pull/82 opened as a DRAFT into master, body states the 19 failing tests, the 69 conflicts and that visual parity is unverified. Not mergeable until those are resolved.
+
+## [2026-11-08] ops | Master-merge session prepared but not started (repository trust pending)
+- A separate session to resolve the 69 master conflicts on its own branch `merge-master-into-fractal` (cut from `feature/native-fractal-port`; PR #82 and Gemini's branch untouched) was refused by the app until the user clicks Trust repository for `C:\Rizzoma`. Nothing started, nothing changed in git.
+- Plan usage read live: 5-hour window 2% used (resets 17:50 UTC), weekly all-models 14%, Fable 3%; this session's context 20%.
