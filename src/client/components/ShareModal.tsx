@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 import { toast } from './Toast';
@@ -18,6 +18,16 @@ export function ShareModal({ isOpen, onClose, topicId, topicTitle: _topicTitle }
   const [allowComments, setAllowComments] = useState(true);
   const [allowEdits, setAllowEdits] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Escape must close the popover wherever focus is (the overlay div is not focusable on open).
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKey = (e: { key: string }): void => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
