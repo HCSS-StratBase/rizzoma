@@ -112,3 +112,7 @@ last_verified: 2026-11-06
 - **Session**: `d20d65d8-9d2b-422d-a2ff-a96c9204ef4a`
 - **Finding**: 56 unit test files, ~249 test calls; CI never ran on `feature/native-fractal-port` (not in the trigger list, no PR); no local check; last full pass on record 2026-02-10.
 - **Change**: `.github/workflows/ci.yml` branch list, `scripts/check-rizzoma-parity-gate.mjs` fails on 0/0, `scripts/git-hooks/pre-push` + `scripts/install-git-hooks.sh`. Unit tests did not run here (Windows rollup module missing; WSL worker timeouts on /mnt/c). Details: verification/gates-sweeps-and-deployment.md section 3.7.
+
+## [2026-11-08] verification | First CI run on feature/native-fractal-port (run 42430632337, commit fadefc21): FAILED
+- **Typecheck failed with 16 errors** (TS4111 x5, TS7006 x4, TS2307 x4, TS2339 x2, TS6133 x1) in RizzomaLayout, RizzomaTopicDetail, RizzomaBlip, TagNode and TaskWidget. Four are `Cannot find module '@tiptap/suggestion'`: the code imports a package that package.json does not list, so a clean install cannot build it. The Test step (the 56 unit test files) was SKIPPED because Typecheck failed first; no unit-test result exists yet.
+- **browser-smokes failed** at "Install Playwright browsers": Playwright does not support Chromium on ubuntu26.04 (the `ubuntu-latest` image moved); pinning `ubuntu-24.04` would likely fix it (not tried). health-checks and perf-budgets were skipped.
