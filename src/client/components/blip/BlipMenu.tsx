@@ -83,6 +83,7 @@ export function BlipMenu({
   onCreateInlineChild,
   clipboardAvailable = false,
   onShowHistory,
+  onSend,
   isSending = false,
   isDeleting = false,
   onInsertAttachment,
@@ -360,13 +361,13 @@ export function BlipMenu({
           {isTopicRoot ? 'Copy topic content' : 'Copy comment'}
         </button>
       </div>
-      {canComment && onPasteAsReply && (
+      {onPasteAsReply && (
         <div className="list-menu-button">
           <button
             type="button"
             role="menuitem"
             className="paste-as-reply js-paste-after-blip-button"
-            disabled={!clipboardAvailable}
+            disabled={!canComment || !clipboardAvailable}
             title={!canComment ? commentsReadOnlyMessage : undefined}
             onClick={() => {
               if (!canComment) return;
@@ -433,6 +434,21 @@ export function BlipMenu({
             }}
           >
             {isCut ? '✓ Cut (ready to paste)' : 'Cut blip'}
+          </button>
+        </div>
+      )}
+      {onSend && (
+        <div className="list-menu-button">
+          <button
+            type="button"
+            role="menuitem"
+            disabled={isSending}
+            onClick={() => {
+              onSend?.();
+              setShowOverflow(false);
+            }}
+          >
+            {isSending ? 'Sending…' : 'Send'}
           </button>
         </div>
       )}
@@ -644,7 +660,7 @@ export function BlipMenu({
           {!isTopicRoot && canEdit && onToggleCollapseByDefault && (
             <button
               className={`menu-btn is-folded-by-default delimitered-right js-is-folded-by-default ${collapseByDefault ? 'active' : ''}`}
-              title="Collapse this thread by default"
+              title={collapseByDefault ? 'Expand this thread by default' : 'Collapse this thread by default'}
               aria-pressed={collapseByDefault ? 'true' : 'false'}
               data-testid="blip-menu-collapse-default"
               onClick={onToggleCollapseByDefault}
@@ -806,7 +822,7 @@ export function BlipMenu({
         {!isTopicRoot && canEdit && onToggleCollapseByDefault && (
           <button
             className={`menu-btn is-folded-by-default delimitered-right js-is-folded-by-default ${collapseByDefault ? 'active' : ''}`}
-            title="Collapse this thread by default"
+            title={collapseByDefault ? 'Expand this thread by default' : 'Collapse this thread by default'}
             aria-pressed={collapseByDefault ? 'true' : 'false'}
             data-testid="blip-menu-collapse-default"
             onClick={onToggleCollapseByDefault}

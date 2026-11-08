@@ -118,7 +118,7 @@ describe('client: BlipMenu toolbar', () => {
   });
 
   it('finishes editing when Done is clicked', () => {
-    const doneBtn = container.querySelector('button[title="Finish editing"]');
+    const doneBtn = container.querySelector('[data-testid="blip-menu-done"]');
     expect(doneBtn).toBeTruthy();
     act(() => {
       doneBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -136,7 +136,7 @@ describe('client: BlipMenu toolbar', () => {
     };
 
     click('Undo (Ctrl+Z)');
-    click('Redo');
+    click('Redo (Ctrl+Shift+Z, Ctrl+Y)');
     click('Bold (Ctrl+B)');
     click('Italic (Ctrl+I)');
     click('Underline (Ctrl+U)');
@@ -182,7 +182,7 @@ describe('client: BlipMenu toolbar', () => {
     const underlineBtn = container.querySelector('button[title="Underline (Ctrl+U)"]');
     const strikeBtn = container.querySelector('button[title="Strikethrough"]');
     const undoBtn = container.querySelector('button[title="Undo (Ctrl+Z)"]');
-    const redoBtn = container.querySelector('button[title="Redo"]');
+    const redoBtn = container.querySelector('[data-testid="blip-menu-redo"]');
 
     expect(boldBtn?.classList.contains('active')).toBe(true);
     expect(italicBtn?.classList.contains('active')).toBe(true);
@@ -203,16 +203,14 @@ describe('client: BlipMenu toolbar', () => {
       />
     ));
 
-    const editBtn = container.querySelector('button[title="Edit"]');
+    const editBtn = container.querySelector('[data-testid="blip-menu-edit"]');
     const commentsBtn = container.querySelector('[data-testid="blip-menu-comments-hide"]');
-    const collapseBtn = container.querySelector('[data-testid="blip-menu-collapse"]');
-    const expandBtn = container.querySelector('[data-testid="blip-menu-expand"]');
     const linkBtn = container.querySelector('[data-testid="blip-menu-get-link"]');
 
     expect(editBtn).toBeTruthy();
     expect(commentsBtn).toBeTruthy();
-    expect(collapseBtn).toBeTruthy();
-    expect(expandBtn).toBeTruthy();
+    // The legacy read toolbar has no Collapse/Expand buttons (collapsing goes through the [+] marker and Hide).
+    expect(container.querySelector('[data-testid="blip-menu-collapse"]')).toBeNull();
     expect(linkBtn).toBeTruthy();
 
     act(() => editBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
@@ -221,17 +219,11 @@ describe('client: BlipMenu toolbar', () => {
     act(() => commentsBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(baseProps.onHideComments).toHaveBeenCalled();
 
-    act(() => collapseBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    expect(baseProps.onCollapse).toHaveBeenCalled();
-
-    act(() => expandBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    expect(baseProps.onExpand).toHaveBeenCalled();
-
     act(() => linkBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(baseProps.onGetLink).toHaveBeenCalled();
 
     // Delete and collapse-default are in the overflow/gear menu
-    const gear = container.querySelector('button[title="More options"]');
+    const gear = container.querySelector('[data-testid="blip-menu-gear-toggle"]');
     expect(gear).toBeTruthy();
     act(() => gear!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
 
@@ -286,10 +278,10 @@ describe('client: BlipMenu toolbar', () => {
     const showBtn = container.querySelector('[data-testid="blip-menu-comments-show"]') as HTMLButtonElement | null;
     expect(hideBtn || showBtn).toBeTruthy();
 
-    const gear = container.querySelector('button[title="More options"]');
+    const gear = container.querySelector('[data-testid="blip-menu-gear-toggle"]');
     expect(gear).toBeTruthy();
     act(() => gear!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    const pasteReply = Array.from(container.querySelectorAll('.menu-dropdown-item')).find(
+    const pasteReply = Array.from(container.querySelectorAll('.list-menu-button button')).find(
       (btn) => btn.textContent === 'Paste as reply'
     ) as HTMLButtonElement | undefined;
     expect(pasteReply).toBeTruthy();
@@ -344,7 +336,7 @@ describe('client: BlipMenu toolbar', () => {
       bgBtn!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    const swatches = container.querySelectorAll('.blip-menu-color-swatch');
+    const swatches = container.querySelectorAll('.color-choice');
     expect(swatches.length).toBeGreaterThan(1);
 
     act(() => {
@@ -355,15 +347,15 @@ describe('client: BlipMenu toolbar', () => {
   });
 
   it('opens overflow and triggers playback handler', () => {
-    const gear = container.querySelector('button[title="Other actions"]');
+    const gear = container.querySelector('[data-testid="blip-menu-overflow-toggle"]');
     expect(gear).toBeTruthy();
 
     act(() => {
       gear!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    const items = Array.from(container.querySelectorAll('.menu-dropdown-item')) as HTMLButtonElement[];
-    const playbackBtn = items.find((btn) => btn.textContent === 'Playback history');
+    const items = Array.from(container.querySelectorAll('.list-menu-button button')) as HTMLButtonElement[];
+    const playbackBtn = items.find((btn) => btn.textContent === 'Playback');
     expect(playbackBtn).toBeTruthy();
 
     act(() => {
@@ -374,14 +366,14 @@ describe('client: BlipMenu toolbar', () => {
   });
 
   it('invokes send handler from overflow', () => {
-    const gear = container.querySelector('button[title="Other actions"]');
+    const gear = container.querySelector('[data-testid="blip-menu-overflow-toggle"]');
     expect(gear).toBeTruthy();
 
     act(() => {
       gear!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    const sendBtn = Array.from(container.querySelectorAll('.menu-dropdown-item')).find(
+    const sendBtn = Array.from(container.querySelectorAll('.list-menu-button button')).find(
       (btn) => btn.textContent === 'Send'
     ) as HTMLButtonElement | undefined;
     expect(sendBtn).toBeTruthy();
@@ -394,17 +386,17 @@ describe('client: BlipMenu toolbar', () => {
   });
 
   it('exposes copy link and delete actions inside overflow', () => {
-    const gear = container.querySelector('button[title="Other actions"]');
+    const gear = container.querySelector('[data-testid="blip-menu-overflow-toggle"]');
     expect(gear).toBeTruthy();
 
     act(() => {
       gear!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    const linkBtn = Array.from(container.querySelectorAll('.menu-dropdown-item')).find(
-      (btn) => btn.textContent === 'Copy direct link'
+    const linkBtn = Array.from(container.querySelectorAll('.list-menu-button button')).find(
+      (btn) => btn.textContent === 'Copy link'
     ) as HTMLButtonElement | undefined;
-    const deleteBtn = Array.from(container.querySelectorAll('.menu-dropdown-item')).find(
+    const deleteBtn = Array.from(container.querySelectorAll('.list-menu-button button')).find(
       (btn) => btn.textContent === 'Delete blip'
     ) as HTMLButtonElement | undefined;
 
@@ -416,10 +408,10 @@ describe('client: BlipMenu toolbar', () => {
     });
     expect(baseProps.onGetLink).toHaveBeenCalled();
 
-    const reopenGear = container.querySelector('button[title="Other actions"]');
+    const reopenGear = container.querySelector('[data-testid="blip-menu-overflow-toggle"]');
     expect(reopenGear).toBeTruthy();
     act(() => reopenGear!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    const deleteAfterReopen = Array.from(container.querySelectorAll('.menu-dropdown-item')).find(
+    const deleteAfterReopen = Array.from(container.querySelectorAll('.list-menu-button button')).find(
       (btn) => btn.textContent === 'Delete blip'
     ) as HTMLButtonElement | undefined;
     expect(deleteAfterReopen).toBeTruthy();
@@ -443,10 +435,10 @@ describe('client: BlipMenu toolbar', () => {
     ({ container, root } = renderMenu(<BlipMenu {...baseProps} editor={editor as any} />));
 
     const clickMenuItem = (label: string) => {
-      const gear = container.querySelector('button[title="Other actions"]');
+      const gear = container.querySelector('[data-testid="blip-menu-overflow-toggle"]');
       expect(gear).toBeTruthy();
       act(() => gear!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-      const btn = Array.from(container.querySelectorAll('.menu-dropdown-item')).find(
+      const btn = Array.from(container.querySelectorAll('.list-menu-button button')).find(
         (el) => el.textContent === label
       ) as HTMLButtonElement | undefined;
       expect(btn).toBeTruthy();
@@ -493,14 +485,14 @@ describe('client: BlipMenu toolbar', () => {
     };
     ({ container, root } = renderMenu(<BlipMenu {...baseProps} editor={editor as any} />));
 
-    const gear = container.querySelector('button[title="Other actions"]');
+    const gear = container.querySelector('[data-testid="blip-menu-overflow-toggle"]');
     expect(gear).toBeTruthy();
     act(() => gear!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
 
-    const pasteAtCursor = Array.from(container.querySelectorAll('.menu-dropdown-item')).find(
+    const pasteAtCursor = Array.from(container.querySelectorAll('.list-menu-button button')).find(
       (btn) => btn.textContent === 'Paste at cursor'
     ) as HTMLButtonElement | undefined;
-    const pasteAsReply = Array.from(container.querySelectorAll('.menu-dropdown-item')).find(
+    const pasteAsReply = Array.from(container.querySelectorAll('.list-menu-button button')).find(
       (btn) => btn.textContent === 'Paste as reply'
     ) as HTMLButtonElement | undefined;
 
@@ -543,7 +535,7 @@ describe('client: BlipMenu toolbar', () => {
     expect(overflowToggle).toBeTruthy();
     act(() => overflowToggle!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
 
-    const pasteAsReply = Array.from(container.querySelectorAll('.menu-dropdown-item')).find(
+    const pasteAsReply = Array.from(container.querySelectorAll('.list-menu-button button')).find(
       (btn) => btn.textContent === 'Paste as reply'
     ) as HTMLButtonElement | undefined;
     expect(pasteAsReply).toBeTruthy();
@@ -562,7 +554,7 @@ describe('client: BlipMenu toolbar', () => {
     ({ container, root } = renderMenu(<BlipMenu {...baseProps} editor={editor as any} />));
 
     // Delete button is in the overflow/gear menu
-    const gear = container.querySelector('button[title="More options"]') as HTMLButtonElement | null;
+    const gear = container.querySelector('[data-testid="blip-menu-gear-toggle"]') as HTMLButtonElement | null;
     expect(gear).toBeTruthy();
     act(() => gear!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
 
@@ -580,7 +572,7 @@ describe('client: BlipMenu toolbar', () => {
     ({ container, root } = renderMenu(<BlipMenu {...baseProps} editor={editor as any} />));
 
     // Open overflow to find enabled delete button
-    const gear2 = container.querySelector('button[title="More options"]') as HTMLButtonElement | null;
+    const gear2 = container.querySelector('[data-testid="blip-menu-gear-toggle"]') as HTMLButtonElement | null;
     act(() => gear2!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
 
     const enabledDelete = container.querySelector('[data-testid="blip-menu-delete"]') as HTMLButtonElement | null;
@@ -615,7 +607,7 @@ describe('client: BlipMenu toolbar', () => {
     ));
 
     // Open overflow in read mode to find the toggle
-    const gear = container.querySelector('button[title="More options"]');
+    const gear = container.querySelector('[data-testid="blip-menu-gear-toggle"]');
     expect(gear).toBeTruthy();
     act(() => gear!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
 
