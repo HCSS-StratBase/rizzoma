@@ -1490,7 +1490,7 @@ export function RizzomaBlip({
       setInlineCommentDraft('');
       setSelectionCoords({
         x: rect.left + rect.width / 2,
-        y: rect.top - 40,
+        y: rect.bottom + 8,
       });
       setSelectedRangeData(offsets);
       setShowInlineCommentBtn(true);
@@ -2676,12 +2676,12 @@ export function RizzomaBlip({
       {/* Authentic Range Menu for selected text */}
       {FEATURES.INLINE_COMMENTS && showInlineCommentBtn && selectionCoords && !isInlineCommentFormVisible && (
         <div
-          className="range-menu"
+          className={`range-menu ${blip.permissions.canEdit && !isEditing ? 'edit' : ''}`}
           style={{
             position: 'fixed',
             left: `${selectionCoords.x}px`,
             top: `${selectionCoords.y}px`,
-            transform: 'translateX(-50%)'
+            transform: blip.permissions.canEdit && !isEditing ? 'translateX(-20px)' : 'translateX(-50%)'
           }}
         >
           {blip.permissions.canEdit && !isEditing && (

@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig(({ command, mode }) => {
-  const featAll = process.env.FEAT_ALL || (command === 'build' || mode === 'production' ? '1' : '');
+  const featAll = process.env.FEAT_ALL || '1';
 
   return {
     plugins: [react()],

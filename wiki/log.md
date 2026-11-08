@@ -191,6 +191,19 @@ last_verified: 2026-11-06
 - A separate session to resolve the 69 master conflicts on its own branch `merge-master-into-fractal` (cut from `feature/native-fractal-port`; PR #82 and Gemini's branch untouched) was refused by the app until the user clicks Trust repository for `C:\Rizzoma`. Nothing started, nothing changed in git.
 - Plan usage read live: 5-hour window 2% used (resets 17:50 UTC), weekly all-models 14%, Fable 3%; this session's context 20%.
 
+## [2026-11-08] parity | Surface 7: Range-Selection Comment Popover, Upward Arrow, and Selection Actions
+- **Why**: Surface 7 in the 10-surface visual parity plan. Verify range menu appearance on text selection, upward pointing arrow, icons sprite alignment, and action handlers (`Edit` pencil -> TipTap edit mode, `Comment` speech bubble -> floating annotation form).
+- **Implemented**:
+  - `src/shared/featureFlags.ts`: Set `INLINE_COMMENTS: env['FEAT_INLINE_COMMENTS'] !== '0'`, ensuring authentic range selection menus are enabled by default across both production and development environments.
+  - `vite.config.ts`: Set `const featAll = process.env.FEAT_ALL || '1'`, preventing dev mode from defaulting feature flags to empty strings.
+  - `src/client/components/blip/BlipMenu.css`: Removed `overflow: hidden` which clipped the pointing arrow; added authentic upward pointing arrow (`::before`, `::after` triangles with border z-indexing); hooked up authentic `/s/img/range_menu_icons.png` sprite (36x18px: 0-18px edit pencil, 18-36px comment bubble); added rounded corners (`border-radius: 3px`) to outer button edges.
+  - `src/client/components/blip/RizzomaBlip.tsx`: Positioned range menu below text selection (`rect.bottom + 8`) so the arrow points up to the selection; applied `.edit` class and `translateX(-20px)` offset when edit button is present to center the arrow directly over the edit icon at the selection center.
+- **Verification**: Playwright automated testing against topic `917d750213736e02a665422fca066d53` on `138-201-62-161.nip.io`:
+  - `surface7_test_selection.png`: Text selection "Russian Red Lin" active in root blip with floating range menu rendered below.
+  - `surface7_range_menu_full_crop.png`: High-resolution pixel crop confirming upward pointing arrow, Edit pencil icon, vertical divider, Comment speech bubble icon with inner down-arrow, and "Comment" text.
+  - `surface7_annotation_form.png`: Clicking "Comment" button opens floating annotation form below selection with quoted text `Annotate: "Russian Red Lin"`, textarea, and `[Cancel] [Add annotation]` actions.
+  - `surface7_edit_mode_from_range.png`: Clicking "Edit" button enters TipTap edit mode immediately with authentic toolbar, blue controls, and editor focus.
+
 ## [2026-11-08] ops | Master-merge session started; Ultra five-hour limit researched
 - Session `local_955b8e07-7c59-4852-b895-9a8d2346aff8` ("rizzoma-master-merge") started after the user trusted the repository. Brief: new branch `merge-master-into-fractal` from `feature/native-fractal-port`, resolve the 69 conflicts, branch wins on UI parity, report typecheck / `npm test` (baseline 230/252) / wiki lint / CI; PR #82 and Gemini's branch untouched. Result not yet reported.
 - Usage question answered from Anthropic's own help article (https://support.claude.com/en/articles/17728952-what-is-the-ultra-plan, read this session): verified Ultra accounts have no five-hour limit; verification is automatic (account and payment history), phone verification at checkout does not count, and the Settings > Usage "Current session" bar is the test. The user's usage read still shows that bar (2% used), so the account is probably not yet verified; the page gives no timeline.

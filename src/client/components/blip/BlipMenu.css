@@ -472,9 +472,38 @@
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   background: linear-gradient(to bottom, #66a9e9 0%, #5092d3 100%);
+}
+
+.range-menu::before,
+.range-menu::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  height: 0;
+  margin-left: -8px;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #66a9e9;
+  pointer-events: none;
+}
+
+.range-menu.edit::before,
+.range-menu.edit::after {
+  left: 20px;
+}
+
+.range-menu::after {
+  top: -9px;
+  border-bottom: 8px solid #2E72BB;
+  z-index: 0;
+}
+
+.range-menu::before {
+  z-index: 1;
 }
 
 .range-menu button,
@@ -494,6 +523,16 @@
   text-shadow: none;
 }
 
+.range-menu .button:first-child {
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+.range-menu .button:last-child {
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
 .range-menu button:not([disabled]):hover,
 .range-menu .button:not([disabled]):hover {
   background: #66a9e9;
@@ -505,11 +544,12 @@
 }
 
 .range-menu .icon {
-  height: 20px;
+  height: 18px;
   width: 18px;
   display: inline-block;
-  background: url(/s/img/wave_buttons.png) no-repeat;
+  background: url(/s/img/range_menu_icons.png) no-repeat;
   vertical-align: middle;
+  margin: 4px;
 }
 
 .range-menu .edit-icon {

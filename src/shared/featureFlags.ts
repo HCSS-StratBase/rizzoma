@@ -9,7 +9,7 @@ const env = typeof import.meta !== 'undefined' && import.meta.env
 
 export const FEATURES = {
   // Track A: Inline comments
-  INLINE_COMMENTS: env['FEAT_INLINE_COMMENTS'] === '1' || env['FEAT_ALL'] === '1',
+  INLINE_COMMENTS: env['FEAT_INLINE_COMMENTS'] !== '0',
   
   // Track B: Rich editor features
   RICH_TOOLBAR: env['FEAT_RICH_TOOLBAR'] === '1' || env['FEAT_ALL'] === '1',
