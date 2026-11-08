@@ -190,3 +190,7 @@ last_verified: 2026-11-06
 ## [2026-11-08] ops | Master-merge session prepared but not started (repository trust pending)
 - A separate session to resolve the 69 master conflicts on its own branch `merge-master-into-fractal` (cut from `feature/native-fractal-port`; PR #82 and Gemini's branch untouched) was refused by the app until the user clicks Trust repository for `C:\Rizzoma`. Nothing started, nothing changed in git.
 - Plan usage read live: 5-hour window 2% used (resets 17:50 UTC), weekly all-models 14%, Fable 3%; this session's context 20%.
+
+## [2026-11-08] ops | Master-merge session started; Ultra five-hour limit researched
+- Session `local_955b8e07-7c59-4852-b895-9a8d2346aff8` ("rizzoma-master-merge") started after the user trusted the repository. Brief: new branch `merge-master-into-fractal` from `feature/native-fractal-port`, resolve the 69 conflicts, branch wins on UI parity, report typecheck / `npm test` (baseline 230/252) / wiki lint / CI; PR #82 and Gemini's branch untouched. Result not yet reported.
+- Usage question answered from Anthropic's own help article (https://support.claude.com/en/articles/17728952-what-is-the-ultra-plan, read this session): verified Ultra accounts have no five-hour limit; verification is automatic (account and payment history), phone verification at checkout does not count, and the Settings > Usage "Current session" bar is the test. The user's usage read still shows that bar (2% used), so the account is probably not yet verified; the page gives no timeline.
