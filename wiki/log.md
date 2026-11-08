@@ -160,3 +160,19 @@ last_verified: 2026-11-06
   - `surface5_typed_edit_mode.png`: Child editor with typed test comment.
   - `surface5_child_saved_view.png`: Saved child blip card in view mode with avatar + date and zero "Untitled" text.
   - `surface5_toggle_expanded.png` & `surface5_toggle_collapsed.png`: Flawless toggle collapse and expand.
+
+## [2026-11-08] parity | Surface 6: Blip Operations, Child Blip Menu Actions, and Multi-Level Nesting
+- **Why**: Surface 6 in the visual parity plan. Verify blip toolbar operations, multi-level fractal child blip nesting (depth 2+), child blip folding/unfolding, suppression of redundant child blip chrome, and exact visual alignment with original Rizzoma (`legacy-240.png`, `060-blip-activated-menu.png`, `061-blip-gear-menu.png`).
+- **Implemented**:
+  - `BlipMenu.tsx`: Fixed `Hide` button label parity (changed from `Hidden` to `Hide` in both edit and read modes). Removed inline green color override (`#2e8b57`), restoring authentic black text `#000` with native sprite checkbox from `BlipMenu.css`.
+  - `RizzomaBlip.tsx`: Replaced restrictive `typeof blip.anchorPosition === 'number'` with `!isRoot && !isTopicRoot` for `onToggleCollapseByDefault` and `onCollapse`, ensuring structural child blips in CouchDB have access to the Hide and collapse actions.
+  - `RizzomaBlip.tsx`: Guarded bottom blip menu (`bottom-blip-menu js-bottom-blip-menu`) with `isEditing && !isInlineChild`, completely eliminating redundant inner `[Done] [Write a reply...]` bars inside nested child blips.
+  - Verified single-active blip toolbar invariant: activating a child blip displays only its toolbar and hides the root blip toolbar.
+  - Verified Depth 2 fractal child blip creation via `Ctrl+Enter` inside Depth 1, rendered inside a nested white card with grey border.
+  - Verified Depth 2 folding/unfolding via speech bubble marker (`−` to `💬+` and back).
+- **Verification**: Playwright automated test against topic `917d750213736e02a665422fca066d53` on `138-201-62-161.nip.io`:
+  - `surface6_fresh_depth2_activated2.png`: Depth 2 child card active with full blip toolbar (`Edit`, fold, unfold, link, `[x] Hide`, trash, gear dropdown).
+  - `surface6_toolbar_crop_clean2.png`: Pixel crop confirming exact parity of the blip toolbar actions and `Hide` checkbox button.
+  - `surface6_depth2_saved.png`: Depth 2 card in saved view mode nested cleanly inside Depth 1 card.
+  - `surface6_depth2_collapsed.png` & `surface6_depth2_reexpanded.png`: Depth 2 collapse/expand cycle working seamlessly.
+
