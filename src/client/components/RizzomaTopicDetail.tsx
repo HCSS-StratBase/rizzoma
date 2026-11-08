@@ -1280,7 +1280,9 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
         } else if (isAuthed) {
           startEditingTopic();
           setTimeout(() => {
-            const from = topicEditorRef.current?.state.selection.from ?? 0;
+            const editor = topicEditorRef.current;
+            const docSize = editor?.state.doc.content.size ?? 0;
+            const from = docSize > 2 ? docSize - 1 : 0;
             createInlineChildBlipRef.current?.(from);
           }, 100);
         }
@@ -1732,7 +1734,7 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
               }}
               onStartEdit={startEditingTopic}
               contentOverride={topicContentOverride}
-              contentHeader={topicContentHeader}
+              contentHeader={null}
               contentFooter={topicContentFooter}
               childFooter={topicChildFooter}
               // BLB: NO navigation - expand/collapse INLINE like original Rizzoma

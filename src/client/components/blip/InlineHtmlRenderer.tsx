@@ -210,6 +210,11 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
       if (text.length === 0 && !hasMediaOrMarker) {
         return null;
       }
+      // If the <li> only contains hashtags (e.g. #RuBase), suppress the bullet disc so it renders as a clean unbulleted tag row
+      if (text.length > 0 && text.split(/\s+/).every(token => token.startsWith('#'))) {
+        props['style'] = { ...(props['style'] as any), listStyle: 'none', marginLeft: 0, paddingLeft: 0 };
+        props['className'] = `${props['className'] || ''} blip-tag-line`.trim();
+      }
     }
     // Mark THESE markers as placed BEFORE walking children so nested block
     // anchors (e.g. a <p> inside an <li>) don't re-place the same child.

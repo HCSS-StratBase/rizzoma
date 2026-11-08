@@ -32,9 +32,8 @@ export const FEATURES = {
   TASKS: env['FEAT_TASKS'] === '1' || env['FEAT_ALL'] === '1' || env['BUSINESS_ACCOUNT'] === '1',
 
   // Track F: Visual parity with original rizzoma.com (B1 reskin + B2 inline render)
-  // Off by default — opt in by setting FEAT_RIZZOMA_PARITY_RENDER=1.
-  // FEAT_ALL does NOT enable this yet (still iterating on visual fidelity).
-  RIZZOMA_PARITY_RENDER: env['FEAT_RIZZOMA_PARITY_RENDER'] === '1',
+  // Enabled by default for authentic visual parity with original Rizzoma
+  RIZZOMA_PARITY_RENDER: env['FEAT_RIZZOMA_PARITY_RENDER'] !== '0',
 
   // Track G: Native fractal-render port (replace React/TipTap hybrid for the
   // parent-of-blips render layer with a direct TS port of original Rizzoma's

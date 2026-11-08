@@ -48,6 +48,17 @@ last_verified: 2026-11-06
 - **Findings recorded, not fixed**: `screenshots/260714-legacy-reference-archive/ARCHIVE_MANIFEST.md` says "Captured: 56" and indexes 57 of the 126 images (69 missing); docs cite files that do not exist in the tree (HANDOFF under docs, RESTART under docs, the coffee-to-ts migration script); covered-by-name is not covered-in-substance: the new catalogs say what a file is by its header, not how it behaves.
 - **Linter**: WSL run PASS, 17 pages, 15/15 diagram pairs, 668 verified citations, 0 orphans, 0 broken links.
 
+## [2026-11-08] fix | Visual Parity Default Enablement, Tag Line Unbulleting, and Ctrl+Enter Immediate Unfold & Edit Active Focus
+- **Session**: `e0d61102-174c-4127-a221-d5dffc93dabe`
+- **Branch / Commit**: `feature/native-fractal-port`
+- **Root Cause & Structural Resolution**:
+  1. **"Untitled blip"**: eradicated fallback in `RizzomaBlip.tsx:2216` and `childBlip.authorName || 'Reply'` in line 2550.
+  2. **Ctrl+Enter Immediate Unfold**: child blips were created with `isFoldedByDefault: true` and `expandedBlips` state was un-synced to `isExpanded` in `RizzomaBlip.tsx` because of missing `useEffect`. Fixed `effectiveExpanded = isTopicRoot ? true : (isExpanded || isEditing)` so an active editing blip is NEVER rendered as a collapsed row. Added `expandedBlips` synchronization hook and ensured `rizzoma:start-edit-blip` triggers `setIsExpanded(true)`.
+  3. **"2 stray bullets on top"**: global Ctrl+Enter listener was inserting child blips at offset 0 above the title. In view mode, anchor now resolves to the end of the root blip content. Suppressed empty `<li>` elements in `InlineHtmlRenderer.tsx`.
+  4. **"I see NO #" (Authentic Hashtags)**: `RIZZOMA_PARITY_RENDER` was previously disabled unless `FEAT_RIZZOMA_PARITY_RENDER=1` was explicitly passed. Made `RIZZOMA_PARITY_RENDER` enabled by default (`env['FEAT_RIZZOMA_PARITY_RENDER'] !== '0'`) in `src/shared/featureFlags.ts` and `vite.config.ts`. Removed redundant `topicContentHeader` that duplicated tags above the title `<h1>`. Added tag-line bullet suppression in `InlineHtmlRenderer.tsx` so lines containing only `#tags` (e.g. `#RuBase`) render as clean unbulleted tag rows matching legacy screenshot `240-topic-content-0-russian-red-lines-2026-r.png`.
+- **Files Modified**: `src/shared/featureFlags.ts`, `vite.config.ts`, `src/client/components/blip/RizzomaBlip.tsx`, `src/client/components/blip/InlineHtmlRenderer.tsx`, `src/client/components/RizzomaTopicDetail.tsx`.
+- **Verification**: `npm run build` succeeds with 0 errors.
+
 ## [2026-11-08] fix | Forensic Resolution of Uncollapsed Topic Children, Elevated Bullet Artifacts, and 2-State Toolbar Parity
 - **Session**: `e0d61102-174c-4127-a221-d5dffc93dabe`
 - **Branch / Commit**: `feature/native-fractal-port`

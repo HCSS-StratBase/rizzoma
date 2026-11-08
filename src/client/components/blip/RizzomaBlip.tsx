@@ -359,8 +359,8 @@ export function RizzomaBlip({
   // Mirrors handleFinishEdit (declared below) for early-registered listeners.
   const finishEditRef = useRef<(() => void) | null>(null);
   // Root blips start expanded by default, but can be collapsed
-  // Non-root blips follow the collapse preference
-  const effectiveExpanded = isTopicRoot ? true : isExpanded;
+  // Non-root blips follow the collapse preference (editing blips are NEVER collapsed)
+  const effectiveExpanded = isTopicRoot ? true : (isExpanded || isEditing);
 
   // Listen for global fold-all / unfold-all events (from ▲/▼ buttons)
   useEffect(() => {
@@ -959,6 +959,7 @@ export function RizzomaBlip({
     const handle = (e: Event) => {
       const { blipId: targetId } = (e as CustomEvent).detail || {};
       if (targetId !== blip.id) return;
+      setIsExpanded(true);
       setIsActive(true);
       if (blip.permissions.canEdit) {
         setIsEditing(true);
@@ -2224,10 +2225,10 @@ export function RizzomaBlip({
   const showCollapsedView = !effectiveExpanded && !isTopicRoot;
 
   useEffect(() => {
-    if (forceExpanded) {
+    if (forceExpanded || (expandedBlips && expandedBlips.has(blip.id))) {
       setIsExpanded(true);
     }
-  }, [forceExpanded]);
+  }, [forceExpanded, expandedBlips, blip.id]);
 
   useEffect(() => {
     // Entering edit mode claims the single-active slot GLOBALLY (broadcast), not
