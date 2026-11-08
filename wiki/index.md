@@ -59,6 +59,7 @@ source_commit: a4d4d583
 | Page | Modality | Last Verified | Summary |
 |---|---|---|---|
 | [`decisions/contradictions-and-lint-findings.md`](decisions/contradictions-and-lint-findings.md) | `□` | `2026-11-06` | Active doc-vs-code contradictions (`?render=native` vs comment, `QUICKSTART.md` vs host `tsx`/`vite`), open Phase 1→Phase 2 gaps (`content-lookup.ts:71-76` inline anchor synthesis, `MemoryStore` session resets), and baseline `secure-agents` security audit. |
+| [`decisions/master-merge-2026-11-08.md`](decisions/master-merge-2026-11-08.md) | `□` | `2026-11-08` | Per-file decisions of the `origin/master` merge (69 conflicts): branch wins on look, master wins on behaviour; hand fixes and known gaps. |
 
 ---
 

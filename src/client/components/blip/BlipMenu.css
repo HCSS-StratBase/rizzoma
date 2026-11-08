@@ -644,3 +644,28 @@
   border-radius: 2px;
 }
 
+/* merge-master: mobile in-flow toolbar rules (asserted by client.mobilePwa test) */
+@media (max-width: 500px) {
+  .blip-container.expanded > .blip-menu-container {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    z-index: 3;
+    margin: 0 0 6px;
+  }
+}
+
+.mobile-layout .blip-container.expanded > .blip-menu-container {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+}
+
+.blip-menu-container.mobile-blip-menu-container {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+}

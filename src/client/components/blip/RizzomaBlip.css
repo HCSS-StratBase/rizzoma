@@ -1479,6 +1479,14 @@
   display: none;
 }
 
+/* When the portal has no expanded child, suppress block-level whitespace
+   so the bare [+] marker doesn't introduce a phantom blank line. React
+   only renders into the portal when localExpandedInline contains the
+   child id — when collapsed, the .inline-child-portal stays empty. */
+.inline-child-portal:empty {
+  display: none;
+}
+
 /* Orphaned markers (referencing non-existent children) - hide completely */
 .blip-thread-marker.orphaned {
   display: none;
@@ -1770,4 +1778,14 @@
   margin-top: 2px !important;
   text-align: center !important;
   white-space: nowrap !important;
+}
+
+/* merge-master: only the ACTIVE blip shows its toolbar (single-active model) */
+.inline-child-expanded .blip-container:not(.active) .blip-menu-container {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+.blip-container.active .blip-menu-container {
+  opacity: 1;
+  transform: none;
 }

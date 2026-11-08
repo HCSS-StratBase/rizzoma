@@ -1,0 +1,296 @@
+{
+  "checks": [
+    {
+      "label": "invited account authenticated",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "owner session survives restart",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "invitation accepted as editor",
+      "ok": true
+    },
+    {
+      "label": "root blip survives restart before mutation",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "parentId": null
+      }
+    },
+    {
+      "label": "child hierarchy survives restart before mutation",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "parentId": "3305bc3a42889979c79fa39f40000720:bded2e01c-826b-43e8-adc4-efbf05bb0dc0"
+      }
+    },
+    {
+      "label": "grandchild hierarchy survives restart before mutation",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "parentId": "3305bc3a42889979c79fa39f40000720:bdd520fb5-14c8-48ff-b6cf-98eed19c5b19"
+      }
+    },
+    {
+      "label": "upload survives restart before mutation",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "accepted invitee task reference persisted",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "accepted invitee mention reference persisted",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "assigned task appears in invitee list",
+      "ok": true
+    },
+    {
+      "label": "mention appears in invitee list",
+      "ok": true
+    },
+    {
+      "label": "task view grants assignee authority",
+      "ok": true
+    },
+    {
+      "label": "task toggles on",
+      "ok": true
+    },
+    {
+      "label": "participant demoted to viewer",
+      "ok": true
+    },
+    {
+      "label": "viewer permissions enforced",
+      "ok": true
+    },
+    {
+      "label": "viewer edit rejected",
+      "ok": true,
+      "details": {
+        "status": 403
+      }
+    },
+    {
+      "label": "viewer assignee retains task authority",
+      "ok": true
+    },
+    {
+      "label": "participant promoted to commenter",
+      "ok": true
+    },
+    {
+      "label": "commenter reply accepted",
+      "ok": true
+    },
+    {
+      "label": "commenter parent edit rejected",
+      "ok": true,
+      "details": {
+        "status": 403
+      }
+    },
+    {
+      "label": "participant restored to editor",
+      "ok": true
+    },
+    {
+      "label": "editor update accepted",
+      "ok": true
+    },
+    {
+      "label": "accepted participant reads ACL upload",
+      "ok": true
+    },
+    {
+      "label": "two-browser Yjs relay",
+      "ok": true
+    },
+    {
+      "label": "disconnected peer misses live update",
+      "ok": true
+    },
+    {
+      "label": "reconnected peer catches up",
+      "ok": true
+    },
+    {
+      "label": "collaboration markers persisted through API",
+      "ok": true
+    },
+    {
+      "label": "fresh reload retains collaboration markers",
+      "ok": true
+    },
+    {
+      "label": "initial unread state is authoritative",
+      "ok": true,
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "label": "existing unread state cleared",
+      "ok": true,
+      "details": {
+        "status": 200,
+        "data": {
+          "ok": true,
+          "count": 3,
+          "results": [
+            {
+              "id": "3305bc3a42889979c79fa39f40000720:bded2e01c-826b-43e8-adc4-efbf05bb0dc0",
+              "ok": true
+            },
+            {
+              "id": "3305bc3a42889979c79fa39f40000720:bdd520fb5-14c8-48ff-b6cf-98eed19c5b19",
+              "ok": true
+            },
+            {
+              "id": "3305bc3a42889979c79fa39f40000720:b9c8ace89-6fd9-4d45-8c76-80a1da769be5",
+              "ok": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "two FtG blips created",
+      "ok": true,
+      "details": {
+        "first": 201,
+        "second": 201
+      }
+    },
+    {
+      "label": "first FtG click persisted through real read endpoint",
+      "ok": true,
+      "details": {
+        "status": 201,
+        "ok": true,
+        "blipId": "3305bc3a42889979c79fa39f40000720:b74f5724d-3f3d-4057-a472-787f8a9a7dbc",
+        "url": "https://138-201-62-161.nip.io/api/waves/3305bc3a42889979c79fa39f40000720/blips/3305bc3a42889979c79fa39f40000720%3Ab74f5724d-3f3d-4057-a472-787f8a9a7dbc/read"
+      }
+    },
+    {
+      "label": "second FtG click persisted through real read endpoint",
+      "ok": true,
+      "details": {
+        "status": 201,
+        "ok": true,
+        "blipId": "3305bc3a42889979c79fa39f40000720:bd7ed840f-81a2-4624-a14c-54142b32aba9",
+        "url": "https://138-201-62-161.nip.io/api/waves/3305bc3a42889979c79fa39f40000720/blips/3305bc3a42889979c79fa39f40000720%3Abd7ed840f-81a2-4624-a14c-54142b32aba9/read"
+      }
+    },
+    {
+      "label": "desktop Follow-the-Green API-persisted 2→1→0 after fresh reload",
+      "ok": true
+    },
+    {
+      "label": "three export formats downloaded",
+      "ok": true,
+      "details": {
+        "count": 3
+      }
+    },
+    {
+      "label": "recursive Production_acceptance_20260712195835.html export",
+      "ok": true
+    },
+    {
+      "label": "recursive Production_acceptance_20260712195835.json export",
+      "ok": true
+    },
+    {
+      "label": "recursive Production_acceptance_20260712195835.txt export",
+      "ok": true
+    },
+    {
+      "label": "public read-only sharing enabled",
+      "ok": true
+    },
+    {
+      "label": "anonymous public read-only access",
+      "ok": true
+    },
+    {
+      "label": "anonymous mutation rejected",
+      "ok": true,
+      "details": {
+        "status": 401
+      }
+    },
+    {
+      "label": "public ACL upload read",
+      "ok": true
+    },
+    {
+      "label": "private sharing restored",
+      "ok": true
+    },
+    {
+      "label": "participant revoked",
+      "ok": true
+    },
+    {
+      "label": "revoked participant loses topic access",
+      "ok": true,
+      "details": {
+        "status": 403
+      }
+    },
+    {
+      "label": "revoked participant loses upload access",
+      "ok": true,
+      "details": {
+        "status": 403
+      }
+    },
+    {
+      "label": "revoked participant loses task authority",
+      "ok": true,
+      "details": {
+        "status": 403
+      }
+    },
+    {
+      "label": "password reset request accepted",
+      "ok": true
+    },
+    {
+      "label": "acceptance pages console clean",
+      "ok": true,
+      "details": []
+    }
+  ],
+  "inviteEmail": "sdspieg+rizzoma-accept-20260712195835@gmail.com",
+  "topicId": "3305bc3a42889979c79fa39f40000720",
+  "unexpectedErrors": {
+    "invitee": [],
+    "owner": [],
+    "anonymous": []
+  }
+}

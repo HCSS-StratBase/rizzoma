@@ -4,6 +4,10 @@ import { DecorationSet, Decoration } from '@tiptap/pm/view';
 import { Awareness } from 'y-protocols/awareness';
 import { useEffect, useState } from 'react';
 import { FEATURES } from '@shared/featureFlags';
+import {
+  anonymousCollaborationUser,
+  isCollaborationUser,
+} from './collaborationIdentity';
 import './CollaborativeCursors.css';
 
 export interface CursorUser {
@@ -17,12 +21,6 @@ export interface CursorState {
   selection: { from: number; to: number };
 }
 
-const cursorColors = [
-  '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', 
-  '#2196f3', '#00bcd4', '#009688', '#4caf50',
-  '#ff9800', '#ff5722', '#795548', '#607d8b'
-];
-
 export const CollaborativeCursor = Extension.create({
   name: 'collaborativeCursor',
 
@@ -30,9 +28,9 @@ export const CollaborativeCursor = Extension.create({
     return {
       provider: null,
       user: {
-        id: 'anonymous',
+        id: 'anonymous:extension',
         name: 'Anonymous',
-        color: cursorColors[Math.floor(Math.random() * cursorColors.length)]
+        color: anonymousCollaborationUser('extension').color,
       },
     };
   },
@@ -64,7 +62,9 @@ export const CollaborativeCursor = Extension.create({
               if (!cursor || !cursor.selection) return;
               
               const { from, to } = cursor.selection;
-              const cursorUser = cursor.user || { 
+              const awarenessUser = (state as any)?.user;
+              const cursorUser = (isCollaborationUser(awarenessUser) && awarenessUser)
+                || cursor.user || {
                 name: 'Unknown', 
                 color: '#666',
                 id: stateClientId.toString()
@@ -114,9 +114,13 @@ export const CollaborativeCursor = Extension.create({
           const updateCursor = () => {
             const state = view.state;
             const { from, to } = state.selection;
-            
+            const awarenessUser = awareness.getLocalState()?.['user'];
+            const currentUser = isCollaborationUser(awarenessUser)
+              ? awarenessUser
+              : user;
+
             awareness.setLocalStateField('cursor', {
-              user,
+              user: currentUser,
               selection: { from, to },
               isTyping
             });
@@ -178,8 +182,12 @@ export function TypingIndicator({ provider }: { provider: any }) {
         if (stateClientId === clientId) return;
 
         const cursor = (state as any)?.cursor;
-        if (cursor?.user && cursor.isTyping) {
-          nextUsers.push(cursor.user);
+        const awarenessUser = (state as any)?.user;
+        const typingUser = isCollaborationUser(awarenessUser)
+          ? awarenessUser
+          : cursor?.user;
+        if (typingUser && cursor?.isTyping) {
+          nextUsers.push(typingUser);
         }
       });
 

@@ -1,0 +1,48 @@
+{
+  "topicId": "ff955fcd14cbbf6212be3a9f7005f0a8",
+  "base": "http://127.0.0.1:3000",
+  "config": {
+    "BLIP_COUNT": 20,
+    "COMMENTS_PER_BLIP": 10,
+    "HISTORY_UPDATES_PER_BLIP": 5
+  },
+  "seed": {
+    "commentCount": 200,
+    "historyCount": 100,
+    "commentSeedMs": 13294,
+    "historySeedMs": 12782
+  },
+  "benchmarks": {
+    "coldLoad": {
+      "ms": 1174,
+      "memoryMB": 33,
+      "collapsedRows": 20,
+      "mountedBlips": 21,
+      "lazySlots": 0
+    },
+    "commentsFetch": {
+      "ms": 176,
+      "totalReturned": 0
+    },
+    "historyFetch": {
+      "elapsedMs": 92,
+      "entries": 0,
+      "hasMore": false,
+      "blipIds": 0
+    }
+  },
+  "budgets": {
+    "coldLoadMs": 5000,
+    "memoryMB": 120,
+    "commentsFetchMs": 4000,
+    "historyFetchMs": 3000
+  },
+  "gates": {
+    "coldLoad": true,
+    "memory": true,
+    "commentsFetch": true,
+    "historyFetch": true,
+    "allLabelsRendered": true
+  },
+  "result": "PASS"
+}

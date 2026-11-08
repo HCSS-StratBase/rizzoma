@@ -14,10 +14,57 @@
   <script type="module">
     import React from 'react';
     import ReactDOM from 'react-dom/client';
-    import { TestEditorApp } from '/src/client/TestEditorApp.tsx';
-    
+    import { BlipEditor } from './src/client/components/editor/BlipEditor';
+    import { FEATURES } from './src/shared/featureFlags';
+    import { MantineProvider, createTheme, Button, Group } from '@mantine/core';
+    import '@mantine/core/styles.css';
+
+    const theme = createTheme({
+      primaryColor: 'teal',
+    });
+
+    function TestApp() {
+      const [content, setContent] = React.useState('<p>Test content for Rizzoma editor</p>');
+      
+      const insertPoll = () => {
+        const editorEl = document.querySelector('.tiptap');
+        if (editorEl) editorEl.focus();
+        setTimeout(() => {
+          if (window.rizzomaDispatchInsertEvent) {
+            window.rizzomaDispatchInsertEvent('rizzoma:insert-gadget', { type: 'poll' });
+          } else {
+            window.dispatchEvent(new CustomEvent('rizzoma:insert-gadget', { 
+              detail: { type: 'poll' } 
+            }));
+          }
+        }, 100);
+      };
+
+      return React.createElement(MantineProvider, { theme },
+        React.createElement('div', { style: { padding: 20 } },
+          React.createElement('h1', null, 'Rizzoma Editor Test + Gadgets'),
+          React.createElement(Group, { mb: 20 },
+            React.createElement(Button, { onClick: insertPoll, color: "teal" }, 'Insert Poll Gadget')
+          ),
+          React.createElement('div', { style: { marginTop: 20, border: '1px solid #ccc', padding: 10 } },
+            React.createElement(BlipEditor, {
+              content,
+              blipId: 'test-blip-1',
+              isReadOnly: false,
+              onUpdate: setContent,
+              enableCollaboration: false
+            })
+          ),
+          React.createElement('div', { style: { marginTop: 20 } },
+            React.createElement('h3', null, 'Content HTML:'),
+            React.createElement('pre', { style: { background: '#f5f5f5', padding: 10, whiteSpace: 'pre-wrap' } }, content)
+          )
+        )
+      );
+    }
+
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(TestEditorApp));
+    root.render(React.createElement(TestApp));
   </script>
 </body>
 </html>

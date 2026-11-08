@@ -1,0 +1,89 @@
+apply plugin: 'com.android.application'
+
+// Auto-bump versionCode on every build so Android's Package Installer
+// treats each new APK as an in-place update instead of refusing with
+// "app already exists". Minutes since epoch fits comfortably in an int
+// (≈ 35M now, int max is 2.1B → valid until year 6053). versionName
+// encodes year-month-day-HHMM so you can visually confirm which build
+// is running from Settings → Apps → Rizzoma → App info. The debug
+// keystore is deterministic per user, so signature-matching is already
+// handled by Gradle — the only missing piece was the monotonic version
+// number. 2026-04-14 task #40.
+def now = new Date()
+def autoVersionCode = (long) (now.getTime() / 60000L)
+def autoVersionName = new java.text.SimpleDateFormat("yyyy.MM.dd.HHmm").format(now)
+
+android {
+    namespace "work.hcss.rizzoma"
+    compileSdk rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "work.hcss.rizzoma"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode autoVersionCode.intValue()
+        versionName autoVersionName
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+// Exclude the legacy kotlin-stdlib-jdk7 / kotlin-stdlib-jdk8 artifacts
+// that got merged into `kotlin-stdlib` starting in Kotlin 1.8.0. Some
+// of Capacitor 8's transitive plugin dependencies still pin Kotlin
+// 1.6.21 stdlib variants which collide with the newer unified stdlib
+// at packageDebug time. The resolutionStrategy force + exclude below
+// resolves the `checkDebugDuplicateClasses` failure. 2026-04-14.
+configurations.all {
+    resolutionStrategy {
+        force "org.jetbrains.kotlin:kotlin-stdlib:1.9.24"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24"
+        force "org.jetbrains.kotlin:kotlin-stdlib-common:1.9.24"
+        // @capacitor/browser 8.0.3 pulls in androidx.browser:1.9.0,
+        // which requires Android Gradle Plugin 8.9.1+. We're still on
+        // AGP 8.7.2 from the stock Capacitor 8 template; pin the
+        // browser lib to the last AGP-8.7-compatible release instead
+        // of a full AGP upgrade. 2026-04-14 task #40.
+        force "androidx.browser:browser:1.8.0"
+    }
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-common'
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

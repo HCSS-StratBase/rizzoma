@@ -1,9 +1,11 @@
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import type { CSSProperties, MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { BlipMenu } from './BlipMenu';
+import { useActiveBlip } from './ActiveBlipContext';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
+import { isChangeOrigin } from '@tiptap/extension-collaboration';
 import { getEditorExtensions, defaultEditorProps } from '../editor/EditorConfig';
 import { TypingIndicator } from '../editor/CollaborativeCursors';
 import { toast } from '../Toast';
@@ -12,6 +14,9 @@ import { InlineComments, InlineCommentsStatus } from '../editor/InlineComments';
 import { FEATURES } from '@shared/featureFlags';
 import { BlipHistoryModal } from './BlipHistoryModal';
 import { api, ensureCsrf } from '../../lib/api';
+import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
+import { insertGadget } from '../../gadgets/insert';
+import type { GadgetInsertDetail } from '../../gadgets/types';
 import {
   getInlineCommentsVisibility,
   getInlineCommentsVisibilityFromStorage,
@@ -36,10 +41,22 @@ import { INSERT_EVENTS, EDIT_MODE_EVENT, EDITOR_FOCUS_EVENT, EDITOR_BLUR_EVENT, 
 import './RizzomaBlip.css';
 import '../editor/extensions/BlipThread.css';
 import { injectInlineMarkers } from './inlineMarkers';
-import { renderInlineHtml } from './InlineHtmlRenderer';
+import { InlineHtmlRenderer } from './InlineHtmlRenderer';
+import { LazyBlipSlot, LAZY_MOUNT_THRESHOLD } from './LazyBlipSlot';
 import { useCollaboration } from '../editor/useCollaboration';
 import { yjsDocManager } from '../editor/YjsDocumentManager';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthenticatedCollaborationUser } from '../editor/useAuthenticatedCollaborationUser';
+import { requestTaskCompletionHydration } from '../editor/extensions/TaskWidget';
+import { collaborationProjectionHeaders } from '../../lib/collaborationProjection';
+import { EMPTY_BLB_HTML, ensureBlbHtml, plainTextToBlbHtml } from '@shared/blbContent';
+import {
+  contentForBlbEditStart,
+  needsBlbSeedProjection,
+  normalizeBlbEditorDocument,
+  seedEmptyBlbYdoc,
+  setBlbEditorBaseline,
+} from '../editor/blbEditorInvariant';
+import { isCanonicalBlbDocument } from '../editor/extensions/BlipKeyboardShortcuts';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
 export type BlipContributor = {
@@ -47,7 +64,7 @@ export type BlipContributor = {
   email: string;
   name?: string;
   avatar?: string;
-  role?: 'owner' | 'editor' | 'viewer';
+  role?: 'owner' | 'editor' | 'commenter' | 'viewer';
 };
 
 export interface BlipData {
@@ -59,6 +76,7 @@ export interface BlipData {
   authorAvatar?: string;
   createdAt: number;
   updatedAt: number;
+  yjsGeneration?: number;
   isRead: boolean;
   deletedAt?: number;
   deleted?: boolean;
@@ -346,8 +364,10 @@ export function RizzomaBlip({
   // Documented as Task #190 (sweep-state contamination → spine[1] empty).
   const isEditingRef = useRef(false);
   useEffect(() => { isEditingRef.current = isEditing; }, [isEditing]);
-  // Mirrors handleFinishEdit (declared below) for early-registered listeners.
-  const finishEditRef = useRef<(() => void) | null>(null);
+  // The topic-root shell uses the wave id as its synthetic blip id. It has no
+  // corresponding blip document, so blip-scoped preference routes are not
+  // applicable and would return noisy 404s on every topic load.
+  const shouldSyncServerBlipPreferences = !isPerfMode && !isTopicRoot;
   // Root blips start expanded by default, but can be collapsed
   // Non-root blips follow the collapse preference (editing blips are NEVER collapsed)
   const effectiveExpanded = (isTopicRoot || isInlineChild) ? true : (isExpanded || isEditing);
@@ -368,13 +388,23 @@ export function RizzomaBlip({
   // Dispatch edit mode event to RightToolsPanel
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, { detail: { isEditing } }));
-  }, [isEditing]);
+    window.dispatchEvent(new CustomEvent(EDIT_MODE_EVENT, {
+      detail: { isEditing, blipId: blip.id },
+    }));
+  }, [blip.id, isEditing]);
 
-  // BLB: toolbar visibility follows original Rizzoma: exactly one clicked blip
-  // is active. Expanding a thread must NOT make every visible ancestor/child
-  // show its own Edit/Collapse/Expand/link/gear menu.
-  const [isActive, setIsActive] = useState(false);
+  // BLB §18b2: at most ONE blip in the topic shows chrome (menu bar / edit
+  // toolbar) at a time — the shared ActiveBlipContext holds which one. Blips
+  // start passive; the topic root claims the slot on open, everything else
+  // activates on click. Legacy fallback (no provider): force-expanded
+  // non-inline blips start active, as before.
+  const activeBlipCtx = useActiveBlip();
+  const activeBlipIdInCtx = activeBlipCtx ? activeBlipCtx.activeBlipId : null;
+  const [isActive, setIsActive] = useState(!activeBlipCtx && forceExpanded && !isInlineChild);
+  const claimActive = useCallback(() => {
+    setIsActive(true);
+    activeBlipCtx?.setActiveBlip(blip.id);
+  }, [activeBlipCtx, blip.id]);
 
   // Dispatch blip-active-editable event so RightToolsPanel shows insert buttons
   // even before entering edit mode (enables auto-enter-edit on insert click)
@@ -390,28 +420,15 @@ export function RizzomaBlip({
     }));
   }, [isActive, blip.id, blip.permissions.canEdit]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const handleActiveClaim = (event: Event) => {
-      const targetId = (event as CustomEvent<{ blipId?: string }>).detail?.blipId;
-      if (!targetId) return;
-      const mine = targetId === blip.id;
-      setIsActive(mine);
-      // Single-active is about EDIT SURFACES, not just toolbar visibility: a
-      // foreign claim while this blip is editing must FINISH (auto-save) the
-      // edit, exactly like the original Rizzoma. Without this, the previous
-      // editor stayed editable with its toolbar merely hidden.
-      if (!mine && isEditingRef.current) {
-        finishEditRef.current?.();
-      }
-    };
-    window.addEventListener(ACTIVE_BLIP_CLAIM_EVENT, handleActiveClaim);
-    return () => window.removeEventListener(ACTIVE_BLIP_CLAIM_EVENT, handleActiveClaim);
-  }, [blip.id]);
-
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
-  const [editedContent, setEditedContent] = useState(blip.content);
+  const safeBlipContent = useMemo(
+    () => isTopicRoot
+      ? sanitizeRichHtml(blip.content || EMPTY_BLB_HTML)
+      : sanitizeRichHtml(ensureBlbHtml(sanitizeRichHtml(blip.content || ''))),
+    [blip.content, isTopicRoot],
+  );
+  const [editedContent, setEditedContent] = useState(safeBlipContent);
   const [showInlineCommentBtn, setShowInlineCommentBtn] = useState(false);
   const [inlineCommentsNotice, setInlineCommentsNotice] = useState<string | null>(null);
   const [selectionCoords, setSelectionCoords] = useState<{ x: number; y: number } | null>(null);
@@ -436,7 +453,7 @@ export function RizzomaBlip({
   const [isSavingEdit] = useState(false); // Auto-save handles saving now
   const [isDeleting, setIsDeleting] = useState(false);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSavedContentRef = useRef<string>(blip.content);
+  const lastSavedContentRef = useRef<string>(safeBlipContent);
   const editorRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const blipContainerRef = useRef<HTMLDivElement>(null);
@@ -447,33 +464,68 @@ export function RizzomaBlip({
   const collapsePreferenceUpdatedAtRef = useRef(collapsePreferenceMetadata?.updatedAt ?? 0);
   const readOnlySelectionWarned = useRef(false);
   const pendingInsertRef = useRef<string | null>(null);
-  const pendingGadgetDetailRef = useRef<{ type?: string; url?: string } | null>(null);
+  const pendingGadgetDetailRef = useRef<GadgetInsertDetail | null>(null);
+  const inlineEditorRef = useRef<Editor | null>(null);
+  const projectionActiveRef = useRef(true);
+  const yjsGeneration = blip.yjsGeneration ?? 0;
+  const projectionIdentity = `${blip.id}:${yjsGeneration}`;
+  const projectionIdentityRef = useRef(projectionIdentity);
+  if (projectionIdentityRef.current !== projectionIdentity) {
+    projectionIdentityRef.current = projectionIdentity;
+  }
 
   // Auto-save blip content (debounced, silent)
-  const autoSaveBlip = useCallback(async (content: string) => {
-    if (content === lastSavedContentRef.current) return;
+  const autoSaveBlip = useCallback(async (
+    content: string,
+    headers?: Record<string, string>,
+    force = false,
+  ): Promise<'saved' | 'retry' | 'failed'> => {
+    if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return 'failed';
+    if (!force && content === lastSavedContentRef.current) return 'saved';
     try {
       await ensureCsrf();
+      if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return 'failed';
       const response = await api(`/api/blips/${encodeURIComponent(blip.id)}`, {
         method: 'PUT',
+        queueable: false,
+        headers,
         body: JSON.stringify({ content }),
       });
       if (response.ok) {
+        if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return 'saved';
         lastSavedContentRef.current = content;
         onBlipUpdate?.(blip.id, content);
+        // Task side-documents are derived only after this durable save. A
+        // freshly inserted task may have been absent from the earlier
+        // hydration, so refresh its server-provided completion/permission now.
+        requestTaskCompletionHydration(inlineEditorRef.current);
         // No toast - auto-save is silent for real-time experience
+        return 'saved';
       }
+      if (
+        response.status === 408
+        || response.status === 409
+        || response.status === 425
+        || response.status === 429
+        || response.status >= 500
+      ) return 'retry';
+      return 'failed';
     } catch {
-      // Silent fail for auto-save
+      return projectionActiveRef.current && projectionIdentityRef.current === projectionIdentity
+        ? 'retry'
+        : 'failed';
     }
-  }, [blip.id, onBlipUpdate]);
+  }, [blip.id, onBlipUpdate, projectionIdentity]);
 
   // Ref to suppress auto-save during Y.Doc seeding (setContent triggers onUpdate)
   const seedingYdocRef = useRef(false);
+  // An invalid remote/legacy document is repaired in a queued canonical
+  // editor transaction. The ref prevents setContent's nested onUpdate from
+  // scheduling another repair or persisting the transient invalid projection.
+  const blbNormalizationPendingRef = useRef(false);
 
   // Refs to hold current editor and callback (avoids stale closures in useEditor)
   const createChildBlipRef = useRef<(anchorPosition: number) => Promise<void>>();
-  const inlineEditorRef = useRef<Editor | null>(null);
 
   // Stable callback that reads from ref (never goes stale)
   const stableCreateInlineChildBlip = useCallback((anchorPosition: number) => {
@@ -488,37 +540,108 @@ export function RizzomaBlip({
   const stableShowComments = useCallback(() => { showCommentsRef.current?.(); }, []);
 
   // --- Real-time collaboration (awareness + document sync) ---
-  // Activate based on canEdit (NOT isEditing or authUser) so the Collaboration extension
+  // Activate based on canEdit (NOT isEditing or auth state) so the Collaboration extension
   // is present from editor creation. canEdit already gates unauthenticated users.
-  // authUser is only needed for setUser() which updates cursor name/color later.
-  const { user: authUser } = useAuth();
+  // The authenticated user is converted to the provider's awareness identity synchronously,
+  // before TipTap creates its collaborative-cursor extension.
+  const collaborationUser = useAuthenticatedCollaborationUser();
   // Skip collab for topic root — RizzomaTopicDetail.tsx owns the collab-enabled topicEditor.
   // Without this guard, both components would create SocketIOProviders for the same blipId,
   // causing duplicate socket room joins and update relay loops.
-  const collabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && effectiveExpanded && blip.permissions.canEdit && !isTopicRoot);
+  // Join editable child-blip rooms from their first render, before expansion.
+  // Gating this on `effectiveExpanded` lets an editor mount without a provider
+  // when activation and expansion race, so that client never receives live
+  // relays. TipTap also needs the Collaboration extension in its initial plugin
+  // set; late `setOptions()` calls do not reliably install ySyncPlugin.
+  const collabEnabled = !!(FEATURES.REALTIME_COLLAB && FEATURES.LIVE_CURSORS && blip.permissions.canEdit && !isTopicRoot);
   const ydoc = useMemo(
-    () => collabEnabled ? yjsDocManager.getDocument(blip.id) : undefined,
-    [blip.id, collabEnabled]
+    () => collabEnabled
+      ? yjsDocManager.getDocument(blip.id, collaborationUser?.id, yjsGeneration)
+      : undefined,
+    [blip.id, collabEnabled, collaborationUser?.id, yjsGeneration]
   );
-  const collabProvider = useCollaboration(ydoc, blip.id, collabEnabled);
+  const collabProvider = useCollaboration(
+    ydoc,
+    blip.id,
+    collabEnabled,
+    collaborationUser,
+    yjsGeneration,
+  );
 
   // collabActive = all collab deps are ready (enabled + ydoc + provider).
   // Used as useEditor dep to force editor recreation with the Collaboration extension.
   // Without this, useEditor's setOptions() doesn't properly reinitialize ProseMirror
   // plugins, leaving the visible editor without ySyncPlugin.
   const collabActive = collabEnabled && !!ydoc && !!collabProvider;
+  const [syncedCollabProvider, setSyncedCollabProvider] = useState(collabProvider?.synced ? collabProvider : null);
+  const collabReady = !collabActive
+    || Boolean(collabProvider?.mutationReady && syncedCollabProvider === collabProvider);
+  const collabActiveRef = useRef(collabActive);
+  const collabProviderRef = useRef(collabProvider);
+  const syncedCollabProviderRef = useRef(syncedCollabProvider);
+  collabActiveRef.current = collabActive;
+  collabProviderRef.current = collabProvider;
+  syncedCollabProviderRef.current = syncedCollabProvider;
 
-  // Set real user info on the collaboration provider
+  // Read live provider state at the instant a command would mutate the
+  // document. Rendering a disabled toolbar is not sufficient: an upload can
+  // finish, or a queued requestAnimationFrame can run, after the provider has
+  // disconnected without causing React to render first.
+  const canMutateEditorNow = useCallback(() => {
+    const editor = inlineEditorRef.current;
+    if (!isEditingRef.current || !editor || (editor as any).isDestroyed) return false;
+    if (!collabActiveRef.current) return true;
+    const provider = collabProviderRef.current;
+    return Boolean(
+      provider
+      && provider.mutationReady
+      && syncedCollabProviderRef.current === provider
+    );
+  }, []);
+
   useEffect(() => {
-    if (collabProvider && authUser) {
-      const colors = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4'];
-      collabProvider.setUser({
-        id: authUser.id,
-        name: authUser.name || authUser.email,
-        color: colors[parseInt(authUser.id, 36) % colors.length]
-      });
+    if (!collabActive || !collabProvider) {
+      setSyncedCollabProvider(null);
+      return;
     }
-  }, [collabProvider, authUser]);
+    return collabProvider.onSyncStateChange((synced) => {
+      setSyncedCollabProvider(synced ? collabProvider : null);
+    });
+  }, [collabActive, collabProvider]);
+
+  const persistLatestProjection = useCallback(async (
+    fallbackContent: string,
+    attempt = 0,
+    force = false,
+  ): Promise<void> => {
+    if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return;
+    const currentEditor = inlineEditorRef.current;
+    const latestContent = currentEditor && !(currentEditor as any).isDestroyed
+      ? currentEditor.getHTML()
+      : fallbackContent;
+    const headers = collabActive
+      ? await collaborationProjectionHeaders(ydoc, yjsGeneration)
+      : undefined;
+    if (!projectionActiveRef.current || projectionIdentityRef.current !== projectionIdentity) return;
+    const result = await autoSaveBlip(
+      latestContent,
+      headers,
+      force,
+    );
+    // Another collaborator may advance the server Y.Doc while this HTTP
+    // projection is in flight. Re-read both HTML and the full-state digest before a
+    // bounded retry; never commit the transaction's older captured HTML.
+    if (
+      projectionActiveRef.current
+      && projectionIdentityRef.current === projectionIdentity
+      && result === 'retry'
+      && attempt < 8
+    ) {
+      autoSaveTimeoutRef.current = setTimeout(() => {
+        void persistLatestProjection(fallbackContent, attempt + 1, force);
+      }, Math.min(2_000, 150 * (2 ** attempt)));
+    }
+  }, [autoSaveBlip, collabActive, projectionIdentity, ydoc, yjsGeneration]);
 
   // Stabilize onToggleInlineComments callback for extensions memoization
   const stableToggleInlineComments = useCallback(
@@ -538,9 +661,15 @@ export function RizzomaBlip({
         onCreateInlineChildBlip: stableCreateInlineChildBlip,
         onHideComments: stableHideComments,
         onShowComments: stableShowComments,
+        currentUser: collaborationUser ? { id: collaborationUser.id, label: collaborationUser.name } : null,
+        participants: (blip.contributors || []).map((contributor) => ({
+          id: contributor.id,
+          label: contributor.name || contributor.email || contributor.id,
+          email: contributor.email,
+        })),
       }
     ),
-    [blip.id, collabActive, ydoc, collabProvider, stableToggleInlineComments, stableCreateInlineChildBlip, stableHideComments, stableShowComments]
+    [blip.id, blip.contributors, collaborationUser?.id, collaborationUser?.name, collabActive, ydoc, collabProvider, stableToggleInlineComments, stableCreateInlineChildBlip, stableHideComments, stableShowComments]
   );
 
   // Create inline editor for editing mode.
@@ -554,46 +683,73 @@ export function RizzomaBlip({
   const inlineEditor = useEditorWithDeps(
     {
       extensions,
-      content: editedContent,
-      editable: isEditing,
+      // Never introduce an independent local ProseMirror history before the
+      // collaboration provider applies the authoritative server snapshot.
+      content: collabActive ? undefined : editedContent,
+      // A delayed authoritative sync must land before any keystroke can create
+      // a competing local CRDT root.
+      editable: isEditing && collabReady,
       editorProps: defaultEditorProps,
       onUpdate: ({ editor, transaction }: { editor: Editor; transaction: any }) => {
         // Skip auto-save during Y.Doc seeding (setContent triggers onUpdate)
         if (seedingYdocRef.current) return;
+        if (blbNormalizationPendingRef.current) return;
+        if (collabActive && !collabProvider?.synced) return;
 
-        // Critical: skip auto-save when NOT in edit mode. Programmatic
+        // Critical: skip non-collaborative updates when NOT in edit mode. Programmatic
         // setContent calls (e.g. on mount, on blip-id change at line ~617,
         // on handleStartEdit at line ~997) trigger onUpdate even though
         // the user isn't typing. If we autosave from those calls AND
         // TipTap's parser falls back to <p></p> for unrecognized markup,
-        // we silently overwrite the saved content with empty. This was
+        // we silently overwrite the saved content with empty. Authorized remote
+        // Yjs updates are the exception: materializing them keeps Couch HTML and
+        // task/mention side-documents current even if the originating tab closes
+        // before its debounce fires. This was
         // Task #190's root cause for the gate-036 spine[1] empty render.
-        if (!isEditingRef.current) return;
+        const remoteCollaborationChange = isChangeOrigin(transaction);
+        if (!isEditingRef.current && !remoteCollaborationChange) return;
 
         const html = editor.getHTML();
+        if (!isCanonicalBlbDocument(editor.state.doc)) {
+          blbNormalizationPendingRef.current = true;
+          queueMicrotask(() => {
+            if ((editor as any).isDestroyed) {
+              blbNormalizationPendingRef.current = false;
+              return;
+            }
+            const repaired = normalizeBlbEditorDocument(editor, { kind: 'blip' }).html;
+            blbNormalizationPendingRef.current = false;
+            setEditedContent(repaired);
+            if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+            autoSaveTimeoutRef.current = setTimeout(() => {
+              // This branch proves the shared snapshot was structurally
+              // invalid; force its canonical repair into the Couch projection
+              // even when the client-side lazy-normalized cache looks equal.
+              void persistLatestProjection(repaired, 0, true);
+            }, 300);
+          });
+          return;
+        }
         setEditedContent(html);
 
-        // When collab is active, only auto-save for local edits (not remote Y.Doc sync).
-        // Remote updates have transaction.origin set to the ySyncPlugin binding.
-        const isRemoteSync = transaction?.origin != null && typeof transaction.origin === 'object';
-        if (isRemoteSync) return;
-
-        // Debounced auto-save (300ms delay)
+        // Materialize both local and remote convergence. The server validates
+        // the accompanying full-state Yjs digest, so a delayed pre-merge HTML save
+        // cannot become the durable API/task/mention projection.
         if (autoSaveTimeoutRef.current) {
           clearTimeout(autoSaveTimeoutRef.current);
         }
         autoSaveTimeoutRef.current = setTimeout(() => {
-          autoSaveBlip(html);
+          void persistLatestProjection(html);
         }, 300);
       },
     },
-    [blip.id, collabActive, collabProvider]
+    [blip.id, collabActive, collabProvider, persistLatestProjection]
   );
 
   // Keep editor ref updated for use in callbacks
   inlineEditorRef.current = inlineEditor;
 
-  // Reliably propagate isEditing → contenteditable. useEditor's setOptions()
+  // Reliably propagate isEditing + authoritative sync → contenteditable.
   // does NOT always update editable when the option changes after mount; the
   // editable option is read at editor-creation time only. Calling setEditable()
   // explicitly tells ProseMirror to update its contenteditable attribute.
@@ -602,23 +758,64 @@ export function RizzomaBlip({
   // contenteditable="false" and the user cannot type.
   useEffect(() => {
     if (!inlineEditor || (inlineEditor as any).isDestroyed) return;
-    inlineEditor.setEditable(isEditing);
-  }, [inlineEditor, isEditing]);
+    const editable = isEditing && collabReady;
+    inlineEditor.setEditable(editable);
+    if (editable) {
+      requestAnimationFrame(() => {
+        if (!(inlineEditor as any).isDestroyed && isEditingRef.current) {
+          inlineEditor.commands['focus']('end');
+        }
+      });
+    }
+  }, [collabReady, inlineEditor, isEditing]);
+
+  // Losing mutation permission (including the shell going offline) freezes
+  // an already-open editor without firing a REST save. Any local Yjs update
+  // remains in memory and the provider's acknowledged reconnect path retries
+  // it; the global beforeunload guard protects that interim state.
+  useEffect(() => {
+    if (blip.permissions.canEdit || !isEditing) return;
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
+    setIsEditing(false);
+    inlineEditor?.setEditable(false);
+  }, [blip.permissions.canEdit, inlineEditor, isEditing]);
 
   // Seed Y.Doc from blip HTML content after the server sync response arrives.
   // TipTap's Collaboration extension renders from Y.Doc fragment 'default' (ignoring the content prop).
   // The server always sends a blip:sync response — if it contains state, the Y.Doc is populated
-  // automatically; if empty, we seed from the saved blip HTML so only one client ever seeds.
+  // automatically. If it is empty, only the client granted `shouldSeed` may seed from saved HTML;
+  // every other client must wait for that authoritative Y.js update. This prevents two clients
+  // from creating divergent CRDT histories from the same HTML snapshot.
   useEffect(() => {
     if (!inlineEditor || (inlineEditor as any).isDestroyed || !collabEnabled || !ydoc || !collabProvider) return;
 
     const trySeed = () => {
       if ((inlineEditor as any).isDestroyed) return;
-      const frag = ydoc.getXmlFragment('default');
-      if (frag.length === 0 && blip.content) {
-        seedingYdocRef.current = true;
-        inlineEditor.commands.setContent(ensureBulletedBody(blip.content));
+      if (!collabProvider.shouldSeed) return;
+      if (ydoc.getXmlFragment('default').length > 0) return;
+      const durableSeedContent = sanitizeRichHtml(
+        collabProvider.seedContent ?? blip.content ?? '',
+      );
+      const authoritativeSeed = sanitizeRichHtml(ensureBlbHtml(durableSeedContent));
+      const needsMigration = needsBlbSeedProjection(durableSeedContent, authoritativeSeed);
+      seedingYdocRef.current = true;
+      try {
+        seedEmptyBlbYdoc(inlineEditor, ydoc, authoritativeSeed);
+      } finally {
         seedingYdocRef.current = false;
+      }
+      setEditedContent(authoritativeSeed);
+      if (needsMigration) {
+        if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+        // Seeding deliberately suppresses onUpdate, so explicitly materialize
+        // a changed canonical Y.Doc through the digest-backed projection.
+        // Exact canonical Couch content produces no migration PUT.
+        autoSaveTimeoutRef.current = setTimeout(() => {
+          void persistLatestProjection(authoritativeSeed, 0, true);
+        }, 0);
       }
     };
 
@@ -627,27 +824,27 @@ export function RizzomaBlip({
       return;
     }
 
-    // Wait for server sync before seeding; timeout fallback if server never responds
-    let done = false;
+    // Never fall back to unsupervised local seeding: if the sync response is
+    // delayed, seeding without server authority recreates the split-brain race.
+    let disposed = false;
     const timer = setTimeout(() => {
-      if (done) return;
-      done = true;
-      trySeed();
+      if (!disposed) console.warn(`[collab] waiting for seed authority for blip ${blip.id}`);
     }, 2000);
 
     collabProvider.onSynced(() => {
-      if (done) return;
-      done = true;
+      if (disposed) return;
       clearTimeout(timer);
       trySeed();
     });
 
-    return () => { done = true; clearTimeout(timer); };
-  }, [inlineEditor, collabEnabled, ydoc, collabProvider, blip.content]);
+    return () => { disposed = true; clearTimeout(timer); };
+  }, [inlineEditor, collabEnabled, ydoc, collabProvider, blip.content, blip.id, persistLatestProjection]);
 
   // Cleanup auto-save timeout on unmount to prevent stale saves to wrong topic
   useEffect(() => {
+    projectionActiveRef.current = true;
     return () => {
+      projectionActiveRef.current = false;
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
         autoSaveTimeoutRef.current = null;
@@ -665,18 +862,14 @@ export function RizzomaBlip({
       clearTimeout(autoSaveTimeoutRef.current);
       autoSaveTimeoutRef.current = null;
     }
-    // Reset state to new blip's content. BLB guard: a freshly-created child can
-    // still carry the empty optimistic body here — seed the bulleted list so the
-    // editor never initialises as a bare <p> (which the first auto-save would
-    // then persist, un-bulleting the blip).
-    const resetContent = ensureBulletedBody(blip.content);
-    setEditedContent(resetContent);
-    lastSavedContentRef.current = resetContent;
+    // Reset state to new blip's content
+    setEditedContent(safeBlipContent);
+    lastSavedContentRef.current = safeBlipContent;
     setIsEditing(false);
-    if (inlineEditor && !(inlineEditor as any).isDestroyed) {
-      inlineEditor.commands.setContent(resetContent);
+    if (inlineEditor && !(inlineEditor as any).isDestroyed && !collabActive) {
+      setBlbEditorBaseline(inlineEditor, safeBlipContent);
     }
-  }, [blip.id, blip.content, inlineEditor]);
+  }, [blip.id, safeBlipContent, inlineEditor]);
 
   // Dispatch editor focus/blur events for RightToolsPanel insert button visibility
   useEffect(() => {
@@ -703,7 +896,7 @@ export function RizzomaBlip({
   useEffect(() => {
     createChildBlipRef.current = async (anchorPosition: number) => {
       console.log('[RizzomaBlip] createChildBlipFromEditor called, canComment:', blip.permissions.canComment, 'anchorPosition:', anchorPosition);
-      if (!blip.permissions.canComment) return;
+      if (!blip.permissions.canComment || !canMutateEditorNow()) return;
 
       try {
         // Extract waveId from the blip id (format: waveId:blipId)
@@ -713,6 +906,7 @@ export function RizzomaBlip({
         await ensureCsrf();
         const response = await api('/api/blips', {
           method: 'POST',
+          queueable: false,
           body: JSON.stringify({
             waveId,
             parentId: blip.id,
@@ -720,7 +914,7 @@ export function RizzomaBlip({
             // Start with <ul><li></li></ul> so the new child has a bullet ready
             // for the user's first label, matching original Rizzoma's behavior
             // where Ctrl+Enter created a new bulleted thread, not a paragraph.
-            content: '<ul><li><p></p></li></ul>',
+            content: EMPTY_BLB_HTML,
             anchorPosition, // Store the position where the [+] marker was created
             isFoldedByDefault: true,
           }),
@@ -730,7 +924,7 @@ export function RizzomaBlip({
           throw new Error('Failed to create child blip');
         }
 
-        const newBlip = response.data as any;
+        const newBlip = response.data as { id?: string; _id?: string };
         const newBlipId = newBlip.id || newBlip._id;
 
         console.log('[RizzomaBlip] Created child blip via Ctrl+Enter:', newBlipId);
@@ -743,12 +937,17 @@ export function RizzomaBlip({
         // cursor at the wrong place. The cursor is still at its original PM
         // position from when Ctrl+Enter fired (async POST doesn't move it), so
         // insertBlipThread inserts at the structurally-correct location.
-        const editor = inlineEditorRef.current || inlineEditor;
-        if (editor) {
+        const editor = inlineEditorRef.current;
+        if (editor && canMutateEditorNow()) {
           (editor.commands as any)['insertBlipThread']({ threadId: newBlipId, hasUnread: false });
-          // Save the parent blip content IMMEDIATELY with the new marker so reloads persist it
-          const updatedHtml = editor.getHTML();
-          await autoSaveBlip(updatedHtml);
+          // The content is auto-saved, so the [+] marker will persist
+        } else {
+          // The child is already durable and carries anchorPosition. Do not
+          // mutate a parent whose authoritative room was lost; a post-reconnect
+          // topic reload reconstructs its marker from that durable relation.
+          window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+          toast('Child created; reconnecting before attaching it.', 'info');
+          return;
         }
 
         // BLB: Expand the new child blip inline + navigate into edit mode.
@@ -779,35 +978,32 @@ export function RizzomaBlip({
             window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
             await new Promise((r) => setTimeout(r, 250));
           }
-          window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
+          window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
             detail: { threadId: newBlipId, parentId: blip.id },
           }));
-          // Robust edit-entry (2026-07-14). A single-RAF dispatch is NOT
-          // enough for NESTED creation: the new child claims the single-active
-          // slot, which FINISHES this parent's edit, which unmounts the child's
-          // first mount (it lives in the parent editor's BlipThreadNode portal).
-          // The child then re-mounts in the parent's VIEW render — after the RAF
-          // has already fired — so it sat in view mode with no editor and no
-          // focus, and the fractal died at depth 3 (hand-build, 2026-07-14).
-          // Re-drive until the child's ProseMirror is actually editable:
-          // re-EXPAND only if its container left the DOM (toggle is a toggle),
-          // then re-enter edit. Capped ~3.5s.
+          // Robust edit-entry (2026-07-09): a single RAF dispatch races BOTH
+          // the child's mount (topic reload) AND the parent's finish-edit
+          // save under the single-active-blip model (the parent's editor
+          // closes when the child claims the active slot, and that save can
+          // re-render the child back to view mode). Re-dispatch until the
+          // child's editor is actually editable, backing off up to ~3s.
           const tryEnterEdit = (attempt: number) => {
             const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
             const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
-            if (editable) {
-              (editable as HTMLElement).focus();
-              return;
-            }
-            if (!container) {
-              window.dispatchEvent(new CustomEvent('rizzoma:toggle-inline-blip', {
-                detail: { threadId: newBlipId, parentId: blip.id },
-              }));
+            if (editable) return;
+            window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
+              detail: { threadId: newBlipId, parentId: blip.id },
+            }));
+            const marker = document.querySelector<HTMLElement>(
+              `[data-blip-thread="${CSS.escape(newBlipId)}"]`
+            );
+            if (marker && marker.textContent !== '−') {
+              marker.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
             }
             window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
               detail: { blipId: newBlipId },
             }));
-            if (attempt < 8) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 450);
+            if (attempt < 60) setTimeout(() => tryEnterEdit(attempt + 1), attempt < 2 ? 150 : 400);
           };
           requestAnimationFrame(() => tryEnterEdit(0));
         }
@@ -816,7 +1012,7 @@ export function RizzomaBlip({
         toast('Failed to create child blip', 'error');
       }
     };
-  }, [blip.id, blip.permissions.canComment]);
+  }, [blip.id, blip.permissions.canComment, canMutateEditorNow, toast]);
 
   const hasUnreadChildren = blip.childBlips?.some(child => !child.isRead) ?? false;
   const childCount = blip.childBlips?.length ?? 0;
@@ -853,17 +1049,31 @@ export function RizzomaBlip({
     });
   }, []);
 
+  const ensureInlineChildExpanded = useCallback((childId: string) => {
+    setLocalExpandedInline(prev => {
+      if (prev.has(childId)) return prev;
+      const next = new Set(prev);
+      next.add(childId);
+      return next;
+    });
+    setEverMountedInline(prev => {
+      if (prev.has(childId)) return prev;
+      const next = new Set(prev);
+      next.add(childId);
+      return next;
+    });
+  }, []);
+
   // Track F: when RIZZOMA_PARITY_RENDER is on, view-mode uses the React-based
   // renderInlineHtml() walker — no portal anchors injected, no createPortal.
   // The legacy injectInlineMarkers path stays in use for the non-parity branch
   // and for edit mode (where TipTap NodeView still emits portal anchors).
   const parityViewRender = FEATURES.RIZZOMA_PARITY_RENDER && !isEditing;
-  const rawViewHtml = parityViewRender
-    ? (blip.content || '')
+  const viewContentHtml = parityViewRender
+    ? safeBlipContent
     : (!isEditing && inlineChildren.length > 0
-        ? injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)
-        : (blip.content || ''));
-  const viewContentHtml = ensureBulletedBody(rawViewHtml);
+        ? injectInlineMarkers(safeBlipContent, inlineChildren, localExpandedInline)
+        : safeBlipContent);
 
   // Portal containers for rendering expanded inline children at their marker positions
   const portalContainers = useRef<Map<string, HTMLElement>>(new Map());
@@ -931,17 +1141,70 @@ export function RizzomaBlip({
     return () => window.removeEventListener('rizzoma:toggle-inline-blip', handleToggleInline);
   }, [blip.id, inlineChildren, toggleInlineChild]);
 
+  // Programmatic creation must be idempotent: retries/remounts should ensure
+  // the child is open, never invert its state. User marker clicks still use
+  // the toggle listener above.
+  useEffect(() => {
+    const handleEnsureInline = (e: Event) => {
+      const { threadId, parentId } = (e as CustomEvent).detail || {};
+      if (!threadId) return;
+      const claimByParent = parentId && parentId === blip.id;
+      const claimByMatch = !parentId && inlineChildren.some(c => c.id === threadId);
+      if (claimByParent || claimByMatch) {
+        ensureInlineChildExpanded(threadId);
+      }
+    };
+    window.addEventListener('rizzoma:ensure-inline-blip-expanded', handleEnsureInline);
+    return () => window.removeEventListener('rizzoma:ensure-inline-blip-expanded', handleEnsureInline);
+  }, [blip.id, ensureInlineChildExpanded, inlineChildren]);
+
   // Listen for activation-only events (from Follow-the-Green) — activates blip without triggering mark-read
   useEffect(() => {
     const handleActivate = (e: Event) => {
       const { blipId: targetId } = (e as CustomEvent).detail || {};
       if (targetId === blip.id) {
-        setIsActive(true);
+        claimActive();
       }
     };
     window.addEventListener('rizzoma:activate-blip', handleActivate);
     return () => window.removeEventListener('rizzoma:activate-blip', handleActivate);
-  }, [blip.id]);
+  }, [blip.id, claimActive]);
+
+  // External edit-mode trigger — used by Ctrl+Enter handler so a freshly-created
+  // inline child immediately enters edit mode with cursor focus, instead of landing
+  // in view mode with empty content (in which state the user has no affordance to
+  // type — no toolbar visible, no body to click).
+  useEffect(() => {
+    const handle = (e: Event) => {
+      const { blipId: targetId } = (e as CustomEvent).detail || {};
+      if (targetId !== blip.id) return;
+      claimActive();
+      if (blip.permissions.canEdit) {
+        requestTaskCompletionHydration(inlineEditorRef.current);
+        setIsEditing(true);
+        // Bug A perf fix (2026-05-11): single RAF instead of two. The
+        // setIsEditing's effect commits + the inlineEditor's
+        // useEffect-mount runs in the same tick; one RAF lands after
+        // both. Falls back to a 50ms retry if the editor isn't ready
+        // yet — covers the rare case where TipTap's async initializer
+        // hasn't finished, without paying the second RAF cost in the
+        // common path.
+        requestAnimationFrame(() => {
+          const ed = inlineEditorRef.current;
+          if (ed && collabReady) {
+            (ed.commands as any)['focus']('end');
+          } else if (collabReady) {
+            setTimeout(() => {
+              const ed2 = inlineEditorRef.current;
+              if (ed2) (ed2.commands as any)['focus']('end');
+            }, 50);
+          }
+        });
+      }
+    };
+    window.addEventListener('rizzoma:enter-edit-blip', handle);
+    return () => window.removeEventListener('rizzoma:enter-edit-blip', handle);
+  }, [blip.id, blip.permissions.canEdit, claimActive, collabReady]);
 
   // External edit-mode trigger — used by Ctrl+Enter handler so a freshly-created
   // inline child immediately enters edit mode with cursor focus, instead of landing
@@ -1065,22 +1328,33 @@ export function RizzomaBlip({
     }
     console.log('handleStartEdit called for blip:', blip.id, 'canEdit:', blip.permissions.canEdit);
     if (blip.permissions.canEdit) {
-      const nextContent = ensureBulletedBody(
-        injectInlineMarkers(blip.content || '', inlineChildren, localExpandedInline)
+      const fallbackContent = injectInlineMarkers(safeBlipContent, inlineChildren, localExpandedInline);
+      const hasAuthoritativeCollaborationState = Boolean(
+        collabActive && ydoc && ydoc.getXmlFragment('default').length > 0,
       );
+      const nextContent = contentForBlbEditStart(
+        inlineEditor,
+        fallbackContent,
+        hasAuthoritativeCollaborationState,
+      );
+      // Revalidate the hidden editor before replacing its content. Existing
+      // task IDs refresh after a parity-view toggle; a new task signature is
+      // detected by the durability plugin's setContent lifecycle update.
+      requestTaskCompletionHydration(inlineEditor);
       setEditedContent(nextContent);
       setIsEditing(true);
-      setIsActive(true);
+      claimActive();
       // Update inline editor content and make it editable
       if (inlineEditor) {
-        inlineEditor.commands.setContent(nextContent);
-        inlineEditor.setEditable(true);
-        requestAnimationFrame(() => {
-          inlineEditor.commands.focus();
-        });
+        // Collaboration owns editor content from first render. If its Y.Doc is
+        // empty, wait for the supervised seed effect; if it is non-empty, the
+        // current editor HTML above is already authoritative. Only the local
+        // editor path needs a prop-driven setContent here.
+        if (!collabActive) setBlbEditorBaseline(inlineEditor, nextContent);
+        inlineEditor.setEditable(collabReady);
       }
     }
-  }, [onStartEdit, blip.id, blip.permissions.canEdit, blip.content, inlineChildren, localExpandedInline, inlineEditor]);
+  }, [onStartEdit, blip.id, blip.permissions.canEdit, collabActive, collabReady, claimActive, inlineChildren, localExpandedInline, inlineEditor, safeBlipContent, ydoc]);
 
   // Handle clicks on [+] markers in view mode (inside dangerouslySetInnerHTML content)
   // AND click-to-edit: putting cursor in the blip immediately reveals full editing bar!
@@ -1120,7 +1394,7 @@ export function RizzomaBlip({
       onExpand(blip.id);
     }
     if (next) {
-      setIsActive(true);
+      claimActive();
     }
     setIsExpanded(next);
     if (!next) {
@@ -1148,7 +1422,6 @@ export function RizzomaBlip({
     handleToggleExpand();
   };
 
-
   const handleFinishEdit = useCallback(() => {
     // Clear any pending auto-save and do a final save
     if (autoSaveTimeoutRef.current) {
@@ -1157,31 +1430,21 @@ export function RizzomaBlip({
     }
     // Final save if content changed
     const currentContent = inlineEditor?.getHTML() || editedContent;
-    if (currentContent !== lastSavedContentRef.current) {
-      autoSaveBlip(currentContent);
+    if ((!collabActive || collabReady) && currentContent !== lastSavedContentRef.current) {
+      void persistLatestProjection(currentContent);
     }
     setIsEditing(false);
     if (inlineEditor) {
       inlineEditor.setEditable(false);
     }
-  }, [autoSaveBlip, editedContent, inlineEditor]);
-  useEffect(() => { finishEditRef.current = handleFinishEdit; }, [handleFinishEdit]);
+  }, [collabActive, collabReady, editedContent, inlineEditor, persistLatestProjection]);
 
   const handleCreateInlineChildAtCursor = useCallback(() => {
-    if (!blip.permissions.canComment) return;
-    if (!isEditing) {
-      handleStartEdit();
-      setTimeout(() => {
-        const editor = inlineEditorRef.current || inlineEditor;
-        const pos = editor?.state?.selection?.from ?? 0;
-        stableCreateInlineChildBlip(pos);
-      }, 100);
-      return;
-    }
     const editor = inlineEditorRef.current || inlineEditor;
-    const pos = editor?.state?.selection?.from ?? 0;
-    stableCreateInlineChildBlip(pos);
-  }, [blip.permissions.canComment, isEditing, handleStartEdit, inlineEditor, stableCreateInlineChildBlip]);
+    if (!editor || !blip.permissions.canComment || !canMutateEditorNow()) return;
+    const { from } = editor.state.selection;
+    stableCreateInlineChildBlip(from);
+  }, [blip.permissions.canComment, canMutateEditorNow, inlineEditor, stableCreateInlineChildBlip]);
 
   // handleSaveEdit now just finishes editing - auto-save handles the actual saving
   const handleSaveEdit = useCallback(async () => {
@@ -1198,10 +1461,11 @@ export function RizzomaBlip({
       await ensureCsrf();
       const response = await api('/api/blips', {
         method: 'POST',
+        queueable: false,
         body: JSON.stringify({
           waveId,
           parentId: blip.id,
-          content: replyContent,
+          content: plainTextToBlbHtml(replyContent),
           isFoldedByDefault: true,
         }),
       });
@@ -1278,6 +1542,7 @@ export function RizzomaBlip({
       });
       lastUploadRef.current = { file, kind, ...handlers };
       const task = createUploadTask(file, {
+        blipId: blip.id,
         onProgress: (percent) => {
           setUploadState((prev) => (prev ? { ...prev, progress: percent } : prev));
         },
@@ -1286,6 +1551,14 @@ export function RizzomaBlip({
       task.promise
         .then((result) => {
           uploadTaskRef.current = null;
+          if (!canMutateEditorNow()) {
+            const message = 'Editor is resynchronizing; the upload was not inserted. Please retry.';
+            setUploadState((prev) => prev
+              ? { ...prev, status: 'error', error: message }
+              : prev);
+            toast(message, 'error');
+            return;
+          }
           lastUploadRef.current = null;
           setUploadState(null);
           handlers.onSuccess(result);
@@ -1309,7 +1582,7 @@ export function RizzomaBlip({
           toast(handlers.failureToast, 'error');
         });
     },
-    [toast],
+    [blip.id, canMutateEditorNow, toast],
   );
 
   const handleCancelUpload = useCallback(() => {
@@ -1324,9 +1597,9 @@ export function RizzomaBlip({
 
   const handleRetryUpload = useCallback(() => {
     const last = lastUploadRef.current;
-    if (!last) return;
+    if (!last || !canMutateEditorNow()) return;
     beginUpload(last.kind, last.file, last);
-  }, [beginUpload]);
+  }, [beginUpload, canMutateEditorNow]);
 
   const dismissUpload = useCallback(() => {
     setUploadState(null);
@@ -1349,8 +1622,9 @@ export function RizzomaBlip({
   });
 
   const insertAttachment = (name: string, url: string, size: number) => {
-    if (!inlineEditor) return;
-    inlineEditor
+    const editor = inlineEditorRef.current;
+    if (!editor || !canMutateEditorNow()) return;
+    editor
       .chain()
       .focus()
       .insertContent({
@@ -1377,12 +1651,16 @@ export function RizzomaBlip({
   };
 
   const handleAttachmentUpload = async () => {
-    if (!inlineEditor) {
+    if (!canMutateEditorNow()) {
       toast('Enter edit mode to insert attachments', 'error');
       return;
     }
     try {
       const file = await pickFile('*/*');
+      if (!canMutateEditorNow()) {
+        toast('Editor is resynchronizing; please retry the attachment.', 'error');
+        return;
+      }
       beginUpload('attachment', file, {
         onSuccess: (result) => insertAttachment(result.originalName || file.name, result.url, result.size),
         successToast: 'Attachment uploaded',
@@ -1396,7 +1674,7 @@ export function RizzomaBlip({
   };
 
   const handleImageUpload = async () => {
-    if (!inlineEditor) {
+    if (!canMutateEditorNow()) {
       toast('Enter edit mode to insert images', 'error');
       return;
     }
@@ -1406,9 +1684,15 @@ export function RizzomaBlip({
         toast('Please choose an image file', 'error');
         return;
       }
+      if (!canMutateEditorNow()) {
+        toast('Editor is resynchronizing; please retry the image.', 'error');
+        return;
+      }
       beginUpload('image', file, {
         onSuccess: (result) => {
-          inlineEditor.chain().focus().setImage({ src: result.url, alt: result.originalName || file.name }).run();
+          const editor = inlineEditorRef.current;
+          if (!editor || !canMutateEditorNow()) return;
+          editor.chain().focus().setImage({ src: result.url, alt: result.originalName || file.name }).run();
         },
         successToast: 'Image uploaded',
         failureToast: 'Failed to upload image',
@@ -1537,7 +1821,7 @@ export function RizzomaBlip({
   }, [blip.id]);
 
   useEffect(() => {
-    if (isPerfMode) return undefined;
+    if (!shouldSyncServerBlipPreferences) return undefined;
     let cancelled = false;
     const requestStartedAt = Date.now();
     const syncPreference = async () => {
@@ -1565,19 +1849,14 @@ export function RizzomaBlip({
     return () => {
       cancelled = true;
     };
-  }, [blip.id, isPerfMode]);
+  }, [blip.id, shouldSyncServerBlipPreferences]);
 
-  // Handle click to make exactly this blip active (show menu).
-  // Stop propagation so clicking a nested blip does not activate every ancestor.
-  const handleBlipClick = (event: ReactMouseEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-    globalActiveBlipId = blip.id;
-    window.dispatchEvent(new CustomEvent(ACTIVE_BLIP_CLAIM_EVENT, {
-      detail: { blipId: blip.id },
-    }));
-    window.dispatchEvent(new CustomEvent(BLIP_ACTIVE_EVENT, {
-      detail: { active: blip.permissions.canEdit, blipId: blip.id },
-    }));
+  // Handle click to make blip active (show menu). stopPropagation so the
+  // DEEPEST clicked blip claims the active slot — without it the click bubbles
+  // through every ancestor blip container and the outermost one wins.
+  const handleBlipClick = (e?: { stopPropagation: () => void }) => {
+    e?.stopPropagation();
+    claimActive();
     if (!blip.isRead) {
       onBlipRead?.(blip.id);
     }
@@ -1613,7 +1892,8 @@ export function RizzomaBlip({
 
   useEffect(() => {
     // Skip visibility preference fetch in perf mode to avoid N+1 API calls
-    if (isPerfMode) return undefined;
+    // and for the synthetic topic root, which is not a persisted blip doc.
+    if (!shouldSyncServerBlipPreferences) return undefined;
 
     let cancelled = false;
     const requestStartedAt = Date.now();
@@ -1623,6 +1903,7 @@ export function RizzomaBlip({
         await ensureCsrf();
         await api(`/api/blips/${encodeURIComponent(blip.id)}/inline-comments-visibility`, {
           method: 'PATCH',
+          queueable: false,
           body: JSON.stringify({ isVisible }),
         });
       } catch (error) {
@@ -1666,7 +1947,7 @@ export function RizzomaBlip({
     return () => {
       cancelled = true;
     };
-  }, [blip.id, isPerfMode]);
+  }, [blip.id, shouldSyncServerBlipPreferences]);
 
   // Handle Ctrl+E (toggle edit), Shift+Enter (Done), and Ctrl+Enter (reply)
   useEffect(() => {
@@ -1738,50 +2019,16 @@ export function RizzomaBlip({
     };
 
     // Helper: execute a gadget insert action
-    const executeGadgetInsert = (editor: any, detail: { type?: string; url?: string } | null) => {
-      const gadgetType = detail?.type || 'iframe';
-      const url = detail?.url;
-
-      switch (gadgetType) {
-        case 'youtube': {
-          if (!url) return;
-          let embedUrl = url;
-          const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
-          if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
-          editor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
-          break;
-        }
-        case 'code':
-          editor.chain().focus().toggleCodeBlock().run();
-          break;
-        case 'poll':
-          editor.chain().focus().insertContent({
-            type: 'pollGadget',
-            attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
-          }).run();
-          break;
-        case 'latex':
-          editor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run();
-          break;
-        case 'iframe':
-        case 'spreadsheet':
-        case 'image': {
-          if (!url) return;
-          if (gadgetType === 'image') {
-            editor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
-          } else {
-            editor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
-          }
-          break;
-        }
-        default:
-          editor.chain().focus().insertContent(`[${gadgetType} gadget]`).run();
-          break;
+    const executeGadgetInsert = (editor: any, detail: GadgetInsertDetail | null) => {
+      try {
+        insertGadget(editor, detail);
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Invalid gadget source', 'error');
       }
     };
 
     const handleInsert = (action: string) => {
-      if (isEditing && inlineEditor) {
+      if (isEditing && inlineEditor && canMutateEditorNow()) {
         // Editor ready → execute immediately
         executeInsert(action, inlineEditor);
       } else if (blip.permissions.canEdit) {
@@ -1797,8 +2044,8 @@ export function RizzomaBlip({
     const handleInsertReply = () => handleInsert(INSERT_EVENTS.REPLY);
 
     const handleInsertGadget = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { type?: string; url?: string } | undefined;
-      if (isEditing && inlineEditor) {
+      const detail = (e as CustomEvent<GadgetInsertDetail>).detail;
+      if (isEditing && inlineEditor && canMutateEditorNow()) {
         executeGadgetInsert(inlineEditor, detail || null);
       } else if (blip.permissions.canEdit) {
         pendingInsertRef.current = INSERT_EVENTS.GADGET;
@@ -1820,58 +2067,25 @@ export function RizzomaBlip({
       window.removeEventListener(INSERT_EVENTS.REPLY, handleInsertReply);
       window.removeEventListener(INSERT_EVENTS.GADGET, handleInsertGadget);
     };
-  }, [isActive, isEditing, inlineEditor, blip.permissions.canEdit]);
+  }, [isActive, isEditing, inlineEditor, blip.permissions.canEdit, canMutateEditorNow]);
 
   // Consume pending insert when editor becomes ready after auto-entering edit mode
   useEffect(() => {
-    if (!isEditing || !inlineEditor || !pendingInsertRef.current) return;
+    if (!isEditing || !inlineEditor || !collabReady || !pendingInsertRef.current) return;
 
     const action = pendingInsertRef.current;
     pendingInsertRef.current = null;
 
     // Small delay to let editor fully initialize and become focusable
     requestAnimationFrame(() => {
+      if (!canMutateEditorNow()) return;
       if (action === INSERT_EVENTS.GADGET) {
         const detail = pendingGadgetDetailRef.current;
         pendingGadgetDetailRef.current = null;
-        const gadgetType = detail?.type || 'iframe';
-        const url = detail?.url;
-
-        switch (gadgetType) {
-          case 'youtube': {
-            if (!url) return;
-            let embedUrl = url;
-            const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
-            if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
-            inlineEditor.chain().focus().insertContent(`<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`).run();
-            break;
-          }
-          case 'code':
-            inlineEditor.chain().focus().toggleCodeBlock().run();
-            break;
-          case 'poll':
-            inlineEditor.chain().focus().insertContent({
-              type: 'pollGadget',
-              attrs: { question: 'Vote', options: JSON.stringify(['Yes', 'No', 'Maybe']), votes: '{}' },
-            }).run();
-            break;
-          case 'latex':
-            inlineEditor.chain().focus().insertContent({ type: 'paragraph', content: [{ type: 'text', text: '$$  $$' }] }).run();
-            break;
-          case 'iframe':
-          case 'spreadsheet':
-          case 'image': {
-            if (!url) return;
-            if (gadgetType === 'image') {
-              inlineEditor.chain().focus().insertContent(`<img src="${url}" alt="image" />`).run();
-            } else {
-              inlineEditor.chain().focus().insertContent(`<iframe width="600" height="400" src="${url}" frameborder="0" allowfullscreen></iframe>`).run();
-            }
-            break;
-          }
-          default:
-            inlineEditor.chain().focus().insertContent(`[${gadgetType} gadget]`).run();
-            break;
+        try {
+          insertGadget(inlineEditor as any, detail);
+        } catch (error) {
+          toast(error instanceof Error ? error.message : 'Invalid gadget source', 'error');
         }
       } else {
         // Trigger chars: @, ~, #, ↵
@@ -1896,7 +2110,7 @@ export function RizzomaBlip({
         }
       }
     });
-  }, [isEditing, inlineEditor]);
+  }, [canMutateEditorNow, collabReady, isEditing, inlineEditor]);
 
   useEffect(() => {
     if (isRoot && !blip.isRead) {
@@ -1934,6 +2148,7 @@ export function RizzomaBlip({
       await ensureCsrf();
       const response = await api('/api/comments', {
         method: 'POST',
+        queueable: false,
         body: JSON.stringify({
           blipId: blip.id,
           content: inlineCommentDraft.trim(),
@@ -2007,7 +2222,7 @@ export function RizzomaBlip({
       toast('Copy a comment first', 'error');
       return;
     }
-    if (!inlineEditor || !isEditing) {
+    if (!inlineEditor || !isEditing || !canMutateEditorNow()) {
       toast('Enter edit mode to paste', 'error');
       return;
     }
@@ -2022,6 +2237,7 @@ export function RizzomaBlip({
       await ensureCsrf();
       const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/duplicate`, {
         method: 'POST',
+        queueable: false,
       });
       if (!response.ok) {
         throw new Error('Failed to duplicate blip');
@@ -2074,6 +2290,7 @@ export function RizzomaBlip({
       await ensureCsrf();
       const response = await api('/api/blips', {
         method: 'POST',
+        queueable: false,
         body: JSON.stringify({
           waveId,
           parentId: blip.id, // Paste as child of current blip
@@ -2086,10 +2303,11 @@ export function RizzomaBlip({
       // If this was a cut operation, delete the original
       if (payload.isCut && payload.blipId) {
         try {
-          await ensureCsrf();
-          await api(`/api/blips/${encodeURIComponent(payload.blipId)}`, {
+          const deleteResponse = await api(`/api/blips/${encodeURIComponent(payload.blipId)}`, {
             method: 'DELETE',
+            queueable: false,
           });
+          if (!deleteResponse.ok) throw new Error('Failed to delete cut blip');
           clearCutState(payload.blipId);
         } catch (deleteError) {
           console.warn('Failed to delete cut blip', deleteError);
@@ -2118,6 +2336,7 @@ export function RizzomaBlip({
       await ensureCsrf();
       const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/collapse-default`, {
         method: 'PATCH',
+        queueable: false,
         body: JSON.stringify({ collapseByDefault: next })
       });
       if (!response.ok) {
@@ -2147,6 +2366,7 @@ export function RizzomaBlip({
         await ensureCsrf();
         const response = await api(`/api/blips/${encodeURIComponent(blip.id)}/inline-comments-visibility`, {
           method: 'PATCH',
+          queueable: false,
           body: JSON.stringify({ isVisible: next }),
         });
         if (!response.ok) {
@@ -2223,17 +2443,31 @@ export function RizzomaBlip({
   }, [forceExpanded, expandedBlips, blip.id]);
 
   useEffect(() => {
-    // Entering edit mode claims the single-active slot GLOBALLY (broadcast), not
-    // just locally: without this, a programmatic edit entry (Ctrl+Enter child,
-    // right-panel insert) left the previous surface — e.g. the TOPIC editor —
-    // editable alongside this one (two toolbars, §18b2 violation).
-    if (isEditing) {
-      setIsActive(true);
-      window.dispatchEvent(new CustomEvent(ACTIVE_BLIP_CLAIM_EVENT, {
-        detail: { blipId: blip.id },
-      }));
+    if (activeBlipCtx) {
+      // Single-active model: entering edit mode always claims the slot; the
+      // topic root claims it once on open (nothing else active yet) so the
+      // familiar editable-root UX is preserved. Expanding a blip does NOT
+      // activate it — that was the "toolbar on every nested blip" defect.
+      if (isEditing) {
+        claimActive();
+      } else if (isTopicRoot && effectiveExpanded && activeBlipCtx.activeBlipId === null) {
+        claimActive();
+      }
+    } else if (isInlineChild) {
+      // Legacy (no provider): inline children only auto-activate when editing.
+      if (isEditing) setIsActive(true);
+    } else {
+      setIsActive(effectiveExpanded || isEditing);
     }
-  }, [isEditing, isInlineChild, blip.id]);
+  }, [effectiveExpanded, isEditing, isInlineChild, isTopicRoot, activeBlipCtx, claimActive]);
+
+  // Release: when another blip claims the active slot, this one drops its
+  // chrome — finishing (and thereby saving) any edit in progress first.
+  useEffect(() => {
+    if (!activeBlipCtx || activeBlipIdInCtx === blip.id) return;
+    if (isEditingRef.current) handleFinishEdit();
+    setIsActive(false);
+  }, [activeBlipCtx, activeBlipIdInCtx, blip.id, handleFinishEdit]);
 
 
   return (
@@ -2283,12 +2517,12 @@ export function RizzomaBlip({
           {!isTopicRoot && (
             <BlipMenu
               isActive={isActive}
-              isEditing={isEditing}
+              isEditing={isEditing && collabReady}
               isInlineChild={isInlineChild}
               canEdit={blip.permissions.canEdit}
               canComment={blip.permissions.canComment}
               inlineCommentsNotice={inlineCommentsNotice}
-              editor={inlineEditor || undefined}
+              editor={collabReady ? (inlineEditor || undefined) : undefined}
               isExpanded={effectiveExpanded}
               onStartEdit={handleStartEdit}
               onFinishEdit={handleFinishEdit}
@@ -2304,12 +2538,12 @@ export function RizzomaBlip({
               onToggleCollapseByDefault={blip.permissions.canEdit && !isRoot && !isTopicRoot ? handleToggleCollapsePreference : undefined}
               onCopyComment={handleCopyComment}
               onPasteAsReply={blip.permissions.canComment ? handlePasteAsReplyFromClipboard : undefined}
-              onPasteAtCursor={isEditing ? handlePasteAtCursorFromClipboard : undefined}
-              onCreateInlineChild={isEditing && blip.permissions.canComment ? handleCreateInlineChildAtCursor : undefined}
+              onPasteAtCursor={isEditing && collabReady ? handlePasteAtCursorFromClipboard : undefined}
+              onCreateInlineChild={isEditing && collabReady && blip.permissions.canComment ? handleCreateInlineChildAtCursor : undefined}
               clipboardAvailable={clipboardAvailable}
               onShowHistory={() => setShowHistoryModal(true)}
-              onInsertAttachment={isEditing ? handleAttachmentUpload : undefined}
-              onInsertImage={isEditing ? handleImageUpload : undefined}
+              onInsertAttachment={isEditing && collabReady ? handleAttachmentUpload : undefined}
+              onInsertImage={isEditing && collabReady ? handleImageUpload : undefined}
               isUploading={isUploading}
               uploadProgress={uploadProgress}
               onDelete={!isRoot && blip.permissions.canEdit ? handleDelete : undefined}
@@ -2405,12 +2639,13 @@ export function RizzomaBlip({
                     title={contentTitle}
                     style={onContentClick ? { cursor: 'pointer' } : undefined}
                   >
-                    {renderInlineHtml({
-                      html: ensureBulletedBody(blip.content || ''),
-                      inlineChildren,
-                      expandedSet: localExpandedInline,
-                      everMountedSet: everMountedInline,
-                      renderInlineChild: (childId: string) => {
+                    <InlineHtmlRenderer
+                      taskBlipId={blip.id}
+                      html={blip.content || ''}
+                      inlineChildren={inlineChildren}
+                      expandedSet={localExpandedInline}
+                      everMountedSet={everMountedInline}
+                      renderInlineChild={(childId: string) => {
                         const child = inlineChildren.find(c => c.id === childId);
                         if (!child) return null;
                         return (
@@ -2428,8 +2663,8 @@ export function RizzomaBlip({
                             expandedBlips={expandedBlips}
                           />
                         );
-                      },
-                    })}
+                      }}
+                    />
                   </div>
                 ) : (
                   <div
@@ -2530,7 +2765,61 @@ export function RizzomaBlip({
         {/* Child Blips (Replies) - BEFORE "Write a reply..." per BLB structure */}
         {(listChildren && listChildren.length > 0) || childFooter ? (
           <div className={`child-blips${childContainerClassName ? ` ${childContainerClassName}` : ''}`}>
-            {listChildren && listChildren.length > 0 && (
+            {listChildren && listChildren.length > 0 && (isTopicRoot ? (
+              // Restore the lazy topic-root path from 28585a3e: large waves
+              // keep every label in the DOM, but only mount full editor/collab
+              // components near the viewport. Small waves retain eager mounts.
+              listChildren.length > LAZY_MOUNT_THRESHOLD ? (
+                listChildren.map((childBlip) => {
+                  const text = childBlip.content
+                    ? childBlip.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+                    : '';
+                  const label = text
+                    ? (text.length > 80 ? `${text.slice(0, 80)}…` : text)
+                    : (childBlip.authorName || 'Reply');
+                  return (
+                    <LazyBlipSlot
+                      key={childBlip.id}
+                      blipId={childBlip.id}
+                      label={label}
+                      hasUnread={!childBlip.isRead}
+                      hasChildren={(childBlip.childBlips?.length ?? 0) > 0}
+                      onExpand={onExpand}
+                      renderFull={(expandOnMount) => (
+                        <RizzomaBlip
+                          blip={expandOnMount ? { ...childBlip, isCollapsed: false } : childBlip}
+                          isRoot={false}
+                          depth={depth + 1}
+                          onBlipUpdate={onBlipUpdate}
+                          onAddReply={onAddReply}
+                          onToggleCollapse={onToggleCollapse}
+                          onDeleteBlip={onDeleteBlip}
+                          onBlipRead={onBlipRead}
+                          onExpand={onExpand}
+                          expandedBlips={expandedBlips}
+                        />
+                      )}
+                    />
+                  );
+                })
+              ) : (
+                listChildren.map((childBlip) => (
+                  <RizzomaBlip
+                    key={childBlip.id}
+                    blip={childBlip}
+                    isRoot={false}
+                    depth={depth + 1}
+                    onBlipUpdate={onBlipUpdate}
+                    onAddReply={onAddReply}
+                    onToggleCollapse={onToggleCollapse}
+                    onDeleteBlip={onDeleteBlip}
+                    onBlipRead={onBlipRead}
+                    onExpand={onExpand}
+                    expandedBlips={expandedBlips}
+                  />
+                ))
+              )
+            ) : (
               listChildren.map((childBlip) => {
                 const childExpanded = expandedBlips?.has(childBlip.id);
                 const childHasUnread = !childBlip.isRead || (childBlip.childBlips?.some((grandchild) => !grandchild.isRead) ?? false);
@@ -2587,7 +2876,7 @@ export function RizzomaBlip({
                   </div>
                 );
               })
-            )}
+            ))}
             {childFooter}
           </div>
         ) : null}

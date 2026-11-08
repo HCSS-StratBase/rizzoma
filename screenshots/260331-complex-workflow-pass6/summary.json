@@ -1,0 +1,52 @@
+{
+  "topicId": "9012be97aa78eaa471f308772c0baa9a",
+  "base": "http://127.0.0.1:4196",
+  "timestamp": "2026-03-31T17:19:39.011Z",
+  "steps": [
+    {
+      "step": "topic_loaded",
+      "screenshot": "screenshots/260331-complex-workflow-pass6/01-topic-loaded.png"
+    },
+    {
+      "step": "root_reply_a_created",
+      "screenshot": "screenshots/260331-complex-workflow-pass6/02-root-reply-a-created.png"
+    },
+    {
+      "step": "root_reply_b_created",
+      "screenshot": "screenshots/260331-complex-workflow-pass6/03-root-reply-b-created.png"
+    },
+    {
+      "step": "root_reply_a_expanded",
+      "screenshot": "screenshots/260331-complex-workflow-pass6/04-root-reply-a-expanded.png"
+    },
+    {
+      "step": "nested_reply_form_open",
+      "screenshot": "screenshots/260331-complex-workflow-pass6/05-nested-reply-form-open.png"
+    },
+    {
+      "step": "nested_reply_created",
+      "screenshot": "screenshots/260331-complex-workflow-pass6/06-nested-reply-created.png"
+    },
+    {
+      "step": "nested_reply_expanded",
+      "screenshot": "screenshots/260331-complex-workflow-pass6/07-nested-reply-expanded.png"
+    },
+    {
+      "step": "topic_edit_mode",
+      "screenshot": "screenshots/260331-complex-workflow-pass6/08-topic-edit-mode.png"
+    },
+    {
+      "step": "gadget_palette_open",
+      "screenshot": "screenshots/260331-complex-workflow-pass6/09-gadget-palette-open.png"
+    },
+    {
+      "step": "poll_inserted",
+      "screenshot": "screenshots/260331-complex-workflow-pass6/10-poll-inserted.png"
+    },
+    {
+      "step": "done_mode_after_poll",
+      "screenshot": "screenshots/260331-complex-workflow-pass6/11-done-mode-after-poll.png"
+    }
+  ],
+  "finalHtmlPath": "screenshots/260331-complex-workflow-pass6/final.html"
+}

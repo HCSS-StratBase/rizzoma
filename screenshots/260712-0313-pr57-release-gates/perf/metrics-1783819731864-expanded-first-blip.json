@@ -1,0 +1,72 @@
+{
+  "timestamp": "1783819731864-expanded-first-blip",
+  "waveId": "9a1b2f657db4abd92008c0bc45000e7f",
+  "expectedBlips": 120,
+  "actualBlips": 120,
+  "labelsVisible": 119,
+  "expectedLabels": 119,
+  "blipsRendered": 120,
+  "domBlipsIncludingTopicRoot": 121,
+  "lazySlots": 101,
+  "lazyMountThreshold": 100,
+  "expandedBlips": 1,
+  "expandedBlipId": "9a1b2f657db4abd92008c0bc45000e7f:b1783819735508",
+  "stage": "expanded-first-blip",
+  "renderProfile": "expanded-first-blip",
+  "renderMode": "full",
+  "windowed": {
+    "target": 120,
+    "elapsedMs": 0.1,
+    "count": 120,
+    "timedOut": false
+  },
+  "performance": {
+    "stageDurationMs": 612.1,
+    "memoryUsage": {
+      "used": 36,
+      "total": 51
+    },
+    "appMetrics": {}
+  },
+  "url": "http://127.0.0.1:3000#/topic/9a1b2f657db4abd92008c0bc45000e7f?layout=rizzoma&perf=full&perfRender=full&perfLimit=120",
+  "screenshot": "snapshots/perf/render-1783819731864-expanded-first-blip.png",
+  "startedAt": 1783819738761,
+  "benchmarks": {
+    "stageDurationTargetMs": 3000,
+    "memoryTargetMb": 100,
+    "checks": {
+      "duration": {
+        "actualMs": 612.1,
+        "passed": true
+      },
+      "memory": {
+        "actualMb": 36,
+        "telemetryAvailable": true,
+        "passed": true
+      },
+      "childCount": {
+        "expected": 120,
+        "actual": 120,
+        "passed": true
+      },
+      "labelCount": {
+        "expected": 119,
+        "actual": 119,
+        "passed": true
+      },
+      "lazySlots": {
+        "required": true,
+        "threshold": 100,
+        "actual": 101,
+        "passed": true
+      },
+      "windowedCount": {
+        "expected": 120,
+        "actual": 120,
+        "timedOut": false,
+        "passed": true
+      }
+    },
+    "passed": true
+  }
+}

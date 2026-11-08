@@ -6,6 +6,15 @@ interface NavigationPanelProps {
   onTabChange: (tab: any) => void;
   isAuthed: boolean;
   onNewClick: () => void;
+  /**
+   * Unread TOPIC count (from useWaveUnread's unreadIds.length). Badges
+   * on the Topics tab — previously misplaced on Mentions, which was
+   * misleading because clicking Mentions routed to a separate list
+   * loaded from /api/mentions that had no relation to topic unread
+   * state, leaving the user with "badge says 6, list is empty".
+   */
+  unreadTopicCount?: number;
+  /** Unread mentions badge. */
   unreadCount?: number;
 }
 

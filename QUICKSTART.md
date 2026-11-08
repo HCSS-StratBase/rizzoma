@@ -36,7 +36,7 @@ There are two supported ways to run the app itself:
 docker compose up -d couchdb redis
 FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev
 ```
-- App runs on the host (`:3000` + `:8000`)
+- App runs on the host (`:3000` + `:8788`)
 - Fastest edit/debug loop
 
 2. Containerized app process (`rizzoma-app`)
@@ -48,6 +48,13 @@ docker compose up -d app couchdb redis rabbitmq sphinx minio clamav
 - Use this when you explicitly want full compose/container mode
 
 The app is always required. The only choice is whether it runs locally (`npm run dev`) or in the `app` container.
+
+## 🌿 Branching Mode (Private Repo)
+
+For this private/solo repo, working directly on `master` is acceptable.
+- Keep small, frequent commits on `master`.
+- Keep a rollback anchor branch (`master-archive-2026-02-24`) before major branch-pointer changes.
+- Use temporary feature branches only for risky or long-running experiments.
 
 You can also run the all-in-one script, which will start services, wait for health checks, and launch the app:
 ```bash
@@ -80,7 +87,7 @@ Once running, you can access:
 | Service | URL | Credentials |
 |---------|-----|-------------|
 | **Main App** | http://localhost:3000 | Register/login in UI |
-| **API** | http://localhost:8000/api | - |
+| **API** | http://localhost:8788/api | - |
 | **CouchDB Admin** | http://localhost:5984/_utils/ | admin/password |
 | **RabbitMQ Admin** | http://localhost:15672 | admin/password |
 
@@ -115,7 +122,7 @@ docker info
 
 # Check port conflicts
 lsof -i :3000
-lsof -i :8000
+lsof -i :8788
 lsof -i :5984
 
 # Clean restart
@@ -141,10 +148,10 @@ npm run dev
 npm run logs
 
 # Check API health
-curl http://localhost:8000/api/health
+curl http://localhost:8788/api/health
 
 # Check dependencies
-curl http://localhost:8000/api/deps
+curl http://localhost:8788/api/deps
 ```
 
 ## 🛑 Stopping Everything
@@ -164,7 +171,7 @@ docker compose down
 ## 📚 Next Steps
 
 - Create your first topic at http://localhost:3000
-- Explore the API at http://localhost:8000/api/topics
+- Explore the API at http://localhost:8788/api/topics
 - Check out `docs/HANDOFF.md` and `docs/RESTART.md` for the active branch status and restart checklist
 - Enable editor features for rich text editing
 

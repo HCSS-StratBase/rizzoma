@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 import { toast } from './Toast';
@@ -19,65 +19,94 @@ interface InviteModalProps {
   topicTitle: string;
 }
 
+type InviteRole = 'viewer' | 'commenter' | 'editor';
+
 export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle }: InviteModalProps): JSX.Element | null {
   const [emails, setEmails] = useState('');
+  const [role, setRole] = useState<InviteRole>('editor');
   const [sending, setSending] = useState(false);
+  const [sharingLevel, setSharingLevel] = useState<'private' | 'link' | 'public' | 'unknown'>('unknown');
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  // Sharing level decides how the "copy link" action is worded (a private link does not grant access).
   useEffect(() => {
     if (!isOpen) return;
+    let cancelled = false;
+    void api(`/api/waves/${encodeURIComponent(topicId)}/sharing`).then((response) => {
+      if (cancelled || !response.ok || !response.data || typeof response.data !== 'object') return;
+      const level = String((response.data as any).sharing?.shareLevel || 'unknown');
+      if (level === 'private' || level === 'link' || level === 'public') setSharingLevel(level);
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [isOpen, topicId]);
 
-    // Load topic participants
+  // Topic members shown in the legacy "manage members" list. No invented fallback member on failure.
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
     void api<{ participants: Participant[] }>(`/api/waves/${encodeURIComponent(topicId)}/participants`).then((res) => {
-      if (res.ok && res.data && Array.isArray((res.data as { participants: Participant[] }).participants)) {
-        setParticipants((res.data as { participants: Participant[] }).participants);
-      } else {
-        // Fallback default participant if endpoint not present
-        setParticipants([
-          { id: '1', name: 'Stephan De Spiegeleire', email: 'sdspieg@gmail.com', role: 'Owner' }
-        ]);
-      }
+      if (cancelled) return;
+      const list = res.ok && res.data ? (res.data as { participants?: Participant[] }).participants : undefined;
+      setParticipants(Array.isArray(list) ? list : []);
     }).catch(() => {
-      setParticipants([
-        { id: '1', name: 'Stephan De Spiegeleire', email: 'sdspieg@gmail.com', role: 'Owner' }
-      ]);
+      if (!cancelled) setParticipants([]);
     });
+    return () => { cancelled = true; };
   }, [isOpen, topicId]);
 
   if (!isOpen) return null;
 
   const handleInvite = async (): Promise<void> => {
-    const emailList = emails
-      .split(',')
-      .map(e => e.trim())
-      .filter(e => e.length > 0 && e.includes('@'));
+    const rawEmails = emails.split(/[,;\n]/).map((email) => email.trim().toLowerCase()).filter(Boolean);
+    const invalid = rawEmails.filter((email) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+    const emailList = [...new Set(rawEmails)];
 
-    if (emailList.length === 0) {
+    if (emailList.length === 0 || invalid.length > 0) {
       toast('Please enter at least one valid email address', 'error');
+      return;
+    }
+    if (emailList.length > 20) {
+      toast('You can invite at most 20 participants at a time', 'error');
       return;
     }
 
     setSending(true);
-    await ensureCsrf();
+    try {
+      await ensureCsrf();
+      const response = await api(`/api/waves/${encodeURIComponent(topicId)}/participants`, {
+        method: 'POST',
+        body: JSON.stringify({
+          emails: emailList,
+          role,
+        }),
+      });
 
-    const response = await api(`/api/waves/${encodeURIComponent(topicId)}/participants`, {
-      method: 'POST',
-      body: JSON.stringify({
-        emails: emailList
-      })
-    });
-
-    setSending(false);
-
-    if (response.ok) {
-      toast(`Invitation sent to ${emailList.length} participant(s)`);
+      if (!response.ok) {
+        toast('Failed to send invitations', 'error');
+        return;
+      }
+      const results = typeof response.data === 'object' && response.data
+        ? ((response.data as any).invited as Array<{ email?: string; ok?: boolean; status?: string }> | undefined) || []
+        : [];
+      const successful = results.filter((result) => result.ok === true);
+      const failed = results.filter((result) => result.ok !== true);
+      if (results.length === 0) {
+        toast('The server did not return invitation delivery status. Please retry.', 'error');
+        return;
+      }
+      if (failed.length > 0) {
+        setEmails(failed.map((result) => result.email).filter(Boolean).join(', '));
+        toast(`${successful.length} invitation(s) succeeded; ${failed.length} failed. Failed addresses remain for retry.`, 'error');
+        return;
+      }
+      toast(`${successful.length} invitation(s) sent or already accepted`);
       setEmails('');
       onClose();
-    } else {
-      toast('Invitation sent');
-      setEmails('');
-      onClose();
+    } catch {
+      toast('Invitation delivery could not reach the server. Please try again.', 'error');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -86,6 +115,21 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
       onClose();
     }
   };
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/#/topic/${topicId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      toast(sharingLevel === 'private' || sharingLevel === 'unknown'
+        ? 'Private topic link copied. Recipients still need an invitation.'
+        : 'Topic link copied to clipboard');
+    }).catch(() => {
+      toast('Failed to copy link', 'error');
+    });
+  };
+
+  const linkHint = sharingLevel === 'private' || sharingLevel === 'unknown'
+    ? 'Copy link copies the topic address (does not grant access; invitation required).'
+    : 'Copy link shares a direct link to this topic.';
 
   const toggleSelect = (id: string) => {
     const next = new Set(selectedIds);
@@ -110,6 +154,7 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
       <div className="invite-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="invite-input-row">
           <input
+            id="invite-emails"
             type="text"
             value={emails}
             onChange={(e) => setEmails(e.target.value)}
@@ -121,6 +166,16 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
             }}
             autoFocus
           />
+          <select
+            className="invite-role-select"
+            aria-label="Access role for new invitations"
+            value={role}
+            onChange={(event) => setRole(event.target.value as InviteRole)}
+          >
+            <option value="viewer">Viewer</option>
+            <option value="commenter">Commenter</option>
+            <option value="editor">Editor</option>
+          </select>
         </div>
 
         <div className="invite-selection-bar">
@@ -167,6 +222,9 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
             <button type="button" className="invite-btn-secondary" disabled={selectedIds.size === 0}>
               Remove
             </button>
+            <button type="button" className="invite-btn-secondary" onClick={handleCopyLink}>
+              Copy link
+            </button>
           </div>
           <button
             type="button"
@@ -183,6 +241,7 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
             {sending ? 'Sending...' : emails.trim() ? 'Invite' : 'Done'}
           </button>
         </div>
+        <div className="invite-link-hint">{linkHint}</div>
       </div>
     </div>
   );

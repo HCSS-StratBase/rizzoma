@@ -1,0 +1,102 @@
+[
+  {
+    "viewport": {
+      "label": "1280",
+      "width": 1280,
+      "height": 900
+    },
+    "surface": "complete-reset",
+    "file": "1280-complete-reset.png",
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "label": "1280",
+      "width": 1280,
+      "height": 900
+    },
+    "surface": "request-reset",
+    "file": "1280-request-reset.png",
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "label": "1366",
+      "width": 1366,
+      "height": 900
+    },
+    "surface": "complete-reset",
+    "file": "1366-complete-reset.png",
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "label": "1366",
+      "width": 1366,
+      "height": 900
+    },
+    "surface": "request-reset",
+    "file": "1366-request-reset.png",
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "label": "1440",
+      "width": 1440,
+      "height": 900
+    },
+    "surface": "complete-reset",
+    "file": "1440-complete-reset.png",
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "label": "1440",
+      "width": 1440,
+      "height": 900
+    },
+    "surface": "request-reset",
+    "file": "1440-request-reset.png",
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "label": "1600",
+      "width": 1600,
+      "height": 900
+    },
+    "surface": "complete-reset",
+    "file": "1600-complete-reset.png",
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "label": "1600",
+      "width": 1600,
+      "height": 900
+    },
+    "surface": "request-reset",
+    "file": "1600-request-reset.png",
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "label": "mobile-390",
+      "width": 390,
+      "height": 844
+    },
+    "surface": "complete-reset",
+    "file": "mobile-390-complete-reset.png",
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "label": "mobile-390",
+      "width": 390,
+      "height": 844
+    },
+    "surface": "request-reset",
+    "file": "mobile-390-request-reset.png",
+    "consoleErrors": []
+  }
+]

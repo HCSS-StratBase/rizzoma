@@ -1,21 +1,37 @@
 import { Router } from 'express';
-import { couchDbInfo } from '../lib/couch.js';
+import { couchDatabaseInfo } from '../lib/couch.js';
+import { sessionStoreHealth } from '../middleware/session.js';
+import { virusScannerHealth } from '../lib/virusScan.js';
 
 const healthRouter = Router();
 
 const startedAt = Date.now();
 
 healthRouter.get('/health', async (_req, res) => {
-  const checks: Record<string, { status: 'ok' | 'error'; ms?: number; error?: string; version?: string }> = {};
+  const checks: Record<string, {
+    status: 'ok' | 'error';
+    ms?: number;
+    error?: string;
+    version?: string;
+    mode?: 'redis' | 'memory';
+  }> = {};
 
   // CouchDB check
   const couchStart = Date.now();
   try {
-    const info = await couchDbInfo();
-    checks['couchdb'] = { status: 'ok', ms: Date.now() - couchStart, version: info?.version };
+    await couchDatabaseInfo(3_000);
+    checks['couchdb'] = { status: 'ok', ms: Date.now() - couchStart };
   } catch (e: any) {
     checks['couchdb'] = { status: 'error', ms: Date.now() - couchStart, error: e?.message || 'unreachable' };
   }
+
+  // Session persistence is part of readiness, not an optional diagnostic.
+  // A production process backed by MemoryStore logs every user out on restart.
+  checks['sessions'] = await sessionStoreHealth();
+
+  // Production upload admission fails closed without ClamAV, so a candidate
+  // is not release-ready when that dependency cannot answer PING.
+  checks['clamav'] = await virusScannerHealth();
 
   const allOk = Object.values(checks).every(c => c.status === 'ok');
   const uptimeMs = Date.now() - startedAt;

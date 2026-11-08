@@ -1,0 +1,25 @@
+{
+  "cookies": [
+    {
+      "name": "XSRF-TOKEN",
+      "value": "00f821856a66dc3983b2110f99450647",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1772586102.960207,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "rizzoma.sid",
+      "value": "s%3AlMEBx95_GYyuiRr7l-qSPr8jIk2TdkAF.sN5Wbn3F4mPXWIJBCLzAn5Oax81jJi7bHoSe0IVItoQ",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1772586101.438055,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

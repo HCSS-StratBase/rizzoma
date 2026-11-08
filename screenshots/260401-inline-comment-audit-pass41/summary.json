@@ -1,0 +1,140 @@
+{
+  "topicId": "9012be97aa78eaa471f308772c0fd71f",
+  "base": "http://127.0.0.1:4202",
+  "timestamp": "2026-03-31T23:38:53.517Z",
+  "steps": [
+    {
+      "step": "topic_loaded",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass41/01-topic-loaded.png",
+      "html": "screenshots/260401-inline-comment-audit-pass41/01-topic-loaded.html"
+    },
+    {
+      "step": "topic_edit_mode",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass41/02-topic-edit-mode.png",
+      "html": "screenshots/260401-inline-comment-audit-pass41/02-topic-edit-mode.html"
+    },
+    {
+      "step": "after_ctrl_enter",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass41/03-after-ctrl-enter.png",
+      "html": "screenshots/260401-inline-comment-audit-pass41/03-after-ctrl-enter.html"
+    },
+    {
+      "step": "subblip_done_mode",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass41/04-subblip-done-mode.png",
+      "html": "screenshots/260401-inline-comment-audit-pass41/04-subblip-done-mode.html"
+    },
+    {
+      "step": "after_hide_click",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass41/05-after-hide-click.png",
+      "html": "screenshots/260401-inline-comment-audit-pass41/05-after-hide-click.html"
+    },
+    {
+      "step": "returned_to_topic",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass41/06-returned-to-topic.png",
+      "html": "screenshots/260401-inline-comment-audit-pass41/06-returned-to-topic.html"
+    },
+    {
+      "step": "after_marker_click",
+      "screenshot": "screenshots/260401-inline-comment-audit-pass41/07-after-marker-click.png",
+      "html": "screenshots/260401-inline-comment-audit-pass41/07-after-marker-click.html"
+    }
+  ],
+  "summary": {
+    "markerCount": 0,
+    "subblipEditorVisible": true,
+    "subblipReadVisible": false,
+    "subblipBodyHtml": "<p><br class=\"ProseMirror-trailingBreak\"></p>",
+    "parentReturnedInEditMode": false
+  },
+  "afterCtrlEnterState": {
+    "url": "http://127.0.0.1:4202/#/topic/9012be97aa78eaa471f308772c0fd71f/b1775000325228/",
+    "hash": "#/topic/9012be97aa78eaa471f308772c0fd71f/b1775000325228/",
+    "hasTopicContentView": false,
+    "hasTopicContentEdit": false,
+    "hasSubblipView": true,
+    "topicEditorDebug": {
+      "isEditingTopic": false,
+      "forceTopicReadMode": true,
+      "showTopicEditMode": false,
+      "topicEditDebug": {
+        "startCalls": 1,
+        "lastStartAt": 1775000324765,
+        "lastStartReason": "toolbar-edit-button",
+        "lastStartStack": "Error\n    at http://127.0.0.1:4202/components/RizzomaTopicDetail.tsx:1157:19\n    at onClick (http://127.0.0.1:4202/components/RizzomaTopicDetail.tsx:1680:17)\n    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3680:22)\n    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3705:24)\n    at invokeGuardedCallback (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3739:39)\n    at invokeGuardedCallbackAndCatchFirstError (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3742:33)\n    at executeDispatch (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7046:11)\n    at processDispatchQueueItemsInOrder (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7066:15)\n    at processDispatchQueue (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7075:13)\n    at dispatchEventsForPlugins (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7083:11)"
+      },
+      "hasTopicEditor": true,
+      "topicEditorEditable": false,
+      "topicEditorHtml": "<h1>Inline comment audit 1775000323089</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0fd71f:b1775000325228\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "topicContentState": "<h1>Inline comment audit 1775000323089</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0fd71f:b1775000325228\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "pendingBootstrap": null,
+      "bootstrapping": false,
+      "topicContentHtmlBase": "<h1>Inline comment audit 1775000323089</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0fd71f:b1775000325228\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "viewSeedHtml": ""
+    }
+  },
+  "subblipDoneState": {
+    "url": "http://127.0.0.1:4202/#/topic/9012be97aa78eaa471f308772c0fd71f/b1775000325228/",
+    "hash": "#/topic/9012be97aa78eaa471f308772c0fd71f/b1775000325228/",
+    "hasTopicContentView": false,
+    "hasTopicContentEdit": false,
+    "hasSubblipView": true,
+    "topicEditorDebug": {
+      "isEditingTopic": false,
+      "forceTopicReadMode": true,
+      "showTopicEditMode": false,
+      "topicEditDebug": {
+        "startCalls": 1,
+        "lastStartAt": 1775000324765,
+        "lastStartReason": "toolbar-edit-button",
+        "lastStartStack": "Error\n    at http://127.0.0.1:4202/components/RizzomaTopicDetail.tsx:1157:19\n    at onClick (http://127.0.0.1:4202/components/RizzomaTopicDetail.tsx:1680:17)\n    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3680:22)\n    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3705:24)\n    at invokeGuardedCallback (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3739:39)\n    at invokeGuardedCallbackAndCatchFirstError (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3742:33)\n    at executeDispatch (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7046:11)\n    at processDispatchQueueItemsInOrder (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7066:15)\n    at processDispatchQueue (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7075:13)\n    at dispatchEventsForPlugins (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7083:11)"
+      },
+      "hasTopicEditor": true,
+      "topicEditorEditable": false,
+      "topicEditorHtml": "<h1>Inline comment audit 1775000323089</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0fd71f:b1775000325228\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "topicContentState": "<h1>Inline comment audit 1775000323089</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0fd71f:b1775000325228\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "pendingBootstrap": null,
+      "bootstrapping": false,
+      "topicContentHtmlBase": "<h1>Inline comment audit 1775000323089</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0fd71f:b1775000325228\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "viewSeedHtml": ""
+    }
+  },
+  "afterHideState": {
+    "url": "http://127.0.0.1:4202/#/topic/9012be97aa78eaa471f308772c0fd71f",
+    "hash": "#/topic/9012be97aa78eaa471f308772c0fd71f",
+    "hasTopicContentView": true,
+    "hasTopicContentEdit": false,
+    "hasSubblipView": false,
+    "topicToolbarEditing": false,
+    "topicToolbarButtons": [
+      "Edit",
+      "💬",
+      "🔗",
+      "⚙️"
+    ],
+    "markerCount": 1,
+    "editMarkerCount": 0,
+    "topicContentHtml": "<h1>Inline comment audit 1775000323089</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0fd71f:b1775000325228\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+    "topicEditHtml": "",
+    "topicEditorDebug": {
+      "isEditingTopic": false,
+      "forceTopicReadMode": true,
+      "showTopicEditMode": false,
+      "topicEditDebug": {
+        "startCalls": 1,
+        "lastStartAt": 1775000324765,
+        "lastStartReason": "toolbar-edit-button",
+        "lastStartStack": "Error\n    at http://127.0.0.1:4202/components/RizzomaTopicDetail.tsx:1157:19\n    at onClick (http://127.0.0.1:4202/components/RizzomaTopicDetail.tsx:1680:17)\n    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3680:22)\n    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3705:24)\n    at invokeGuardedCallback (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3739:39)\n    at invokeGuardedCallbackAndCatchFirstError (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:3742:33)\n    at executeDispatch (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7046:11)\n    at processDispatchQueueItemsInOrder (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7066:15)\n    at processDispatchQueue (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7075:13)\n    at dispatchEventsForPlugins (http://127.0.0.1:4202/@fs/mnt/c/Rizzoma/node_modules/.vite/deps/chunk-LPF6KSF2.js?v=8075fbbe:7083:11)"
+      },
+      "hasTopicEditor": true,
+      "topicEditorEditable": false,
+      "topicEditorHtml": "<h1>Inline comment audit 1775000323089</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0fd71f:b1775000325228\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "topicContentState": "<h1>Inline comment audit 1775000323089</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0fd71f:b1775000325228\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "pendingBootstrap": null,
+      "bootstrapping": false,
+      "topicContentHtmlBase": "<h1>Inline comment audit 1775000323089</h1><p>#MetaTopic</p><ul><li><p>First anchor point for Ctrl+Enter.<span data-blip-thread=\"9012be97aa78eaa471f308772c0fd71f:b1775000325228\" class=\"blip-thread-marker\">+</span></p></li><li><p>Second anchor point for Ctrl+Enter.</p></li></ul><p>This topic exists only to test the live anchored inline-comment path.</p>",
+      "viewSeedHtml": ""
+    }
+  },
+  "urlBeforeMarkerClick": "http://127.0.0.1:4202/#/topic/9012be97aa78eaa471f308772c0fd71f",
+  "urlAfterMarkerClick": "http://127.0.0.1:4202/#/topic/9012be97aa78eaa471f308772c0fd71f/b1775000325228/"
+}

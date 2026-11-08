@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: cf0d69bf
+source_commit: 2a896d17
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 245 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 49 root files.
+**¶1** □ GENERATED. `public/` 252 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 51 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -40,6 +40,11 @@ graph LR
 | Folder | Files |
 |---|---:|
 | `public` | 4 |
+| `public/gadgets/apps` | 3 |
+| `public/gadgets/apps/calendar-planner` | 1 |
+| `public/gadgets/apps/focus-timer` | 1 |
+| `public/gadgets/apps/kanban-board` | 1 |
+| `public/gadgets/apps/notes-scratchpad` | 1 |
 | `public/icons` | 9 |
 | `public/landing` | 6 |
 | `public/s/img` | 136 |
@@ -91,6 +96,7 @@ graph LR
 | `STATUS.md` | — |
 | `aggregate_stats.py` | — |
 | `app.js` | coffee-script wrapper |
+| `capacitor.config.ts` | Capacitor configuration for the Rizzoma native wrappers |
 | `create-demo-topic.cjs` | Create a topic |
 | `docker-compose.yml` | — |
 | `jest.config.cjs` | — |
@@ -103,6 +109,7 @@ graph LR
 | `perf-harness.mjs` | — |
 | `rizzoma.html` | — |
 | `test-blb-snapshots.mjs` | — |
+| `test-collab-smoke.mjs` | Real-time collab smoke test (Playwright, two browser contexts). |
 | `test-editor.html` | Set feature flags before module loading |
 | `test-features.html` | — |
 | `test-follow-green-smoke.mjs` | — |

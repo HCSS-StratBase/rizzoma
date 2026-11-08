@@ -10,6 +10,16 @@ const cloneBlips = (nodes: any[]): any[] => nodes.map((n) => ({ ...n, children: 
 describe('routes: /api/waves unread/next', () => {
   let waveBlips = makeBlips();
   let readDocs: Array<Record<string, unknown>> = [];
+  let selfFetchPaths: string[] = [];
+  let holdConcurrentReadPuts = false;
+  let concurrentReadPutArrivals = 0;
+  let releaseConcurrentReadPuts: (() => void) | undefined;
+  let concurrentReadPutBarrier: Promise<void> = Promise.resolve();
+  let holdConcurrentReadPosts = false;
+  let concurrentReadPostArrivals = 0;
+  let releaseConcurrentReadPosts: (() => void) | undefined;
+  let concurrentReadPostBarrier: Promise<void> = Promise.resolve();
+  let failNextReadPutStatus: number | undefined;
   const findRoute = (method: string, path: string) => {
     return (wavesRouter as any).stack.find((layer: any) => layer.route?.path === path && layer.route?.methods?.[method.toLowerCase()]);
   };
@@ -21,14 +31,14 @@ describe('routes: /api/waves unread/next', () => {
   ) => {
     const layer = findRoute(method, path);
     if (!layer) throw new Error(`Route ${method} ${path} not found`);
-    const handler = layer.route.stack[0].handle as (req: any, res: any, next: () => void) => any;
+    const handlers = layer.route.stack.map((e: any) => e.handle) as Array<(req: any, res: any, next: (err?: any) => void) => any>;
     const req: any = {
       method,
       params,
       query,
       body,
-      session: { userId: 'u1' },
-      headers: { host: 'localhost' },
+      session: { userId: 'u1', csrfToken: 'token' },
+      headers: { host: 'localhost', 'x-csrf-token': 'token' },
       protocol: 'http',
       get(header: string) { return (this.headers || {})[header.toLowerCase()]; },
     };
@@ -42,13 +52,32 @@ describe('routes: /api/waves unread/next', () => {
       setHeader(name: string, value: unknown) { (this.headers as any)[name.toLowerCase()] = value; },
       getHeader(name: string) { return (this.headers as any)[name.toLowerCase()]; },
     };
-    await handler(req, res, () => {});
+    for (const handler of handlers) {
+      await new Promise<void>((resolve, reject) => {
+        let done = false;
+        const next = (err?: any) => { if (done) return; done = true; err ? reject(err) : resolve(); };
+        try {
+          const r = handler(req, res, next);
+          if (r && typeof r.then === 'function') r.then(() => { if (!done) { done = true; resolve(); } }).catch(reject);
+        } catch (e) { reject(e); }
+      });
+    }
     return res;
   };
 
   beforeEach(() => {
     waveBlips = makeBlips();
     readDocs = [];
+    selfFetchPaths = [];
+    holdConcurrentReadPuts = false;
+    concurrentReadPutArrivals = 0;
+    releaseConcurrentReadPuts = undefined;
+    concurrentReadPutBarrier = Promise.resolve();
+    holdConcurrentReadPosts = false;
+    concurrentReadPostArrivals = 0;
+    releaseConcurrentReadPosts = undefined;
+    concurrentReadPostBarrier = Promise.resolve();
+    failNextReadPutStatus = undefined;
   });
 
   beforeAll(() => {
@@ -60,6 +89,7 @@ describe('routes: /api/waves unread/next', () => {
       const method = ((init?.method as string | undefined) ?? 'GET').toUpperCase();
       // Forward local API routes except the tree fetch we stub
       if ((u.hostname === '127.0.0.1' || u.hostname === 'localhost') && path.startsWith('/api/waves/')) {
+        selfFetchPaths.push(path);
         // If fetching just the wave detail (not unread/next/read), return stub tree
         if (method === 'GET' && /^\/api\/waves\/[^/]+$/.test(path)) {
           const body = {
@@ -94,16 +124,47 @@ describe('routes: /api/waves unread/next', () => {
       if (method === 'POST' && /\/project_rizzoma\/?$/.test(path)) {
         // insert read doc
         const body = JSON.parse((init?.body as string | undefined) ?? '{}') as Record<string, unknown>;
+        if (holdConcurrentReadPosts) {
+          concurrentReadPostArrivals += 1;
+          if (concurrentReadPostArrivals === 2) releaseConcurrentReadPosts?.();
+          await concurrentReadPostBarrier;
+        }
+        if (readDocs.some((doc) => doc['_id'] === body['_id'])) {
+          return okResp({ error: 'conflict', reason: 'Document update conflict.' }, 409);
+        }
         const stored = { ...body, _rev: '1-x' };
         readDocs.push(stored);
         const id = (typeof body['_id'] === 'string' && body['_id'] !== '') ? body['_id'] as string : 'r1';
         return okResp({ ok: true, id, rev: '1-x' }, 201);
       }
+      if (method === 'GET' && /\/project_rizzoma\/.+/.test(path)) {
+        const id = decodeURIComponent(path.slice(path.lastIndexOf('/') + 1));
+        const doc = readDocs.find((candidate) => candidate['_id'] === id);
+        return doc
+          ? okResp({ ...doc })
+          : okResp({ error: 'not_found', reason: 'missing' }, 404);
+      }
       if (method === 'PUT' && /\/project_rizzoma\/.+/.test(path)) {
         const body = JSON.parse((init?.body as string | undefined) ?? '{}') as Record<string, unknown>;
+        if (failNextReadPutStatus) {
+          const status = failNextReadPutStatus;
+          failNextReadPutStatus = undefined;
+          return okResp({ error: 'storage_failure', reason: 'simulated storage failure' }, status);
+        }
+        if (holdConcurrentReadPuts) {
+          concurrentReadPutArrivals += 1;
+          if (concurrentReadPutArrivals === 2) releaseConcurrentReadPuts?.();
+          await concurrentReadPutBarrier;
+        }
         const idx = readDocs.findIndex((d) => d['_id'] === body['_id']);
-        const stored = { ...body, _rev: '2-x' };
-        if (idx >= 0) readDocs[idx] = stored;
+        if (idx < 0) return okResp({ error: 'not_found', reason: 'missing' }, 404);
+        const current = readDocs[idx]!;
+        if (body['_rev'] !== current['_rev']) {
+          return okResp({ error: 'conflict', reason: 'Document update conflict.' }, 409);
+        }
+        const nextRevision = Number.parseInt(String(current['_rev'] || '0').split('-', 1)[0] || '0', 10) + 1;
+        const stored = { ...body, _rev: `${nextRevision}-x` };
+        readDocs[idx] = stored;
         return okResp({ ok: true, id: body['_id'] || 'r1', rev: stored._rev });
       }
       return okResp({}, 404);
@@ -114,9 +175,10 @@ describe('routes: /api/waves unread/next', () => {
     const resp = await runRoute('GET', '/:id/unread', { params: { id: 'w1' } });
     const body = resp.body;
     expect(resp.statusCode ?? 200).toBe(200);
-    expect(Array.isArray(body.unread)).toBe(true);
-    // flattened preorder: [b1, b1a, b2]
-    expect(body.unread[0]).toBe('b1');
+    expect(body.unread).toEqual(['b1', 'b1a', 'b2']);
+    expect(body.total).toBe(3);
+    expect(body.read).toBe(0);
+    expect(selfFetchPaths).toEqual([]);
   });
 
   it('next returns first unread, then advances after marking read', async () => {
@@ -147,5 +209,103 @@ describe('routes: /api/waves unread/next', () => {
     await runRoute('POST', '/:waveId/blips/:blipId/read', { params: { waveId: 'w1', blipId: 'b1' } });
     const secondReadAt = Number((readDocs[0] as any)?.readAt || 0);
     expect(secondReadAt).toBeGreaterThan(firstReadAt);
+  });
+
+  it('updates a legacy random-ID read marker without creating a duplicate', async () => {
+    readDocs = [{
+      _id: 'legacy-read-marker',
+      _rev: '1-x',
+      type: 'read',
+      userId: 'u1',
+      waveId: 'w1',
+      blipId: 'b1',
+      readAt: 1,
+    }];
+
+    const response = await runRoute('POST', '/:waveId/blips/:blipId/read', {
+      params: { waveId: 'w1', blipId: 'b1' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.id).toBe('legacy-read-marker');
+    expect(readDocs).toHaveLength(1);
+    expect(readDocs[0]?.['_id']).toBe('legacy-read-marker');
+    expect(Number(readDocs[0]?.['readAt'] || 0)).toBeGreaterThan(1);
+  });
+
+  it('makes overlapping mark-read updates conflict-idempotent', async () => {
+    const markerId = 'read:user:u1:wave:w1:blip:b1';
+    readDocs = [{
+      _id: markerId,
+      _rev: '1-x',
+      type: 'read',
+      userId: 'u1',
+      waveId: 'w1',
+      blipId: 'b1',
+      readAt: 1,
+    }];
+    holdConcurrentReadPuts = true;
+    concurrentReadPutBarrier = new Promise<void>((resolve) => {
+      releaseConcurrentReadPuts = resolve;
+    });
+
+    const [first, second] = await Promise.all([
+      runRoute('POST', '/:waveId/blips/:blipId/read', { params: { waveId: 'w1', blipId: 'b1' } }),
+      runRoute('POST', '/:waveId/blips/:blipId/read', { params: { waveId: 'w1', blipId: 'b1' } }),
+    ]);
+
+    expect(first.statusCode).toBeGreaterThanOrEqual(200);
+    expect(first.statusCode).toBeLessThan(300);
+    expect(second.statusCode).toBeGreaterThanOrEqual(200);
+    expect(second.statusCode).toBeLessThan(300);
+    expect(first.body.ok).toBe(true);
+    expect(second.body.ok).toBe(true);
+    expect(readDocs).toHaveLength(1);
+    expect(Number(readDocs[0]?.['readAt'] || 0)).toBeGreaterThan(1);
+    expect(Number.isFinite(Number(readDocs[0]?.['readAt']))).toBe(true);
+  });
+
+  it('makes overlapping first mark-read inserts conflict-idempotent', async () => {
+    holdConcurrentReadPosts = true;
+    concurrentReadPostBarrier = new Promise<void>((resolve) => {
+      releaseConcurrentReadPosts = resolve;
+    });
+
+    const [first, second] = await Promise.all([
+      runRoute('POST', '/:waveId/blips/:blipId/read', { params: { waveId: 'w1', blipId: 'b1' } }),
+      runRoute('POST', '/:waveId/blips/:blipId/read', { params: { waveId: 'w1', blipId: 'b1' } }),
+    ]);
+
+    expect(first.statusCode).toBeGreaterThanOrEqual(200);
+    expect(first.statusCode).toBeLessThan(300);
+    expect(second.statusCode).toBeGreaterThanOrEqual(200);
+    expect(second.statusCode).toBeLessThan(300);
+    expect(first.body.ok).toBe(true);
+    expect(second.body.ok).toBe(true);
+    expect(readDocs).toHaveLength(1);
+    expect(readDocs[0]?.['_id']).toBe('read:user:u1:wave:w1:blip:b1');
+    expect(Number(readDocs[0]?.['readAt'] || 0)).toBeGreaterThan(0);
+    expect(Number.isFinite(Number(readDocs[0]?.['readAt']))).toBe(true);
+  });
+
+  it('does not retry or mask non-conflict storage failures', async () => {
+    readDocs = [{
+      _id: 'read:user:u1:wave:w1:blip:b1',
+      _rev: '1-x',
+      type: 'read',
+      userId: 'u1',
+      waveId: 'w1',
+      blipId: 'b1',
+      readAt: 1,
+    }];
+    failNextReadPutStatus = 503;
+
+    const response = await runRoute('POST', '/:waveId/blips/:blipId/read', {
+      params: { waveId: 'w1', blipId: 'b1' },
+    });
+
+    expect(response.statusCode).toBe(500);
+    expect(response.body.error).toContain('503 simulated storage failure');
+    expect(readDocs[0]?.['_rev']).toBe('1-x');
   });
 });

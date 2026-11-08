@@ -4,6 +4,62 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Test Editor Features</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #eef3f8;
+      --panel: rgba(255, 255, 255, 0.86);
+      --panel-strong: rgba(255, 255, 255, 0.96);
+      --ink: #10233a;
+      --muted: #5d728c;
+      --line: rgba(120, 143, 167, 0.24);
+      --accent: #1c8f83;
+      --accent-soft: rgba(28, 143, 131, 0.12);
+      --shadow: 0 28px 60px rgba(17, 33, 52, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(39, 174, 96, 0.08), transparent 28%),
+        radial-gradient(circle at 80% 12%, rgba(32, 201, 151, 0.12), transparent 20%),
+        linear-gradient(180deg, #f6fafc 0%, var(--page-bg) 58%, #edf1f6 100%);
+    }
+    #test-editor {
+      padding: 32px 24px 40px;
+    }
+
+    .test-editor-shell .blip-editor {
+      border: none;
+      background: transparent;
+      padding: 0;
+    }
+
+    .test-editor-shell .blip-editor .ProseMirror {
+      min-height: 260px;
+      padding-right: 340px;
+      color: var(--ink);
+    }
+
+    .test-editor-shell .blip-editor .ProseMirror > * + * {
+      margin-top: 14px;
+    }
+
+    .test-editor-shell .blip-editor .inline-comment-nav {
+      top: 10px;
+      right: 12px;
+      width: 286px;
+      border-radius: 16px;
+      border-color: rgba(132, 148, 166, 0.22);
+      box-shadow: 0 20px 36px rgba(16, 35, 58, 0.1);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(14px);
+    }
+  </style>
 </head>
 <body>
   <div id="test-editor"></div>
@@ -11,29 +67,322 @@
     import React from 'react';
     import ReactDOM from 'react-dom/client';
     import { BlipEditor } from './components/editor/BlipEditor';
-    import { FEATURES } from '../shared/featureFlags';
+    import {
+      MantineProvider,
+      createTheme,
+      Button,
+      Group,
+      Badge,
+      Stack,
+      Text,
+      Title,
+      Card,
+      Divider,
+      Box,
+      ThemeIcon
+    } from '@mantine/core';
+    import { Vote, Sparkles, MessageSquareText, FileCode2 } from 'lucide-react';
+    import '@mantine/core/styles.css';
+
+    const theme = createTheme({
+      primaryColor: 'teal',
+      fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+      headings: {
+        fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+      },
+      radius: {
+        xl: '18px',
+      }
+    });
 
     function TestApp() {
-      const [content, setContent] = React.useState('<p>Test content for Rizzoma editor</p>');
+      const initialContent = [
+        '<p><strong>Decision frame.</strong> The team needs one recommendation to carry into the steering-group call tomorrow morning.</p>',
+        '<p>Use the poll to converge quickly, then leave rationale directly below it so nobody has to reconstruct the discussion later.</p>'
+      ].join('');
+      const [content, setContent] = React.useState(initialContent);
+      const serializerPreview = content.length > 320 ? `${content.slice(0, 320)}…` : content;
       
-      return React.createElement('div', { style: { padding: 20 } },
-        React.createElement('h1', null, 'Rizzoma Editor Test'),
-        React.createElement('div', null, 
-          React.createElement('h2', null, 'Feature Flags:'),
-          React.createElement('pre', null, JSON.stringify(FEATURES, null, 2))
-        ),
-        React.createElement('div', { style: { marginTop: 20, border: '1px solid #ccc', padding: 10 } },
-          React.createElement(BlipEditor, {
-            content,
-            blipId: 'test-blip-1',
-            isReadOnly: false,
-            onUpdate: setContent,
-            enableCollaboration: false
-          })
-        ),
-        React.createElement('div', { style: { marginTop: 20 } },
-          React.createElement('h3', null, 'Content HTML:'),
-          React.createElement('pre', { style: { background: '#f5f5f5', padding: 10 } }, content)
+      const insertPoll = () => {
+        const editorEl = document.querySelector('.tiptap');
+        if (editorEl) editorEl.focus();
+        setTimeout(() => {
+          if (window.rizzomaDispatchInsertEvent) {
+            window.rizzomaDispatchInsertEvent('rizzoma:insert-gadget', { type: 'poll' });
+          } else {
+            window.dispatchEvent(new CustomEvent('rizzoma:insert-gadget', { 
+              detail: { type: 'poll' } 
+            }));
+          }
+        }, 100);
+      };
+
+      return React.createElement(
+        MantineProvider,
+        { theme },
+        React.createElement(
+          'div',
+          {
+            style: {
+              maxWidth: 1380,
+              margin: '0 auto',
+            },
+            className: 'test-editor-shell',
+          },
+          React.createElement(
+            Card,
+            {
+              radius: 'xl',
+              padding: 0,
+              style: {
+                overflow: 'hidden',
+                background: 'var(--panel-strong)',
+                border: '1px solid var(--line)',
+                boxShadow: 'var(--shadow)',
+              }
+            },
+            React.createElement(
+              'div',
+              {
+                style: {
+                  padding: '28px 32px 22px',
+                  borderBottom: '1px solid var(--line)',
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(241, 252, 248, 0.92))',
+                }
+              },
+              React.createElement(
+                Group,
+                { justify: 'space-between', align: 'flex-start', gap: 'lg' },
+                React.createElement(
+                  Stack,
+                  { gap: 10, style: { flex: 1 } },
+                  React.createElement(
+                    Group,
+                    { gap: 'xs' },
+                    React.createElement(Badge, { color: 'teal', variant: 'light', radius: 'sm' }, 'Topic Prototype'),
+                    React.createElement(Badge, { color: 'gray', variant: 'outline', radius: 'sm' }, 'Gadgets'),
+                    React.createElement(Badge, { color: 'gray', variant: 'outline', radius: 'sm' }, 'Editor Surface')
+                  ),
+                  React.createElement(Title, { order: 1, style: { fontSize: '2rem', lineHeight: 1.05, color: 'var(--ink)' } }, 'Decision-Making Inside a Rizzoma Blip'),
+                  React.createElement(
+                    Text,
+                    { c: 'dimmed', maw: 760, size: 'md', style: { lineHeight: 1.65 } },
+                    'This view simulates a live topic pane: a substantive blip body on the left, collaboration context on the right, and a first-class poll gadget embedded where a team would actually make a choice.'
+                  )
+                ),
+                React.createElement(
+                  Group,
+                  { gap: 'sm', align: 'center' },
+                  React.createElement(
+                    Button,
+                    {
+                      onClick: insertPoll,
+                      color: 'teal',
+                      radius: 'xl',
+                      size: 'md',
+                      leftSection: React.createElement(Vote, { size: 16 }),
+                      style: { fontWeight: 700 }
+                    },
+                    'Insert Poll Into Blip'
+                  )
+                )
+              )
+            ),
+            React.createElement(
+              'div',
+              {
+                style: {
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(0, 1.55fr) 320px',
+                  gap: 24,
+                  padding: 24,
+                  alignItems: 'start',
+                }
+              },
+              React.createElement(
+                Stack,
+                { gap: 'md' },
+                React.createElement(
+                  Card,
+                  {
+                    radius: 'xl',
+                    padding: 'xl',
+                    style: {
+                      background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249, 251, 255, 0.94))',
+                      border: '1px solid var(--line)',
+                    }
+                  },
+                  React.createElement(
+                    Group,
+                    { justify: 'space-between', mb: 'md', align: 'center' },
+                    React.createElement(
+                      Stack,
+                      { gap: 4 },
+                      React.createElement(Text, { size: 'xs', tt: 'uppercase', fw: 800, c: 'teal', style: { letterSpacing: '0.12em' } }, 'Blip Context'),
+                      React.createElement(Title, { order: 3, style: { color: 'var(--ink)' } }, 'Q2 Strategy Workshop')
+                    ),
+                    React.createElement(
+                      Group,
+                      { gap: 'xs' },
+                      React.createElement(Badge, { color: 'teal', variant: 'light', radius: 'sm' }, 'Expanded'),
+                      React.createElement(Badge, { color: 'gray', variant: 'outline', radius: 'sm' }, '3 collaborators')
+                    )
+                  ),
+                  React.createElement(
+                    Text,
+                    {
+                      size: 'sm',
+                      c: 'dimmed',
+                      mb: 'lg',
+                      style: { lineHeight: 1.75 }
+                    },
+                    'We need a single recommendation before tomorrow’s steering-group call. Capture the decision directly in the blip so the vote, rationale, and follow-up discussion stay attached to the same thread.'
+                  ),
+                  React.createElement(
+                    'div',
+                    {
+                      style: {
+                        borderRadius: 18,
+                        border: '1px solid var(--line)',
+                        background: 'rgba(255,255,255,0.86)',
+                        padding: 18,
+                        minHeight: 360,
+                      }
+                    },
+                    React.createElement(BlipEditor, {
+                      content,
+                      blipId: 'test-blip-1',
+                      isReadOnly: false,
+                      onUpdate: setContent,
+                      enableCollaboration: false
+                    })
+                  )
+                ),
+                React.createElement(
+                  Card,
+                  {
+                    radius: 'xl',
+                    padding: 'lg',
+                    style: {
+                      background: 'rgba(17, 33, 52, 0.96)',
+                      color: 'white',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                    }
+                  },
+                  React.createElement(
+                    Group,
+                    { justify: 'space-between', mb: 'sm' },
+                    React.createElement(
+                      Group,
+                      { gap: 'sm' },
+                      React.createElement(
+                        ThemeIcon,
+                        { color: 'teal', radius: 'xl', variant: 'light', size: 34 },
+                        React.createElement(FileCode2, { size: 18 })
+                      ),
+                      React.createElement(
+                        Stack,
+                        { gap: 0 },
+                        React.createElement(Text, { fw: 700, size: 'sm', c: 'white' }, 'Serializer Snapshot'),
+                        React.createElement(Text, { size: 'xs', c: 'rgba(255,255,255,0.68)' }, 'Live editor output after each edit')
+                      )
+                    ),
+                    React.createElement(Badge, { color: 'teal', variant: 'light', radius: 'sm' }, 'Dev')
+                  ),
+                  React.createElement(
+                    Text,
+                    {
+                      component: 'pre',
+                      size: 'xs',
+                      style: {
+                        margin: 0,
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        lineHeight: 1.7,
+                        color: 'rgba(232, 240, 248, 0.92)',
+                        maxHeight: 150,
+                        overflow: 'hidden',
+                      }
+                    },
+                    serializerPreview
+                  )
+                )
+              ),
+              React.createElement(
+                Stack,
+                { gap: 'md' },
+                React.createElement(
+                  Card,
+                  {
+                    radius: 'xl',
+                    padding: 'lg',
+                    style: {
+                      background: 'var(--panel)',
+                      border: '1px solid var(--line)',
+                      boxShadow: '0 16px 30px rgba(18, 37, 59, 0.08)',
+                    }
+                  },
+                  React.createElement(
+                    Stack,
+                    { gap: 'md' },
+                    React.createElement(
+                      Group,
+                      { gap: 'sm' },
+                      React.createElement(
+                        ThemeIcon,
+                        { color: 'teal', radius: 'xl', variant: 'light', size: 36 },
+                        React.createElement(Sparkles, { size: 18 })
+                      ),
+                      React.createElement(
+                        Stack,
+                        { gap: 0 },
+                        React.createElement(Text, { fw: 700 }, 'Gadget Goal'),
+                        React.createElement(Text, { size: 'sm', c: 'dimmed' }, 'Make the poll feel like native collaboration, not an embed')
+                      )
+                    ),
+                    React.createElement(Divider, null),
+                    React.createElement(
+                      Stack,
+                      { gap: 10 },
+                      React.createElement(Text, { size: 'sm', fw: 700, c: 'var(--ink)' }, 'What should happen here'),
+                      React.createElement(Text, { size: 'sm', c: 'dimmed', style: { lineHeight: 1.6 } }, 'The team proposes a question, people vote inline, and the surrounding thread explains why the decision matters. The gadget should support the conversation rather than feeling like a detached widget.')
+                    )
+                  )
+                ),
+                React.createElement(
+                  Card,
+                  {
+                    radius: 'xl',
+                    padding: 'lg',
+                    style: {
+                      background: 'var(--panel)',
+                      border: '1px solid var(--line)',
+                    }
+                  },
+                  React.createElement(
+                    Group,
+                    { gap: 'sm', mb: 'sm' },
+                    React.createElement(
+                      ThemeIcon,
+                      { color: 'blue', radius: 'xl', variant: 'light', size: 36 },
+                      React.createElement(MessageSquareText, { size: 18 })
+                    ),
+                    React.createElement(
+                      Stack,
+                      { gap: 0 },
+                      React.createElement(Text, { fw: 700 }, 'Inline Comments'),
+                      React.createElement(Text, { size: 'sm', c: 'dimmed' }, 'Annotations stay near the working blip')
+                    )
+                  ),
+                  React.createElement(
+                    Text,
+                    { size: 'sm', c: 'dimmed', style: { lineHeight: 1.65 } },
+                    'The comment rail remains visible, but it now reads as supporting collaboration context instead of floating awkwardly on an otherwise empty page.'
+                  )
+                )
+              )
+            )
+          )
         )
       );
     }

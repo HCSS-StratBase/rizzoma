@@ -1,0 +1,307 @@
+[
+  {
+    "mode": "owner",
+    "viewport": {
+      "label": "1280",
+      "width": 1280,
+      "height": 900
+    },
+    "beforeFile": "owner-1280-checked.png",
+    "before": {
+      "text": "☑ Owner",
+      "role": "button",
+      "tabIndex": "0",
+      "className": "task-widget task-done task-interactive"
+    },
+    "box": {
+      "x": 557.328125,
+      "y": 149.734375,
+      "width": 68.78125,
+      "height": 23.6875
+    },
+    "expectedConsoleErrors": [
+      "WebSocket connection to 'ws://127.0.0.1:4329/socket.io/?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response",
+      "[socket] connect_error TransportError: websocket error\n    at WS.onError (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:960:33)\n    at ws.onerror (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:1475:35)"
+    ],
+    "unexpectedConsoleErrors": [],
+    "toggledFile": "owner-1280-confirmed-toggle.png",
+    "afterToggle": {
+      "text": "☐ Owner",
+      "role": "button",
+      "className": "task-widget task-interactive"
+    },
+    "editFile": "owner-1280-editor-handoff.png",
+    "editorText": "☐ Owner"
+  },
+  {
+    "mode": "public",
+    "viewport": {
+      "label": "1280",
+      "width": 1280,
+      "height": 900
+    },
+    "beforeFile": "public-1280-checked.png",
+    "before": {
+      "text": "☑ Owner",
+      "role": null,
+      "tabIndex": null,
+      "className": "task-widget task-done task-readonly"
+    },
+    "box": {
+      "x": 257.765625,
+      "y": 221.734375,
+      "width": 70.125,
+      "height": 23.6875
+    },
+    "expectedConsoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "WebSocket connection to 'ws://127.0.0.1:4329/socket.io/?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response",
+      "[socket] connect_error TransportError: websocket error\n    at WS.onError (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:960:33)\n    at ws.onerror (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:1475:35)"
+    ],
+    "unexpectedConsoleErrors": []
+  },
+  {
+    "mode": "owner",
+    "viewport": {
+      "label": "1366",
+      "width": 1366,
+      "height": 900
+    },
+    "beforeFile": "owner-1366-checked.png",
+    "before": {
+      "text": "☑ Owner",
+      "role": "button",
+      "tabIndex": "0",
+      "className": "task-widget task-done task-interactive"
+    },
+    "box": {
+      "x": 557.328125,
+      "y": 149.734375,
+      "width": 68.78125,
+      "height": 23.6875
+    },
+    "expectedConsoleErrors": [
+      "WebSocket connection to 'ws://127.0.0.1:4329/socket.io/?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response",
+      "[socket] connect_error TransportError: websocket error\n    at WS.onError (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:960:33)\n    at ws.onerror (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:1475:35)"
+    ],
+    "unexpectedConsoleErrors": [],
+    "toggledFile": "owner-1366-confirmed-toggle.png",
+    "afterToggle": {
+      "text": "☐ Owner",
+      "role": "button",
+      "className": "task-widget task-interactive"
+    },
+    "editFile": "owner-1366-editor-handoff.png",
+    "editorText": "☐ Owner"
+  },
+  {
+    "mode": "public",
+    "viewport": {
+      "label": "1366",
+      "width": 1366,
+      "height": 900
+    },
+    "beforeFile": "public-1366-checked.png",
+    "before": {
+      "text": "☑ Owner",
+      "role": null,
+      "tabIndex": null,
+      "className": "task-widget task-done task-readonly"
+    },
+    "box": {
+      "x": 300.765625,
+      "y": 221.734375,
+      "width": 70.125,
+      "height": 23.6875
+    },
+    "expectedConsoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "WebSocket connection to 'ws://127.0.0.1:4329/socket.io/?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response",
+      "[socket] connect_error TransportError: websocket error\n    at WS.onError (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:960:33)\n    at ws.onerror (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:1475:35)"
+    ],
+    "unexpectedConsoleErrors": []
+  },
+  {
+    "mode": "owner",
+    "viewport": {
+      "label": "1440",
+      "width": 1440,
+      "height": 900
+    },
+    "beforeFile": "owner-1440-checked.png",
+    "before": {
+      "text": "☑ Owner",
+      "role": "button",
+      "tabIndex": "0",
+      "className": "task-widget task-done task-interactive"
+    },
+    "box": {
+      "x": 557.328125,
+      "y": 149.734375,
+      "width": 68.78125,
+      "height": 23.6875
+    },
+    "expectedConsoleErrors": [
+      "WebSocket connection to 'ws://127.0.0.1:4329/socket.io/?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response",
+      "[socket] connect_error TransportError: websocket error\n    at WS.onError (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:960:33)\n    at ws.onerror (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:1475:35)"
+    ],
+    "unexpectedConsoleErrors": [],
+    "toggledFile": "owner-1440-confirmed-toggle.png",
+    "afterToggle": {
+      "text": "☐ Owner",
+      "role": "button",
+      "className": "task-widget task-interactive"
+    },
+    "editFile": "owner-1440-editor-handoff.png",
+    "editorText": "☐ Owner"
+  },
+  {
+    "mode": "public",
+    "viewport": {
+      "label": "1440",
+      "width": 1440,
+      "height": 900
+    },
+    "beforeFile": "public-1440-checked.png",
+    "before": {
+      "text": "☑ Owner",
+      "role": null,
+      "tabIndex": null,
+      "className": "task-widget task-done task-readonly"
+    },
+    "box": {
+      "x": 337.765625,
+      "y": 221.734375,
+      "width": 70.125,
+      "height": 23.6875
+    },
+    "expectedConsoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "WebSocket connection to 'ws://127.0.0.1:4329/socket.io/?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response",
+      "[socket] connect_error TransportError: websocket error\n    at WS.onError (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:960:33)\n    at ws.onerror (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:1475:35)"
+    ],
+    "unexpectedConsoleErrors": []
+  },
+  {
+    "mode": "owner",
+    "viewport": {
+      "label": "1600",
+      "width": 1600,
+      "height": 900
+    },
+    "beforeFile": "owner-1600-checked.png",
+    "before": {
+      "text": "☑ Owner",
+      "role": "button",
+      "tabIndex": "0",
+      "className": "task-widget task-done task-interactive"
+    },
+    "box": {
+      "x": 557.328125,
+      "y": 149.734375,
+      "width": 68.78125,
+      "height": 23.6875
+    },
+    "expectedConsoleErrors": [
+      "WebSocket connection to 'ws://127.0.0.1:4329/socket.io/?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response",
+      "[socket] connect_error TransportError: websocket error\n    at WS.onError (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:960:33)\n    at ws.onerror (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:1475:35)"
+    ],
+    "unexpectedConsoleErrors": [],
+    "toggledFile": "owner-1600-confirmed-toggle.png",
+    "afterToggle": {
+      "text": "☐ Owner",
+      "role": "button",
+      "className": "task-widget task-interactive"
+    },
+    "editFile": "owner-1600-editor-handoff.png",
+    "editorText": "☐ Owner"
+  },
+  {
+    "mode": "public",
+    "viewport": {
+      "label": "1600",
+      "width": 1600,
+      "height": 900
+    },
+    "beforeFile": "public-1600-checked.png",
+    "before": {
+      "text": "☑ Owner",
+      "role": null,
+      "tabIndex": null,
+      "className": "task-widget task-done task-readonly"
+    },
+    "box": {
+      "x": 417.765625,
+      "y": 221.734375,
+      "width": 70.125,
+      "height": 23.6875
+    },
+    "expectedConsoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "WebSocket connection to 'ws://127.0.0.1:4329/socket.io/?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response",
+      "[socket] connect_error TransportError: websocket error\n    at WS.onError (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:960:33)\n    at ws.onerror (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:1475:35)"
+    ],
+    "unexpectedConsoleErrors": []
+  },
+  {
+    "mode": "owner",
+    "viewport": {
+      "label": "mobile-390",
+      "width": 390,
+      "height": 844
+    },
+    "beforeFile": "owner-mobile-390-checked.png",
+    "before": {
+      "text": "☑ Owner",
+      "role": "button",
+      "tabIndex": "0",
+      "className": "task-widget task-done task-interactive"
+    },
+    "box": {
+      "x": 181.328125,
+      "y": 197.734375,
+      "width": 68.78125,
+      "height": 23.6875
+    },
+    "expectedConsoleErrors": [
+      "WebSocket connection to 'ws://127.0.0.1:4329/socket.io/?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response",
+      "[socket] connect_error TransportError: websocket error\n    at WS.onError (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:960:33)\n    at ws.onerror (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:1475:35)"
+    ],
+    "unexpectedConsoleErrors": [],
+    "toggledFile": "owner-mobile-390-confirmed-toggle.png",
+    "afterToggle": {
+      "text": "☐ Owner",
+      "role": "button",
+      "className": "task-widget task-interactive"
+    },
+    "editFile": "owner-mobile-390-editor-handoff.png",
+    "editorText": "☐ Owner"
+  },
+  {
+    "mode": "public",
+    "viewport": {
+      "label": "mobile-390",
+      "width": 390,
+      "height": 844
+    },
+    "beforeFile": "public-mobile-390-checked.png",
+    "before": {
+      "text": "☑ Owner",
+      "role": null,
+      "tabIndex": null,
+      "className": "task-widget task-done task-readonly"
+    },
+    "box": {
+      "x": 191.765625,
+      "y": 213.734375,
+      "width": 70.125,
+      "height": 23.6875
+    },
+    "expectedConsoleErrors": [
+      "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "WebSocket connection to 'ws://127.0.0.1:4329/socket.io/?EIO=4&transport=websocket' failed: Connection closed before receiving a handshake response",
+      "[socket] connect_error TransportError: websocket error\n    at WS.onError (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:960:33)\n    at ws.onerror (http://127.0.0.1:4329/@fs/home/stephan/rizzoma-preintegration-offline-upload/node_modules/.vite/deps/socket__io-client.js?v=132ba2d9:1475:35)"
+    ],
+    "unexpectedConsoleErrors": []
+  }
+]

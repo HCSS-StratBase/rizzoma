@@ -39,6 +39,8 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}): Offline
   clearQueue: () => void;
   /** Remove a specific mutation from the queue */
   removeMutation: (id: string) => void;
+  /** Move a failed mutation back to pending. */
+  retryMutation: (id: string) => void;
 } {
   const { onOnline, onOffline, onMutationSuccess, onMutationFailed, onSyncComplete } = options;
 
@@ -51,11 +53,9 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}): Offline
     pendingMutations: [],
   });
 
-  // Initialize offline queue
+  // AuthProvider owns queue initialization/partition activation. This hook is
+  // read-only with respect to auth so it cannot load a queue before bootstrap.
   useEffect(() => {
-    offlineQueue.initialize();
-
-    // Update initial state
     const queue = offlineQueue.getQueue();
     setStatus((prev) => ({
       ...prev,
@@ -75,8 +75,10 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}): Offline
       const queue = offlineQueue.getQueue();
 
       switch (event.type) {
+        case 'queue-loaded':
         case 'mutation-added':
         case 'mutation-retry':
+        case 'mutation-requeued':
           setStatus((prev) => ({
             ...prev,
             hasPendingMutations: queue.length > 0,
@@ -126,12 +128,23 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}): Offline
           }));
           break;
 
+        case 'queue-unloaded':
         case 'queue-cleared':
           setStatus((prev) => ({
             ...prev,
             hasPendingMutations: false,
             pendingCount: 0,
             pendingMutations: [],
+          }));
+          break;
+
+        case 'auth-required':
+          setStatus((prev) => ({
+            ...prev,
+            isSyncing: false,
+            hasPendingMutations: queue.length > 0,
+            pendingCount: queue.length,
+            pendingMutations: queue,
           }));
           break;
       }
@@ -189,11 +202,23 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}): Offline
     }));
   }, []);
 
+  const retryMutation = useCallback((id: string) => {
+    if (!offlineQueue.retryFailed(id)) return;
+    const queue = offlineQueue.getQueue();
+    setStatus((prev) => ({
+      ...prev,
+      hasPendingMutations: queue.length > 0,
+      pendingCount: queue.length,
+      pendingMutations: queue,
+    }));
+  }, []);
+
   return {
     ...status,
     sync,
     clearQueue,
     removeMutation,
+    retryMutation,
   };
 }
 
@@ -224,7 +249,7 @@ export function useIsOnline(): boolean {
 /**
  * Hook that shows a toast when going offline/online
  */
-export function useOfflineToast(): void {
+export function useOfflineToast({ showOffline = true }: { showOffline?: boolean } = {}): void {
   useEffect(() => {
     const handleOnline = () => {
       window.dispatchEvent(
@@ -235,9 +260,10 @@ export function useOfflineToast(): void {
     };
 
     const handleOffline = () => {
+      if (!showOffline) return;
       window.dispatchEvent(
         new CustomEvent('toast', {
-          detail: { message: 'You are offline. Changes will sync when reconnected.', type: 'warning' },
+          detail: { message: 'You are offline. Reconnect before editing.', type: 'warning' },
         })
       );
     };
@@ -249,7 +275,7 @@ export function useOfflineToast(): void {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [showOffline]);
 }
 
 /**
@@ -259,12 +285,32 @@ export function useOfflineIndicator(): {
   isOffline: boolean;
   hasPending: boolean;
   pendingCount: number;
+  failedCount: number;
+  retryFailed: () => Promise<void>;
+  discardFailed: () => void;
 } {
-  const { isOnline, hasPendingMutations, pendingCount } = useOfflineStatus();
+  const {
+    isOnline,
+    hasPendingMutations,
+    pendingCount,
+    pendingMutations,
+    retryMutation,
+    removeMutation,
+    sync,
+  } = useOfflineStatus();
+  const failed = pendingMutations.filter((mutation) => mutation.status === 'failed');
 
   return {
     isOffline: !isOnline,
     hasPending: hasPendingMutations,
     pendingCount,
+    failedCount: failed.length,
+    retryFailed: async () => {
+      failed.forEach((mutation) => retryMutation(mutation.id));
+      await sync();
+    },
+    discardFailed: () => {
+      failed.forEach((mutation) => removeMutation(mutation.id));
+    },
   };
 }

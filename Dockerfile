@@ -12,7 +12,7 @@ COPY package*.json ./
 # Use npm install in dev to allow missing/updated lockfiles and faster iteration
 RUN npm install
 COPY . .
-EXPOSE 3000 8000
+EXPOSE 3000 8788
 CMD ["npm", "run", "dev"]
 
 # Stage 3: Builder
@@ -34,10 +34,16 @@ RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit
 COPY --from=builder /app/dist ./dist
 RUN mkdir -p /app/data/uploads && chown -R node:node /app/data
 
-USER node
-EXPOSE 8000
+# Server creates /app/logs (winston) and /app/data/uploads at startup; USER
+# node can't write to /app (owned by root from COPY), so pre-create + chown.
+RUN mkdir -p /app/logs /app/data/uploads && chown -R node:node /app/logs /app/data
 
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD curl -fsS http://localhost:8000/api/health || exit 1
+USER node
+EXPOSE 8788
+
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD curl -fsS http://localhost:8788/api/health || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
+# tsc preserves src/ → dist/ hierarchy (rootDir=src, outDir=dist/server in
+# tsconfig.server.json), so src/server/app.ts emits to dist/server/server/app.js.
 CMD ["node", "dist/server/server/app.js"]

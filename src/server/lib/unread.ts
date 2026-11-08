@@ -147,3 +147,27 @@ export function invalidateUnreadCache(userId: string): void {
   }
   logUnread('invalidated cache for', userId);
 }
+
+/**
+ * Invalidate every cached entry that touches a given wave. Called on
+ * blip create/update/delete so any user polling the sidebar for that
+ * wave's unread count gets a fresh compute. The cache key format is
+ * `${userId}:${sortedWaveIds.join(',')}` — we can't match by exact
+ * waveId substring alone because comma-separation could produce false
+ * positives (e.g. `ff1,ff2,ff3` would match waveId `ff2,ff3`). Parse
+ * the list properly.
+ */
+export function invalidateUnreadCacheForWave(waveId: string): void {
+  if (!waveId) return;
+  let removed = 0;
+  for (const key of unreadCache.keys()) {
+    const colonIdx = key.indexOf(':');
+    if (colonIdx < 0) continue;
+    const waveList = key.slice(colonIdx + 1).split(',');
+    if (waveList.includes(waveId)) {
+      unreadCache.delete(key);
+      removed++;
+    }
+  }
+  if (removed > 0) logUnread('invalidated', removed, 'cache entries for wave', waveId);
+}

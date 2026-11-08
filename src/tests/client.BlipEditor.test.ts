@@ -1,15 +1,21 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
+import * as Y from 'yjs';
+import { Awareness } from 'y-protocols/awareness';
+import { collaborationUserFromAuth } from '../client/components/editor/collaborationIdentity';
 
 describe('client: TipTap editor integration', () => {
-  it('EditorConfig exports required functions', { timeout: 30000 }, async () => {
-    const module = await import('../client/components/editor/EditorConfig');
-    expect(module.createYjsDocument).toBeDefined();
-    expect(module.getEditorExtensions).toBeDefined();
-    expect(module.defaultEditorProps).toBeDefined();
-    expect(typeof module.createYjsDocument).toBe('function');
-    expect(typeof module.getEditorExtensions).toBe('function');
-  });
-  
+  // Warm the EditorConfig module once up-front with a generous timeout.
+  // On WSL2 /mnt/c the cold transform of the full TipTap + lowlight +
+  // Y.js dependency tree can take 60s+ the first time Vite encounters
+  // it in a session; individual tests that import it afterwards run in
+  // sub-second time. Without this warm-up the first test that imports
+  // EditorConfig flakes against a 60s per-test timeout whenever the
+  // suite is run from a cold transform cache.
+  let editorConfigModule: typeof import('../client/components/editor/EditorConfig');
+  beforeAll(async () => {
+    editorConfigModule = await import('../client/components/editor/EditorConfig');
+  }, 180000);
+
   it('YjsDocumentManager exports class', async () => {
     const module = await import('../client/components/editor/YjsDocumentManager');
     expect(module.YjsDocumentManager).toBeDefined();
@@ -29,14 +35,22 @@ describe('client: TipTap editor integration', () => {
     expect(module.SocketIOProvider).toBeDefined();
   });
   
-  it('useSocket hook exists', { timeout: 30000 }, async () => {
+  it('useSocket hook exists', { timeout: 60000 }, async () => {
     const module = await import('../client/hooks/useSocket');
     expect(module.useSocket).toBeDefined();
     expect(typeof module.useSocket).toBe('function');
   });
 
-  it('getEditorExtensions includes TagNode and TaskWidgetNode', { timeout: 30000 }, async () => {
-    const { getEditorExtensions } = await import('../client/components/editor/EditorConfig');
+  it('EditorConfig exports required functions', () => {
+    expect(editorConfigModule.createYjsDocument).toBeDefined();
+    expect(editorConfigModule.getEditorExtensions).toBeDefined();
+    expect(editorConfigModule.defaultEditorProps).toBeDefined();
+    expect(typeof editorConfigModule.createYjsDocument).toBe('function');
+    expect(typeof editorConfigModule.getEditorExtensions).toBe('function');
+  });
+
+  it('getEditorExtensions includes TagNode and TaskWidgetNode', () => {
+    const { getEditorExtensions } = editorConfigModule;
     const extensions = getEditorExtensions(undefined, undefined, {
       blipId: 'test-blip-id',
     });
@@ -47,8 +61,31 @@ describe('client: TipTap editor integration', () => {
     expect(names).toContain('mention');
   });
 
-  it('TipTap editor resolves tag and taskWidget extensions', { timeout: 30000 }, async () => {
-    const { getEditorExtensions } = await import('../client/components/editor/EditorConfig');
+  it('configures collaborative cursors with the authenticated provider identity', () => {
+    const doc = new Y.Doc();
+    const awareness = new Awareness(doc);
+    const alice = collaborationUserFromAuth({
+      id: 'alice-auth-id',
+      email: 'alice@example.com',
+      name: 'Alice Example',
+    });
+    awareness.setLocalStateField('user', alice);
+
+    const extensions = editorConfigModule.getEditorExtensions(doc, { awareness }, {
+      blipId: 'identity-blip',
+    });
+    const cursorExtension = extensions.find((extension: any) => extension.name === 'collaborativeCursor');
+
+    expect(cursorExtension).toBeDefined();
+    expect(cursorExtension.options.user).toEqual(alice);
+    expect(cursorExtension.options.user.name).not.toMatch(/^User \d+$/);
+
+    awareness.destroy();
+    doc.destroy();
+  });
+
+  it('TipTap editor resolves tag and taskWidget extensions', { timeout: 60000 }, async () => {
+    const { getEditorExtensions } = editorConfigModule;
     const tiptap = await import('@tiptap/core');
     const Editor = (tiptap as any).Editor;
 

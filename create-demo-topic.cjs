@@ -9,7 +9,7 @@ const createTopic = () => new Promise((resolve, reject) => {
 
   const req = http.request({
     hostname: 'localhost',
-    port: 8000,
+    port: 8788,
     path: '/api/topics',
     method: 'POST',
     headers: {
@@ -43,7 +43,7 @@ const createBlip = (waveId, parentId, content) => new Promise((resolve, reject) 
 
   const req = http.request({
     hostname: 'localhost',
-    port: 8000,
+    port: 8788,
     path: '/api/blips',
     method: 'POST',
     headers: {

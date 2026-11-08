@@ -178,3 +178,19 @@
 .invite-btn-primary:hover {
   background: #398de3;
 }
+
+.invite-role-select {
+  margin-left: 8px;
+  padding: 4px 6px;
+  border: 1px solid #c2c9cf;
+  border-radius: 3px;
+  background: #fff;
+  font-size: 12px;
+  color: #223447;
+}
+
+.invite-link-hint {
+  padding: 6px 12px 10px;
+  font-size: 11px;
+  color: #6b7c8c;
+}

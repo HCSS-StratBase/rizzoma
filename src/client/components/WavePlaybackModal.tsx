@@ -3,6 +3,7 @@ import type { BlipHistoryEntry, WaveHistoryResponse } from '@shared/types/blips'
 import { api, ensureCsrf } from '../lib/api';
 import { computeDiff } from '../lib/htmlDiff';
 import { toast } from './Toast';
+import { sanitizeRichHtml } from '../lib/sanitizeRichHtml';
 import './WavePlaybackModal.css';
 
 type BlipInfo = { id: string; label: string };
@@ -44,7 +45,7 @@ function formatDateButton(ts?: number): string {
 
 function stripHtmlToText(html: string): string {
   const div = document.createElement('div');
-  div.innerHTML = html;
+  div.innerHTML = sanitizeRichHtml(html);
   return (div.textContent || div.innerText || '').slice(0, 120);
 }
 
@@ -102,9 +103,9 @@ export function WavePlaybackModal({ waveId, topicTitle: _topicTitle, blips, onCl
     if (!current) return '';
     if (showDiff) {
       const prev = getPrevSameBlip(currentIndex);
-      if (prev) return computeDiff(prev.content, current.content);
+      if (prev) return sanitizeRichHtml(computeDiff(prev.content, current.content));
     }
-    return current.content;
+    return sanitizeRichHtml(current.content);
   }, [current, currentIndex, showDiff, getPrevSameBlip]);
 
   // Cluster boundaries for fast-forward/back
@@ -467,7 +468,7 @@ export function WavePlaybackModal({ waveId, topicTitle: _topicTitle, blips, onCl
               )}
             </div>
             <div
-              className="playback-blip-content"
+              className="playback-blip-content wave-playback-content"
               dangerouslySetInnerHTML={{ __html: displayContent }}
             />
           </div>
@@ -490,7 +491,7 @@ export function WavePlaybackModal({ waveId, topicTitle: _topicTitle, blips, onCl
                     <div className="playback-item-label">
                       {getBlipLabel(blipId)}
                     </div>
-                    <div className="playback-item-preview">
+                    <div className="playback-item-preview wave-overview-blip-content">
                       {stripHtmlToText(state.content)}
                     </div>
                   </div>

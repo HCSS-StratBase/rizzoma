@@ -10,10 +10,17 @@ const NOTIF_DISMISSED_KEY = 'rizzoma:pwa:notif-dismissed';
  * Compact banner for PWA install prompt and notification opt-in.
  * Auto-hides when already installed, dismissed, or not available.
  */
-export function PWAPrompts() {
+export function PWAPrompts({ showOfflineStatus = true }: { showOfflineStatus?: boolean }) {
   const { canInstall, promptInstall } = useInstallPrompt();
   const isPWA = useIsPWA();
-  const { isOffline, hasPending, pendingCount } = useOfflineIndicator();
+  const {
+    isOffline,
+    hasPending,
+    pendingCount,
+    failedCount,
+    retryFailed,
+    discardFailed,
+  } = useOfflineIndicator();
 
   const [installDismissed, setInstallDismissed] = useState(() => {
     try { return localStorage.getItem(DISMISSED_KEY) === '1'; } catch { return false; }
@@ -62,7 +69,7 @@ export function PWAPrompts() {
 
   const showInstall = canInstall && !isPWA && !installDismissed;
   const showNotif = notifPermission === 'default' && !notifDismissed;
-  const showOffline = isOffline || hasPending;
+  const showOffline = showOfflineStatus && (isOffline || hasPending);
 
   if (!showInstall && !showNotif && !showOffline) return null;
 
@@ -72,10 +79,32 @@ export function PWAPrompts() {
         <div className="pwa-prompt pwa-prompt--offline">
           <span className="pwa-prompt__icon">!</span>
           <span className="pwa-prompt__text">
-            {isOffline
-              ? `Offline${hasPending ? ` — ${pendingCount} change${pendingCount > 1 ? 's' : ''} queued` : ''}`
+            {failedCount > 0
+              ? `${failedCount} offline change${failedCount > 1 ? 's need' : ' needs'} attention`
+              : isOffline
+              ? (hasPending
+                ? `Offline — ${pendingCount} saved change${pendingCount > 1 ? 's' : ''} awaiting recovery`
+                : 'Offline — reconnect before editing')
               : `Syncing ${pendingCount} queued change${pendingCount > 1 ? 's' : ''}...`}
           </span>
+          {failedCount > 0 && (
+            <>
+              <button
+                className="pwa-prompt__btn pwa-prompt__btn--primary"
+                onClick={() => { void retryFailed(); }}
+              >
+                Retry
+              </button>
+              <button
+                className="pwa-prompt__btn pwa-prompt__btn--dismiss"
+                onClick={discardFailed}
+                aria-label="Discard failed offline changes"
+                title="Discard"
+              >
+                &times;
+              </button>
+            </>
+          )}
         </div>
       )}
       {showInstall && (

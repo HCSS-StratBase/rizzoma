@@ -198,12 +198,146 @@ export async function requestDisplayMedia(
   return navigator.mediaDevices.getDisplayMedia(constraints);
 }
 
+// Hard Gap #22 round 2 (2026-04-13): mobile-focused additions.
+// The first modernization sweep landed basic enumerate + permission query.
+// Round 2 adds the observer and lifecycle helpers that mobile browsers
+// actually exercise: users plug/unplug headsets, revoke camera access
+// mid-call, and hit OverconstrainedError when requesting 1080p on a
+// phone camera that only supports 720p.
+
+/**
+ * Subscribe to MediaDevices devicechange events (e.g., headset plugged
+ * in/out, external webcam connected). Returns an unsubscribe function.
+ *
+ * On mobile this fires when the user plugs in a wired headset or
+ * connects a Bluetooth mic. Useful for re-rendering a device picker
+ * without forcing a full page reload.
+ */
+export function subscribeDeviceChanges(
+  handler: (devices: MediaDeviceInfo[]) => void
+): () => void {
+  if (typeof navigator === 'undefined' || !navigator.mediaDevices) {
+    return () => undefined;
+  }
+  const refresh = async () => {
+    try {
+      const devices = await enumerateInputDevices();
+      handler(devices);
+    } catch {
+      // Silently ignore enumeration failures — the next devicechange
+      // event will retry.
+    }
+  };
+  const listener = () => {
+    void refresh();
+  };
+  try {
+    navigator.mediaDevices.addEventListener('devicechange', listener);
+  } catch {
+    return () => undefined;
+  }
+  // Fire once immediately so the handler gets the initial device list.
+  void refresh();
+  return () => {
+    try {
+      navigator.mediaDevices.removeEventListener('devicechange', listener);
+    } catch {
+      // best effort
+    }
+  };
+}
+
+/**
+ * Subscribe to camera OR microphone permission state changes. Fires
+ * when the user grants/revokes/prompts for permission via browser
+ * settings without reloading the page. Returns an unsubscribe function.
+ *
+ * On iOS Safari this is particularly useful — the user can revoke
+ * camera access from Settings → Safari → Camera at any time, and the
+ * app should react without requiring a reload.
+ */
+export async function subscribePermissionChanges(
+  permission: 'camera' | 'microphone',
+  handler: (state: string) => void
+): Promise<() => void> {
+  if (!hasPermissionsApi) return () => undefined;
+  try {
+    const status = await navigator.permissions.query({ name: permission as PermissionName });
+    if (!status) return () => undefined;
+    const listener = () => handler(status.state);
+    status.addEventListener('change', listener);
+    // Fire once immediately with the current state so the handler can
+    // sync up without waiting for a change.
+    handler(status.state);
+    return () => {
+      try {
+        status.removeEventListener('change', listener);
+      } catch {
+        // best effort
+      }
+    };
+  } catch {
+    return () => undefined;
+  }
+}
+
+/**
+ * Stop all tracks on a MediaStream and detach it from any HTML media
+ * elements that currently reference it. Safe to call with null/undefined.
+ *
+ * This is the correct way to release a camera/mic on mobile — just
+ * dropping the reference doesn't immediately release the hardware, and
+ * users will see the camera-in-use indicator lingering until GC fires.
+ */
+export function stopMediaStream(stream: MediaStream | null | undefined): void {
+  if (!stream) return;
+  try {
+    trace('Stopping media stream tracks');
+    for (const track of stream.getTracks()) {
+      try {
+        track.stop();
+      } catch {
+        // best effort per-track
+      }
+    }
+  } catch {
+    // best effort — stream may already be torn down
+  }
+}
+
+/**
+ * Request user media with automatic constraint fallback on
+ * OverconstrainedError. On mobile a user asking for 1920x1080 video
+ * will fail on most phone cameras; this helper retries with a relaxed
+ * constraint (video:true, audio preserved from the original request)
+ * so the call still succeeds with whatever the device CAN provide.
+ */
+export async function requestUserMediaWithFallback(
+  constraints?: MediaStreamConstraints | string
+): Promise<MediaStream> {
+  try {
+    return await requestUserMedia(constraints);
+  } catch (error) {
+    const name = (error as { name?: string })?.name || '';
+    const isOverconstrained = name === 'OverconstrainedError' || name === 'ConstraintNotSatisfiedError';
+    if (!isOverconstrained) throw error;
+    trace(`OverconstrainedError caught — retrying with relaxed constraints`);
+    const original = normalizeConstraints(constraints);
+    const relaxed: MediaStreamConstraints = {
+      audio: original.audio ?? true,
+      video: original.video ? true : false,
+    };
+    return requestUserMedia(relaxed);
+  }
+}
+
 /** Default constraints for getUserMedia */
 export { defaultConstraints };
 
 /** Adapter object for backward compatibility with tests */
 const adapter = {
   requestUserMedia,
+  requestUserMediaWithFallback,
   requestDisplayMedia,
   attachMediaStream,
   reattachMediaStream,
@@ -216,6 +350,9 @@ const adapter = {
   hasPermissionsApi,
   getMediaPermissionStatus,
   enumerateInputDevices,
+  subscribeDeviceChanges,
+  subscribePermissionChanges,
+  stopMediaStream,
 };
 
 export default adapter;

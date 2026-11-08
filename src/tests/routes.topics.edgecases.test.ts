@@ -43,7 +43,7 @@ describe('routes: /api/topics edge cases', () => {
     }) as typeof global.fetch;
   });
 
-  it('rejects POST without session (CSRF fails first -> 403)', async () => {
+  it('rejects POST without session before evaluating CSRF', async () => {
     const app = makeApp({});
     const server = app.listen(0);
     const addr = server.address();
@@ -51,11 +51,11 @@ describe('routes: /api/topics edge cases', () => {
     const resp = await fetch(`http://127.0.0.1:${port}/api/topics`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-csrf-token': 't' }, body: JSON.stringify({ title: 'Nope' }) });
     const body = await resp.json();
     server.close();
-    expect(resp.status).toBe(403);
+    expect(resp.status).toBe(401);
     expect(body.error).toBeDefined();
   });
 
-  it('allows any authenticated user to PATCH a topic (collaborative editing)', async () => {
+  it('denies an authenticated outsider from PATCHing a topic', async () => {
     const app = makeApp({ userId: 'u1', csrfToken: 't' });
     const server = app.listen(0);
     const addr = server.address();
@@ -63,7 +63,7 @@ describe('routes: /api/topics edge cases', () => {
     const resp = await fetch(`http://127.0.0.1:${port}/api/topics/t1`, { method: 'PATCH', headers: { 'content-type': 'application/json', 'x-csrf-token': 't' }, body: JSON.stringify({ title: 'x' }) });
     const body = await resp.json();
     server.close();
-    expect(resp.status).toBe(200);
-    expect(body.rev).toBeDefined();
+    expect(resp.status).toBe(403);
+    expect(body.error).toBe('forbidden');
   });
 });

@@ -37,6 +37,19 @@ ios/
 # Diagnostic output
 .coverage/
 coverage/
+# Claude Code per-project hooks + state (personal — see .claude/hooks/)
+.claude/settings.local.json
+.claude/state/
+.claude/scheduled_tasks.lock
+
+# Other repositories
+.svn
+src/pulse_index.coffee
+src/server/app_roles/web_payment.coffee
+src/server/app_roles/web_pulse.coffee
+src/pages/
+original-rizzoma/
+original-rizzoma-src/
 
 # Dependency directories
 node_modules/
@@ -101,3 +114,52 @@ original-rizzoma/
 .playwright-mcp/
 scripts/rizzoma-session-state.json
 scripts/__pycache__/
+
+# Snapshots (default ignored; explicitly include latest published artifacts)
+snapshots/**
+!snapshots/**/.gitkeep
+!snapshots/follow-the-green/1765298128125-*.png
+!snapshots/follow-the-green/1765296401439-*.png
+!snapshots/toolbar-inline/1765298097444-*.png
+!snapshots/perf/**
+
+# Development logs
+*.log
+
+# Hard Gap #24 (2026-04-13) — local scratch / dev junk that kept showing up
+# in git status. Documented in docs/HANDOFF.md / CLAUDE_SESSION.md as the
+# four skip-listed items.
+tmp/
+scripts/__pycache__/
+gpu_hog_report.bat
+tana-tools.json
+# Local rizzoma backup bundles (the dated copies live on GDrive — see
+# docs/HANDOFF.md and Rizzoma-backup/README.md). The legacy `rizzoma.bundle`
+# entry above already covers the unsuffixed pointer; this catches the
+# dated variants too.
+rizzoma-*.bundle
+
+# Winston rotating file logs (runtime audit trail — see
+# src/server/lib/logger.ts). Never commit .log content.
+logs/
+
+# Capacitor native project build artifacts (2026-04-14). The native
+# project trees THEMSELVES are committed (android/, ios/) because
+# Capacitor does not regenerate them from scratch on sync — devs need
+# the Xcode/Gradle configuration to stay reproducible. Build outputs
+# and local IDE state are ignored.
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/.idea/
+ios/App/Pods/
+ios/App/build/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/
+
+# Built APK output (reproducible from source — do not commit).
+dist/apk/
+.claude/

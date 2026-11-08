@@ -9,7 +9,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import { parseHtmlToContentArray } from '../parser';
-import { ModelType, type BlipEl, type LineEl, type TextEl } from '../types';
+import { renderContent } from '../renderer';
+import { ModelType, type BlipEl, type ContentArray, type LineEl, type TextEl } from '../types';
 
 describe('parseHtmlToContentArray', () => {
   it('parses a plain paragraph', () => {
@@ -58,6 +59,27 @@ describe('parseHtmlToContentArray', () => {
     const arr = parseHtmlToContentArray('<h1>Title</h1><p>Body</p>');
     const lines = arr.filter((e): e is LineEl => e.type === ModelType.LINE);
     expect(lines[0]?.params.heading).toBe(1);
+  });
+
+  it('rejects unsafe links in both native parsing and rendering', () => {
+    const parsed = parseHtmlToContentArray(
+      '<p><a href="javascript:alert(1)">Unsafe</a> <a href="https://example.test/path">Safe</a></p>',
+    );
+    const parsedText = parsed.filter((element): element is TextEl => element.type === ModelType.TEXT);
+    expect(parsedText.find((element) => element.text === 'Unsafe')?.params.url).toBeUndefined();
+    expect(parsedText.find((element) => element.text.trim() === 'Safe')?.params.url).toBe('https://example.test/path');
+
+    const crafted: ContentArray = [
+      { type: ModelType.LINE, text: ' ', params: {} },
+      { type: ModelType.TEXT, text: 'Crafted unsafe', params: { url: 'javascript:alert(1)' } },
+      { type: ModelType.TEXT, text: 'Crafted safe', params: { url: 'https://example.test/ok' } },
+    ];
+    const container = document.createElement('div');
+    renderContent(container, crafted, { resolveChildBlip: () => null });
+    expect(container.textContent).toContain('Crafted unsafe');
+    expect(container.querySelectorAll('a')).toHaveLength(1);
+    expect(container.querySelector('a')?.getAttribute('href')).toBe('https://example.test/ok');
+    expect(container.innerHTML).not.toContain('javascript:');
   });
 
   it('returns empty array for empty input', () => {

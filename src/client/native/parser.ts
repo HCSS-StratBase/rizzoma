@@ -28,6 +28,7 @@ import {
   ModelType,
   TextParams,
 } from './types';
+import { isSafeRichUrl } from '../lib/sanitizeRichHtml';
 
 const SKIP_TAGS = new Set([
   'SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'INPUT', 'TEXTAREA',
@@ -75,7 +76,7 @@ const elementToTextParams = (el: Element, parent: TextParams): TextParams => {
       break;
     case 'A': {
       const href = (el as HTMLAnchorElement).getAttribute('href');
-      if (href) p.url = href;
+      if (href && isSafeRichUrl(href, 'href')) p.url = href;
       break;
     }
   }

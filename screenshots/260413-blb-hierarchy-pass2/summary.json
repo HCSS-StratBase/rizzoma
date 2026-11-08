@@ -1,0 +1,18 @@
+{
+  "topicId": "ff955fcd14cbbf6212be3a9f70010d36",
+  "base": "http://127.0.0.1:3000",
+  "timestamp": "2026-04-12T23:55:26.412Z",
+  "replies": {
+    "A": "ff955fcd14cbbf6212be3a9f70010d36:b1776038123345",
+    "A1": "ff955fcd14cbbf6212be3a9f70010d36:b1776038123476",
+    "A11": "ff955fcd14cbbf6212be3a9f70010d36:b1776038123560",
+    "A2": "ff955fcd14cbbf6212be3a9f70010d36:b1776038123519",
+    "B": "ff955fcd14cbbf6212be3a9f70010d36:b1776038123387",
+    "C": "ff955fcd14cbbf6212be3a9f70010d36:b1776038123433"
+  },
+  "initialState": {
+    "rootReplies": 0,
+    "nestedRails": 1,
+    "collapsedRows": 0
+  }
+}

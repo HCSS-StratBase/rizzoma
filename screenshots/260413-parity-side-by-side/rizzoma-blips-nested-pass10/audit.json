@@ -1,0 +1,27 @@
+{
+  "topicId": "ff955fcd14cbbf6212be3a9f70020774",
+  "base": "http://127.0.0.1:3000",
+  "capturedAt": "2026-04-13T11:50:28.044Z",
+  "audit": {
+    "viewportWidth": 1440,
+    "viewportHeight": 900,
+    "navPanel": true,
+    "topicsList": true,
+    "topicsInList": 20,
+    "waveContainer": true,
+    "rightToolsPanel": true,
+    "topicCollabToolbar": true,
+    "totalBlipsRendered": 4,
+    "blipAuthorDates": 3,
+    "blipContributorsInfo": 3,
+    "topicSectionWraps": 7,
+    "topicSectionAuthors": 7,
+    "topicSectionAuthorAvatars": 7,
+    "h1Count": 1,
+    "ulCount": 5,
+    "olCount": 1,
+    "liCount": 18,
+    "linkCount": 3,
+    "strongCount": 8
+  }
+}

@@ -1,6 +1,7 @@
 import { chromium, devices } from 'playwright';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { seedAcceptedParticipant, seedVerifiedE2EAccount } from './scripts/lib/e2e-sharing-fixtures.mjs';
 
 const baseUrl = process.env.RIZZOMA_BASE_URL || 'http://localhost:3000';
 const headed = process.env.RIZZOMA_E2E_HEADED === '1';
@@ -47,13 +48,9 @@ async function attachConsole(page, label, profileName) {
   };
 }
 
-async function enableUnreadDebug(page, disableAutoNav = false) {
-  await page.addInitScript(({ disableAutoNav }) => {
+async function enableUnreadDebug(page) {
+  await page.addInitScript(() => {
     try { localStorage.setItem('rizzoma:debug:unread', '1'); } catch {}
-    // Disable auto-navigation for tests so we can verify the unread button appears
-    if (disableAutoNav) {
-      try { localStorage.setItem('rizzoma:test:noAutoNav', '1'); } catch {}
-    }
     try {
       if (window && (window).io) {
         const s = (window).io();
@@ -61,7 +58,7 @@ async function enableUnreadDebug(page, disableAutoNav = false) {
         s.on('wave:unread', (payload) => console.log('[observer init] wave:unread', payload));
       }
     } catch {}
-  }, { disableAutoNav });
+  });
 }
 
 async function gotoApp(page) {
@@ -93,32 +90,12 @@ async function ensureAuth(page, email, pwd, label) {
       body: JSON.stringify({ email, password }),
     });
 
-    if (loginResp.ok) {
-      return { success: true, method: 'login' };
-    }
-
-    // If login fails, try register
-    const registerResp = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers,
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (registerResp.ok) {
-      return { success: true, method: 'register' };
-    }
-
-    const error = await registerResp.text();
-    return { success: false, error, status: registerResp.status };
+    if (loginResp.ok) return { success: true, method: 'login' };
+    return { success: false, error: await loginResp.text(), status: loginResp.status };
   }, { email, password: pwd });
 
   if (!authResult.success) {
     throw new Error(`Auth failed for ${label}: ${authResult.error} (status: ${authResult.status})`);
-  }
-
-  if (authResult.method === 'register') {
-    log(`${label}: registered new account for ${email}`);
   }
 
   // Reload page to pick up new session (use domcontentloaded instead of networkidle due to WebSocket)
@@ -206,41 +183,54 @@ async function openWave(page, waveId, expectBlipId) {
   }
 }
 
+async function fetchUnreadState(page, waveId) {
+  const result = await page.evaluate(async (targetWaveId) => {
+    const response = await fetch(`/api/waves/${encodeURIComponent(targetWaveId)}/unread`, {
+      credentials: 'include',
+    });
+    const text = await response.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch {}
+    return { ok: response.ok, status: response.status, text, data };
+  }, waveId);
+  if (!result.ok) {
+    throw new Error(`Unread fetch failed (${result.status}): ${result.text.slice(0, 300)}`);
+  }
+  if (!result.data || !Array.isArray(result.data.unread)) {
+    throw new Error(`Unread response is missing an array: ${result.text.slice(0, 300)}`);
+  }
+  return result.data;
+}
+
 async function markWaveRead(page, waveId, label = 'page') {
   log(`markWaveRead [${label}] starting...`);
-  const token = await getXsrfToken(page);
-  log(`markWaveRead [${label}] got token, fetching unread...`);
-  const evalPromise = page.evaluate(async ({ waveId, token }) => {
-    console.log('[markWaveRead] fetching unread list');
-    const unreadResp = await fetch(`/api/waves/${encodeURIComponent(waveId)}/unread`, { credentials: 'include' });
-    const unreadBody = await unreadResp.json();
-    const blipIds = Array.isArray(unreadBody?.unread) ? unreadBody.unread : [];
-    console.log('[markWaveRead] unread count:', blipIds.length);
+  const operation = (async () => {
+    const unreadBody = await fetchUnreadState(page, waveId);
+    const blipIds = unreadBody.unread.map((id) => String(id));
     if (blipIds.length === 0) return 'no_unread';
-    console.log('[markWaveRead] marking read...');
-    await fetch(`/api/waves/${encodeURIComponent(waveId)}/read`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-csrf-token': token,
-      },
-      credentials: 'include',
-      body: JSON.stringify({ blipIds }),
-    });
-    console.log('[markWaveRead] done');
-    return 'done';
-  }, { waveId, token });
-
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error(`markWaveRead [${label}] timeout`)), 30000)
-  );
-
-  try {
-    const result = await Promise.race([evalPromise, timeout]);
-    log(`markWaveRead [${label}] complete: ${result}`);
-  } catch (err) {
-    log(`markWaveRead [${label}] error: ${err.message}`);
-  }
+    const token = await getXsrfToken(page);
+    const result = await page.evaluate(async ({ targetWaveId, ids, csrf }) => {
+      const response = await fetch(`/api/waves/${encodeURIComponent(targetWaveId)}/read`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-csrf-token': csrf,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ blipIds: ids }),
+      });
+      return { ok: response.ok, status: response.status, text: await response.text() };
+    }, { targetWaveId: waveId, ids: blipIds, csrf: token });
+    if (!result.ok) {
+      throw new Error(`Mark-read failed (${result.status}): ${result.text.slice(0, 300)}`);
+    }
+    return `marked_${blipIds.length}`;
+  })();
+  const result = await Promise.race([
+    operation,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`markWaveRead [${label}] timeout`)), 30000)),
+  ]);
+  log(`markWaveRead [${label}] complete: ${result}`);
 }
 
 async function createBlip(page, waveId, content) {
@@ -265,19 +255,34 @@ async function createBlip(page, waveId, content) {
 }
 
 async function waitForUnreadButton(page, expectedCount) {
-  const buttonVisible = await page.locator('.follow-the-green-btn').isVisible({ timeout: 15000 });
-  if (!buttonVisible) throw new Error('Follow-the-Green button not visible');
-  await page.waitForTimeout(250); // tolerate optimistic overrides
-  log(`Observer: unread button target ${expectedCount} (tolerating overrides)`);
+  await page.waitForFunction((count) => {
+    const button = document.querySelector('button.next-button.has-unread');
+    if (!(button instanceof HTMLButtonElement) || button.disabled || button.offsetParent === null) return false;
+    return button.title.startsWith(`${count} unread`);
+  }, expectedCount, { timeout: 15000 });
+  log(`Observer: real Next button shows ${expectedCount} unread`);
 }
 
 async function getUnreadCount(page) {
   return page.evaluate(() => {
-    const count = document.querySelector('.unread-count');
-    if (!count) return 0;
-    const num = Number(count.textContent?.trim() || '0');
+    const button = document.querySelector('button.next-button');
+    const match = button?.getAttribute('title')?.match(/^(\d+) unread/);
+    const num = Number(match?.[1] || '0');
     return Number.isFinite(num) ? num : 0;
   });
+}
+
+async function waitForUnreadIds(page, waveId, expectedIds, timeoutMs = 15000) {
+  const expected = [...expectedIds].map(String).sort();
+  const deadline = Date.now() + timeoutMs;
+  let actual = [];
+  while (Date.now() < deadline) {
+    const state = await fetchUnreadState(page, waveId);
+    actual = state.unread.map((id) => String(id)).sort();
+    if (JSON.stringify(actual) === JSON.stringify(expected)) return state;
+    await page.waitForTimeout(250);
+  }
+  throw new Error(`Unread IDs did not converge: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
 
 async function waitForToast(page, text) {
@@ -306,7 +311,7 @@ async function captureSnapshot(page, label) {
   const safe = label.replace(/[^a-z0-9-_]/gi, '_').toLowerCase();
   await fs.mkdir(snapshotDir, { recursive: true });
   const filepath = path.join(snapshotDir, `${timestamp}-${safe}.png`);
-  await page.screenshot({ path: filepath, fullPage: true });
+  await page.screenshot({ path: filepath, fullPage: false });
   log(`Saved snapshot ${filepath}`);
 }
 
@@ -318,6 +323,8 @@ async function main() {
     log(`Running profile: ${profile.name}`);
     const ownerEmail = ownerEmailBase || `follow-owner+${profile.name}+${timestamp}@example.com`;
     const observerEmail = observerEmailBase || `follow-observer+${profile.name}+${timestamp}@example.com`;
+    const ownerFixture = await seedVerifiedE2EAccount(ownerEmail, password);
+    await seedVerifiedE2EAccount(observerEmail, password);
     const ownerContext = await browser.newContext(profile.contextOptions);
     const observerContext = await browser.newContext(profile.contextOptions);
     const ownerPage = await ownerContext.newPage();
@@ -327,7 +334,7 @@ async function main() {
 
     try {
       await enableUnreadDebug(ownerPage);
-      await enableUnreadDebug(observerPage, true); // Disable auto-nav for observer to test button visibility
+      await enableUnreadDebug(observerPage);
       observerPage.on('request', (req) => {
         const url = req.url();
         if (url.includes('/api/waves/') && (url.includes('/read') || url.includes('/unread'))) {
@@ -347,10 +354,15 @@ async function main() {
       await openWave(ownerPage, waveId, rootBlipId);
 
       await ensureAuth(observerPage, observerEmail, password, `[${profile.name}] Observer`);
-      // Set test flag before opening wave to disable auto-navigation
-      await observerPage.evaluate(() => {
-        localStorage.setItem('rizzoma:test:noAutoNav', '1');
-      });
+      await seedAcceptedParticipant(waveId, observerEmail, 'viewer', ownerFixture._id);
+      const viewerAccess = await observerPage.evaluate(async (id) => {
+        const response = await fetch(`/api/topics/${encodeURIComponent(id)}`, { credentials: 'include' });
+        const data = await response.json().catch(() => null);
+        return { status: response.status, role: data?.permissions?.role, canRead: data?.permissions?.canRead, canEdit: data?.permissions?.canEdit };
+      }, waveId);
+      if (viewerAccess.status !== 200 || viewerAccess.role !== 'viewer' || !viewerAccess.canRead || viewerAccess.canEdit) {
+        throw new Error(`Observer viewer policy mismatch: ${JSON.stringify(viewerAccess)}`);
+      }
       await openWave(observerPage, waveId, rootBlipId);
 
       await markWaveRead(ownerPage, waveId, 'owner');
@@ -364,49 +376,29 @@ async function main() {
         log(`Owner created blip ${blipId}`);
       }
 
-      // Wait for the Follow-the-Green button to appear (or auto-nav to process)
-      // The auto-navigation feature will automatically mark blips as read,
-      // so we verify that behavior works instead of requiring manual button click
-      log('Waiting for unread state to stabilize...');
-      await observerPage.waitForTimeout(3000); // Give auto-nav time to process
+      let unreadState = await waitForUnreadIds(observerPage, waveId, blipIds);
+      await waitForUnreadButton(observerPage, blipIds.length);
+      await captureSnapshot(observerPage, `${profile.name}-two-unread`);
 
-      // Verify the button exists (may show 0 if auto-nav already processed)
-      const btn = observerPage.locator('.follow-the-green-btn');
-      const btnVisible = await btn.isVisible().catch(() => false);
-      log(`Follow-the-Green button visible: ${btnVisible}`);
-
-      // Click if visible, otherwise the auto-nav already handled it
-      if (btnVisible) {
-        await btn.click({ force: true });
-        log('Observer clicked Follow-the-Green');
-      } else {
-        log('Auto-navigation already processed unread blips');
-      }
-      // If onClick is ignored, trigger the exposed debug hook.
-      await observerPage.evaluate(({ waveId }) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const hook = (window).__followGreenClick;
-        if (typeof hook === 'function') {
-          console.log('Invoking __followGreenClick debug hook');
-          try { hook(); } catch (e) { console.error('hook error', e); }
+      for (let remaining = blipIds.length; remaining > 0; remaining -= 1) {
+        const nextId = String(unreadState.unread[0]);
+        const expectedAfterClick = unreadState.unread.slice(1).map((id) => String(id));
+        await observerPage.locator('button.next-button.has-unread').click();
+        unreadState = await waitForUnreadIds(observerPage, waveId, expectedAfterClick);
+        await ensureBlipRead(observerPage, nextId);
+        if (expectedAfterClick.length > 0) {
+          await waitForUnreadButton(observerPage, expectedAfterClick.length);
         }
-        // Hard UI override: clear badge locally.
-        try {
-          const count = document.querySelector('.unread-count');
-          if (count) count.textContent = '0';
-        } catch {}
-        // Direct mark-all to ensure server state clears.
-        try {
-          void fetch(`/api/waves/${encodeURIComponent(waveId)}/read`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ blipIds }),
-          });
-        } catch (e) { console.error('direct mark-all error', e); }
-      }, { waveId });
-      // Give time for unread state to clear
-      await observerPage.waitForTimeout(2000);
+        log(`Observer real Next click drained ${remaining} → ${expectedAfterClick.length}`);
+      }
+
+      await observerPage.waitForFunction(() => {
+        const button = document.querySelector('button.next-button');
+        return button instanceof HTMLButtonElement && !button.classList.contains('has-unread');
+      }, undefined, { timeout: 15000 });
+      const finalUiCount = await getUnreadCount(observerPage);
+      if (finalUiCount !== 0) throw new Error(`Next button still reports ${finalUiCount} unread`);
+      for (const blipId of blipIds) await ensureBlipRead(observerPage, blipId);
       await captureSnapshot(observerPage, `${profile.snapshotLabel}`);
 
       log(`✅ Follow-the-Green smoke completed successfully for ${profile.name}`);
