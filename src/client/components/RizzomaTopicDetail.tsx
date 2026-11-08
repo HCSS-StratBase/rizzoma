@@ -1471,11 +1471,19 @@ export function RizzomaTopicDetail({ id, blipPath = null, isAuthed = false, unre
                 Print
               </button>
               <button className="gear-menu-item" onClick={handleExportTopic}>
-                Export topic
+                Export single topic
               </button>
               <button className="gear-menu-item" onClick={handleCopyEmbedCode}>
                 Get embed code
               </button>
+              <div className="gear-menu-divider" />
+              <a
+                href="/settings.html"
+                className="gear-menu-item gear-menu-link"
+                onClick={() => setShowGearMenu(false)}
+              >
+                User settings
+              </a>
               {FEATURES.WAVE_PLAYBACK && (
                 <>
                   <div className="gear-menu-divider" />

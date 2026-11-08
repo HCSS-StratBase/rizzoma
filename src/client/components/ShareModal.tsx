@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 import { toast } from './Toast';
-import './CreateTopicModal.css'; // Reuse existing modal styles
+import './ShareModal.css';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -13,7 +13,7 @@ interface ShareModalProps {
 
 type ShareLevel = 'private' | 'link' | 'public';
 
-export function ShareModal({ isOpen, onClose, topicId, topicTitle }: ShareModalProps): JSX.Element | null {
+export function ShareModal({ isOpen, onClose, topicId, topicTitle: _topicTitle }: ShareModalProps): JSX.Element | null {
   const [shareLevel, setShareLevel] = useState<ShareLevel>('private');
   const [allowComments, setAllowComments] = useState(true);
   const [allowEdits, setAllowEdits] = useState(false);
@@ -60,117 +60,105 @@ export function ShareModal({ isOpen, onClose, topicId, topicTitle }: ShareModalP
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} onKeyDown={handleKeyDown}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Share Settings</h2>
-          <button className="close-btn" onClick={onClose}>&times;</button>
-        </div>
-
-        <div className="modal-body">
-          <p className="modal-description">
-            Configure sharing for "<strong>{topicTitle}</strong>"
-          </p>
-
-          <div className="form-group">
-            <label>Who can access this topic?</label>
-            <div className="radio-group">
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="shareLevel"
-                  value="private"
-                  checked={shareLevel === 'private'}
-                  onChange={() => setShareLevel('private')}
-                />
-                <span className="radio-label">
-                  <strong>🔒 Private</strong>
-                  <span className="radio-hint">Only invited participants can access</span>
-                </span>
-              </label>
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="shareLevel"
-                  value="link"
-                  checked={shareLevel === 'link'}
-                  onChange={() => setShareLevel('link')}
-                />
-                <span className="radio-label">
-                  <strong>🔗 Anyone with link</strong>
-                  <span className="radio-hint">Anyone with the link can view</span>
-                </span>
-              </label>
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="shareLevel"
-                  value="public"
-                  checked={shareLevel === 'public'}
-                  onChange={() => setShareLevel('public')}
-                />
-                <span className="radio-label">
-                  <strong>🌐 Public</strong>
-                  <span className="radio-hint">Listed publicly, anyone can find and view</span>
-                </span>
-              </label>
-            </div>
-          </div>
-
-          {shareLevel !== 'private' && (
-            <div className="form-group">
-              <label>Permissions for viewers</label>
-              <div className="checkbox-group">
-                <label className="checkbox-option">
-                  <input
-                    type="checkbox"
-                    checked={allowComments}
-                    onChange={(e) => setAllowComments(e.target.checked)}
-                  />
-                  <span>Allow comments</span>
-                </label>
-                <label className="checkbox-option">
-                  <input
-                    type="checkbox"
-                    checked={allowEdits}
-                    onChange={(e) => setAllowEdits(e.target.checked)}
-                  />
-                  <span>Allow editing</span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          <div className="form-group share-link-group">
-            <label>Share link</label>
-            <div className="share-link-row">
-              <input
-                type="text"
-                readOnly
-                value={`${window.location.origin}/#/topic/${topicId}`}
-                className="share-link-input"
-              />
-              <button type="button" className="btn-copy" onClick={handleCopyLink}>
-                Copy
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="modal-footer">
-          <button
-            className="btn-primary"
-            onClick={() => { void handleSave(); }}
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : 'Save Settings'}
+    <div className="share-modal-overlay" onClick={onClose} onKeyDown={handleKeyDown}>
+      <div className="share-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="share-url-row">
+          <input
+            type="text"
+            readOnly
+            value={`${window.location.origin}/#/topic/${topicId}`}
+            className="share-url-input"
+            onClick={(e) => (e.target as HTMLInputElement).select()}
+          />
+          <button type="button" className="share-copy-btn" onClick={handleCopyLink}>
+            Copy link
           </button>
+        </div>
+
+        <div className="share-privacy-box">
+          <label className="share-privacy-option">
+            <input
+              type="radio"
+              name="shareLevel"
+              value="private"
+              checked={shareLevel === 'private'}
+              onChange={() => setShareLevel('private')}
+            />
+            <div className="share-privacy-icon">🔒</div>
+            <div className="share-privacy-text">
+              <strong>Private.</strong>
+              <span className="share-details">Only listed participants can access. Sign-in required.</span>
+            </div>
+          </label>
+
+          <label className="share-privacy-option">
+            <input
+              type="radio"
+              name="shareLevel"
+              value="link"
+              checked={shareLevel === 'link'}
+              onChange={() => setShareLevel('link')}
+            />
+            <div className="share-privacy-icon">🔗</div>
+            <div className="share-privacy-text">
+              <strong>Anyone with the link.</strong>
+              <span className="share-details">Anyone who has the link can view {allowEdits ? 'and edit' : ''}.</span>
+            </div>
+          </label>
+
+          <label className="share-privacy-option">
+            <input
+              type="radio"
+              name="shareLevel"
+              value="public"
+              checked={shareLevel === 'public'}
+              onChange={() => setShareLevel('public')}
+            />
+            <div className="share-privacy-icon">🌐</div>
+            <div className="share-privacy-text">
+              <strong>Public on the web.</strong>
+              <span className="share-details">Anyone can find and comment.</span>
+            </div>
+          </label>
+        </div>
+
+        {shareLevel !== 'private' && (
+          <div className="share-permissions-box">
+            <label>
+              <input
+                type="checkbox"
+                checked={allowComments}
+                onChange={(e) => setAllowComments(e.target.checked)}
+              />
+              Allow comments
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={allowEdits}
+                onChange={(e) => setAllowEdits(e.target.checked)}
+              />
+              Allow editing
+            </label>
+          </div>
+        )}
+
+        <div className="share-actions">
           <button
-            className="btn-secondary"
+            type="button"
+            className="share-btn-cancel"
             onClick={onClose}
             disabled={saving}
           >
             Cancel
+          </button>
+          <button
+            type="button"
+            className="share-btn-save"
+            onClick={() => { void handleSave(); }}
+            disabled={saving}
+          >
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>

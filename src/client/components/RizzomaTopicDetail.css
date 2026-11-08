@@ -146,6 +146,8 @@
   font-size: 13px;
   color: #303030;
   font-family: Arial, Helvetica, sans-serif;
+  text-decoration: none;
+  box-sizing: border-box;
   transition: background-color 0.15s ease;
 }
 

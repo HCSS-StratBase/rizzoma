@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import './RightToolsPanel.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { emitWaveUnread } from '../lib/socket';
+import { api } from '../lib/api';
 import { GadgetPalette, type GadgetType } from './GadgetPalette';
 
 // Custom events for insert shortcuts - these are dispatched globally
@@ -79,6 +80,22 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
   const [isBlipActiveEditable, setIsBlipActiveEditable] = useState(false);
   const [_isCursorInEditor, setIsCursorInEditor] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   useEffect(() => {
     setAvatarFailed(false);
@@ -247,10 +264,14 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
 
   return (
     <div className="right-tools-panel">
-      {/* User Avatar */}
+      {/* User Avatar & Account Menu */}
       {user && (
-        <div className="user-avatar-section">
-          <div className="user-avatar-small" title={user.email || user.name || 'User'}>
+        <div className="user-avatar-section" ref={userMenuRef}>
+          <div
+            className="user-avatar-small"
+            title={user.email || user.name || 'User account'}
+            onClick={() => setShowUserMenu(!showUserMenu)}
+          >
             {user.avatar && !avatarFailed ? (
               <img
                 src={user.avatar}
@@ -266,6 +287,29 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
               {getInitials(user.name, user.email)}
             </span>
           </div>
+
+          {showUserMenu && (
+            <div className="user-profile-menu">
+              <div className="user-profile-info">
+                <div className="user-profile-name">{user.name || 'User'}</div>
+                <div className="user-profile-email">{user.email || ''}</div>
+              </div>
+              <div className="user-profile-divider" />
+              <a href="/settings.html" className="user-profile-item">
+                Settings
+              </a>
+              <button
+                type="button"
+                className="user-profile-item"
+                onClick={async () => {
+                  await api('/api/auth/logout', { method: 'POST' });
+                  window.location.reload();
+                }}
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
       )}
 
