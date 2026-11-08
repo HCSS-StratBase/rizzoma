@@ -222,3 +222,20 @@ last_verified: 2026-11-06
   - `surface8_topics_search.png`: Real-time topic search for "Russian" filters the topic list instantaneously.
   - `surface8_mentions_tab.png`: `@ Mentions` tab switches to mentions stream with `All` and `Unread` filter segments.
 
+## [2026-11-08] parity | Surface 9: User Settings, Account & Profile Modals
+- **Why**: Surface 9 in the 10-surface visual parity plan. Establish authentic User Settings page, User Profile account menu, Share popover with `#EEF3F7` permission container, and Participant Member Management modal.
+- **Implemented**:
+  - `src/client/components/ShareModal.tsx` & `ShareModal.css`: Rebuilt from scratch to match `032-share-modal.png`. Replaced generic modal overlay with anchored card featuring top URL row, "Copy link" action, dedicated `#EEF3F7` container (`.share-privacy-box`), and 3 privacy radio choices with lock/link/globe icons: Private (only listed participants), Anyone with the link (can view/edit), Public on the web (find and comment).
+  - `src/client/components/InviteModal.tsx` & `InviteModal.css`: Rebuilt to match `034-manage-members.png`. Provides search/invite input, `0 topic members selected` count row, member list with checkboxes, avatars, names, emails, and role badges (`owner`), and action buttons (`Select role ▾`, `Remove`, `Done`).
+  - `src/client/components/RightToolsPanel.tsx` & `RightToolsPanel.css`: Added interactive account dropdown on user avatar click (`.user-profile-menu`) anchored to the top-right rail with user name, email, link to `/settings.html`, and `Sign out`.
+  - `src/client/components/RizzomaTopicDetail.tsx` & `RizzomaTopicDetail.css`: Anchored gear dropdown under settings gear icon with `Follow topic`, `Print`, `Export single topic`, `Get embed code`, divider, `User settings` (navigating to `/settings.html`), and `Wave Timeline`.
+  - `src/client/settings.tsx` & `settings.css`: Styled full `/settings.html` page matching `original-rizzoma-src/src/static/css/settings_new.css` and screenshot `273-settings-first-page.png`: `#C2C9CF` background, white card container, `#728AA0` header bar with "Rizzoma Settings" and "← Back to Topics", left sidebar tabs (`Profile`, `Notifications`, `Appearance`), and profile form fields.
+  - `scripts/verify_surface9.mjs`: Playwright automated verification against live instance on `138-201-62-161.nip.io`.
+- **Verification**:
+  - `surface9_share_modal_open.png`: Anchored share popover with URL row, copy button, and `#EEF3F7` privacy box with 3 radio options.
+  - `surface9_invite_modal_open.png`: Participant management modal displaying member row with avatar, name, email, role badge, and actions matching `034-manage-members.png`.
+  - `surface9_gear_dropdown_open.png`: Gear settings dropdown open with `User settings` menu item.
+  - `surface9_user_profile_menu.png`: Clicking avatar in right tools rail opens interactive account popover with user details, Settings link, and Sign out.
+  - `surface9_settings_page.png`: Settings page styled with authentic `#C2C9CF` background, slate blue header, tab rail, and profile inputs.
+
+

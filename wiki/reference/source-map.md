@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: 0e9ce094
+source_commit: cf0d69bf
 generated: true
 ---
 
@@ -40,7 +40,7 @@ graph LR
     P --> K["code"]
 ```
 
-## Client components (105)
+## Client components (107)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -59,7 +59,8 @@ graph LR
 | `src/client/components/GadgetPalette.css` | 184 | — |
 | `src/client/components/GadgetPalette.tsx` | 127 | (no header comment; exports GadgetType) |
 | `src/client/components/GreenNavigation.tsx` | 43 | (no header comment; exports GreenNavigation) |
-| `src/client/components/InviteModal.tsx` | 147 | (no header comment; exports InviteModal) |
+| `src/client/components/InviteModal.css` | 181 | InviteModal.css - Authentic Legacy Rizzoma Member Management Popup matching 034-manage-members.png |
+| `src/client/components/InviteModal.tsx` | 190 | (no header comment; exports InviteModal) |
 | `src/client/components/MentionsList.css` | 134 | — |
 | `src/client/components/MentionsList.tsx` | 154 | (no header comment; exports MentionsList) |
 | `src/client/components/NavigationPanel.css` | 195 | NavigationPanel.css - Authentic Legacy Rizzoma Navigation Rail |
@@ -71,17 +72,18 @@ graph LR
 | `src/client/components/PublicTopicsPanel.css` | 80 | — |
 | `src/client/components/PublicTopicsPanel.tsx` | 104 | (no header comment; exports PublicTopicsPanel) |
 | `src/client/components/RebuildPanel.tsx` | 133 | (no header comment; exports RebuildPanel) |
-| `src/client/components/RightToolsPanel.css` | 394 | RightToolsPanel.css - Authentic Legacy Rizzoma Right Tools Panel |
-| `src/client/components/RightToolsPanel.tsx` | 410 | Custom events for insert shortcuts - these are dispatched globally |
+| `src/client/components/RightToolsPanel.css` | 468 | RightToolsPanel.css - Authentic Legacy Rizzoma Right Tools Panel |
+| `src/client/components/RightToolsPanel.tsx` | 454 | Custom events for insert shortcuts - these are dispatched globally |
 | `src/client/components/RizzomaLanding.css` | 360 | — |
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
 | `src/client/components/RizzomaLayout.css` | 297 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 306 | (no header comment; exports RizzomaLayout) |
-| `src/client/components/RizzomaTopicDetail.css` | 1021 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.tsx` | 1737 | DISABLED: Socket subscription was causing infinite loop |
+| `src/client/components/RizzomaTopicDetail.css` | 1023 | RizzomaTopicDetail - Matching real Rizzoma |
+| `src/client/components/RizzomaTopicDetail.tsx` | 1745 | DISABLED: Socket subscription was causing infinite loop |
 | `src/client/components/RizzomaTopicsList.css` | 221 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 249 | (no header comment; exports RizzomaTopicsList) |
-| `src/client/components/ShareModal.tsx` | 180 | (no header comment; exports ShareModal) |
+| `src/client/components/ShareModal.css` | 175 | ShareModal.css - Authentic Legacy Rizzoma Share Popover Style |
+| `src/client/components/ShareModal.tsx` | 168 | (no header comment; exports ShareModal) |
 | `src/client/components/StatusBar.tsx` | 16 | (no header comment; exports StatusBar) |
 | `src/client/components/StorePanel.css` | 144 | — |
 | `src/client/components/StorePanel.tsx` | 160 | (no header comment; exports StorePanel) |
@@ -175,7 +177,7 @@ graph LR
 | `src/client/native/wave-view.ts` | 249 | Native fractal-render — WaveView. |
 | `src/client/native/yjs-binding.ts` | 202 | Native fractal-render — Y.js CRDT binding for the ContentArray model. |
 
-## Client other (34)
+## Client other (35)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -207,8 +209,9 @@ graph LR
 | `src/client/main.tsx` | 258 | (no header comment; exports App) |
 | `src/client/rizzoma-main.tsx` | 7 | — |
 | `src/client/rizzoma.html` | 19 | — |
+| `src/client/settings.css` | 219 | settings.css - Authentic Rizzoma User Settings styling |
 | `src/client/settings.html` | 14 | — |
-| `src/client/settings.tsx` | 327 | — |
+| `src/client/settings.tsx` | 252 | — |
 | `src/client/styles/breakpoints.css` | 105 | Breakpoint System - CSS Custom Properties |
 | `src/client/styles/view-transitions.css` | 263 | View Transitions Styles |
 | `src/client/test-editor.html` | 45 | — |
