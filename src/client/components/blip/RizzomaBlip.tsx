@@ -2292,7 +2292,7 @@ export function RizzomaBlip({
               isExpanded={effectiveExpanded}
               onStartEdit={handleStartEdit}
               onFinishEdit={handleFinishEdit}
-              onCollapse={typeof blip.anchorPosition === 'number' ? handleCollapse : undefined}
+              onCollapse={!isRoot && !isTopicRoot ? handleCollapse : undefined}
               onExpand={handleExpand}
               onSend={handleSendFromToolbar}
               onGetLink={handleCopyLink}
@@ -2301,7 +2301,7 @@ export function RizzomaBlip({
               onHideComments={handleHideComments}
               areCommentsVisible={areCommentsVisible}
               collapseByDefault={collapseByDefault}
-              onToggleCollapseByDefault={blip.permissions.canEdit && typeof blip.anchorPosition === 'number' ? handleToggleCollapsePreference : undefined}
+              onToggleCollapseByDefault={blip.permissions.canEdit && !isRoot && !isTopicRoot ? handleToggleCollapsePreference : undefined}
               onCopyComment={handleCopyComment}
               onPasteAsReply={blip.permissions.canComment ? handlePasteAsReplyFromClipboard : undefined}
               onPasteAtCursor={isEditing ? handlePasteAtCursorFromClipboard : undefined}
@@ -2634,8 +2634,8 @@ export function RizzomaBlip({
         )}
       </div>
 
-          {/* Authentic Bottom Blip Menu - Done bar & reply button */}
-          {isEditing && (
+          {/* Authentic Bottom Blip Menu - Done bar & reply button (standalone blips only) */}
+          {isEditing && !isInlineChild && (
             <div className="bottom-blip-menu js-bottom-blip-menu">
               <button
                 type="button"

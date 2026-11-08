@@ -647,9 +647,8 @@ export function BlipMenu({
               aria-pressed={collapseByDefault ? 'true' : 'false'}
               data-testid="blip-menu-collapse-default"
               onClick={onToggleCollapseByDefault}
-              style={{ fontWeight: collapseByDefault ? 'bold' : 'normal', color: collapseByDefault ? '#2e8b57' : undefined }}
             >
-              Hidden
+              Hide
             </button>
           )}
 
@@ -810,9 +809,8 @@ export function BlipMenu({
             aria-pressed={collapseByDefault ? 'true' : 'false'}
             data-testid="blip-menu-collapse-default"
             onClick={onToggleCollapseByDefault}
-            style={{ fontWeight: collapseByDefault ? 'bold' : 'normal', color: collapseByDefault ? '#2e8b57' : undefined }}
           >
-            Hidden
+            Hide
           </button>
         )}
 
