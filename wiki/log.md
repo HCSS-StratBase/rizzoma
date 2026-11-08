@@ -199,3 +199,7 @@ last_verified: 2026-11-06
 - **Wiki lint/coverage**: coverage 1014/1014, 0 gaps (catalogs regenerated). Lint errors remaining are the 4 pre-existing citations of `original-rizzoma-src/`, which is absent from a clean clone; same on the pre-merge branch.
 - **Hand fixes**: removed the branch's unauthenticated `PUT`/`PATCH /api/waves/:id` alias routes that auto-merged beside master's access control; deleted the `tiptap.d.ts` shim as master did; backend default port follows master (8788) after a first attempt at 8000 broke CI browser-smokes (see decision page).
 - **Not verified**: visual parity after the merge (no sweep run), live deployment, browser smokes (see CI entry once pushed).
+
+## [2026-11-08] verification | CI on the merge branch is red: runs 42489115789 and 42490514900
+- **Run 42489115789** (`39cdcb1c`): Test fails (BlipMenu 14, collapsePreferences 1); browser-smokes fails at "Wait for dev stack" because the backend listened on 8000 while master's step polls 8788. Fixed in `aa8082ad` by following master's port.
+- **Run 42490514900** (`aa8082ad`): typecheck, lint step and health-checks pass; Test still fails on the same 15; browser-smokes passes the wait step, then the toolbar+inline smoke times out in chromium, firefox and webkit waiting for `.rizzoma-layout` to be visible. Cause undiagnosed. The branch's smokes passed before the merge, so this is a merge regression and blocks any claim that the merged app works.
