@@ -272,31 +272,37 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
       {/* Follow the Green - Next / Next Topic buttons */}
       {unreadCount === 0 && nextTopicAvailable ? (
         <button
+          type="button"
           className="next-unread-blip next-topic-blip"
           onClick={onNextTopic}
           title="Jump to next topic with unread blips"
         >
-          Next &gt;
+          <span>Next</span>
+          <img src="/s/img/next_unread_button_icon.png" alt="" />
         </button>
       ) : (
         <button
+          type="button"
           className={`next-unread-blip ${unreadCount > 0 ? '' : 'disabled'}`}
           onClick={handleFollowGreen}
           disabled={unreadCount === 0 || navigating}
           title={unreadCount > 0 ? `${unreadCount} unread - click to navigate` : 'No unread blips'}
         >
-          Next &gt;
+          <span>Next</span>
+          <img src="/s/img/next_unread_button_icon.png" alt="" />
         </button>
       )}
 
       {/* Fold/Unfold controls */}
       <div className="fold-controls">
         <button
+          type="button"
           className="hide-replies fold-btn"
           onClick={handleHideReplies}
           title="Hide replies (Ctrl+Shift+Up)"
         />
         <button
+          type="button"
           className="show-replies fold-btn"
           onClick={handleShowReplies}
           title="Show replies (Ctrl+Shift+Down)"
@@ -306,6 +312,7 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
       {/* View mode toggle */}
       <div className="view-toggle">
         <button
+          type="button"
           className={`text-view view-btn ${viewMode === 'text' ? 'active' : ''}`}
           onClick={() => setViewMode('text')}
           title="Text view"
@@ -314,6 +321,7 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
           <span className="view-label">Text view</span>
         </button>
         <button
+          type="button"
           className={`mindmap-view view-btn ${viewMode === 'mindmap' ? 'active' : ''}`}
           onClick={() => setViewMode('mindmap')}
           title="Mind map"
@@ -323,73 +331,79 @@ export function RightToolsPanel({ user, unreadState, onNextTopic, nextTopicAvail
         </button>
       </div>
 
-      {/* Display mode toggle (short/expanded view) */}
-      <div className="display-toggle">
-        <button
-          className={`display-btn ${displayMode === 'short' ? 'active' : ''}`}
-          onClick={() => setDisplayMode('short')}
-          title="Short view"
-        >
-          short
-        </button>
-        <button
-          className={`display-btn ${displayMode === 'expanded' ? 'active' : ''}`}
-          onClick={() => setDisplayMode('expanded')}
-          title="Expanded view"
-        >
-          expanded
-        </button>
-      </div>
-
-      {/* Insert shortcuts - visible when editing or when an editable blip is active */}
-      {(isEditMode || isBlipActiveEditable) && <div className="insert-shortcuts">
+      {/* Display mode toggle (short/expanded view) - only visible in mindmap view */}
+      {viewMode === 'mindmap' && (
+        <div className="mindmap-view-switch-buttons">
           <button
-            className="insert-btn"
+            type="button"
+            className={`mindmap-short-view ${displayMode === 'short' ? 'active' : ''}`}
+            onClick={() => setDisplayMode('short')}
+            title="Short view"
+          >
+            short
+          </button>
+          <button
+            type="button"
+            className={`mindmap-long-view ${displayMode === 'expanded' ? 'active' : ''}`}
+            onClick={() => setDisplayMode('expanded')}
+            title="Expanded view"
+          >
+            expanded
+          </button>
+        </div>
+      )}
+
+      {/* Active blip controls - visible when editing or when an editable blip is active */}
+      {(isEditMode || isBlipActiveEditable) && (
+        <div className="active-blip-controls">
+          <button
+            type="button"
+            className="active-blip-control insert-reply"
             onMouseDown={e => e.preventDefault()}
             onClick={handleInsertReply}
             title="Insert reply (Ctrl+Enter)"
-          >
-            <span className="insert-icon">↵</span>
-          </button>
+          />
           <button
-            className="insert-btn"
+            type="button"
+            className="active-blip-control insert-mention"
             onMouseDown={e => e.preventDefault()}
             onClick={handleInsertMention}
             title="Insert mention (@)"
-          >
-            <span className="insert-icon">@</span>
-          </button>
+          />
           <button
-            className="insert-btn"
+            type="button"
+            className="active-blip-control insert-task"
             onMouseDown={e => e.preventDefault()}
             onClick={handleInsertTask}
             title="Insert task (~)"
-          >
-            <span className="insert-icon">~</span>
-          </button>
+          />
           <button
-            className="insert-btn"
+            type="button"
+            className="active-blip-control insert-tag"
             onMouseDown={e => e.preventDefault()}
             onClick={handleInsertTag}
             title="Insert tag (#)"
-          >
-            <span className="insert-icon">#</span>
-          </button>
-          <button
-            className="insert-btn gadget-btn"
-            onMouseDown={e => e.preventDefault()}
-            onClick={handleInsertGadget}
-            title="Insert gadget"
-          >
-            <span className="insert-label">Gadgets</span>
-          </button>
-          {showGadgetPalette && (
-            <GadgetPalette
-              onSelect={handleGadgetSelect}
-              onClose={() => setShowGadgetPalette(false)}
-            />
-          )}
-        </div>}
+          />
+          <div className="insert-gadget-container">
+            <button
+              type="button"
+              className="active-blip-control insert-gadget"
+              onMouseDown={e => e.preventDefault()}
+              onClick={handleInsertGadget}
+              title="Insert gadget"
+            >
+              <div className="gadget-logo" />
+              <span>Gadgets</span>
+            </button>
+            {showGadgetPalette && (
+              <GadgetPalette
+                onSelect={handleGadgetSelect}
+                onClose={() => setShowGadgetPalette(false)}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -207,3 +207,18 @@ last_verified: 2026-11-06
 ## [2026-11-08] ops | Master-merge session started; Ultra five-hour limit researched
 - Session `local_955b8e07-7c59-4852-b895-9a8d2346aff8` ("rizzoma-master-merge") started after the user trusted the repository. Brief: new branch `merge-master-into-fractal` from `feature/native-fractal-port`, resolve the 69 conflicts, branch wins on UI parity, report typecheck / `npm test` (baseline 230/252) / wiki lint / CI; PR #82 and Gemini's branch untouched. Result not yet reported.
 - Usage question answered from Anthropic's own help article (https://support.claude.com/en/articles/17728952-what-is-the-ultra-plan, read this session): verified Ultra accounts have no five-hour limit; verification is automatic (account and payment history), phone verification at checkout does not count, and the Settings > Usage "Current session" bar is the test. The user's usage read still shows that bar (2% used), so the account is probably not yet verified; the page gives no timeline.
+
+## [2026-11-08] parity | Surface 8: Search, Mentions, Tags & RightToolsPanel
+- **Why**: Surface 8 in the 10-surface visual parity plan. Establish authentic RightToolsPanel sprite controls, Next Unread Blip button, Mind map short/expanded toggles, Insert Gadget palette, left rail real-time topic search, and Mentions tab navigation.
+- **Implemented**:
+  - `src/client/components/RightToolsPanel.tsx`: Replaced placeholder buttons with authentic `.active-blip-controls` structure (`insert-reply`, `insert-mention`, `insert-task`, `insert-tag`, `insert-gadget` with `.gadget-logo`); hooked up authentic `.next-unread-blip` markup with `<span>Next</span><img .../>`; conditioned `.mindmap-view-switch-buttons` to only render when `viewMode === 'mindmap'`.
+  - `src/client/components/RightToolsPanel.css`: Implemented authentic styles from `original-rizzoma-src/src/static/css/page.css`: Next button `#95D529` styling, 60x45px button dimensions, `/s/img/active_blip_control_icons.png` sprite offsets (`insert-reply` 22px 16px, `insert-mention` 21px -43px, `insert-task` 21px -103px, `insert-tag` 21px -164px, `gadget-logo` 20px -232px), and `#9FA8B3` / `#304E69` mind map view switch buttons.
+  - `scripts/verify_surface8.mjs`: Automated Playwright verification testing against `917d750213736e02a665422fca066d53` on `138-201-62-161.nip.io`.
+- **Verification**:
+  - `surface8_right_panel_text_mode.png`: Clean right rail in text mode; next unread button displays authentic green `#95D529` with `Next ▶`.
+  - `surface8_right_panel_mindmap_mode.png`: Switching to Mind map view cleanly reveals `short` and `expanded` toggles.
+  - `surface8_active_blip_controls.png`: Edit mode on root blip reveals authentic 5-icon sprite stack (speech bubble, @, task, #, puzzle gadget).
+  - `surface8_gadget_palette.png`: Clicking Gadgets opens 11-gadget palette modal in-place.
+  - `surface8_topics_search.png`: Real-time topic search for "Russian" filters the topic list instantaneously.
+  - `surface8_mentions_tab.png`: `@ Mentions` tab switches to mentions stream with `All` and `Unread` filter segments.
+

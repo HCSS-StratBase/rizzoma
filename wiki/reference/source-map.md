@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feature/native-fractal-port
-source_commit: aabef72c
+source_commit: 0e9ce094
 generated: true
 ---
 
@@ -71,8 +71,8 @@ graph LR
 | `src/client/components/PublicTopicsPanel.css` | 80 | — |
 | `src/client/components/PublicTopicsPanel.tsx` | 104 | (no header comment; exports PublicTopicsPanel) |
 | `src/client/components/RebuildPanel.tsx` | 133 | (no header comment; exports RebuildPanel) |
-| `src/client/components/RightToolsPanel.css` | 306 | RightToolsPanel.css - Authentic Legacy Rizzoma Right Tools Panel |
-| `src/client/components/RightToolsPanel.tsx` | 396 | Custom events for insert shortcuts - these are dispatched globally |
+| `src/client/components/RightToolsPanel.css` | 394 | RightToolsPanel.css - Authentic Legacy Rizzoma Right Tools Panel |
+| `src/client/components/RightToolsPanel.tsx` | 410 | Custom events for insert shortcuts - these are dispatched globally |
 | `src/client/components/RizzomaLanding.css` | 360 | — |
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
 | `src/client/components/RizzomaLayout.css` | 297 | dynamic viewport height — accounts for mobile address bar |
