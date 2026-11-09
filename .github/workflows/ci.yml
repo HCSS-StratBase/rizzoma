@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
@@ -49,7 +49,7 @@ jobs:
 
   browser-smokes:
     if: ${{ always() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build
     timeout-minutes: 45
     steps:
@@ -179,7 +179,7 @@ jobs:
           docker compose down || true
 
   perf-budgets:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build
     timeout-minutes: 15
     steps:
@@ -289,7 +289,7 @@ jobs:
     # upload edge cases) are independent of typecheck/lint and need to
     # surface as their own signal.
     if: ${{ always() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build
     steps:
       - uses: actions/checkout@v4
