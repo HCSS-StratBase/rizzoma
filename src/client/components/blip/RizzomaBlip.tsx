@@ -989,17 +989,22 @@ export function RizzomaBlip({
           // child's editor is actually editable, backing off up to ~3s.
           const tryEnterEdit = (attempt: number) => {
             const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
-            const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
-            if (editable) return;
+            const editable = container?.querySelector<HTMLElement>('.ProseMirror[contenteditable="true"]');
+            if (editable) {
+              // Done only when the NEW child's editor also holds the cursor. The
+              // enter-edit listener focuses only if collaboration was ready at that
+              // instant; when the editor becomes editable later, nothing focused it
+              // and the user's keystrokes went nowhere (measured: L2/L4/L5 never
+              // focused within 8 s). The pre-merge code focused here as well.
+              if (document.activeElement !== editable) editable.focus();
+              if (document.activeElement === editable || attempt >= 60) return;
+            }
+            // Re-assert expansion idempotently. Never click the [+] marker here:
+            // a click is a TOGGLE, so a retry could fold the very child it is
+            // opening (the fractal then died one level deeper each time).
             window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
               detail: { threadId: newBlipId, parentId: blip.id },
             }));
-            const marker = document.querySelector<HTMLElement>(
-              `[data-blip-thread="${CSS.escape(newBlipId)}"]`
-            );
-            if (marker && marker.textContent !== '−') {
-              marker.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-            }
             window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
               detail: { blipId: newBlipId },
             }));
@@ -1206,48 +1211,6 @@ export function RizzomaBlip({
     return () => window.removeEventListener('rizzoma:enter-edit-blip', handle);
   }, [blip.id, blip.permissions.canEdit, claimActive, collabReady]);
 
-  // External edit-mode trigger — used by Ctrl+Enter handler so a freshly-created
-  // inline child immediately enters edit mode with cursor focus, instead of landing
-  // in view mode with empty content (in which state the user has no affordance to
-  // type — no toolbar visible, no body to click).
-  useEffect(() => {
-    const handle = (e: Event) => {
-      const { blipId: targetId } = (e as CustomEvent).detail || {};
-      if (targetId !== blip.id) return;
-      setIsExpanded(true);
-      setIsActive(true);
-      if (blip.permissions.canEdit) {
-        setIsEditing(true);
-        // BLB: guarantee a bulleted body at edit entry (this path does NOT go
-        // through handleStartEdit, so nothing else seeds the list).
-        if (inlineEditorRef.current) {
-          const cur = inlineEditorRef.current.getHTML();
-          const seeded = ensureBulletedBody(cur);
-          if (seeded !== cur) inlineEditorRef.current.commands.setContent(seeded);
-        }
-        // Bug A perf fix (2026-05-11): single RAF instead of two. The
-        // setIsEditing's effect commits + the inlineEditor's
-        // useEffect-mount runs in the same tick; one RAF lands after
-        // both. Falls back to a 50ms retry if the editor isn't ready
-        // yet — covers the rare case where TipTap's async initializer
-        // hasn't finished, without paying the second RAF cost in the
-        // common path.
-        requestAnimationFrame(() => {
-          const ed = inlineEditorRef.current;
-          if (ed) {
-            (ed.commands as any)['focus']('end');
-          } else {
-            setTimeout(() => {
-              const ed2 = inlineEditorRef.current;
-              if (ed2) (ed2.commands as any)['focus']('end');
-            }, 50);
-          }
-        });
-      }
-    };
-    window.addEventListener('rizzoma:enter-edit-blip', handle);
-    return () => window.removeEventListener('rizzoma:enter-edit-blip', handle);
-  }, [blip.id, blip.permissions.canEdit]);
 
   // Collapse-only for list children (from Follow-the-Green — collapse previous before jumping to next)
   useEffect(() => {
