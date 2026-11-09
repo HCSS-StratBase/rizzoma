@@ -62,3 +62,24 @@ The sweep's 44/44 measures only that elements exist. The behavioural gate shows 
 - Fix the deep-nesting layout, the mind map and search.
 - Bring Gemini's 23 server edits into the branch as commits. Check behaviour feature by feature against this morning's live: expand/collapse all, Next, collapsed-by-default, Send, editing as a non-owner.
 - Re-build these sheets, look at all of them, and show them to SDS. Deploy only with SDS's go.
+
+
+## Addendum (10 Nov, ~00:45): Ctrl+Enter regression, three causes fixed, latency still open
+
+SDS: Rizzoma must be **infinitely fractal**, so depth 10 is only the gate's sample. The criterion is identical behaviour at every depth: the new child opens in place, is editable, holds the cursor, keeps typed text, persists after reload and is visible to a second client, and the hand-off time must not grow with depth.
+
+- **Cause 1:** my merge of master kept two `rizzoma:enter-edit-blip` listeners in `RizzomaBlip.tsx`. Removed the fractal duplicate. Gate 4/10 to 7/13 (the break moved from L3 to L4).
+- **Cause 2:** master's retry loop clicked the new child's [+] marker, a toggle. Removed. Gate 8/15 (break at L5 and the L3b child).
+- **Cause 3:** the retry loop stopped without focusing the child's editor. It now focuses and retries until the editor holds the cursor.
+- Commits 73997a73 (hand-off) and a01f828a (layout), pushed.
+
+**Measured hand-off time** (Ctrl+Enter until the NEW child is editable and focused; a local timing copy of the gate):
+
+| Build | Per level |
+|---|---|
+| Morning code | 0.7 to 1.8 s at every level from L2 to L10 |
+| Branch with the three fixes | 1.2 to 2.4 s, until the run stopped at L5 on the gate's 1.1 s step |
+
+The browser logged `[collab] waiting for seed authority`. Master's `editable: isEditing && collabReady` keeps a brand-new child read-only until its Y.js room confirms seed authority, which the pre-merge code did not do. Text typed in that window can be lost.
+
+**Open:** make the new child editable within one keystroke without giving up master's divergence protection. Not yet done: a run at depth 30 to prove there is no ceiling, and fixing the gate's root selector (`button.topic-tb-btn` no longer exists).
