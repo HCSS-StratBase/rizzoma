@@ -347,3 +347,9 @@ last_verified: 2026-11-06
 - **¶2** □ Both builds: a topic created through `POST /api/topics` with Alpha/Beta/Gamma was wiped to `<h1>title</h1><ul><li><p></p></li></ul>` on its FIRST read-mode open, with no external PATCH and no rename. The external-PATCH case also wiped on both. So any topic without a stored Y.js snapshot (API-created, imported, or externally replaced) loses its body the first time a user with edit rights opens it, when realtime collaboration is on.
 - **¶3** □ `deploy/systemd/production.env.example` sets `FEAT_ALL=1`, so production configurations built from it have collaboration on. Collaboration is only active for users with edit rights (`topicCollabEnabled` requires `topicCanEdit`). Not tested: a topic created and edited through the UI, then renamed.
 - **¶4** □ No fix yet. PR 82 must not merge as is, and master itself carries the bug.
+
+## [2026-11-09] ingest | Fix for the read-mode content wipe opened against master (PR 84)
+
+- **¶1** □ Branch `fix/read-mode-collab-wipe` from master 72c54ced, commit b4b6fa6d, PR https://github.com/HCSS-StratBase/rizzoma/pull/84. `RizzomaTopicDetail.tsx`: a mode-independent seed effect seeds the topic Y.Doc after the server sync when this client holds seed authority (the `RizzomaBlip` pattern); `onUpdate` refuses to normalize or save until the Y.Doc is seeded or has received state; the edit-mode effect only enables editing.
+- **¶2** □ Regression smoke `test-topic-readmode-seed-smoke.mjs` (`npm run test:readmode-seed`) added to the CI browser-smokes job. Measured: 5/5 on the fix, 1/5 on unfixed master; typecheck 0 errors, lint 0 errors, unit suite 113 files, 687 passed, 3 skipped.
+- **¶3** □ Next: once PR 84 merges, bring master into `feature/native-fractal-port`, re-run the sweep (the fractal captures should then pass), and commit the uncommitted sweep fixes. Not checked: whether any deployed instance already lost topic content.
