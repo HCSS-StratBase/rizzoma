@@ -1,7 +1,7 @@
 import { chromium, devices } from 'playwright';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { seedVerifiedE2EAccount } from './lib/e2e-sharing-fixtures.mjs';
+import { seedAcceptedParticipant, seedVerifiedE2EAccount } from './lib/e2e-sharing-fixtures.mjs';
 
 const baseUrl = process.env.RIZZOMA_BASE_URL || 'https://138-201-62-161.nip.io';
 const stamp = process.env.RIZZOMA_SWEEP_STAMP || new Date().toISOString().replace(/[-:T]/g, '').slice(2, 12);
@@ -999,10 +999,11 @@ async function captureRealtimeCollaborationStates(baseContext, ownerPage, fixtur
   const observerPage = await observerContext.newPage();
   try {
     await ensureAuth(observerPage, observerEmail, 'observer');
-    await api(ownerPage, 'POST', `/api/waves/${encodeURIComponent(fixture.waveId)}/participants`, {
-      emails: [observerEmail],
-      message: 'Visual sweep realtime collaboration fixture.',
-    }).catch(() => {});
+    // Master's sharing hardening leaves an emailed invite pending until the
+    // invitee accepts, so an invited observer cannot open the topic. Seed an
+    // accepted editor participant in the local sweep database instead, as
+    // test-collab-smoke.mjs does.
+    await seedAcceptedParticipant(fixture.waveId, observerEmail, 'editor', 'visual-sweep');
     await openWave(ownerPage, fixture.waveId);
     await openWave(observerPage, fixture.waveId);
 
