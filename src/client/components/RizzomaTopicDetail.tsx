@@ -397,6 +397,11 @@ function RizzomaTopicDetailState({
     return Boolean(topicCollabProviderRef.current?.mutationReady);
   }, []);
   const seedingTopicYdocRef = useRef(false);
+  // The provider whose Y.Doc is known to hold the topic: either the server
+  // sync delivered state, or this client seeded it from the saved HTML.
+  // Until then the editor shows an empty document that must never be
+  // normalized or projected back over the stored content.
+  const topicYdocReadyForProviderRef = useRef<unknown>(null);
   const acceptedEditorRoster = participants
     .filter((participant) => participant.status === 'accepted' || !participant.status)
     .filter((participant) => !participant.userId.startsWith('invite:'))
@@ -435,6 +440,9 @@ function RizzomaTopicDetailState({
       if (seedingTopicYdocRef.current) return;
       if (topicBlbNormalizationPendingRef.current) return;
       if (topicCollabActive && !topicCollabProvider?.synced) return;
+      // An unseeded Y.Doc is empty, not authoritative. Normalizing and
+      // saving it would replace the stored topic with an empty body.
+      if (topicCollabActive && topicYdocReadyForProviderRef.current !== topicCollabProvider) return;
 
       const html = editor.getHTML();
       if (!isCanonicalBlbDocument(editor.state.doc, true)) {
@@ -556,6 +564,70 @@ function RizzomaTopicDetailState({
     };
   }, [canMutateTopicEditorNow, isEditingTopic, topicCollabReady, topicEditor]);
 
+  // Seed the topic Y.Doc after the server sync in EVERY mode, as RizzomaBlip
+  // does for child blips. Previously this happened only on entering edit mode,
+  // so a reader with edit rights opened an empty Y.Doc and its onUpdate
+  // normalized and saved that empty document over the stored topic.
+  useEffect(() => {
+    if (!topicEditor || (topicEditor as any).isDestroyed) return;
+    if (!topicCollabActive || !topicYdoc || !topicCollabProvider) return;
+    if (topicYdocReadyForProviderRef.current === topicCollabProvider) return;
+    let disposed = false;
+    const trySeed = () => {
+      if (disposed || (topicEditor as any).isDestroyed) return;
+      if (topicYdocReadyForProviderRef.current === topicCollabProvider) return;
+      if (topicYdoc.getXmlFragment('default').length > 0) {
+        topicYdocReadyForProviderRef.current = topicCollabProvider;
+        return;
+      }
+      // Only the client granted seed authority may seed; others wait for
+      // that client's Y.js update, which makes the fragment non-empty.
+      if (!topicCollabProvider.shouldSeed) return;
+      const durableSeedContent = sanitizeRichHtml(
+        topicCollabProvider.seedContent ?? topic?.content ?? topicContent ?? '',
+      );
+      const authoritativeSeed = sanitizeRichHtml(ensureTopicBlbHtml(
+        topicTitleRef.current,
+        durableSeedContent,
+      ));
+      const needsMigration = needsBlbSeedProjection(durableSeedContent, authoritativeSeed);
+      seedingTopicYdocRef.current = true;
+      try {
+        seedEmptyBlbYdoc(topicEditor, topicYdoc, authoritativeSeed);
+      } finally {
+        seedingTopicYdocRef.current = false;
+      }
+      topicYdocReadyForProviderRef.current = topicCollabProvider;
+      setTopicContent(authoritativeSeed);
+      if (needsMigration) {
+        if (topicSaveTimeoutRef.current) clearTimeout(topicSaveTimeoutRef.current);
+        // Seeding suppresses onUpdate; explicitly migrate only a changed
+        // canonical shared document through the digest-backed projection.
+        topicSaveTimeoutRef.current = setTimeout(() => {
+          void autoSaveTopicContentRef.current(authoritativeSeed, 0, true);
+        }, 0);
+      }
+    };
+    if (topicCollabProvider.synced) {
+      trySeed();
+    } else {
+      topicCollabProvider.onSynced(trySeed);
+    }
+    // A non-authority client becomes ready when the seeding client's update
+    // arrives and fills the fragment.
+    const fragment = topicYdoc.getXmlFragment('default');
+    const onFragmentChange = () => {
+      if (!disposed && fragment.length > 0 && topicYdocReadyForProviderRef.current !== topicCollabProvider) {
+        topicYdocReadyForProviderRef.current = topicCollabProvider;
+      }
+    };
+    fragment.observe(onFragmentChange);
+    return () => {
+      disposed = true;
+      fragment.unobserve(onFragmentChange);
+    };
+  }, [topicEditor, topicCollabActive, topicYdoc, topicCollabProvider, topic?.content, topicContent]);
+
   // Sync editor content and editable state when entering edit mode.
   // With Collaboration, wait for server sync before seeding — only seed if Y.Doc is empty.
   useEffect(() => {
@@ -571,37 +643,9 @@ function RizzomaTopicDetailState({
       if (topicCollabActive && topicYdoc && topicCollabProvider) {
         // Collab: wait for server sync, only seed if Y.Doc fragment is empty
         hasSetInitialContentRef.current = true;
+        // Seeding is owned by the mode-independent seed effect above.
         topicCollabProvider.onSynced(() => {
           if ((topicEditor as any).isDestroyed) return;
-          if (topicCollabProvider.shouldSeed) {
-            if (topicYdoc.getXmlFragment('default').length > 0) {
-              setContentAndFocus();
-              return;
-            }
-            const durableSeedContent = sanitizeRichHtml(
-              topicCollabProvider.seedContent ?? topic?.content ?? topicContent,
-            );
-            const authoritativeSeed = sanitizeRichHtml(ensureTopicBlbHtml(
-              topicTitleRef.current,
-              durableSeedContent,
-            ));
-            const needsMigration = needsBlbSeedProjection(durableSeedContent, authoritativeSeed);
-            seedingTopicYdocRef.current = true;
-            try {
-              seedEmptyBlbYdoc(topicEditor, topicYdoc, authoritativeSeed);
-            } finally {
-              seedingTopicYdocRef.current = false;
-            }
-            setTopicContent(authoritativeSeed);
-            if (needsMigration) {
-              if (topicSaveTimeoutRef.current) clearTimeout(topicSaveTimeoutRef.current);
-              // Seeding suppresses onUpdate; explicitly migrate only a changed
-              // canonical shared document through the digest-backed projection.
-              topicSaveTimeoutRef.current = setTimeout(() => {
-                void autoSaveTopicContentRef.current(authoritativeSeed, 0, true);
-              }, 0);
-            }
-          }
           setContentAndFocus();
         });
       } else {
