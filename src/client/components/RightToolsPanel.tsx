@@ -376,7 +376,7 @@ function RightToolsPanelContent({
       ) : (
         <button
           type="button"
-          className={`next-unread-blip next-button ${unreadCount > 0 ? '' : 'disabled'}`}
+          className={`next-unread-blip next-button ${unreadCount > 0 ? 'has-unread' : 'disabled'}`}
           onClick={handleFollowGreen}
           disabled={unreadCount === 0 || navigating}
           title={unreadCount > 0 ? `${unreadCount} unread - click to navigate` : 'No unread blips'}
