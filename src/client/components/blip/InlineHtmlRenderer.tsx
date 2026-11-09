@@ -174,6 +174,14 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     el.querySelectorAll('.blip-thread-marker[data-blip-thread]').forEach(marker => {
       const id = marker.getAttribute('data-blip-thread') || '';
       if (!id || !knownIds.has(id)) return;
+      // Anchor to the marker's CLOSEST block owner: its nearest <li>, or its
+      // nearest <p> when it is in no list item. querySelectorAll also returns
+      // markers in nested sub-items, and the outer <li> is walked first, so
+      // without this check a [+] on a sub-bullet opened its child at the end
+      // of the whole outer item (below every sibling sub-bullet) instead of
+      // directly under its own bullet.
+      const owner = marker.closest('li') || marker.closest('p');
+      if (owner !== el) return;
       // Mount if currently expanded OR previously expanded (preserve subtree on fold).
       if (!mountedSet.has(id)) return;
       if (childrenAlreadyPlaced.has(id)) return;
