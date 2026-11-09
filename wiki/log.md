@@ -221,3 +221,7 @@ last_verified: 2026-11-06
 
 ## [2026-11-09] verification | CI run 42536660786 (961c0a8d): build, perf-budgets, health-checks and the toolbar smoke pass
 - **Result**: build (typecheck, full vitest, production build, Docker image) green for the first time on the merge branch; toolbar+inline smoke green in chromium, firefox and webkit; perf-budgets and health-checks green. Remaining red: Follow-the-Green desktop smoke, which waits for `button.next-button.has-unread` (master's class); the branch's Next button carried `next-button` but not `has-unread`. Fixed by adding `has-unread` when unread count is above zero. Follow-the-Green mobile and the collab smoke had not run behind it.
+
+## [2026-11-09] verification | CI fully green on the merge branch: run 42537452651 (a35df20c)
+- **Result**: build, perf-budgets, health-checks, browser-smokes (toolbar+inline, Follow-the-Green desktop and mobile, collab) and ci-gate all pass. First fully green run on this branch.
+- **Boundary**: tests now guard the branch's legacy toolbar, not master's. Visual parity not re-measured after the merge; live deployment on the 8788 default unverified; PR 82 retarget is SDS's decision.

@@ -94,7 +94,7 @@ See `wiki/log.md` entry of 2026-11-08 for the measured numbers (typecheck, vites
 
 ## 5. CI status at the end of the session
 
-- ▷ CI is **red** on this branch: runs 42489115789 and 42490514900 (details in `wiki/log.md`). Test fails on the 15 known tests; the toolbar+inline browser smoke times out waiting for `.rizzoma-layout`, a regression against the pre-merge branch. Diagnosing why the merged shell does not render in the smoke is the first task before retargeting PR 82.
+- □ CI is **green** on this branch since run 42537452651 (a35df20c); history of the red runs and their causes is in `wiki/log.md`. Tests and smokes were aligned to the legacy toolbar and the Next button carries `has-unread`.
 
 (Receipt filed 2026-11-08T14:44:38Z; no code changed after the CI runs above.)
 (final check)
