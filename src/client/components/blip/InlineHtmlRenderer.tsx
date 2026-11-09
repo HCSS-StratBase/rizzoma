@@ -295,6 +295,21 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     const props = elementToProps(el);
     props['key'] = nextKey();
 
+    // Legacy topics keep a tag row (e.g. "#RuBase") above their bullets. After BLB
+    // normalization that row becomes ONE list item holding the bullets as a nested
+    // list, which rendered as "• #RuBase" with every bullet indented a level.
+    // Original Rizzoma shows the tag chip on its own line and the bullets as
+    // top-level items, so mark such an item for the tag-row styling.
+    if (tag === 'li') {
+      const first = el.firstElementChild;
+      const firstText = first?.textContent?.trim() || '';
+      const isTagOnly = !!first && first.tagName.toLowerCase() === 'p'
+        && firstText.length > 0 && firstText.split(/\s+/).every((token) => token.startsWith('#'));
+      if (isTagOnly && Array.from(el.children).some((c) => c.tagName.toLowerCase() === 'ul')) {
+        props['className'] = `${props['className'] || ''} blip-tag-row`.trim();
+      }
+    }
+
     // Block-parent anchor: when a li / p contains expanded markers, render the
     // bullet content first, then append the inline child blip(s) as siblings
     // immediately AFTER. We do this by wrapping the li in a Fragment whose

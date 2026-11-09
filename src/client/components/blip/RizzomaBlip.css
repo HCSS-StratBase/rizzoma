@@ -1789,3 +1789,90 @@
   opacity: 1;
   transform: none;
 }
+
+
+/* ===== LEGACY PARITY 2026-11-09 (compared by eye with legacy screenshots
+   240-topic-content-0-russian-red-lines-2026 and 225-crop-expanded-inline-thread) ===== */
+
+/* Topic body: original Rizzoma draws no frame or tinted card around the text. */
+.topic-blip-content .topic-content-view {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 2px 0 6px !important;
+}
+
+/* Tag row ("#RuBase" above the bullets): no bullet on the tag, bullets not indented. */
+.topic-content-view ul > li.blip-tag-row::before,
+.blip-text ul > li.blip-tag-row::before {
+  display: none !important;
+  content: none !important;
+}
+.topic-content-view ul > li.blip-tag-row,
+.blip-text ul > li.blip-tag-row {
+  padding-left: 0 !important;
+}
+.topic-content-view ul > li.blip-tag-row > ul,
+.blip-text ul > li.blip-tag-row > ul {
+  padding-left: 0 !important;
+  margin: 0 !important;
+}
+.topic-content-view ul > li.blip-tag-row > ul > li,
+.blip-text ul > li.blip-tag-row > ul > li {
+  padding-left: 18px;
+}
+.topic-content-view ul > li.blip-tag-row > ul > li::before,
+.blip-text ul > li.blip-tag-row > ul > li::before {
+  content: '' !important;
+  position: absolute;
+  left: 5px;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border: none !important;
+  border-radius: 50%;
+  background: #333333 !important;
+}
+.topic-content-view li.blip-tag-row > p.blip-tag-line {
+  margin: 0 0 4px !important;
+}
+
+/* Expanded inline child: one thin box reaching the right edge, tight spacing
+   (legacy: ~1 line of padding, no stacked margins). */
+.topic-content-view .inline-child-expanded,
+.rizzoma-parity .topic-content-view .inline-child-expanded {
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
+  margin-right: -44px !important;   /* the list item reserves 44px on the right */
+}
+.inline-child-expanded > .rizzoma-blip.nested-blip {
+  margin-top: 0 !important;
+}
+.inline-child-expanded > .blip-container {
+  padding: 4px 10px !important;
+}
+.inline-child-expanded > .blip-container > .blip-content {
+  padding: 0 !important;
+}
+.inline-child-expanded .blip-content > .blip-text,
+.inline-child-expanded .blip-text {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+/* Tags already show inline in the body; original Rizzoma has no second tag row below it. */
+.topic-blip-body .topic-tags {
+  display: none !important;
+}
+
+/* PARITY 2026-11-09 B: an expanded child shows ONE avatar (the top contributor) with
+   its date under it, inside the box, as in legacy 225. The stack rules force every
+   avatar static into a 28px slot, so extra contributors spilled out below the box. */
+.inline-child-expanded .blip-contributors-stack .blip-contributor-avatar:not(:first-child),
+.inline-child-expanded .blip-contributors-stack .blip-contributors-overflow {
+  display: none !important;
+}
+.inline-child-expanded > .blip-container > .blip-content {
+  min-height: 46px !important;
+}
