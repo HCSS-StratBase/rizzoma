@@ -106,7 +106,10 @@ await sleep(7000);
 await step('topic-open');
 
 // ---------- build: root label ----------
-await page.locator('button.topic-tb-btn', { hasText: 'Edit' }).first().click({ timeout: 10000 })
+// The topic toolbar was redesigned into the shared BlipMenu (.wave-panel);
+// the old topic-tb-btn selector made this step fail on every run since, so
+// L1 was never typed and every later level was measured on a wrong start.
+await page.locator('.wave-panel [data-testid="blip-menu-edit"], button.topic-tb-btn:has-text("Edit")').first().click({ timeout: 10000 })
   .catch(() => gate('root Edit affordance exists', false, 'no Edit button on this render path'));
 await step('root-edit');
 await page.locator('.topic-content-edit .ProseMirror, .ProseMirror[contenteditable="true"]').first()
