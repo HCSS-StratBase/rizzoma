@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { beginChildTypeahead, cancelChildTypeahead, flushChildTypeahead } from '../../lib/inlineChildTypeahead';
 import type { CSSProperties, ReactNode } from 'react';
 import { BlipMenu } from './BlipMenu';
 import { useActiveBlip } from './ActiveBlipContext';
@@ -897,6 +898,9 @@ export function RizzomaBlip({
     createChildBlipRef.current = async (anchorPosition: number) => {
       console.log('[RizzomaBlip] createChildBlipFromEditor called, canComment:', blip.permissions.canComment, 'anchorPosition:', anchorPosition);
       if (!blip.permissions.canComment || !canMutateEditorNow()) return;
+      // Hold keystrokes from this instant so nothing typed while the child
+      // is being created lands in this (parent) blip. See inlineChildTypeahead.
+      beginChildTypeahead();
 
       try {
         // Extract waveId from the blip id (format: waveId:blipId)
@@ -945,6 +949,7 @@ export function RizzomaBlip({
           // The child is already durable and carries anchorPosition. Do not
           // mutate a parent whose authoritative room was lost; a post-reconnect
           // topic reload reconstructs its marker from that durable relation.
+          cancelChildTypeahead();
           window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
           toast('Child created; reconnecting before attaching it.', 'info');
           return;
@@ -971,8 +976,37 @@ export function RizzomaBlip({
           // fired, so the toggle handler couldn't find the new blip in
           // inlineChildren. The await of load(true) gives React time to
           // commit the optimistic state.
-          const w = window as unknown as { __rizzomaTopicReload?: () => Promise<void> };
-          if (typeof w.__rizzomaTopicReload === 'function') {
+          // Local-first (2026-11-10): add the child to the in-memory tree NOW
+          // instead of awaiting a full topic reload (which also remounted the
+          // child). The retry loop below re-asserts expansion until React has
+          // committed it, which is what defeated the 2026-05 attempt.
+          const w = window as unknown as {
+            __rizzomaTopicReload?: () => Promise<void>;
+            __rizzomaTopicAddBlip?: (b: BlipData) => void;
+          };
+          const created = response.data as Partial<BlipData> & { _id?: string };
+          if (typeof w.__rizzomaTopicAddBlip === 'function') {
+            const now = Date.now();
+            w.__rizzomaTopicAddBlip({
+              id: newBlipId,
+              blipPath: newBlipId.includes(':') ? newBlipId.split(':')[1] : newBlipId,
+              content: created.content || EMPTY_BLB_HTML,
+              authorId: created.authorId || '',
+              authorName: created.authorName || '',
+              authorAvatar: created.authorAvatar,
+              createdAt: created.createdAt || now,
+              updatedAt: created.updatedAt || now,
+              yjsGeneration: 0,
+              isRead: true,
+              isFoldedByDefault: true,
+              isCollapsed: false,
+              parentBlipId: blip.id,
+              anchorPosition,
+              childBlips: [],
+              permissions: { ...blip.permissions },
+              contributors: [],
+            });
+          } else if (typeof w.__rizzomaTopicReload === 'function') {
             await w.__rizzomaTopicReload();
           } else {
             window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
@@ -996,9 +1030,11 @@ export function RizzomaBlip({
               // instant; when the editor becomes editable later, nothing focused it
               // and the user's keystrokes went nowhere (measured: L2/L4/L5 never
               // focused within 8 s). The pre-merge code focused here as well.
-              if (document.activeElement !== editable) editable.focus();
+              // Replay what the user typed since Ctrl+Enter into the child.
+              flushChildTypeahead(editable);
               if (document.activeElement === editable || attempt >= 60) return;
             }
+            if (attempt >= 60) { cancelChildTypeahead(); return; }
             // Re-assert expansion idempotently. Never click the [+] marker here:
             // a click is a TOGGLE, so a retry could fold the very child it is
             // opening (the fractal then died one level deeper each time).
@@ -1013,6 +1049,7 @@ export function RizzomaBlip({
           requestAnimationFrame(() => tryEnterEdit(0));
         }
       } catch (error) {
+        cancelChildTypeahead();
         console.error('Error creating child blip:', error);
         toast('Failed to create child blip', 'error');
       }
@@ -2405,14 +2442,26 @@ export function RizzomaBlip({
     }
   }, [forceExpanded, expandedBlips, blip.id]);
 
+  // Claim once per edit session, on ENTERING edit mode (2026-11-10). This
+  // effect re-runs whenever the shared active id changes; claiming on every
+  // re-run let a parent that stays in edit mode while its descendant is active
+  // (see the release effect below) take the slot straight back, so parent and
+  // child ping-ponged and the new child kept dropping out of edit mode
+  // (probe: L3 editable at 1.78 s, out at 2.30 s, in at 2.67 s, out at 3.08 s).
+  // Explicit user actions (click, Edit button) still call claimActive().
+  const claimedThisEditRef = useRef(false);
   useEffect(() => {
+    if (!isEditing) claimedThisEditRef.current = false;
     if (activeBlipCtx) {
       // Single-active model: entering edit mode always claims the slot; the
       // topic root claims it once on open (nothing else active yet) so the
       // familiar editable-root UX is preserved. Expanding a blip does NOT
       // activate it — that was the "toolbar on every nested blip" defect.
       if (isEditing) {
-        claimActive();
+        if (!claimedThisEditRef.current) {
+          claimedThisEditRef.current = true;
+          claimActive();
+        }
       } else if (isTopicRoot && effectiveExpanded && activeBlipCtx.activeBlipId === null) {
         claimActive();
       }
@@ -2428,6 +2477,22 @@ export function RizzomaBlip({
   // chrome — finishing (and thereby saving) any edit in progress first.
   useEffect(() => {
     if (!activeBlipCtx || activeBlipIdInCtx === blip.id) return;
+    // Infinite fractal (2026-11-10). Inspiration: original Rizzoma
+    // (original-rizzoma-src/src/client/blip/view.coffee:511-539,
+    // initInsertInlineBlip + setEditModeEnabled) kept the WAVE in edit mode
+    // while the user typed in a new inline child, so the parent editor never
+    // closed and the child never moved. Here: while the active blip is one of
+    // this blip's own descendants, keep this editor open with its chrome off.
+    // Finishing it moved the child from the editor portal to the view
+    // renderer, remounting it and dropping its edit state at every level.
+    if (isEditingRef.current && activeBlipIdInCtx) {
+      const self = document.querySelector(`[data-blip-id="${CSS.escape(blip.id)}"]`);
+      const active = document.querySelector(`[data-blip-id="${CSS.escape(activeBlipIdInCtx)}"]`);
+      if (self && active && active !== self && self.contains(active)) {
+        setIsActive(false);
+        return;
+      }
+    }
     if (isEditingRef.current) handleFinishEdit();
     setIsActive(false);
   }, [activeBlipCtx, activeBlipIdInCtx, blip.id, handleFinishEdit]);

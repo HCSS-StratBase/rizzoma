@@ -121,35 +121,81 @@ const s1 = await step('typed-L1');
 gate('root editor accepts typing', s1.editable >= 1);
 
 // ---------- descend to DEPTH, with BRANCHES at 3 and 6 ----------
+// Hand-off check (2026-11-10, replaces "editable+focused 1.1 s after Ctrl+Enter"
+// and "the label appears anywhere on the page"). A user presses Ctrl+Enter and
+// TYPES AT ONCE, as in the original Rizzoma, where the child was created and
+// focused synchronously. So: press Ctrl+Enter, type immediately, then require
+//   (a) the label ends up inside a NEW blip (not one that existed before),
+//   (b) no fragment of it lands in an existing blip (the parent),
+//   (c) the cursor is inside that new blip afterwards,
+// and record the time until the label is visible there. The old checks hid
+// both failure modes: "focused" accepted ANY editor and "landed" searched the
+// whole page, so text typed into the parent passed.
+const HANDOFF_MAX_MS = Number(process.env.HB_HANDOFF_MAX_MS || 3000);
+const handoffMs = [];
+const blipIdsNow = () => page.evaluate(() =>
+  Array.from(new Set(Array.from(document.querySelectorAll('[data-blip-id]')).map(e => e.getAttribute('data-blip-id')))));
+const handoff = async (label, name) => {
+  const before = await blipIdsNow();
+  const t0 = Date.now();
+  await page.keyboard.press('Control+Enter');
+  await page.keyboard.type(label, { delay: 25 });
+  const probe = () => page.evaluate(({ label, before }) => {
+    const old = new Set(before);
+    // A fragment specific to THIS label ("L2 la", "L3b ch"): the parent may
+    // legitimately hold "L3b sibling", which shares "L3b " with "L3b child".
+    const tag = label.slice(0, label.indexOf(' ') + 3);
+    let owner = null; let stray = false;
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      const v = n.nodeValue || '';
+      const id = n.parentElement?.closest('[data-blip-id]')?.getAttribute('data-blip-id') || null;
+      if (v.includes(label) && id && !old.has(id)) owner = id;
+      else if ((v.includes(tag) || v.includes(label)) && id && old.has(id)) stray = true;
+    }
+    const focusId = document.activeElement?.closest?.('[data-blip-id]')?.getAttribute('data-blip-id') || null;
+    return { owner, stray, focusInOwner: Boolean(owner && focusId === owner) };
+  }, { label, before });
+  let r = await probe();
+  while (!r.owner && Date.now() - t0 < HANDOFF_MAX_MS) { await sleep(100); r = await probe(); }
+  const ms = Date.now() - t0;
+  await sleep(1200);                                  // let late remounts show up
+  const settled = await probe();
+  await step(name);
+  return { ...settled, ms: r.owner ? ms : null };
+};
 const BRANCH_AT = [3, 6];
 for (let d = 2; d <= DEPTH; d++) {
-  await page.keyboard.press('Control+Enter');
-  const sc = await step(`ctrl-enter-L${d}`);
-  gate(`L${d}: Ctrl+Enter opens an EDITABLE, FOCUSED child`, sc.editable >= 1 && sc.focused,
-    `editable=${sc.editable} focused=${sc.focused}`);
-  if (!(sc.editable >= 1)) break;
-  await page.keyboard.type(`L${d} label`, { delay: 25 });
-  await step(`typed-L${d}`);
-  const landed = await page.evaluate(t => document.body.innerText.includes(t), `L${d} label`);
-  gate(`L${d}: typed text lands in the child`, landed);
-  if (!landed) break;
+  const h = await handoff(`L${d} label`, `ctrl-enter-typed-L${d}`);
+  if (h.ms !== null) handoffMs.push({ d, ms: h.ms });
+  log(`L${d} hand-off: ${h.ms === null ? `NOT within ${HANDOFF_MAX_MS} ms` : `${h.ms} ms`} owner=${h.owner ? h.owner.slice(-6) : '-'} stray=${h.stray} focusInChild=${h.focusInOwner}`);
+  gate(`L${d}: typing right after Ctrl+Enter lands in a NEW child within ${HANDOFF_MAX_MS} ms`, h.ms !== null,
+    h.ms === null ? `not within budget${h.owner ? ' (landed later)' : ''}` : `${h.ms} ms`);
+  gate(`L${d}: nothing typed lands in the parent`, !h.stray);
+  gate(`L${d}: the cursor stays in the new child`, h.focusInOwner);
+  if (!h.owner || !h.focusInOwner) break;
 
   // BRANCH: sibling LINE in the same blip + its own child (BLIP between LINEs)
   if (BRANCH_AT.includes(d)) {
     await page.keyboard.press('Enter');
     await page.keyboard.type(`L${d}b sibling`, { delay: 25 });
     await step(`typed-L${d}b-sibling`);
-    await page.keyboard.press('Control+Enter');
-    const sb = await step(`ctrl-enter-L${d}b-child`);
-    gate(`L${d}b: sibling-line Ctrl+Enter opens an editable child`, sb.editable >= 1 && sb.focused,
-      `editable=${sb.editable} focused=${sb.focused}`);
-    if (sb.editable >= 1) {
-      await page.keyboard.type(`L${d}b child`, { delay: 25 });
-      await step(`typed-L${d}b-child`);
+    const hb = await handoff(`L${d}b child`, `ctrl-enter-typed-L${d}b-child`);
+    log(`L${d}b hand-off: ${hb.ms === null ? 'NOT within budget' : `${hb.ms} ms`} stray=${hb.stray} focusInChild=${hb.focusInOwner}`);
+    gate(`L${d}b: sibling-line Ctrl+Enter: typing lands in a NEW child, not the parent`, Boolean(hb.owner) && !hb.stray,
+      `owner=${hb.owner ? 'new' : '-'} stray=${hb.stray}`);
+    if (hb.owner) {
       // return the caret to the spine child so the descent continues from L{d}
       await page.evaluate(t => {
-        const eds = Array.from(document.querySelectorAll('.ProseMirror'));
-        const spine = eds.find(e => (e.innerText || '').includes(t));
+        // The editor that OWNS the label: with parents kept in edit mode an
+        // ancestor editor also contains the text (the child renders inside
+        // it), and picking the first match put the caret in L2, so L4 and L7
+        // were built under L2 instead of the spine.
+        let spine = null;
+        const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        for (let n = w.nextNode(); n; n = w.nextNode()) {
+          if ((n.nodeValue || '').includes(t)) { spine = n.parentElement?.closest('.ProseMirror'); if (spine) break; }
+        }
         if (!spine) return;
         spine.focus();
         const li = spine.querySelector('li') || spine;
@@ -164,6 +210,17 @@ for (let d = 2; d <= DEPTH; d++) {
     }
   }
 }
+
+// ---------- infinitely fractal: hand-off time must not grow with depth ----------
+log(`hand-off ms by level: ${handoffMs.map(h => `L${h.d}=${h.ms}`).join(' ')}`);
+if (handoffMs.length >= 4) {
+  const ms = handoffMs.map(h => h.ms);
+  const early = [...ms.slice(0, 3)].sort((a, b) => a - b)[1];
+  const late = Math.max(...ms.slice(-3));
+  gate('hand-off time is constant with depth (deepest 3 levels <= 1.5x early median + 400 ms)',
+    late <= 1.5 * early + 400, `early median ${early} ms, deepest-3 max ${late} ms`);
+}
+gate(`reached the requested depth (${DEPTH})`, handoffMs.some(h => h.d === DEPTH));
 
 // ---------- reload: fold-by-default (BLB §2) ----------
 await page.reload({ waitUntil: 'domcontentloaded' });
@@ -213,6 +270,41 @@ const persisted = await page.evaluate((depth) => {
 }, DEPTH);
 gate('every authored label persists after reload + expand', persisted.length === 0,
   persisted.length ? `missing: ${persisted.join(', ')}` : 'all present');
+
+// ---------- structure: the spine really nests (2026-11-10) ----------
+// Each L(d) must live in a blip whose nearest ancestor blip holds L(d-1), and
+// each L(d)b child under the blip holding L(d)b sibling. Labels present but
+// hung off the wrong parent passed every earlier check (seen: L4 and L7 under
+// L2 after a branch).
+const nesting = await page.evaluate((depth) => {
+  const ownerOf = (label) => {
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      if ((n.nodeValue || '').includes(label)) {
+        const b = n.parentElement?.closest('[data-blip-id]');
+        if (b) return b;
+      }
+    }
+    return null;
+  };
+  const parentBlip = (el) => el?.parentElement?.closest('[data-blip-id]') || null;
+  const bad = [];
+  const pairs = [];
+  for (let d = 2; d <= depth; d++) pairs.push([`L${d} label`, `L${d - 1} label`]);
+  pairs.push(['L3b child', 'L3b sibling'], ['L6b child', 'L6b sibling']);
+  for (const [child, parent] of pairs) {
+    const c = ownerOf(child); const p = ownerOf(parent);
+    if (!c || !p) continue;               // absence is reported by the persistence check
+    if (parentBlip(c) !== p) {
+      const actual = parentBlip(c);
+      const actualText = (actual?.querySelector('li, p')?.textContent || '?').trim().slice(0, 20);
+      bad.push(`${child} under "${actualText}" not "${parent}"`);
+    }
+  }
+  return bad;
+}, DEPTH);
+gate('the fractal nests: every level is a child of the level above', nesting.length === 0,
+  nesting.length ? nesting.join(' | ') : 'all levels nested correctly');
 
 // ---------- structure: BLB §19 row 1 ----------
 const structure = await page.evaluate((depth) => {

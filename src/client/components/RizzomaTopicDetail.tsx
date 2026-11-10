@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { api, ensureCsrf } from '../lib/api';
+import { beginChildTypeahead, cancelChildTypeahead, flushChildTypeahead } from '../lib/inlineChildTypeahead';
 import { isSafeRichUrl, sanitizeRichHtml } from '../lib/sanitizeRichHtml';
 import { insertGadget } from '../gadgets/insert';
 import type { GadgetInsertDetail } from '../gadgets/types';
@@ -1007,6 +1008,10 @@ function RizzomaTopicDetailState({
         toast(isAuthed ? 'You do not have permission to comment' : 'Sign in to create comments', 'error');
         return;
       }
+      // Hold keystrokes from this instant: nothing typed while the child is
+      // being created may land in the topic root (measured 2026-11-10: the
+      // cursor stayed in the root ~1 s). See lib/inlineChildTypeahead.ts.
+      beginChildTypeahead();
       await ensureCsrf();
       const requestBody = {
         waveId: id,
@@ -1041,6 +1046,11 @@ function RizzomaTopicDetailState({
                 topicSaveTimeoutRef.current = null;
               }
               setTopicContent(nextTopicContent);
+              // AWAIT the save (measured 2026-11-10): reloads that land before
+              // it fetch the topic WITHOUT the marker, so the child first
+              // renders outside its bullet and is remounted inside it when the
+              // save lands, losing its edit state. The held keystrokes
+              // (inlineChildTypeahead) make this wait invisible to the user.
               await autoSaveTopicContentRef.current(nextTopicContent);
               setIsEditingTopic(false);
               editor.setEditable(false);
@@ -1048,6 +1058,7 @@ function RizzomaTopicDetailState({
               // The durable child already records its anchor. Preserve it and
               // let the authoritative reload attach it after collaboration
               // resynchronizes; never mutate the disconnected topic Y.Doc.
+              cancelChildTypeahead();
               window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
               toast('Child created; reconnecting before attaching it.', 'info');
               return;
@@ -1116,12 +1127,10 @@ function RizzomaTopicDetailState({
             //      blip in `inlineChildren` and expand it.
             //   3. RAF + dispatch enter-edit — the inline editor needs one
             //      paint cycle to mount before we can focus it.
-            try {
-              await load(true);
-            } catch {
-              // load() rarely fails; if it does the optimistic state above
-              // still lets the toggle render.
-            }
+            // Local-first (2026-11-10): no awaited full reload here. It cost
+            // most of the hand-off time and remounted the new child; the
+            // optimistic state above plus the idempotent retries below are
+            // enough, and collaborators' socket events still reload later.
             window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
               detail: { threadId: newBlipId, parentId: id }
             }));
@@ -1137,22 +1146,24 @@ function RizzomaTopicDetailState({
               const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
               const editable = container?.querySelector('.ProseMirror[contenteditable="true"]');
               const action = nextInlineChildHandoffAction(Boolean(container), Boolean(editable));
+              if (editable instanceof HTMLElement) {
+                // Ready: put the cursor in the child and replay what the user
+                // typed since Ctrl+Enter.
+                flushChildTypeahead(editable);
+                if (document.activeElement === editable) return;
+              }
               if (action === 'done') return;
+              if (attempt >= 60) { cancelChildTypeahead(); return; }
               if (action === 'ensure-expanded' || !editable) {
                 window.dispatchEvent(new CustomEvent('rizzoma:ensure-inline-blip-expanded', {
                   detail: { threadId: newBlipId, parentId: id }
                 }));
-                // The state event can race the topic-root RizzomaBlip's first
-                // listener/effect commit. Once the durable marker is present,
-                // fall back to the exact user path (marker click) to force the
-                // inline thread open instead of silently timing out with a
-                // saved but invisible child.
-                const marker = document.querySelector<HTMLElement>(
-                  `[data-blip-thread="${CSS.escape(newBlipId)}"]`
-                );
-                if (marker && marker.textContent !== '−') {
-                  marker.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-                }
+                // No marker-click fallback (removed 2026-11-10, as in the blip
+                // path): a click is a TOGGLE, and a retry that ran while the
+                // marker label lagged the state folded the very child it was
+                // opening (gate: child still '+' after 4 s). The idempotent
+                // ensure-expanded event above, re-sent on every retry, covers
+                // the race with the topic-root listener's first commit.
               }
               if (action === 'enter-edit') {
                 window.dispatchEvent(new CustomEvent('rizzoma:enter-edit-blip', {
@@ -1163,13 +1174,16 @@ function RizzomaTopicDetailState({
             };
             requestAnimationFrame(() => requestAnimationFrame(() => tryEnterEdit(0)));
           } else {
+            cancelChildTypeahead();
             toast('Subblip created');
             load(true); // Fallback: reload to show the new blip
           }
         } else {
+          cancelChildTypeahead();
           toast('Failed to create comment', 'error');
         }
       } catch (err) {
+        cancelChildTypeahead();
         console.error('[TopicDetail] Error creating blip:', err);
         toast('Failed to create comment', 'error');
       }

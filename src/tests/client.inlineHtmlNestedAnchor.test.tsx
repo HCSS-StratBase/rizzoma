@@ -59,6 +59,19 @@ describe('parity view: inline child anchors to its own bullet', () => {
     expect(one).not.toBe(two);
   });
 
+  it('keeps the same child DOM node when the parent HTML changes shape before the marker', () => {
+    // 2026-11-10: positional keys shifted when a reload brought a differently
+    // shaped copy of the parent, so React remounted the open child and it lost
+    // its edit state. Elements on the path to a marker are keyed by its id.
+    const marker = `<span class="blip-thread-host"><span class="blip-thread-marker" data-blip-thread="${CHILD}">+</span></span>`;
+    render([CHILD], `<h1>T</h1><ul><li><p>L1 ${marker}</p></li></ul>`);
+    const before = container.querySelector(`[data-test-child="${CHILD}"]`);
+    render([CHILD], `<h1>T</h1><p>extra</p><p>more</p><ul><li><p>Lead</p></li><li><p>L1 ${marker}</p></li></ul>`);
+    const after = container.querySelector(`[data-test-child="${CHILD}"]`);
+    expect(after).not.toBeNull();
+    expect(after).toBe(before);
+  });
+
   it('still anchors a marker in a top-level paragraph after that paragraph', () => {
     render([CHILD], `<p>Lead <span class="blip-thread-host"><span class="blip-thread-marker" data-blip-thread="${CHILD}">+</span></span></p><p>After</p>`);
     const placed = container.querySelector(`[data-inline-child="${CHILD}"]`)!;

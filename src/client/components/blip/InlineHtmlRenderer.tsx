@@ -166,6 +166,22 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
   // expanded marker lives inside it, we append the child's React node as a sibling.
   let keySeq = 0;
   const nextKey = () => `n${keySeq++}`;
+  // Stable identity for every element on the path to an inline child
+  // (2026-11-10). Positional keys shift whenever the parent's HTML changes
+  // shape before the marker (e.g. the server's normalised copy replacing the
+  // local one after a save), and React then tore down the bullet holding the
+  // child, remounting the child and dropping its edit state (probe: editable
+  // at 1.25 s, torn down at 1.80 s when the post-save reload landed). An
+  // element that contains a known child marker is keyed by that marker's id
+  // and its nesting depth; sibling subtrees never share a first marker.
+  const markerPathKey = (el: Element, tag: string, depth: number): string | null => {
+    const markers = el.querySelectorAll('.blip-thread-marker[data-blip-thread]');
+    for (const marker of Array.from(markers)) {
+      const id = marker.getAttribute('data-blip-thread') || '';
+      if (id && knownIds.has(id)) return `${tag}@${depth}#${id}`;
+    }
+    return null;
+  };
 
   const childrenAlreadyPlaced = new Set<string>();
 
@@ -190,7 +206,7 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     return ids;
   };
 
-  const walkNode = (node: Node): ReactNode => {
+  const walkNode = (node: Node, depth = 0): ReactNode => {
     if (node.nodeType === Node.TEXT_NODE) {
       const val = node.nodeValue || '';
       if (!val.includes('#')) {
@@ -293,7 +309,9 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     }
 
     const props = elementToProps(el);
-    props['key'] = nextKey();
+    const positionalKey = nextKey();
+    const stableKey = markerPathKey(el, tag, depth);
+    props['key'] = stableKey ?? positionalKey;
 
     // Legacy topics keep a tag row (e.g. "#RuBase") above their bullets. After BLB
     // normalization that row becomes ONE list item holding the bullets as a nested
@@ -353,10 +371,10 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
           renderInlineChild(id),
         );
       });
-      return createElement(Fragment, { key: nextKey() }, [node, ...followups]);
+      return createElement(Fragment, { key: stableKey ? `frag-${stableKey}` : nextKey() }, [node, ...followups]);
     }
 
-    const childNodes = Array.from(el.childNodes).map(walkNode);
+    const childNodes = Array.from(el.childNodes).map((c) => walkNode(c, depth + 1));
     const reactNode = createElement(tag, props, ...childNodes);
 
     if (expandedHere.length === 0) {
@@ -403,10 +421,10 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
         renderInlineChild(id),
       );
     });
-    return createElement(Fragment, { key: nextKey() }, [reactNode, ...followups]);
+    return createElement(Fragment, { key: stableKey ? `frag-${stableKey}` : nextKey() }, [reactNode, ...followups]);
   };
 
-  const topNodes = Array.from(container.childNodes).map(walkNode);
+  const topNodes = Array.from(container.childNodes).map((c) => walkNode(c, 0));
 
   // Any mounted child that didn't find an in-line position (e.g., marker missing
   // entirely, anchor outside the rendered HTML) — render at the end so it's still
