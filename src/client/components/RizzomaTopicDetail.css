@@ -425,10 +425,9 @@
 .inline-child-expanded .blip-text ol {
   list-style-type: decimal;
 }
-.inline-child-expanded .blip-text ul ul,
-.inline-child-expanded .blip-text ol ol,
-.inline-child-expanded .blip-text ul ol,
-.inline-child-expanded .blip-text ol ul {
+/* li > list, not "ul ul": a nested blip sits inside its parent's list item. */
+.inline-child-expanded .blip-text li > ul,
+.inline-child-expanded .blip-text li > ol {
   list-style-type: circle;
 }
 
@@ -775,10 +774,8 @@
   margin: 0;
 }
 
-.topic-content-view ul ul,
-.topic-content-view ol ol,
-.topic-content-view ul ol,
-.topic-content-view ol ul {
+.topic-content-view li > ul,
+.topic-content-view li > ol {
   margin-top: 4px;
 }
 

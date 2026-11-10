@@ -230,45 +230,65 @@ gate(`reached the requested depth (${DEPTH})`, handoffMs.some(h => h.d === DEPTH
 // ---------- deep-nesting layout: where does each level's width go? ----------
 // For each spine level, the label's blip box (left, width) and every element
 // between it and the parent blip that adds horizontal space (margin, padding,
-// border). Original Rizzoma lost ~22 px of width per level (22 px bullet
-// indent + 2 px border + 8 px editor margin, minus a -10 px right margin).
-const geometry = await page.evaluate((depth) => {
-  const boxOf = (label) => {
-    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    for (let n = w.nextNode(); n; n = w.nextNode()) {
-      if ((n.nodeValue || '').includes(label)) {
-        const owner = n.parentElement?.closest('.ProseMirror')?.closest('[data-blip-id]');
-        if (owner) return owner;
+// border). Original Rizzoma lost ~32 px of width per level: 22 px bullet
+// indent + 2+2 px border + 8+8 px editor margins, minus the -10 px right
+// margin of .blips-container (blip.css, editor/renderer.coffee).
+// Run in BOTH edit mode (while building) and view mode (after reload): the
+// two render paths have different CSS, and view mode once lost ~87 px per
+// level on the right that the edit-mode measurement could not see.
+const measureLayout = async (mode) => {
+  const geometry = await page.evaluate((depth) => {
+    const boxOf = (label) => {
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let n = w.nextNode(); n; n = w.nextNode()) {
+        if ((n.nodeValue || '').includes(label)) {
+          const owner = n.parentElement?.closest('[data-blip-id]');
+          if (owner) return owner;
+        }
       }
-    }
-    return null;
-  };
-  const rows = [];
-  let prev = null;
-  for (let d = 2; d <= depth; d++) {
-    const el = boxOf(`L${d} label`);
-    if (!el) break;
-    const r = el.getBoundingClientRect();
-    const adds = [];
-    if (prev) {
-      for (let a = el; a && a !== prev; a = a.parentElement) {
-        const cs = getComputedStyle(a);
-        const px = (v) => Math.round(parseFloat(v) || 0);
-        const l = px(cs.marginLeft) + px(cs.paddingLeft) + px(cs.borderLeftWidth);
-        const rt = px(cs.marginRight) + px(cs.paddingRight) + px(cs.borderRightWidth);
-        if (l || rt) adds.push(`${a.tagName.toLowerCase()}.${(a.className || '').toString().split(' ').filter(Boolean).slice(0, 2).join('.')} L${l}/R${rt}`);
+      return null;
+    };
+    const px = (v) => Math.round(parseFloat(v) || 0);
+    const rows = [];
+    let prev = null;
+    for (let d = 2; d <= depth; d++) {
+      const el = boxOf(`L${d} label`);
+      if (!el) break;
+      const r = el.getBoundingClientRect();
+      const chain = [];
+      if (prev) {
+        for (let a = el.parentElement; a && a !== prev; a = a.parentElement) {
+          const cs = getComputedStyle(a);
+          const l = px(cs.marginLeft) + px(cs.paddingLeft) + px(cs.borderLeftWidth);
+          const rt = px(cs.marginRight) + px(cs.paddingRight) + px(cs.borderRightWidth);
+          chain.push(`${a.tagName.toLowerCase()}.${(a.className || '').toString().split(' ').filter(Boolean).slice(0, 2).join('.')} w${Math.round(a.getBoundingClientRect().width)} L${l}/R${rt}`);
+        }
       }
+      const pr = prev ? prev.getBoundingClientRect() : null;
+      rows.push({ d, left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width),
+        gapL: pr ? Math.round(r.left - pr.left) : null, gapR: pr ? Math.round(pr.right - r.right) : null, chain });
+      prev = el;
     }
-    rows.push({ d, left: Math.round(r.left), width: Math.round(r.width), adds });
-    prev = el;
+    return rows;
+  }, DEPTH);
+  for (const g of geometry) {
+    log(`layout[${mode}] L${g.d}: left=${g.left} right=${g.right} width=${g.width} inset L${g.gapL}/R${g.gapR}${g.d <= 4 ? ` chain: ${g.chain.join(' < ')}` : ''}`);
   }
-  return rows;
-}, DEPTH);
-for (const g of geometry) log(`layout L${g.d}: left=${g.left} width=${g.width} ${g.adds.join(' | ')}`);
-if (geometry.length >= 3) {
-  const perLevel = (geometry[0].width - geometry[geometry.length - 1].width) / (geometry.length - 1);
-  log(`layout: width lost per level ${perLevel.toFixed(1)} px (original Rizzoma ~22 px)`);
-}
+  if (geometry.length >= 3) {
+    // Median width step between consecutive levels, ignoring levels already
+    // squeezed to a minimum width (those stop shrinking and would hide the cost).
+    const steps = [];
+    for (let i = 1; i < geometry.length; i++) {
+      if (geometry[i].width > 100) steps.push(geometry[i - 1].width - geometry[i].width);
+    }
+    steps.sort((a, b) => a - b);
+    const perLevel = steps.length ? steps[Math.floor(steps.length / 2)] : NaN;
+    log(`layout[${mode}]: width lost per level (median) ${perLevel} px (original Rizzoma ~32 px)`);
+    gate(`${mode} mode: deep nesting costs no more width per level than original Rizzoma (median <= 35 px)`,
+      perLevel <= 35, `${perLevel} px per level`);
+  }
+};
+await measureLayout('edit');
 
 // ---------- reload: fold-by-default (BLB §2) ----------
 await page.reload({ waitUntil: 'domcontentloaded' });
@@ -307,6 +327,14 @@ for (let i = 0; i < DEPTH + 8; i++) {
   await sleep(1200);
 }
 await step('fully-expanded');
+await measureLayout('view');
+// House rule: layout is judged by eye at 1366 and 1600 px wide as well.
+for (const w of [1366, 1600]) {
+  await page.setViewportSize({ width: w, height: 950 });
+  await sleep(800);
+  await step(`fully-expanded-${w}px`);
+}
+await page.setViewportSize({ width: 1440, height: 950 });
 
 // ---------- persistence ----------
 const persisted = await page.evaluate((depth) => {

@@ -250,21 +250,26 @@
   content: none !important;
 }
 
-/* Level 2 bullet: ◦ circle */
-.blip-text ul ul,
-.topic-content-view ul ul,
-.topic-blip-content ul ul,
-.tiptap.ProseMirror ul ul,
-.blip-editor-container .ProseMirror ul ul {
+/* Level 2 bullet: ◦ circle.
+   Strict child chains (li > ul), never descendant (ul ul): a nested blip
+   renders INSIDE its parent's list item, so "ul ul" matched the child blip's
+   own first-level list and indented it 18px more per level and gave it a
+   circle bullet (measured 2026-11-10: 59 px lost per level at depth 30).
+   Original Rizzoma restarts each blip at level 0 (renderer.coffee). */
+.blip-text li > ul,
+.topic-content-view li > ul,
+.topic-blip-content li > ul,
+.tiptap.ProseMirror li > ul,
+.blip-editor-container .ProseMirror li > ul {
   padding-left: 18px !important;
   margin: 0.1em 0;
 }
 
-.blip-text ul ul > li::before,
-.topic-content-view ul ul > li::before,
-.topic-blip-content ul ul > li::before,
-.tiptap.ProseMirror ul ul > li::before,
-.blip-editor-container .ProseMirror ul ul > li::before {
+.blip-text li > ul > li::before,
+.topic-content-view li > ul > li::before,
+.topic-blip-content li > ul > li::before,
+.tiptap.ProseMirror li > ul > li::before,
+.blip-editor-container .ProseMirror li > ul > li::before {
   content: '';
   position: absolute;
   left: 5px;
@@ -277,21 +282,12 @@
   box-sizing: border-box;
 }
 
-/* Level 3 bullet: ▪ square */
-.blip-text ul ul ul,
-.topic-content-view ul ul ul,
-.topic-blip-content ul ul ul,
-.tiptap.ProseMirror ul ul ul,
-.blip-editor-container .ProseMirror ul ul ul {
-  padding-left: 18px !important;
-  margin: 0.1em 0;
-}
-
-.blip-text ul ul ul > li::before,
-.topic-content-view ul ul ul > li::before,
-.topic-blip-content ul ul ul > li::before,
-.tiptap.ProseMirror ul ul ul > li::before,
-.blip-editor-container .ProseMirror ul ul ul > li::before {
+/* Level 3 bullet: ▪ square (indent already covered by li > ul above) */
+.blip-text li > ul > li > ul > li::before,
+.topic-content-view li > ul > li > ul > li::before,
+.topic-blip-content li > ul > li > ul > li::before,
+.tiptap.ProseMirror li > ul > li > ul > li::before,
+.blip-editor-container .ProseMirror li > ul > li > ul > li::before {
   content: '';
   position: absolute;
   left: 5px;
@@ -721,14 +717,13 @@
   list-style-type: decimal !important;
   padding-left: 1.5em !important;
 }
-.tiptap.ProseMirror ul ul,
-.rizzoma-parity .tiptap.ProseMirror ul ul {
-  list-style: none !important;
-  list-style-type: none !important;
-  padding-left: 18px !important;
-}
-.tiptap.ProseMirror ul ul ul,
-.rizzoma-parity .tiptap.ProseMirror ul ul ul {
+/* Nested lists WITHIN one editor only (li > ul). A descendant selector
+   (ul ul) also matched a nested blip's own top-level list, because that
+   blip renders inside the ancestor editor's list item: every level got an
+   extra 18 px indent (measured 2026-11-10, depth 30: 59 px lost per level,
+   boxes 41 px wide from L16). */
+.tiptap.ProseMirror li > ul,
+.rizzoma-parity .tiptap.ProseMirror li > ul {
   list-style: none !important;
   list-style-type: none !important;
   padding-left: 18px !important;
@@ -773,17 +768,15 @@
   line-height: 22px;
 }
 
-/* Nested lists - indent further */
-.blip-editor-container .ProseMirror ul ul,
-.blip-editor-container .ProseMirror ol ol,
-.blip-editor-container .ProseMirror ul ol,
-.blip-editor-container .ProseMirror ol ul {
+/* Nested lists - indent further, within the same editor only (li > list;
+   see the li > ul note above). */
+.blip-editor-container .ProseMirror li > ul,
+.blip-editor-container .ProseMirror li > ol {
   margin: 0.1em 0;
   padding-left: 18px !important;
 }
 
-.blip-editor-container .ProseMirror ul ul,
-.blip-editor-container .ProseMirror ul ul ul {
+.blip-editor-container .ProseMirror li > ul {
   list-style: none !important;
   list-style-type: none !important;
 }
@@ -1844,7 +1837,22 @@
 .rizzoma-parity .topic-content-view .inline-child-expanded {
   margin-top: 4px !important;
   margin-bottom: 4px !important;
-  margin-right: -44px !important;   /* the list item reserves 44px on the right */
+  /* The list item reserves 44px on the right; the extra 10px reaches over the
+     parent's own right margin + border, as original Rizzoma's .blips-container
+     did (margin-right: -10px in blip.css), so a level costs ~31px, not ~41px. */
+  margin-right: -54px !important;
+}
+/* View mode, inside a nested blip: the parent ALSO reserves its avatar slot on
+   the text column (.blip-main-content padding-right 46px + nested .blip-text
+   padding-right 48px + .blip-content-row 2px). The avatar is absolutely
+   positioned at the blip's top-right and a child box always starts below its
+   label line, so the box reaches under that reservation too. Without this,
+   view mode lost ~109 px per level (measured 2026-11-10, depth 10: L10 box
+   51 px wide, its date printed over its label). */
+.inline-child-expanded .blip-view-mode > .blip-content-row > .blip-main-content .blip-text li > .inline-child-expanded,
+.rizzoma-parity .inline-child-expanded .blip-view-mode > .blip-content-row > .blip-main-content .blip-text li > .inline-child-expanded {
+  /* ...but not past the parent box's own right edge (+10px: its padding). */
+  margin-right: calc(-54px - 46px - 48px - 2px + 10px) !important;
 }
 .inline-child-expanded > .rizzoma-blip.nested-blip {
   margin-top: 0 !important;
