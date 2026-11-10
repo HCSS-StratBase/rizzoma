@@ -31,6 +31,12 @@ SHELL = {"Bash", "run_terminal_command", "run_shell_command", "run_command", "ex
 PATH_KEYS = ("file_path", "path", "absolute_path", "notebook_path", "target_file", "TargetFile", "AbsolutePath",
              "SearchPath", "dir_path", "directory", "target_notebook", "filePath")
 STATE_DIR = Path(tempfile.gettempdir()) / "wiki_first"
+# ORIGINAL-FIRST (SDS, 10 Nov 2026): before changing app behaviour, look at how the ORIGINAL Rizzoma
+# did it (C:\\Rizzoma\\original-rizzoma-src, CoffeeScript). Inspiration, not a template: 20 years
+# later there may be better solutions, but the original often shows the intended behaviour.
+ORIGINAL_RE = re.compile(r"original-rizzoma(-src)?", re.I)
+ORIGINAL_HINT = "/mnt/c/Rizzoma/original-rizzoma-src (Windows: C:\\Rizzoma\\original-rizzoma-src), e.g. src/client/blip/view.coffee"
+APP_DIRS = ("src", "server", "client", "app")
 
 
 def norm(p):
@@ -61,7 +67,7 @@ def load(sid):
     try:
         return json.loads((STATE_DIR / f"{sid}.json").read_text(encoding="utf-8"))
     except Exception:
-        return {"read_index": False, "src_edits": [], "wiki_edits": False, "stop_warned": False}
+        return {"read_index": False, "read_original": False, "src_edits": [], "wiki_edits": False, "stop_warned": False}
 
 
 def save(sid, st):
@@ -122,7 +128,10 @@ def main():
             f"editing code under {', '.join(CODE_DIRS)}/, read {repo / 'wiki' / 'index.md'} and then the wiki page "
             "for the area you touch. A hook blocks code access until the index was read. If you change code, update "
             "the matching wiki page and wiki/log.md in the same session. UI work: look at the original screenshots "
-            "first (wiki/reference/legacy-screenshots.md). Index follows.\n\n" + idx[:6000]
+            "first (wiki/reference/legacy-screenshots.md). ORIGINAL-FIRST RULE: before editing app code (src/, server/, "
+            f"client/, app/), look at how the original Rizzoma did it in {ORIGINAL_HINT}: read or search it in this "
+            "session; a hook blocks app-code edits until you have. Use it as inspiration, not a template: "
+            "better modern solutions are welcome, but know what the original did and why. Index follows.\n\n" + idx[:6000]
         )
         if cli == "agy":
             print(json.dumps({"injectSteps": [{"systemMessage": {"systemMessage": msg}}]}))
@@ -138,6 +147,14 @@ def main():
             ti = {}
         raw = next((ti[k] for k in PATH_KEYS if isinstance(ti.get(k), str) and ti.get(k)), "")
         cmd = ti.get("command") if isinstance(ti.get("command"), str) else ""
+        pattern = ti.get("pattern") if isinstance(ti.get("pattern"), str) else ""
+        if (tool in READ or tool in SEARCH or tool in SHELL) and (
+            ORIGINAL_RE.search(raw) or ORIGINAL_RE.search(cmd) or ORIGINAL_RE.search(pattern)
+        ):
+            st0 = load(sid)
+            st0["read_original"] = True
+            save(sid, st0)
+            return 0
         repo = find_repo(norm(raw) if raw else cwd) or find_repo(cwd)
         if not repo:
             return 0
@@ -184,6 +201,9 @@ def main():
             return 0
         if not st["read_index"]:
             return deny(cli, f"WIKI-FIRST GATE: read {index_path} (and the page for this area) before using {tool} on this repo's code. Then retry.")
+        if kind == "edit" and any((rel_parts(repo, t) or ("",))[0] in APP_DIRS for t in targets) and not st.get("read_original"):
+            return deny(cli, "ORIGINAL-FIRST GATE: before changing app behaviour, look at how the original Rizzoma did it: "
+                             f"read or search {ORIGINAL_HINT} (the relevant part) in this session. Inspiration, not a template. Then retry.")
         if kind == "edit":
             st["src_edits"] = sorted(set(st["src_edits"]) | {str(t) for t in targets if is_code(repo, t)})[:200]
             save(sid, st)
