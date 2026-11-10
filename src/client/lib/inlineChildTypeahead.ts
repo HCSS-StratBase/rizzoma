@@ -32,6 +32,22 @@ interface ActiveTypeahead {
 
 let active: ActiveTypeahead | null = null;
 
+/**
+ * Hand-off timeline (ms since the Ctrl+Enter keypress) for the last child
+ * creation, exposed as window.__rizzomaHandoffTrace so the behaviour gate and
+ * the probe can see where the time goes (server create, mount, collaboration
+ * room, focus) separately from their own measuring cost. Cheap: a few
+ * performance.now() calls per Ctrl+Enter.
+ */
+type HandoffTrace = { t0: number; marks: Record<string, number> };
+export function markHandoff(name: string): void {
+  if (typeof window === 'undefined') return;
+  const w = window as unknown as { __rizzomaHandoffTrace?: HandoffTrace };
+  const trace = w.__rizzomaHandoffTrace;
+  if (!trace || name in trace.marks) return;
+  trace.marks[name] = Math.round(performance.now() - trace.t0);
+}
+
 const pushText = (tokens: TypeaheadToken[], text: string) => {
   const last = tokens[tokens.length - 1];
   if (last && 'text' in last) last.text += text;
@@ -82,6 +98,9 @@ const deliver = (target: HTMLElement | null, tokens: TypeaheadToken[], insert: I
  */
 export function beginChildTypeahead(options: { timeoutMs?: number; insert?: Inserter } = {}): void {
   if (active || typeof window === 'undefined') return;
+  (window as unknown as { __rizzomaHandoffTrace?: HandoffTrace }).__rizzomaHandoffTrace = {
+    t0: performance.now(), marks: {},
+  };
   const tokens: TypeaheadToken[] = [];
   const origin = (document.activeElement as HTMLElement | null) ?? null;
 
@@ -132,6 +151,7 @@ export function flushChildTypeahead(target: HTMLElement, insert: Inserter = repl
   }
   if (document.activeElement !== target) target.focus();
   deliver(target, current.tokens, insert);
+  markHandoff('flushed');
 }
 
 /** The child could not be opened: replay the held keys where they were typed. */

@@ -161,14 +161,18 @@ const handoff = async (label, name) => {
   const ms = Date.now() - t0;
   await sleep(1200);                                  // let late remounts show up
   const settled = await probe();
+  // App-side timeline (ms after the keypress): posted, added, mounted,
+  // editable, flushed, focused. Separates the app's time from this gate's
+  // own typing and whole-page polling cost, which grows with the DOM.
+  const trace = await page.evaluate(() => (window.__rizzomaHandoffTrace || {}).marks || null);
   await step(name);
-  return { ...settled, ms: r.owner ? ms : null };
+  return { ...settled, ms: r.owner ? ms : null, trace };
 };
 const BRANCH_AT = [3, 6];
 for (let d = 2; d <= DEPTH; d++) {
   const h = await handoff(`L${d} label`, `ctrl-enter-typed-L${d}`);
-  if (h.ms !== null) handoffMs.push({ d, ms: h.ms });
-  log(`L${d} hand-off: ${h.ms === null ? `NOT within ${HANDOFF_MAX_MS} ms` : `${h.ms} ms`} owner=${h.owner ? h.owner.slice(-6) : '-'} stray=${h.stray} focusInChild=${h.focusInOwner}`);
+  if (h.ms !== null) handoffMs.push({ d, ms: h.ms, app: h.trace?.focused ?? h.trace?.flushed ?? null });
+  log(`L${d} hand-off: ${h.ms === null ? `NOT within ${HANDOFF_MAX_MS} ms` : `${h.ms} ms`} owner=${h.owner ? h.owner.slice(-6) : '-'} stray=${h.stray} focusInChild=${h.focusInOwner} app=${JSON.stringify(h.trace)}`);
   gate(`L${d}: typing right after Ctrl+Enter lands in a NEW child within ${HANDOFF_MAX_MS} ms`, h.ms !== null,
     h.ms === null ? `not within budget${h.owner ? ' (landed later)' : ''}` : `${h.ms} ms`);
   gate(`L${d}: nothing typed lands in the parent`, !h.stray);
@@ -213,6 +217,7 @@ for (let d = 2; d <= DEPTH; d++) {
 
 // ---------- infinitely fractal: hand-off time must not grow with depth ----------
 log(`hand-off ms by level: ${handoffMs.map(h => `L${h.d}=${h.ms}`).join(' ')}`);
+log(`app-side hand-off ms (keypress to focused child) by level: ${handoffMs.map(h => `L${h.d}=${h.app}`).join(' ')}`);
 if (handoffMs.length >= 4) {
   const ms = handoffMs.map(h => h.ms);
   const early = [...ms.slice(0, 3)].sort((a, b) => a - b)[1];
@@ -221,6 +226,49 @@ if (handoffMs.length >= 4) {
     late <= 1.5 * early + 400, `early median ${early} ms, deepest-3 max ${late} ms`);
 }
 gate(`reached the requested depth (${DEPTH})`, handoffMs.some(h => h.d === DEPTH));
+
+// ---------- deep-nesting layout: where does each level's width go? ----------
+// For each spine level, the label's blip box (left, width) and every element
+// between it and the parent blip that adds horizontal space (margin, padding,
+// border). Original Rizzoma lost ~22 px of width per level (22 px bullet
+// indent + 2 px border + 8 px editor margin, minus a -10 px right margin).
+const geometry = await page.evaluate((depth) => {
+  const boxOf = (label) => {
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      if ((n.nodeValue || '').includes(label)) {
+        const owner = n.parentElement?.closest('.ProseMirror')?.closest('[data-blip-id]');
+        if (owner) return owner;
+      }
+    }
+    return null;
+  };
+  const rows = [];
+  let prev = null;
+  for (let d = 2; d <= depth; d++) {
+    const el = boxOf(`L${d} label`);
+    if (!el) break;
+    const r = el.getBoundingClientRect();
+    const adds = [];
+    if (prev) {
+      for (let a = el; a && a !== prev; a = a.parentElement) {
+        const cs = getComputedStyle(a);
+        const px = (v) => Math.round(parseFloat(v) || 0);
+        const l = px(cs.marginLeft) + px(cs.paddingLeft) + px(cs.borderLeftWidth);
+        const rt = px(cs.marginRight) + px(cs.paddingRight) + px(cs.borderRightWidth);
+        if (l || rt) adds.push(`${a.tagName.toLowerCase()}.${(a.className || '').toString().split(' ').filter(Boolean).slice(0, 2).join('.')} L${l}/R${rt}`);
+      }
+    }
+    rows.push({ d, left: Math.round(r.left), width: Math.round(r.width), adds });
+    prev = el;
+  }
+  return rows;
+}, DEPTH);
+for (const g of geometry) log(`layout L${g.d}: left=${g.left} width=${g.width} ${g.adds.join(' | ')}`);
+if (geometry.length >= 3) {
+  const perLevel = (geometry[0].width - geometry[geometry.length - 1].width) / (geometry.length - 1);
+  log(`layout: width lost per level ${perLevel.toFixed(1)} px (original Rizzoma ~22 px)`);
+}
 
 // ---------- reload: fold-by-default (BLB §2) ----------
 await page.reload({ waitUntil: 'domcontentloaded' });

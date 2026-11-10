@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { beginChildTypeahead, cancelChildTypeahead, flushChildTypeahead } from '../../lib/inlineChildTypeahead';
+import { beginChildTypeahead, cancelChildTypeahead, flushChildTypeahead, markHandoff } from '../../lib/inlineChildTypeahead';
 import type { CSSProperties, ReactNode } from 'react';
 import { BlipMenu } from './BlipMenu';
 import { useActiveBlip } from './ActiveBlipContext';
@@ -930,6 +930,7 @@ export function RizzomaBlip({
 
         const newBlip = response.data as { id?: string; _id?: string };
         const newBlipId = newBlip.id || newBlip._id;
+        markHandoff('posted');
 
         console.log('[RizzomaBlip] Created child blip via Ctrl+Enter:', newBlipId);
 
@@ -1006,6 +1007,7 @@ export function RizzomaBlip({
               permissions: { ...blip.permissions },
               contributors: [],
             });
+            markHandoff('added');
           } else if (typeof w.__rizzomaTopicReload === 'function') {
             await w.__rizzomaTopicReload();
           } else {
@@ -1021,20 +1023,38 @@ export function RizzomaBlip({
           // closes when the child claims the active slot, and that save can
           // re-render the child back to view mode). Re-dispatch until the
           // child's editor is actually editable, backing off up to ~3s.
-          const tryEnterEdit = (attempt: number) => {
+          // Readiness is checked on every DOM change (MutationObserver), not
+          // only on the retry timer: polling at 150/400 ms added up to 400 ms
+          // of idle wait after the child was already editable.
+          let handedOff = false;
+          const checkReady = (): boolean => {
+            if (handedOff) return true;
             const container = document.querySelector(`[data-blip-id="${newBlipId}"]`);
-            const editable = container?.querySelector<HTMLElement>('.ProseMirror[contenteditable="true"]');
-            if (editable) {
-              // Done only when the NEW child's editor also holds the cursor. The
-              // enter-edit listener focuses only if collaboration was ready at that
-              // instant; when the editor becomes editable later, nothing focused it
-              // and the user's keystrokes went nowhere (measured: L2/L4/L5 never
-              // focused within 8 s). The pre-merge code focused here as well.
-              // Replay what the user typed since Ctrl+Enter into the child.
-              flushChildTypeahead(editable);
-              if (document.activeElement === editable || attempt >= 60) return;
-            }
-            if (attempt >= 60) { cancelChildTypeahead(); return; }
+            if (!container) return false;
+            markHandoff('mounted');
+            const editable = container.querySelector<HTMLElement>('.ProseMirror[contenteditable="true"]');
+            if (!editable) return false;
+            markHandoff('editable');
+            // Done only when the NEW child's editor also holds the cursor. The
+            // enter-edit listener focuses only if collaboration was ready at that
+            // instant; when the editor becomes editable later, nothing focused it
+            // and the user's keystrokes went nowhere (measured: L2/L4/L5 never
+            // focused within 8 s). The pre-merge code focused here as well.
+            // Replay what the user typed since Ctrl+Enter into the child.
+            flushChildTypeahead(editable);
+            if (document.activeElement !== editable) return false;
+            markHandoff('focused');
+            handedOff = true;
+            readyObserver.disconnect();
+            return true;
+          };
+          const readyObserver = new MutationObserver(() => { checkReady(); });
+          readyObserver.observe(document.body, {
+            subtree: true, childList: true, attributes: true, attributeFilter: ['contenteditable'],
+          });
+          const tryEnterEdit = (attempt: number) => {
+            if (checkReady()) return;
+            if (attempt >= 60) { readyObserver.disconnect(); cancelChildTypeahead(); return; }
             // Re-assert expansion idempotently. Never click the [+] marker here:
             // a click is a TOGGLE, so a retry could fold the very child it is
             // opening (the fractal then died one level deeper each time).
