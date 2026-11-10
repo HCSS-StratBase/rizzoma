@@ -83,3 +83,28 @@ SDS: Rizzoma must be **infinitely fractal**, so depth 10 is only the gate's samp
 The browser logged `[collab] waiting for seed authority`. Master's `editable: isEditing && collabReady` keeps a brand-new child read-only until its Y.js room confirms seed authority, which the pre-merge code did not do. Text typed in that window can be lost.
 
 **Open:** make the new child editable within one keystroke without giving up master's divergence protection. Not yet done: a run at depth 30 to prove there is no ceiling, and fixing the gate's root selector (`button.topic-tb-btn` no longer exists).
+
+
+## Addendum 2 (10 Nov, ~01:30): where the hand-off time goes; provider reuse tried and reverted
+
+**Trace** (local timing copy of the gate, logging requests, WebSocket frames and keypresses), level 3:
+
+| After Ctrl+Enter | Event |
+|---|---|
+| +0.2 s | child created |
+| +0.45 s | topic reloaded |
+| +0.5 s | child joins its room |
+| +0.74 s | child LEAVES and re-joins (remount) |
+| +0.8 s | sync |
+| following ~1.5 s | the parent finishes edit and PUTs, which triggers 5 full topic reloads; the child leaves and re-joins again |
+
+The child is never editable within 8 s.
+
+**Experiment: reuse the collaboration provider across remounts** (registry with a 4 s grace in `useCollaboration.ts`). Typecheck 0, and the collaboration unit tests passed (8 files, 74 tests). The gate did not improve: depth 10 gave 6/13, and depth 30 showed L2 and L4 never editable, about 2 s elsewhere. Reverted; the patch is kept in `docs/experiments/2611100130-provider-reuse-experiment.patch`.
+
+**New finding:** at L3b the child WAS editable and focused at 0.9 s, but 1.1 s later it was no longer editable. A remount resets the component's own `isEditing` state, so keeping the connection alive is not enough.
+
+**Remaining suspects:**
+1. The parent leaving edit mode moves the child from the editor portal to the view render (a remount by design).
+2. Every parent save triggers a full topic reload (`rizzoma:refresh-topics` -> `load(true, true)`), 5 in about 1.5 s.
+3. The parity renderer's positional keys (`n0`, `n1`, ...) shift when the parent's content changes, which can rebuild the child.
