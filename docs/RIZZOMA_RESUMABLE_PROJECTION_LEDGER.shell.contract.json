@@ -1,0 +1,990 @@
+{
+  "source_points": [
+    {
+      "id": "repo_choice",
+      "text": "Use a dedicated private hcss-utils/documentation-spine repository rather than repurposing adjacent repositories."
+    },
+    {
+      "id": "ordinal",
+      "text": "Ordinal retry positions are not durable content identity."
+    },
+    {
+      "id": "stable_id",
+      "text": "Stable job IDs derive from bound run identity, normalized parent path, operation type, and rendered body hash."
+    },
+    {
+      "id": "main",
+      "text": "The protected main branch contains canonical documents, schemas, and completed compact receipts."
+    },
+    {
+      "id": "run_branch",
+      "text": "Each live projection uses an isolated branch created from the exact canonical commit."
+    },
+    {
+      "id": "manifest",
+      "text": "The immutable manifest binds draft, contract, target, path, writer, canonical commit, and pre-write tree hash."
+    },
+    {
+      "id": "plan",
+      "text": "The deterministic plan records parent-before-child operations, dependencies, and source coverage."
+    },
+    {
+      "id": "readback",
+      "text": "A browser action becomes successful only after fresh persisted Rizzoma readback."
+    },
+    {
+      "id": "events",
+      "text": "Verified effects are recorded as append-only events with node and rendering evidence."
+    },
+    {
+      "id": "checkpoint",
+      "text": "Checkpoint state is derived from events and can be rebuilt."
+    },
+    {
+      "id": "receipt",
+      "text": "A final immutable receipt requires complete structural and visual acceptance evidence."
+    },
+    {
+      "id": "resume",
+      "text": "Resume revalidates bindings and live completed effects before executing missing stable jobs."
+    },
+    {
+      "id": "drift",
+      "text": "Changed inputs, targets, paths, branch heads, or completed effects fail closed as blocked_drift."
+    },
+    {
+      "id": "concurrency",
+      "text": "A project lease and expected Git head prevent concurrent writers from corrupting evidence."
+    },
+    {
+      "id": "executor",
+      "text": "The authenticated Windows CDP browser remains the supervised mutation executor."
+    },
+    {
+      "id": "ci",
+      "text": "GitHub Actions performs deterministic validation but never receives browser credentials."
+    },
+    {
+      "id": "security",
+      "text": "Secrets, cookies, profiles, session state, bulk captures, and large binaries are excluded."
+    },
+    {
+      "id": "pilot",
+      "text": "The pilot intentionally stops after two of five jobs on a disposable blip and resumes."
+    },
+    {
+      "id": "acceptance",
+      "text": "Acceptance proves no duplicates, no lost events, complete Hidden state, links, emphasis, structure, and PNG inspection."
+    },
+    {
+      "id": "adoption",
+      "text": "Real backfill begins only after the controlled interruption test passes."
+    }
+  ],
+  "tree": [
+    {
+      "label": "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+      "children": [
+        {
+          "label": "Ledger design",
+          "children": [
+            {
+              "label": "Core decision",
+              "children": [
+                {
+                  "label": "Identity over position",
+                  "children": [
+                    {
+                      "label": "An ordinal such as job 18 identifies one temporary plan position, so reordered or inserted work can make the same retry command mutate different content.",
+                      "covers": [
+                        "ordinal"
+                      ],
+                      "terminal_reason": "This sentence states the complete ordinal-retry rejection rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "A stable job identity combines the bound run, normalized parent path, operation type and rendered body hash, so unrelated plan insertions do not rename an existing effect.",
+                      "covers": [
+                        "stable_id"
+                      ],
+                      "terminal_reason": "This sentence states the complete stable-identity derivation rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Dedicated private ledger",
+                  "children": [
+                    {
+                      "label": "The pilot should use a private hcss-utils/documentation-spine repository because real drafts, targets and receipts require durable versioning without public exposure.",
+                      "covers": [
+                        "repo_choice"
+                      ],
+                      "terminal_reason": "This sentence states the complete private-repository choice rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "The existing agentic-documents, rizzoma-playback and private rizzoma repositories solve report generation, historical playback and application hosting respectively, so none is the ledger.",
+                      "covers": [
+                        "repo_choice"
+                      ],
+                      "terminal_reason": "This sentence states the complete adjacent-repository exclusion rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Repository topology",
+              "children": [
+                {
+                  "label": "Canonical main",
+                  "children": [
+                    {
+                      "label": "The protected main branch contains schemas, canonical project Markdown, projection declarations and compact completed receipts.",
+                      "covers": [
+                        "main"
+                      ],
+                      "terminal_reason": "This sentence states the complete canonical-main contents rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Heartbeat and per-operation checkpoint churn stays off main so its history remains a navigable record of accepted knowledge.",
+                      "covers": [
+                        "main",
+                        "checkpoint"
+                      ],
+                      "terminal_reason": "This sentence states the complete canonical-history boundary rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Projection branches",
+                  "children": [
+                    {
+                      "label": "Every execution starts from the exact canonical commit on projection project run-id, isolating its manifest, plan, events and checkpoint.",
+                      "covers": [
+                        "run_branch",
+                        "manifest",
+                        "plan"
+                      ],
+                      "terminal_reason": "This sentence states the complete projection-branch isolation rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "After acceptance, the detailed branch is tagged and retained while its compact final receipt is merged into main.",
+                      "covers": [
+                        "run_branch",
+                        "receipt"
+                      ],
+                      "terminal_reason": "This sentence states the complete completed-run preservation rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Durable file roles",
+                  "children": [
+                    {
+                      "label": "Projects hold Research Design, Progress, Decisions, Evidence, source metadata and Rizzoma projection declarations beside stable project identifiers.",
+                      "covers": [
+                        "main"
+                      ],
+                      "terminal_reason": "This sentence states the complete canonical-project layout rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Runs hold manifest.json, plan.json, events.jsonl, checkpoint.json and receipt.json, while schemas and validators remain shared.",
+                      "covers": [
+                        "manifest",
+                        "plan",
+                        "events",
+                        "checkpoint",
+                        "receipt"
+                      ],
+                      "terminal_reason": "This sentence states the complete runtime-file layout rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Run identity",
+              "children": [
+                {
+                  "label": "Immutable manifest",
+                  "children": [
+                    {
+                      "label": "Before mutation, the manifest binds schema and writer versions, canonical commit, draft and contract hashes, exact target, normalized parent path and expected tree hash.",
+                      "covers": [
+                        "manifest"
+                      ],
+                      "terminal_reason": "This sentence states the complete manifest binding rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Changing any bound field creates a new run because editing identity after effects land would sever the proof between intent and persisted content.",
+                      "covers": [
+                        "manifest",
+                        "drift"
+                      ],
+                      "terminal_reason": "This sentence states the complete manifest immutability rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Deterministic plan",
+                  "children": [
+                    {
+                      "label": "The plan orders operations parent before child and records dependencies, preconditions, source-point coverage and stable job IDs.",
+                      "covers": [
+                        "plan",
+                        "stable_id"
+                      ],
+                      "terminal_reason": "This sentence states the complete deterministic-plan contents rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Two identical bodies under different parents remain distinct because the normalized parent path participates in stable identity.",
+                      "covers": [
+                        "stable_id"
+                      ],
+                      "terminal_reason": "This sentence states the complete parent-path disambiguation rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Precondition proof",
+                  "children": [
+                    {
+                      "label": "The expected pre-write tree hash proves which live Rizzoma state authorized the first mutation.",
+                      "covers": [
+                        "manifest",
+                        "readback"
+                      ],
+                      "terminal_reason": "This sentence states the complete initial-tree precondition rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "The expected Git branch head proves which ledger state authorized each subsequent checkpoint push.",
+                      "covers": [
+                        "concurrency"
+                      ],
+                      "terminal_reason": "This sentence states the complete branch-head precondition rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Recovery protocol",
+          "children": [
+            {
+              "label": "Verified effect ledger",
+              "children": [
+                {
+                  "label": "Readback before success",
+                  "children": [
+                    {
+                      "label": "A browser click or successful API response is only an attempted action. A verified effect requires fresh persisted-page readback of the intended subtree.",
+                      "covers": [
+                        "readback"
+                      ],
+                      "terminal_reason": "This sentence states the complete verified-effect threshold rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Readback must confirm the affected node, rendered parent path and content hash before the writer may advance.",
+                      "covers": [
+                        "readback",
+                        "events"
+                      ],
+                      "terminal_reason": "This sentence states the complete per-effect readback evidence rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Append-only events",
+                  "children": [
+                    {
+                      "label": "Each successful event records job ID, sequence, timestamps, affected node IDs, rendered hash, observed path, executor version and relevant fold, link or emphasis evidence.",
+                      "covers": [
+                        "events"
+                      ],
+                      "terminal_reason": "This sentence states the complete successful-event schema rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Failures are classified and appended rather than overwritten, preserving the evidence needed to distinguish retryable interruption from semantic drift.",
+                      "covers": [
+                        "events",
+                        "drift"
+                      ],
+                      "terminal_reason": "This sentence states the complete failure-event preservation rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Derived checkpoints",
+                  "children": [
+                    {
+                      "label": "checkpoint.json summarizes completed job IDs, the latest verified event, eligible next jobs and current branch head.",
+                      "covers": [
+                        "checkpoint"
+                      ],
+                      "terminal_reason": "This sentence states the complete checkpoint summary rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "The checkpoint is disposable derived state because the append-only event stream can reconstruct it exactly.",
+                      "covers": [
+                        "checkpoint",
+                        "events"
+                      ],
+                      "terminal_reason": "This sentence states the complete checkpoint rebuildability rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Resume semantics",
+              "children": [
+                {
+                  "label": "Recovery sequence",
+                  "children": [
+                    {
+                      "label": "Resume reloads the manifest, plan and events, recomputes their hashes, checks the branch head and reads the live target before any mutation.",
+                      "covers": [
+                        "resume",
+                        "manifest",
+                        "plan",
+                        "events"
+                      ],
+                      "terminal_reason": "This sentence states the complete resume preflight rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "It revalidates every completed live effect and executes only dependency-ready stable jobs without a verified success event.",
+                      "covers": [
+                        "resume",
+                        "stable_id",
+                        "readback"
+                      ],
+                      "terminal_reason": "This sentence states the complete missing-job execution rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Drift refusal",
+                  "children": [
+                    {
+                      "label": "A changed draft, contract, canonical commit, target, parent path or branch head produces blocked_drift instead of reinterpretation.",
+                      "covers": [
+                        "drift"
+                      ],
+                      "terminal_reason": "This sentence states the complete input-drift refusal rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "A missing or altered previously completed effect also produces blocked_drift because the old receipt no longer describes the live tree.",
+                      "covers": [
+                        "drift",
+                        "readback"
+                      ],
+                      "terminal_reason": "This sentence states the complete live-effect drift refusal rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Concurrent writer guard",
+                  "children": [
+                    {
+                      "label": "One orchestrator holds the project projection lease, and every checkpoint push compares the expected remote head with the actual head.",
+                      "covers": [
+                        "concurrency"
+                      ],
+                      "terminal_reason": "This sentence states the complete single-writer lease rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "A head mismatch stops the run, while force-pushing checkpoint history is prohibited because it would erase execution evidence.",
+                      "covers": [
+                        "concurrency",
+                        "events"
+                      ],
+                      "terminal_reason": "This sentence states the complete history-preservation guard rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Operationalization",
+          "children": [
+            {
+              "label": "Execution boundary",
+              "children": [
+                {
+                  "label": "Local CDP executor",
+                  "children": [
+                    {
+                      "label": "The supervised Windows CDP process owns authenticated Rizzoma mutation, fresh readback, evidence capture and checkpoint publication.",
+                      "covers": [
+                        "executor",
+                        "readback"
+                      ],
+                      "terminal_reason": "This sentence states the complete local-executor responsibility rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Its orchestrator exposes process, heartbeat, progress and verified-effect health separately and stops after bounded retries.",
+                      "covers": [
+                        "executor",
+                        "events"
+                      ],
+                      "terminal_reason": "This sentence states the complete executor-health contract rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "GitHub validation",
+                  "children": [
+                    {
+                      "label": "GitHub Actions validates schemas, hashes, stable-job uniqueness, source coverage, receipt completeness and forbidden artifacts.",
+                      "covers": [
+                        "ci",
+                        "acceptance"
+                      ],
+                      "terminal_reason": "This sentence states the complete continuous-validation scope rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Actions never operate the authenticated browser, making GitHub the durable control plane rather than the interactive executor.",
+                      "covers": [
+                        "ci",
+                        "executor"
+                      ],
+                      "terminal_reason": "This sentence states the complete control-plane boundary rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Security separation",
+                  "children": [
+                    {
+                      "label": "Credentials, cookies, browser profiles, session-state files and authentication tokens never enter the repository or workflow logs.",
+                      "covers": [
+                        "security",
+                        "ci"
+                      ],
+                      "terminal_reason": "This sentence states the complete credential exclusion rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Generic schemas, validators and synthetic fixtures may be public, while real topic URLs, drafts, manifests and receipts remain private.",
+                      "covers": [
+                        "security",
+                        "repo_choice"
+                      ],
+                      "terminal_reason": "This sentence states the complete public-private separation rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Pilot acceptance",
+              "children": [
+                {
+                  "label": "Controlled interruption",
+                  "children": [
+                    {
+                      "label": "The first live test writes exactly two verified jobs of a deterministic five-job tree to a disposable blip and then terminates the executor.",
+                      "covers": [
+                        "pilot"
+                      ],
+                      "terminal_reason": "This sentence states the complete intentional-interruption setup rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Restarting with the same branch and manifest must recognize the first two effects and write only the remaining three.",
+                      "covers": [
+                        "pilot",
+                        "resume",
+                        "stable_id"
+                      ],
+                      "terminal_reason": "This sentence states the complete duplicate-free continuation rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Receipt gate",
+                  "children": [
+                    {
+                      "label": "The final receipt requires every planned job, complete persisted-tree parity, a passing scoped probe, Hidden threads, surviving links and all three emphasis tiers.",
+                      "covers": [
+                        "receipt",
+                        "acceptance"
+                      ],
+                      "terminal_reason": "This sentence states the complete structural-receipt gate rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Medium-resolution PNG inspection, final tree hash, Git heads and durable screenshot references complete the acceptance evidence.",
+                      "covers": [
+                        "receipt",
+                        "acceptance"
+                      ],
+                      "terminal_reason": "This sentence states the complete visual-receipt gate rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                },
+                {
+                  "label": "Adoption boundary",
+                  "children": [
+                    {
+                      "label": "The pilot fails on any duplicate node, lost event, unverified advancement, accepted drift, rewritten history or incomplete receipt.",
+                      "covers": [
+                        "acceptance"
+                      ],
+                      "terminal_reason": "This sentence states the complete pilot-failure criteria rule, so splitting it would only repeat the same requirement."
+                    },
+                    {
+                      "label": "Only after the controlled interruption passes should receipt-backed resume repair the incomplete benchmark branch or manage a real documentation projection.",
+                      "covers": [
+                        "adoption",
+                        "pilot"
+                      ],
+                      "terminal_reason": "This sentence states the complete production-adoption threshold rule, so splitting it would only repeat the same requirement."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "depth_policy": {
+    "mode": "content-derived",
+    "minimum_is_floor_only": true,
+    "terminal_audit": [
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Core decision",
+          "Identity over position",
+          "An ordinal such as job 18 identifies one temporary plan position, so reordered or inserted work can make the same retry command mutate different content."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Core decision",
+          "Identity over position",
+          "A stable job identity combines the bound run, normalized parent path, operation type and rendered body hash, so unrelated plan insertions do not rename an existing effect."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Core decision",
+          "Dedicated private ledger",
+          "The pilot should use a private hcss-utils/documentation-spine repository because real drafts, targets and receipts require durable versioning without public exposure."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Core decision",
+          "Dedicated private ledger",
+          "The existing agentic-documents, rizzoma-playback and private rizzoma repositories solve report generation, historical playback and application hosting respectively, so none is the ledger."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Repository topology",
+          "Canonical main",
+          "The protected main branch contains schemas, canonical project Markdown, projection declarations and compact completed receipts."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Repository topology",
+          "Canonical main",
+          "Heartbeat and per-operation checkpoint churn stays off main so its history remains a navigable record of accepted knowledge."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Repository topology",
+          "Projection branches",
+          "Every execution starts from the exact canonical commit on projection project run-id, isolating its manifest, plan, events and checkpoint."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Repository topology",
+          "Projection branches",
+          "After acceptance, the detailed branch is tagged and retained while its compact final receipt is merged into main."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Repository topology",
+          "Durable file roles",
+          "Projects hold Research Design, Progress, Decisions, Evidence, source metadata and Rizzoma projection declarations beside stable project identifiers."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Repository topology",
+          "Durable file roles",
+          "Runs hold manifest.json, plan.json, events.jsonl, checkpoint.json and receipt.json, while schemas and validators remain shared."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Run identity",
+          "Immutable manifest",
+          "Before mutation, the manifest binds schema and writer versions, canonical commit, draft and contract hashes, exact target, normalized parent path and expected tree hash."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Run identity",
+          "Immutable manifest",
+          "Changing any bound field creates a new run because editing identity after effects land would sever the proof between intent and persisted content."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Run identity",
+          "Deterministic plan",
+          "The plan orders operations parent before child and records dependencies, preconditions, source-point coverage and stable job IDs."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Run identity",
+          "Deterministic plan",
+          "Two identical bodies under different parents remain distinct because the normalized parent path participates in stable identity."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Run identity",
+          "Precondition proof",
+          "The expected pre-write tree hash proves which live Rizzoma state authorized the first mutation."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Ledger design",
+          "Run identity",
+          "Precondition proof",
+          "The expected Git branch head proves which ledger state authorized each subsequent checkpoint push."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Verified effect ledger",
+          "Readback before success",
+          "A browser click or successful API response is only an attempted action. A verified effect requires fresh persisted-page readback of the intended subtree."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Verified effect ledger",
+          "Readback before success",
+          "Readback must confirm the affected node, rendered parent path and content hash before the writer may advance."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Verified effect ledger",
+          "Append-only events",
+          "Each successful event records job ID, sequence, timestamps, affected node IDs, rendered hash, observed path, executor version and relevant fold, link or emphasis evidence."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Verified effect ledger",
+          "Append-only events",
+          "Failures are classified and appended rather than overwritten, preserving the evidence needed to distinguish retryable interruption from semantic drift."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Verified effect ledger",
+          "Derived checkpoints",
+          "checkpoint.json summarizes completed job IDs, the latest verified event, eligible next jobs and current branch head."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Verified effect ledger",
+          "Derived checkpoints",
+          "The checkpoint is disposable derived state because the append-only event stream can reconstruct it exactly."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Resume semantics",
+          "Recovery sequence",
+          "Resume reloads the manifest, plan and events, recomputes their hashes, checks the branch head and reads the live target before any mutation."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Resume semantics",
+          "Recovery sequence",
+          "It revalidates every completed live effect and executes only dependency-ready stable jobs without a verified success event."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Resume semantics",
+          "Drift refusal",
+          "A changed draft, contract, canonical commit, target, parent path or branch head produces blocked_drift instead of reinterpretation."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Resume semantics",
+          "Drift refusal",
+          "A missing or altered previously completed effect also produces blocked_drift because the old receipt no longer describes the live tree."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Resume semantics",
+          "Concurrent writer guard",
+          "One orchestrator holds the project projection lease, and every checkpoint push compares the expected remote head with the actual head."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Recovery protocol",
+          "Resume semantics",
+          "Concurrent writer guard",
+          "A head mismatch stops the run, while force-pushing checkpoint history is prohibited because it would erase execution evidence."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Execution boundary",
+          "Local CDP executor",
+          "The supervised Windows CDP process owns authenticated Rizzoma mutation, fresh readback, evidence capture and checkpoint publication."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Execution boundary",
+          "Local CDP executor",
+          "Its orchestrator exposes process, heartbeat, progress and verified-effect health separately and stops after bounded retries."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Execution boundary",
+          "GitHub validation",
+          "GitHub Actions validates schemas, hashes, stable-job uniqueness, source coverage, receipt completeness and forbidden artifacts."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Execution boundary",
+          "GitHub validation",
+          "Actions never operate the authenticated browser, making GitHub the durable control plane rather than the interactive executor."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Execution boundary",
+          "Security separation",
+          "Credentials, cookies, browser profiles, session-state files and authentication tokens never enter the repository or workflow logs."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Execution boundary",
+          "Security separation",
+          "Generic schemas, validators and synthetic fixtures may be public, while real topic URLs, drafts, manifests and receipts remain private."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Pilot acceptance",
+          "Controlled interruption",
+          "The first live test writes exactly two verified jobs of a deterministic five-job tree to a disposable blip and then terminates the executor."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Pilot acceptance",
+          "Controlled interruption",
+          "Restarting with the same branch and manifest must recognize the first two effects and write only the remaining three."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Pilot acceptance",
+          "Receipt gate",
+          "The final receipt requires every planned job, complete persisted-tree parity, a passing scoped probe, Hidden threads, surviving links and all three emphasis tiers."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Pilot acceptance",
+          "Receipt gate",
+          "Medium-resolution PNG inspection, final tree hash, Git heads and durable screenshot references complete the acceptance evidence."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Pilot acceptance",
+          "Adoption boundary",
+          "The pilot fails on any duplicate node, lost event, unverified advancement, accepted drift, rewritten history or incomplete receipt."
+        ],
+        "unexposed_subthoughts": []
+      },
+      {
+        "path": [
+          "[GPT-5.6 Sol · Codex] Resumable projection ledger",
+          "Operationalization",
+          "Pilot acceptance",
+          "Adoption boundary",
+          "Only after the controlled interruption passes should receipt-backed resume repair the incomplete benchmark branch or manage a real documentation projection."
+        ],
+        "unexposed_subthoughts": []
+      }
+    ]
+  },
+  "links": [
+    {
+      "leaf_prefix": "Actions never operate",
+      "anchor": "durable control plane",
+      "url": "https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/RIZZOMA_RESUMABLE_PROJECTION_LEDGER.md"
+    }
+  ],
+  "emphases": [
+    {
+      "leaf_prefix": "A stable job identity",
+      "anchor": "stable job identity",
+      "style": "bold"
+    },
+    {
+      "leaf_prefix": "A browser click",
+      "anchor": "verified effect",
+      "style": "bolditalic"
+    },
+    {
+      "leaf_prefix": "Actions never operate",
+      "anchor": "control plane",
+      "style": "italic"
+    }
+  ],
+  "acceptance": {
+    "require_persisted_readback": true,
+    "require_folded_threads": true,
+    "require_visual_png": true,
+    "require_scoped_structure_probe": true
+  },
+  "draft_sha256": "ce72777348afddf80dfbed2f739b43c5049edf55d2bd48e3a9f122052e1c01e4"
+}

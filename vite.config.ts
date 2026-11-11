@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig(({ command, mode }) => {
-  const featAll = process.env.FEAT_ALL || (command === 'build' || mode === 'production' ? '1' : '');
+  const featAll = process.env.FEAT_ALL || '1';
 
   return {
     plugins: [react()],
@@ -24,11 +24,8 @@ export default defineConfig(({ command, mode }) => {
       'import.meta.env.FEAT_TASKS': JSON.stringify(process.env.FEAT_TASKS || ''),
       'import.meta.env.BUSINESS_ACCOUNT': JSON.stringify(process.env.BUSINESS_ACCOUNT || ''),
       // Track F: visual parity with original rizzoma.com (B1 reskin + B2 inline render).
-      // OFF by default — opt in via FEAT_RIZZOMA_PARITY_RENDER=1. Without this define,
-      // the client's import.meta.env.FEAT_RIZZOMA_PARITY_RENDER is undefined and the
-      // FEATURES.RIZZOMA_PARITY_RENDER flag stays false even when the server-side env
-      // is set — which is what was happening on the dev VPS through 2026-05-05.
-      'import.meta.env.FEAT_RIZZOMA_PARITY_RENDER': JSON.stringify(process.env.FEAT_RIZZOMA_PARITY_RENDER || ''),
+      // Enabled by default for authentic visual parity.
+      'import.meta.env.FEAT_RIZZOMA_PARITY_RENDER': JSON.stringify(process.env.FEAT_RIZZOMA_PARITY_RENDER || '1'),
       // Track G: native fractal-render port. Same trap-avoidance comment as above —
       // without this define, the client's flag stays undefined no matter what the
       // server-side env says. See docs/NATIVE_RENDER_PORT_PLAN.md and GH #50–#56.
@@ -56,9 +53,9 @@ export default defineConfig(({ command, mode }) => {
   },
   server: {
     host: true,
-    // Overridable so a second instance (e.g. a dev deployment next to the
-    // live one) can run on its own ports: VITE_PORT + VITE_API_TARGET.
+    // Overridable so a staging instance can run beside live on its own ports.
     port: Number(process.env.VITE_PORT || 3000),
+    strictPort: !!process.env.VITE_PORT,
     allowedHosts: true,
     proxy: {
       '/api': {

@@ -1,0 +1,16 @@
+#!/bin/sh
+# Rizzoma pre-push: run the parity gate and say loudly when it fails.
+# Warn-only by default so a red gate does not strand work; set RIZZOMA_PREPUSH_STRICT=1 to block the push.
+# Install (once per clone): sh scripts/install-git-hooks.sh
+ROOT=$(git rev-parse --show-toplevel)
+cd "$ROOT" || exit 0
+[ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh" >/dev/null 2>&1
+command -v node >/dev/null 2>&1 || { echo "[pre-push] node not found; parity gate NOT run"; exit 0; }
+if node scripts/check-rizzoma-parity-gate.mjs; then
+  echo "[pre-push] parity gate: PASS"
+else
+  echo "[pre-push] parity gate: FAIL (see above). Unit tests run in CI; run 'npm test' from a Linux checkout."
+  [ "$RIZZOMA_PREPUSH_STRICT" = "1" ] && { echo "[pre-push] STRICT: push blocked"; exit 1; }
+  echo "[pre-push] warn-only: push continues (set RIZZOMA_PREPUSH_STRICT=1 to block)"
+fi
+exit 0

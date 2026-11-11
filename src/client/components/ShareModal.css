@@ -1,0 +1,174 @@
+/* ShareModal.css - Authentic Legacy Rizzoma Share Popover Style */
+
+.share-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.share-modal-card {
+  width: 500px;
+  max-width: 95vw;
+  background: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid #b5bec5;
+  padding: 16px;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.share-url-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.share-url-input {
+  flex: 1;
+  height: 30px;
+  padding: 0 8px;
+  font-size: 13px;
+  border: 1px solid #b5bec5;
+  border-radius: 2px;
+  background: #ffffff;
+  color: #333333;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.share-url-input:focus {
+  border-color: #4ea0f1;
+}
+
+.share-copy-btn {
+  height: 30px;
+  padding: 0 14px;
+  background: #f0f0f0;
+  border: 1px solid #b5bec5;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #4c5a68;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.share-copy-btn:hover {
+  background: #e2e6eb;
+}
+
+/* Authentic #EEF3F7 Privacy Box matching 032-share-modal.png */
+.share-privacy-box {
+  background: #eef3f7;
+  border: 1px solid #d5dee5;
+  border-radius: 3px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.share-privacy-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.share-privacy-option input[type="radio"] {
+  margin-top: 3px;
+  cursor: pointer;
+}
+
+.share-privacy-icon {
+  width: 24px;
+  height: 24px;
+  background: #d6dadf;
+  border: 1px solid #9aa1a7;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.share-privacy-text {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #222222;
+}
+
+.share-privacy-text strong {
+  color: #000000;
+  margin-right: 4px;
+}
+
+.share-privacy-text .share-details {
+  color: #5f7484;
+}
+
+.share-permissions-box {
+  padding: 0 4px;
+  margin-bottom: 14px;
+  display: flex;
+  gap: 18px;
+  font-size: 12px;
+  color: #4c5a68;
+}
+
+.share-permissions-box label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.share-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.share-btn-save {
+  height: 30px;
+  padding: 0 16px;
+  background: #4ea0f1;
+  color: #ffffff;
+  border: 1px solid #3682cf;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.share-btn-save:hover {
+  background: #398de3;
+}
+
+.share-btn-cancel {
+  height: 30px;
+  padding: 0 14px;
+  background: #f0f0f0;
+  color: #555555;
+  border: 1px solid #b5bec5;
+  border-radius: 2px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.share-btn-cancel:hover {
+  background: #e2e6eb;
+}

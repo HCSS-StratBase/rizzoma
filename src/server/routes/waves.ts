@@ -76,6 +76,19 @@ const sharingPolicySchema = z.object({
   allowEdits: policy.shareLevel === 'private' ? false : policy.allowEdits,
 }));
 
+function flattenBlips(blips: FlatBlip[]): Array<{ id: string; updatedAt: number }> {
+  const out: Array<{ id: string; updatedAt: number }> = [];
+  const visit = (n: FlatBlip) => {
+    if (n && n.id) {
+      const updatedAt = Number(n.updatedAt ?? n.createdAt ?? 0);
+      out.push({ id: String(n.id), updatedAt });
+    }
+    (n.children || []).forEach(visit);
+  };
+  (blips || []).forEach(visit);
+  return out;
+}
+
 async function loadWaveBlipTree(waveId: string): Promise<{ blips: Blip[]; roots: FlatBlip[] }> {
   const result = await find<Blip>(
     { type: 'blip', waveId },
@@ -292,6 +305,26 @@ router.get('/:id/history', async (req, res) => {
       updatedAt: d.updatedAt,
       snapshotVersion: d.snapshotVersion,
     }));
+    // If no history entries exist yet, synthesize baseline from topic content so playback is never blank
+    if (entries.length === 0) {
+      try {
+        const topic = await getDoc<any>(waveId);
+        if (topic) {
+          entries.push({
+            id: `blip_history:${waveId}:${topic.createdAt || Date.now()}`,
+            blipId: waveId,
+            waveId: waveId,
+            content: topic.content || '',
+            authorId: topic.authorId,
+            authorName: topic.authorName || 'Author',
+            event: 'create',
+            createdAt: topic.createdAt || Date.now(),
+            updatedAt: topic.updatedAt || Date.now(),
+            snapshotVersion: 1,
+          });
+        }
+      } catch {}
+    }
     const blipIds = [...new Set(entries.map(e => e.blipId))];
     const earliest = entries.length > 0 ? entries[0].createdAt : 0;
     const latest = entries.length > 0 ? entries[entries.length - 1].createdAt : 0;
@@ -332,19 +365,6 @@ router.get('/:id', async (req, res) => {
 });
 
 // compute a depth-first order of blips (preorder) including timestamps
-function flattenBlips(blips: FlatBlip[]): Array<{ id: string; updatedAt: number }> {
-  const out: Array<{ id: string; updatedAt: number }> = [];
-  const visit = (n: FlatBlip) => {
-    if (n && n.id) {
-      const updatedAt = Number(n.updatedAt ?? n.createdAt ?? 0);
-      out.push({ id: String(n.id), updatedAt });
-    }
-    (n.children || []).forEach(visit);
-  };
-  (blips || []).forEach(visit);
-  return out;
-}
-
 // GET /api/waves/:id/unread — list unread blip IDs for current user
 // noStore: per-user dynamic (unread list is per-user, not part of the wave doc)
 router.get('/:id/unread', noStore, async (req, res) => {
@@ -410,10 +430,14 @@ router.get('/:id/prev', noStore, async (req, res) => {
     const r = await find<BlipRead>({ type: 'read', userId, waveId: id }, { limit: 10000 });
     const readMap = new Map<string, number>();
     (r.docs || []).forEach((d) => readMap.set(String(d.blipId), Number((d as any).readAt || 0)));
-    const startIdx = before ? Math.max(0, order.findIndex((o) => o.id === before) - 1) : order.length - 1;
+    const beforeIdx = before ? order.findIndex((o) => o.id === before) : -1;
+    const startIdx = before
+      ? (beforeIdx > 0 ? beforeIdx - 1 : order.length - 1)
+      : order.length - 1;
     let prev: string | null = null;
     for (let i = startIdx; i >= 0; i--) {
       const entry = order[i];
+      if (!entry) continue;
       const readAt = readMap.get(entry.id) || 0;
       if (entry && entry.updatedAt > readAt) { prev = entry.id; break; }
     }

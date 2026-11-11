@@ -1,5 +1,29 @@
 # Visual Screenshot Sweep
 
+## Hard parity gate — added 2026-07-13
+
+UI/parity work is not allowed to close on a plain `visual:sweep` programmatic pass. The required gate is now:
+
+```bash
+npm run visual:sweep
+RIZZOMA_SWEEP_DIR=<new screenshots/*-feature-sweep folder> npm run visual:coverage
+npm run parity:gate
+```
+
+`npm run parity:gate` runs [scripts/check-rizzoma-parity-gate.mjs](../scripts/check-rizzoma-parity-gate.mjs). It blocks if today's UI/sweep/status work lacks any of the following:
+
+- the legacy reference set under `screenshots/260224-2343-rizzoma-live-reference/feature/rizzoma-core-features/`;
+- a fresh current `screenshots/*-feature-sweep/` folder with passing `manifest.md`;
+- current `coverage.md`;
+- saved side-by-side legacy/current comparison PNGs under `legacy-current-comparisons/`;
+- a written `PARITY_AUDIT.md` with measured counts, screenshot gaps, severe failures, and next fixes.
+
+The project Stop hook [visual-sweep-gate.sh](../.claude/hooks/visual-sweep-gate.sh) calls the same npm gate. On machines where `.claude/settings.local.json` is active, register that hook under Stop. The checked-in hook file is durable; `.claude/settings.local.json` itself is intentionally local/ignored.
+
+**2026-07-14 update (Claude Fable 5):** the gate now enforces the FULL coverage matrix (SDS directive): coverage `screenshot_gap > 0` is a hard FAIL; the legacy reference archive must be at matrix scale (>=150 PNG+md pairs across the Feb set + `screenshots/260714-legacy-reference-archive/`, target ~243); comparison floor raised to 16. The systematic legacy archive (126 captures over 4 read-only passes of rizzoma.com) plus the two-client realtime capture (`capture_realtime_pair.mjs`, closes VF-039/040) brought the chain to PASS: 44/44 sweep gates, 159/159 coverage rows with 0 gaps, 24 comparison sheets, audit at `screenshots/260714-021500-feature-sweep/legacy-current-comparisons/PARITY_AUDIT.md` (verdict: EVIDENCE-COMPLETE / VISUAL PARITY IN_PROGRESS — deep-BLB layout divergence is the #1 open item).
+
+Latest audit anchor: [PARITY_AUDIT.md](../screenshots/260713-225614-public-parity-sweep-feature-sweep/legacy-current-comparisons/PARITY_AUDIT.md) recorded FAIL / IN_PROGRESS; superseded by the 2026-07-14 audit above.
+
 ## 2026-04-24 Sweep
 
 - Scope: fresh public-production sweep against `https://138-201-62-161.nip.io` for documented functionality where screenshots are the right artifact.

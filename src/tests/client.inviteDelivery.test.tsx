@@ -120,14 +120,14 @@ describe('client invitation delivery feedback', () => {
     await act(async () => setValue(emailInput, 'sent@example.test, failed@example.test, sent@example.test'));
 
     await act(async () => {
-      container.querySelector<HTMLButtonElement>('.modal-footer .btn-primary')!.click();
+      container.querySelector<HTMLButtonElement>('.invite-btn-primary')!.click();
       await Promise.resolve();
       await Promise.resolve();
     });
 
     expect(onClose).not.toHaveBeenCalled();
     expect(emailInput.value).toBe('failed@example.test');
-    expect(container.querySelector<HTMLButtonElement>('.modal-footer .btn-primary')!.disabled).toBe(false);
+    expect(container.querySelector<HTMLButtonElement>('.invite-btn-primary')!.disabled).toBe(false);
     expect(inviteMocks.toast).toHaveBeenCalledWith(expect.stringContaining('1 invitation(s) succeeded; 1 failed'), 'error');
   });
 });

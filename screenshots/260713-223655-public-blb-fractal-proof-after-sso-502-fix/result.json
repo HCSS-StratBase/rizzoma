@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "baseUrl": "https://138-201-62-161.nip.io",
+  "url": "https://138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a00740b",
+  "email": "blb-proof-20260713T203706@example.com",
+  "topicId": "18fd97812660e69bf157d9dc5a00740b",
+  "rootId": "18fd97812660e69bf157d9dc5a00740b:b1783975030484",
+  "nestedId": "18fd97812660e69bf157d9dc5a00740b:b1783975030531",
+  "terminalId": "18fd97812660e69bf157d9dc5a00740b:b1783975030566",
+  "collapsedRoot": {
+    "text": "•Root reply label+",
+    "hasBullet": true,
+    "hasPlus": true
+  },
+  "nestedCollapsed": {
+    "text": "•Nested reply label+",
+    "hasBullet": true,
+    "hasPlus": true
+  },
+  "terminalCollapsed": {
+    "text": "•Terminal leaf label+",
+    "hasBullet": true,
+    "hasPlus": true
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "outDir": "/mnt/c/Rizzoma/screenshots/260713-223655-public-blb-fractal-proof-after-sso-502-fix"
+}

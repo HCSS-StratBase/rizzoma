@@ -1,209 +1,109 @@
 # Worklog — 2026-07-13
 
-## PR #71 deployment and concurrent read-marker closeout
+Branch: `feature/native-fractal-port`
 
-- PR [#71](https://github.com/HCSS-StratBase/rizzoma/pull/71) passed all seven
-  GitHub checks and merged as exact master
-  `0553a611c54a7cfa8faf466ac0797a13b4aa51d4`.
-- The immutable production build matched all **994** lockfile-driven production
-  packages. The exact release passed private green `:8102` health and asset
-  checks, then replaced blue through a zero-overlap cutover. Both nginx vhosts
-  now target green; CouchDB, Redis, and ClamAV report ready.
-- Resumed two-account acceptance verified invitation acceptance, role changes,
-  Task and mention surfaces, Yjs relay/reconnect, Follow-the-Green, recursive
-  exports, public/private sharing, upload ACLs, and revocation. The final console
-  gate correctly stopped on one real defect instead of accepting a partial
-  result.
-- Exact production evidence showed two simultaneous mark-read requests for the
-  same user/wave/blip. Both read the same CouchDB revision; one returned 200 and
-  the other conflict escaped as 500.
+## BLB collapsed-row affordance + dev proof
 
-## Read-marker repair
+- Fixed the immediate BLB failure where collapsed blips could render as terminal-looking text without a visible `[+]` affordance:
+  - `src/client/components/blip/RizzomaBlip.tsx`
+  - collapsed root/list rows now stop click propagation, expand deterministically, and always render the green/grey `[+]` affordance
+  - nested collapsed child rows also always render `[+]`
+  - `onToggleCollapse` now fires only on collapse, not on expand, so expansion is not immediately counteracted by parent collapse state
+- Fixed a proxy-sensitive unread-route bug:
+  - `src/server/routes/waves.ts`
+  - `/api/waves/:id/unread`, `/next`, and `/prev` no longer call the app through `fetch(req.protocol + req.headers.host)`; they compute the blip order directly from CouchDB
+  - updated `src/tests/routes.waves.prev.test.ts` for the direct CouchDB `_find` path and fixed the empty-order `/prev` edge case
+- Added a reusable clickable proof harness:
+  - `scripts/verify-blb-fractal-proof.mjs`
+  - creates a fresh authenticated test user, topic, root blip, nested blip, terminal leaf, screenshots the BLB states, and writes `result.json`
+  - `scripts/rizzoma_sanity_sweep.mjs` now supports `RZ_BASE`, `RZ_TOPIC`, `RZ_EMAIL`, `RZ_PASS`, and `RZ_OUT_DIR`
+- Dev VPS state:
+  - active checkout `/data/large-projects/stephan/rizzoma_260612` synced to `75d888c7`
+  - restarted dev server/client with `FEAT_ALL=1`
+  - repaired `dev.138-201-62-161.nip.io` nginx proxy, which had been pointing at dead `127.0.0.1:8101`; enabled vhost now proxies to the live Vite dev server at `127.0.0.1:3000`
+  - backup: `/etc/nginx/sites-enabled/rizzoma-dev.conf.bak-20260713-blb-dev-proxy`
+- Verification:
+  - `npm run build` passed
+  - targeted route tests passed: `src/tests/routes.waves.unread.test.ts`, `src/tests/routes.waves.prev.test.ts`, `src/tests/routes.waves.test.ts`, `src/tests/routes.blips.permissions.test.ts` — 11/11
+  - full `npm run test` passed — 55 files, 245 passed, 3 skipped
+  - clickable dev proof passed at [BLB proof 20260713T132301](https://dev.138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a005c3a)
+  - proof artifacts: `screenshots/260713-152256-dev-https-blb-fractal-proof-clean/`
+  - visually inspected PNGs show:
+    - topic root body uses real bullets
+    - collapsed root reply renders bullet + green `[+]`
+    - expanded root shows bulleted content and nested bullet + green `[+]`
+    - expanded nested blip shows terminal leaf as bullet + green `[+]`
+    - reload returns to persisted collapsed BLB rows
+- Boundary:
+  - this was initially verified on the dev VPS URL, then the bare public hostname was repaired/cut over after OAuth exposed a stale nginx upstream
+  - only the proof path was visually verified today; broader feature sweep and mobile/iPhone Safari remain separate gates
 
-- Added `src/server/lib/readMarkers.ts`, a shared upsert for single and bulk
-  routes. New markers use a deterministic CouchDB ID; retries reread that exact
-  document rather than trusting a potentially stale Mango result.
-- Existing legacy random-ID markers are found once and remain in place.
-  Concurrent update and initial-insert conflicts retry at most four writes;
-  `readAt` uses the maximum requested/current value; unrelated CouchDB errors
-  propagate unchanged.
-- Regression tests enforce CouchDB revision conflicts and prove two simultaneous
-  updates both return 2xx, two simultaneous first inserts both return 2xx with
-  one marker, legacy reuse creates no duplicate, and a simulated 503 is not
-  masked.
+## Public hostname 502 + OAuth callback repair
 
-## Verification
+- Reproduced the user-facing `502 Bad Gateway` after Gmail SSO at the nginx layer:
+  - the Google callback returned to `https://138-201-62-161.nip.io/api/auth/google/callback`
+  - enabled production nginx vhost `/etc/nginx/sites-enabled/rizzoma.conf` still proxied to dead `127.0.0.1:8101`
+  - nginx logged `connect() failed (111: Connection refused) while connecting to upstream`
+- Confirmed the legacy production node process on `8102` was alive, then corrected the stale enabled vhost:
+  - temporary restore: `127.0.0.1:8101` → `127.0.0.1:8102`
+  - backup: `/etc/nginx/sites-enabled/rizzoma.conf.bak-20260713-fix-prod-502`
+- Confirmed OAuth on both dev and bare public hosts redirects back to the bare hostname, so a dev-only proof URL is not sufficient for authenticated SSO testing.
+- Cut the bare public hostname over to the already-verified new app on Vite/API:
+  - `/etc/nginx/sites-enabled/rizzoma.conf`: `proxy_pass http://127.0.0.1:3000;`
+  - backup: `/etc/nginx/sites-enabled/rizzoma.conf.bak-20260713-cutover-new-blb`
+  - `nginx -t` succeeded and `systemctl reload nginx` completed
+- Verification:
+  - `https://138-201-62-161.nip.io/` returns 200
+  - `https://138-201-62-161.nip.io/api/health` returns 200
+  - `https://138-201-62-161.nip.io/api/auth/google` returns 302 to Google with callback back to `https://138-201-62-161.nip.io/api/auth/google/callback`
+  - public BLB proof passed at [BLB proof 20260713T203706](https://138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a00740b)
+  - proof artifacts: `screenshots/260713-223655-public-blb-fractal-proof-after-sso-502-fix/`
+  - visually inspected PNGs show public root/nested/terminal bullet-plus recursion and reload persistence
 
-- Focused unread route suite: **8 passed / 0 failed**.
-- Focused unread/Follow-the-Green matrix: **18 passed / 1 skipped / 0 failed**.
-- Full Vitest: **108 files / 651 passed / 3 skipped / 0 failed**.
-- TypeScript no-emit: passed.
-- Full-source ESLint `--quiet`: passed.
-- `git diff --check`: passed.
-- Production build: passed, **3,315 modules** transformed.
-- Independent read-only concurrency audit: **GO** for the observed two-request
-  race. The deliberate bound means an extreme perfectly lock-stepped burst can
-  fail after four write attempts rather than loop forever; that is a visible
-  failure, not false success.
+## Active-only blip toolbar parity
 
-## Boundary
+- Fixed the UI parity defect reported from the user's latest Downloads screenshot (`2026-07-13_22-41-24.png`):
+  - wrong behavior: every expanded ancestor/descendant showed the full per-blip menu (`Edit / Collapse / Expand / link / gear`)
+  - legacy Rizzoma reference: inactive expanded blips show content/reply surfaces only; the full menu belongs to the single active blip
+- Root cause:
+  - `RizzomaBlip` auto-marked every expanded non-inline blip active (`effectiveExpanded || isEditing`)
+  - active-state clicks bubbled up through ancestors
+  - CSS used descendant selectors for active menu/text styling, so active chrome could cascade through child trees
+- Fix:
+  - `src/client/components/blip/RizzomaBlip.tsx` now uses an explicit single active-blip claim event and stops click propagation at the clicked blip
+  - expanded blips no longer become active merely because they are visible
+  - `src/client/components/blip/RizzomaBlip.css` scopes active menu/text styling to the active blip's own direct menu/content
+- Verification:
+  - `npm run build` passed
+  - focused tests passed: `src/tests/client.BlipMenu.test.tsx`, `src/tests/routes.waves.prev.test.ts`, `src/tests/routes.waves.unread.test.ts` — 25/25
+  - public proof passed at [BLB proof 20260713T205010](https://138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a00e553)
+  - proof artifacts: `screenshots/260713-225006-public-active-terminal-toolbar-proof/`
+  - hard gate in `scripts/verify-blb-fractal-proof.mjs`: after clicking the terminal blip, exactly one visible `.blip-menu-container` exists and its `data-blip-id` is the terminal blip
+  - visually inspected `04-terminal-active-only-toolbar.png`: root and nested blips have no repeated menu; only the terminal active blip shows the toolbar
 
-- PR [#72](https://github.com/HCSS-StratBase/rizzoma/pull/72) passed all required
-  checks and squash-merged as exact master
-  `5e1bc271e81613768e811cfc306c0c691e71d77b`.
-- That exact tree is public on managed blue `:8101`. The immutable package
-  contains all **994** lockfile-required production packages. Green `:8102`
-  was drained for 38 seconds with no live connections or snapshot/flush errors,
-  then stopped and disabled; both nginx vhosts now target blue. Public health
-  reports CouchDB, Redis, and ClamAV ready.
-- The resumed public phase-2 matrix passed **49/49** checks with zero unexpected
-  browser errors and real Follow-the-Green **2 -> 1 -> 0** behavior. The final
-  password-reset/restart/responsive phase did not produce its report and is not
-  counted as accepted evidence.
+## Visual parity gate hardening
 
-## Core BLB release blocker
-
-- SDS's first manual use exposed a more fundamental miss than the read-marker
-  race: newly created content is not guaranteed to start and persist as a
-  bullet list. The application can therefore create flat paragraph bodies that
-  cannot serve as BLB labels with recursively anchored `[+]` subblips.
-- This invalidates the overall “fully functional” claim despite green CI,
-  infrastructure health, and the 49-check phase-2 matrix. Production is
-  **deployed but not accepted**.
-- Next acceptance must start from a real public topic created through the UI,
-  using the same content-gated fractal specification as the legacy Rizzoma
-  writer. It must prove always-bulleted topic, reply, and inline-child creation;
-  recursive `[+]` construction; persistence after reload and managed restart;
-  and inspected 1280/1366/1440/1600/mobile PNGs.
-
-## Public reproduction and repair candidate
-
-- The canonical content gate passed an intended **18-node**, depth-1 fractal
-  status specification. Real public controls created the
-  [reality-check topic](https://138-201-62-161.nip.io/#/topic/3305bc3a42889979c79fa39f400088c7?layout=rizzoma),
-  typed that spec into a real blip, saved it, and reloaded it.
-- Measured readback was exact: **18 paragraphs / 0 UL / 0 LI** before and after
-  reload, with zero browser errors. Visual inspection confirms one long flat
-  body with no recursive `[+]` anchors. Evidence:
-  `screenshots/260713-0130-public-blb-creation-failure/`.
-- Root cause spans creation and durability paths: topic creation and reply boxes
-  supplied prose, the server accepted it verbatim, Ctrl+Enter read the wrong
-  response level, toolbars and Shift+Tab could remove the outer list, raw API
-  updates and duplication bypassed the invariant, and collaboration accepted
-  flat ProseMirror state.
-- Branch `fix/blb-always-bulleted` adds one shared BLB content contract. Topic
-  creation now seeds H1 + UL/LI; plain-text reply lines become escaped LI/P
-  labels; a ProseMirror transaction filter blocks flattening before Yjs emits;
-  the server independently rejects flat CRDT candidates before cache mutation
-  or relay; visible/secondary toolbars and keyboard escape paths are guarded;
-  API replacements, duplicates, and legacy content normalize; root and nested
-  Ctrl+Enter share the same starter; and the root optimistic mapper reads the
-  nested server `blip` envelope.
-- The durability review then closed seven additional split-brain/bypass paths:
-  Yjs undo could restore invalid state; topic H1 accepted child creation;
-  reserved Yjs roots could be poisoned; existing-flat seeds were repaired only
-  in memory; stale REST props could overwrite collaborative state; malformed
-  HTML could escape normalization; and task-list roots were mistaken for the
-  canonical outer bullet list.
-- Local verification is green: full Vitest **112 files / 678 passed / 3 skipped
-  / 0 failed**; typecheck; branch-context lint; full-source ESLint at **0
-  errors / 8,954 baseline warnings**; and a **3,318-module** production build.
-  An independent final audit returned **GO for merge-candidate testing**.
-- Boundary: draft PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73)
-  is not deployed; public production still runs the broken PR #72 tree.
-  Private-green two-client/reload/restart and responsive visual acceptance,
-  green PR checks, exact public cutover, repair of the measured failure topic,
-  and clean journals remain.
-
-## PR #73 private-green rejection
-
-- PR [#73](https://github.com/HCSS-StratBase/rizzoma/pull/73) passed all seven
-  GitHub checks and merged as exact `7581d03677dd64a1ec5169ac8fc73b3a23d4039d`.
-- That exact tree was deployed only to inactive managed green. A real-control
-  test initially rendered four proper topic bullets, then immediate Ctrl+Enter
-  erased their labels and exposed repeated topic PATCH 409s. After a managed
-  restart the server rejected the stored duplicate H1+UL collaboration history
-  as HTTP 400 `invalid_blb_structure`.
-- Visual evidence is preserved under
-  `screenshots/260713-0258-private-green-blb-acceptance/`. Green was stopped;
-  nginx and public blue remained on exact PR #72 `5e1bc271` throughout.
-
-## BLB revision-race repair
-
-- Root cause: collaboration-capable TipTap editors could create and normalize a
-  local blank ProseMirror document before the server snapshot arrived. Yjs
-  merged histories rather than replacing them, so the authoritative H1+UL tree
-  landed beside a local H1+UL baseline.
-- Collaborative topic and child editors now start without a local content
-  document. The elected seeder converts one canonical ProseMirror document
-  directly into an empty Y.XmlFragment; a nonempty fragment is never reseeded.
-- `SocketIOProvider` now publishes live sync-state transitions and an
-  authoritative `mutationReady` capability requiring server sync, room
-  readiness, and server-granted edit permission. Topic/root and child editors,
-  menus, right tools, paste, formatting, uploads, queued actions, and both
-  Ctrl+Enter child-create paths remain frozen until that capability is true and
-  recheck it after asynchronous work.
-- Disconnect, access loss, generation mismatch, and every rejected update revoke
-  mutation readiness. A rejected document leaves the room and freezes the UI
-  while preserving the local Y.Doc and pending-change ledger for explicit
-  recovery; it is never replayed as a known-bad base.
-- Invalid durable snapshots are validated before admission, fail the join
-  closed, and remain stored for evidence-backed migration. Only the inactive
-  decode is discarded; no snapshot is silently deleted.
-
-## Follow-up verification
-
-- Focused collaboration/BLB gate: **73/73 passed**.
-- Full Vitest: **112 files / 684 passed / 3 skipped / 0 failed**.
-- TypeScript no-emit, touched-file ESLint, and `git diff --check`: passed.
-- Production build: passed, **3,318 modules** transformed.
-- Independent multi-pass race/data-loss audit: initial NO-GO findings were fixed
-  across toolbar, upload, async child-create, access-loss, and rejected-update
-  paths; final verdict **GO** with no remaining pre-sync, post-disconnect,
-  rejected-update, async-mutation, or invalid-snapshot blocker found.
-- Boundary: this is still a code candidate. Follow-up PR/CI/merge, exact private
-  deployment, two-client/reload/restart/responsive real-control acceptance, the
-  zero-overlap public cutover, and explicit repair of the measured public
-  failure topic remain mandatory.
-
-## PR #74 private-green handoff rejection
-
-- PR [#74](https://github.com/HCSS-StratBase/rizzoma/pull/74) passed all seven
-  GitHub checks and squash-merged as exact
-  `d2f200c8a35d9e9587abe4f41b0fb05b69e011f1`.
-- The exact tree deployed healthy to private green. Blue was gracefully stopped
-  after a 40-second maintenance drain; zero old-lane connections and no
-  snapshot/flush/graceful-shutdown errors were measured. Nginx was not changed.
-- Real controls created a topic whose four labels remained proper bullets. Root
-  Ctrl+Enter durably created a canonical `<ul><li>` child and persisted the
-  topic's `[+]` marker, but the child never became editable within 30 seconds.
-- Fresh reload proved the stored topic and child were intact. The measured UI
-  cause was a self-canceling retry: claiming the child closes the topic editor,
-  temporarily removing the portal; the retry interpreted “container absent” as
-  “expand again” and toggled the retained expanded state to collapsed.
-- Branch `fix/blb-inline-child-handoff` replaces that toggle with an explicit
-  three-state decision: missing portal = wait, mounted child = enter edit,
-  editable child = done. Focused regression is **33/33**; full Vitest is **113
-  files / 686 passed / 3 skipped / 0 failed**.
-
-## PR #75 private-green expansion-state rejection
-
-- PR [#75](https://github.com/HCSS-StratBase/rizzoma/pull/75) passed all seven
-  checks and merged as exact `cb209dbd29c2c60ee17244328bee764f35aea6cb`.
-- Exact PR #75 deployed healthy to private green `:8102`; blue was stopped and
-  nginx was not changed.
-- Real controls again created a topic whose four labels were proper bullets,
-  and Ctrl+Enter durably created a canonical empty child plus a persisted `[+]`
-  marker. Evidence: `screenshots/260713-1050-private-green-blb-acceptance/`.
-- The child still never became editable. Inspection proved the stored topic and
-  child were correct, but the DOM rendered only the root blip after reload:
-  `screenshots/260713-1052-private-green-inspect-failed-handoff/`.
-- Root cause: the first fix stopped the second toggle, but expansion remained
-  local component state. Closing the topic editor remounted the root blip and
-  lost that local state, so the child container disappeared. Branch
-  `fix/blb-ensure-inline-expand` adds an idempotent
-  `rizzoma:ensure-inline-blip-expanded` event and uses it for programmatic
-  creation/retry while preserving toggle semantics for user marker clicks.
-- Local gates after the patch: touched-file ESLint, branch-context lint,
-  **113 test files / 686 passed / 3 skipped / 0 failed**, and a
-  **3,319-module** production build.
+- Root process failure:
+  - the repository already had `scripts/visual-feature-sweep.mjs`, the legacy reference set, and `.claude/hooks/visual-sweep-gate.sh`
+  - the hook was only a warning and was not registered in the local Stop hook chain, so a plain programmatic sweep could be mistaken for legacy visual parity
+- Measured current state:
+  - latest public sweep: `screenshots/260713-225614-public-parity-sweep-feature-sweep/`
+  - documented rows parsed: 200
+  - classified coverage rows: 159
+  - current visual screenshot row coverage: 104/159 = 65.4% of classified rows, or 52.0% of all documented rows
+  - old reference set: 24 PNG screenshots + 24 MD notes
+  - new sweep: 44 PNG screenshots
+  - side-by-side comparison sheets generated: 10
+  - completed written analyses before the new audit: 0
+- Gate changes:
+  - added `scripts/check-rizzoma-parity-gate.mjs`
+  - added `npm run parity:gate`
+  - rewrote `.claude/hooks/visual-sweep-gate.sh` to call the npm gate and return `continue:false` on failure
+  - registered the hook in local `.claude/settings.local.json` for this machine; the local settings file is gitignored, so `docs/VISUAL_SCREENSHOT_SWEEP.md` now documents the Stop-hook registration requirement
+- Audit artifact:
+  - added `screenshots/260713-225614-public-parity-sweep-feature-sweep/legacy-current-comparisons/PARITY_AUDIT.md`
+  - verdict is explicitly **FAIL / IN_PROGRESS**
+  - severe failures recorded: BLB/fractal bullet defects, active-toolbar menu regression, Google SSO 502, deep-BLB layout divergence, and unresolved mobile parity decision
+- Verification:
+  - `npm run parity:gate` passed after the audit was created
+  - `.claude/hooks/visual-sweep-gate.sh </dev/null` returned `{"continue": true}` with the current audit present

@@ -7,8 +7,8 @@
   display: flex;
   flex-direction: column;
   font-size: 14px;
-  color: #223447;
-  padding-bottom: 20px;
+  color: #333;
+  position: relative;
 }
 
 .rizzoma-topic-detail.loading {
@@ -21,32 +21,18 @@
 /* ========================================
    TOPIC COLLABORATION TOOLBAR
    Original Rizzoma: Invite | avatars | +N | Share | gear
+   Source: wave.css (.wave-header), page.css (.button), participants_panel.css (.wave-participants)
 ======================================== */
 .topic-collab-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 22px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(242,247,252,0.96));
-  border-bottom: 1px solid rgba(138, 156, 176, 0.2);
+  height: 50px;
+  padding: 8px 10px 0 10px;
+  background: #B5BEC5;
+  box-sizing: border-box;
   flex-shrink: 0;
-  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.85);
-}
-
-/* Parity fix (2026-04-13): topic author attribution row between the
-   collab toolbar and the topic body. Matches the legacy Rizzoma pattern
-   where the topic title carries an author avatar + creation date on
-   the right. Kept compact so it doesn't compete with the body. */
-.topic-attribution-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 22px 4px 22px;
-  background: rgba(242, 247, 252, 0.72);
-  border-bottom: 1px solid rgba(138, 156, 176, 0.18);
-  font-size: 11px;
-  color: #56708a;
-  flex-shrink: 0;
+  position: relative;
+  z-index: 4;
 }
 
 .topic-attribution-avatar {
@@ -69,42 +55,92 @@
 }
 
 .collab-btn {
-  padding: 7px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  background: #fff;
-  border: 1px solid rgba(132, 148, 166, 0.24);
-  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 11px;
+  font-size: 13px;
+  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(to bottom, #f3f3f3 0%, #dedede 100%);
+  border: 1px solid #859099;
+  border-radius: 3px;
   cursor: pointer;
-  color: #334155;
-  transition: all 0.15s ease;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+  color: #364552;
+  text-shadow: white 1px 1px 1px;
+  font-weight: normal;
+  box-sizing: border-box;
+  transition: background 0.15s ease;
+  vertical-align: top;
 }
 
 .collab-btn:hover {
-  background: #f8fbff;
-  border-color: rgba(92, 170, 247, 0.36);
+  background: linear-gradient(to bottom, #f3f3f3 0%, #c6c6c6 100%);
+  border-color: #758089;
+}
+
+.collab-btn:active {
+  background: #bbc2c7;
 }
 
 .invite-btn {
-  color: #0f7f73;
+  color: #364552;
+  font-weight: normal;
+  margin-right: 6px;
 }
 
 .share-btn {
-  color: #475569;
+  color: #364552;
+  height: 32px;
+  min-width: 69px;
+  text-align: right;
+  padding-right: 10px;
+  padding-left: 28px;
+  position: relative;
+  margin-left: 15px;
+}
+
+.share-btn .share-lock-icon {
+  position: absolute;
+  left: 7px;
+  top: 9px;
+  width: 18px;
+  height: 13px;
+  background: url('/s/img/wave_lock_sprite.png') -6px -8px no-repeat;
+  display: inline-block;
 }
 
 .gear-btn {
-  padding: 6px 10px;
-  font-size: 14px;
+  width: 40px;
+  height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.gear-btn .gear-icon-sprite {
+  width: 28px;
+  height: 18px;
+  background: url('/s/img/settings-sprite.png') 0 0 no-repeat;
+  display: inline-block;
+}
+
+.gear-btn:hover .gear-icon-sprite {
+  background-position: 0 -19px;
 }
 
 .gear-btn.active {
-  background: #ddd;
+  background: transparent !important;
 }
 
 .gear-menu-container {
   position: relative;
+  margin-left: auto;
 }
 
 .gear-dropdown {
@@ -112,10 +148,10 @@
   top: 100%;
   right: 0;
   min-width: 180px;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: #F4F4F4;
+  border: 1px solid #E5E5E5;
+  border-radius: 0 0 2px 2px;
+  box-shadow: 2px 4px 9px -6px black;
   z-index: 1000;
   padding: 4px 0;
 }
@@ -123,18 +159,22 @@
 .gear-menu-item {
   display: block;
   width: 100%;
-  padding: 8px 16px;
+  padding: 6px 12px;
   text-align: left;
   background: none;
   border: none;
   cursor: pointer;
   font-size: 13px;
-  color: #333;
+  color: #303030;
+  font-family: Arial, Helvetica, sans-serif;
+  text-decoration: none;
+  box-sizing: border-box;
   transition: background-color 0.15s ease;
 }
 
 .gear-menu-item:hover {
-  background: #f0f0f0;
+  background: #4ea0f1;
+  color: #fff;
 }
 
 .gear-menu-divider {
@@ -146,19 +186,30 @@
 .collab-participants {
   display: flex;
   align-items: center;
-  gap: 4px;
-  flex: 1;
+  gap: 2px;
 }
 
 .participant-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 10px;
-  border: 2px solid #fff;
-  box-shadow: 0 6px 12px rgba(15,23,42,0.08);
-  margin-left: -8px;
-  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 0;
+  border: 1px solid #707478;
+  box-sizing: border-box;
+  margin-left: 0;
+  margin-right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
+  background: #CCD9E5;
+  vertical-align: top;
+}
+
+.participant-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .participant-avatar.fallback,
@@ -166,8 +217,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #4EA0F1, #2f7ac1);
-  color: #fff;
+  background: #E3EAF0;
+  color: #336699;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.01em;
@@ -182,7 +233,7 @@
 }
 
 .participant-avatar.owner {
-  border-color: #4EA0F1;
+  border-color: #336699;
 }
 
 .participant-avatar.pending {
@@ -194,15 +245,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  background: #e0e0e0;
-  color: #666;
+  width: 30px;
+  height: 30px;
+  border-radius: 0;
+  border: 1px solid #707478;
+  background: #E3EAF0;
+  color: #336699;
   font-size: 11px;
   font-weight: 500;
-  margin-left: -8px;
+  margin-left: 0;
+  margin-right: 2px;
   cursor: default;
+  box-sizing: border-box;
 }
 
 .participant-count {
@@ -237,69 +291,10 @@
   max-height: calc(100vh - 120px);
 }
 
-/* Meta-blip toolbar (like BlipMenu for regular blips) */
-.topic-blip-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: linear-gradient(180deg, rgba(242, 248, 254, 0.995), rgba(220, 234, 246, 0.985));
-  border-bottom: 1px solid rgba(138, 156, 176, 0.32);
-  flex-shrink: 0;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.94),
-    inset 0 -1px 0 rgba(173, 192, 210, 0.44);
-}
-
-.topic-blip-toolbar.editing {
-  background: linear-gradient(180deg, #cfe5f8, #bdd8ef);
-  border-bottom-color: rgba(109, 153, 188, 0.98);
-}
-
-.topic-tb-btn {
-  padding: 5px 9px;
-  font-size: 11px;
-  background: rgba(255, 255, 255, 0.56);
-  border: 1px solid rgba(157, 180, 203, 0.44);
+.topic-meta-blip.edit-mode,
+.topic-meta-blip.active.edit-mode {
+  border: 2px solid #57AAD9 !important;
   border-radius: 4px;
-  cursor: pointer;
-  color: #2f506e;
-  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  font-weight: 700;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.74);
-}
-
-.topic-tb-btn:hover {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(99, 154, 198, 0.6);
-  color: #203f5c;
-}
-
-.topic-tb-btn.primary {
-  background: linear-gradient(180deg, #5caaf7, #4d9ee9);
-  color: white;
-  font-weight: 700;
-  box-shadow: 0 8px 18px rgba(77, 158, 233, 0.22);
-}
-
-.topic-tb-btn.primary:hover {
-  background: #4A9BE8;
-}
-
-.topic-tb-btn.active {
-  background: rgba(92, 170, 247, 0.18);
-  border-color: rgba(79, 141, 191, 0.68);
-  color: #1f4f7a;
-}
-
-/* Insert comment button - styled like original */
-.topic-tb-btn.insert-comment-btn {
-  color: #10B981;
-  font-weight: 500;
-}
-
-.topic-tb-btn.insert-comment-btn:hover {
-  background: rgba(16, 185, 129, 0.1);
 }
 
 .topic-toolbar-spacer {
@@ -348,6 +343,10 @@
   font-size: 10px;
 }
 
+.topic-avatar-small.fallback {
+  font-size: 10px;
+}
+
 .topic-avatar-small.owner {
   border-color: #4EA0F1;
 }
@@ -358,10 +357,10 @@
   white-space: nowrap;
 }
 
-/* Meta-blip content area - unified with children (BLB: one blip container) */
+/* Meta-blip content area - unified with children (BLB: one blip container, matches legacy-240.png padding) */
 .topic-blip-content {
-  padding: 18px 22px 10px;
-  background: transparent;
+  padding: 14px 24px 6px 24px;
+  background: white;
   /* No bottom padding - flows directly into children */
 }
 
@@ -381,8 +380,8 @@
 
 /* Child blips area - seamless continuation of topic content (BLB: unified container) */
 .topic-blip-children {
-  padding: 6px 22px 18px;
-  background: transparent;
+  padding: 0 24px 16px 24px;
+  background: white;
   /* Same background as content - appears as ONE container */
 }
 
@@ -426,10 +425,9 @@
 .inline-child-expanded .blip-text ol {
   list-style-type: decimal;
 }
-.inline-child-expanded .blip-text ul ul,
-.inline-child-expanded .blip-text ol ol,
-.inline-child-expanded .blip-text ul ol,
-.inline-child-expanded .blip-text ol ul {
+/* li > list, not "ul ul": a nested blip sits inside its parent's list item. */
+.inline-child-expanded .blip-text li > ul,
+.inline-child-expanded .blip-text li > ol {
   list-style-type: circle;
 }
 
@@ -453,11 +451,12 @@
 }
 
 .topic-title {
-  margin: 0;
-  font-size: 18px;
+  margin: 0 0 8px 0;
+  font-size: 24px;
   font-weight: bold;
   color: #222;
-  line-height: 1.3;
+  line-height: 28px;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .topic-title:hover {
@@ -775,10 +774,8 @@
   margin: 0;
 }
 
-.topic-content-view ul ul,
-.topic-content-view ol ol,
-.topic-content-view ul ol,
-.topic-content-view ol ul {
+.topic-content-view li > ul,
+.topic-content-view li > ol {
   margin-top: 4px;
 }
 
@@ -940,7 +937,7 @@
 
 /* Blips list (legacy) */
 .blips-list {
-  list-style: disc;
+  list-style: none !important;
   margin: 0;
   padding: 0 0 0 24px;
 }
@@ -1183,14 +1180,14 @@
 
 /* Nested children */
 .blip-children {
-  list-style: circle;
+  list-style: none !important;
   margin: 0;
   padding: 8px 0 8px 24px;
   border-top: 1px solid #e0e0e0;
 }
 
 .blip-children .blip-children {
-  list-style: square;
+  list-style: none !important;
 }
 
 /* Reply row at bottom */
@@ -1716,4 +1713,39 @@
 .subblip-focus-shell .child-blips {
   margin-top: 10px;
   padding-top: 4px;
+}
+
+/* merge-master: avatar image/initials fallback (security-hardened TopicAvatar) */
+.topic-avatar-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 1px solid #fff;
+  box-shadow: 0 4px 10px rgba(15,23,42,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.topic-avatar-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.topic-avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.topic-avatar-small.fallback {
+  font-size: 10px;
+}
+
+.topic-avatar-small.owner {
+  border-color: #4EA0F1;
 }

@@ -1,6 +1,7 @@
 import { chromium, devices } from 'playwright';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { seedAcceptedParticipant, seedVerifiedE2EAccount } from './lib/e2e-sharing-fixtures.mjs';
 
 const baseUrl = process.env.RIZZOMA_BASE_URL || 'https://138-201-62-161.nip.io';
 const stamp = process.env.RIZZOMA_SWEEP_STAMP || new Date().toISOString().replace(/[-:T]/g, '').slice(2, 12);
@@ -245,6 +246,9 @@ async function getXsrfToken(page) {
 
 async function ensureAuth(page, email, label) {
   log(`${label}: authenticating ${email}`);
+  // Production registration requires a mailbox-verified invitation; seed a verified
+  // throwaway account in the local sweep database instead of using the HTTP register route.
+  await seedVerifiedE2EAccount(email, password);
   await gotoApp(page);
   const result = await page.evaluate(async ({ email, password }) => {
     await fetch('/api/auth/csrf', { credentials: 'include' });
@@ -720,7 +724,7 @@ async function captureTopicChrome(page) {
         });
         return { pass: has.open && has.items >= 1, detail: 'open=' + has.open + ' items=' + has.items };
       } });
-  await clickText(page, 'Export topic');
+  await clickText(page, /Export( single)? topic/i);  // Surface 9 renamed the item to 'Export single topic'
   await capture(page, 'export topic modal open', ['History: export topic', 'User Interface: export modal'],
     'Export topic action opens format-selection modal.', { dynamicStep: 'after-export-click', assertFn: modalOpen });
   await closeOpenModal(page);
@@ -750,7 +754,7 @@ async function captureTopicChrome(page) {
       'History & Playback: Wave playback speed (0.5x to 10x)',
       'Blip Operations: playback history',
     ],
-    'Wave Timeline opens playback modal with controls/timeline.', { dynamicStep: 'after-wave-timeline-click', assertFn: modalOpen });
+    'Wave Timeline opens playback modal with controls/timeline.', { dynamicStep: 'after-wave-timeline-click', assertFn: gateAny(modalOpen, gateExists('.wave-playback-in-place, [aria-label="Wave Playback History"]')) });
   await page.keyboard.press('Escape').catch(() => {});
   await page.locator('.wave-playback-close, .modal-close').first().click({ timeout: 3000 }).catch(() => {});
 }
@@ -894,7 +898,7 @@ async function captureBlipAndToolbarStates(page, fixture) {
   await page.getByText('#todo', { exact: true }).first().click({ timeout: 2000 }).catch(() => {});
   await closeTransientEditorOverlays(page);
 
-  await page.locator('.gadget-btn').first().click();
+  await page.locator('[data-testid="right-tools-insert-gadget"], .gadget-btn').first().click();
   await capture(page, 'right panel gadget palette open', [
       'Rich Text: gadget palette',
       'Inline Widgets: gadget insert shortcuts',
@@ -947,8 +951,17 @@ async function captureBlipAndToolbarStates(page, fixture) {
     'Inline comments control surfaces the comment navigation/filter area when available.',
     { dynamicStep: 'after-comments-toggle', assertFn: gateExists('[data-testid^="blip-menu-comments"], .inline-comments-nav, [class*="comments"]') });
 
-  await main.locator('[data-testid="blip-menu-gear-toggle"]').click();
-  await clickText(page, 'Playback history');
+  const gearToggle = main.locator('[data-testid="blip-menu-gear-toggle"]');
+  if (await gearToggle.isVisible()) {
+    await gearToggle.click();
+    await page.waitForTimeout(300);
+    const playbackBtn = main.locator('[data-testid="blip-menu-playback"], button:has-text("Playback history"), button:has-text("Playback")').first();
+    if (await playbackBtn.isVisible()) {
+      await playbackBtn.click();
+    } else {
+      await clickText(page, 'Playback history', { timeout: 3000 }).catch(() => {});
+    }
+  }
   await page.waitForTimeout(800);
   await capture(page, 'per blip playback history modal', [
       'History & Playback: per-blip playback',
@@ -966,11 +979,14 @@ async function enterMainBlipEdit(page, fixture) {
   // Wait for the specific main-blip element to mount — observer page may need
   // a moment after openWave() before the blip data is loaded into the DOM.
   await main.waitFor({ timeout: 25000 });
-  await main.locator('.blip-collapsed-row').click({ timeout: 5000 }).catch(() => {});
-  if (!(await main.locator('[data-testid="blip-menu-edit-surface"]').first().count())) {
-    await main.locator('[data-testid="blip-menu-read-surface"]').first().waitFor({ timeout: 25000 });
-    await main.locator('[data-testid="blip-menu-edit"]').first().click();
+  const collapsed = main.locator('.blip-collapsed-row');
+  if (await collapsed.count()) {
+    await collapsed.click();
+  } else if (!(await main.locator('[data-testid="blip-menu-read-surface"]').count())) {
+    await main.locator('.blip-content').first().click().catch(() => {});
   }
+  await main.locator('[data-testid="blip-menu-read-surface"]').first().waitFor({ timeout: 25000 });
+  await main.locator('[data-testid="blip-menu-edit"]').first().click();
   await main.locator('[data-testid="blip-menu-edit-surface"]').first().waitFor({ timeout: 25000 });
   const editor = main.locator('.ProseMirror').first();
   await editor.waitFor({ timeout: 10000 });
@@ -983,10 +999,11 @@ async function captureRealtimeCollaborationStates(baseContext, ownerPage, fixtur
   const observerPage = await observerContext.newPage();
   try {
     await ensureAuth(observerPage, observerEmail, 'observer');
-    await api(ownerPage, 'POST', `/api/waves/${encodeURIComponent(fixture.waveId)}/participants`, {
-      emails: [observerEmail],
-      message: 'Visual sweep realtime collaboration fixture.',
-    }).catch(() => {});
+    // Master's sharing hardening leaves an emailed invite pending until the
+    // invitee accepts, so an invited observer cannot open the topic. Seed an
+    // accepted editor participant in the local sweep database instead, as
+    // test-collab-smoke.mjs does.
+    await seedAcceptedParticipant(fixture.waveId, observerEmail, 'editor', 'visual-sweep');
     await openWave(ownerPage, fixture.waveId);
     await openWave(observerPage, fixture.waveId);
 
@@ -1214,14 +1231,14 @@ async function captureRightPanel(page) {
   await capture(page, 'right panel mind map selected', ['User Interface: Mind map toggle', 'User Interface: Right panel mind map button'],
     'Mind map button can be selected in the right tools panel.',
     { dynamicStep: 'after-mindmap-click', assertFn: gateActiveBtn('.view-btn[title="Mind map"]') });
-  await page.locator('.display-btn[title="Short view"]').click();
+  await page.locator('button[title="Short view"]').click();
   await capture(page, 'right panel short mode selected', ['User Interface: short display mode'],
     'Short display mode toggle activates.',
-    { dynamicStep: 'after-short-click', assertFn: gateActiveBtn('.display-btn[title="Short view"]') });
-  await page.locator('.display-btn[title="Expanded view"]').click();
+    { dynamicStep: 'after-short-click', assertFn: gateActiveBtn('button[title="Short view"]') });
+  await page.locator('button[title="Expanded view"]').click();
   await capture(page, 'right panel expanded mode selected', ['User Interface: expanded display mode'],
     'Expanded display mode toggle activates.',
-    { dynamicStep: 'after-expanded-click', assertFn: gateActiveBtn('.display-btn[title="Expanded view"]') });
+    { dynamicStep: 'after-expanded-click', assertFn: gateActiveBtn('button[title="Expanded view"]') });
 }
 
 async function captureToastState(page) {

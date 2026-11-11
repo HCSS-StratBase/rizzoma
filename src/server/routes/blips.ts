@@ -335,7 +335,7 @@ router.post('/', requireAuth, csrfProtect(), async (req, res): Promise<void> => 
       authorId: userId,
       authorName: fallbackName,
       deleted: false,
-      isFoldedByDefault: false,
+      isFoldedByDefault: typeof req.body?.isFoldedByDefault === 'boolean' ? req.body.isFoldedByDefault : true,
       // Store anchor position for inline blips created via Ctrl+Enter
       ...(typeof anchorPosition === 'number' ? { anchorPosition } : {}),
     } as any;
@@ -663,6 +663,26 @@ router.get('/:id/history', requireAuth, async (req, res): Promise<void> => {
       .slice()
       .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
       .map(({ _id, _rev, type, ...rest }) => ({ id: _id, ...rest }));
+    // If no history exists yet, provide baseline from current blip/topic
+    if (history.length === 0) {
+      try {
+        const doc = await getDoc<any>(blipId);
+        if (doc) {
+          history.push({
+            id: `blip_history:${blipId}:${doc.createdAt || Date.now()}`,
+            blipId: blipId,
+            waveId: doc.waveId || (blipId.includes(':') ? blipId.split(':')[0] : blipId),
+            content: doc.content || '',
+            authorId: doc.authorId,
+            authorName: doc.authorName || 'Author',
+            event: 'create',
+            createdAt: doc.createdAt || Date.now(),
+            updatedAt: doc.updatedAt || Date.now(),
+            snapshotVersion: 1,
+          });
+        }
+      } catch {}
+    }
     res.json({ history });
   } catch (e: any) {
     if (String(e?.message).startsWith('404')) {

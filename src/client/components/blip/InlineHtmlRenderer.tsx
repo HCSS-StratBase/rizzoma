@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import '../editor/extensions/BlipThread.css';
 import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
 import {
   formatTaskDate,
@@ -165,6 +166,22 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
   // expanded marker lives inside it, we append the child's React node as a sibling.
   let keySeq = 0;
   const nextKey = () => `n${keySeq++}`;
+  // Stable identity for every element on the path to an inline child
+  // (2026-11-10). Positional keys shift whenever the parent's HTML changes
+  // shape before the marker (e.g. the server's normalised copy replacing the
+  // local one after a save), and React then tore down the bullet holding the
+  // child, remounting the child and dropping its edit state (probe: editable
+  // at 1.25 s, torn down at 1.80 s when the post-save reload landed). An
+  // element that contains a known child marker is keyed by that marker's id
+  // and its nesting depth; sibling subtrees never share a first marker.
+  const markerPathKey = (el: Element, tag: string, depth: number): string | null => {
+    const markers = el.querySelectorAll('.blip-thread-marker[data-blip-thread]');
+    for (const marker of Array.from(markers)) {
+      const id = marker.getAttribute('data-blip-thread') || '';
+      if (id && knownIds.has(id)) return `${tag}@${depth}#${id}`;
+    }
+    return null;
+  };
 
   const childrenAlreadyPlaced = new Set<string>();
 
@@ -173,6 +190,14 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     el.querySelectorAll('.blip-thread-marker[data-blip-thread]').forEach(marker => {
       const id = marker.getAttribute('data-blip-thread') || '';
       if (!id || !knownIds.has(id)) return;
+      // Anchor to the marker's CLOSEST block owner: its nearest <li>, or its
+      // nearest <p> when it is in no list item. querySelectorAll also returns
+      // markers in nested sub-items, and the outer <li> is walked first, so
+      // without this check a [+] on a sub-bullet opened its child at the end
+      // of the whole outer item (below every sibling sub-bullet) instead of
+      // directly under its own bullet.
+      const owner = marker.closest('li') || marker.closest('p');
+      if (owner !== el) return;
       // Mount if currently expanded OR previously expanded (preserve subtree on fold).
       if (!mountedSet.has(id)) return;
       if (childrenAlreadyPlaced.has(id)) return;
@@ -181,9 +206,29 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     return ids;
   };
 
-  const walkNode = (node: Node): ReactNode => {
+  const walkNode = (node: Node, depth = 0): ReactNode => {
     if (node.nodeType === Node.TEXT_NODE) {
-      return node.nodeValue;
+      const val = node.nodeValue || '';
+      if (!val.includes('#')) {
+        return val;
+      }
+      // Match #tag tokens (letters, digits, underscores, dashes, including Cyrillic / international characters)
+      const parts = val.split(/(#[\w\u0400-\u04FF-]+)/g);
+      if (parts.length <= 1) return val;
+      return parts.map((part, idx) => {
+        if (part.startsWith('#') && part.length > 1) {
+          return createElement(
+            'span',
+            { key: `tag-${idx}`, className: 'blip-tag-container' },
+            createElement(
+              'span',
+              { className: 'js-blip-tag blip-tag clickable' },
+              createElement('span', { className: 'blip-tag-text' }, part),
+            ),
+          );
+        }
+        return part;
+      });
     }
     if (node.nodeType !== Node.ELEMENT_NODE) {
       return null;
@@ -258,13 +303,30 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     if (el.classList.contains('blip-thread-marker')) {
       const blipId = el.getAttribute('data-blip-thread') || '';
       const child = childById.get(blipId);
-      const hasUnread = child?.isRead === false;
+      const hasUnread = child ? child.isRead === false : el.classList.contains('has-unread');
       const isExpanded = expandedSet.has(blipId) && knownIds.has(blipId);
       return renderMarker(el, blipId, hasUnread, isExpanded);
     }
 
     const props = elementToProps(el);
-    props['key'] = nextKey();
+    const positionalKey = nextKey();
+    const stableKey = markerPathKey(el, tag, depth);
+    props['key'] = stableKey ?? positionalKey;
+
+    // Legacy topics keep a tag row (e.g. "#RuBase") above their bullets. After BLB
+    // normalization that row becomes ONE list item holding the bullets as a nested
+    // list, which rendered as "• #RuBase" with every bullet indented a level.
+    // Original Rizzoma shows the tag chip on its own line and the bullets as
+    // top-level items, so mark such an item for the tag-row styling.
+    if (tag === 'li') {
+      const first = el.firstElementChild;
+      const firstText = first?.textContent?.trim() || '';
+      const isTagOnly = !!first && first.tagName.toLowerCase() === 'p'
+        && firstText.length > 0 && firstText.split(/\s+/).every((token) => token.startsWith('#'));
+      if (isTagOnly && Array.from(el.children).some((c) => c.tagName.toLowerCase() === 'ul')) {
+        props['className'] = `${props['className'] || ''} blip-tag-row`.trim();
+      }
+    }
 
     // Block-parent anchor: when a li / p contains expanded markers, render the
     // bullet content first, then append the inline child blip(s) as siblings
@@ -272,6 +334,20 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     // children are [li, child1, child2, ...].
     const isBlockAnchor = tag === 'li' || tag === 'p';
     const expandedHere = isBlockAnchor ? mountedMarkersInside(el) : [];
+
+    // Suppress stray empty bullet items or paragraphs in view mode (no text, no markers, no images/embeds)
+    if ((tag === 'li' || tag === 'p') && expandedHere.length === 0) {
+      const text = el.textContent?.trim() || '';
+      const hasMediaOrMarker = el.querySelector('img, video, iframe, [data-blip-thread], .blip-thread-marker, .blip-tag-container');
+      if (text.length === 0 && !hasMediaOrMarker) {
+        return null;
+      }
+      // If only contains hashtags (e.g. #RuBase), suppress the bullet disc so it renders as a clean unbulleted tag row
+      if (text.length > 0 && text.split(/\s+/).every(token => token.startsWith('#'))) {
+        props['style'] = { ...(props['style'] as any), listStyle: 'none', marginLeft: 0, paddingLeft: 0, margin: '4px 0 8px 0' };
+        props['className'] = `${props['className'] || ''} blip-tag-line`.trim();
+      }
+    }
     // Mark THESE markers as placed BEFORE walking children so nested block
     // anchors (e.g. a <p> inside an <li>) don't re-place the same child.
     // Without this, the marker is found by both the LI walker and the inner P
@@ -295,10 +371,10 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
           renderInlineChild(id),
         );
       });
-      return createElement(Fragment, { key: nextKey() }, [node, ...followups]);
+      return createElement(Fragment, { key: stableKey ? `frag-${stableKey}` : nextKey() }, [node, ...followups]);
     }
 
-    const childNodes = Array.from(el.childNodes).map(walkNode);
+    const childNodes = Array.from(el.childNodes).map((c) => walkNode(c, depth + 1));
     const reactNode = createElement(tag, props, ...childNodes);
 
     if (expandedHere.length === 0) {
@@ -345,10 +421,10 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
         renderInlineChild(id),
       );
     });
-    return createElement(Fragment, { key: nextKey() }, [reactNode, ...followups]);
+    return createElement(Fragment, { key: stableKey ? `frag-${stableKey}` : nextKey() }, [reactNode, ...followups]);
   };
 
-  const topNodes = Array.from(container.childNodes).map(walkNode);
+  const topNodes = Array.from(container.childNodes).map((c) => walkNode(c, 0));
 
   // Any mounted child that didn't find an in-line position (e.g., marker missing
   // entirely, anchor outside the rendered HTML) — render at the end so it's still

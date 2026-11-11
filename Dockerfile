@@ -32,6 +32,7 @@ COPY package*.json ./
 RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
+RUN mkdir -p /app/data/uploads && chown -R node:node /app/data
 
 # Server creates /app/logs (winston) and /app/data/uploads at startup; USER
 # node can't write to /app (owned by root from COPY), so pre-create + chown.

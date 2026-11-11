@@ -17,13 +17,14 @@
 
 /* Navigation Panel - Far Left */
 .navigation-container {
-  width: 80px;
-  min-width: 80px;
-  background: linear-gradient(180deg, #223246 0%, #172434 100%);
+  width: 79px;
+  min-width: 79px;
+  max-width: 79px;
+  background: #728AA0;
   color: white;
   display: flex;
   flex-direction: column;
-  box-shadow: 14px 0 28px rgba(15, 23, 42, 0.16);
+  box-shadow: 1px 0px 16px 0px rgba(0, 0, 0, 0.4);
   z-index: 3;
 }
 
@@ -58,176 +59,28 @@
 
 /* Search/List Panel - Left Center */
 .tabs-container {
-  width: 296px;
-  min-width: 296px;
-  background: linear-gradient(180deg, rgba(236, 242, 248, 0.96), rgba(227, 235, 244, 0.98));
+  width: 301px;
+  min-width: 301px;
+  background: #e3eaf0;
   display: flex;
   flex-direction: column;
-  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.75), 12px 0 30px rgba(15, 23, 42, 0.08);
-  transition: width 0.3s ease;
-  z-index: 2;
-  border-right: 1px solid rgba(136, 154, 176, 0.18);
-}
-
-.tabs-container {
   position: relative;
+  z-index: 2;
+  box-shadow: 1px 0px 8px rgba(0, 0, 0, 0.1);
 }
 
 .tabs-container.collapsed {
-  width: 40px;
-  min-width: 40px;
-  overflow: hidden;
-}
-
-/* Right-tools container wraps the RightToolsPanel plus adds the
-   collapse-btn and the inside-facing resize handle. Mirrors the
-   .tabs-container left-side pattern so both sidebars behave
-   symmetrically: a full expanded width with a drag handle, or a
-   collapsed 40px rail with just the expand arrow. */
-.right-tools-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  flex: 0 0 auto;
-  min-width: 104px;
-  background:
-    linear-gradient(180deg, rgba(246, 249, 253, 0.98), rgba(234, 240, 247, 0.96));
-  border-left: 1px solid rgba(136, 154, 176, 0.18);
-  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.76);
-  transition: width 0.2s ease, min-width 0.2s ease;
-}
-
-.right-tools-container.collapsed {
-  width: 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
-  overflow: hidden;
-}
-
-.right-tools-container.collapsed .right-tools-panel {
+  width: 0;
+  min-width: 0;
   display: none;
-}
-
-.right-tools-collapse-btn {
-  position: absolute;
-  top: 12px;
-  left: 4px;
-  z-index: 5;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(136, 154, 176, 0.3);
-  border-radius: 8px;
-  color: #6a7f96;
-  cursor: pointer;
-  font-size: 12px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-
-.right-tools-collapse-btn:hover {
-  background: #fff;
-  border-color: rgba(90, 164, 242, 0.45);
-  color: #274967;
-}
-
-.right-tools-container.collapsed .right-tools-collapse-btn {
-  top: 12px;
-  left: 6px;
-}
-
-/* Drag-to-resize handles. A 6px-wide invisible strip pinned to the
-   inside edge of each side pane that shows a col-resize cursor on
-   hover. The actual drag is wired in JS via onPointerDown →
-   window pointermove listeners that update the persisted width
-   state. Kept narrow so they don't eat real clickable area. */
-.pane-resizer {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 6px;
-  cursor: col-resize;
-  z-index: 10;
-  background: transparent;
-  transition: background 0.15s ease;
-}
-
-.pane-resizer:hover,
-.pane-resizer:active {
-  background: rgba(90, 164, 242, 0.35);
-}
-
-.pane-resizer-left {
-  /* right edge of the left topics pane */
-  right: 0;
-}
-
-.pane-resizer-right {
-  /* left edge of the right tools pane */
-  left: 0;
-}
-
-.right-tools-container.collapsed .pane-resizer-right {
-  display: none;
-}
-
-/* When the topics sidebar is collapsed to its 40px rail, the
-   "Topics" heading was still rendered at its full size + its 18px
-   header padding, which overflowed the 40px container and bled into
-   the adjacent .wave-container. Hiding the header text + tightening
-   the header padding keeps only the collapse-btn visible as a
-   narrow vertical rail, matching the legacy Rizzoma collapsed state. */
-.tabs-container.collapsed .tabs-header {
-  padding: 0;
-  justify-content: center;
-}
-
-.tabs-container.collapsed .tabs-header h3 {
-  display: none;
-}
-
-.tabs-header {
-  height: 56px;
-  background: linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(231, 238, 246, 0.96));
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 18px;
-  border-bottom: 1px solid rgba(136, 154, 176, 0.2);
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.75);
-}
-
-.tabs-header h3 {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #2c4259;
-}
-
-.collapse-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px 10px;
-  font-size: 14px;
-  color: #6a7f96;
-  border-radius: 10px;
-}
-
-.collapse-btn:hover {
-  background: rgba(90, 164, 242, 0.12);
-  color: #274967;
 }
 
 .tabs-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 10px 10px 14px;
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
 }
 
 /* Wave/Content Panel - Center Right */
@@ -315,8 +168,8 @@
 /* Responsive adjustments */
 @media (max-width: 1200px) {
   .tabs-container {
-    width: 280px;
-    min-width: 280px;
+    width: 301px;
+    min-width: 301px;
   }
 }
 

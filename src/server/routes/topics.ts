@@ -167,7 +167,9 @@ function stripHtml(input: string): string {
 
 function buildSnippet(content?: string): string | undefined {
   if (!content) return undefined;
-  const text = stripHtml(String(content));
+  // Remove H1 title so snippet only contains lines after the title (matches original Rizzoma's @_getLinesText(1))
+  const withoutTitle = String(content).replace(/<h1[^>]*>.*?<\/h1>/i, '').trim();
+  const text = stripHtml(withoutTitle || String(content));
   if (!text) return undefined;
   return text.length > MAX_SNIPPET_LENGTH ? `${text.slice(0, MAX_SNIPPET_LENGTH)}…` : text;
 }
@@ -241,11 +243,13 @@ router.get('/', noStore, async (req, res): Promise<void> => {
 
     const response = enriched.map((topic) => {
       const author = topic.authorId ? authorMap.get(topic.authorId) : undefined;
+      const authorName = author?.name || (author?.email ? author.email.split('@')[0] : 'User');
+      const authorAvatar = author?.avatar || '/s/img/user/anonim.png';
       return {
         ...topic,
         snippet: buildSnippet(topic.content),
-        authorName: author?.name ?? undefined,
-        authorAvatar: author?.avatar ?? undefined,
+        authorName,
+        authorAvatar,
         isFollowed: userId && topic.id ? followedTopics.has(topic.id) : undefined,
       };
     });
@@ -338,6 +342,36 @@ router.get('/', noStore, async (req, res): Promise<void> => {
   }
 });
 
+async function recordTopicHistory(
+  topicId: string,
+  content: string,
+  action: 'create' | 'update',
+  actorId: string,
+  actorName?: string,
+): Promise<void> {
+  try {
+    const existing = await find<any>({ type: 'blip_history', blipId: topicId }, { limit: 200 });
+    const nextVersion = existing.docs.reduce((max: number, doc: any) => Math.max(max, doc.snapshotVersion || 0), 0) + 1;
+    const now = Date.now();
+    const historyDoc = {
+      _id: `blip_history:${topicId}:${now}`,
+      type: 'blip_history',
+      blipId: topicId,
+      waveId: topicId,
+      content: content || '',
+      authorId: actorId,
+      authorName: actorName,
+      event: action,
+      createdAt: now,
+      updatedAt: now,
+      snapshotVersion: nextVersion,
+    };
+    await insertDoc(historyDoc as any);
+  } catch (err) {
+    console.warn('[topics] recordTopicHistory failed:', err);
+  }
+}
+
 // POST /api/topics
 router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): Promise<void> => {
   const userId = req.user!.id;
@@ -370,6 +404,7 @@ router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): 
     };
     const r = await insertDoc(doc);
     const topicId = r.id;
+    void recordTopicHistory(topicId, doc.content || '', 'create', userId, req.user?.name);
 
     // Every topic has an explicit owner participant, even when the creator
     // did not invite anyone during creation. Authorization must not depend on

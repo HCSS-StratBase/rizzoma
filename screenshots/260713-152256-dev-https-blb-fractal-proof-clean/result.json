@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "baseUrl": "https://dev.138-201-62-161.nip.io",
+  "url": "https://dev.138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a005c3a",
+  "email": "blb-proof-20260713T132301@example.com",
+  "topicId": "18fd97812660e69bf157d9dc5a005c3a",
+  "rootId": "18fd97812660e69bf157d9dc5a005c3a:b1783948985710",
+  "nestedId": "18fd97812660e69bf157d9dc5a005c3a:b1783948985753",
+  "terminalId": "18fd97812660e69bf157d9dc5a005c3a:b1783948985795",
+  "collapsedRoot": {
+    "text": "•Root reply label+",
+    "hasBullet": true,
+    "hasPlus": true
+  },
+  "nestedCollapsed": {
+    "text": "•Nested reply label+",
+    "hasBullet": true,
+    "hasPlus": true
+  },
+  "terminalCollapsed": {
+    "text": "•Terminal leaf label+",
+    "hasBullet": true,
+    "hasPlus": true
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "outDir": "/mnt/c/Rizzoma/screenshots/260713-152256-dev-https-blb-fractal-proof-clean"
+}

@@ -147,87 +147,154 @@
 }
 
 .blip-text {
-  line-height: 1.5;
-  color: #333;
-  padding: 4px;
-  border-radius: 3px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  line-height: 22px;
+  color: #000;
+  padding: 0 4px;
+  border-radius: 0;
   min-height: 24px;
   user-select: text;
 }
 
+.blip-text p {
+  margin: 0;
+  padding: 0;
+  line-height: 22px;
+}
+
 /*
- * View-mode list styling MUST mirror the edit-mode (.ProseMirror) rules
- * because RizzomaApp.css has a global `* { padding: 0 }` reset. Without
- * these, saved <ul>/<ol>/<li> render as flat unindented lines with no disc
- * markers — the editor looks right while editing, then collapses to flat
- * on save. Reported by Hryhorii 2026-05-04.
+ * View-mode & edit-mode list styling:
+ * Clean single-bullet convention matching legacy Rizzoma.
+ * list-style: none suppresses browser-native ::marker elevated dots.
+ * li::before places a pixel-perfect, vertically centered bullet.
  */
 .blip-text ul,
-.blip-text ol {
-  margin: 0.5em 0;
+.topic-content-view ul,
+.topic-blip-content ul,
+.tiptap.ProseMirror ul,
+.blip-editor-container .ProseMirror ul {
+  list-style: none !important;
+  list-style-type: none !important;
+  margin: 0.25em 0;
+  padding-left: 0 !important;
+}
+
+.blip-text ul > li::marker,
+.topic-content-view ul > li::marker,
+.topic-blip-content ul > li::marker,
+.tiptap.ProseMirror ul > li::marker,
+.blip-editor-container .ProseMirror ul > li::marker {
+  display: none !important;
+  content: "" !important;
+}
+
+.blip-text ol,
+.topic-content-view ol,
+.topic-blip-content ol,
+.tiptap.ProseMirror ol {
+  margin: 0.25em 0;
   padding-left: 1.5em;
-  list-style-position: outside;
-}
-
-.blip-text ul {
-  list-style-type: disc;
-}
-
-.blip-text ol {
   list-style-type: decimal;
 }
 
-.blip-text li {
-  margin: 0.25em 0;
+.blip-text li,
+.topic-content-view li,
+.topic-blip-content li,
+.tiptap.ProseMirror li {
+  position: relative;
+  padding-left: 18px;
+  margin: 0.15em 0;
+  line-height: 22px;
 }
 
-.blip-text li p {
+.blip-text li p,
+.topic-content-view li p,
+.topic-blip-content li p,
+.tiptap.ProseMirror li p {
   display: inline;
   margin: 0;
+  line-height: 22px;
 }
 
-.blip-text ul ul,
-.blip-text ol ol,
-.blip-text ul ol,
-.blip-text ol ul {
-  margin: 0.25em 0;
-  padding-left: 1.5em;
+/* Level 1 bullet: clean, perfectly centered real circular disc */
+.blip-text ul > li::before,
+.topic-content-view ul > li::before,
+.topic-blip-content ul > li::before,
+.tiptap.ProseMirror ul > li::before,
+.blip-editor-container .ProseMirror ul > li::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #333333;
 }
 
-/*
- * B1 PARITY (2026-05-05): Match Rizzoma's bulleted-type0 convention —
- * disc bullet at every nesting level (NOT the browser cascade
- * disc→circle→square→disc-again at depth 4+ which breaks at deep
- * fractals). Indentation is via margin-left:22px per LI, exactly like
- * the original's `<li class="bulleted bulleted-type0" margin-left:22px>`.
- * The browser-cascade rules above stay in place so projects that don't
- * opt into parity rendering still get the disc/circle/square hierarchy;
- * the parity overrides only fire when .rizzoma-parity is on the layout
- * root (set by FEAT_RIZZOMA_PARITY_RENDER).
- */
-.rizzoma-parity .blip-text ul,
-.rizzoma-parity .blip-text ul ul,
-.rizzoma-parity .blip-text ul ul ul,
-.rizzoma-parity .blip-text ul ul ul ul {
-  list-style-type: disc;
-  padding-left: 0;
-  margin-left: 0;
+/* Suppress pseudo-element bullets on tag lines */
+.blip-text ul > li.blip-tag-line::before,
+.topic-content-view ul > li.blip-tag-line::before,
+.topic-blip-content ul > li.blip-tag-line::before,
+.tiptap.ProseMirror ul > li.blip-tag-line::before {
+  display: none !important;
+  content: none !important;
 }
 
-.rizzoma-parity .blip-text li {
-  margin-left: 22px;
-  margin-top: 0;
-  margin-bottom: 0;
-  list-style-position: outside;
+/* Suppress pseudo-element bullets on empty list items */
+.blip-text ul > li:empty::before,
+.topic-content-view ul > li:empty::before,
+.topic-blip-content ul > li:empty::before {
+  display: none !important;
+  content: none !important;
 }
 
-/* NON-parity defaults (existing browser-cascade behavior) */
-.blip-text ul ul {
-  list-style-type: circle;
+/* Level 2 bullet: ◦ circle.
+   Strict child chains (li > ul), never descendant (ul ul): a nested blip
+   renders INSIDE its parent's list item, so "ul ul" matched the child blip's
+   own first-level list and indented it 18px more per level and gave it a
+   circle bullet (measured 2026-11-10: 59 px lost per level at depth 30).
+   Original Rizzoma restarts each blip at level 0 (renderer.coffee). */
+.blip-text li > ul,
+.topic-content-view li > ul,
+.topic-blip-content li > ul,
+.tiptap.ProseMirror li > ul,
+.blip-editor-container .ProseMirror li > ul {
+  padding-left: 18px !important;
+  margin: 0.1em 0;
 }
 
-.blip-text ul ul ul {
-  list-style-type: square;
+.blip-text li > ul > li::before,
+.topic-content-view li > ul > li::before,
+.topic-blip-content li > ul > li::before,
+.tiptap.ProseMirror li > ul > li::before,
+.blip-editor-container .ProseMirror li > ul > li::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  border: 1px solid #333333;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+/* Level 3 bullet: ▪ square (indent already covered by li > ul above) */
+.blip-text li > ul > li > ul > li::before,
+.topic-content-view li > ul > li > ul > li::before,
+.topic-blip-content li > ul > li > ul > li::before,
+.tiptap.ProseMirror li > ul > li > ul > li::before,
+.blip-editor-container .ProseMirror li > ul > li > ul > li::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 9px;
+  width: 4px;
+  height: 4px;
+  background: #555555;
 }
 
 /* Inline comment button */
@@ -637,63 +704,81 @@
 .tiptap.ProseMirror ol,
 .rizzoma-parity .tiptap.ProseMirror ul,
 .rizzoma-parity .tiptap.ProseMirror ol {
-  padding-left: 1.5em !important;
-  margin: 0.5em 0;
-  list-style-position: outside;
+  margin: 0.25em 0;
 }
 .tiptap.ProseMirror ul,
-.rizzoma-parity .tiptap.ProseMirror ul { list-style-type: disc; }
+.rizzoma-parity .tiptap.ProseMirror ul {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+}
 .tiptap.ProseMirror ol,
-.rizzoma-parity .tiptap.ProseMirror ol { list-style-type: decimal; }
-.tiptap.ProseMirror ul ul,
-.rizzoma-parity .tiptap.ProseMirror ul ul { list-style-type: circle; padding-left: 1.5em !important; }
-.tiptap.ProseMirror ul ul ul,
-.rizzoma-parity .tiptap.ProseMirror ul ul ul { list-style-type: square; }
+.rizzoma-parity .tiptap.ProseMirror ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
+}
+/* Nested lists WITHIN one editor only (li > ul). A descendant selector
+   (ul ul) also matched a nested blip's own top-level list, because that
+   blip renders inside the ancestor editor's list item: every level got an
+   extra 18 px indent (measured 2026-11-10, depth 30: 59 px lost per level,
+   boxes 41 px wide from L16). */
+.tiptap.ProseMirror li > ul,
+.rizzoma-parity .tiptap.ProseMirror li > ul {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 18px !important;
+}
 .tiptap.ProseMirror li,
-.rizzoma-parity .tiptap.ProseMirror li { margin: 0.25em 0; }
+.rizzoma-parity .tiptap.ProseMirror li {
+  position: relative;
+  padding-left: 18px;
+  margin: 0.15em 0;
+  line-height: 22px;
+}
 .tiptap.ProseMirror li p,
-.rizzoma-parity .tiptap.ProseMirror li p { display: inline; margin: 0; }
+.rizzoma-parity .tiptap.ProseMirror li p { display: inline; margin: 0; line-height: 22px; }
 
 /* List styling in editor */
 .blip-editor-container .ProseMirror ul,
 .blip-editor-container .ProseMirror ol {
-  margin: 0.5em 0;
-  padding-left: 1.5em;
-  list-style-position: outside;
+  margin: 0.25em 0;
 }
 
 .blip-editor-container .ProseMirror ul {
-  list-style-type: disc;
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
 }
 
 .blip-editor-container .ProseMirror ol {
-  list-style-type: decimal;
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
 }
 
 .blip-editor-container .ProseMirror li {
-  margin: 0.25em 0;
+  position: relative;
+  padding-left: 18px;
+  margin: 0.15em 0;
+  line-height: 22px;
 }
 
 .blip-editor-container .ProseMirror li p {
   display: inline;
   margin: 0;
+  line-height: 22px;
 }
 
-/* Nested lists - indent further */
-.blip-editor-container .ProseMirror ul ul,
-.blip-editor-container .ProseMirror ol ol,
-.blip-editor-container .ProseMirror ul ol,
-.blip-editor-container .ProseMirror ol ul {
-  margin: 0.25em 0;
-  padding-left: 1.5em;
+/* Nested lists - indent further, within the same editor only (li > list;
+   see the li > ul note above). */
+.blip-editor-container .ProseMirror li > ul,
+.blip-editor-container .ProseMirror li > ol {
+  margin: 0.1em 0;
+  padding-left: 18px !important;
 }
 
-.blip-editor-container .ProseMirror ul ul {
-  list-style-type: circle;
-}
-
-.blip-editor-container .ProseMirror ul ul ul {
-  list-style-type: square;
+.blip-editor-container .ProseMirror li > ul {
+  list-style: none !important;
+  list-style-type: none !important;
 }
 
 .blip-editor-container .blip-editor {
@@ -1026,12 +1111,13 @@
   background-color: transparent !important;
 }
 
-.blip-container.active .blip-text {
+.blip-container.active > .blip-content > .blip-view-mode .blip-text {
   background-color: rgba(87, 170, 217, 0.05);
 }
 
-/* Ensure menu appears when blip is active */
-.blip-container.active .blip-menu-container {
+/* Ensure only the active blip's own direct menu appears. Do not cascade this
+ * through expanded child blips; original Rizzoma shows one active toolbar. */
+.blip-container.active > .blip-menu-container {
   opacity: 1;
   transform: translateY(0);
 }
@@ -1135,7 +1221,7 @@
 }
 
 .blip-collapsed-row .blip-bullet {
-  margin-right: 6px;
+  display: none !important;
 }
 
 .blip-collapsed-row:hover {
@@ -1162,7 +1248,8 @@
   background: #b3b3b3;
   border: none;
   border-radius: 3px;
-  margin-left: 2px;
+  margin-right: 6px;
+  margin-left: 0;
   vertical-align: middle;
   cursor: pointer;
 }
@@ -1222,7 +1309,6 @@
 
 /* Sub-bullet style for nested blips */
 .blip-container.nested-blip .blip-bullet {
-  content: '◦';
   font-size: 14px;
   color: #888;
 }
@@ -1267,8 +1353,9 @@
   margin-left: 22px;
   border-left: 2px solid #ddd;
   padding-left: 8px;
-  margin-top: 4px;
-  margin-bottom: 4px;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+  clear: both;
   background: #fafafa;
   border-radius: 0 3px 3px 0;
 }
@@ -1287,8 +1374,9 @@
   margin-left: 22px;
   border-left: 1px solid #e0e0e0;  /* thin guide line, not 2px card border */
   padding: 0 0 0 8px;
-  margin-top: 0;
-  margin-bottom: 0;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+  clear: both;
   background: transparent !important;  /* drop the lavender panel */
   border-radius: 0;
 }
@@ -1310,7 +1398,7 @@
 /* Minimal styling for inline children — no toolbar, clean content display */
 .inline-child-expanded > .blip-container {
   margin-left: 0 !important;
-  padding: 4px 0;
+  padding: 10px 14px !important;
 }
 
 .inline-child-expanded > .blip-container > .blip-content {
@@ -1371,6 +1459,17 @@
 .inline-child-portal {
   display: block;
   list-style: none;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+  clear: both;
+}
+
+/* When the portal has no expanded child, suppress block-level whitespace
+   so the bare [+] marker doesn't introduce a phantom blank line. React
+   only renders into the portal when localExpandedInline contains the
+   child id — when collapsed, the .inline-child-portal stays empty. */
+.inline-child-portal:empty {
+  display: none;
 }
 
 /* When the portal has no expanded child, suppress block-level whitespace
@@ -1415,4 +1514,373 @@
     min-height: 80px;
     font-size: 16px; /* prevents iOS zoom on focus */
   }
+}
+
+/* ============================================================
+ * 2026-07-14 DEEP-BLB PARITY (audit severe-failure #1)
+ * Legacy rizzoma.com nests depth-10 as TIGHT boxed blocks: ~22px indent per
+ * level (the LI's own margin), children visually contained in the parent box,
+ * near-full width retained. Our render compounded ~86px/level on the left
+ * (wrapper margin 22 + wrapper padding 8 + row/text body paddings) and lost
+ * ~70px/level on the right (the avatar/meta flex column). Keep ONLY the LI's
+ * 22px step; the wrapper hugs it; the meta column overlays the top-right
+ * corner instead of consuming width.
+ * ============================================================ */
+.rizzoma-parity .inline-child-expanded {
+  margin-left: 0;
+  padding: 0 0 0 2px;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+  clear: both;
+}
+.rizzoma-parity .inline-child-expanded .blip-content-row {
+  padding-left: 0 !important;
+  padding-right: 2px !important;
+  gap: 4px;
+  position: relative;
+}
+.rizzoma-parity .inline-child-expanded .blip-text {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+/* The nested bullet gutter is the last compounding term: legacy's per-level step
+   IS the LI's 22px margin, so keep the bullet tight against it. */
+.rizzoma-parity .inline-child-expanded > .blip-container > .blip-content .blip-bullet {
+  margin-left: 0;
+  width: 4px;
+}
+/* Legacy boxed-card look for nested children */
+.rizzoma-parity .inline-child-expanded > .blip-container {
+  border: 1px solid #d9d9d9;
+  border-radius: 3px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+/* Meta/avatar column overlays the box corner in authentic vertical stack */
+.rizzoma-parity .inline-child-expanded .blip-view-mode > .blip-content-row > .blip-contributors-info,
+.rizzoma-parity .inline-child-expanded .blip-author-info,
+.rizzoma-parity .inline-child-expanded .blip-contributors-info {
+  position: absolute !important;
+  right: 14px !important;
+  top: 10px !important;
+  padding-left: 0 !important;
+  margin: 0 !important;
+  z-index: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+.rizzoma-parity .inline-child-expanded .blip-contributors-stack {
+  width: 28px;
+  height: 28px;
+}
+.rizzoma-parity .inline-child-expanded .blip-contributor-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  border: 1px solid #707478;
+}
+.rizzoma-parity .inline-child-expanded .blip-author-date {
+  font-size: 10px;
+  line-height: 12px;
+  color: #333333;
+  margin-top: 2px;
+  text-align: center;
+  white-space: nowrap;
+}
+.rizzoma-parity .inline-child-expanded .blip-reply-inline {
+  display: none !important;
+}
+
+/* ============================================================
+ * 2026-07-15 — bullets/avatar/top-line parity with old rizzoma.com
+ * (SDS: "the avatar needs no bullet AND also shouldn't be eating any screen
+ * real estate — the first bullet can easily be top-aligned with the avatar —
+ * just check the old Rizzoma: there it is EXACTLY so"). BLB.md §7a.
+ *
+ * (1) The blip body's <ul><li> is the ONLY bullet. The container must NOT
+ *     render a second wrapper bullet on top of it (the stray '•' floating
+ *     above the first list item — the arrows in the 2026-07-15 screenshot).
+ * (2) The contributor avatar carries no bullet and eats ZERO vertical space:
+ *     absolute, top-right, top-aligned with the first bullet.
+ * ============================================================ */
+.blip-view-mode .blip-content-row,
+.rizzoma-parity .blip-view-mode .blip-content-row {
+  position: relative;
+}
+/* Kill the wrapper bullet in EXPANDED view — the list supplies the bullet.
+   (Collapsed rows keep their single .blip-collapsed-row .blip-bullet.) */
+.blip-view-mode > .blip-content-row > .blip-bullet,
+.rizzoma-parity .blip-view-mode > .blip-content-row > .blip-bullet {
+  display: none !important;
+}
+/* Avatar/date float in the top-right corner, no row of their own. */
+.blip-view-mode > .blip-content-row > .blip-contributors-info,
+.rizzoma-parity .blip-view-mode > .blip-content-row > .blip-contributors-info {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  margin: 0;
+  padding: 0;
+  z-index: 2;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+.blip-view-mode > .blip-content-row > .blip-contributors-info .blip-author-date,
+.rizzoma-parity .blip-view-mode > .blip-content-row > .blip-contributors-info .blip-author-date {
+  font-size: 10px;
+  line-height: 14px;
+}
+/* Reserve just enough right padding on the text column so long labels don't
+   slide under the avatar. */
+.blip-view-mode > .blip-content-row > .blip-main-content,
+.rizzoma-parity .blip-view-mode > .blip-content-row > .blip-main-content {
+  padding-right: 46px;
+}
+/* First list line hugs the top of the box — no leading gap above bullet 1. */
+.blip-view-mode .blip-text > ul,
+.rizzoma-parity .blip-view-mode .blip-text > ul {
+  margin-top: 0;
+}
+
+/* Authentic Rizzoma #tag chip styling (matches src/static/css/blip.css:560-618) */
+.blip-tag-container,
+.blip-tag {
+  display: inline-block;
+  border-radius: 3px;
+}
+.blip-tag {
+  background: #eaeaea;
+  padding: 0 3px;
+  height: 20px;
+  line-height: 20px;
+  font-size: 12px;
+}
+.blip-tag.clickable {
+  cursor: pointer;
+}
+.blip-tag.clickable:hover {
+  text-decoration: underline;
+}
+.blip-tag-container {
+  border: 2px solid white;
+  margin: 0 3px 0 0;
+  vertical-align: middle;
+}
+.blip-tag-text {
+  color: #000000;
+  margin: 0 3px 0 0;
+  font-weight: normal;
+}
+
+/* Topic Root Author Avatar & Date Card (matches legacy-240.png) */
+.blip-contributors-info.topic-root-contributors,
+.rizzoma-parity .blip-view-mode > .blip-content-row > .blip-contributors-info.topic-root-contributors {
+  position: absolute;
+  top: 14px;
+  right: 24px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  z-index: 2;
+}
+.blip-contributors-info.topic-root-contributors .blip-contributors-stack {
+  width: 32px;
+  height: 32px;
+}
+.blip-contributors-info.topic-root-contributors .blip-contributor-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
+  border: 1px solid #707478;
+}
+.blip-contributors-info.topic-root-contributors .blip-author-date {
+  font-size: 11px;
+  color: #333333;
+  margin-top: 2px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Topic Root H1 Title Typography (matches legacy-240.png and blip.css:79) */
+.root-blip h1,
+.topic-meta-blip h1 {
+  font-size: 18px !important;
+  font-weight: bold !important;
+  color: #000000 !important;
+  margin: 0 0 6px 0 !important;
+  line-height: 22px !important;
+}
+
+/* Nested Child Blip Author Avatar & Date Card (matches 225-crop-expanded-inline-thread.png and blip.css:322-331) */
+.inline-child-expanded .blip-view-mode > .blip-content-row > .blip-contributors-info,
+.inline-child-expanded .blip-contributors-info,
+.inline-child-expanded .blip-container.nested-blip .blip-contributors-info,
+.rizzoma-parity .inline-child-expanded .blip-container.nested-blip .blip-contributors-info,
+.rizzoma-parity .inline-child-expanded .blip-view-mode > .blip-content-row > .blip-contributors-info {
+  position: absolute !important;
+  top: 8px !important;
+  right: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 2 !important;
+  min-width: 36px !important;
+  width: auto !important;
+}
+.inline-child-expanded .blip-text,
+.rizzoma-parity .inline-child-expanded .blip-text {
+  padding-right: 48px !important;
+}
+.inline-child-expanded .blip-contributors-stack,
+.inline-child-expanded .blip-container.nested-blip .blip-contributors-stack,
+.rizzoma-parity .inline-child-expanded .blip-container.nested-blip .blip-contributors-stack,
+.rizzoma-parity .inline-child-expanded .blip-contributors-stack {
+  position: relative !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+}
+.inline-child-expanded .blip-contributor-avatar,
+.inline-child-expanded .blip-container.nested-blip .blip-contributor-avatar,
+.rizzoma-parity .inline-child-expanded .blip-container.nested-blip .blip-contributor-avatar,
+.rizzoma-parity .inline-child-expanded .blip-contributor-avatar {
+  position: static !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 2px !important;
+  border: 1px solid #707478 !important;
+}
+.inline-child-expanded .blip-view-mode > .blip-content-row > .blip-contributors-info .blip-author-date,
+.inline-child-expanded .blip-author-date,
+.inline-child-expanded .blip-container.nested-blip .blip-author-date,
+.rizzoma-parity .inline-child-expanded .blip-container.nested-blip .blip-author-date,
+.rizzoma-parity .inline-child-expanded .blip-author-date {
+  font-size: 10px !important;
+  line-height: 12px !important;
+  color: #333333 !important;
+  margin-top: 2px !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+/* merge-master: only the ACTIVE blip shows its toolbar (single-active model) */
+.inline-child-expanded .blip-container:not(.active) .blip-menu-container {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+.blip-container.active .blip-menu-container {
+  opacity: 1;
+  transform: none;
+}
+
+
+/* ===== LEGACY PARITY 2026-11-09 (compared by eye with legacy screenshots
+   240-topic-content-0-russian-red-lines-2026 and 225-crop-expanded-inline-thread) ===== */
+
+/* Topic body: original Rizzoma draws no frame or tinted card around the text. */
+.topic-blip-content .topic-content-view {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 2px 0 6px !important;
+}
+
+/* Tag row ("#RuBase" above the bullets): no bullet on the tag, bullets not indented. */
+.topic-content-view ul > li.blip-tag-row::before,
+.blip-text ul > li.blip-tag-row::before {
+  display: none !important;
+  content: none !important;
+}
+.topic-content-view ul > li.blip-tag-row,
+.blip-text ul > li.blip-tag-row {
+  padding-left: 0 !important;
+}
+.topic-content-view ul > li.blip-tag-row > ul,
+.blip-text ul > li.blip-tag-row > ul {
+  padding-left: 0 !important;
+  margin: 0 !important;
+}
+.topic-content-view ul > li.blip-tag-row > ul > li,
+.blip-text ul > li.blip-tag-row > ul > li {
+  padding-left: 18px;
+}
+.topic-content-view ul > li.blip-tag-row > ul > li::before,
+.blip-text ul > li.blip-tag-row > ul > li::before {
+  content: '' !important;
+  position: absolute;
+  left: 5px;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border: none !important;
+  border-radius: 50%;
+  background: #333333 !important;
+}
+.topic-content-view li.blip-tag-row > p.blip-tag-line {
+  margin: 0 0 4px !important;
+}
+
+/* Expanded inline child: one thin box reaching the right edge, tight spacing
+   (legacy: ~1 line of padding, no stacked margins). */
+.topic-content-view .inline-child-expanded,
+.rizzoma-parity .topic-content-view .inline-child-expanded {
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
+  /* The list item reserves 44px on the right; the extra 10px reaches over the
+     parent's own right margin + border, as original Rizzoma's .blips-container
+     did (margin-right: -10px in blip.css), so a level costs ~31px, not ~41px. */
+  margin-right: -54px !important;
+}
+/* View mode, inside a nested blip: the parent ALSO reserves its avatar slot on
+   the text column (.blip-main-content padding-right 46px + nested .blip-text
+   padding-right 48px + .blip-content-row 2px). The avatar is absolutely
+   positioned at the blip's top-right and a child box always starts below its
+   label line, so the box reaches under that reservation too. Without this,
+   view mode lost ~109 px per level (measured 2026-11-10, depth 10: L10 box
+   51 px wide, its date printed over its label). */
+.inline-child-expanded .blip-view-mode > .blip-content-row > .blip-main-content .blip-text li > .inline-child-expanded,
+.rizzoma-parity .inline-child-expanded .blip-view-mode > .blip-content-row > .blip-main-content .blip-text li > .inline-child-expanded {
+  /* ...but not past the parent box's own right edge (+10px: its padding). */
+  margin-right: calc(-54px - 46px - 48px - 2px + 10px) !important;
+}
+.inline-child-expanded > .rizzoma-blip.nested-blip {
+  margin-top: 0 !important;
+}
+.inline-child-expanded > .blip-container {
+  padding: 4px 10px !important;
+}
+.inline-child-expanded > .blip-container > .blip-content {
+  padding: 0 !important;
+}
+.inline-child-expanded .blip-content > .blip-text,
+.inline-child-expanded .blip-text {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+/* Tags already show inline in the body; original Rizzoma has no second tag row below it. */
+.topic-blip-body .topic-tags {
+  display: none !important;
+}
+
+/* PARITY 2026-11-09 B: an expanded child shows ONE avatar (the top contributor) with
+   its date under it, inside the box, as in legacy 225. The stack rules force every
+   avatar static into a 28px slot, so extra contributors spilled out below the box. */
+.inline-child-expanded .blip-contributors-stack .blip-contributor-avatar:not(:first-child),
+.inline-child-expanded .blip-contributors-stack .blip-contributors-overflow {
+  display: none !important;
+}
+.inline-child-expanded > .blip-container > .blip-content {
+  min-height: 46px !important;
 }
