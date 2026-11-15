@@ -261,7 +261,7 @@
 .topic-blip-content li > ul,
 .tiptap.ProseMirror li > ul,
 .blip-editor-container .ProseMirror li > ul {
-  padding-left: 18px !important;
+  padding-left: 0 !important;
   margin: 0.1em 0;
 }
 
@@ -272,7 +272,7 @@
 .blip-editor-container .ProseMirror li > ul > li::before {
   content: '';
   position: absolute;
-  left: 5px;
+  left: 0;
   top: 9px;
   width: 5px;
   height: 5px;
@@ -290,7 +290,7 @@
 .blip-editor-container .ProseMirror li > ul > li > ul > li::before {
   content: '';
   position: absolute;
-  left: 5px;
+  left: 0;
   top: 9px;
   width: 4px;
   height: 4px;
