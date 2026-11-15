@@ -293,8 +293,9 @@
 
 .topic-meta-blip.edit-mode,
 .topic-meta-blip.active.edit-mode {
+  margin-top: 0 !important;
   border: 2px solid #57AAD9 !important;
-  border-radius: 4px;
+  border-radius: 0 0 4px 4px;
 }
 
 .topic-toolbar-spacer {
@@ -550,10 +551,15 @@
   line-height: 1.58;
 }
 
-.topic-content-edit .ProseMirror ul,
+.topic-content-edit .ProseMirror ul {
+  margin: 4px 0 0;
+  padding-left: 0;
+  color: #223b51;
+}
+
 .topic-content-edit .ProseMirror ol {
-  margin: 12px 0 0;
-  padding-left: 28px;
+  margin: 4px 0 0;
+  padding-left: 1.5em;
   color: #223b51;
 }
 
@@ -742,7 +748,7 @@
    no enlarged line-height. */
 .topic-content-view h1 {
   margin: 0 0 4px 0;
-  padding: 0 18px;
+  padding: 0;
   font-size: 17px;
   font-weight: 600;
   color: #12273d;
@@ -752,7 +758,7 @@
 
 .topic-content-view p {
   margin: 4px 0 0 0;
-  padding: 0 18px;
+  padding: 0;
   font-size: 14px;
   color: #253d53;
   line-height: 1.55;
@@ -762,14 +768,15 @@
   margin-top: 0;
 }
 
-.topic-content-view ul,
+.topic-content-view ul {
+  margin: 4px 0 0;
+  padding: 0;
+  color: #243b53;
+}
+
 .topic-content-view ol {
-  margin: 12px 0 0;
-  /* Match .topic-content-edit .ProseMirror ul padding-left (28px)
-     so view and edit modes render the bulleted list at the same
-     indent — user pointed out edit mode looked "much better"
-     because the list was less indented. 2026-04-14 task #39. */
-  padding: 0 0 0 28px;
+  margin: 4px 0 0;
+  padding: 0 0 0 1.5em;
   color: #243b53;
 }
 

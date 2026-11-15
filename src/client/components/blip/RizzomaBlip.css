@@ -736,7 +736,7 @@
 .tiptap.ProseMirror li,
 .rizzoma-parity .tiptap.ProseMirror li {
   position: relative;
-  padding-left: 18px;
+  padding-left: 14px;
   margin: 0.15em 0;
   line-height: 22px;
 }
@@ -762,7 +762,7 @@
 
 .blip-editor-container .ProseMirror li {
   position: relative;
-  padding-left: 18px;
+  padding-left: 14px;
   margin: 0.15em 0;
   line-height: 22px;
 }
@@ -774,11 +774,15 @@
 }
 
 /* Nested lists - indent further, within the same editor only (li > list;
-   see the li > ul note above). */
-.blip-editor-container .ProseMirror li > ul,
+   see the li > ul note above). Nested ul sits at parent li's +14px text edge. */
+.blip-editor-container .ProseMirror li > ul {
+  margin: 0.1em 0;
+  padding-left: 0 !important;
+}
+
 .blip-editor-container .ProseMirror li > ol {
   margin: 0.1em 0;
-  padding-left: 18px !important;
+  padding-left: 1.5em !important;
 }
 
 .blip-editor-container .ProseMirror li > ul {
