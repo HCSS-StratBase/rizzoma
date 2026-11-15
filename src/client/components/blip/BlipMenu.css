@@ -11,9 +11,13 @@
   align-items: flex-start;
   gap: 4px;
   pointer-events: auto !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 4px !important;
   opacity: 1 !important;
   transform: none !important;
+}
+
+.blip-container.editing > .blip-menu-container {
+  margin-bottom: 0 !important;
 }
 
 .blip-menu-container > * {

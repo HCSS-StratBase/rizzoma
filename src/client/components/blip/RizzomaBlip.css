@@ -203,7 +203,7 @@
 .topic-blip-content li,
 .tiptap.ProseMirror li {
   position: relative;
-  padding-left: 18px;
+  padding-left: 14px;
   margin: 0.15em 0;
   line-height: 22px;
 }
@@ -225,7 +225,7 @@
 .blip-editor-container .ProseMirror ul > li::before {
   content: '';
   position: absolute;
-  left: 5px;
+  left: 0;
   top: 9px;
   width: 5px;
   height: 5px;
@@ -653,7 +653,12 @@
 
 /* Editor Container */
 .blip-editor-container {
-  margin: 4px 0;
+  margin: 0 0 4px 0;
+}
+
+.blip-container.editing > .blip-content {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
 }
 
 /* TipTap ProseMirror editor styling for inline blip editor */
@@ -663,7 +668,7 @@
   padding: 8px;
   background: #fff;
   border: 1px solid #4285f4;
-  border-radius: 4px;
+  border-radius: 0 0 4px 4px;
 }
 
 .blip-editor-container .ProseMirror:focus {
