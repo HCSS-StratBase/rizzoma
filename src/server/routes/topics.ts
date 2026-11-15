@@ -162,7 +162,16 @@ type TopicListItem = {
 
 const MAX_SNIPPET_LENGTH = 140;
 function stripHtml(input: string): string {
-  return input.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return input
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&amp;/gi, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function buildSnippet(content?: string): string | undefined {

@@ -10,6 +10,7 @@ import { InviteModal } from './InviteModal';
 import { ShareModal } from './ShareModal';
 import ExportModal from './ExportModal';
 import { WavePlaybackModal } from './WavePlaybackModal';
+import { MindMapView } from './MindMapView';
 import './RizzomaTopicDetail.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { RizzomaBlip, ACTIVE_BLIP_CLAIM_EVENT, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
@@ -22,7 +23,7 @@ import { EDIT_MODE_EVENT, INSERT_EVENTS } from './RightToolsPanel';
 import { useCollaboration } from './editor/useCollaboration';
 import { yjsDocManager } from './editor/YjsDocumentManager';
 import { FEATURES } from '@shared/featureFlags';
-import { NativeWaveView } from './native/NativeWaveView';
+import { NativeWaveView, type NativeWaveEditController } from './native/NativeWaveView';
 import { buildNativeContentLookup, type NativeBlipInput } from '@client/native/content-lookup';
 import { ActiveBlipProvider, EditSurfaceActiveBridge } from './blip/ActiveBlipContext';
 import { useAuthenticatedCollaborationUser } from './editor/useAuthenticatedCollaborationUser';
@@ -215,23 +216,23 @@ function extractTitleFromContent(html: string): string {
     if (pMatch) return pMatch[1].replace(/<[^>]+>/g, '').trim();
     return html?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().split('\n')[0] || '';
   }
-  const div = document.createElement('div');
-  div.innerHTML = html;
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
 
   // Try H1 first
-  const h1 = div.querySelector('h1');
+  const h1 = tpl.content.querySelector('h1');
   if (h1?.textContent?.trim()) {
     return h1.textContent.trim();
   }
 
   // Try first paragraph
-  const p = div.querySelector('p');
+  const p = tpl.content.querySelector('p');
   if (p?.textContent?.trim()) {
     return p.textContent.trim();
   }
 
   // Fallback to first line of text content
-  const text = div.textContent || '';
+  const text = tpl.content.textContent || '';
   return text.trim().split('\n')[0] || '';
 }
 
@@ -309,6 +310,79 @@ function RizzomaTopicDetailState({
   const [showExportModal, setShowExportModal] = useState(false);
   const [showWavePlayback, setShowWavePlayback] = useState(false);
   const [showCommentsPanel, setShowCommentsPanel] = useState(true);
+  const [topicViewMode, setTopicViewMode] = useState<'text' | 'mindmap'>('text');
+  const [mindmapDisplayMode, setMindmapDisplayMode] = useState<'short' | 'expanded'>('short');
+
+  useEffect(() => {
+    const onViewModeChange = (e: Event) => {
+      const detail = (e as CustomEvent<{ viewMode?: 'text' | 'mindmap'; displayMode?: 'short' | 'expanded' }>).detail;
+      if (detail?.viewMode) setTopicViewMode(detail.viewMode);
+      if (detail?.displayMode) setMindmapDisplayMode(detail.displayMode);
+    };
+    window.addEventListener('rizzoma:view-mode-change', onViewModeChange);
+    return () => window.removeEventListener('rizzoma:view-mode-change', onViewModeChange);
+  }, []);
+
+  // View-mode host bridge for sandboxed app-frame gadgets (Kanban, Planner, Focus, Notes).
+  useEffect(() => {
+    const handleGadgetMessage = (event: MessageEvent) => {
+      if (event.origin !== 'null') return;
+      const payload = event.data;
+      if (!payload || typeof payload !== 'object' || payload.scope !== 'rizzoma-gadget') return;
+
+      const sourceWin = event.source as Window | null;
+      if (!sourceWin) return;
+
+      // Ignore frames already managed by an active TipTap SandboxAppGadgetView
+      const figures = Array.from(document.querySelectorAll('figure[data-gadget-type="app-frame"]'));
+      const matchedFigure = figures.find((fig) => {
+        if (fig.closest('.app-frame-live-state')) return false;
+        const frame = fig.querySelector('iframe');
+        return frame?.contentWindow === sourceWin;
+      });
+      if (!matchedFigure) return;
+
+      const reply = (response: Record<string, unknown>) => {
+        sourceWin.postMessage(
+          { scope: 'rizzoma-gadget', requestId: payload.requestId, ...response },
+          '*'
+        );
+      };
+
+      if (payload.type === 'host.getNodeData') {
+        let parsed: Record<string, unknown> | null = null;
+        const raw = matchedFigure.getAttribute('data-app-data');
+        if (raw) {
+          try {
+            parsed = JSON.parse(raw);
+          } catch {
+            parsed = null;
+          }
+        }
+        reply({ type: 'host.response', data: parsed });
+        return;
+      }
+
+      if (payload.type === 'host.getUserContext') {
+        reply({
+          type: 'host.response',
+          data: { userId: collaborationUser?.name || 'viewer', canEdit: false },
+        });
+        return;
+      }
+
+      if (payload.type === 'host.resize') {
+        const nextHeight = String(Math.min(1_200, Math.max(320, Number(payload.height || 0))));
+        const frame = matchedFigure.querySelector('iframe');
+        if (frame instanceof HTMLIFrameElement) {
+          frame.style.height = `${nextHeight}px`;
+        }
+        reply({ type: 'host.response', data: { height: nextHeight } });
+      }
+    };
+    window.addEventListener('message', handleGadgetMessage);
+    return () => window.removeEventListener('message', handleGadgetMessage);
+  }, [collaborationUser?.name]);
 
   useEffect(() => {
     if (isAuthed) return;
@@ -320,6 +394,8 @@ function RizzomaTopicDetailState({
 
   // Topic content editing state (BLB: topic is meta-blip, title is first line)
   const [isEditingTopic, setIsEditingTopic] = useState(false);
+  const [isNativeEditing, setIsNativeEditing] = useState(false);
+  const nativeEditControllerRef = useRef<NativeWaveEditController | null>(null);
   const isEditingTopicRef = useRef(isEditingTopic);
   isEditingTopicRef.current = isEditingTopic;
   const [topicContent, setTopicContent] = useState('');
@@ -1020,7 +1096,7 @@ function RizzomaTopicDetailState({
         content: EMPTY_BLB_HTML,
         parentId: null, // This is a child of the topic/wave itself (root-level blip)
         anchorPosition: anchorPosition, // The cursor position where this inline comment is anchored
-        isFoldedByDefault: false, // In original Rizzoma, newly created child blips open unfolded and ready for editing
+        isFoldedByDefault: true, // Newly created blips default to hidden/folded-by-default while opening expanded for immediate editing
       };
       try {
         const response = await api('/api/blips', {
@@ -1078,7 +1154,7 @@ function RizzomaTopicDetailState({
               updatedAt: createdBlip.updatedAt,
               yjsGeneration: 0,
               isRead: true,
-              isFoldedByDefault: false,
+              isFoldedByDefault: true,
               isCollapsed: false,
               parentBlipId: undefined,
               childBlips: [],
@@ -1361,7 +1437,7 @@ function RizzomaTopicDetailState({
       if (ed && !ed.isDestroyed) {
         try {
           const { state } = ed;
-          let nodePos: number | null = null;
+          let nodePos = -1;
           state.doc.descendants((node: any, pos: number) => {
             if (node.type.name === 'blipThread' && node.attrs.threadId === blipId) {
               nodePos = pos;
@@ -1369,7 +1445,7 @@ function RizzomaTopicDetailState({
             }
             return true;
           });
-          if (nodePos !== null) {
+          if (nodePos >= 0) {
             ed.commands.deleteRange({ from: nodePos, to: nodePos + 1 });
           }
         } catch {
@@ -1750,25 +1826,26 @@ function RizzomaTopicDetailState({
   const useNativeRender = (() => {
     if (!FEATURES.RIZZOMA_NATIVE_RENDER) return false;
     if (typeof window === 'undefined') return false;
-    // Opt-IN ONLY via `?render=native` — the native path is still read-only
-    // (no Edit button, no per-blip toolbars, no Write-a-reply input).
-    // Default stays on the React/TipTap path until Phases 2-4 finish wiring
-    // edit/collab into the native render.
-    return new URLSearchParams(window.location.search).get('render') === 'native';
+    const param = new URLSearchParams(window.location.search).get('render');
+    if (param === 'native') return true;
+    if (param === 'hybrid' || param === 'react') return false;
+    try {
+      return window.localStorage.getItem('rizzoma_render_mode') === 'native';
+    } catch {
+      return false;
+    }
   })();
 
-  if (useNativeRender) {
-    // The `blips` state is a NESTED tree (each BlipData carries `.childBlips`),
-    // and nesting is stored as parentId relationships — NOT as `data-blip-thread`
-    // markers in the HTML (those are injected only at React render time). So the
-    // lookup must be built from the authoritative tree, flattened to every
-    // descendant, with one synthesized BLIP element per child. Feeding the
-    // renderer per-blip parsed HTML alone stopped the fractal at the first level
-    // whose marker happened to be persisted. See native/content-lookup.ts.
+  const nativeLookup = (() => {
+    if (!useNativeRender) return null;
+    const rootHtml = sanitizeRichHtml(ensureTopicBlbHtml(
+      topic.title || 'Untitled',
+      sanitizeRichHtml(topic.content || ''),
+    ));
     const flat: NativeBlipInput[] = [
       {
         id: topic.id,
-        content: topic.content || `<h1>${topic.title || 'Untitled'}</h1>`,
+        content: rootHtml,
         parentId: null,
       },
     ];
@@ -1779,14 +1856,8 @@ function RizzomaTopicDetailState({
       }
     };
     flatten(blips);
-    const lookup = buildNativeContentLookup(topic.id, flat);
-
-    return (
-      <div className="rizzoma-topic-detail rizzoma-native-mode">
-        <NativeWaveView rootBlipId={topic.id} contentByBlipId={lookup} />
-      </div>
-    );
-  }
+    return buildNativeContentLookup(topic.id, flat);
+  })();
 
   const tags = extractTags(topic.content || '');
   // Revoke the already-loaded tree synchronously when auth/connectivity drops;
@@ -2009,21 +2080,30 @@ function RizzomaTopicDetailState({
         <div className={`wave-panel ${isEditingTopic ? 'edit-mode' : ''} active`}>
           <BlipMenu
             isActive={true}
-            isEditing={isEditingTopic}
+            isEditing={useNativeRender ? isNativeEditing : isEditingTopic}
             canEdit={isAuthed}
             canComment={isAuthed}
             editor={topicEditor || undefined}
             isTopicRoot={true}
             collapseByDefault={false}
             onToggleCollapseByDefault={undefined}
-            onStartEdit={startEditingTopic}
-            onFinishEdit={finishEditingTopic}
+            onStartEdit={useNativeRender ? () => nativeEditControllerRef.current?.startEdit() : startEditingTopic}
+            onFinishEdit={useNativeRender ? () => nativeEditControllerRef.current?.finishEdit() : finishEditingTopic}
             onShowComments={() => {
               setShowCommentsPanel(true);
+              const win = window as unknown as { __rizzomaUnfoldAllActive?: boolean; __rizzomaUnfoldTimer?: ReturnType<typeof setTimeout> };
+              win.__rizzomaUnfoldAllActive = true;
+              if (win.__rizzomaUnfoldTimer) clearTimeout(win.__rizzomaUnfoldTimer);
+              win.__rizzomaUnfoldTimer = setTimeout(() => {
+                win.__rizzomaUnfoldAllActive = false;
+              }, 600);
+              window.dispatchEvent(new CustomEvent('rizzoma:unfold-all'));
               toast('Comments shown');
             }}
             onHideComments={() => {
               setShowCommentsPanel(false);
+              (window as unknown as { __rizzomaUnfoldAllActive?: boolean }).__rizzomaUnfoldAllActive = false;
+              window.dispatchEvent(new CustomEvent('rizzoma:fold-all'));
               toast('Comments hidden');
             }}
             areCommentsVisible={showCommentsPanel}
@@ -2054,7 +2134,26 @@ function RizzomaTopicDetailState({
           />
         </div>
       )}
-      {!currentSubblip && (
+      {!currentSubblip && topicViewMode === 'mindmap' && (
+        <MindMapView
+          topicTitle={topic.title}
+          topicId={id}
+          rootContent={topic.content}
+          blips={blips}
+          displayMode={mindmapDisplayMode}
+          onSelectBlip={(blipId) => {
+            window.dispatchEvent(new CustomEvent('rizzoma:set-view-mode', { detail: { viewMode: 'text' } }));
+            setTopicViewMode('text');
+            if (blipId !== id) {
+              setExpandedBlips((prev) => new Set([...prev, blipId]));
+              setTimeout(() => {
+                document.querySelector(`[data-blip-id="${blipId}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }, 80);
+            }
+          }}
+        />
+      )}
+      {!currentSubblip && topicViewMode !== 'mindmap' && (
         <div
           className={`topic-meta-blip blip-container root-blip ${isEditingTopic ? 'active edit-mode' : ''}`}
           onDoubleClick={() => {
@@ -2131,6 +2230,22 @@ function RizzomaTopicDetailState({
                 {topicChildFooter}
               </div>
             </>
+          ) : useNativeRender && nativeLookup ? (
+            <div className="rizzoma-native-mode">
+              <NativeWaveView
+                rootBlipId={topic.id}
+                contentByBlipId={nativeLookup}
+                canEdit={isAuthed}
+                topicTitle={topic.title || 'Wave playback'}
+                blips={renderedBlips.map((b) => ({
+                  id: b.id,
+                  label: extractTitleFromContent(b.content || '') || b.authorName || b.id,
+                }))}
+                editControllerRef={nativeEditControllerRef}
+                onEditingChange={setIsNativeEditing}
+                hideToolbar={true}
+              />
+            </div>
           ) : (
             <RizzomaBlip
               key={topicBlip.id}

@@ -1371,9 +1371,9 @@
  * we're confident the parity skin is right.
  */
 .rizzoma-parity .inline-child-expanded {
-  margin-left: 22px;
+  margin-left: 14px;
   border-left: 1px solid #e0e0e0;  /* thin guide line, not 2px card border */
-  padding: 0 0 0 8px;
+  padding: 0 0 0 6px;
   margin-top: 8px !important;
   margin-bottom: 8px !important;
   clear: both;
@@ -1774,7 +1774,7 @@
 }
 
 /* merge-master: only the ACTIVE blip shows its toolbar (single-active model) */
-.inline-child-expanded .blip-container:not(.active) .blip-menu-container {
+.inline-child-expanded .blip-container:not(.active) > .blip-menu-container {
   opacity: 0 !important;
   pointer-events: none;
 }
@@ -1858,7 +1858,7 @@
   margin-top: 0 !important;
 }
 .inline-child-expanded > .blip-container {
-  padding: 4px 10px !important;
+  padding: 4px 10px 4px 6px !important;
 }
 .inline-child-expanded > .blip-container > .blip-content {
   padding: 0 !important;

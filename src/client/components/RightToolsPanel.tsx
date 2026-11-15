@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import './RightToolsPanel.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
 import { emitWaveUnread } from '../lib/socket';
-import { api } from '../lib/api';
+import { logoutCurrentSession } from '../lib/logout';
 import { GadgetPalette, type GadgetType } from './GadgetPalette';
 import { ShellAuthControls } from './ShellAuthControls';
 
@@ -93,16 +93,25 @@ function RightToolsPanelContent({
   nextTopicAvailable,
 }: RightToolsPanelProps) {
   const [viewMode, setViewMode] = useState<'text' | 'mindmap'>('text');
-  // `navigating` (state) controls the button's disabled prop for visual
-  // feedback. `navigatingRef` is the synchronous lock that prevents
-  // rapid-fire clicks from racing past each other before React has a
-  // chance to propagate the disabled prop. Without the ref, two clicks
-  // fired in the same React render frame both pass the
-  // `if (navigating) return` guard because the state setter is
-  // asynchronous. Task #72 (2026-04-15).
   const [navigating, setNavigating] = useState(false);
   const navigatingRef = useRef(false);
-  const [displayMode, setDisplayMode] = useState<'short' | 'expanded'>('expanded');
+  const [displayMode, setDisplayMode] = useState<'short' | 'expanded'>('short');
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('rizzoma:view-mode-change', {
+      detail: { viewMode, displayMode },
+    }));
+  }, [viewMode, displayMode]);
+
+  useEffect(() => {
+    const onSetViewMode = (e: Event) => {
+      const detail = (e as CustomEvent<{ viewMode?: 'text' | 'mindmap'; displayMode?: 'short' | 'expanded' }>).detail;
+      if (detail?.viewMode) setViewMode(detail.viewMode);
+      if (detail?.displayMode) setDisplayMode(detail.displayMode);
+    };
+    window.addEventListener('rizzoma:set-view-mode', onSetViewMode);
+    return () => window.removeEventListener('rizzoma:set-view-mode', onSetViewMode);
+  }, []);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isBlipActiveEditable, setIsBlipActiveEditable] = useState(false);
   const [_isCursorInEditor, setIsCursorInEditor] = useState(false);
@@ -128,17 +137,34 @@ function RightToolsPanelContent({
     setAvatarFailed(false);
   }, [user?.avatar]);
 
-  // Listen for edit mode changes and blip active events from RizzomaBlip
+  // Listen for edit mode changes and blip active events from RizzomaBlip / RizzomaTopicDetail
   useEffect(() => {
+    const editingBlips = new Set<string>();
+    let activeEditableBlipId: string | null = null;
     const handleEditModeChange = (e: Event) => {
-      const customEvent = e as CustomEvent<{ isEditing: boolean }>;
+      const customEvent = e as CustomEvent<{ isEditing: boolean; blipId?: string }>;
       const editing = customEvent.detail?.isEditing ?? false;
-      setIsEditMode(editing);
-      if (!editing) setIsCursorInEditor(false);
+      const blipId = customEvent.detail?.blipId ?? '__default__';
+      if (editing) {
+        editingBlips.add(blipId);
+      } else {
+        editingBlips.delete(blipId);
+      }
+      const anyEditing = editingBlips.size > 0;
+      setIsEditMode(anyEditing);
+      if (!anyEditing) setIsCursorInEditor(false);
     };
     const handleBlipActive = (e: Event) => {
-      const customEvent = e as CustomEvent<{ active: boolean }>;
-      setIsBlipActiveEditable(customEvent.detail?.active ?? false);
+      const customEvent = e as CustomEvent<{ active: boolean; blipId?: string }>;
+      const active = customEvent.detail?.active ?? false;
+      const blipId = customEvent.detail?.blipId ?? '__default__';
+      if (active) {
+        activeEditableBlipId = blipId;
+        setIsBlipActiveEditable(true);
+      } else if (activeEditableBlipId === blipId || activeEditableBlipId === null) {
+        activeEditableBlipId = null;
+        setIsBlipActiveEditable(false);
+      }
     };
     const handleFocus = () => setIsCursorInEditor(true);
     const handleBlur = () => setIsCursorInEditor(false);
@@ -302,10 +328,17 @@ function RightToolsPanelContent({
 
   // Fold/Unfold handlers
   const handleHideReplies = useCallback(() => {
+    (window as unknown as { __rizzomaUnfoldAllActive?: boolean }).__rizzomaUnfoldAllActive = false;
     dispatchInsertEvent('rizzoma:fold-all');
   }, []);
 
   const handleShowReplies = useCallback(() => {
+    const win = window as unknown as { __rizzomaUnfoldAllActive?: boolean; __rizzomaUnfoldTimer?: ReturnType<typeof setTimeout> };
+    win.__rizzomaUnfoldAllActive = true;
+    if (win.__rizzomaUnfoldTimer) clearTimeout(win.__rizzomaUnfoldTimer);
+    win.__rizzomaUnfoldTimer = setTimeout(() => {
+      win.__rizzomaUnfoldAllActive = false;
+    }, 600);
     dispatchInsertEvent('rizzoma:unfold-all');
   }, []);
 
@@ -349,8 +382,12 @@ function RightToolsPanelContent({
                 type="button"
                 className="user-profile-item"
                 onClick={async () => {
-                  await api('/api/auth/logout', { method: 'POST' });
-                  window.location.reload();
+                  try {
+                    await logoutCurrentSession();
+                    window.location.reload();
+                  } catch {
+                    // Keep active session visible if server logout failed
+                  }
                 }}
               >
                 Sign out

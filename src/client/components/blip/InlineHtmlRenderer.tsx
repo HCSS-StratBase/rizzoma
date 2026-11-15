@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 import '../editor/extensions/BlipThread.css';
+import { formatLatexToHtml } from '../../lib/renderLatex';
 import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
 import {
   formatTaskDate,
@@ -37,6 +38,7 @@ const ATTR_RENAMES: Record<string, string> = {
   autocomplete: 'autoComplete',
   autofocus: 'autoFocus',
   crossorigin: 'crossOrigin',
+  referrerpolicy: 'referrerPolicy',
 };
 
 const VOID_ELEMENTS = new Set([
@@ -73,10 +75,17 @@ const elementToProps = (el: Element): Record<string, unknown> => {
   return props;
 };
 
-const renderMarker = (el: Element, blipId: string, hasUnread: boolean, isExpanded: boolean): ReactNode => {
+const renderMarker = (
+  el: Element,
+  blipId: string,
+  hasUnread: boolean,
+  isExpanded: boolean,
+  isOrphaned = false,
+): ReactNode => {
   const classes = ['blip-thread-marker'];
   if (hasUnread) classes.push('has-unread');
   if (isExpanded) classes.push('expanded');
+  if (isOrphaned) classes.push('orphaned');
   // Preserve any existing extra classes (e.g., orphaned)
   const existingCls = el.getAttribute('class') || '';
   existingCls.split(/\s+/).forEach(c => {
@@ -209,13 +218,23 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
   const walkNode = (node: Node, depth = 0): ReactNode => {
     if (node.nodeType === Node.TEXT_NODE) {
       const val = node.nodeValue || '';
-      if (!val.includes('#')) {
+      if (!val.includes('#') && !val.includes('$$')) {
         return val;
       }
-      // Match #tag tokens (letters, digits, underscores, dashes, including Cyrillic / international characters)
-      const parts = val.split(/(#[\w\u0400-\u04FF-]+)/g);
+      // Split on $$...$$ math expressions or #tag tokens
+      const parts = val.split(/(\$\$[^$]+\$\$|#[\w\u0400-\u04FF-]+)/g);
       if (parts.length <= 1) return val;
       return parts.map((part, idx) => {
+        if (part.startsWith('$$') && part.endsWith('$$') && part.length > 4) {
+          const rendered = formatLatexToHtml(part.slice(2, -2));
+          if (rendered) {
+            return createElement('span', {
+              key: `latex-${idx}`,
+              className: 'rizzoma-latex',
+              dangerouslySetInnerHTML: { __html: rendered },
+            });
+          }
+        }
         if (part.startsWith('#') && part.length > 1) {
           return createElement(
             'span',
@@ -305,7 +324,8 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
       const child = childById.get(blipId);
       const hasUnread = child ? child.isRead === false : el.classList.contains('has-unread');
       const isExpanded = expandedSet.has(blipId) && knownIds.has(blipId);
-      return renderMarker(el, blipId, hasUnread, isExpanded);
+      const isOrphaned = Boolean(blipId) && !knownIds.has(blipId);
+      return renderMarker(el, blipId, hasUnread, isExpanded, isOrphaned);
     }
 
     const props = elementToProps(el);

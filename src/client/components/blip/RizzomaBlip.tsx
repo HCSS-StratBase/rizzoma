@@ -105,6 +105,13 @@ export function formatRizzomaDate(timestamp: number | undefined): string {
   if (!timestamp) return '';
   const d = new Date(timestamp);
   const now = new Date();
+  if (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  ) {
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
   if (d.getFullYear() === now.getFullYear()) {
     return `${d.getDate()} ${d.toLocaleDateString('en-US', { month: 'short' })}`;
   }
@@ -216,9 +223,9 @@ const htmlToPlainText = (html: string): string => {
   if (typeof window === 'undefined') {
     return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   }
-  const div = window.document.createElement('div');
-  div.innerHTML = html;
-  const text = div.textContent || div.innerText || '';
+  const tpl = window.document.createElement('template');
+  tpl.innerHTML = html;
+  const text = tpl.content.textContent || '';
   return text.replace(/\u00a0/g, ' ').trim();
 };
 
@@ -1126,6 +1133,35 @@ export function RizzomaBlip({
     });
   }, []);
 
+  // Expand/collapse all inline children on global fold-all / unfold-all events
+  // (and cascade to newly-mounted nested inline blips during an active unfold-all).
+  const inlineChildIdsForFold = inlineChildren.map(c => c.id);
+  const inlineChildIdsForFoldKey = inlineChildIdsForFold.join(',');
+  useEffect(() => {
+    const expandAllInline = () => {
+      if (inlineChildIdsForFold.length === 0) return;
+      setLocalExpandedInline(new Set(inlineChildIdsForFold));
+      setEverMountedInline(prev => {
+        const next = new Set(prev);
+        for (const id of inlineChildIdsForFold) next.add(id);
+        return next;
+      });
+    };
+    const collapseAllInline = () => {
+      setLocalExpandedInline(new Set());
+    };
+    if ((window as unknown as { __rizzomaUnfoldAllActive?: boolean }).__rizzomaUnfoldAllActive) {
+      expandAllInline();
+    }
+    window.addEventListener('rizzoma:unfold-all', expandAllInline);
+    window.addEventListener('rizzoma:fold-all', collapseAllInline);
+    return () => {
+      window.removeEventListener('rizzoma:unfold-all', expandAllInline);
+      window.removeEventListener('rizzoma:fold-all', collapseAllInline);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- inlineChildIdsForFoldKey tracks inlineChildren IDs stably
+  }, [inlineChildIdsForFoldKey]);
+
   // Track F: when RIZZOMA_PARITY_RENDER is on, view-mode uses the React-based
   // renderInlineHtml() walker — no portal anchors injected, no createPortal.
   // The legacy injectInlineMarkers path stays in use for the non-parity branch
@@ -1321,7 +1357,7 @@ export function RizzomaBlip({
       if (ed && !ed.isDestroyed) {
         try {
           const { state } = ed;
-          let nodePos: number | null = null;
+          let nodePos = -1;
           state.doc.descendants((node: any, pos: number) => {
             if (node.type.name === 'blipThread' && node.attrs.threadId === deletedId) {
               nodePos = pos;
@@ -1329,7 +1365,7 @@ export function RizzomaBlip({
             }
             return true;
           });
-          if (nodePos !== null) {
+          if (nodePos >= 0) {
             ed.commands.deleteRange({ from: nodePos, to: nodePos + 1 });
           }
         } catch {

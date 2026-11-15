@@ -418,7 +418,7 @@
    content further than the line it's anchored to". */
 .inline-child-expanded .blip-text ul,
 .inline-child-expanded .blip-text ol {
-  padding-left: 28px;
+  padding-left: 18px;
   margin: 0;
   list-style-type: disc;
 }
@@ -426,9 +426,17 @@
   list-style-type: decimal;
 }
 /* li > list, not "ul ul": a nested blip sits inside its parent's list item. */
+.inline-child-expanded .blip-text ul,
 .inline-child-expanded .blip-text li > ul,
+.blip-text ul ul {
+  list-style-type: disc;
+}
+.topic-content-view .blip-text li > ul > li::before {
+  background: #333333;
+}
+.inline-child-expanded .blip-text ol,
 .inline-child-expanded .blip-text li > ol {
-  list-style-type: circle;
+  list-style-type: decimal;
 }
 
 .empty-state-inline {
@@ -816,6 +824,41 @@
 
 .topic-content-view .blip-thread-marker.has-unread:hover {
   background: #246b46;
+}
+
+.rizzoma-latex {
+  font-family: 'Cambria Math', 'Times New Roman', Georgia, serif;
+  font-style: italic;
+  font-size: 1.04em;
+  background: #f8fafc;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid #e2e8f0;
+  display: inline-block;
+}
+
+.rizzoma-latex sub,
+.rizzoma-latex sup {
+  font-size: 0.72em;
+  line-height: 0;
+}
+
+.rizzoma-latex-frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  font-size: 0.85em;
+  margin: 0 2px;
+}
+
+.rizzoma-latex-frac .num {
+  border-bottom: 1px solid currentColor;
+  padding: 0 2px;
+}
+
+.rizzoma-latex-frac .den {
+  padding: 0 2px;
 }
 
 .topic-content-view figure[data-gadget-type="app-frame"] {
