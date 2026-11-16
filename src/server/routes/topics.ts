@@ -29,6 +29,7 @@ import {
 import { readCollaborationProjection } from '../lib/collaborationProjection.js';
 import { yjsDocCache } from '../lib/yjsDocCache.js';
 import { ensureTopicBlbHtml, isTopicBlbHtml } from '../../shared/blbContent.js';
+import { isBlankPlaceholderOverwrite } from '../../shared/topicProjectionGuard.js';
 
 const CONTENT_REFERENCE_ERRORS = new Set([
   'invalid_mention_target',
@@ -162,12 +163,23 @@ type TopicListItem = {
 
 const MAX_SNIPPET_LENGTH = 140;
 function stripHtml(input: string): string {
-  return input.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return input
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&amp;/gi, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function buildSnippet(content?: string): string | undefined {
   if (!content) return undefined;
-  const text = stripHtml(String(content));
+  // Remove H1 title so snippet only contains lines after the title (matches original Rizzoma's @_getLinesText(1))
+  const withoutTitle = String(content).replace(/<h1[^>]*>.*?<\/h1>/i, '').trim();
+  const text = stripHtml(withoutTitle || String(content));
   if (!text) return undefined;
   return text.length > MAX_SNIPPET_LENGTH ? `${text.slice(0, MAX_SNIPPET_LENGTH)}…` : text;
 }
@@ -241,11 +253,13 @@ router.get('/', noStore, async (req, res): Promise<void> => {
 
     const response = enriched.map((topic) => {
       const author = topic.authorId ? authorMap.get(topic.authorId) : undefined;
+      const authorName = author?.name || (author?.email ? author.email.split('@')[0] : 'User');
+      const authorAvatar = author?.avatar || '/s/img/user/anonim.png';
       return {
         ...topic,
         snippet: buildSnippet(topic.content),
-        authorName: author?.name ?? undefined,
-        authorAvatar: author?.avatar ?? undefined,
+        authorName,
+        authorAvatar,
         isFollowed: userId && topic.id ? followedTopics.has(topic.id) : undefined,
       };
     });
@@ -338,6 +352,36 @@ router.get('/', noStore, async (req, res): Promise<void> => {
   }
 });
 
+async function recordTopicHistory(
+  topicId: string,
+  content: string,
+  action: 'create' | 'update',
+  actorId: string,
+  actorName?: string,
+): Promise<void> {
+  try {
+    const existing = await find<any>({ type: 'blip_history', blipId: topicId }, { limit: 200 });
+    const nextVersion = existing.docs.reduce((max: number, doc: any) => Math.max(max, doc.snapshotVersion || 0), 0) + 1;
+    const now = Date.now();
+    const historyDoc = {
+      _id: `blip_history:${topicId}:${now}`,
+      type: 'blip_history',
+      blipId: topicId,
+      waveId: topicId,
+      content: content || '',
+      authorId: actorId,
+      authorName: actorName,
+      event: action,
+      createdAt: now,
+      updatedAt: now,
+      snapshotVersion: nextVersion,
+    };
+    await insertDoc(historyDoc as any);
+  } catch (err) {
+    console.warn('[topics] recordTopicHistory failed:', err);
+  }
+}
+
 // POST /api/topics
 router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): Promise<void> => {
   const userId = req.user!.id;
@@ -370,6 +414,7 @@ router.post('/', requireAuth, csrfProtect(), inviteRateLimit, async (req, res): 
     };
     const r = await insertDoc(doc);
     const topicId = r.id;
+    void recordTopicHistory(topicId, doc.content || '', 'create', userId, req.user?.name);
 
     // Every topic has an explicit owner participant, even when the creator
     // did not invite anyone during creation. Authorization must not depend on
@@ -645,6 +690,14 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
     const result = await yjsDocCache.runExclusive(id, async () => {
       const existing = await loadLiveTopic(id);
       const nextTitle = payload.title ?? existing.title;
+      if (isBlankPlaceholderOverwrite({
+        incomingTitle: payload.title,
+        incomingContent: payload.content,
+        existingTitle: existing.title,
+        existingContent: existing.content,
+      })) {
+        throw new Error('blank_placeholder_overwrite');
+      }
       // The title has one source of truth: topic.title. A title-only patch
       // therefore also rewrites the document H1 and is an external content
       // replacement subject to the same Yjs generation boundary.
@@ -731,6 +784,10 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
     }
     return;
   } catch (e: any) {
+    if (String(e?.message) === 'blank_placeholder_overwrite') {
+      res.status(409).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
     if (
       String(e?.message) === 'invalid_collaboration_state_digest'
       || String(e?.message) === 'invalid_collaboration_generation'

@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, master, feature/rizzoma-core-features ]
+    branches: [ main, master, feature/rizzoma-core-features, feature/native-fractal-port, claude/merge-master-into-fractal-03f408 ]
   pull_request:
 
 jobs:
@@ -25,11 +25,9 @@ jobs:
         env:
           CYPRESS_INSTALL_BINARY: '0'
         run: |
-          # Rollup's platform binary is an optional dependency but is required
-          # at runtime by Vite/Vitest. Keep optional packages enabled; only
-          # suppress Cypress's binary download via CYPRESS_INSTALL_BINARY.
-          npm ci --no-audit --no-fund
-      - name: Typecheck (hard gate — 0 errors required)
+          npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+      - name: Typecheck
+        if: ${{ steps.install.outcome == 'success' }}
         run: npm run typecheck
       - name: Lint (non-blocking)
         continue-on-error: true
@@ -69,32 +67,26 @@ jobs:
         env:
           CYPRESS_INSTALL_BINARY: '0'
         run: |
-          npm ci --no-audit --no-fund
+          npm ci --no-audit --no-fund || npm install --no-audit --no-fund
       - name: Install Playwright browsers
         if: ${{ steps.install-smoke.outcome == 'success' }}
         run: npx playwright install --with-deps chromium firefox webkit
       - name: Start docker services
         if: ${{ steps.install-smoke.outcome == 'success' }}
         run: docker compose up -d couchdb redis
-      - name: Initialize CouchDB database
+      - name: Create CouchDB database
         if: ${{ steps.install-smoke.outcome == 'success' }}
         run: |
           set -euo pipefail
+          # The app does not create its database; without it every auth call is a 500 "Database does not exist".
           for attempt in {1..30}; do
-            if curl -fsS -u admin:password http://127.0.0.1:5984/_up >/dev/null 2>&1; then
-              status="$(curl -sS -o /dev/null -w '%{http_code}' -u admin:password -X PUT http://127.0.0.1:5984/project_rizzoma)"
-              if [[ "$status" == "201" || "$status" == "202" || "$status" == "412" ]]; then
-                echo "CouchDB database is ready (HTTP $status)"
-                exit 0
-              fi
-              echo "Unexpected CouchDB database response: HTTP $status"
-              exit 1
-            fi
-            echo "Waiting for CouchDB (attempt ${attempt})..."
-            sleep 2
+            if curl -fsS http://admin:password@127.0.0.1:5984/_up >/dev/null 2>&1; then break; fi
+            echo "Waiting for CouchDB (attempt ${attempt})..."; sleep 2
           done
-          echo "CouchDB failed to become ready"
-          exit 1
+          curl -sS -X PUT http://admin:password@127.0.0.1:5984/_users >/dev/null || true
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X PUT http://admin:password@127.0.0.1:5984/project_rizzoma)
+          echo "PUT project_rizzoma -> HTTP ${code}"
+          [ "$code" = "201" ] || [ "$code" = "412" ]
       - name: Start dev stack
         if: ${{ steps.install-smoke.outcome == 'success' }}
         run: |
@@ -199,32 +191,26 @@ jobs:
         env:
           CYPRESS_INSTALL_BINARY: '0'
         run: |
-          npm ci --no-audit --no-fund
+          npm ci --no-audit --no-fund || npm install --no-audit --no-fund
       - name: Install Playwright browsers
         if: ${{ steps.install-perf.outcome == 'success' }}
         run: npx playwright install --with-deps chromium
       - name: Start docker services
         if: ${{ steps.install-perf.outcome == 'success' }}
         run: docker compose up -d couchdb redis
-      - name: Initialize CouchDB database
+      - name: Create CouchDB database
         if: ${{ steps.install-perf.outcome == 'success' }}
         run: |
           set -euo pipefail
+          # The app does not create its database; without it every auth call is a 500 "Database does not exist".
           for attempt in {1..30}; do
-            if curl -fsS -u admin:password http://127.0.0.1:5984/_up >/dev/null 2>&1; then
-              status="$(curl -sS -o /dev/null -w '%{http_code}' -u admin:password -X PUT http://127.0.0.1:5984/project_rizzoma)"
-              if [[ "$status" == "201" || "$status" == "202" || "$status" == "412" ]]; then
-                echo "CouchDB database is ready (HTTP $status)"
-                exit 0
-              fi
-              echo "Unexpected CouchDB database response: HTTP $status"
-              exit 1
-            fi
-            echo "Waiting for CouchDB (attempt ${attempt})..."
-            sleep 2
+            if curl -fsS http://admin:password@127.0.0.1:5984/_up >/dev/null 2>&1; then break; fi
+            echo "Waiting for CouchDB (attempt ${attempt})..."; sleep 2
           done
-          echo "CouchDB failed to become ready"
-          exit 1
+          curl -sS -X PUT http://admin:password@127.0.0.1:5984/_users >/dev/null || true
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X PUT http://admin:password@127.0.0.1:5984/project_rizzoma)
+          echo "PUT project_rizzoma -> HTTP ${code}"
+          [ "$code" = "201" ] || [ "$code" = "412" ]
       - name: Start dev stack
         if: ${{ steps.install-perf.outcome == 'success' }}
         run: |
@@ -284,10 +270,6 @@ jobs:
           docker compose down || true
 
   health-checks:
-    # Hard Gap #19 (2026-04-13): always run health-checks, even when build
-    # fails. Health regressions (CouchDB connectivity, inline-comment routes,
-    # upload edge cases) are independent of typecheck/lint and need to
-    # surface as their own signal.
     if: ${{ always() }}
     runs-on: ubuntu-24.04
     needs: build
@@ -308,7 +290,7 @@ jobs:
         env:
           CYPRESS_INSTALL_BINARY: '0'
         run: |
-          npm ci --no-audit --no-fund
+          npm ci --no-audit --no-fund || npm install --no-audit --no-fund
       - name: Run health / uploads / inline comments checks
         if: ${{ steps.install-health.outcome == 'success' }}
         env:

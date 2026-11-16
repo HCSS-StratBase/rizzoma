@@ -13,9 +13,10 @@ describe('client: collapse preferences persistence', () => {
     window.localStorage.clear();
   });
 
-  it('defaults to not hidden and persists metadata to localStorage', () => {
-    // Default is false (not hidden) unless explicitly set
-    expect(getCollapsePreference('wave1:blip1')).toBe(false);
+  it('defaults to hidden (BLB parity) and persists metadata to localStorage', () => {
+    // Parity with the original Rizzoma: every blip starts collapsed unless a preference was saved
+    // (commit 2d917927 'enforce hidden by default always'). An explicit false must still stick.
+    expect(getCollapsePreference('wave1:blip1')).toBe(true);
     expect(getCollapsePreferenceMetadata('wave1:blip1')).toBeUndefined();
 
     const updatedAt = setCollapsePreference('wave1:blip1', true);
@@ -26,6 +27,9 @@ describe('client: collapse preferences persistence', () => {
     expect(parsed['wave1:blip1'].updatedAt).toBe(updatedAt);
     expect(getCollapsePreference('wave1:blip1')).toBe(true);
     expect(getCollapsePreferenceMetadata('wave1:blip1')).toEqual({ isCollapsed: true, updatedAt });
+
+    setCollapsePreference('wave1:blip1', false);
+    expect(getCollapsePreference('wave1:blip1')).toBe(false);
   });
 
   it('notifies subscribers with updated metadata', () => {

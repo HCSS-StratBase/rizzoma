@@ -1,0 +1,110 @@
+# Parity audit, 9 November 2026 (night)
+
+Verdict: **FAIL. Not deployable.** The current `feature/native-fractal-port` branch (7fee6d4e plus uncommitted layout fixes in `InlineHtmlRenderer.tsx` and `RizzomaBlip.css`) regresses core behaviour that this morning's live code had. The live app is back on this morning's code (rolled back 21:50).
+
+Everything below ran on the local dev stack (`FEAT_ALL=1`), with nothing written to live. The two builds compared:
+- **branch:** `~/rizzoma-ci`, the state described above;
+- **morning:** this morning's live code rebuilt in `~/rizzoma-morning`, i.e. commit c492be39 plus the 23 uncommitted server edits (`wip.patch`) plus the untracked files. Two packages had to be added locally for it to build (`@tiptap/suggestion` 2.27.2, `y-prosemirror` 1.3.7); live already had them.
+
+Comparison sheets: this folder, built from the pair list in `scripts/build_parity_comparisons.py`, with the current file matched by name.
+
+## Measured counts
+
+| Check | morning | branch |
+|---|---|---|
+| Behavioural gate `scripts/handbuild_acceptance.mjs` (depth 10) | **23 of 27 pass** | **4 of 10 pass** |
+| Ctrl+Enter opens an editable, focused child | L2 to L10 all pass | L2 pass, **L3 fails** (`editable=0 focused=false`), so the rest of the tree is never built |
+| Tree collapsed after reload | pass | pass, but trivially: the deep levels were never created |
+| Every authored label persists after reload | fails only for the L1 label | 9 labels missing |
+| Second client sees the whole tree | fails only for the L1 label | 9 labels missing |
+| Every blip body is `<ul><li>` | pass | fail |
+| Root Edit button exists; root accepts typing | fail | fail (same on both builds, so probably the gate's selector; not verified) |
+| Visual sweep (element-count gates) | 14 captures, then stopped (the sweep script is newer than this code) | 44 of 44 "pass" |
+| Legacy/current comparison sheets | not built | 22 built, 16 looked at by eye |
+
+The sweep's 44/44 measures only that elements exist. The behavioural gate shows the branch cannot build a tree past depth 2.
+
+## Severe failures
+
+1. **Ctrl+Enter breaks at depth 3** (behavioural gate, branch only). A regression from this morning; cause not yet traced.
+2. **Deep nesting layout collapses** (sheet `fractal_deep_vs_depth10`). From depth about 6, the boxes stop short of the right edge, avatars jump left over the text, and the column narrows. Legacy keeps every level full width with the avatar at the right.
+3. **Mind map is not drawn** (sheet `mindmap_vs_mindmap`). Selecting Mind map leaves the text tree; the screenshot is identical to the text view. Legacy shows a horizontal mind map. The sweep passed only because the button became active.
+4. **Search shows "Loading…" with no results** (sheet `search_vs_search`). Legacy lists the matches.
+5. **Live findings from SDS (this evening's deploy, not re-tested here):** expand/collapse all, the Next button, collapsed-by-default and Send failed. SDS also could not edit: on live, SDS's real account owns 2 of 130 topics and is a participant in none, and master's sharing rules then deny editing.
+
+## Other differences seen by eye
+
+- **Topic card (all topic sheets):** a rounded, shadowed white card and a yellow "Google Calendar" banner on every screen. Legacy shows the banner only as a dismissible tip inside the topic, and draws the topic flat.
+- **Active blip (`blip_menu_vs_read_toolbar`, `fractal1_vs_fractal`):** our active blip gets a blue frame and a full-width toolbar. Legacy shows a compact menu floating at the blip's first line.
+- **Gear menu (`gear_vs_gear`):** ours has 8 items (Copy comment, Paste as reply, Duplicate blip, Cut blip, Send, Copy link, Playback, Delete blip). Legacy has 3 (Copy comment, Copy link, Playback).
+- **Invite (`invite_vs_invite`):** ours lists the owner as "Participant <email>". Legacy shows the name, email and "Owner".
+- **Share (`share_vs_share`):** ours is a centred modal with Cancel/Save. Legacy is a popover under the Share button that applies immediately.
+- **Playback (`playback_vs_playback`):** ours captures a per-blip version modal. Legacy replaces the topic in place with a playback bar (date, step buttons, Copy, Paste as reply).
+- **Mobile (`mobile_vs_mobile`):** a dark "Topic" bar, heavy padding and a floating Next. Legacy has a teal toolbar with Edit and icons, and nested boxes running edge to edge.
+- **Tag row (topic "Russian Red Lines - 2026", legacy 240):** the tag got a bullet and the bullets were indented. Fixed locally (uncommitted, looked at). Legacy `010-topics-list-default` shows the same pattern for `#MetaTopic` and confirms the intended look.
+
+## Legacy/current comparisons
+
+- **Built:** 22 sheets in this folder. `signup_vs_signup` is missing, because the sweep has no sign-up capture.
+- **Looked at (16):**
+  - topic_view, fractal1, fractal_deep, folded_toc;
+  - blip_menu, edit_ribbon, gear, link_popup;
+  - topics_list, search, playback, share, invite;
+  - mobile, mindmap, textview.
+- **Not looked at yet (6):** signin, mentions, tasks, publics, store, teams.
+- **Baseline problems found:**
+  - the legacy references `030-topic-view-default`, `051-fractal-unfold-level-1`, `055-fractal-unfold-level-5` and `059-fractal-refolded` all show the same fully expanded depth-10 tree, so their notes do not match their images;
+  - `link_popup` pairs legacy's Insert-link dialog with our overflow menu, so link insertion is not captured at all.
+
+## What must happen before any deploy
+
+- Trace and fix the depth-3 Ctrl+Enter regression; the behavioural gate must reach at least the morning's 23 of 27.
+- Fix the deep-nesting layout, the mind map and search.
+- Bring Gemini's 23 server edits into the branch as commits. Check behaviour feature by feature against this morning's live: expand/collapse all, Next, collapsed-by-default, Send, editing as a non-owner.
+- Re-build these sheets, look at all of them, and show them to SDS. Deploy only with SDS's go.
+
+
+## Addendum (10 Nov, ~00:45): Ctrl+Enter regression, three causes fixed, latency still open
+
+SDS: Rizzoma must be **infinitely fractal**, so depth 10 is only the gate's sample. The criterion is identical behaviour at every depth: the new child opens in place, is editable, holds the cursor, keeps typed text, persists after reload and is visible to a second client, and the hand-off time must not grow with depth.
+
+- **Cause 1:** my merge of master kept two `rizzoma:enter-edit-blip` listeners in `RizzomaBlip.tsx`. Removed the fractal duplicate. Gate 4/10 to 7/13 (the break moved from L3 to L4).
+- **Cause 2:** master's retry loop clicked the new child's [+] marker, a toggle. Removed. Gate 8/15 (break at L5 and the L3b child).
+- **Cause 3:** the retry loop stopped without focusing the child's editor. It now focuses and retries until the editor holds the cursor.
+- Commits 73997a73 (hand-off) and a01f828a (layout), pushed.
+
+**Measured hand-off time** (Ctrl+Enter until the NEW child is editable and focused; a local timing copy of the gate):
+
+| Build | Per level |
+|---|---|
+| Morning code | 0.7 to 1.8 s at every level from L2 to L10 |
+| Branch with the three fixes | 1.2 to 2.4 s, until the run stopped at L5 on the gate's 1.1 s step |
+
+The browser logged `[collab] waiting for seed authority`. Master's `editable: isEditing && collabReady` keeps a brand-new child read-only until its Y.js room confirms seed authority, which the pre-merge code did not do. Text typed in that window can be lost.
+
+**Open:** make the new child editable within one keystroke without giving up master's divergence protection. Not yet done: a run at depth 30 to prove there is no ceiling, and fixing the gate's root selector (`button.topic-tb-btn` no longer exists).
+
+
+## Addendum 2 (10 Nov, ~01:30): where the hand-off time goes; provider reuse tried and reverted
+
+**Trace** (local timing copy of the gate, logging requests, WebSocket frames and keypresses), level 3:
+
+| After Ctrl+Enter | Event |
+|---|---|
+| +0.2 s | child created |
+| +0.45 s | topic reloaded |
+| +0.5 s | child joins its room |
+| +0.74 s | child LEAVES and re-joins (remount) |
+| +0.8 s | sync |
+| following ~1.5 s | the parent finishes edit and PUTs, which triggers 5 full topic reloads; the child leaves and re-joins again |
+
+The child is never editable within 8 s.
+
+**Experiment: reuse the collaboration provider across remounts** (registry with a 4 s grace in `useCollaboration.ts`). Typecheck 0, and the collaboration unit tests passed (8 files, 74 tests). The gate did not improve: depth 10 gave 6/13, and depth 30 showed L2 and L4 never editable, about 2 s elsewhere. Reverted; the patch is kept in `docs/experiments/2611100130-provider-reuse-experiment.patch`.
+
+**New finding:** at L3b the child WAS editable and focused at 0.9 s, but 1.1 s later it was no longer editable. A remount resets the component's own `isEditing` state, so keeping the connection alive is not enough.
+
+**Remaining suspects:**
+1. The parent leaving edit mode moves the child from the editor portal to the view render (a remount by design).
+2. Every parent save triggers a full topic reload (`rizzoma:refresh-topics` -> `load(true, true)`), 5 in about 1.5 s.
+3. The parity renderer's positional keys (`n0`, `n1`, ...) shift when the parent's content changes, which can rebuild the child.

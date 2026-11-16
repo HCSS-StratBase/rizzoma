@@ -218,8 +218,8 @@ async function runSmoke(browserName) {
       await browser.close();
       return;
     }
-    await targetBlip.locator('[data-testid="blip-menu-collapse"]').waitFor({ timeout: 5000 });
-    await targetBlip.locator('[data-testid="blip-menu-expand"]').waitFor({ timeout: 5000 });
+    // Legacy parity: no Collapse/Expand buttons in the read toolbar (the [+] marker and Hide control do that).
+    await targetBlip.locator('[data-testid="blip-menu-get-link"]').waitFor({ timeout: 5000 });
     await readSurface.waitFor({ timeout: 15000 });
 
     const editButton = targetBlip.locator('[data-testid="blip-menu-edit"]').first();
@@ -236,9 +236,9 @@ async function runSmoke(browserName) {
     log(browserName, 'Verifying edit overflow actions');
     const overflowToggle = targetBlip.locator('[data-testid="blip-menu-overflow-toggle"]').first();
     await overflowToggle.click();
-    const overflowPanel = targetBlip.locator('.menu-dropdown-panel').first();
+    const overflowPanel = targetBlip.locator('[data-testid="blip-menu-overflow-menu"]').first();
     await overflowPanel.waitFor({ timeout: 3000 });
-    const expectedOverflowItems = ['Send', 'Copy comment', 'Playback history', 'Paste at cursor', 'Paste as reply', 'Copy direct link'];
+    const expectedOverflowItems = ['Send', 'Copy comment', 'Playback', 'Paste at cursor', 'Paste as reply', 'Copy link'];
     for (const label of expectedOverflowItems) {
       const item = overflowPanel.locator('button', { hasText: label }).first();
       const count = await item.count();
@@ -264,9 +264,9 @@ async function runSmoke(browserName) {
     log(browserName, 'Checking read-only gear overflow');
     const gearToggle = targetBlip.locator('[data-testid="blip-menu-gear-toggle"]').first();
     await gearToggle.click();
-    const gearPanel = targetBlip.locator('.menu-dropdown-panel').first();
+    const gearPanel = targetBlip.locator('[data-testid="blip-menu-overflow-menu"]').first();
     await gearPanel.waitFor({ timeout: 3000 });
-    const readOverflowItems = ['Copy comment', 'Playback history', 'Paste as reply', 'Copy direct link'];
+    const readOverflowItems = ['Copy comment', 'Playback', 'Paste as reply', 'Copy link'];
     for (const label of readOverflowItems) {
       const item = gearPanel.locator('button', { hasText: label }).first();
       const count = await item.count();

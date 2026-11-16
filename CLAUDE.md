@@ -1,82 +1,37 @@
-# Rizzoma Project Status (`codex/password-recovery`)
+# CLAUDE.md — Rizzoma (entry point)
 
-> **2026-07-12 password-recovery checkpoint:** This isolated branch starts at combined integration commit `c00e1711` and adds generic password-reset requests, hashed fragment-only one-time tokens, atomic credential-generation invalidation, eager session cleanup, and responsive request/complete UI. Focused tests, typecheck, touched-file lint, production build, and the inspected viewport matrix pass. It is not merged or deployed; integrate it onto the final combined head and run full CI plus staging SMTP/session acceptance. See the [password recovery worklog](docs/worklog-260712-password-recovery.md).
+> **READ THESE FIRST — they are the only authoritative docs:**
+> | For | Read |
+> |---|---|
+> | Current state (branch, deployment, gates, open failures) | **[`STATUS.md`](STATUS.md)** — GENERATED (`node scripts/gen_status.mjs`); never hand-write status |
+> | Architecture + why the React/TipTap hybrid keeps cracking | **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** |
+> | BLB rules (every rule labelled OLD vs NEW; **bullets are IMPOSED in our app**) | **[`docs/BLB.md`](docs/BLB.md)** |
+> | The prescribed fix | [`docs/NATIVE_RENDER_PORT_PLAN.md`](docs/NATIVE_RENDER_PORT_PLAN.md) |
+> | Verification gates | [`docs/VISUAL_SCREENSHOT_SWEEP.md`](docs/VISUAL_SCREENSHOT_SWEEP.md) |
+> | Legacy rizzoma.com write automation | [`docs/BLB.md`](docs/BLB.md#8a-legacy-rizzomacom-mcp-write-gate-old) + gate #94 incident report in the [shared documentation folder](https://drive.google.com/drive/folders/11Rs-D01thAXjqHDIDQfciWbflux4FzSy). Complete rich contracts use `rizzoma_post_recursive`; unattended runs require an independent checkpointed worker and evidence-gated completion orchestrator. |
+> | GitHub-backed project documentation | [`docs/GITHUB_DOCUMENTATION_SPINE.md`](docs/GITHUB_DOCUMENTATION_SPINE.md) — proposed canonical Git → Rizzoma → Tana/HANDOFF authority and synchronization contract |
+> | **Compounding LLM Wiki & AST Call Graph (2026-11-06)** | **[`wiki/index.md`](wiki/index.md)** + **[`wiki/SCHEMA.md`](wiki/SCHEMA.md)** — BFO `Continuant TD` / `Occurrent LR` diagrams, `file:line` subsystem guides, active contradictions ([`wiki/decisions/contradictions-and-lint-findings.md`](wiki/decisions/contradictions-and-lint-findings.md)), mechanical linter (`python3 scripts/wiki_lint.py`), and `~/.local/bin/codegraph` AST index |
+> | Anything superseded | [`docs/deprecated/README.md`](docs/deprecated/README.md) — **not authoritative** |
+>
+> A PreToolUse hook DENIES edits to `src/**` until the architecture analysis, the port plan,
+> the sweep doc and `docs/BLB.md` have been read **this session**. That is deliberate.
+>
+> **Working branch: `feature/native-fractal-port`** (this is what is deployed live).
+> Docs telling you to check out `feature/rizzoma-core-features` are deprecated.
+>
+> **The app does NOT run in Docker.** Live = nohup tsx :8000 + vite :3000 behind nginx;
+> only CouchDB + Redis are containers. `docker compose up app …` is historical.
+>
+> **UI work: look at the ORIGINAL first.** `screenshots/260714-legacy-reference-archive/` holds 126 screenshots of the original rizzoma.com, each with a `.md` description beside it; index and rules: **[`wiki/reference/legacy-screenshots.md`](wiki/reference/legacy-screenshots.md)**. Other catalogs (source map, scripts, docs, assets): `wiki/index.md` section 6. After adding files run `python3 scripts/wiki_generate_catalogs.py` then `python3 scripts/wiki_coverage.py`.
+
+
+---
+
+# Rizzoma Project Status (`feature/native-fractal-port`)
 
 > **Session Continuity**: Read `CLAUDE_SESSION.md` first for detailed context from the last working session (recent fixes, test status, gotchas, key files).
 
 This file is a lightweight status guide for the active branch. Older "phase" timelines, demo-mode flows, and auto-commit scripts are historical only—use real authentication and the current branch backlog below.
-
-## Credentials — ALWAYS check `.env` first
-
-Before asking the user for OAuth/SMTP/API credentials, **read `/mnt/c/Rizzoma/.env`**. It contains:
-- `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET`
-- `FACEBOOK_APP_ID` + `FACEBOOK_APP_SECRET`
-- `MICROSOFT_CLIENT_ID` + `MICROSOFT_CLIENT_SECRET` + `MICROSOFT_TENANT`
-- `SMTP_*` (Gmail SMTP for notifications)
-- `SSH_PASS`
-- `CLIENT_URL` + `APP_BASE_URL` defaults
-
-The file is `.gitignore`d (so secrets don't leak), but it lives on local disk and is the source of truth for all third-party credentials. SYSTEM_INSTRUCTIONS.md inlines war_datasets / Zotero / Tana MCP creds, but NOT these — so searching SYSTEM_INSTRUCTIONS alone will incorrectly conclude they're missing.
-
-When deploying these to the VPS, copy the relevant env vars into `docker-compose.yml`'s `environment:` block on the VPS (the VPS doesn't have access to the local `.env`).
-
-## Hetzner — where to look BEFORE doing anything firewall/SSH/console-related
-
-The Rizzoma VPS at `138.201.62.161` is a **bare-metal dedicated server** (Hetzner Robot, server `#2480874`, FSN1-DC8) — NOT a Cloud instance. There is no Hetzner Cloud firewall in front of it; firewall lives on the host (iptables / UFW) or in Robot's "Host Firewall" feature for dedicated servers. Cloud-API tokens (64-char hex) are irrelevant here.
-
-**Authoritative reference docs in GDrive — read FIRST when anything Hetzner-related comes up. Use the cloud URL, NOT the local `/mnt/g` path (the `/mnt/g` path only works on this WSL machine):**
-
-| File | What it has |
-|---|---|
-| [HETZNER_SSH_SAGA.md](https://drive.google.com/file/d/10OIjlF0oE8s9Xa-jr5-WHhdqPHXGhtEJ/view?usp=drivesdk) | **Most important.** Full 2026-04-01 SSH-lockout post-mortem. Contains the working Robot webservice password, full Robot API recipes (rescue mode + hardware reset + firewall endpoint), the fail2ban-with-`iptables-allports` red herring, the ControlMaster mux-socket gotcha, and the lessons learned. (Local: `/mnt/g/My Drive/RuBase/Transparent battlefield/feature-extraction/HETZNER_SSH_SAGA.md`.) |
-| [fix_hetzner_firewall.py](https://drive.google.com/file/d/1pFqwMtALKV44RGvKmh1XTDIbmjUCPeJo/view?usp=drivesdk) | Selenium script automating Hetzner web Console login. Has the web Console credentials inlined. (Local: `/mnt/g/My Drive/RuBase/Projects overview/fix_hetzner_firewall.py`.) |
-| [HETZNER_DEPLOYMENT_STATUS.md](https://drive.google.com/file/d/1OKkFUdpbT_09nPP3cQhk-g830uRHGpMj/view?usp=drivesdk) | Older deployment status from a different app on the same server. War_datasets PostgreSQL creds. (Local: `/mnt/g/My Drive/RuBase/Apps/ruw-analyze - refactor - 250209 - Copy/HETZNER_DEPLOYMENT_STATUS.md`.) |
-
-**Verified-working credentials (2026-04-23):**
-
-- **Robot webservice** (`https://robot-ws.your-server.de`, also Robot panel login): user `#ws+MMV3d9rH`, password `5Js4m@rMKuEAWG7`. Test: `curl -u '#ws+MMV3d9rH:5Js4m@rMKuEAWG7' https://robot-ws.your-server.de/server` → `HTTP 200`. **`HETZNER_ROBOT_PASS=d6_96!_udYW!-uWw4BrLr2q` in `/mnt/c/Rizzoma/.env` is WRONG** — that value is a stale root SSH password, not the Robot password.
-- **Hetzner web Console** (`https://accounts.hetzner.com/login`): `sdspieg@gmail.com` / `S#$k5dZ*JEbb7GJ`.
-- **Root SSH password** (current, after the 2026-04-01 rescue-mode reset): `StratBase2026!`. Older values `r6XPuJKbnm4k5G` and `d6_96!_udYW!-uWw4BrLr2q` are both stale. SSH **key auth** is preferred and is what the Rizzoma deploy flow uses.
-
-Never claim "Hetzner Cloud firewall is blocking X" without first verifying whether you actually mean a dedicated-server firewall (managed via Robot, not Cloud Console). For this server, you don't.
-
-## BLB structure — fractal bullets required everywhere (Rizzoma, local md, Tana)
-
-When posting or documenting in BLB-shape (the standard for this project's Rizzoma topics, structured local md docs, AND Tana posts), the **fractal rule is non-negotiable**: every blip's body must itself be a bulleted list of further atomic labels, recursively, all the way down. Flat `<div>` paragraphs are NOT BLB — they kill the fractal because the `[+]` subblip marker semantically anchors to a list item that becomes its Label.
-
-**Read `docs/BLB_LOGIC_AND_PHILOSOPHY.md` (sections 1–18) before any BLB-shaped writeup. Then run this 5-row pre-commit checklist at every level, in every destination, BEFORE saying done:**
-
-| # | Check | Concrete test |
-|---|---|---|
-| 1 | Bullet structure exists | Rizzoma: dump `editor.innerHTML` before Done — any `<div>` body block = FAIL. md: ≥2 consecutive non-list lines = FAIL. Tana: every "fact" is a child node, not crammed into one node's body. |
-| 2 | Labels are atomic | First-line text is 2–5 words, one thought, scannable as a TOC entry. No parens, em-dashes, commas joining ideas. Read it out loud: TOC entry or sentence? Sentence = FAIL. |
-| 3 | No prose body anywhere | If a line would have a period in the middle, it's at least two bullets. |
-| 4 | Detail goes deeper, not wider | Any bullet with ≥2 sub-thoughts gets its own `[+]` subblip with bulleted children. |
-| 5 | Parent renders as clean TOC | Collapse all → only labels-with-`[+]` visible, no inline detail = pass. |
-
-**Rizzoma editor mechanic for BLB-correct subblips:** when you land in a freshly-Ctrl+Enter'd subblip, the editor starts as `<div><br></div>`. The FIRST keystrokes must be the bullet-list toggle — **toolbar `≡` button (most reliable; Ctrl+Shift+8 also works)**. Only THEN type each item; Enter for new bullet. For items needing detail, cursor at end → Ctrl+Enter to recurse → toggle `≡` again → bullets, etc. Verify with `editor.innerHTML` showing `<ul><li>...</li></ul>` not `<div>...</div>` before clicking Done.
-
-**Worked-example failure (2026-04-23, do not repeat):** posted 5 sibling bullets under the Hetzner blip in the HTU licenses/creds/passwords topic. Labels were prose ("Robot webservice (rescue / reboot / firewall API)" instead of "Robot webservice"). Bodies were `<div><span>URL: …</span></div><div><span>Email: …</span></div>` instead of `<ul><li>URL [+]</li><li>Email [+]</li></ul>`. The fix was delete + redo with proper fractal bullets. Full root-cause in `~/.claude/projects/-mnt-c-Rizzoma/memory/feedback_blb_fractal_bullets_required.md`.
-
-**Scripting BLB-correct content into legacy rizzoma.com: use the canonical engine, do NOT hand-roll (2026-06-12).** The guard-complete spec-driven posting engine is [docs/skills/rizzoma/rizzoma_post.py](https://github.com/HCSS-StratBase/rizzoma/blob/master/docs/skills/rizzoma/rizzoma_post.py) (with [SKILL.md](https://github.com/HCSS-StratBase/rizzoma/blob/master/docs/skills/rizzoma/SKILL.md) and the `content_gate.py` style checker alongside). It encodes traps the older docs miss: appending after the last LI steals that LI's reply thread; container-edge clicks activate the wrong blip. The doc below is reference only.
-
-**Scripting BLB-correct content into legacy rizzoma.com via Playwright** is a separate operational concern — selectors, Playwright pitfalls (`btn.click()` vs `page.locator().click()`, `keyboard.type` vs `insertText` for `#@~$*<>`), Done-vs-Edit disambiguation, autosave timing, etc. — fully documented in [docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md](docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md) (or on GitHub: [RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md](https://github.com/HCSS-StratBase/rizzoma/blob/master/docs/RIZZOMA_LEGACY_EDITOR_PLAYWRIGHT.md)). Read that BEFORE attempting any headless Rizzoma edit; the philosophy doc [docs/BLB_LOGIC_AND_PHILOSOPHY.md](docs/BLB_LOGIC_AND_PHILOSOPHY.md) (or on GitHub: [BLB_LOGIC_AND_PHILOSOPHY.md](https://github.com/HCSS-StratBase/rizzoma/blob/master/docs/BLB_LOGIC_AND_PHILOSOPHY.md)) §19 has the pre-commit checklist that ties them together.
-
-## Tana posting — REQUIRED tags for Rizzoma entries
-
-Every Tana entry posted from this project MUST include BOTH the type tag AND the project tags. Repeat-mistake on 3 sessions; do not make a fourth.
-
-| Tag | ID | When |
-|---|---|---|
-| `#discussion` | `Ux8stlKm4NM_` | for discussion/note entries |
-| `#task` | `X_vT1GSytHJy` | for actionable tasks |
-| `#Rizzoma` | `hLM0dWLg34-F` | **always for Rizzoma work** |
-| `#Rizzoma_modernization` | `-b9KQhkcs8dr` | **always for this codebase's work** |
-| `#Claude` | `39bzN4PyAMqn` | provenance (optional) |
-
-Plus the standard provenance fields per `/mnt/g/My Drive/Tana/tana-workflow.md`: `Created by` (SDS = `X6yCff_d87Wn`) and `Generated by` (Claude = `I_e177ygtAEE` for `BaewUwERUcWs` field on discussions, or Claude = `AUjPowsHSBEC` for `dG5OQzKA6eYV` field on tasks).
-
-If you're unsure which project tags apply, run `mcp__tana-local__list_tags` first — never guess.
 
 ## Testing Methodology
 - Use real sessions via the AuthPanel; demo/query-string logins (`?demo=true`) are not supported.
@@ -90,210 +45,12 @@ If you're unsure which project tags apply, run `mcp__tana-local__list_tags` firs
 3) Health checks + CI gating for `/api/health`, inline comments, and uploads; keep browser smokes green.
 4) Validate PWA on actual mobile devices (iPhone Safari, Chrome Android).
 
-## FtG + Collab — How It Actually Works (audited 2026-04-15)
-
-Real-time collab and Follow-the-Green have asymmetric sync models.
-Understand this before changing the related code or you WILL ship a
-regression.
-
-### Reply blips use Y.js live document sync
-- Every editable non-root blip instantiates a Y.Doc + SocketIOProvider
-  on FIRST render (see `collabEnabled` in RizzomaBlip.tsx line ~491 —
-  NOT gated on `effectiveExpanded` any more; that was task #57's bug).
-- Typing flows tiptap → y-prosemirror → Y.Doc.on('update') →
-  `socket.emit('blip:update', …)` → server relays to other clients in
-  the `collab:blip:<blipId>` room → receivers call `Y.applyUpdate`.
-- Awareness (cursor position + user label) syncs via `awareness:update`
-  events. Live cursors render in-editor via `CollaborativeCursor`.
-- Y.Doc **seeding is server-authoritative via a seed lock**: the first
-  client to `blip:join` a fresh blip receives `shouldSeed: true` and
-  is the only one allowed to populate the Y.Doc from HTML. Every
-  subsequent joiner receives `shouldSeed: false` and waits for the
-  seeder's y:update to arrive via the normal relay path. Without this
-  lock, two tabs joining simultaneously both seeded independently and
-  created divergent CRDT histories that could not merge (task #57).
-- HTTP PUT autosave (via tiptap onUpdate → debounced fetch) still runs
-  alongside Y.js, so `blip.content` in CouchDB stays in sync with the
-  Y.Doc's HTML serialization. This is the path other users see when
-  they open the topic fresh (before joining the Y.Doc room).
-- Reconnect survives offline: CollaborativeProvider's `setupReconnect`
-  sends a `blip:sync:request` with the local state vector when the
-  socket comes back, and the server returns the diff with missed
-  updates. Verified 2026-04-15 via Playwright.
-
-### Topic-root editor does NOT use Y.js
-- By design, `!isTopicRoot` is part of the `collabEnabled` guard in
-  RizzomaBlip.tsx. Editing the topic title or root paragraph flows
-  through the topic PATCH endpoint, NOT Y.js.
-- Cross-tab sync for topic-root happens via a coarser-grained path:
-  `PATCH /api/topics/:id` emits a `topic:updated` socket event
-  (src/server/routes/topics.ts line ~575); `RizzomaTopicDetail`
-  subscribes via `subscribeTopicDetail()` in
-  `src/client/lib/socket.ts` and refetches the topic on receipt.
-- This means topic-root edits are propagated, but only on
-  transaction boundaries, not character by character. This is a
-  deliberate tradeoff — topic titles and intros change rarely and
-  structurally; Y.js granularity is overkill. If you ever want live
-  topic-root collab (e.g. two people renaming at once), you'd have
-  to wire Y.js through RizzomaTopicDetail's own `useEditor` call,
-  which is a separate code path from RizzomaBlip.
-
-### Follow-the-Green sidebar state
-- `/api/topics` embeds per-user `unreadCount` / `totalCount` fields.
-  The route sets `Cache-Control: no-store` so the browser never
-  serves a stale cached body when counts change without a byte-length
-  shift (task #56 — this bug manifested as sidebar bars that didn't
-  clear on mark-read until a hard reload).
-- Mark-read goes through `POST /api/waves/:id/blips/:id/read` or
-  `POST /api/waves/:id/read` (bulk). Both invalidate the unread cache
-  server-side and emit `blip:read` / `wave:unread` socket events.
-- After successful mark-read, `useWaveUnread` dispatches
-  `rizzoma:refresh-topics` on `window`. `RizzomaTopicsList` listens
-  for that event (250ms debounced) and re-fetches `/api/topics`.
-  Because of the `no-store` header, the fresh response updates the
-  sidebar state in real time.
-- Keyboard shortcuts currently wired: `Ctrl+Enter` (new inline child
-  blip, via `BlipKeyboardShortcuts.ts`); `Ctrl+Space` (Next — clicks
-  the context-dependent `.next-topic-button`, wired in
-  `RizzomaLayout.tsx` on 2026-04-15 task #67). `Tab` / `Shift+Tab`
-  for list indent/outdent, `Ctrl+Shift+Up/Down` for hide/show inline
-  comments. `Ctrl+F` and `Ctrl+1/2/3` were removed from the sidebar
-  legend (task #68) — they were shown but never implemented.
-
-### Feature flag gotcha
-- Every feature in `src/shared/featureFlags.ts` tree-shakes based on
-  `import.meta.env.FEAT_ALL` (or per-feature variants). Vite's
-  `define` block resolves these at BUILD time. Before task #58,
-  `npm run build` didn't set `FEAT_ALL=1` so production builds shipped
-  every feature (including REALTIME_COLLAB, LIVE_CURSORS,
-  FOLLOW_GREEN) as `false`. This has been invisible for weeks and
-  caused the initial "collab is broken" report. Fix: `vite.config.ts`
-  now defaults `FEAT_ALL` to `'1'` when `command === 'build'`. If you
-  need a pared-down build (CI perf runs, feature-flag tests), set
-  `FEAT_ALL=0` explicitly.
-
 ## Recently Completed Highlights
-- **HTTPS + Google OAuth end-to-end on the VPS (2026-04-23)**: Live at
-  [https://138-201-62-161.nip.io/](https://138-201-62-161.nip.io/) with valid Let's Encrypt cert
-  (auto-renewing through 2026-07-22). Required two passes on the Hetzner
-  **Robot** host firewall (NOT Cloud — this server is bare-metal Robot,
-  per the [saga doc](https://drive.google.com/file/d/10OIjlF0oE8s9Xa-jr5-WHhdqPHXGhtEJ/view?usp=drivesdk)):
-  (1) opened port 80 to unblock the Let's Encrypt webroot challenge
-  (commit `b183177e`); (2) consolidated the existing `apps` rule
-  (8000-9999) into `apps-and-ephemeral` (8000-65535) to allow return
-  traffic from MASQUERADE'd container outbound (commit `b46d094e`).
-  Without (2), the server's POST to `oauth2.googleapis.com/token`
-  was timing out — diagnosed via `tcpdump -nni any host 1.1.1.1`
-  showing SYN egressed fine but no SYN-ACK ever returned (Hetzner
-  whitelist firewall was dropping return packets to ephemeral source
-  ports). Updated docker-compose env to use the HTTPS URL. Verified
-  Playwright sign-in lands as `sdspieg@gmail.com` "Stephan De
-  Spiegeleire" with Google avatar; `GET /api/auth/me` returns the
-  user. Tasks #140 + #143 both closed in the same session that
-  opened them. Same fix unblocks SMTP / S3 / any container-outbound
-  feature. Operational details in [`docs/VPS_DEPLOYMENT.md`](docs/VPS_DEPLOYMENT.md)
-  + [`docs/worklog-260423.md`](docs/worklog-260423.md).
-- **VPS production-build path now green (2026-04-22)**: `app-prod`
-  service is healthy on `:8201` alongside dev `:8200`. Three Dockerfile
-  bugs found + fixed in sequence: (a) `aa63d4c5` — production CMD path
-  was `dist/server/app.js` but tsc preserves `src/` hierarchy so
-  output is at `dist/server/server/app.js`; (b) `b0ed1a15` — `parse5`
-  was a transitive dev-only dep via vite/jsdom but `sectionAttribution`
-  imports it at runtime, so production install (`--omit=dev`) was
-  missing it; (c) `b6f8793d`/`40cfb0e2` — `USER node` couldn't write
-  to `/app/logs` (winston) or `/app/data/uploads` (uploads route),
-  pre-create + chown both at the production stage. Verified
-  `curl :8201/api/health → 200`, OAuth env (Google/Facebook/Microsoft)
-  + SMTP + new SESSION_SECRET (`b2DPa6...m-59`) all present in container.
-  HTTPS still blocked on Hetzner inbound port 80 (Let's Encrypt webroot
-  challenge times out — needs Hetzner Cloud firewall opened, separate
-  task).
-- **CI gates tightened (2026-04-22, #147)**: `build` job's
-  `npm install` was `continue-on-error: true`, so an install failure
-  silently skipped typecheck + vitest while ci-gate marked the run
-  green. Hardened: install is now hard-fail, typecheck + vitest are
-  unconditional gates, and ci-gate only allows "skipped" for downstream
-  jobs (browser-smokes, perf-budgets, health-checks). Verified locally:
-  tsc 0 errors, vitest 186/193 (7 skipped, 0 failed). Commit `87c5e988`.
-- **BUG #43 — gear-menu "Delete blip" 404 (2026-04-21)**: Reported by
-  Hryhorii against the live VPS. Root cause: `linksRouter` was mounted
-  at `/api` in `app.ts`; its `DELETE /:from/:to` route expanded to
-  `DELETE /api/:from/:to` and silently shadowed every two-segment
-  DELETE under `/api/`, including `DELETE /api/blips/<id>`. The links
-  handler never called `next()`, so every blip-delete got a 404
-  `{"error":"not_found"}` — a payload shape that collides exactly
-  with blipsRouter's own missing-blip response, which is why the
-  shadow stayed invisible for weeks.
-  Fix (`c4844c73`): mount linksRouter at `/api/links`; move
-  `GET /:id/links` into blipsRouter so the client's
-  `/api/blips/:id/links` path still resolves. Verified live on VPS
-  after rebuild — `DELETE → {deleted:true}`, CouchDB doc now
-  `deleted=True rev=2`. Full writeup: `docs/BUG_DELETE_BLIP_SHADOW.md`.
-  Same commit also shipped: **#42** — sphinx behind `profiles:
-  ["search"]`, removed from `app`'s `depends_on` (closes the
-  Dockerfile.sphinx-missing bug Hryhorii filed); and **FEAT_ALL=1**
-  added to `app` and `app-prod` services in docker-compose — the
-  VPS container was running `npm run dev` with FEAT_ALL unset,
-  tree-shaking every Track-A..E feature to false (same failure
-  class as #58 but for the dev-server path rather than prod build).
-- **BUG #41 — nested reply CSS gap (2026-04-18)**: Nested reply
-  blips rendered as heavy cards (border-radius 14px, box-shadow,
-  gradient background, 14px padding) creating a visible gap between
-  parent blip content and replies. Original Rizzoma renders replies
-  as flat indented rows. Fix (`5bb75bb6`): strip ALL card styling
-  from `.child-blips .blip-content` — `border-radius: 0`,
-  `box-shadow: none`, `background: transparent`, `border: none`,
-  `padding: 2px 4px 2px 0`. Tightened `.blip-reply-inline` margin
-  14→4px, `.child-blips` margin-top 6→2px, `.blip-content` bottom
-  padding 14→8px. Topic-root children keep full card treatment;
-  only nested children go flat. Verified at 3 reply depths via
-  Playwright. Issue HCSS-StratBase/rizzoma#41.
-- **BUG #40 — sub-blip nesting broken at depth >1 (2026-04-17)**:
-  Reported by Hryhorii and Liliia ("I see the plus sign, but I
-  can't edit" / "I cannot create blips within blips"). Root cause:
-  `rizzoma:refresh-topics` handler in `RizzomaTopicDetail.tsx:1392`
-  called `load(true, true)` with `fromSocket=true`, hitting a
-  10-second `SOCKET_COOLDOWN_MS` that silently skipped the topic
-  reload after grandchild creation. Parent's `childBlips` never
-  updated, so the [+] marker was dead. Depth 1 was immune because
-  topic-root child creation uses `onAddReply()` → `load(true)`
-  without `fromSocket`. Fix (`222efc97`): flip the one boolean:
-  `load(true, true)` → `load(true, false)` to bypass the
-  cooldown. Verified at 4 depth levels. Issue
-  HCSS-StratBase/rizzoma#40.
-- **FtG + collab hardening sweep (2026-04-15)**: Full audit uncovered
-  three independent bugs that had shipped for weeks.
-  **#58** — `npm run build` never set `FEAT_ALL=1`, so every
-  production bundle (desktop AND mobile APK) tree-shook every feature
-  flag to false and ran without collab, live cursors, follow-the-green,
-  inline comments, etc. Fix: `vite.config.ts` defaults `FEAT_ALL` to
-  `'1'` for production builds.
-  **#57** — Y.js cross-tab document sync was silently broken in two
-  ways. (a) `collabEnabled` was gated on `effectiveExpanded`, so the
-  Collaboration extension was missing from the editor's initial plugin
-  list and tiptap's `setOptions()` never reinitializes plugins — zero
-  `blip:update` events ever fired from user typing. (b) Y.Doc seed
-  race: two tabs joining a fresh blip both seeded from HTML and
-  produced divergent CRDT histories that couldn't merge. Fix:
-  removed `effectiveExpanded` from the guard so every editable non-root
-  blip wires collab from first render; added server-side
-  `seedAuthorityClaimed` set that grants the first joiner
-  `shouldSeed: true` and every subsequent joiner `shouldSeed: false`.
-  **#56** — Sidebar green bar stayed stale after mark-read until a
-  hard page reload. Root cause: Express's weak ETag + browser 304
-  replay. When two back-to-back `/api/topics` responses had the same
-  byte length (unread count changed 1→0 but JSON shape unchanged), the
-  browser replayed the cached body. Fix: `Cache-Control: no-store` on
-  `/api/topics`.
-  **Legend cleanup (#67 + #68)**: wired `Ctrl+Space` → Next Topic button
-  in RizzomaLayout; removed `Ctrl+F` and `Ctrl+1,2,3` from the sidebar
-  legend (they were shown but never implemented).
-  Verified end-to-end via Playwright: Y.js cross-tab sync shows typed
-  characters in the other tab's editor with inline collaborative cursor
-  labels; sidebar green bar clears in <1s after mark-read; reconnect
-  after disconnect catches up missed updates; CRDT merge handles
-  concurrent edits from two clients without character loss. See
-  screenshots/260415-ftg-collab-audit/ for the verification artifacts.
+- **Hryhorii test feedback — 4 issues fixed live (2026-05-04)**: All four reproduced + fixed + verified end-to-end on the VPS dev container at `https://dev.138-201-62-161.nip.io`:
+  - **#45**: Bullet hierarchy collapsed flat on save. Global `* { padding: 0 }` in `RizzomaApp.css` stripped `<ul>` padding; the compensating list rules existed for edit-mode `.blip-editor-container .ProseMirror ul/ol/li` but never for view-mode `.blip-text`. Mirrored. Real `<ul>` now renders `padding-left: 22.5px` + disc/circle/square per level. (`cd9e626e`)
+  - **#46**: `docker compose up` failed because compose referenced `Dockerfile.sphinx` (vestigial — sphinx full-text engine deleted in CoffeeScript cleanup, app uses CouchDB Mango everywhere). Gated sphinx behind `--profile search`, dropped from `app.depends_on`. (`cd9e626e`)
+  - **#47**: Inline `[+]` not openable from edit mode. Original Rizzoma had a single render path; ours split view-mode portal anchors (in `injectInlineMarkers`) from edit-mode markers (in `BlipThreadNode`). Unified: `BlipThreadNode` now wraps `[+]` and a sibling `.inline-child-portal` anchor in `display: contents` host; portal-rendering JSX moved out of view-mode-only branch; `useLayoutEffect` scans from `blipContainerRef`. Caught + fixed an infinite re-render loop mid-test (unstable `inlineChildren` array dep → stable `inlineChildIdsKey` string hash). (`f0d7658e` + `707a24f6`)
+  - **#48**: OAuth callback URL leaked `localhost`. Vite proxy `/api/*` → `localhost:8000` with `changeOrigin: true` rewrites `Host`; Express `getBaseUrl` falls back to `req.get('host')` → `redirect_uri = http://localhost:8000/...`. Made `APP_URL` / `CLIENT_URL` / `ALLOWED_ORIGINS` configurable in compose. Set up `dev.138-201-62-161.nip.io` HTTPS endpoint (Google OAuth refuses bare-IP redirects). End-to-end Sign-in-with-Google verified. (`02a57468`)
 - **Four-item sweep (2026-02-10)**: getUserMedia → modern TS ES module (removed legacy prefixed APIs, 10 tests); offline queue wired into `api()` for all 30+ mutation paths; PWA install banner + notification opt-in + offline indicator UI; collab tests hardened (reconnection, multi-client, persistence — 24 new tests total, 161/161 pass).
 - **Test/Perf/PWA sweep (2026-02-10)**: 146/146 tests pass (fixed 2 WSL2-flaky timeouts). Perf harness 100-blip benchmark: landing-labels 289ms / expanded-root 523ms / 18MB memory — both PASS. PWA audit 98/100: fixed manifest.json shortcut icon `.png` → `.svg`.
 - **Mobile hardening (2026-02-10)**: Touch targets (44px min) added to 11 CSS files, dead `mobile.tsx` stub removed, pull-to-refresh now waits for actual data reload, `100dvh` for mobile address bar, GadgetPalette responsive grid, iOS zoom prevention (`font-size: 16px` on inputs).
@@ -310,7 +67,7 @@ regression.
   - Removed duplicate toolbar buttons in `BlipMenu.tsx`
   - Full methodology documented in `docs/BLB_LOGIC_AND_PHILOSOPHY.md`
 - **Major dependency upgrades (2026-01-18)**: Express 4→5, Redis 4→5, Vite 5→7, Vitest 1→4, @vitejs/plugin-react→5.0.0
-- **AWS SDK v3 migration (2026-01-18, superseded for uploads 2026-07-12)**: the earlier public/pre-signed S3 upload path was removed because its URL outlived participant revocation. S3/MinIO now fails closed until object bytes are streamed through the wave ACL.
+- **AWS SDK v3 migration (2026-01-18)**: S3 uploads now use modular `@aws-sdk/client-s3` with lazy initialization
 - **Massive legacy cleanup (2026-01-18)**: Removed 480 files, -66,949 lines:
   - All CoffeeScript files (`src/share/`, `src/*_index.coffee`)
   - All legacy static assets (`src/static/` - images, CSS, jQuery plugins)
@@ -332,15 +89,7 @@ regression.
 - Run app: `FEAT_ALL=1 EDITOR_ENABLE=1 npm run dev` and sign in via AuthPanel (no demo/query-string logins).  
 - Tests: `npm run test`, `npm run test:toolbar-inline`, `npm run test:follow-green`, `npm run perf:harness` (as needed).  
 - Snapshots: `npm run snapshots:pull` to fetch latest artifacts without rerunning Playwright.  
-- Health: `curl http://localhost:8788/api/health` (Vite UI on `:3000` proxies `/api` to the backend).
-
-## Reserved Ports (DO NOT change without grep + doc sweep)
-- **Vite UI**: `3000` — only port the user opens in the browser.
-- **Express backend**: `8788` — distinctive Rizzoma-reserved port. Chosen to avoid the common `:8000` collision with `google_workspace_mcp` and other dev services. Override with `PORT` env var only when running multiple Rizzoma backends side by side.
-- **CouchDB**: `5984` (Docker)
-- **Redis**: `6379` (Docker)
-- All capture/Playwright verifiers take the Vite UI URL as an arg (defaults to `127.0.0.1:3000` or a fresh `:4xxx` Vite session); the backend URL is only used directly by `curl` health checks, the dev redirect, and `notifications.ts` invite emails.
-- If you change this port, grep for `8788` across `src/server/`, `src/client/lib/socket.ts`, `vite.config.ts`, `docker-compose.yml`, `Dockerfile`, `.github/workflows/`, `package.json`, `scripts/start-all.sh`, `create-demo-topic.cjs`, and refresh `CLAUDE.md`, `CLAUDE_SESSION.md`, `AGENTS.md`, `docs/HANDOFF.md`, `docs/RESTART.md`.
+- Health: `curl http://localhost:8000/api/health`.
 
 ## Notes
 - Use `RIZZOMA_FEATURES_STATUS.md` for the authoritative feature snapshot; update after meaningful test runs.

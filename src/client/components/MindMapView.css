@@ -1,0 +1,145 @@
+.mindmap-container {
+  flex: 1;
+  overflow: auto;
+  padding: 20px 24px;
+  background: #ffffff;
+  min-height: 400px;
+}
+
+.mindmap-root-heading {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 18px 0;
+  cursor: pointer;
+}
+
+.mindmap-root-heading:hover {
+  color: #2563eb;
+}
+
+.mindmap-tree {
+  display: inline-flex;
+  align-items: flex-start;
+  padding-left: 4px;
+}
+
+.mindmap-root-stem {
+  width: 2px;
+  height: 36px;
+  background: #94a3b8;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.mindmap-children {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 22px;
+  border-left: 1px solid #cbd5e1;
+}
+
+.mindmap-branch {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  position: relative;
+}
+
+.mindmap-branch::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 15px;
+  width: 22px;
+  height: 1px;
+  background: #cbd5e1;
+}
+
+.mindmap-node-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.mindmap-node {
+  background: linear-gradient(180deg, #e5e9ee 0%, #d4dae2 100%);
+  border: 1px solid #c2cbd6;
+  border-radius: 2px;
+  padding: 6px 10px;
+  min-width: 170px;
+  max-width: 260px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.mindmap-node-line {
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mindmap-node.expanded .mindmap-node-line {
+  white-space: normal;
+}
+
+.mindmap-node:hover {
+  background: #d0d8e2;
+  border-color: #4ea0f1;
+}
+
+.mindmap-node.unread {
+  border-left: 3px solid #6dbb4b;
+}
+
+.mindmap-unread-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6dbb4b;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.mindmap-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin: 6px 6px 0 4px;
+  background: #b8c2cc;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.mindmap-toggle-btn:hover {
+  background: #64748b;
+}
+
+.mindmap-node-body {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+.mindmap-node.short .mindmap-node-body {
+  max-height: 3.8em;
+  overflow: hidden;
+}
+
+.mindmap-empty {
+  color: #64748b;
+  font-size: 13px;
+  padding: 8px 16px;
+}

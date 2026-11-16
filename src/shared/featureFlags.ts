@@ -9,7 +9,7 @@ const env = typeof import.meta !== 'undefined' && import.meta.env
 
 export const FEATURES = {
   // Track A: Inline comments
-  INLINE_COMMENTS: env['FEAT_INLINE_COMMENTS'] === '1' || env['FEAT_ALL'] === '1',
+  INLINE_COMMENTS: env['FEAT_INLINE_COMMENTS'] !== '0',
   
   // Track B: Rich editor features
   RICH_TOOLBAR: env['FEAT_RICH_TOOLBAR'] === '1' || env['FEAT_ALL'] === '1',
@@ -26,23 +26,22 @@ export const FEATURES = {
   REALTIME_COLLAB: env['FEAT_REALTIME_COLLAB'] === '1' || env['FEAT_ALL'] === '1',
   
   // Track E: Playback
-  WAVE_PLAYBACK: env['FEAT_WAVE_PLAYBACK'] === '1' || env['FEAT_ALL'] === '1',
+  WAVE_PLAYBACK: env['FEAT_WAVE_PLAYBACK'] !== '0',
 
   // Navigation features
   TASKS: env['FEAT_TASKS'] === '1' || env['FEAT_ALL'] === '1' || env['BUSINESS_ACCOUNT'] === '1',
 
   // Track F: Visual parity with original rizzoma.com (B1 reskin + B2 inline render)
-  // Off by default — opt in by setting FEAT_RIZZOMA_PARITY_RENDER=1.
-  // FEAT_ALL does NOT enable this yet (still iterating on visual fidelity).
-  RIZZOMA_PARITY_RENDER: env['FEAT_RIZZOMA_PARITY_RENDER'] === '1',
+  // Enabled by default for authentic visual parity with original Rizzoma
+  RIZZOMA_PARITY_RENDER: env['FEAT_RIZZOMA_PARITY_RENDER'] !== '0',
 
   // Track G: Native fractal-render port (replace React/TipTap hybrid for the
   // parent-of-blips render layer with a direct TS port of original Rizzoma's
   // content-array + linear-walk model). See docs/NATIVE_RENDER_PORT_PLAN.md.
-  // Off by default; opt in via FEAT_RIZZOMA_NATIVE_RENDER=1. Phase-by-phase
-  // rollout — phases 1..4 leave both paths side-by-side; phase 5 deletes
-  // the React path. FEAT_ALL does NOT enable this.
-  RIZZOMA_NATIVE_RENDER: env['FEAT_RIZZOMA_NATIVE_RENDER'] === '1',
+  // Capability enabled by default (`!== '0'`); RizzomaTopicDetail keeps
+  // `?render=native` / `localStorage.rizzoma_render_mode === 'native'` opt-in
+  // until Milestone 2 browser verification completes.
+  RIZZOMA_NATIVE_RENDER: env['FEAT_RIZZOMA_NATIVE_RENDER'] !== '0',
 } as const;
 
 // Helper to check if any feature is enabled

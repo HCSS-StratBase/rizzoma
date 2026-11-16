@@ -12,7 +12,12 @@ export function createHostBridge({ onNodeData, onUserContext, onResize, scope = 
   }
 
   function readBootstrapState() {
-    const frame = window.frameElement;
+    let frame = null;
+    try {
+      frame = window.frameElement;
+    } catch {
+      return null;
+    }
     if (!frame || String(frame.tagName || '').toLowerCase() !== 'iframe') {
       return null;
     }
@@ -42,11 +47,15 @@ export function createHostBridge({ onNodeData, onUserContext, onResize, scope = 
 
   function send(type, payload = {}) {
     requestId += 1;
-    parent.postMessage({ scope, requestId: String(requestId), type, ...payload }, window.location.origin);
+    const targetOrigin =
+      window.location.origin && window.location.origin !== 'null'
+        ? window.location.origin
+        : '*';
+    parent.postMessage({ scope, requestId: String(requestId), type, ...payload }, targetOrigin);
   }
 
   window.addEventListener('message', (event) => {
-    if (event.origin !== window.location.origin) return;
+    if (event.source !== window.parent) return;
     const payload = event.data;
     if (!payload || payload.scope !== scope) return;
 

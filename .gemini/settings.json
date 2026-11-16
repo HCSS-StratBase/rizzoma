@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "SessionStart": [{"matcher": "*", "hooks": [{"type": "command", "name": "wiki-first-start", "command": "python3 scripts/wiki_first_hook.py start --cli gemini", "timeout": 10000}]}],
+    "BeforeTool": [{"matcher": "read_file|read_many_files|grep_search|glob|list_directory|write_file|replace", "hooks": [{"type": "command", "name": "wiki-first-pre", "command": "python3 scripts/wiki_first_hook.py pre --cli gemini", "timeout": 10000}]}],
+    "AfterAgent": [{"matcher": "*", "hooks": [{"type": "command", "name": "wiki-first-stop", "command": "python3 scripts/wiki_first_hook.py stop --cli gemini", "timeout": 10000}]}]
+  }
+}

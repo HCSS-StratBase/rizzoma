@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import type { BlipHistoryEntry, WaveHistoryResponse } from '@shared/types/blips';
-import { api } from '../lib/api';
+import { api, ensureCsrf } from '../lib/api';
 import { computeDiff } from '../lib/htmlDiff';
+import { toast } from './Toast';
 import { sanitizeRichHtml } from '../lib/sanitizeRichHtml';
 import './WavePlaybackModal.css';
 
@@ -31,10 +32,15 @@ function formatDateTime(ts: number): string {
   });
 }
 
-function toDatetimeLocalValue(ts: number): string {
-  const d = new Date(ts);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+function formatDateButton(ts?: number): string {
+  if (!ts) return 'Timeline';
+  return new Date(ts).toLocaleString('en-US', {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
 }
 
 function stripHtmlToText(html: string): string {
@@ -43,7 +49,7 @@ function stripHtmlToText(html: string): string {
   return (div.textContent || div.innerText || '').slice(0, 120);
 }
 
-export function WavePlaybackModal({ waveId, topicTitle, blips, onClose }: WavePlaybackModalProps) {
+export function WavePlaybackModal({ waveId, topicTitle: _topicTitle, blips, onClose }: WavePlaybackModalProps) {
   const [timeline, setTimeline] = useState<BlipHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +57,6 @@ export function WavePlaybackModal({ waveId, topicTitle, blips, onClose }: WavePl
   const [playbackState, setPlaybackState] = useState<PlaybackState>('stopped');
   const [playbackSpeed, setPlaybackSpeed] = useState(1000);
   const [showDiff, setShowDiff] = useState(false);
-  const [jumpToDate, setJumpToDate] = useState('');
   const playbackRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Build blip color map
@@ -131,7 +136,6 @@ export function WavePlaybackModal({ waveId, topicTitle, blips, onClose }: WavePl
       setTimeline(entries);
       if (entries.length > 0) {
         setCurrentIndex(entries.length - 1);
-        setJumpToDate(toDatetimeLocalValue(entries[entries.length - 1].createdAt));
       }
     } catch (err) {
       console.error('Failed to load wave history', err);
@@ -205,11 +209,6 @@ export function WavePlaybackModal({ waveId, topicTitle, blips, onClose }: WavePl
 
   const handlePause = () => setPlaybackState('paused');
 
-  const handleStop = () => {
-    setPlaybackState('stopped');
-    setCurrentIndex(timeline.length - 1);
-  };
-
   const handleStepBack = () => {
     setPlaybackState('paused');
     setCurrentIndex(prev => Math.max(0, prev - 1));
@@ -222,7 +221,6 @@ export function WavePlaybackModal({ waveId, topicTitle, blips, onClose }: WavePl
 
   const handleFastBack = () => {
     setPlaybackState('paused');
-    // Jump to previous cluster boundary
     for (let i = clusterBoundaries.length - 1; i >= 0; i--) {
       if (clusterBoundaries[i] < currentIndex) {
         setCurrentIndex(clusterBoundaries[i]);
@@ -234,7 +232,6 @@ export function WavePlaybackModal({ waveId, topicTitle, blips, onClose }: WavePl
 
   const handleFastForward = () => {
     setPlaybackState('paused');
-    // Jump to next cluster boundary
     for (const boundary of clusterBoundaries) {
       if (boundary > currentIndex) {
         setCurrentIndex(boundary);
@@ -249,33 +246,45 @@ export function WavePlaybackModal({ waveId, topicTitle, blips, onClose }: WavePl
     setCurrentIndex(parseInt(e.target.value, 10));
   };
 
-  const handleDateJump = () => {
-    if (!jumpToDate) return;
-    const targetTs = new Date(jumpToDate).getTime();
-    if (isNaN(targetTs)) return;
-    // Find closest entry at or after the target timestamp
-    let closest = 0;
-    let minDiff = Infinity;
-    for (let i = 0; i < timeline.length; i++) {
-      const diff = Math.abs(timeline[i].createdAt - targetTs);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closest = i;
+  const handleCopy = () => {
+    if (!current) return;
+    const text = stripHtmlToText(current.content);
+    navigator.clipboard.writeText(text).then(() => {
+      toast('Historical content copied to clipboard');
+    }).catch(() => {
+      toast('Failed to copy', 'error');
+    });
+  };
+
+  const handlePasteAsReply = async () => {
+    if (!current) return;
+    try {
+      await ensureCsrf();
+      const res = await api(`/api/waves/${encodeURIComponent(waveId)}/blips`, {
+        method: 'POST',
+        body: JSON.stringify({
+          content: `<p><em>[Restored from ${formatDateTime(current.createdAt)}]:</em></p>${current.content}`
+        })
+      });
+      if (res.ok) {
+        toast('Historical revision posted as reply blip');
+        onClose();
+      } else {
+        toast('Failed to post reply', 'error');
       }
+    } catch {
+      toast('Failed to post reply', 'error');
     }
-    setPlaybackState('paused');
-    setCurrentIndex(closest);
   };
 
   const getBlipLabel = (blipId: string): string => {
     const label = blipLabelMap.get(blipId);
     if (label) return label;
-    // Fallback: extract from blipId
     const suffix = blipId.includes(':') ? blipId.split(':').pop() : blipId;
     return suffix ? `Blip ${suffix.slice(0, 8)}` : blipId.slice(0, 12);
   };
 
-  // Ordered unique blip IDs (by first appearance in timeline)
+  // Ordered unique blip IDs
   const orderedBlipIds = useMemo(() => {
     const seen = new Set<string>();
     const order: string[] = [];
@@ -289,155 +298,209 @@ export function WavePlaybackModal({ waveId, topicTitle, blips, onClose }: WavePl
   }, [timeline]);
 
   return (
-    <div className="wave-playback-backdrop" role="dialog" aria-modal="true" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="wave-playback-modal">
-        {/* Header */}
-        <div className="wave-playback-header">
-          <h3>Wave Timeline: {topicTitle}</h3>
-          <button type="button" onClick={onClose} aria-label="Close wave playback">✕</button>
+    <div className="wave-playback-in-place" role="region" aria-label="Wave Playback History">
+      {/* 1. Top Playback Toolbar matching 069-playback-ui.png */}
+      <div className="playback-top-toolbar">
+        <div className="playback-button-group">
+          <div className="calendar-button" title="Historical Timestamp">
+            {formatDateButton(current?.createdAt)}
+          </div>
+          <button
+            type="button"
+            className="playback-nav-btn"
+            onClick={handleFastBack}
+            disabled={currentIndex === 0}
+            title="First revision (|◀)"
+          >
+            |◀
+          </button>
+          <button
+            type="button"
+            className="playback-nav-btn"
+            onClick={handleStepBack}
+            disabled={currentIndex === 0}
+            title="Step back (◀)"
+          >
+            ◀
+          </button>
+          {playbackState === 'playing' ? (
+            <button
+              type="button"
+              className="playback-nav-btn play-btn"
+              onClick={handlePause}
+              title="Pause (⏸)"
+            >
+              ⏸
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="playback-nav-btn play-btn"
+              onClick={handlePlay}
+              title="Play (▶)"
+            >
+              ▶
+            </button>
+          )}
+          <button
+            type="button"
+            className="playback-nav-btn"
+            onClick={handleStepForward}
+            disabled={currentIndex >= timeline.length - 1}
+            title="Step forward (▶)"
+          >
+            ▶
+          </button>
+          <button
+            type="button"
+            className="playback-nav-btn"
+            onClick={handleFastForward}
+            disabled={currentIndex >= timeline.length - 1}
+            title="Latest revision (▶|)"
+          >
+            ▶|
+          </button>
+          <button
+            type="button"
+            className="playback-action-btn"
+            onClick={handleCopy}
+            title="Copy historical content"
+          >
+            Copy
+          </button>
+          <button
+            type="button"
+            className="playback-action-btn last"
+            onClick={() => { void handlePasteAsReply(); }}
+            title="Paste historical content as new reply blip"
+          >
+            Paste as reply
+          </button>
         </div>
 
-        {loading && <div className="wave-playback-status">Loading wave history...</div>}
-        {error && !loading && <div className="wave-playback-error">{error}</div>}
+        <div className="playback-options-group">
+          <select
+            value={playbackSpeed}
+            onChange={e => setPlaybackSpeed(parseInt(e.target.value, 10))}
+            className="playback-speed-select"
+            aria-label="Playback speed"
+          >
+            <option value="2000">0.5x</option>
+            <option value="1000">1x</option>
+            <option value="500">2x</option>
+            <option value="250">4x</option>
+          </select>
 
-        {!loading && !error && timeline.length === 0 && (
-          <div className="wave-playback-status">No history entries found. Edit some blips to create history.</div>
-        )}
+          <label className="playback-diff-label">
+            <input
+              type="checkbox"
+              checked={showDiff}
+              onChange={e => setShowDiff(e.target.checked)}
+            />
+            Diff
+          </label>
 
-        {!loading && !error && timeline.length > 0 && (
-          <>
-            {/* Date Jump */}
-            <div className="wave-playback-date-jump">
-              <label>Jump to:</label>
-              <input
-                type="datetime-local"
-                value={jumpToDate}
-                onChange={e => setJumpToDate(e.target.value)}
+          <span className="playback-step-badge">
+            {timeline.length > 0 ? `${currentIndex + 1} / ${timeline.length}` : '0 / 0'}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          className="playback-close-btn"
+          onClick={onClose}
+          title="Exit playback view"
+        >
+          Close Playback ✕
+        </button>
+      </div>
+
+      {/* 2. Timeline Scrubber Bar */}
+      <div className="playback-scrubber-bar">
+        <div className="playback-slider-row">
+          <span className="playback-slider-label">1</span>
+          <input
+            type="range"
+            min="0"
+            max={Math.max(0, timeline.length - 1)}
+            value={currentIndex}
+            onChange={handleSliderChange}
+            className="playback-range-slider"
+            aria-label="Wave timeline scrubber"
+          />
+          <span className="playback-slider-label">{timeline.length}</span>
+        </div>
+
+        {timeline.length > 0 && timeline.length <= 500 && (
+          <div className="playback-timeline-dots">
+            {timeline.map((entry, idx) => (
+              <button
+                key={entry.id}
+                type="button"
+                className={`playback-dot ${idx === currentIndex ? 'active' : ''}`}
+                style={{ background: blipColorMap.get(entry.blipId) || '#999' }}
+                onClick={() => { setPlaybackState('paused'); setCurrentIndex(idx); }}
+                title={`${getBlipLabel(entry.blipId)} — ${formatDateTime(entry.createdAt)}`}
+                aria-label={`Step ${idx + 1}`}
               />
-              <button type="button" onClick={handleDateJump}>Jump</button>
-            </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-            {/* Timeline Slider */}
-            <div className="wave-playback-controls">
-              <div className="wave-timeline-slider-container">
-                <span className="wave-timeline-label">1</span>
-                <input
-                  type="range"
-                  min="0"
-                  max={timeline.length - 1}
-                  value={currentIndex}
-                  onChange={handleSliderChange}
-                  className="wave-timeline-slider"
-                  aria-label="Wave timeline position"
-                />
-                <span className="wave-timeline-label">{timeline.length}</span>
-              </div>
-
-              {/* Playback Controls */}
-              <div className="wave-playback-btns">
-                <button type="button" onClick={handleFastBack} disabled={currentIndex === 0} title="Previous cluster" className="playback-btn">⏮</button>
-                <button type="button" onClick={handleStepBack} disabled={currentIndex === 0} title="Step back" className="playback-btn">⏪</button>
-                {playbackState === 'playing' ? (
-                  <button type="button" onClick={handlePause} title="Pause" className="playback-btn primary">⏸</button>
-                ) : (
-                  <button type="button" onClick={handlePlay} title="Play" className="playback-btn primary">▶</button>
-                )}
-                <button type="button" onClick={handleStop} title="Stop" className="playback-btn">⏹</button>
-                <button type="button" onClick={handleStepForward} disabled={currentIndex >= timeline.length - 1} title="Step forward" className="playback-btn">⏩</button>
-                <button type="button" onClick={handleFastForward} disabled={currentIndex >= timeline.length - 1} title="Next cluster" className="playback-btn">⏭</button>
-
-                <select value={playbackSpeed} onChange={e => setPlaybackSpeed(parseInt(e.target.value, 10))} className="speed-select" aria-label="Playback speed">
-                  <option value="2000">0.5x</option>
-                  <option value="1000">1x</option>
-                  <option value="500">2x</option>
-                  <option value="250">4x</option>
-                  <option value="100">10x</option>
-                </select>
-
-                <label className="diff-toggle">
-                  <input type="checkbox" checked={showDiff} onChange={e => setShowDiff(e.target.checked)} />
-                  Show diff
-                </label>
-              </div>
-            </div>
-
-            {/* Color-coded Timeline Dots */}
-            {timeline.length <= 500 && (
-              <div className="wave-timeline-dots">
-                {timeline.map((entry, idx) => (
-                  <button
-                    key={entry.id}
-                    type="button"
-                    className={`wave-timeline-dot ${idx === currentIndex ? 'active' : ''}`}
-                    style={{ background: blipColorMap.get(entry.blipId) || '#ccc' }}
-                    onClick={() => { setPlaybackState('paused'); setCurrentIndex(idx); }}
-                    title={`${getBlipLabel(entry.blipId)} — ${formatDateTime(entry.createdAt)}`}
-                    aria-label={`Step ${idx + 1}`}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Current Change Info */}
-            <div className="wave-playback-info">
-              <span className="wp-step">Step {currentIndex + 1}/{timeline.length}</span>
+      {/* 3. Main Split Body */}
+      {loading ? (
+        <div style={{ padding: 40, textAlign: 'center', color: '#666' }}>Loading wave history...</div>
+      ) : error ? (
+        <div style={{ padding: 20, textAlign: 'center', color: '#c0392b' }}>{error}</div>
+      ) : timeline.length === 0 ? (
+        <div style={{ padding: 40, textAlign: 'center', color: '#666' }}>No history entries found.</div>
+      ) : (
+        <div className="playback-split-body">
+          {/* Left Pane: Historical Blip Content */}
+          <div className="playback-content-pane">
+            <div className="playback-pane-header">
+              <span>{showDiff ? 'Historical Diff View' : 'Historical Content'}</span>
               {current && (
-                <>
-                  <span className="wp-blip-label" style={{ color: blipColorMap.get(current.blipId) }}>
-                    {getBlipLabel(current.blipId)} {current.event === 'create' ? 'created' : 'updated'}
-                  </span>
-                  {current.authorName && <span className="wp-author">by {current.authorName}</span>}
-                  <span className="wp-time">{formatDateTime(current.createdAt)}</span>
-                </>
+                <span className="playback-edit-details">
+                  {getBlipLabel(current.blipId)} {current.event === 'create' ? 'created' : 'edited'} {current.authorName ? `by ${current.authorName}` : ''} at {formatDateTime(current.createdAt)}
+                </span>
               )}
             </div>
+            <div
+              className="playback-blip-content wave-playback-content"
+              dangerouslySetInnerHTML={{ __html: displayContent }}
+            />
+          </div>
 
-            {/* Split Pane */}
-            <div className="wave-playback-split-pane">
-              {/* Left: Changed Blip Content */}
-              <div className="wave-playback-content-pane">
-                <h4>{showDiff ? 'Diff View' : 'Current Content'}</h4>
-                <div
-                  className="wave-playback-content"
-                  dangerouslySetInnerHTML={{ __html: displayContent }}
-                />
-              </div>
-
-              {/* Right: Mini Wave Overview */}
-              <div className="wave-playback-overview-pane">
-                <h4>Wave State ({waveStateAtIndex.size} blips)</h4>
-                {orderedBlipIds.map(blipId => {
-                  const state = waveStateAtIndex.get(blipId);
-                  if (!state) return null;
-                  const isHighlighted = current?.blipId === blipId;
-                  const color = blipColorMap.get(blipId) || '#ccc';
-                  return (
-                    <div
-                      key={blipId}
-                      className={`wave-overview-blip ${isHighlighted ? 'highlighted' : ''}`}
-                      style={{ borderLeftColor: color }}
-                    >
-                      <div className="wave-overview-blip-label">
-                        <span className="blip-color-dot" style={{ background: color }} />
-                        {getBlipLabel(blipId)}
-                      </div>
-                      <div className="wave-overview-blip-content">
-                        {stripHtmlToText(state.content)}
-                      </div>
+          {/* Right Pane: Wave State Overview */}
+          <div className="playback-overview-pane">
+            <div className="playback-overview-title">Wave State ({waveStateAtIndex.size} blips)</div>
+            <div className="playback-overview-list">
+              {orderedBlipIds.map(blipId => {
+                const state = waveStateAtIndex.get(blipId);
+                if (!state) return null;
+                const isHighlighted = current?.blipId === blipId;
+                const color = blipColorMap.get(blipId) || '#ccc';
+                return (
+                  <div
+                    key={blipId}
+                    className={`playback-overview-item ${isHighlighted ? 'highlighted' : ''}`}
+                    style={{ borderLeftColor: color }}
+                  >
+                    <div className="playback-item-label">
+                      {getBlipLabel(blipId)}
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="playback-item-preview wave-overview-blip-content">
+                      {stripHtmlToText(state.content)}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </>
-        )}
-
-        {/* Footer */}
-        <div className="wave-playback-footer">
-          <button type="button" onClick={loadHistory} disabled={loading}>Refresh</button>
-          <button type="button" className="primary" onClick={onClose}>Close</button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

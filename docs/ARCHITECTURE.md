@@ -1,344 +1,121 @@
-# Rizzoma Architecture & Configuration Reference
+# Architecture
 
-This document provides a comprehensive reference for understanding the Rizzoma codebase structure, layout configuration, authentication, and key component locations.
+**Status:** AUTHORITATIVE. Supersedes `deprecated/ARCHITECTURE.md`,
+`deprecated/NATIVE_RENDER_ARCHITECTURE.md`, `deprecated/arch-old-vs-new.md`,
+`deprecated/TECH_STACK_OLD_VS_NEW.md`, `deprecated/EDITOR.md`,
+`deprecated/EDITOR_REALTIME.md`, `deprecated/TOPIC_RENDER_UNIFICATION.md`,
+`deprecated/RIZZOMA_COMPARISON.md`, `deprecated/RIZZOMA_FULL_COMPARISON.md`.
+**Last reviewed:** 2026-07-14.
 
-## Table of Contents
-1. [Layout System](#layout-system)
-2. [Authentication](#authentication)
-3. [Component Hierarchy](#component-hierarchy)
-4. [Styling Architecture](#styling-architecture)
-5. [State Management](#state-management)
-6. [Development Notes](#development-notes)
-
----
-
-## Layout System
-
-### Layout Selection Logic
-
-**File:** `src/client/main.tsx` (lines 81-159)
-
-The app supports two layouts:
-- **Rizzoma Layout** (default): Full-featured UI with sidebar, topics list, wave view
-- **Basic Layout**: Simple developer/debug view
-
-```typescript
-// Line 82-84: Layout parameter parsing
-const params = new URLSearchParams(window.location.search);
-// Default to Rizzoma layout unless explicitly set to 'basic'
-const useRizzomaLayoutParam = params.get('layout') !== 'basic';
-
-// Line 139: Combined layout decision
-const forceRizzomaLayout = useRizzomaLayoutParam || route.startsWith('#/topic/') || route.startsWith('#/wave/');
-```
-
-**To switch layouts:**
-- `http://localhost:3001/` → Rizzoma layout (default)
-- `http://localhost:3001/?layout=basic` → Basic layout
-- Any `#/topic/` or `#/wave/` route → Forces Rizzoma layout
-
-### Layout Preservation
-
-**File:** `src/client/main.tsx` (lines 54-72)
-
-When `?layout=rizzoma` is present, the app patches `history.pushState` and `history.replaceState` to preserve the layout parameter across navigation.
+Current state (branch, deployment, gates, open failures) is **generated** into
+[`../STATUS.md`](../STATUS.md) — never hand-write status here.
 
 ---
 
-## Authentication
+## 1. Stack
 
-### OAuth Providers
+| Layer | Old rizzoma.com (2013, vendored in `original-rizzoma-src/`) | This app |
+|---|---|---|
+| Language | CoffeeScript | TypeScript |
+| Client | Backbone-ish views + jQuery, direct DOM | React 18 + Vite (shell) |
+| Content render | **content-array + one linear walk** (see §2) | React/TipTap hybrid (see §3) — *being replaced* |
+| Editor | `editor_v2.coffee` | TipTap / ProseMirror, one editor per *actively-editing* blip |
+| Realtime | Share.js OT | Y.js CRDT + Socket.IO relay; awareness for cursors/typing |
+| Store | CouchDB | CouchDB (unchanged schema; blip = `parentId` + HTML body) |
+| Server | Node + Express | Node + Express + Zod, session in Redis (MemoryStore on the current live process — see STATUS) |
 
-**File:** `src/server/routes/auth.ts`
+## 2. The original's content model — the thing we are converging on
 
-| Provider | Env Variables | Routes |
-|----------|--------------|--------|
-| Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `/api/auth/google`, `/api/auth/google/callback` |
-| Facebook | `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` | `/api/auth/facebook`, `/api/auth/facebook/callback` |
-| Microsoft | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_TENANT` | `/api/auth/microsoft`, `/api/auth/microsoft/callback` |
-| SAML 2.0 | `SAML_ENABLED`, `SAML_ENTRY_POINT`, `SAML_ISSUER`, `SAML_CERT` | `/api/auth/saml`, `/api/auth/saml/callback`, `/api/auth/saml/metadata` |
-
-### OAuth Flow
-
-1. User clicks OAuth button → `GET /api/auth/{provider}`
-2. Redirect to provider's auth page
-3. Provider redirects back → `GET /api/auth/{provider}/callback`
-4. Server exchanges code for token, fetches user profile
-5. Server finds/creates user by email, sets session
-6. Redirect to `CLIENT_URL/?layout=rizzoma` (or `/?layout=rizzoma` if no CLIENT_URL)
-
-### Key Configuration
-
-**File:** `.env`
-
-```bash
-# Frontend URL (for OAuth redirects in dev)
-CLIENT_URL=http://localhost:3001
-
-# Google OAuth
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-
-# Facebook OAuth
-FACEBOOK_APP_ID=...
-FACEBOOK_APP_SECRET=...
-
-# Microsoft OAuth
-MICROSOFT_CLIENT_ID=...
-MICROSOFT_CLIENT_SECRET=...
-MICROSOFT_TENANT=common  # 'common' for all accounts, or specific tenant ID
-
-# SAML 2.0 (optional)
-SAML_ENABLED=true
-SAML_ENTRY_POINT=https://your-idp/sso/saml
-SAML_ISSUER=https://your-app
-SAML_CERT=-----BEGIN CERTIFICATE-----...
-```
-
-### Session Handling
-
-**File:** `src/server/middleware/session.ts`
-
-Sessions use `express-session` with Redis store (or memory fallback in dev).
-
-Session data structure:
-```typescript
-{
-  userId: string;       // CouchDB document ID
-  userEmail: string;    // User's email
-  userName?: string;    // Display name (from OAuth provider)
-  userAvatar?: string;  // Profile picture URL (from OAuth provider)
-}
-```
-
-### User Avatar Display
-
-**File:** `src/client/components/RightToolsPanel.tsx`
-
-The RightToolsPanel displays the user's avatar in the following priority order:
-1. **OAuth provider avatar** (Google, Facebook) - direct URL from provider
-2. **Gravatar fallback** - generated from email hash
-
-Note: Microsoft OAuth doesn't provide a direct avatar URL (requires additional API call to fetch binary photo data), so Microsoft users fall back to Gravatar.
-
-### OAuth Status Endpoint
-
-**File:** `src/server/routes/auth.ts` (line 493)
-
-`GET /api/auth/oauth-status` returns which providers are configured:
-```json
-{"google":true,"facebook":true,"microsoft":true,"saml":false}
-```
-
----
-
-## Component Hierarchy
-
-### Main App Structure
+A blip's content is a **flat array of typed records**, not a DOM tree and not a document model:
 
 ```
-src/client/main.tsx
-├── App (main component)
-│   ├── RizzomaLanding (when not authenticated)
-│   │   └── AuthPanel (OAuth buttons + email login)
-│   └── RizzomaLayout (when authenticated)
-│       ├── NavigationPanel (far left - +New, Topics, Mentions, etc.)
-│       ├── RizzomaTopicsList / MentionsList / TasksList (left panel)
-│       ├── RizzomaTopicDetail (center - wave content)
-│       └── RightToolsPanel (far right - avatar, Next, view toggles)
+content = [
+  {type: LINE, params: {bulleted: 0}},
+  {type: TEXT, text: "First label", params: {bold: true}},
+  {type: BLIP, params: {THREAD_ID: "…", ID: "child-blip-id"}},   ← a child, anchored HERE
+  {type: TEXT, text: " by Claude"},
+  {type: LINE, …},
+  …
+]
 ```
 
-### Key Components
+Three element types — `LINE`, `TEXT`, `BLIP` — and **the BLIP element's array index IS its
+anchor**. There is no numeric character offset, therefore **drift is impossible by
+construction**. Rendering is **one linear walk** over the array: `LINE` → `<p>`, `TEXT` →
+text node, `BLIP` → a `<span class="blip-thread">` whose `js-blips-container` is filled by
+recursively walking the child's own content array. Fold/unfold is a **CSS class on a DOM node
+that is never destroyed** — so drafts, scroll and focus survive a collapse cycle.
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| `App` | `src/client/main.tsx` | Root component, layout switching, auth state |
-| `RizzomaLayout` | `src/client/components/RizzomaLayout.tsx` | Main app shell with panels |
-| `RizzomaLanding` | `src/client/components/RizzomaLanding.tsx` | Landing page for unauthenticated users |
-| `AuthPanel` | `src/client/components/AuthPanel.tsx` | OAuth buttons and email login form |
-| `NavigationPanel` | `src/client/components/NavigationPanel.tsx` | Left sidebar with tab buttons |
-| `RizzomaTopicsList` | `src/client/components/RizzomaTopicsList.tsx` | Topics list with search |
-| `RizzomaTopicDetail` | `src/client/components/RizzomaTopicDetail.tsx` | Wave/topic content viewer |
-| `RightToolsPanel` | `src/client/components/RightToolsPanel.tsx` | User avatar, Next button, view controls |
-| `RizzomaBlip` | `src/client/components/blip/RizzomaBlip.tsx` | Individual blip (message) renderer |
+Full analysis, with the original CoffeeScript quoted:
+**[`ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md`](./ORIGINAL_FRACTAL_LOGIC_AND_WHY_OURS_DOESNT_MATCH.md)** — read it before touching the render layer (a hook enforces this).
 
-### Props Flow
+## 3. What we built instead, and why it keeps cracking
 
-```
-main.tsx (me state)
-  └── RizzomaLayout (isAuthed, user)
-      └── RightToolsPanel (isAuthed, user, unreadState)
-          └── User avatar display
-```
+Seven indirection layers sit between a keystroke and a rendered child:
 
----
+`parentId` + numeric `anchorPosition` (server) → `RizzomaBlip.tsx` React state →
+`inlineMarkers.ts` (injects marker spans) → `InlineHtmlRenderer.tsx` (walks saved HTML) →
+`BlipThreadNode.tsx` (TipTap NodeView) → `ReactDOM.createPortal` → `useLayoutEffect` DOM scans —
+plus **two separate create-child handlers** (topic-root in `RizzomaTopicDetail.tsx`, nested in
+`RizzomaBlip.tsx`).
 
-## Styling Architecture
+Every pair of layers can disagree, and each bug fix is a patch over one of those seams. The
+analysis doc lists ten such bugs from a single day in May; **2026-07-14 added two more of the
+same family** (the fractal dying at depth 3 because the child's mount lived in a portal that
+the parent's edit-close unmounted; nested blips persisting as `<p>` because the editor
+initialised before the seeded content propagated). Both were literally items 8 and 10 on that
+May list.
 
-### CSS Files
+> **Rule:** do not add another retry loop, content guard or portal patch without reading the
+> analysis first. The prescribed fix is §4.
 
-Each component has a corresponding CSS file:
+## 4. The native port — the prescribed fix
 
-| Component | CSS File |
-|-----------|----------|
-| `RizzomaLayout` | `src/client/components/RizzomaLayout.css` |
-| `RizzomaTopicsList` | `src/client/components/RizzomaTopicsList.css` |
-| `RizzomaTopicDetail` | `src/client/components/RizzomaTopicDetail.css` |
-| `RightToolsPanel` | `src/client/components/RightToolsPanel.css` |
-| `AuthPanel` | `src/client/components/AuthPanel.css` |
-| `RizzomaBlip` | `src/client/components/blip/RizzomaBlip.css` |
+Replace the parent-of-blips render layer with a direct TS port of the original's model.
+Plan (phases, gates, rollback): **[`NATIVE_RENDER_PORT_PLAN.md`](./NATIVE_RENDER_PORT_PLAN.md)**.
 
-### Global Styles
+**Non-goals** (explicitly unchanged): server schema, Y.js/Socket.IO transport, per-blip TipTap
+editor and its extensions (mentions, tags, tasks, gadgets, inline comments), auth, uploads,
+playback, the React UI shell, mobile/PWA.
 
-- `src/client/RizzomaApp.css` - App-wide styles
-- `src/client/styles/breakpoints.css` - Responsive breakpoints
-- `src/client/styles/view-transitions.css` - Page transition animations
+Code lives in `src/client/native/`:
 
-### Panel Widths (RizzomaLayout.css)
+| File | Role |
+|---|---|
+| `types.ts` | `ContentArray = Array<LineEl \| TextEl \| BlipEl \| AttachmentEl>` |
+| `parser.ts` / `serializer.ts` | HTML ⇄ ContentArray (server stays HTML-per-blip; no DB migration) |
+| `renderer.ts` | the single linear walk → DOM |
+| `blip-thread.ts` | `<span class="blip-thread">`, CSS-class fold, DOM never destroyed |
+| `blip-view.ts` / `wave-view.ts` | one blip's / the topic's lifecycle |
+| `blip-editor-host.ts` | mounts TipTap into the *actively editing* blip; **Ctrl+Enter inserts a BLIP element at the cursor's array index** |
+| `yjs-binding.ts` / `awareness.ts` | collab over the ContentArray |
 
-```css
-.navigation-container { width: 56px; }     /* Far left - icons only */
-.tabs-container { width: 280px; }          /* Topics/search panel */
-.wave-container { flex: 1; }               /* Main content - fills remaining */
-.right-tools-panel { width: 80px; }        /* Far right - avatar, controls */
-```
+Wired behind `FEAT_RIZZOMA_NATIVE_RENDER`, opt-in per session via `?render=native`.
+**Its true state is measured, not asserted — see [`../STATUS.md`](../STATUS.md).**
 
-### User Avatar Styling (RightToolsPanel.css)
+## 5. Editor
 
-```css
-.user-avatar-large {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  /* ... */
-}
-```
+One TipTap editor exists **only for the blip currently being edited** (this matches the
+original; it is not a per-blip always-on editor). Single-active-editor is an invariant: a blip
+entering edit mode broadcasts `rizzoma:active-blip-claim`, and any other surface holding the
+slot **finishes and auto-saves** its edit. The topic-level editor participates in the same
+protocol under the id `topic-editor:<topicId>`; a claim carrying the topic root's own id is a
+click *inside* that editor and re-asserts, rather than releasing (releasing on those killed
+the edit session — 2026-07-09).
 
----
+Toolbar parity reference: [`EDITOR_TOOLBAR_PARITY.md`](./EDITOR_TOOLBAR_PARITY.md).
+Body-structure rules (bullets are **imposed** in our app): [`BLB.md` §5](./BLB.md).
 
-## State Management
+## 6. Verification architecture
 
-### Authentication State
+Three enforcement layers — none of them optional:
 
-**Location:** `src/client/main.tsx`
-
-```typescript
-const [me, setMe] = useState<any>(null);  // User object from /api/auth/me
-```
-
-User object structure:
-```typescript
-{
-  id: string;       // CouchDB document ID
-  email: string;    // User's email
-  name?: string;    // Display name
-  avatar?: string;  // Avatar URL (from OAuth provider)
-}
-```
-
-### Topic/Wave State
-
-**Location:** `src/client/components/RizzomaLayout.tsx`
-
-```typescript
-const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
-const [activeTab, setActiveTab] = useState<TabType>('topics');
-const unreadState = useWaveUnread(selectedTopicId);
-```
-
-### Unread State Hook
-
-**File:** `src/client/hooks/useWaveUnread.ts`
-
-Tracks unread blips for the current wave, provides:
-- `unreadIds: string[]` - IDs of unread blips
-- `markBlipRead(id)` - Mark a blip as read
-- `refresh()` - Refresh unread state
-
----
-
-## Development Notes
-
-### Vite Hot Module Replacement (HMR)
-
-**Known Issue:** Vite HMR sometimes doesn't pick up changes, especially:
-- Changes to files imported at module level (constants, configs)
-- Changes to hook dependencies
-- Complex component structure changes
-
-**Workarounds:**
-1. Hard refresh: `Ctrl+Shift+R` or `Cmd+Shift+R`
-2. Restart Vite: Kill and restart `npm run dev`
-3. Clear Vite cache: Delete `node_modules/.vite`
-
-**Why this happens:**
-- Vite uses ES module imports which can cache at the browser level
-- Some changes require full module graph invalidation
-- React Fast Refresh has limitations with certain patterns
-
-### Port Configuration
-
-| Service | Default Port | Description |
-|---------|-------------|-------------|
-| Vite (frontend) | 3000 (or 3001 if 3000 in use) | Dev server with HMR |
-| Express (API) | 8000 | Backend API server |
-| CouchDB | 5984 | Database |
-| Redis | 6379 | Session store |
-
-### Environment Variables Loading
-
-**File:** `src/server/app.ts` (line 1)
-
-```typescript
-import 'dotenv/config';  // Loads .env file
-```
-
-The `.env` file must be in the project root. Changes require server restart.
-
-### Hash-based Routing
-
-The app uses hash-based routing (`#/topic/...`, `#/wave/...`) for SPA navigation:
-
-```typescript
-// Route patterns
-#/                    → Topics list
-#/topic/{id}          → View topic
-#/wave/{id}           → View wave
-#/waves               → Waves list
-#/editor/search       → Editor search
-#/editor/admin        → Editor admin
-```
-
----
-
-## Quick Reference
-
-### Adding a New OAuth Provider
-
-1. Add env vars to `.env` and `src/server/routes/auth.ts`
-2. Add routes: `GET /api/auth/{provider}` and `GET /api/auth/{provider}/callback`
-3. Update `oauth-status` endpoint
-4. Update `OAuthStatus` type in `src/client/components/AuthPanel.tsx`
-5. Add button to AuthPanel
-
-### Changing Layout Default
-
-**File:** `src/client/main.tsx` line 84
-
-```typescript
-// Current: Rizzoma is default
-const useRizzomaLayoutParam = params.get('layout') !== 'basic';
-
-// To make basic default:
-const useRizzomaLayoutParam = params.get('layout') === 'rizzoma';
-```
-
-### Adding User Data to Components
-
-1. Pass `user` prop from `main.tsx` → `RizzomaLayout`
-2. Add to `RizzomaLayoutProps` interface
-3. Pass down to child components as needed
-
----
-
-*Last updated: 2026-01-20*
+1. **Gate chain** — `npm run visual:sweep` → `visual:coverage` → `parity:gate`
+   ([`VISUAL_SCREENSHOT_SWEEP.md`](./VISUAL_SCREENSHOT_SWEEP.md)). Coverage gaps, a legacy
+   archive below floor, too few comparison sheets, or a missing `PARITY_AUDIT.md` all FAIL.
+2. **Hand-build acceptance** — `scripts/handbuild_acceptance.mjs`. Fixture-expansion and gate
+   counts are **not** acceptance ([`BLB.md` §8](./BLB.md)). `parity:gate` requires fresh
+   hand-build evidence newer than the last UI commit.
+3. **Mandatory-docs gate** (user-scope hook `rizzoma-app-docs-gate.sh`) — touching
+   `src/**` is DENIED until this file, the analysis, the port plan, the sweep doc and
+   `BLB.md` have been read *this session*.

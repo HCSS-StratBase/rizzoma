@@ -1,3 +1,13 @@
+# QUICKSTART
+
+> **⚠️ REALITY CHECK (2026-07-14).** The **app does not run in Docker.** Only CouchDB and Redis
+> are containers. Local dev: `docker compose up -d couchdb redis` then
+> `FEAT_ALL=1 FEAT_RIZZOMA_PARITY_RENDER=1 npm run dev` (server :8000, vite :3000).
+> Live/staging topology (nohup tsx + vite behind nginx) is in **[`STATUS.md`](STATUS.md)**.
+> Any `docker compose up -d app …` line below is historical.
+
+---
+
 # 🚀 Rizzoma Quick Start Guide
 
 This guide will help you get Rizzoma up and running quickly and reliably.

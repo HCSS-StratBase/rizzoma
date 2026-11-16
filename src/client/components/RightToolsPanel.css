@@ -1,381 +1,467 @@
-/* RightToolsPanel - Minimal like real Rizzoma */
+/* RightToolsPanel.css - Authentic Legacy Rizzoma Right Tools Panel */
 
 .right-tools-panel {
-  /* Width is now owned by the parent .right-tools-container wrapper
-     which lets us hook up the drag-to-resize handle. The inner
-     panel fills the wrapper's width and provides its own scrollable
-     content area. */
-  width: 100%;
+  width: 65px;
+  min-width: 65px;
+  max-width: 65px;
   height: 100%;
-  max-height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
+  background: #728AA0;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 44px 10px 14px;
-  gap: 16px;
-  scrollbar-width: thin;
+  padding: 8px 0;
+  box-sizing: border-box;
+  z-index: 2;
+  box-shadow: -1px 0px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* User Avatar Section */
+/* User Avatar Section - Compact Square at Top */
 .user-avatar-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  position: relative;
 }
 
-.user-avatar-large {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
+.user-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
   overflow: hidden;
-  background: linear-gradient(135deg, #5fa8ff 0%, #3c7ed4 100%);
+  background: white;
+  border: 1px solid #707478;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 14px 24px rgba(60, 126, 212, 0.22);
-  border: 2px solid #fff;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
-.user-avatar-large img {
+.user-avatar-small:hover {
+  border-color: #ffffff;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+/* User Account Profile Menu Dropdown */
+.user-profile-menu {
+  position: absolute;
+  top: 0;
+  right: 48px;
+  width: 210px;
+  background: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  border: 1px solid #d0d7de;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: left;
+}
+
+.user-profile-info {
+  padding: 8px 14px 10px 14px;
+}
+
+.user-profile-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: #222222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-profile-email {
+  font-size: 11px;
+  color: #666666;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-profile-divider {
+  height: 1px;
+  background: #e5e8ec;
+  margin: 4px 0;
+}
+
+.user-profile-item {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: #333333;
+  font-size: 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.user-profile-item:hover {
+  background: #4ea0f1;
+  color: #ffffff;
+}
+
+.user-avatar-small img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
 .avatar-initials {
-  color: white;
-  font-size: 18px;
-  font-weight: 600;
-  text-transform: uppercase;
+  color: #728AA0;
+  font-size: 13px;
+  font-weight: bold;
+  font-family: arial, sans-serif;
 }
 
 .avatar-initials.hidden {
   display: none;
 }
 
-.user-name {
-  font-size: 10px;
-  color: #5e7389;
-  text-align: center;
-  max-width: 70px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 500;
-}
-
-.right-tools-panel > .shell-auth {
-  width: 100%;
-}
-
-.right-tools-panel > .shell-auth .shell-auth-action {
-  border-color: rgba(112, 143, 176, 0.42);
-  background: rgba(255, 255, 255, 0.92);
-  color: #35536f;
-  box-shadow: 0 6px 16px rgba(38, 67, 96, 0.08);
-}
-
-.right-tools-panel > .shell-auth .shell-auth-action:hover:not(:disabled) {
-  border-color: rgba(74, 151, 226, 0.64);
-  background: #ffffff;
-  color: #1f4669;
-}
-
-/* Next button (Follow the Green) */
-.next-button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 12px 8px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(170, 186, 204, 0.4);
-  border-radius: 16px;
+/* Next Unread Blip Button - Authentic Green Button */
+.next-unread-blip {
+  display: block;
+  width: 60px;
+  height: 45px;
+  background: #95D529;
+  color: #fff;
+  font-family: arial, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  border: 1px solid #82BA24;
+  border-left: none;
+  border-radius: 0 3px 3px 0;
   cursor: pointer;
-  font-size: 11px;
-  color: #50657d;
-  width: 100%;
-  transition: all 0.2s;
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+  box-sizing: border-box;
+  text-align: left;
+  padding: 0 8px;
+  line-height: 43px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  transition: background 0.15s ease;
 }
 
-.next-button:hover:not(:disabled) {
-  background: #DDD;
-  border-color: #BBB;
+.next-unread-blip:hover:not(:disabled) {
+  background: #87BF28;
 }
 
-.next-button:disabled {
+.next-unread-blip:active:not(:disabled) {
+  background: #78A924;
+  box-shadow: inset 0 0 4px 0px #000;
+}
+
+.right-tools-panel .next-unread-blip span {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.right-tools-panel .next-unread-blip img {
+  margin: 0 0 -1px 3px;
+  vertical-align: middle;
+}
+
+.next-unread-blip.disabled,
+.next-unread-blip:disabled {
+  background: #8EA2B5;
+  cursor: auto;
+  border-color: #8091A3;
+  box-shadow: none;
+}
+
+.next-unread-blip.disabled img,
+.next-unread-blip.disabled span,
+.next-unread-blip:disabled img,
+.next-unread-blip:disabled span {
   opacity: 0.5;
-  cursor: not-allowed;
 }
 
-.next-button.has-unread {
-  background: linear-gradient(180deg, #8adf42, #73c930);
-  border-color: #73c930;
-  color: white;
+.next-topic-blip {
+  background: #4EA0F1 !important;
+  border-color: #3B8FE0 !important;
 }
 
-.next-button.has-unread:hover:not(:disabled) {
-  background: #7AD030;
-}
-
-.next-arrow {
-  font-size: 16px;
-}
-
-/* Next Topic button — shown when current topic is clear but OTHER
-   topics still have unread. Originally rendered blue (#4EA0F1) but
-   the user expected it to stay green because "Follow the Green" is
-   still active — there is more green to chase. Match the same
-   gradient as `.next-button.has-unread` so visual cue is consistent.
-   The double-arrow glyph (▶▶) is what distinguishes the cross-topic
-   jump from the single-topic jump. 2026-04-14 task #39. */
-.next-topic-button {
-  background: linear-gradient(180deg, #8adf42, #73c930) !important;
-  border-color: #73c930 !important;
-  color: white !important;
-}
-
-.next-topic-button:hover {
-  background: #7AD030 !important;
-  border-color: #65b022 !important;
-}
-
-/* View toggle */
-.view-toggle {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  padding-top: 4px;
-}
-
-.view-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 8px 4px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 14px;
-  cursor: pointer;
-  font-size: 10px;
-  color: #61778e;
-  transition: all 0.2s;
-}
-
-.view-btn:hover {
-  background: rgba(255, 255, 255, 0.76);
-}
-
-.view-btn.active {
-  background: rgba(93, 171, 247, 0.14);
-  border-color: rgba(93, 171, 247, 0.28);
-  color: #264867;
-}
-
-.view-icon {
-  font-size: 16px;
-}
-
-.view-label {
-  white-space: nowrap;
+.next-topic-blip:hover {
+  background: #3B8FE0 !important;
 }
 
 /* Fold/Unfold controls */
 .fold-controls {
-  display: flex;
-  gap: 4px;
-  width: 100%;
-  justify-content: center;
-}
-
-.fold-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(170, 186, 204, 0.36);
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 10px;
-  color: #5d738a;
-  transition: all 0.15s;
-}
-
-.fold-btn:hover {
-  background: #DDD;
-  border-color: #BBB;
-}
-
-.fold-icon {
-  font-size: 10px;
-}
-
-/* Display mode toggle (short/expanded) */
-.display-toggle {
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 100%;
+  width: 60px;
 }
 
-.display-btn {
-  padding: 4px 6px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 10px;
+.hide-replies,
+.show-replies {
+  display: block;
+  height: 45px;
+  width: 60px;
+  border: 1px solid #C1CDD7;
+  border-left: none;
+  background-color: #e3eaef;
+  background-repeat: no-repeat;
   cursor: pointer;
-  font-size: 10px;
-  color: #61778e;
+  box-sizing: border-box;
+}
+
+.hide-replies {
+  background-image: url('/s/img/sprite_show_hide.png');
+  background-position: 22px 17px;
+  border-radius: 0 3px 0 0;
+}
+
+.show-replies {
+  background-image: url('/s/img/sprite_show_hide.png');
+  background-position: 22px -50px;
+  border-radius: 0 0 3px 0;
+  border-top: none;
+}
+
+.hide-replies:hover,
+.show-replies:hover {
+  background-color: #c5d3de;
+}
+
+.hide-replies:active,
+.show-replies:active {
+  background-color: #adbfcc;
+}
+
+/* View mode toggle */
+.view-toggle {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  width: 60px;
+}
+
+.text-view,
+.mindmap-view {
+  display: block;
+  width: 60px;
+  height: 50px;
+  position: relative;
+  border: 1px solid #C1CDD7;
+  border-left: none;
+  cursor: pointer;
+  box-sizing: border-box;
   text-align: center;
-  transition: all 0.15s;
 }
 
-.display-btn:hover {
-  background: rgba(255, 255, 255, 0.76);
+.text-view {
+  border-radius: 0 3px 0 0;
 }
 
-.display-btn.active {
-  background: rgba(93, 171, 247, 0.14);
-  border-color: rgba(93, 171, 247, 0.28);
-  color: #264867;
+.mindmap-view {
+  border-radius: 0 0 3px 0;
+  border-top: none;
 }
 
-/* Insert shortcuts */
-.insert-shortcuts {
+.text-view .view-icon,
+.mindmap-view .view-icon {
+  position: absolute;
+  top: 9px;
+  left: 21px;
+  height: 17px;
+  width: 18px;
+  background-image: url('/s/img/mapmode.png');
+  background-repeat: no-repeat;
+}
+
+.text-view .view-icon {
+  background-position: 0 0;
+}
+
+.text-view.active .view-icon {
+  background-position: 0 0;
+}
+
+.text-view:not(.active) .view-icon {
+  background-position: -19px 0;
+}
+
+.mindmap-view .view-icon {
+  width: 15px;
+  left: 23px;
+  background-position: -54px 0;
+}
+
+.mindmap-view.active .view-icon {
+  background-position: -38px 0;
+}
+
+.text-view.active,
+.mindmap-view.active {
+  background-color: #e3eaef;
+  color: #4f90d0;
+}
+
+.text-view:not(.active),
+.mindmap-view:not(.active) {
+  background-color: #b6c4cf;
+  color: #5b7f9b;
+}
+
+.text-view:hover,
+.mindmap-view:hover {
+  background-color: #c5d3de;
+}
+
+.view-label {
+  font-size: 9px;
+  white-space: nowrap;
+  font-weight: bold;
+  display: inline-block;
+  margin-top: 28px;
+  font-family: arial, sans-serif;
+}
+
+/* Mindmap view switch buttons (short / expanded) */
+.mindmap-view-switch-buttons {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  width: 100%;
-  padding-top: 10px;
-  border-top: 1px solid rgba(170, 186, 204, 0.28);
+  gap: 4px;
+  width: 60px;
   margin-top: 8px;
 }
 
-.insert-shortcuts-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 0 2px 4px;
-}
-
-.insert-shortcuts-title {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #50657d;
-}
-
-.insert-shortcuts-subtitle {
-  font-size: 9px;
-  color: #7f92a5;
+.mindmap-view-switch-buttons button {
+  font-size: 11px;
+  color: white;
+  outline: none;
+  border: none;
+  display: block;
+  border-radius: 0;
+  background: #9FA8B3;
+  padding: 8px 5px;
+  position: relative;
+  cursor: pointer;
   text-align: center;
 }
 
-.insert-btn {
+.mindmap-view-switch-buttons button.active {
+  background: #304E69;
+  font-weight: bold;
+}
+
+.mindmap-view-switch-buttons button:hover::before {
+  display: inline-block;
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: white;
+  opacity: 0.2;
+}
+
+/* Active blip controls - Authentic Sprite Controls */
+.active-blip-controls {
   display: flex;
+  flex-direction: column;
+  width: 60px;
+  margin-top: 10px;
+}
+
+.active-blip-controls .active-blip-control {
+  width: 60px;
+  height: 45px;
+  box-sizing: border-box;
+  border: 1px solid #76A8D9;
+  border-left: none;
+  cursor: pointer;
+  background-color: #78bcff;
+  background-image: url("/s/img/active_blip_control_icons.png");
+  background-repeat: no-repeat;
+  display: block;
+  padding: 0;
+}
+
+.active-blip-controls .active-blip-control:hover {
+  background-color: #64a8eb;
+}
+
+.active-blip-controls .active-blip-control:active {
+  background-color: #589bdd;
+}
+
+.active-blip-controls .insert-reply {
+  border-radius: 0 3px 0 0;
+  background-position: 22px 16px;
+}
+
+.active-blip-controls .insert-mention {
+  border-top: none;
+  background-position: 21px -43px;
+}
+
+.active-blip-controls .insert-task {
+  border-top: none;
+  background-position: 21px -103px;
+}
+
+.active-blip-controls .insert-tag {
+  border-radius: 0 0 3px 0;
+  border-top: none;
+  background-position: 21px -164px;
+}
+
+.active-blip-controls .insert-gadget-container {
+  position: relative;
+  width: 60px;
+}
+
+.active-blip-controls .gadget-logo {
+  background-image: url("/s/img/active_blip_control_icons.png");
+  background-position: 20px -232px;
+  width: 60px;
+  height: 35px;
+  background-repeat: no-repeat;
+  margin-top: 4px;
+}
+
+.active-blip-controls .insert-gadget {
+  margin-top: 10px;
+  position: relative;
+  height: 57px;
+  border: none;
+  text-align: center;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  font-family: arial, sans-serif;
+  border-radius: 0 3px 3px 0;
+  background-image: none;
+  background-color: #78bcff;
+  cursor: pointer;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  padding: 8px 4px;
-  background: linear-gradient(180deg, #79bcff, #589fe7);
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #fff;
-  transition: all 0.15s;
-  min-height: 36px;
 }
 
-.insert-btn:hover {
-  background: rgb(100, 170, 240);
+.active-blip-controls .insert-gadget:hover {
+  background-color: #64a8eb;
 }
 
-.insert-btn:active {
-  background: rgb(80, 155, 230);
+.active-blip-controls .insert-gadget:active {
+  background-color: #589bdd;
 }
 
-.insert-icon {
-  font-weight: 600;
-  font-family: monospace;
-}
-
-.insert-btn.gadget-btn {
-  gap: 6px;
-  min-height: 44px;
-  font-size: 10px;
-  padding: 10px 8px;
-  background: linear-gradient(180deg, #3976c8, #25589f);
-  box-shadow: 0 12px 22px rgba(37, 88, 159, 0.28);
-}
-
-.insert-btn.gadget-btn:hover {
-  background: linear-gradient(180deg, #427dcf, #2d5ea5);
-}
-
-.gadget-insert-icon {
-  font-size: 16px;
-  line-height: 1;
-}
-
-.insert-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-
-/* Mobile: Hide on small screens */
 @media (max-width: 768px) {
   .right-tools-panel {
-    width: 50px;
-    min-width: 50px;
-    padding: 8px 4px;
-  }
-
-  .view-label {
     display: none;
-  }
-}
-
-@media (max-width: 500px) {
-  .right-tools-panel {
-    display: none;
-  }
-}
-
-/* Touch-friendly targets for tablets */
-@media (hover: none) and (pointer: coarse) {
-  .next-button {
-    min-height: 44px;
-  }
-
-  .view-btn {
-    min-height: 44px;
-    padding: 10px 4px;
-  }
-
-  .fold-btn {
-    width: 44px;
-    height: 44px;
-  }
-
-  .display-btn {
-    min-height: 44px;
-    padding: 10px 6px;
-  }
-
-  .insert-btn {
-    min-height: 44px;
   }
 }

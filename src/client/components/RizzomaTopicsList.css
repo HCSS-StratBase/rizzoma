@@ -1,15 +1,19 @@
-/* Rizzoma Topics List - Original Style */
+/* Authentic Legacy Rizzoma Topics List Styles */
 
 .rizzoma-topics-list {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: transparent;
+  background: #E3EAF0;
+  font-family: Arial, Helvetica, sans-serif;
+  user-select: none;
 }
 
 /* Search Header */
 .topics-header {
-  padding: 12px 12px 10px;
+  height: 50px;
+  padding: 9px 8px;
+  box-sizing: border-box;
   position: relative;
 }
 
@@ -27,9 +31,8 @@
   outline: none;
   padding: 0 44px 0 13px;
   font-size: 13px;
-  background: rgba(255, 255, 255, 0.86);
-  color: #29415a;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+  background: #FFF;
+  color: #000;
 }
 
 .search-query:focus {
@@ -45,14 +48,11 @@
   width: 30px;
   border-radius: 10px;
   cursor: pointer;
-  background: linear-gradient(180deg, #69b6fb, #4d99ec);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
+  background: url('/s/img/search_buttons.png') no-repeat scroll 0 -3px;
 }
 
 .search-icon:hover {
-  background-color: #4A9BE8;
+  background-position: 0 -36px;
 }
 
 /* Topics Container */
@@ -60,8 +60,8 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  border-top: 1px solid rgba(255, 255, 255, 0.7);
-  padding: 4px 6px 12px;
+  background: #E3EAF0;
+  padding-bottom: 190px;
 }
 
 /* Search Result Item (Topic) */
@@ -72,13 +72,9 @@
   display: block;
   color: #223649;
   text-decoration: none;
-  margin: 0 4px 8px;
-  padding: 16px 12px 14px 16px;
-  border-bottom: none;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.52);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
-  transition: transform 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
+  padding: 17px 10px 13px 15px;
+  border-bottom: 1px solid #FFF;
+  box-sizing: border-box;
 }
 
 .search-result-item:hover {
@@ -88,23 +84,28 @@
 }
 
 /* Selected/Active state */
-.search-result-item.active,
+.search-result-item.active {
+  color: #FFF !important;
+  background: #5DABF7 !important;
+  padding-bottom: 13px;
+  padding-top: 17px;
+}
+
 .search-result-item.active .item-snippet {
-  color: white;
-  background: linear-gradient(180deg, #5daadf, #4f90d0);
+  color: #FFF !important;
 }
 
 .search-result-item.active .last-changed {
-  color: rgba(255, 255, 255, 0.9);
+  color: #FFF !important;
 }
 
 /* Unread indicator bar on left */
 .unread-blips-indicator {
   position: absolute;
-  background: rgba(255, 255, 255, 0.68);
-  width: 4px;
-  top: 10px;
-  bottom: 10px;
+  background: #FFF;
+  width: 3px;
+  top: 5px;
+  bottom: 5px;
   left: 10px;
   border-radius: 999px;
 }
@@ -116,10 +117,10 @@
   bottom: 0;
   left: 0;
   width: 3px;
-  transition: height 0.2s ease;
+  height: 3px;
 }
 
-.search-result-item.active .unread-blips-indicator > div {
+.search-result-item.active > .unread-blips-indicator > div {
   background: #336699;
 }
 
@@ -134,16 +135,11 @@
   overflow: hidden;
   min-height: 32px;
   line-height: 17px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  margin: 0;
+  word-break: break-word;
 }
 
-.wave-title > span:first-child {
-  display: block;
-  margin-bottom: 2px;
-}
-
-.search-result-item.unread .wave-title {
+.search-result-item.unread .text-content {
   font-weight: bold;
 }
 
@@ -151,87 +147,60 @@
   color: #6d7f90;
   font-weight: 500;
   font-size: 12px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 16px;
 }
 
 /* Wave info area (right side) */
 .wave-info {
   position: absolute;
-  right: 10px;
-  top: 14px;
+  right: 8px;
+  top: 15px;
   text-align: center;
-  width: 60px;
+  width: 64px;
 }
 
-/* Follow/Unfollow button - hidden by default */
+/* Follow/Unfollow button matching legacy-240.png */
 .wave-info .follow {
   display: none;
-  text-align: center;
-  margin-top: 4px;
+  background: #FFF;
+  color: #333;
+  border: 1px solid #C8D7E6;
+  border-radius: 3px;
+  padding: 3px 8px;
   font-size: 11px;
-  padding: 4px 8px;
-  border: 1px solid rgba(204, 217, 229, 0.9);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
+  line-height: 16px;
   cursor: pointer;
-  color: #28435c;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  margin-top: 6px;
+  white-space: nowrap;
 }
 
 .wave-info .follow:hover {
-  background: #f0f0f0;
-  border-color: #5DABF7;
+  background: #F4F8FA;
+  border-color: #A0BBD4;
 }
 
-.search-result-item.active .wave-info .follow {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+.search-result-item.active .follow,
+.search-result-item.show-follow-button .follow {
+  display: inline-block;
 }
 
-.search-result-item.active .wave-info .follow:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Info section - avatar and date */
-.wave-info .info {
-  display: block;
-}
-
-/* Show follow button, hide info on active or hover */
-.search-result-item.active .wave-info .follow,
-.search-result-item.show-follow-button .wave-info .follow {
-  display: block;
-}
-
-.search-result-item.active .wave-info .info,
-.search-result-item.show-follow-button .wave-info .info {
+.search-result-item.active .info,
+.search-result-item.show-follow-button .info {
   display: none;
 }
 
 /* Avatar */
-.last-editing.avatar {
+.last-editing.avatar,
+.wave-info .last-editing {
   height: 30px;
   width: 30px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  line-height: 30px;
-  background-color: #CCD9E5;
-  border-radius: 10px;
-  color: white;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  display: inline-block;
+  border-radius: 3px;
   overflow: hidden;
   object-fit: cover;
-}
-
-.last-editing.avatar.fallback {
-  background: linear-gradient(135deg, #4EA0F1, #2f7ac1);
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  vertical-align: middle;
+  background: #CCD9E5;
 }
 
 /* Date/time */
@@ -239,8 +208,10 @@
   font-family: 'PT Sans Narrow', Arial, sans-serif;
   font-size: 12px;
   line-height: 13px;
-  color: #66798d;
-  margin-top: 4px;
+  width: 64px;
+  text-align: center;
+  color: #666;
+  margin-top: 2px;
 }
 
 /* Loading and empty states */
@@ -250,111 +221,4 @@
   padding: 40px 20px;
   color: #706F6F;
   font-size: 16px;
-}
-
-/* Infinite-scroll sentinel: enough vertical space so the
-   IntersectionObserver with rootMargin:200px reliably fires before
-   the user reaches the real end of the list. */
-.topics-list-sentinel {
-  min-height: 48px;
-  padding: 12px 20px;
-  text-align: center;
-  color: #9b9b9b;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-/* Remove the old footer - we don't need it anymore */
-.topics-footer {
-  display: none;
-}
-
-/* Parity fix (2026-04-13): Rizzoma branding + Follow + shortcut legend
-   at the bottom of the topics column, matching the legacy
-   rizzoma-blips-nested.png reference. Sits below the scrollable
-   topics-container in the same flex column so it stays anchored. */
-.topics-list-footer {
-  flex: 0 0 auto;
-  padding: 8px 12px 10px 12px;
-  border-top: 1px solid rgba(138, 156, 176, 0.18);
-  background: rgba(244, 248, 252, 0.92);
-}
-
-.topics-list-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.topics-list-brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
-  background: #0f766e;
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.topics-list-brand-text {
-  font-size: 13px;
-  font-weight: 700;
-  color: #29415a;
-  letter-spacing: 0.01em;
-}
-
-.topics-list-follow {
-  margin-left: auto;
-  padding: 3px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #0d8f82;
-  background: transparent;
-  border: 1px solid rgba(13, 143, 130, 0.6);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.topics-list-follow:hover {
-  background: rgba(13, 143, 130, 0.08);
-  color: #0a6e64;
-}
-
-.topics-list-shortcuts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px 8px;
-  font-size: 9px;
-  color: #6e7e92;
-}
-
-.topics-list-shortcut {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.topics-list-shortcut kbd {
-  display: inline-block;
-  padding: 1px 4px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 9px;
-  line-height: 1;
-  color: #29415a;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(138, 156, 176, 0.32);
-  border-radius: 3px;
-}
-
-.topics-list-shortcut span {
-  margin-left: 3px;
-  color: #8a9aad;
 }

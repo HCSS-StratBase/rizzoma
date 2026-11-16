@@ -75,7 +75,7 @@ describe('client: ShareModal persisted policy', () => {
 
     const publicRadio = container.querySelector('input[value="public"]') as HTMLInputElement;
     const linkRadio = container.querySelector('input[value="link"]') as HTMLInputElement;
-    const save = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Save Settings')!;
+    const save = [...container.querySelectorAll('button')].find((button) => button.classList.contains('share-btn-save'))!;
     expect(publicRadio.checked).toBe(true);
     expect(save.disabled).toBe(false);
 
@@ -96,7 +96,7 @@ describe('client: ShareModal persisted policy', () => {
     renderModal();
     await act(async () => {});
 
-    const save = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Save Settings') as HTMLButtonElement;
+    const save = [...container.querySelectorAll('button')].find((button) => button.classList.contains('share-btn-save')) as HTMLButtonElement;
     expect(save.disabled).toBe(true);
     expect(container.querySelector('[role="alert"]')?.textContent).toContain('could not be loaded');
   });

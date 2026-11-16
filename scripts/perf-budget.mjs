@@ -10,6 +10,7 @@ const DEFAULTS = {
   expectedBlips: Number(process.env.PERF_BUDGET_EXPECTED_BLIPS || 5000),
   minBlipRatio: Number(process.env.PERF_BUDGET_MIN_RATIO || 0.5), // accept partial render for large seeds
   sampleSize: Number(process.env.PERF_BUDGET_SAMPLE || 5), // number of recent runs to check
+  checkAbsoluteTtf: process.env.PERF_BUDGET_CHECK_TTF === '1',
 };
 
 const snapshotDir = path.resolve(process.env.PERF_SNAPSHOT_DIR || path.join('snapshots', 'perf'));

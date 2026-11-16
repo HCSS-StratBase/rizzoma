@@ -1,74 +1,80 @@
-/* BlipThread inline marker styles — unified with .blip-expand-icon (#b3b3b3 gray) */
+/* BlipThread inline marker styles — authentic original Rizzoma speech bubble */
 
 .blip-thread-marker {
-  font-size: 0; /* Hide textContent — CSS drives the visible symbol */
-  color: #ffffff;
+  font-size: 0 !important; /* Hide textContent — CSS drives the visible symbol */
+  line-height: 0 !important;
+  color: transparent !important;
   cursor: pointer;
   padding: 0;
   user-select: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
   vertical-align: middle;
   text-decoration: none;
   border-radius: 3px;
-  width: 16px;
-  height: 14px;
-  background: #b3b3b3;
+  width: 18px;
+  height: 16px;
+  background-color: #b3b3b3;
   border: none;
-  margin-left: 2px;
+  position: relative;
+  margin-left: 5px;
+  margin-right: 2px;
   transition: background-color 0.15s ease;
 }
 
-/* CSS-driven marker symbol — always shows correct +/− */
+/* Authentic speech-bubble tail matching blip.css:411-423 */
+.blip-thread-marker::before {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background-color: inherit;
+  top: 10px;
+  left: 3px;
+  transform: rotate(-45deg) skewX(-45deg);
+  -webkit-transform: rotate(-45deg) skewX(-45deg);
+  z-index: 0;
+}
+
+/* Authentic plus/minus sprite matching blip.css:425-434 and /s/img/plus_minus.png */
 .blip-thread-marker::after {
-  content: "+";
-  font-family: Arial, sans-serif;
-  font-size: 10px;
-  font-weight: bold;
-  color: #ffffff;
-}
-
-.blip-thread-marker.expanded::after {
-  content: "\2212"; /* − minus sign */
-}
-
-.blip-thread-marker:hover {
-  background: #999999;
-}
-
-/* Unread indicator - green color like Follow-the-Green */
-.blip-thread-marker.has-unread {
-  background: #2e8b57;
-}
-
-.blip-thread-marker.has-unread:hover {
-  background: #246b46;
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 10px;
+  height: 16px;
+  background-image: url('/s/img/plus_minus.png');
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  z-index: 1;
 }
 
 /* Expanded state — shows − instead of + */
-.blip-thread-marker.expanded {
-  background: #999999;
+.blip-thread-marker.expanded::after {
+  background-position: 0 -17px;
 }
 
-.blip-thread-marker.expanded.has-unread {
-  background: #2e8b57;
+.blip-thread-marker:hover {
+  filter: brightness(0.92);
+}
+
+/* Unread indicator - authentic Rizzoma bright green #95d529 */
+.blip-thread-marker.has-unread {
+  background-color: #95d529;
 }
 
 /* Selected state in editor */
 .blip-thread-marker.selected {
-  background-color: rgba(78, 160, 241, 0.2);
   outline: 1px solid rgba(78, 160, 241, 0.5);
 }
 
 /* ProseMirror node view wrapper */
 .blip-thread-marker.ProseMirror-selectednode {
-  background-color: rgba(78, 160, 241, 0.3);
   outline: 2px solid #4ea0f1;
 }
 
 /* Ensure proper inline flow */
 .ProseMirror .blip-thread-marker {
-  display: inline-flex;
+  display: inline-block;
   white-space: nowrap;
 }

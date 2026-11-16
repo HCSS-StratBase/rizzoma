@@ -16,6 +16,7 @@ import { RizzomaLayout } from './components/RizzomaLayout';
 import { FEATURES } from '@shared/featureFlags';
 import { MobileProvider } from './contexts/MobileContext';
 import { AuthProvider, useAuth } from './hooks/useAuth';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { useCollaborationUnloadGuard } from './hooks/useCollaborationPending';
 import { MantineProvider, createTheme } from '@mantine/core';
 import '@mantine/core/styles.css';
@@ -429,11 +430,13 @@ function BasicLogoutButton(): JSX.Element {
 const container = document.getElementById('root');
 if (container) {
   createRoot(container).render(
-    <MantineProvider theme={theme}>
-      <MobileProvider>
-        <App />
-      </MobileProvider>
-    </MantineProvider>
+    <ErrorBoundary fallbackTitle="Rizzoma encountered an unexpected error.">
+      <MantineProvider theme={theme}>
+        <MobileProvider>
+          <App />
+        </MobileProvider>
+      </MantineProvider>
+    </ErrorBoundary>
   );
 }
 

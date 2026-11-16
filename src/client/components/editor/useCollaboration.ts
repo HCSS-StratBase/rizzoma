@@ -40,9 +40,15 @@ export function useCollaboration(
     }
     depsKeyRef.current = currentDepsKey;
     if (enabled && socket && doc) {
-      providerRef.current = new SocketIOProvider(doc, socket, blipId, user, yjsGeneration);
+      providerRef.current = new SocketIOProvider(doc, socket, blipId, user, yjsGeneration, true);
     }
   }
+
+  // Join the room after React commits so any unmounting instance's blip:leave
+  // cleanup executes before the newly mounted instance's blip:join.
+  useEffect(() => {
+    providerRef.current?.joinIfNeeded();
+  }, [currentDepsKey]);
 
   // Auth can resolve after the provider was created. Update the existing
   // awareness state in place rather than destroying/rejoining the room.

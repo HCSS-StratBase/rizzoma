@@ -1,0 +1,70 @@
+- Ledger design [+]
+  - Core decision [+]
+    - Identity over position [+]
+      - An ordinal such as job 18 identifies one temporary plan position, so reordered or inserted work can make the same retry command mutate different content.
+      - A **stable job identity** combines the bound run, normalized parent path, operation type and rendered body hash, so unrelated plan insertions do not rename an existing effect.
+    - Dedicated private ledger [+]
+      - The pilot should use a private hcss-utils/documentation-spine repository because real drafts, targets and receipts require durable versioning without public exposure.
+      - The existing agentic-documents, rizzoma-playback and private rizzoma repositories solve report generation, historical playback and application hosting respectively, so none is the ledger.
+  - Repository topology [+]
+    - Canonical main [+]
+      - The protected main branch contains schemas, canonical project Markdown, projection declarations and compact completed receipts.
+      - Heartbeat and per-operation checkpoint churn stays off main so its history remains a navigable record of accepted knowledge.
+    - Projection branches [+]
+      - Every execution starts from the exact canonical commit on projection project run-id, isolating its manifest, plan, events and checkpoint.
+      - After acceptance, the detailed branch is tagged and retained while its compact final receipt is merged into main.
+    - Durable file roles [+]
+      - Projects hold Research Design, Progress, Decisions, Evidence, source metadata and Rizzoma projection declarations beside stable project identifiers.
+      - Runs hold manifest.json, plan.json, events.jsonl, checkpoint.json and receipt.json, while schemas and validators remain shared.
+  - Run identity [+]
+    - Immutable manifest [+]
+      - Before mutation, the manifest binds schema and writer versions, canonical commit, draft and contract hashes, exact target, normalized parent path and expected tree hash.
+      - Changing any bound field creates a new run because editing identity after effects land would sever the proof between intent and persisted content.
+    - Deterministic plan [+]
+      - The plan orders operations parent before child and records dependencies, preconditions, source-point coverage and stable job IDs.
+      - Two identical bodies under different parents remain distinct because the normalized parent path participates in stable identity.
+    - Precondition proof [+]
+      - The expected pre-write tree hash proves which live Rizzoma state authorized the first mutation.
+      - The expected Git branch head proves which ledger state authorized each subsequent checkpoint push.
+- Recovery protocol [+]
+  - Verified effect ledger [+]
+    - Readback before success [+]
+      - A browser click or successful API response is only an attempted action. A ***verified effect*** requires fresh persisted-page readback of the intended subtree.
+      - Readback must confirm the affected node, rendered parent path and content hash before the writer may advance.
+    - Append-only events [+]
+      - Each successful event records job ID, sequence, timestamps, affected node IDs, rendered hash, observed path, executor version and relevant fold, link or emphasis evidence.
+      - Failures are classified and appended rather than overwritten, preserving the evidence needed to distinguish retryable interruption from semantic drift.
+    - Derived checkpoints [+]
+      - checkpoint.json summarizes completed job IDs, the latest verified event, eligible next jobs and current branch head.
+      - The checkpoint is disposable derived state because the append-only event stream can reconstruct it exactly.
+  - Resume semantics [+]
+    - Recovery sequence [+]
+      - Resume reloads the manifest, plan and events, recomputes their hashes, checks the branch head and reads the live target before any mutation.
+      - It revalidates every completed live effect and executes only dependency-ready stable jobs without a verified success event.
+    - Drift refusal [+]
+      - A changed draft, contract, canonical commit, target, parent path or branch head produces blocked_drift instead of reinterpretation.
+      - A missing or altered previously completed effect also produces blocked_drift because the old receipt no longer describes the live tree.
+    - Concurrent writer guard [+]
+      - One orchestrator holds the project projection lease, and every checkpoint push compares the expected remote head with the actual head.
+      - A head mismatch stops the run, while force-pushing checkpoint history is prohibited because it would erase execution evidence.
+- Operationalization [+]
+  - Execution boundary [+]
+    - Local CDP executor [+]
+      - The supervised Windows CDP process owns authenticated Rizzoma mutation, fresh readback, evidence capture and checkpoint publication.
+      - Its orchestrator exposes process, heartbeat, progress and verified-effect health separately and stops after bounded retries.
+    - GitHub validation [+]
+      - GitHub Actions validates schemas, hashes, stable-job uniqueness, source coverage, receipt completeness and forbidden artifacts.
+      - Actions never operate the authenticated browser, making GitHub the [durable *control plane*](https://github.com/HCSS-StratBase/rizzoma/blob/feature/native-fractal-port/docs/RIZZOMA_RESUMABLE_PROJECTION_LEDGER.md) rather than the interactive executor.
+    - Security separation [+]
+      - Credentials, cookies, browser profiles, session-state files and authentication tokens never enter the repository or workflow logs.
+      - Generic schemas, validators and synthetic fixtures may be public, while real topic URLs, drafts, manifests and receipts remain private.
+  - Pilot acceptance [+]
+    - Controlled interruption [+]
+      - The first live test writes exactly two verified jobs of a deterministic five-job tree to a disposable blip and then terminates the executor.
+      - Restarting with the same branch and manifest must recognize the first two effects and write only the remaining three.
+    - Receipt gate [+]
+      - The final receipt requires every planned job, complete persisted-tree parity, a passing scoped probe, Hidden threads, surviving links and all three emphasis tiers.
+      - Medium-resolution PNG inspection, final tree hash, Git heads and durable screenshot references complete the acceptance evidence.
+    - Adoption boundary [+]
+      - The pilot fails on any duplicate node, lost event, unverified advancement, accepted drift, rewritten history or incomplete receipt.
+      - Only after the controlled interruption passes should receipt-backed resume repair the incomplete benchmark branch or manage a real documentation projection.

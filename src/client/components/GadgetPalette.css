@@ -1,8 +1,8 @@
 .gadget-palette {
   position: absolute;
   right: 74px;
-  top: 210px;
-  bottom: auto;
+  top: auto;
+  bottom: 0;
   transform: none;
   width: 306px;
   background: linear-gradient(180deg, rgba(252, 254, 255, 0.995), rgba(241, 248, 253, 0.985));
@@ -18,7 +18,8 @@
   content: '';
   position: absolute;
   right: -9px;
-  top: 22px;
+  top: auto;
+  bottom: 18px;
   width: 20px;
   height: 20px;
   transform: rotate(45deg);
@@ -67,6 +68,9 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
+  max-height: min(460px, calc(100vh - 200px));
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .gadget-tile {

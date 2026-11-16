@@ -79,6 +79,9 @@ function sniffMime(buffer: Buffer): SniffedType | null {
   if (buffer[0] === 0x4d && buffer[1] === 0x5a) {
     return { mime: 'application/x-msdownload', ext: 'exe' };
   }
+  if (buffer[0] === 0x7f && buffer[1] === 0x45 && buffer[2] === 0x4c && buffer[3] === 0x46) {
+    return { mime: 'application/x-elf', ext: 'elf' };
+  }
   const header = buffer.slice(0, 4).toString();
   if (header === 'GIF8') {
     return { mime: 'image/gif', ext: 'gif' };

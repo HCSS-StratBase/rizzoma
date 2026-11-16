@@ -5,7 +5,7 @@ import { DEFAULT_BG_COLORS } from '@shared/constants/textFormatting';
 import { useMobileContextSafe } from '../../contexts/MobileContext';
 import { BottomSheetMenu, createBlipMenuItems } from '../mobile/BottomSheetMenu';
 import './BlipMenu.css';
-import { runBlbSafeListAction, selectionIsInCanonicalTopLevelList } from '../editor/blbEditorInvariant';
+import { runBlbSafeListAction } from '../editor/blbEditorInvariant';
 
 interface BlipMenuProps {
   isActive: boolean;
@@ -40,13 +40,22 @@ interface BlipMenuProps {
   isSending?: boolean;
   isDeleting?: boolean;
   inlineCommentsNotice?: string | null;
-  // New copy/paste variants
   onDuplicate?: () => void;
   onCut?: () => void;
   onPasteAsNew?: () => void;
   isCut?: boolean;
   isDuplicating?: boolean;
   isInlineChild?: boolean;
+  isTopicRoot?: boolean;
+  topicActions?: {
+    isFollowing?: boolean;
+    onToggleFollow?: () => void;
+    onMarkAsRead?: () => void;
+    onPrint?: () => void;
+    onExport?: () => void;
+    onCopyEmbedCode?: () => void;
+  };
+  metaInfo?: React.ReactNode;
 }
 
 export function BlipMenu({
@@ -58,9 +67,9 @@ export function BlipMenu({
   isExpanded: _isExpanded = false,
   onStartEdit,
   onFinishEdit,
-  onCollapse,
-  onExpand,
-  onToggleComments,
+  onCollapse: _onCollapse,
+  onExpand: _onExpand,
+  onToggleComments: _onToggleComments,
   onShowComments,
   onHideComments,
   onDelete,
@@ -86,8 +95,11 @@ export function BlipMenu({
   onCut,
   onPasteAsNew,
   isCut = false,
-  isDuplicating = false,
+  isDuplicating: _isDuplicating = false,
   isInlineChild = false,
+  isTopicRoot = false,
+  topicActions,
+  metaInfo,
 }: BlipMenuProps) {
   const [textFormatState, setTextFormatState] = useState({
     bold: false,
@@ -102,11 +114,9 @@ export function BlipMenu({
   const overflowRef = useRef<HTMLDivElement | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement | null>(null);
 
-  // Mobile detection
   const mobileContext = useMobileContextSafe();
   const isMobile = mobileContext?.shouldUseMobileUI ?? false;
 
-  // Track active marks to reflect current selection
   useEffect(() => {
     if (!editor) return;
 
@@ -119,7 +129,7 @@ export function BlipMenu({
           strike: editor.isActive('strike'),
         });
       } catch {
-        // ignore transient errors from TipTap during transactions
+        // ignore transient errors from TipTap
       }
     };
 
@@ -152,7 +162,6 @@ export function BlipMenu({
     };
   }, [showOverflow]);
 
-  // Close emoji picker when clicking outside
   useEffect(() => {
     if (!showEmojiPicker) return;
     const handleClickOutside = (event: MouseEvent) => {
@@ -208,6 +217,7 @@ export function BlipMenu({
     }
     setShowBgPalette(false);
   };
+
   const commentsReadOnlyMessage = 'Selection annotations are read-only for this blip.';
   const inlineCommentsBannerMessage = inlineCommentsNotice ?? (!canComment ? commentsReadOnlyMessage : null);
   const commentsBanner = inlineCommentsBannerMessage ? (
@@ -233,7 +243,7 @@ export function BlipMenu({
     isDeleting,
     onStartEdit,
     onFinishEdit,
-    onToggleComments,
+    onToggleComments: _onToggleComments,
     onDelete,
     onGetLink,
     onToggleCollapseByDefault,
@@ -244,398 +254,510 @@ export function BlipMenu({
     onShowHistory,
     onInsertAttachment,
     onInsertImage,
-    onSend,
   });
 
-  // Mobile menu component
   const mobileMenu = (
     <BottomSheetMenu
       isOpen={showMobileMenu}
       onClose={() => setShowMobileMenu(false)}
       items={mobileMenuItems}
-      title={isEditing ? 'Edit Options' : 'Blip Options'}
-      data-testid="blip-mobile-menu"
+      title={isEditing ? 'Editing Blip' : 'Blip Options'}
     />
   );
 
-  const renderOverflowItems = (mode: 'edit' | 'read') => (
-    <div className="menu-dropdown-panel" role="menu">
-      {mode === 'edit' && (
-        <button
-          type="button"
-          role="menuitem"
-          className="menu-dropdown-item"
-          disabled={!onSend || isSending}
-          onClick={() => {
-            onSend?.();
-            setShowOverflow(false);
-          }}
-        >
-          {isSending ? 'Sending…' : 'Send'}
-        </button>
+  const renderOtherDropdown = (mode: 'read' | 'edit') => (
+    <div
+      className="other-blipmenu-container other-blip-menu gear-dropdown gear-menu"
+      role="menu"
+      data-testid="blip-menu-overflow-menu"
+    >
+      <div className="triangle">
+        <div />
+      </div>
+      {isTopicRoot && topicActions && (
+        <>
+          {topicActions.onMarkAsRead && (
+            <div className="list-menu-button">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  topicActions.onMarkAsRead?.();
+                  setShowOverflow(false);
+                }}
+              >
+                Mark topic as read
+              </button>
+            </div>
+          )}
+          {topicActions.onToggleFollow && (
+            <div className="list-menu-button">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  topicActions.onToggleFollow?.();
+                  setShowOverflow(false);
+                }}
+              >
+                {topicActions.isFollowing ? 'Unfollow topic' : 'Follow topic'}
+              </button>
+            </div>
+          )}
+          {topicActions.onPrint && (
+            <div className="list-menu-button">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  topicActions.onPrint?.();
+                  setShowOverflow(false);
+                }}
+              >
+                Print
+              </button>
+            </div>
+          )}
+          {topicActions.onExport && (
+            <div className="list-menu-button">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  topicActions.onExport?.();
+                  setShowOverflow(false);
+                }}
+              >
+                Export topic
+              </button>
+            </div>
+          )}
+          {topicActions.onCopyEmbedCode && (
+            <div className="list-menu-button">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  topicActions.onCopyEmbedCode?.();
+                  setShowOverflow(false);
+                }}
+              >
+                Get embed code
+              </button>
+            </div>
+          )}
+        </>
       )}
-      <button
-        type="button"
-        role="menuitem"
-        className="menu-dropdown-item"
-        disabled={!onCopyComment}
-        onClick={() => {
-          onCopyComment?.();
-          setShowOverflow(false);
-        }}
-      >
-        Copy comment
-      </button>
-      {canEdit && onDuplicate && (
+      <div className="list-menu-button">
         <button
           type="button"
           role="menuitem"
-          className="menu-dropdown-item"
-          disabled={isDuplicating}
+          className="copy-blip-button js-copy-blip-button"
           onClick={() => {
-            onDuplicate?.();
+            onCopyComment?.();
             setShowOverflow(false);
           }}
         >
-          {isDuplicating ? 'Duplicating…' : 'Duplicate blip'}
+          {isTopicRoot ? 'Copy topic content' : 'Copy comment'}
         </button>
+      </div>
+      {onPasteAsReply && (
+        <div className="list-menu-button">
+          <button
+            type="button"
+            role="menuitem"
+            className="paste-as-reply js-paste-after-blip-button"
+            disabled={!canComment || !clipboardAvailable}
+            title={!canComment ? commentsReadOnlyMessage : undefined}
+            onClick={() => {
+              if (!canComment) return;
+              onPasteAsReply?.();
+              setShowOverflow(false);
+            }}
+          >
+            Paste as reply
+          </button>
+        </div>
       )}
-      {canEdit && onCut && (
-        <button
-          type="button"
-          role="menuitem"
-          className={`menu-dropdown-item ${isCut ? 'active' : ''}`}
-          onClick={() => {
-            onCut?.();
-            setShowOverflow(false);
-          }}
-        >
-          {isCut ? '✓ Cut (ready to paste)' : 'Cut blip'}
-        </button>
+      {mode === 'edit' && onPasteAtCursor && (
+        <div className="list-menu-button">
+          <button
+            type="button"
+            role="menuitem"
+            className="paste-at-cursor js-paste-at-cursor-button"
+            disabled={!clipboardAvailable}
+            onClick={() => {
+              onPasteAtCursor?.();
+              setShowOverflow(false);
+            }}
+          >
+            Paste at cursor
+          </button>
+        </div>
       )}
       {canComment && onPasteAsNew && clipboardAvailable && (
-        <button
-          type="button"
-          role="menuitem"
-          className="menu-dropdown-item"
-          onClick={() => {
-            onPasteAsNew?.();
-            setShowOverflow(false);
-          }}
-        >
-          Paste as new blip
-        </button>
+        <div className="list-menu-button">
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onPasteAsNew?.();
+              setShowOverflow(false);
+            }}
+          >
+            Paste as new blip
+          </button>
+        </div>
       )}
-      <button
-        type="button"
-        role="menuitem"
-        className="menu-dropdown-item"
-        disabled={!onShowHistory}
-        onClick={() => {
-          onShowHistory?.();
-          setShowOverflow(false);
-        }}
-      >
-        Playback history
-      </button>
-      {mode === 'edit' && (
-        <button
-          type="button"
-          role="menuitem"
-          className="menu-dropdown-item"
-          disabled={!onPasteAtCursor || !clipboardAvailable}
-          onClick={() => {
-            onPasteAtCursor?.();
-            setShowOverflow(false);
-          }}
-        >
-          Paste at cursor
-        </button>
+      {canEdit && onDuplicate && (
+        <div className="list-menu-button">
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onDuplicate?.();
+              setShowOverflow(false);
+            }}
+          >
+            Duplicate blip
+          </button>
+        </div>
       )}
-      <button
-        type="button"
-        role="menuitem"
-        className="menu-dropdown-item"
-        disabled={!canComment || !onPasteAsReply || !clipboardAvailable}
-        title={!canComment ? commentsReadOnlyMessage : undefined}
-        onClick={() => {
-          if (!canComment) return;
-          onPasteAsReply?.();
-          setShowOverflow(false);
-        }}
-      >
-        Paste as reply
-      </button>
-      <button
-        type="button"
-        role="menuitem"
-        className="menu-dropdown-item"
-        disabled={!onGetLink}
-        onClick={() => {
-          onGetLink?.();
-          setShowOverflow(false);
-        }}
-      >
-        Copy direct link
-      </button>
-      {canEdit && onToggleCollapseByDefault && (
-        <button
-          type="button"
-          role="menuitem"
-          className="menu-dropdown-item"
-          title={collapseByDefault ? 'Expand this thread by default' : 'Collapse this thread by default'}
-          aria-pressed={collapseByDefault ? 'true' : 'false'}
-          data-testid="blip-menu-collapse-default"
-          onClick={() => {
-            onToggleCollapseByDefault?.();
-            setShowOverflow(false);
-          }}
-        >
-          {collapseByDefault ? 'Show by default' : 'Hide by default'}
-        </button>
+      {canEdit && onCut && (
+        <div className="list-menu-button">
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onCut?.();
+              setShowOverflow(false);
+            }}
+          >
+            {isCut ? '✓ Cut (ready to paste)' : 'Cut blip'}
+          </button>
+        </div>
       )}
-      {canEdit && onDelete && (
+      {onSend && (
+        <div className="list-menu-button">
+          <button
+            type="button"
+            role="menuitem"
+            disabled={isSending}
+            onClick={() => {
+              onSend?.();
+              setShowOverflow(false);
+            }}
+          >
+            {isSending ? 'Sending…' : 'Send'}
+          </button>
+        </div>
+      )}
+      <div className="list-menu-button">
         <button
           type="button"
           role="menuitem"
-          className="menu-dropdown-item"
-          disabled={isDeleting}
-          data-testid="blip-menu-delete"
+          className="js-copy-blip-link"
+          disabled={!onGetLink}
           onClick={() => {
-            onDelete?.();
+            onGetLink?.();
             setShowOverflow(false);
           }}
         >
-          {isDeleting ? 'Deleting…' : 'Delete blip'}
+          Copy link
         </button>
+      </div>
+      <div className="list-menu-button">
+        <button
+          type="button"
+          role="menuitem"
+          className="js-playback-button" data-testid="blip-menu-playback"
+          disabled={!onShowHistory}
+          onClick={() => {
+            onShowHistory?.();
+            setShowOverflow(false);
+          }}
+        >
+          Playback
+        </button>
+      </div>
+      {!isTopicRoot && canEdit && onDelete && (
+        <div className="list-menu-button">
+          <button
+            type="button"
+            role="menuitem"
+            disabled={isDeleting}
+            data-testid="blip-menu-delete"
+            onClick={() => {
+              onDelete?.();
+              setShowOverflow(false);
+            }}
+          >
+            {isDeleting ? 'Deleting…' : 'Delete blip'}
+          </button>
+        </div>
       )}
     </div>
   );
 
+  // ---------------- EDIT MODE ----------------
   if (isEditing) {
     return (
-      <div className={`blip-menu-container${isMobile ? ' mobile-blip-menu-container' : ''}`}>
-        <div className={`blip-menu edit-menu${isInlineChild ? ' inline-child-menu' : ''}`} data-testid="blip-menu-edit-surface">
-          <div className="menu-group">
-            <button
-          className="menu-btn done-btn"
-          onClick={onFinishEdit}
-          title="Finish editing"
-          disabled={isSending}
-          data-testid="blip-menu-done"
+      <div className={`blip-menu-container${isTopicRoot ? ' topic-root-menu-container' : ''}${isMobile ? ' mobile-blip-menu-container' : ''}`}>
+        <div
+          className={`blip-menu edit-menu${isInlineChild ? ' inline-child-menu' : ''}${collapseByDefault ? ' folded-by-default' : ''}`}
+          data-testid="blip-menu-edit-surface"
         >
-          Done
-        </button>
-      </div>
-          
-          <div className="menu-group">
-            <button 
-              className="menu-btn"
-              onClick={handleUndo}
-              disabled={!editor?.can().undo()}
-              title="Undo (Ctrl+Z)"
-              data-testid="blip-menu-undo"
-            >
-              ↶
-            </button>
-            <button 
-              className="menu-btn"
-              onClick={handleRedo}
-              disabled={!editor?.can().redo()}
-              title="Redo"
-              data-testid="blip-menu-redo"
-            >
-              ↷
-            </button>
-          </div>
+          {/* Done button */}
+          <button
+            className="menu-btn done-btn change-mode delimitered-right js-change-mode"
+            onClick={onFinishEdit}
+            title="Done, switch to read mode (Ctrl+E, Shift+Enter)"
+            disabled={isSending}
+            data-testid="blip-menu-done"
+          >
+            Done
+          </button>
 
-          <div className="menu-group">
+          {/* Undo / Redo */}
+          <button
+            className="menu-btn undo icon-button js-undo"
+            onClick={handleUndo}
+            disabled={!editor?.can().undo()}
+            title="Undo (Ctrl+Z)"
+            data-testid="blip-menu-undo"
+          >
+            <div className="icon" />
+          </button>
+          <button
+            className="menu-btn redo icon-button delimitered-right js-redo"
+            onClick={handleRedo}
+            disabled={!editor?.can().redo()}
+            title="Redo (Ctrl+Shift+Z, Ctrl+Y)"
+            data-testid="blip-menu-redo"
+          >
+            <div className="icon" />
+          </button>
+
+          {/* Link / Attachment / Image */}
+          <button
+            className="menu-btn add-url icon-button js-manage-link"
+            title="Insert link (Ctrl+L)"
+            onClick={handleInsertLink}
+            disabled={!editor}
+            data-testid="blip-menu-insert-link"
+          >
+            <div className="icon" />
+          </button>
+          <button
+            className="menu-btn insert-file icon-button js-insert-file"
+            title={isUploading ? 'Uploading attachment…' : 'Insert attachment'}
+            onClick={onInsertAttachment}
+            disabled={!onInsertAttachment || isUploading}
+            data-testid="blip-menu-insert-attachment"
+          >
+            <div className="icon" />
+          </button>
+          <button
+            className="menu-btn insert-image icon-button delimitered-right js-insert-image"
+            title={isUploading ? 'Uploading image…' : 'Insert image'}
+            onClick={onInsertImage}
+            disabled={!onInsertImage || isUploading}
+            data-testid="blip-menu-insert-image"
+          >
+            <div className="icon" />
+          </button>
+
+          {/* Bold / Italic / Underline / Strikethrough */}
+          <button
+            className={`menu-btn make-bold icon-button js-make-bold ${textFormatState.bold ? 'active' : ''}`}
+            onClick={handleBold}
+            title="Bold (Ctrl+B)"
+            data-testid="blip-menu-bold"
+          >
+            <div className="icon" />
+          </button>
+          <button
+            className={`menu-btn italic icon-button js-make-italic ${textFormatState.italic ? 'active' : ''}`}
+            onClick={handleItalic}
+            title="Italic (Ctrl+I)"
+            data-testid="blip-menu-italic"
+          >
+            <div className="icon" />
+          </button>
+          <button
+            className={`menu-btn make-underlined icon-button js-make-underlined ${textFormatState.underline ? 'active' : ''}`}
+            onClick={handleUnderline}
+            title="Underline (Ctrl+U)"
+            data-testid="blip-menu-underline"
+          >
+            <div className="icon" />
+          </button>
+          <button
+            className={`menu-btn make-struckthrough icon-button js-make-struckthrough ${textFormatState.strike ? 'active' : ''}`}
+            onClick={handleStrike}
+            title="Strikethrough"
+            data-testid="blip-menu-strike"
+          >
+            <div className="icon" />
+          </button>
+
+          {/* Text Background Color */}
+          <div className="color-panel-container">
             <button
-              className="menu-btn"
-              title="Insert link"
-              onClick={handleInsertLink}
-              disabled={!editor}
-              data-testid="blip-menu-insert-link"
+              className="menu-btn make-background-color icon-button js-make-background-color"
+              onClick={() => setShowBgPalette((open) => !open)}
+              title="Text background color"
+              aria-expanded={showBgPalette}
+              data-testid="blip-menu-highlight-toggle"
             >
-              🔗
+              <div className="icon" />
             </button>
-            <div className="emoji-picker-container" ref={emojiPickerRef}>
-              <button
-                className={`menu-btn ${showEmojiPicker ? 'active' : ''}`}
-                title="Insert emoji"
-                onClick={handleInsertEmoji}
-                disabled={!editor}
-                data-testid="blip-menu-emoji"
-              >
-                😀
-              </button>
-              {showEmojiPicker && (
-                <div className="emoji-picker-dropdown">
-                  <EmojiPicker
-                    onEmojiClick={handleEmojiSelect}
-                    theme={Theme.LIGHT}
-                    searchPlaceholder="Search emojis..."
-                    width={350}
-                    height={400}
+            {showBgPalette && (
+              <div className="color-panel js-color-panel">
+                {DEFAULT_BG_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    className="color-choice"
+                    style={{ backgroundColor: color }}
+                    onClick={() => handleHighlight(color)}
+                    title={color === '#ffffff' ? 'Clear highlight' : color}
+                    type="button"
                   />
-                </div>
-              )}
-            </div>
-            <button
-              className="menu-btn"
-              title={isUploading ? 'Uploading attachment…' : 'Insert attachment'}
-              onClick={onInsertAttachment}
-              disabled={!onInsertAttachment || isUploading}
-              data-testid="blip-menu-insert-attachment"
-            >
-              📎
-            </button>
-            <button
-              className="menu-btn"
-              title={isUploading ? 'Uploading image…' : 'Insert image'}
-              onClick={onInsertImage}
-              disabled={!onInsertImage || isUploading}
-              data-testid="blip-menu-insert-image"
-            >
-              🖼️
-            </button>
-            <button
-              className="menu-btn"
-              title="Insert inline comment at cursor"
-              onClick={onCreateInlineChild}
-              disabled={!onCreateInlineChild || !canComment}
-              data-testid="blip-menu-insert-inline-comment"
-            >
-              💬+
-            </button>
-            {isUploading && (
-              <span className="menu-upload-progress" aria-live="polite">
-                {uploadProgress !== null ? `${uploadProgress}%` : 'Uploading…'}
-              </span>
+                ))}
+              </div>
             )}
           </div>
 
-          <div className="menu-group">
-            <button 
-              className={`menu-btn ${textFormatState.bold ? 'active' : ''}`}
-              onClick={handleBold}
-              title="Bold (Ctrl+B)"
-              data-testid="blip-menu-bold"
+          {/* Clear Formatting */}
+          <button
+            className="menu-btn clear-formatting icon-button js-clear-formatting"
+            onClick={handleClearFormat}
+            title="Clear formatting"
+            data-testid="blip-menu-clear-formatting"
+          >
+            <div className="icon" />
+          </button>
+
+          {/* Bullet / Numbered Lists */}
+          <button
+            className="menu-btn bulleted icon-button js-make-bulleted-list"
+            onClick={handleBulletList}
+            title="Bulleted list"
+            data-testid="blip-menu-bullet-list"
+          >
+            <div className="icon" />
+          </button>
+          <button
+            className="menu-btn numbered icon-button delimitered-right js-make-numbered-list"
+            onClick={handleOrderedList}
+            title="Numbered list"
+            data-testid="blip-menu-ordered-list"
+          >
+            <div className="icon" />
+          </button>
+
+          {/* Hide by default */}
+          {!isTopicRoot && canEdit && onToggleCollapseByDefault && (
+            <button
+              className={`menu-btn is-folded-by-default delimitered-right js-is-folded-by-default ${collapseByDefault ? 'active' : ''}`}
+              title={collapseByDefault ? 'Expand this thread by default' : 'Collapse this thread by default'}
+              aria-pressed={collapseByDefault ? 'true' : 'false'}
+              data-testid="blip-menu-collapse-default"
+              onClick={onToggleCollapseByDefault}
             >
-              <strong>B</strong>
+              Hide
             </button>
-            <button 
-              className={`menu-btn ${textFormatState.italic ? 'active' : ''}`}
-              onClick={handleItalic}
-              title="Italic (Ctrl+I)"
-              data-testid="blip-menu-italic"
+          )}
+
+          {/* Delete blip */}
+          {!isTopicRoot && canEdit && onDelete && (
+            <button
+              className="menu-btn delete-blip delimitered-right icon-button js-delete-blip"
+              title="Delete comment"
+              disabled={isDeleting}
+              data-testid="blip-menu-delete"
+              onClick={onDelete}
             >
-              <em>I</em>
+              <div className="icon" />
             </button>
-            <button 
-              className={`menu-btn ${textFormatState.underline ? 'active' : ''}`}
-              onClick={handleUnderline}
-              title="Underline (Ctrl+U)"
-              data-testid="blip-menu-underline"
+          )}
+
+          {/* Gearwheel */}
+          <div className="gearwheel-container" ref={overflowRef}>
+            <button
+              className={`menu-btn gearwheel icon-button js-gearwheel ${showOverflow ? 'pressed' : ''}`}
+              title="Other"
+              type="button"
+              aria-expanded={showOverflow}
+              data-testid="blip-menu-overflow-toggle"
+              onClick={() => setShowOverflow((open) => !open)}
             >
-              <span style={{ textDecoration: 'underline' }}>U</span>
+              <div className="icon" />
             </button>
-            <button 
-              className={`menu-btn ${textFormatState.strike ? 'active' : ''}`}
-              onClick={handleStrike}
-              title="Strikethrough"
-              data-testid="blip-menu-strike"
-            >
-              <span style={{ textDecoration: 'line-through' }}>S</span>
-            </button>
+            {showOverflow && renderOtherDropdown('edit')}
           </div>
 
-          <div className="menu-group">
-            <div className="menu-dropdown color-dropdown">
-              <button
-                className={`menu-btn ${showBgPalette ? 'active' : ''}`}
-                onClick={() => setShowBgPalette((open) => !open)}
-                title="Text background color"
-                aria-expanded={showBgPalette}
-                data-testid="blip-menu-highlight-toggle"
-              >
-                🎨
-              </button>
-              {showBgPalette && (
-                <div className="blip-menu-color-palette">
-                  {DEFAULT_BG_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      className="blip-menu-color-swatch"
-                      style={{ backgroundColor: color }}
-                      onClick={() => handleHighlight(color)}
-                      title={color === '#ffffff' ? 'Clear highlight' : color}
-                      type="button"
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-            <button 
-              className="menu-btn"
-              onClick={handleClearFormat}
-              title="Clear formatting"
-              data-testid="blip-menu-clear-formatting"
+          {/* Inline comment Affordance & Emoji (Accessible extra) */}
+          {onCreateInlineChild && (
+            <button
+              className="menu-btn icon-button"
+              title="Insert inline comment at cursor"
+              onClick={onCreateInlineChild}
+              disabled={!canComment}
+              data-testid="blip-menu-insert-inline-comment"
+              style={{ width: 'auto', padding: '0 4px', fontSize: '11px', color: '#FFF' }}
             >
-              ❌
+              💬+
             </button>
+          )}
+          <div className="emoji-picker-container" ref={emojiPickerRef}>
+            <button
+              className={`menu-btn icon-button ${showEmojiPicker ? 'active' : ''}`}
+              title="Insert emoji"
+              onClick={handleInsertEmoji}
+              disabled={!editor}
+              data-testid="blip-menu-emoji"
+              style={{ width: 'auto', padding: '0 4px' }}
+            >
+              😀
+            </button>
+            {showEmojiPicker && (
+              <div className="emoji-picker-dropdown">
+                <EmojiPicker
+                  onEmojiClick={handleEmojiSelect}
+                  theme={Theme.LIGHT}
+                  searchPlaceholder="Search emojis..."
+                  width={320}
+                  height={380}
+                />
+              </div>
+            )}
           </div>
 
-          <div className="menu-group">
-            <button 
-              className={`menu-btn ${editor?.isActive('bulletList') ? 'active' : ''}`}
-              onClick={handleBulletList}
-              title={editor && selectionIsInCanonicalTopLevelList(editor) ? 'BLB bullet list (always on)' : 'Bulleted list'}
-              data-testid="blip-menu-bullet-list"
-            >
-              •
-            </button>
-            <button 
-              className="menu-btn"
-              onClick={handleOrderedList}
-              title="Numbered list"
-              disabled={!!editor && selectionIsInCanonicalTopLevelList(editor)}
-              data-testid="blip-menu-ordered-list"
-            >
-              1.
-            </button>
-          </div>
+          {isUploading && (
+            <span className="menu-upload-progress" aria-live="polite">
+              {uploadProgress !== null ? `${uploadProgress}%` : '…'}
+            </span>
+          )}
 
-          <div className="menu-group">
-            <div className="menu-dropdown" ref={overflowRef}>
-              <button
-                className={`menu-btn gear-btn ${showOverflow ? 'active' : ''}`}
-                title="Other actions"
-                type="button"
-                aria-expanded={showOverflow}
-                data-testid="blip-menu-overflow-toggle"
-                onClick={() => setShowOverflow((open) => !open)}
-              >
-                ⚙️
-              </button>
-              {showOverflow && renderOverflowItems('edit')}
-            </div>
-          </div>
+          {metaInfo && (
+            <>
+              <span className="blip-menu-spacer" style={{ flex: 1 }} />
+              {metaInfo}
+            </>
+          )}
 
-          {/* Hide and Delete are in the overflow/gear menu to reduce clutter */}
-          {/* Mobile menu trigger */}
+        {/* Mobile menu trigger */}
           {isMobile && (
-            <div className="menu-group">
-              <button
-                className="menu-btn mobile-menu-btn"
-                onClick={() => setShowMobileMenu(true)}
-                title="More options"
-                type="button"
-                data-testid="blip-menu-mobile-trigger"
-              >
-                ≡
-              </button>
-            </div>
+            <button
+              className="menu-btn mobile-menu-btn icon-button"
+              onClick={() => setShowMobileMenu(true)}
+              title="More options"
+              type="button"
+              data-testid="blip-menu-mobile-trigger"
+            >
+              ≡
+            </button>
           )}
         </div>
         {commentsBanner}
@@ -644,101 +766,110 @@ export function BlipMenu({
     );
   }
 
-  // Read-only menu - Original Rizzoma style: Edit | hide/show comments | link | Hide | Delete | gear
+  // ---------------- READ-ONLY MODE ----------------
+  // Authentic legacy Rizzoma: Edit | hide comments | show comments | get link | Hide | delete | gear
   return (
-    <div className={`blip-menu-container${isMobile ? ' mobile-blip-menu-container' : ''}`}>
-      <div className={`blip-menu read-only-menu${isInlineChild ? ' inline-child-menu' : ''}`} data-testid="blip-menu-read-surface">
+    <div className={`blip-menu-container${isTopicRoot ? ' topic-root-menu-container' : ''}${isMobile ? ' mobile-blip-menu-container' : ''}`}>
+      <div
+        className={`blip-menu read-only-menu${isInlineChild ? ' inline-child-menu' : ''}${collapseByDefault ? ' folded-by-default' : ''}`}
+        data-testid="blip-menu-read-surface"
+      >
+        {/* Edit Button */}
         {canEdit && (
-          <div className="menu-group">
-            <button
-              className="menu-btn edit-btn"
-              onClick={onStartEdit}
-              title="Edit"
-              data-testid="blip-menu-edit"
-            >
-              Edit
-            </button>
-          </div>
+          <button
+            className="menu-btn edit-btn change-mode delimitered-right js-change-mode"
+            onClick={onStartEdit}
+            title="To edit mode (Ctrl+E)"
+            data-testid="blip-menu-edit"
+          >
+            Edit
+          </button>
         )}
 
-        <div className="menu-group">
+        {/* Hide / Show Comments */}
+        <div className="fold-unfold-block js-fold-unfold-block" style={{ display: 'inline-flex' }}>
           <button
-            className="menu-btn"
-            onClick={onCollapse}
-            title={isInlineChild ? 'Hide (collapse back to [+])' : 'Collapse'}
-            disabled={!onCollapse}
-            data-testid="blip-menu-collapse"
+            className="menu-btn hide-all-inlines icon-button js-hide-all-inlines"
+            onClick={onHideComments}
+            title="Hide comments (Ctrl+Shift+Up)"
+            disabled={!onHideComments || !areCommentsVisible}
+            data-testid="blip-menu-comments-hide"
           >
-            {isInlineChild ? 'Hide' : 'Collapse'}
+            <div className="icon" />
           </button>
-          {!isInlineChild && (
-            <button
-              className="menu-btn"
-              onClick={onExpand}
-              title="Expand"
-              disabled={!onExpand}
-              data-testid="blip-menu-expand"
-            >
-              Expand
-            </button>
-          )}
+          <button
+            className="menu-btn show-all-inlines icon-button delimitered-right js-show-all-inlines"
+            onClick={onShowComments}
+            title="Show comments (Ctrl+Shift+Down)"
+            disabled={!onShowComments || areCommentsVisible}
+            data-testid="blip-menu-comments-show"
+          >
+            <div className="icon" />
+          </button>
         </div>
 
-        {!isMobile && (
-          <>
-            <div className="menu-group">
-              <button
-                className="menu-btn"
-                onClick={onHideComments}
-                title="Hide comments (Ctrl+Shift+Up)"
-                disabled={!onHideComments || !areCommentsVisible}
-                data-testid="blip-menu-comments-hide"
-              >
-                ⤵
-              </button>
-              <button
-                className="menu-btn"
-                onClick={onShowComments}
-                title="Show comments (Ctrl+Shift+Down)"
-                disabled={!onShowComments || areCommentsVisible}
-                data-testid="blip-menu-comments-show"
-              >
-                ⤴
-              </button>
-            </div>
+        {/* Get Direct Link */}
+        <button
+          className="menu-btn get-blip-link icon-button delimitered-right js-copy-blip-link"
+          onClick={onGetLink}
+          title="Get direct link"
+          data-testid="blip-menu-get-link"
+        >
+          <div className="icon" />
+        </button>
 
-            <div className="menu-group">
-              <button
-                className="menu-btn"
-                onClick={onGetLink}
-                title="Get Direct Link"
-                data-testid="blip-menu-get-link"
-              >
-                🔗
-              </button>
-            </div>
-          </>
+        {/* Hide (collapse thread by default) */}
+        {!isTopicRoot && canEdit && onToggleCollapseByDefault && (
+          <button
+            className={`menu-btn is-folded-by-default delimitered-right js-is-folded-by-default ${collapseByDefault ? 'active' : ''}`}
+            title={collapseByDefault ? 'Expand this thread by default' : 'Collapse this thread by default'}
+            aria-pressed={collapseByDefault ? 'true' : 'false'}
+            data-testid="blip-menu-collapse-default"
+            onClick={onToggleCollapseByDefault}
+          >
+            Hide
+          </button>
         )}
 
-        {/* Hide and Delete are in the overflow/gear menu to reduce clutter */}
-        <div className="menu-group" ref={overflowRef}>
+        {/* Delete blip */}
+        {!isTopicRoot && canEdit && onDelete && (
           <button
-            className={`menu-btn gear-btn ${showOverflow ? 'active' : ''}`}
-            title="More options"
+            className="menu-btn delete-blip icon-button delimitered-right js-delete-blip"
+            title="Delete comment"
+            disabled={isDeleting}
+            data-testid="blip-menu-delete"
+            onClick={onDelete}
+          >
+            <div className="icon" />
+          </button>
+        )}
+
+        {/* Gearwheel */}
+        <div className="gearwheel-container" ref={overflowRef}>
+          <button
+            className={`menu-btn gearwheel icon-button js-gearwheel ${showOverflow ? 'pressed' : ''}`}
+            title="Other"
             type="button"
             aria-expanded={showOverflow}
             onClick={() => setShowOverflow((open) => !open)}
             data-testid="blip-menu-gear-toggle"
           >
-            ⚙️
+            <div className="icon" />
           </button>
-          {showOverflow && renderOverflowItems('read')}
+          {showOverflow && renderOtherDropdown('read')}
         </div>
+
+        {metaInfo && (
+          <>
+            <span className="blip-menu-spacer" style={{ flex: 1 }} />
+            {metaInfo}
+          </>
+        )}
 
         {/* Mobile menu trigger */}
         {isMobile && (
           <button
-            className="menu-btn mobile-menu-btn"
+            className="menu-btn mobile-menu-btn icon-button"
             onClick={() => setShowMobileMenu(true)}
             title="All options"
             type="button"

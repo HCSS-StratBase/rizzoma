@@ -39,10 +39,19 @@ export function seedEmptyBlbYdoc(
   const fragment = ydoc.getXmlFragment('default');
   if (fragment.length > 0) return false;
 
-  const parsed = createNodeFromContent(html, editor.schema, {
-    slice: false,
-    errorOnInvalidContent: true,
-  }) as ProseMirrorNode;
+  let parsed: ProseMirrorNode;
+  try {
+    parsed = createNodeFromContent(html, editor.schema, {
+      slice: false,
+      errorOnInvalidContent: true,
+    }) as ProseMirrorNode;
+  } catch (err) {
+    console.warn('[blbEditorInvariant] Falling back to lenient HTML parse in seedEmptyBlbYdoc:', err);
+    parsed = createNodeFromContent(html, editor.schema, {
+      slice: false,
+      errorOnInvalidContent: false,
+    }) as ProseMirrorNode;
+  }
   if (parsed.type !== editor.schema.topNodeType) {
     throw new Error('invalid_blb_seed_document');
   }

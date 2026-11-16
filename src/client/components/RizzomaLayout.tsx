@@ -10,6 +10,7 @@ import { RizzomaTopicDetail } from './RizzomaTopicDetail';
 import { RightToolsPanel } from './RightToolsPanel';
 import { CreateTopicModal } from './CreateTopicModal';
 import { PWAPrompts } from './PWAPrompts';
+import { TipsBox } from './TipsBox';
 import './RizzomaLayout.css';
 import { useWaveUnread } from '../hooks/useWaveUnread';
 import { ensureWaveUnreadJoin } from '../lib/socket';
@@ -109,7 +110,7 @@ function RizzomaLayoutState({ isAuthed, user }: RizzomaLayoutProps) {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [currentBlipPath, setCurrentBlipPath] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('topics');
-  const [searchPaneCollapsed, setSearchPaneCollapsed] = useState(() => readBool(LEFT_COLLAPSED_KEY));
+  const [searchPaneCollapsed] = useState(() => readBool(LEFT_COLLAPSED_KEY));
   const [rightPaneCollapsed, setRightPaneCollapsed] = useState(() => readBool(RIGHT_COLLAPSED_KEY));
   const [leftPaneWidth, setLeftPaneWidth] = useState(() => readNumber(LEFT_WIDTH_KEY, LEFT_DEFAULT, LEFT_MIN, LEFT_MAX));
   const [rightPaneWidth, setRightPaneWidth] = useState(() => readNumber(RIGHT_WIDTH_KEY, RIGHT_DEFAULT, RIGHT_MIN, RIGHT_MAX));
@@ -455,19 +456,10 @@ function RizzomaLayoutState({ isAuthed, user }: RizzomaLayoutProps) {
         className={`tabs-container ${searchPaneCollapsed ? 'collapsed' : ''} ${isMobile && mobileView !== 'list' ? 'mobile-hidden' : ''}`}
         style={!isMobile && !searchPaneCollapsed ? { width: leftPaneWidth, minWidth: leftPaneWidth } : undefined}
       >
-        <div className="tabs-header">
-          <h3>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h3>
-          <button
-            className="collapse-btn"
-            onClick={() => setSearchPaneCollapsed(!searchPaneCollapsed)}
-            title={searchPaneCollapsed ? "Expand" : "Collapse"}
-          >
-            {searchPaneCollapsed ? '▶' : '◀'}
-          </button>
-        </div>
         {!searchPaneCollapsed && (
           <div className="tabs-content">
             {renderSearchPanel()}
+            <TipsBox />
           </div>
         )}
         {/* Right-edge drag handle to resize the left pane. Only

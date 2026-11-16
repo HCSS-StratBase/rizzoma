@@ -29,6 +29,10 @@ export type BlipViewEvent = 'rendered' | 'destroyed';
 
 /** Optional callback for opening the per-blip history modal. */
 export type HistoryOpenHandler = (blipId: string) => void;
+/** Optional callback for entering edit mode on a blip. */
+export type BlipEditHandler = (blipId: string, view: BlipView) => void;
+/** Optional callback for creating a reply under a blip. */
+export type BlipReplyHandler = (blipId: string, view: BlipView) => void;
 
 export class BlipView {
   private readonly blipId: string;
@@ -39,7 +43,11 @@ export class BlipView {
   private resolver: ((id: string) => HTMLElement | null) | null = null;
   private listeners: Map<BlipViewEvent, Set<BlipViewListener>> = new Map();
   private gearButton: HTMLButtonElement | null = null;
+  private editButton: HTMLButtonElement | null = null;
+  private replyButton: HTMLButtonElement | null = null;
   private onOpenHistory: HistoryOpenHandler | null = null;
+  private onEditBlip: BlipEditHandler | null = null;
+  private onReplyBlip: BlipReplyHandler | null = null;
 
   constructor(blipId: string) {
     this.blipId = blipId;
@@ -51,13 +59,42 @@ export class BlipView {
     this.inner.className = 'blip-text';
     this.container.appendChild(this.inner);
 
-    // Gear menu (history button + room for share/permissions later).
+    // Gear menu (edit, reply, history).
     // Kept hidden by default via CSS; revealed on container hover or when
     // BlipView is "active". The native render owns this DOM directly —
     // no React, no portal — so it survives fold/unfold without remount.
     const gear = document.createElement('div');
     gear.className = 'blip-gear-menu';
     gear.contentEditable = 'false';
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'blip-gear-edit';
+    editBtn.title = 'Edit blip';
+    editBtn.textContent = '✏️';
+    editBtn.style.display = 'none';
+    editBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.onEditBlip) this.onEditBlip(this.blipId, this);
+    });
+    gear.appendChild(editBtn);
+    this.editButton = editBtn;
+
+    const replyBtn = document.createElement('button');
+    replyBtn.type = 'button';
+    replyBtn.className = 'blip-gear-reply';
+    replyBtn.title = 'Reply to blip';
+    replyBtn.textContent = '↩';
+    replyBtn.style.display = 'none';
+    replyBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.onReplyBlip) this.onReplyBlip(this.blipId, this);
+    });
+    gear.appendChild(replyBtn);
+    this.replyButton = replyBtn;
+
     const historyBtn = document.createElement('button');
     historyBtn.type = 'button';
     historyBtn.className = 'blip-gear-history';
@@ -76,6 +113,22 @@ export class BlipView {
   /** Wire the history modal opener. */
   setHistoryHandler(handler: HistoryOpenHandler | null): void {
     this.onOpenHistory = handler;
+  }
+
+  /** Wire the per-blip edit handler. */
+  setEditHandler(handler: BlipEditHandler | null): void {
+    this.onEditBlip = handler;
+    if (this.editButton) {
+      this.editButton.style.display = handler ? '' : 'none';
+    }
+  }
+
+  /** Wire the per-blip reply handler. */
+  setReplyHandler(handler: BlipReplyHandler | null): void {
+    this.onReplyBlip = handler;
+    if (this.replyButton) {
+      this.replyButton.style.display = handler ? '' : 'none';
+    }
   }
 
   /** Expose the gear button for tests / event wiring. */

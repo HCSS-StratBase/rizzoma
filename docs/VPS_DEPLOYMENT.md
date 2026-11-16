@@ -1,166 +1,159 @@
 # VPS Deployment — Rizzoma on 138.201.62.161
 
-**Last updated**: 2026-07-13 (exact PR #72 blue deployment; BLB creation blocker open)
+**Last updated**: 2026-07-14 00:40 CEST (public checkout includes parity gate/audit evidence checkpoint `ac6a6f9d` plus status-doc sync commits)
 
-> **Current runtime truth:** exact merged master
-> `5e1bc271e81613768e811cfc306c0c691e71d77b` is public through both nginx
-> vhosts to compiled, systemd-managed blue `:8101`. Green `:8102` is
-> stopped/disabled. Public health reports CouchDB, Redis, and ClamAV ready; the
-> deployed client assets are `main-C53x9A2I.js` and `main-BNWeJdg2.css`.
-> Root-only rollback capture: `/root/rizzoma-cutover-read-marker-20260713-010447`.
->
-> PR #72 passed every required check and the public phase-2 acceptance matrix
-> passed 49/49 with zero unexpected browser errors and Follow-the-Green
-> 2 -> 1 -> 0. The final restart/reset/responsive phase produced no report and
-> is not counted as accepted. SDS's first manual use then exposed a more basic
-> release blocker: fresh content is not guaranteed to be a bullet list, so the
-> recursive BLB label-to-`[+]` paradigm is not functional end to end. The
-> service is healthy and the read-marker fix is live, but the product is
-> **deployed, not accepted**.
-
-> **Application merged, not yet public:** PR
-> [#66](https://github.com/HCSS-StratBase/rizzoma/pull/66) merged as `bacb8a50`
-> after all seven GitHub checks passed on source head `b8c9d110`; the underlying
-> audited local run passed 107/107 test files (588 passed, 3 skipped),
-> typecheck, full-source ESLint `--quiet`, a 3,314-module production build,
-> responsive Playwright, and an independent GO audit. Public production remains
-> on the earlier parity release. PR #67 merged, but its first private candidate
-> revealed npm production dependency drift and was held before cutover. The
-> required next operation is a corrected immutable exact-master deployment to the
-> inactive managed lane, followed by the zero-overlap drain below and full
-> public acceptance. Do not expose a candidate lane while the old process-local
-> Yjs cache can still receive writes.
-
-> **Managed-service candidate (not yet public):** branch
-> `fix/lockfile-driven-production-install` replaces the obsolete Docker-era deploy
-> helper with immutable exact-SHA releases and systemd blue/green lanes on
-> loopback `:8101`/`:8102`. It also adds graceful Yjs/Socket.IO/Redis shutdown,
-> production session-secret rotation, Redis/ClamAV readiness, fail-closed
-> rollback, and a second lockfile-driven production-only install after build. The authoritative
-> target procedure is the [managed VPS deployment guide](../deploy/systemd/README.md).
-> Until merge, direct preflight, zero-overlap maintenance drain, and atomic
-> both-vhost cutover are complete, the runtime
-> truth immediately below remains authoritative.
-
-> **Database exposure closed 2026-07-12 12:03 CEST:** Docker still declares
-> CouchDB `5984` and Redis `6379` on all interfaces, and the Hetzner Robot
-> `5432-6543` allow rule includes both. External probes had confirmed CouchDB
-> HTTP 200 and unauthenticated Redis `PONG`. A persistent `DOCKER-USER` rule now
-> drops only those two ports on public interface `enp0s31f6` for IPv4 and IPv6;
-> a dual-stack INPUT rule also closes every internal Rizzoma port, including
-> the previously missed legacy API at `8000`. The follow-on
-> audit confirmed active Redis manipulation. Root-only evidence was preserved,
-> 54 keys were flushed, and Redis was recreated clean. External dependencies
-> and direct APIs are closed while public HTTPS health remains green. Evidence:
-> `screenshots/260712-1218-redis-incident-response/`. Loopback-only Docker
-> publication remains the cleaner future recreation target.
-
-> **⚠️ CURRENT RUNTIME TRUTH — the Docker application topology below is
-> historical.** Public nginx now targets Vite `:3100`, which proxies to API
-> `:8100` from `/data/large-projects/stephan/rizzoma_merge` at exact merged
-> commit `fe6988fb`. The checkout later advanced cleanly to docs/evidence commit
-> `3a55155a`; running application code did not change. The API uses RedisStore
-> and `NODE_ENV=production`.
-> The former public lane remains healthy for immediate rollback: Vite `:3000`
-> plus API `:8788` from `/data/large-projects/stephan/rizzoma_260612` at
-> `daa3f2f3`. Nginx rollback backup:
-> `/root/rizzoma.conf.pre-pr60-20260712-052206`.
->
-> The public frontend is **Vite's development server**, serving source modules
-> with `MODE=development`; it is not a compiled production frontend. Its live
-> flags are `FEAT_ALL=1`, `FEAT_RIZZOMA_PARITY_RENDER=1`, and
-> `FEAT_RIZZOMA_NATIVE_RENDER` unset. Production therefore uses the React/TipTap
-> parity path. `NativeWaveView` is still read-only and is not publicly enabled.
->
-> Both lanes are unmanaged bare Node/Vite processes. They share CouchDB
-> database `project_rizzoma`; only the active lane is Redis-backed for sessions.
-> The `dev.138-201-62-161.nip.io` vhost reaches the same `:3100` lane, which now
-> intentionally uses the public OAuth callback environment. The legacy
-> `:3001` Vite / `:8000` API pair was subsequently verified from process CWD
-> and command lines as an obsolete Rizzoma lane; both are now blocked only on
-> the public interface while remaining locally reachable. The old
-> `scripts/deploy-vps.sh` and Docker instructions below do not describe the live
-> deployment and must not be used until the service topology is rebuilt.
-
-Production acceptance for PR [#60](https://github.com/HCSS-StratBase/rizzoma/pull/60)
-is preserved under `screenshots/260712-0530-pr60-production-final/`: health and
-OAuth passed, public collaboration passed 10/10, strict desktop/mobile unread
-navigation persisted `2 → 1 → 0`, the API recorded zero 5xx responses, and the
-required 1280/1366/1440/1600 visual sweep was inspected. A later 05:58 CEST
-snapshot measured 395 requests / 0 5xx in the current API log after 2,279
-seconds of uptime; treat that as a short post-cutover sample, not a soak.
-
-## Current blue/green deployment and rollback
-
-1. Fetch the desired `master` commit in the inactive checkout and verify its Git
-   tree against the already accepted candidate. Require zero tracked changes;
-   preserve all untracked runtime/backup files.
-2. Check out the exact commit detached. Never deploy an unpinned branch name.
-3. Restart only the inactive API/Vite lane with explicit `PORT`, `VITE_PORT`,
-   `VITE_API_TARGET`, public `APP_URL`/`APP_BASE_URL`/`CLIENT_URL`, allowed
-   origins, `FEAT_ALL=1`, `FEAT_RIZZOMA_PARITY_RENDER=1`, and the verified Redis
-   URL. Load secrets from the preserved live environment file without printing
-   it.
-4. Before exposure, verify only direct candidate health, Redis readiness,
-   compiled assets, old-cookie rejection, and journal cleanliness. Never point
-   dev at the candidate while the old lane can still receive writes.
-5. Start a brief maintenance drain: back up both vhosts and the exact old
-   process recipe, stop old Vite to sever WebSockets, leave the isolated old API
-   up for at least 35 seconds, verify zero connections/no snapshot errors, then
-   stop it.
-6. Point both public and dev vhosts at the managed lane, validate nginx, reload,
-   and only then run full HTTPS acceptance: fresh login/restart continuity,
-   immediate-pre-restart edit persistence, OAuth, two-browser collaboration,
-   Follow-the-Green `2 → 1 → 0`, and inspected viewport PNGs.
-7. Never keep both lanes write-capable. Rollback means draining/stopping the
-   managed lane before restarting the exact former recipe and restoring nginx.
-
-## Historical Docker-era server details (do not use for current deployment)
+## Server details
 
 | Field | Value |
 |---|---|
 | **IP** | `138.201.62.161` |
-| **Dev port** | `8200` (UI; `rizzoma-app` dev target → container `:3000`) |
-| **Prod port** | `8201` (UI; `rizzoma-app-prod` production target → container `:8788`) — green since 2026-04-22 |
-| **URL (HTTPS)** | `https://138-201-62-161.nip.io/` — Let's Encrypt cert + nginx proxy → `localhost:8200` (live since 2026-04-23 03:26 UTC) |
+| **Dev port** | `3000` (Vite UI) + `8000` (API) for active `/data/large-projects/stephan/rizzoma_260612`; nginx dev HTTPS proxies to `127.0.0.1:3000` |
+| **Prod/public HTTPS target** | `3000` (Vite UI) + `8000` (API) for active `/data/large-projects/stephan/rizzoma_260612`; legacy prod process still listens on `8102` but is no longer the public nginx target |
+| **URL (HTTPS)** | `https://138-201-62-161.nip.io/` — Let's Encrypt cert + nginx proxy → `127.0.0.1:3000` as of 2026-07-13 22:40 CEST |
 | **URL (HTTP, legacy)** | `http://138.201.62.161:8200/` (dev, direct Docker port-mapped) |
 | **SSH** | `root@138.201.62.161` (key auth) |
 | **Operator** | Hryhorii (first deployed 2026-04-17; co-owned with Stephan) |
-| **Deployment path** | `/data/large-projects/stephan/rizzoma` |
-| **Process** | Docker Compose (`rizzoma-app` runs `npm run dev`; `rizzoma-app-prod` runs `node dist/server/server/app.js`) |
+| **Deployment path** | `/data/large-projects/stephan/rizzoma_260612` for current public/dev BLB proof; legacy Docker release path remains `/data/large-projects/stephan/rizzoma` |
+| **Process** | Current public/dev proof uses host Node/Vite processes (`npm run dev:server` on `8000`, `npm run dev:client` on `3000`); legacy Docker Compose production process remains available on `8102` |
 | **Persistent volumes** | `/data/volumes/stephan-rizzoma/{app,redis,couchdb,rabbitmq,sphinx,minio}` |
 | **Auth account** | `hp@rizzoma.com` / `stratbase2026` |
 | **Repo** | `HCSS-StratBase/rizzoma` on GitHub |
-| **Current HEAD** | `b99fa4bf` (late-night prod-build path green + CI gates tightened, 2026-04-22) |
+| **Current documented source** | `feature/native-fractal-port`, public/dev active checkout includes parity gate/audit checkpoint `ac6a6f9d` plus status-doc sync commits |
+| **Last verified VPS code baseline** | Public HTTPS currently targets the host-run `feature/native-fractal-port` checkout containing `ac6a6f9d`; legacy prod process at `/srv/rizzoma/releases/72c54ced28d6ece725c1a6971e1be9ca5f97dbd9` listens on `8102` but is not the public target |
 
-## Historical Docker stack (as of 2026-04-23; no longer serving public traffic)
+## Public 502 / SSO callback repair (2026-07-13)
+
+The user hit `502 Bad Gateway` after Gmail SSO because Google OAuth redirects back to:
+
+```text
+https://138-201-62-161.nip.io/api/auth/google/callback
+```
+
+At that moment, the enabled public nginx vhost (`/etc/nginx/sites-enabled/rizzoma.conf`) still proxied to dead `127.0.0.1:8101`, even though a legacy production node process was alive on `8102` and the new BLB app was alive on `3000/8000`.
+
+Repair sequence:
+
+1. Confirmed the outage in `/var/log/nginx/error.log`: `connect() failed (111: Connection refused) while connecting to upstream` for the OAuth callback to `127.0.0.1:8101`.
+2. Confirmed `127.0.0.1:8102` returned 200 for `/` and `/api/health`.
+3. Backed up and temporarily restored public nginx to `8102`:
+   - backup: `/etc/nginx/sites-enabled/rizzoma.conf.bak-20260713-fix-prod-502`
+4. Confirmed `/api/auth/google` on both dev and public hosts redirects back to the bare public hostname, so a dev-only public proof is insufficient for SSO testing.
+5. Backed up and cut the bare public hostname over to the new BLB app:
+   - backup: `/etc/nginx/sites-enabled/rizzoma.conf.bak-20260713-cutover-new-blb`
+   - current public proxy: `proxy_pass http://127.0.0.1:3000;`
+6. `nginx -t` succeeded and nginx was reloaded.
+
+Current public verification:
+
+- `https://138-201-62-161.nip.io/` returns 200.
+- `https://138-201-62-161.nip.io/api/health` returns 200.
+- `https://138-201-62-161.nip.io/api/auth/google` returns 302 to Google with callback to the same public hostname.
+- Public BLB proof passed at `https://138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a00740b`.
+- Evidence folder: `screenshots/260713-223655-public-blb-fractal-proof-after-sso-502-fix/`.
+- Boundary: public proof path is green; broad responsive/mobile/iPhone Safari verification remains open.
+
+## Public parity-gate sync (2026-07-14)
+
+The active checkout `/data/large-projects/stephan/rizzoma_260612` was fast-forwarded from `d8d2d0c4` through `ac6a6f9d` after the visual parity gate checkpoint, then again after status-doc sync commits. The VPS source tree now carries the current project truth:
+
+- `scripts/check-rizzoma-parity-gate.mjs`
+- `npm run parity:gate`
+- hardened `.claude/hooks/visual-sweep-gate.sh`
+- saved public sweep evidence in `screenshots/260713-225614-public-parity-sweep-feature-sweep/`
+- `legacy-current-comparisons/PARITY_AUDIT.md`
+
+Verification:
+
+- VPS checkout: `feature/native-fractal-port` includes `ac6a6f9d` and later status-doc sync commits
+- `https://138-201-62-161.nip.io/` returns 200
+- `https://138-201-62-161.nip.io/api/health` returns 200
+- Audit status remains **FAIL / IN_PROGRESS**; this sync does not certify full parity.
+
+## Dev BLB proof repair (2026-07-13)
+
+The active dev/public checkout for `feature/native-fractal-port` is `/data/large-projects/stephan/rizzoma_260612`, and it includes the `ac6a6f9d` parity-gate checkpoint plus later status-doc sync commits.
+
+The enabled nginx dev vhost (`/etc/nginx/sites-enabled/rizzoma-dev.conf`) had drifted to a dead upstream `127.0.0.1:8101`, causing `https://dev.138-201-62-161.nip.io` to return 502 even though the dev Vite/server pair was healthy on `3000/8000`. It was repaired to:
+
+```nginx
+proxy_pass http://127.0.0.1:3000;
+```
+
+Backup: `/etc/nginx/sites-enabled/rizzoma-dev.conf.bak-20260713-blb-dev-proxy`.
+
+Current verification:
+- `https://dev.138-201-62-161.nip.io/` returns 200.
+- `https://dev.138-201-62-161.nip.io/api/health` returns 200.
+- Clickable BLB proof: `https://dev.138-201-62-161.nip.io/?layout=rizzoma#/topic/18fd97812660e69bf157d9dc5a005c3a`.
+- Evidence folder: `screenshots/260713-152256-dev-https-blb-fractal-proof-clean/`.
+- Scope boundary: this is a dev proof, not a public production cutover.
+
+## What's running (as of 2026-04-24)
 
 Docker-Compose stack:
 
 | Container | Image | Port(s) | Notes |
 |---|---|---|---|
 | `rizzoma-app` | `rizzoma-app` (local build, **dev** target) | `8200:3000` | Vite + Express (`npm run dev`) |
-| `rizzoma-app-prod` | `rizzoma-app` (local build, **production** target) | `8201:8788` | `node dist/server/server/app.js`, USER `node`, healthy since 2026-04-22 late-night |
-| `rizzoma-couchdb` | `couchdb:3` | `127.0.0.1:5984:5984` | |
-| `rizzoma-redis` | `redis:7-alpine` | `127.0.0.1:6379:6379` | Session store (Redis-backed via `connect-redis`) |
-| `rizzoma-rabbitmq` | `rabbitmq:3-management-alpine` | `127.0.0.1:5672:5672`, `127.0.0.1:15672:15672` | |
-| `rizzoma-minio` | `minio/minio:latest` | `127.0.0.1:9000:9000`, `127.0.0.1:9001:9001` | |
-| `rizzoma-mailhog` | `mailhog/mailhog:latest` | `127.0.0.1:1025:1025`, `127.0.0.1:8025:8025` | |
-| `rizzoma-clamav` | `clamav/clamav:latest` | `127.0.0.1:3310:3310` | |
+| `rizzoma-app-prod` | `rizzoma-app` (local build, **production** target) | `8201:8000` | `node dist/server/server/app.js`, USER `node`, healthy since 2026-04-22 late-night |
+| `rizzoma-couchdb` | `couchdb:3` | `5984:5984` | |
+| `rizzoma-redis` | `redis:7-alpine` | `6379:6379` | Session store (Redis-backed via `connect-redis`) |
+| `rizzoma-rabbitmq` | `rabbitmq:3-management-alpine` | `5672:5672`, `15672:15672` | |
+| `rizzoma-minio` | `minio/minio:latest` | `9000:9000`, `9001:9001` | |
+| `rizzoma-mailhog` | `mailhog/mailhog:latest` | `1025:1025`, `8025:8025` | |
+| `rizzoma-clamav` | `clamav/clamav:latest` | `3310:3310` | |
 
 Sphinx is **not** running — it lives behind the `search` profile and is no longer a hard dependency (issue #42 fix, 2026-04-21).
 
-`app-prod` is the future cutover target. It runs the production bundle (built with `FEAT_ALL=1` so feature flags ship enabled) and the `node` user can write `/app/logs` (winston) + `/app/data/uploads` (uploads route) — both pre-created + chowned in the Dockerfile production stage.
+`app-prod` is now the public HTTPS target. It runs the production bundle (built with `FEAT_ALL=1` so feature flags ship enabled) and the `node` user can write `/app/logs` (winston) + `/app/data/uploads` (uploads route) — both pre-created + chowned in the Dockerfile production stage.
 
-## Container env (verified 2026-04-22 late-night, both `app` and `app-prod`)
+## Public cursor-inline redeploy (2026-04-24 23:40 CEST)
+
+The active branch `feature/rizzoma-core-features` was deployed to the VPS at app-code commit `69d6a8a9` (`fix: make mobile inline comments cursor-based`). The VPS working tree had a large unrelated dirty deployment state from earlier work, so it was preserved before the branch reset:
+
+```bash
+cd /data/large-projects/stephan/rizzoma
+git stash push -u -m "pre-cursor-inline-deploy-20260424-234017"
+git checkout -B feature/rizzoma-core-features origin/feature/rizzoma-core-features
+docker compose --profile prod up -d --build app-prod
+```
+
+Verified after rebuild:
+- `docker ps` shows `rizzoma-app-prod` healthy with `0.0.0.0:8201->8000/tcp`.
+- `docker exec rizzoma-app-prod sh -lc 'cat .git/HEAD'` resolves to `69d6a8a9`.
+- Public `/api/health` returns OK and CouchDB healthy.
+- Public root serves `main-CRFVko80.js` and `main-tAElMspz.css`.
+- Physical Pixel 9 Pro XL Chrome verified cursor-based BLB inline comments on the public URL; evidence lives in `screenshots/260424-2350-real-device-pixel9proxl-public/`.
+- After documentation/evidence commits were pushed, the VPS source checkout was fast-forwarded without rebuilding the already-verified app bundle.
+
+## Public prod cutover (2026-04-23 23:24 CEST)
+
+Nginx was changed from `proxy_pass http://127.0.0.1:8200;` to `proxy_pass http://127.0.0.1:8201;` in `/etc/nginx/sites-available/rizzoma.conf`, validated with `nginx -t`, and reloaded. A server backup exists at `/etc/nginx/sites-available/rizzoma.conf.bak-20260423-prod-cutover`.
+
+Post-cutover smoke exposed a stale running `app-prod` env: `CLIENT_URL` / `ALLOWED_ORIGINS` still pointed at the direct `:8200` origin, causing authenticated public prod requests to fail CORS. The compose file already had the correct HTTPS env, so only the running service was stale. Recreated prod with:
+
+```bash
+cd /data/large-projects/stephan/rizzoma
+docker compose up -d --no-deps app-prod
+```
+
+Verified after recreation:
+- Public `https://138-201-62-161.nip.io/api/health` returns from prod.
+- `docker exec rizzoma-app-prod env` shows `CLIENT_URL=https://138-201-62-161.nip.io`, `APP_BASE_URL=https://138-201-62-161.nip.io`, `APP_URL=https://138-201-62-161.nip.io`, and `ALLOWED_ORIGINS` includes the HTTPS origin.
+- Google OAuth start redirects to Google with `redirect_uri=https%3A%2F%2F138-201-62-161.nip.io%2Fapi%2Fauth%2Fgoogle%2Fcallback`.
+- Public prod `test:follow-green` passes desktop and mobile; artifacts live under `screenshots/260423-2324-prod-cutover/follow-green/`.
+- Public prod `test:toolbar-inline` still fails after scoped `Done`, waiting for the read toolbar to reappear. Direct dev `http://138.201.62.161:8200` fails the same way, so this is not a cutover regression, but it is now the top browser-smoke bug.
+
+## Container env (verified 2026-04-23 after HTTPS/OAuth work)
 
 Active env vars on both `rizzoma-app` and `rizzoma-app-prod` containers (same SHA256 hash for `SESSION_SECRET` — verified):
 
 - `NODE_ENV=development` (dev) / `NODE_ENV=production` (prod)
 - `FEAT_ALL=1` (closes the production-tree-shaking bug class — both #58 build-path and #43-companion dev-server path)
-- `ALLOWED_ORIGINS=http://138.201.62.161:8200,http://138.201.62.161:8201,http://localhost:8200,http://127.0.0.1:8200`
-- `APP_BASE_URL=http://138.201.62.161:8200`
-- `APP_URL=http://138.201.62.161:8200`
+- `ALLOWED_ORIGINS` includes `https://138-201-62-161.nip.io` plus the local/direct service origins needed for debugging
+- `APP_BASE_URL=https://138-201-62-161.nip.io`
+- `APP_URL=https://138-201-62-161.nip.io`
+- `CLIENT_URL=https://138-201-62-161.nip.io`
 - `REDIS_URL=redis://redis:6379` (sessions persist across container restarts)
 - `COUCHDB_URL=http://admin:password@couchdb:5984`
 - `RABBITMQ_URL=amqp://rabbitmq:5672`
@@ -170,9 +163,13 @@ Active env vars on both `rizzoma-app` and `rizzoma-app-prod` containers (same SH
 - `MICROSOFT_CLIENT_ID` + `MICROSOFT_CLIENT_SECRET` + `MICROSOFT_TENANT` — wired
 - `SMTP_HOST` + `SMTP_PORT` + `SMTP_USER` + `SMTP_PASS` + `SMTP_SECURE` — wired (Gmail SMTP for invite/notification emails)
 
-OAuth sign-in buttons render and POST to `/api/auth/{google,facebook,microsoft}/start` correctly, but the OAuth provider redirects back to `https://138-201-62-161.nip.io/...` which **requires HTTPS** — currently 404 because Caddy/Let's Encrypt is blocked on the Hetzner Cloud firewall (port 80 inbound denied → ACME webroot challenge times out). HTTP-only OAuth is rejected by all three providers in 2026.
+OAuth status as of 2026-04-23:
+- Google OAuth is verified end-to-end over HTTPS. Playwright sign-in returns to the app as `sdspieg@gmail.com` "Stephan De Spiegeleire" with the Google avatar, and `/api/auth/me` returns the authenticated user.
+- HTTPS is live through nginx + Let's Encrypt at `https://138-201-62-161.nip.io/`; port 80 was opened in the Hetzner Robot host firewall for ACME.
+- Container outbound now works after consolidating the Robot firewall `apps` rule (`8000-9999`) into `apps-and-ephemeral` (`8000-65535`) so MASQUERADE return traffic to ephemeral source ports is allowed.
+- Facebook and Microsoft credentials are wired, but their provider-console callback URLs still need to be added when those sign-in buttons are needed.
 
-## Historical Docker update procedure (2026-04-21; do not use)
+## How to update (verified procedure, 2026-04-21)
 
 Hryhorii's local docker-compose.yml has VPS-specific overrides (ports, persistent volumes, `ALLOWED_ORIGINS` for the public IP). The stock upstream docker-compose matches on sphinx + FEAT_ALL but differs on these. When pulling:
 
@@ -210,7 +207,11 @@ requires a rebuild.
 
 | Commit | Date | Bug | What |
 |---|---|---|---|
+| `df139e18` | 2026-04-24 | public phone evidence | Adds public Pixel 9 Pro XL cursor-inline screenshots and updates docs/Tana-facing handoff state. VPS source checkout is fast-forwarded here; no rebuild was needed because app code did not change after `69d6a8a9`. |
+| `69d6a8a9` | 2026-04-24 | mobile BLB inline comments | Corrects BLB inline comments to cursor-position child blips, renames selected-text comments to selection annotations, deploys public prod bundle `main-CRFVko80.js`, and verifies parent + nested cursor insertion on physical Pixel 9 Pro XL Chrome against `https://138-201-62-161.nip.io`. |
+| `02f36d81..0ed5745e` | 2026-04-24 | visual coverage | Rebuilt `app-prod` with realtime cursor/typing fixes, production Vite feature-flag hardening, mobile topic-content capture support, local avatar fallbacks, compact mobile editor toolbar CSS, Redis/Twitter/mobile runtime closure, and coverage validation that verifies screenshot files exist. Public prod health passed at `https://138-201-62-161.nip.io/api/health`; latest evidence folder is `screenshots/260424-025320-feature-sweep/` with 42 screenshots, 0 screenshot gaps, and a 161 green / 0 orange / 0 red verdict. |
 | `b99fa4bf` | 2026-04-22 | docs | Refresh after late-night prod-build + CI gate work |
+| `907b1972` | 2026-04-23 | toolbar smoke | Scoped `Done` no longer re-enters edit mode; deployed to both `rizzoma-app-prod` and `rizzoma-app` on the VPS |
 | `87c5e988` | 2026-04-22 | #147 | CI typecheck + vitest hardened to true blocking gates |
 | `40cfb0e2` | 2026-04-22 | prod-build | `/app/data/uploads` writable in production stage |
 | `b6f8793d` | 2026-04-22 | prod-build | `/app/logs` writable in production stage (winston EACCES) |
@@ -251,5 +252,6 @@ All commits live on VPS as of 2026-04-22 late-night. Both `rizzoma-app` (dev) an
 - [x] ~~HTTPS via Let's Encrypt~~ — DONE 2026-04-23 03:26 UTC. Live at `https://138-201-62-161.nip.io/`. Process: queried Hetzner Robot host firewall via `GET /firewall/<ip>` (turned out to be a whitelist-mode firewall missing port 80 — NOT a "Hetzner Cloud firewall" as previously assumed); added `http(80)` rule via `POST /firewall/<ip>` preserving the full ruleset; ran certbot webroot challenge against existing nginx; swapped nginx vhost to HTTPS proxy → `localhost:8200` with WebSocket support + 20M `client_max_body_size`; updated docker-compose env (`APP_URL`/`CLIENT_URL`/`APP_BASE_URL`/`ALLOWED_ORIGINS`) to use the HTTPS URL. Verified end-to-end: `curl /api/health` → 200, SPA loads, `/api/auth/google` redirects to Google with the correct HTTPS callback.
 - [x] ~~**USER ACTION**: add `https://138-201-62-161.nip.io/api/auth/google/callback` to Google Cloud Console~~ — DONE 2026-04-23 by SDS. Plus the same fix unblocked OAuth end-to-end (verified Playwright sign-in: `sdspieg@gmail.com` "Stephan De Spiegeleire" with avatar). Required ALSO consolidating the Hetzner Robot host firewall `apps` rule (8000-9999) into `apps-and-ephemeral` (8000-65535) to allow return traffic from MASQUERADE'd outbound connections — without that, container couldn't reach `oauth2.googleapis.com/token` to exchange the auth code. Robot API has a hard limit of 10 input rules; consolidating apps was the way to fit ephemeral coverage in.
 - [ ] **USER ACTION (Facebook / Microsoft)**: add the same callback paths for Facebook (`/api/auth/facebook/callback`) and Microsoft (`/api/auth/microsoft/callback`) in their respective developer consoles when those providers are needed.
-- [ ] Cut over public traffic from `:8200` (dev container, current HTTPS proxy target) to `:8201` (prod container) — change one `proxy_pass` line in `/etc/nginx/sites-available/rizzoma.conf` and reload nginx.
+- [x] ~~Cut over public traffic from `:8200` (dev container) to `:8201` (prod container)~~ — DONE 2026-04-23 23:24 CEST. One nginx `proxy_pass` line changed and reloaded; stale prod CORS/app URL env fixed by recreating `app-prod`; health/OAuth-start/follow-green verified. Residual: toolbar-inline smoke fails after scoped `Done` on both prod and direct dev.
+- [x] ~~Repair `test:toolbar-inline` after cutover~~ — DONE 2026-04-23 23:55 CEST. Root cause: `Done` exited edit mode on `mousedown`, then the same click sequence could hit the newly rendered read-mode `Edit` button and immediately re-enter edit mode. Fix: suppress `mousedown` but finish on `click`; smoke selectors now scope all toolbar interactions to the created blip. Rebuilt both `app-prod` and `app`; public prod + direct dev toolbar smokes pass.
 - [x] ~~Enable Hetzner Robot webservice~~ — turns out it was always enabled; the `HETZNER_ROBOT_PASS` value in `.env` was wrong (actually a stale root SSH password). Working creds in the [Hetzner SSH saga doc](https://drive.google.com/file/d/10OIjlF0oE8s9Xa-jr5-WHhdqPHXGhtEJ/view?usp=drivesdk): user `#ws+MMV3d9rH`, password `5Js4m@rMKuEAWG7`.

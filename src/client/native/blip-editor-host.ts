@@ -36,6 +36,8 @@ export interface BlipEditorAdapter {
   setContent(html: string): void;
   /** Tear down the editor (remove DOM, listeners, plugins). */
   destroy(): void;
+  /** Optional underlying editor instance (for extensions/commands). */
+  readonly raw?: any;
 }
 
 /**
@@ -55,6 +57,10 @@ export class BlipEditorHost {
   constructor(view: BlipView, factory: BlipEditorFactory) {
     this.view = view;
     this.factory = factory;
+  }
+
+  getView(): BlipView {
+    return this.view;
   }
 
   isMounted(): boolean {

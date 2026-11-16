@@ -22,7 +22,7 @@
  * now exports BlipView only. Importers should switch to `from './wave-view'`.
  */
 
-import { BlipView, type HistoryOpenHandler } from './blip-view';
+import { BlipView, type BlipEditHandler, type BlipReplyHandler, type HistoryOpenHandler } from './blip-view';
 import { ContentArray } from './types';
 
 export type WaveViewEvent =
@@ -42,6 +42,10 @@ export interface WaveViewOptions {
   /** Optional handler called when a blip's gear "history" button is clicked.
    *  Wired uniformly to every BlipView this WaveView creates. */
   onOpenHistory?: HistoryOpenHandler;
+  /** Optional handler called when a blip's gear "edit" button is clicked. */
+  onEditBlip?: BlipEditHandler;
+  /** Optional handler called when a blip's gear "reply" button is clicked. */
+  onReplyBlip?: BlipReplyHandler;
 }
 
 export class WaveView {
@@ -52,6 +56,8 @@ export class WaveView {
   private listeners = new Map<WaveViewEvent, Set<WaveViewListener>>();
   private destroyed = false;
   private readonly onOpenHistory: HistoryOpenHandler | null;
+  private readonly onEditBlip: BlipEditHandler | null;
+  private readonly onReplyBlip: BlipReplyHandler | null;
   /** Set of unread blip ids; updated via setUnreadSet() and reflected on
    *  each BlipView's container as `data-unread="1"` for CSS-driven green
    *  marker (Follow-the-Green semantics). */
@@ -60,6 +66,8 @@ export class WaveView {
   constructor(opts: WaveViewOptions) {
     this.contentLookup = opts.contentByBlipId;
     this.onOpenHistory = opts.onOpenHistory || null;
+    this.onEditBlip = opts.onEditBlip || null;
+    this.onReplyBlip = opts.onReplyBlip || null;
     this.rootContainer = document.createElement('div');
     this.rootContainer.className = opts.rootClassName || 'wave-view';
   }
@@ -92,6 +100,8 @@ export class WaveView {
     view = new BlipView(blipId);
     view.setChildResolver((childId) => this.resolveChild(childId));
     if (this.onOpenHistory) view.setHistoryHandler(this.onOpenHistory);
+    if (this.onEditBlip) view.setEditHandler(this.onEditBlip);
+    if (this.onReplyBlip) view.setReplyHandler(this.onReplyBlip);
     if (this.unreadSet.has(blipId)) view.getContainer().setAttribute('data-unread', '1');
     this.views.set(blipId, view);
     const content = this.contentLookup(blipId);

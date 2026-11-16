@@ -1,0 +1,63 @@
+# Legacy reference archive — run of 2026-07-14
+
+- Captured: 56
+- Skipped (already existed): 0
+- Failed: 1
+
+- [Authentication] 001-landing-logged-out.png — Landing page (logged out)
+- [Authentication] 002-signin-form.png — Sign-in form
+- [Authentication] 003-signup-form.png — Sign-up form
+- [Authentication] 004-anon-wall-private-topic.png — Anonymous-access wall on a private topic
+- [User Interface] 010-topics-list-default.png — Topics list (default)
+- [Search] 011-topics-search-typed.png — Topic search — query typed
+- [Search] 012-topics-search-results.png — Topic search — results
+- [Search] 013-topics-search-cleared.png — Topic search — cleared
+- [User Interface] 014-nav-mentions.png — Mentions inbox
+- [User Interface] 015-nav-tasks.png — Tasks inbox
+- [User Interface] 016-nav-publics.png — Publics directory
+- [Inline Widgets] 017-nav-store.png — Gadget store
+- [User Interface] 018-nav-teams.png — Teams page
+- [Waves & Blips] 019-new-topic-button.png — New topic affordance
+- [User Interface] 020-settings-menu.png — Account/settings menu
+- [Waves & Blips] 030-topic-view-default.png — Topic view (default)
+- [User Interface] 031-topic-header-bar.png — Topic header bar
+- [User Interface] 032-share-modal.png — Share/access modal
+- [User Interface] 033-share-modal-closed.png — After closing share modal
+- [User Interface] 034-manage-members.png — Manage topic members
+- [User Interface] 035-members-closed.png — After closing members
+- [User Interface] 036-text-view.png — Text view mode
+- [User Interface] 037-mindmap-view.png — Mind-map view mode
+- [User Interface] 038-mindmap-short.png — Mind map — short mode
+- [User Interface] 039-mindmap-expanded.png — Mind map — expanded mode
+- [User Interface] 040-back-to-text-view.png — Back to text view
+- [Inline Comments] 041-hide-all-comments.png — Hide all comments (Ctrl+Shift+Up)
+- [Inline Comments] 042-show-all-comments.png — Show all comments
+- [BLB] 051-fractal-unfold-level-1.png — Fractal unfold — level 1
+- [BLB] 052-fractal-unfold-level-2.png — Fractal unfold — level 2
+- [BLB] 053-fractal-unfold-level-3.png — Fractal unfold — level 3
+- [BLB] 054-fractal-unfold-level-4.png — Fractal unfold — level 4
+- [BLB] 055-fractal-unfold-level-5.png — Fractal unfold — level 5
+- [BLB] 056-fractal-unfold-level-6.png — Fractal unfold — level 6
+- [BLB] 057-fractal-unfold-level-7.png — Fractal unfold — level 7
+- [BLB] 058-fractal-unfold-level-8.png — Fractal unfold — level 8
+- [BLB] 059-fractal-refolded.png — Fractal re-folded to ToC
+- [Blip Operations] 060-blip-activated-menu.png — Active blip — view menu
+- [Blip Operations] 061-blip-gear-menu.png — Blip gear menu open
+- [Blip Operations] 062-gear-closed.png — Gear closed
+- [Rich Text] 063-root-edit-mode-ribbon.png — Root blip EDIT mode — full ribbon
+- [Rich Text] 064-edit-link-popup.png — Insert-link popup
+- [Rich Text] 065-link-popup-closed.png — Link popup dismissed
+- [Rich Text] 066-edit-done-back-to-view.png — Done — back to view mode
+- [Waves & Blips] 067-reply-box.png — Write-a-reply affordance
+- [User Interface] 068-insert-reply-sidebar.png — Right-rail INSERT panel
+- [History] 069-playback-ui.png — Playback (topic history)
+- [History] 070-playback-closed.png — Playback exited
+- [User Interface] 080-publics-list.png — Publics — directory list
+- [Waves & Blips] 081-public-topic-view.png — A public topic (read-only)
+- [Inline Widgets] 082-store-catalog.png — Store — gadget catalog
+- [Mobile] 090-mobile-topics-list.png — Mobile — topics list
+- [Mobile] 091-mobile-topic-view.png — Mobile — topic view
+- [Mobile] 092-mobile-topic-scrolled.png — Mobile — topic scrolled
+- [Mobile] 093-mobile-fractal-expanded.png — Mobile — fractal level expanded
+- [User Interface] 100-w1280-topics-list.png — 1280px — topics list
+- [User Interface] 101-w1280-topic-view.png — 1280px — topic view

@@ -1,0 +1,96 @@
+diff --git a/src/client/components/editor/useCollaboration.ts b/src/client/components/editor/useCollaboration.ts
+index bb68becc..3938c3fb 100644
+--- a/src/client/components/editor/useCollaboration.ts
++++ b/src/client/components/editor/useCollaboration.ts
+@@ -7,6 +7,60 @@ import {
+   type CollaborationUser,
+ } from './collaborationIdentity';
+ 
++/**
++ * Providers outlive a single component instance for a short grace period.
++ *
++ * Nested Ctrl+Enter remounts a freshly created child blip several times in
++ * about a second (parent finishes edit, topic reloads after each save, the
++ * child moves from the editor portal to the view render). Destroying the
++ * provider on every unmount threw away an already-synced room each time:
++ * leave, re-join, wait for seed authority again, so the child stayed
++ * read-only and nested creation stalled (measured 9-10 Nov 2026: 1.2-2.4 s
++ * per level, often never). A remount within the grace period now reuses the
++ * same provider: same Y.Doc instance (cached by yjsDocManager), same blip,
++ * user and generation, so the same server-authorised room.
++ */
++const PROVIDER_GRACE_MS = 4000;
++type RegistryEntry = { provider: SocketIOProvider; refs: number; timer: ReturnType<typeof setTimeout> | null };
++const providerRegistry = new Map<string, RegistryEntry>();
++
++function acquireProvider(key: string, create: () => SocketIOProvider): SocketIOProvider {
++  const entry = providerRegistry.get(key);
++  if (entry) {
++    if (entry.timer !== null) {
++      clearTimeout(entry.timer);
++      entry.timer = null;
++    }
++    entry.refs += 1;
++    return entry.provider;
++  }
++  const provider = create();
++  providerRegistry.set(key, { provider, refs: 1, timer: null });
++  return provider;
++}
++
++function releaseProvider(key: string, provider: SocketIOProvider): void {
++  const entry = providerRegistry.get(key);
++  if (!entry || entry.provider !== provider) {
++    provider.destroy();
++    return;
++  }
++  entry.refs -= 1;
++  if (entry.refs > 0 || entry.timer !== null) return;
++  entry.timer = setTimeout(() => {
++    const current = providerRegistry.get(key);
++    if (current === entry && entry.refs <= 0) {
++      providerRegistry.delete(key);
++      entry.provider.destroy();
++    }
++  }, PROVIDER_GRACE_MS);
++}
++
++/** Test hook: providers currently held (including those in their grace period). */
++export function __collaborationProviderCountForTests(): number {
++  return providerRegistry.size;
++}
++
+ /**
+  * Hook to create a SocketIOProvider for real-time collaboration.
+  *
+@@ -33,14 +87,18 @@ export function useCollaboration(
+   const currentDepsKey = `${enabled}|${blipId}|${yjsGeneration}|${doc?.clientID ?? 'no-doc'}|${!!socket}|${user?.id ?? 'guest'}`;
+ 
+   if (currentDepsKey !== depsKeyRef.current) {
+-    // Deps changed — destroy old provider, potentially create new one
++    // Deps changed — release the old provider, then acquire the right one
++    // (reusing a live provider for the same document within its grace period).
+     if (providerRef.current) {
+-      providerRef.current.destroy();
++      releaseProvider(depsKeyRef.current, providerRef.current);
+       providerRef.current = null;
+     }
+     depsKeyRef.current = currentDepsKey;
+     if (enabled && socket && doc) {
+-      providerRef.current = new SocketIOProvider(doc, socket, blipId, user, yjsGeneration);
++      providerRef.current = acquireProvider(
++        currentDepsKey,
++        () => new SocketIOProvider(doc, socket, blipId, user, yjsGeneration),
++      );
+     }
+   }
+ 
+@@ -57,7 +115,7 @@ export function useCollaboration(
+   useEffect(() => {
+     return () => {
+       if (providerRef.current) {
+-        providerRef.current.destroy();
++        releaseProvider(depsKeyRef.current, providerRef.current);
+         providerRef.current = null;
+       }
+       // Reset deps key so a remount (e.g. React Strict Mode) creates a fresh provider

@@ -707,4 +707,18 @@ describe('client: CollaborativeProvider', () => {
     second.destroy();
     secondDoc.destroy();
   });
+
+  it('defers blip:join until joinIfNeeded() when deferJoin=true so unmount blip:leave precedes remount join', () => {
+    const provider = new SocketIOProvider(doc, socket as any, 'deferred-blip', null, 0, true);
+    expect(socket.emit.mock.calls.filter(([ev]) => ev === 'blip:join')).toHaveLength(0);
+
+    provider.joinIfNeeded();
+    expect(socket.emit.mock.calls.filter(([ev]) => ev === 'blip:join')).toHaveLength(1);
+
+    // Idempotent once joined
+    provider.joinIfNeeded();
+    expect(socket.emit.mock.calls.filter(([ev]) => ev === 'blip:join')).toHaveLength(1);
+
+    provider.destroy();
+  });
 });

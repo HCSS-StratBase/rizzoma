@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import { api } from '../lib/api';
 import { offlineQueue } from '../lib/offlineQueue';
+import { clearServiceWorkerCache } from '../lib/logout';
 import { yjsDocManager } from '../components/editor/YjsDocumentManager';
 import {
   announceAuthChange,
@@ -114,6 +115,7 @@ export function AuthProvider({
       // A 401 means the server session is already gone, which is the desired
       // postcondition. Retriable/CSRF failures keep the old local identity.
       if (!response.ok && response.status !== 401) throw new Error('Logout failed');
+      clearServiceWorkerCache();
       updateUser(null);
       announceAuthChange({ resetSocket: false });
     } catch (error) {
