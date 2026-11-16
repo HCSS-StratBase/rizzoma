@@ -29,6 +29,7 @@ import {
 import { readCollaborationProjection } from '../lib/collaborationProjection.js';
 import { yjsDocCache } from '../lib/yjsDocCache.js';
 import { ensureTopicBlbHtml, isTopicBlbHtml } from '../../shared/blbContent.js';
+import { isBlankPlaceholderOverwrite } from '../../shared/topicProjectionGuard.js';
 
 const CONTENT_REFERENCE_ERRORS = new Set([
   'invalid_mention_target',
@@ -689,6 +690,14 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
     const result = await yjsDocCache.runExclusive(id, async () => {
       const existing = await loadLiveTopic(id);
       const nextTitle = payload.title ?? existing.title;
+      if (isBlankPlaceholderOverwrite({
+        incomingTitle: payload.title,
+        incomingContent: payload.content,
+        existingTitle: existing.title,
+        existingContent: existing.content,
+      })) {
+        throw new Error('blank_placeholder_overwrite');
+      }
       // The title has one source of truth: topic.title. A title-only patch
       // therefore also rewrites the document H1 and is an external content
       // replacement subject to the same Yjs generation boundary.
@@ -775,6 +784,10 @@ router.patch('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void>
     }
     return;
   } catch (e: any) {
+    if (String(e?.message) === 'blank_placeholder_overwrite') {
+      res.status(409).json({ error: e.message, requestId: (req as any)?.id });
+      return;
+    }
     if (
       String(e?.message) === 'invalid_collaboration_state_digest'
       || String(e?.message) === 'invalid_collaboration_generation'

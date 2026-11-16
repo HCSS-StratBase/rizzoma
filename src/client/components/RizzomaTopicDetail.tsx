@@ -37,6 +37,7 @@ import {
   ensureTopicBlbHtml,
   plainTextToBlbHtml,
 } from '@shared/blbContent';
+import { isBlankPlaceholderOverwrite } from '@shared/topicProjectionGuard';
 import {
   currentTopicEditorTitle,
   needsBlbSeedProjection,
@@ -421,6 +422,9 @@ function RizzomaTopicDetailState({
   const topicEditorRef = useRef<Editor | null>(null);
   const topicTitleRef = useRef(topic?.title || 'Untitled');
   topicTitleRef.current = topic?.title || 'Untitled';
+  // Latest loaded topic, for the blank-placeholder overwrite guard (incident 2026-11-16).
+  const topicStoredRef = useRef(topic);
+  topicStoredRef.current = topic;
   const topicBlbNormalizationPendingRef = useRef(false);
 
   // Stable callback wrapper that delegates to the ref
@@ -1608,6 +1612,19 @@ function RizzomaTopicDetailState({
       if (!force && latestContent === lastSavedContentRef.current) return;
       const extractedTitle = extractTitleFromContent(latestContent);
       if (!extractedTitle) return;
+      // Never save before the stored topic has loaded, and never overwrite a
+      // real topic with the empty "Untitled" placeholder projection.
+      const storedTopic = topicStoredRef.current;
+      if (!storedTopic) return;
+      if (isBlankPlaceholderOverwrite({
+        incomingTitle: extractedTitle,
+        incomingContent: latestContent,
+        existingTitle: storedTopic.title,
+        existingContent: storedTopic.content,
+      })) {
+        console.warn('[topic] refusing blank placeholder autosave over stored topic', id);
+        return;
+      }
       const headers = topicCollabActive
         ? await collaborationProjectionHeaders(topicYdoc, topicYjsGeneration)
         : undefined;
