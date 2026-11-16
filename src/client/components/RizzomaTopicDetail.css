@@ -432,9 +432,8 @@
 .blip-text ul ul {
   list-style-type: disc;
 }
-.topic-content-view .blip-text li > ul > li::before {
-  background: #333333;
-}
+/* Level-2 bullets stay hollow circles as in the original Rizzoma (pixel-measured
+   2026-11-16); RizzomaBlip.css draws the ring, nothing here may fill it. */
 .inline-child-expanded .blip-text ol,
 .inline-child-expanded .blip-text li > ol {
   list-style-type: decimal;
