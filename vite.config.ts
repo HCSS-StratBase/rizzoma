@@ -29,7 +29,7 @@ export default defineConfig(({ command, mode }) => {
       // Track G: native fractal-render port. Same trap-avoidance comment as above —
       // without this define, the client's flag stays undefined no matter what the
       // server-side env says. See docs/NATIVE_RENDER_PORT_PLAN.md and GH #50–#56.
-      'import.meta.env.FEAT_RIZZOMA_NATIVE_RENDER': JSON.stringify(process.env.FEAT_RIZZOMA_NATIVE_RENDER || ''),
+      'import.meta.env.FEAT_RIZZOMA_NATIVE_RENDER': JSON.stringify(process.env.FEAT_RIZZOMA_NATIVE_RENDER || '1'),
     },
   root: './src/client',
   publicDir: '../../public',
@@ -57,6 +57,10 @@ export default defineConfig(({ command, mode }) => {
     port: Number(process.env.VITE_PORT || 3000),
     strictPort: !!process.env.VITE_PORT,
     allowedHosts: true,
+    headers: {
+      // Sandboxed srcdoc gadget iframes run with opaque origin `null` and load /gadgets/apps/app-shell.js
+      'Access-Control-Allow-Origin': '*',
+    },
     proxy: {
       '/api': {
         target: process.env.VITE_API_TARGET || 'http://localhost:8788',

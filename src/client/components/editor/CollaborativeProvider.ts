@@ -70,6 +70,7 @@ export class SocketIOProvider {
     blipId: string,
     user: CollaborationUser | null = null,
     expectedGeneration = 0,
+    deferJoin = false,
   ) {
     this.doc = doc;
     this.socket = socket;
@@ -81,9 +82,16 @@ export class SocketIOProvider {
     this.setupListeners();
     this.setupAwareness(user);
     this.setupReconnect();
-    // Only join immediately if socket is already connected;
+    // Only join immediately if socket is already connected and not deferred;
     // setupReconnect() handles joining on (re)connect events.
-    if (this.socket.connected) {
+    if (!deferJoin && this.socket.connected) {
+      this.joinRoom();
+    }
+  }
+
+  /** Join the room if not yet joined and socket is connected (used after React commit). */
+  joinIfNeeded() {
+    if (!this.destroyed && !this.joined && this.socket.connected) {
       this.joinRoom();
     }
   }

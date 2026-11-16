@@ -14,7 +14,7 @@
  * existing React/TipTap-based view via the feature flag.
  */
 
-import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { WaveView } from '@client/native/wave-view';
 import type { BlipView } from '@client/native/blip-view';
 import type { ContentArray } from '@client/native/types';
@@ -26,14 +26,39 @@ import { parseHtmlToContentArray } from '@client/native/parser';
 import { getEditorExtensions, defaultEditorProps } from '@client/components/editor/EditorConfig';
 import { makeTipTapFactory } from '@client/native/tiptap-adapter';
 import { BlipEditorHost } from '@client/native/blip-editor-host';
+import { TopicDoc } from '@client/native/yjs-binding';
+import { TopicAwareness, colorForUserId } from '@client/native/awareness';
+import { SocketIOProvider } from '@client/components/editor/CollaborativeProvider';
+import { useSocket } from '@client/hooks/useSocket';
+import { useAuth } from '@client/hooks/useAuth';
 import { api, ensureCsrf } from '@client/lib/api';
 import './NativeWaveView.css';
+
+export interface NativeWaveEditController {
+  startEdit: () => void;
+  finishEdit: () => void;
+  toggleEdit: () => void;
+}
 
 export interface NativeWaveViewProps {
   /** The blipId to set as the wave's root (the topic-level blip). */
   rootBlipId: string;
   /** Synchronous lookup: blipId → ContentArray (or null if not loaded). */
   contentByBlipId: (id: string) => ContentArray | null;
+  /** Whether the current user is authenticated and allowed to edit/reply. */
+  canEdit?: boolean;
+  /** Topic title for WavePlaybackModal. */
+  topicTitle?: string;
+  /** Blips list for WavePlaybackModal. */
+  blips?: Array<{ id: string; label: string }>;
+  /** Optional handler for per-blip history modal. */
+  onOpenHistory?: (blipId: string) => void;
+  /** Optional ref populated with start/finish/toggle edit controls for BlipMenu integration. */
+  editControllerRef?: React.MutableRefObject<NativeWaveEditController | null>;
+  /** Optional callback fired when native editing state changes. */
+  onEditingChange?: (editing: boolean) => void;
+  /** Hide the standalone native toolbar when hosted inside RizzomaTopicDetail's BlipMenu. */
+  hideToolbar?: boolean;
   /** Optional className for the host div. */
   className?: string;
   /** Optional callback fired once the WaveView has been instantiated. */
@@ -43,44 +68,74 @@ export interface NativeWaveViewProps {
 export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
   rootBlipId,
   contentByBlipId,
+  canEdit = true,
+  topicTitle = 'Wave playback',
+  blips = [],
+  onOpenHistory,
+  editControllerRef,
+  onEditingChange,
+  hideToolbar = false,
   className,
   onWaveViewReady,
 }) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const waveViewRef = useRef<WaveView | null>(null);
+  const contentLookupRef = useRef(contentByBlipId);
+  contentLookupRef.current = contentByBlipId;
+  const onOpenHistoryRef = useRef(onOpenHistory);
+  onOpenHistoryRef.current = onOpenHistory;
+  const canEditRef = useRef(canEdit);
+  canEditRef.current = canEdit;
   const [showPlayback, setShowPlayback] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const socket = useSocket();
+  const { user: authUser } = useAuth();
+  const topicDocRef = useRef<TopicDoc | null>(null);
+  const awarenessRef = useRef<TopicAwareness | null>(null);
+  const activeProvidersRef = useRef<Map<string, SocketIOProvider>>(new Map());
 
   // Active editors registry: blipId → BlipEditorHost
   const activeHostsRef = useRef<Map<string, BlipEditorHost>>(new Map());
   // Debounced save timers: blipId → timer
   const saveTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  // Optimistic local blipId → server blipId mapping
+  const idMapRef = useRef<Map<string, string>>(new Map());
+  const pendingCreateRef = useRef<Map<string, Promise<string | null>>>(new Map());
+  const resolveBlipId = useCallback((id: string) => idMapRef.current.get(id) ?? id, []);
 
   // Auto-save helper for blips and root topic
-  const autoSaveBlip = useCallback(async (blipId: string, html: string) => {
+  const autoSaveBlip = useCallback(async (rawBlipId: string, html: string) => {
+    const blipId = resolveBlipId(rawBlipId);
+    if (blipId.startsWith('local-')) return;
+    let cleanHtml = html;
+    idMapRef.current.forEach((real, local) => {
+      if (cleanHtml.includes(local)) {
+        cleanHtml = cleanHtml.split(local).join(real);
+      }
+    });
     try {
       await ensureCsrf();
       if (blipId === rootBlipId) {
-        // Extract title: H1 tag or first non-empty line
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        const h1 = tempDiv.querySelector('h1')?.textContent || '';
-        const title = h1.trim() || tempDiv.textContent?.split('\n')[0]?.trim() || 'Untitled';
+        // Extract title: H1 tag or first non-empty line using inert template parsing
+        const tpl = document.createElement('template');
+        tpl.innerHTML = cleanHtml;
+        const h1 = tpl.content.querySelector('h1')?.textContent || '';
+        const title = h1.trim() || tpl.content.textContent?.split('\n')[0]?.trim() || 'Untitled';
         await api(`/api/topics/${encodeURIComponent(rootBlipId)}`, {
           method: 'PATCH',
-          body: JSON.stringify({ title, content: html }),
+          body: JSON.stringify({ title, content: cleanHtml }),
         });
       } else {
         await api(`/api/blips/${encodeURIComponent(blipId)}`, {
           method: 'PUT',
-          body: JSON.stringify({ content: html }),
+          body: JSON.stringify({ content: cleanHtml }),
         });
       }
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('[NativeWaveView] autoSave error for', blipId, err);
     }
-  }, [rootBlipId]);
+  }, [rootBlipId, resolveBlipId]);
 
   // Forward declaration for handleCreateChild
   const handleCreateChildRef = useRef<((parentBlipId: string) => Promise<void>) | null>(null);
@@ -94,6 +149,7 @@ export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
       extensions: () => getEditorExtensions(undefined, undefined, {
         waveId: rootBlipId,
         blipId,
+        isTopicRoot: blipId === rootBlipId,
         onCreateInlineChildBlip: async () => {
           if (handleCreateChildRef.current) {
             await handleCreateChildRef.current(blipId);
@@ -121,108 +177,158 @@ export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
     host.mount();
     activeHostsRef.current.set(blipId, host);
     return host;
-  }, [rootBlipId, autoSaveBlip]);
+  }, [rootBlipId, autoSaveBlip, authUser, socket]);
 
   // Handle Ctrl+Enter child creation inside any active editor
-  const handleCreateChild = useCallback(async (parentBlipId: string) => {
-    try {
-      await ensureCsrf();
-      const res = await api('/api/blips', {
-        method: 'POST',
-        body: JSON.stringify({
-          waveId: rootBlipId,
-          parentId: parentBlipId === rootBlipId ? null : parentBlipId,
-          content: '<ul><li><p></p></li></ul>',
-          anchorPosition: 0,
-        }),
-      });
+  // Synchronous optimistic child creation + focus handoff so typing right after Ctrl+Enter lands in the child.
+  const handleCreateChild = useCallback(async (rawParentBlipId: string) => {
+    const parentBlipId = resolveBlipId(rawParentBlipId);
+    const wv = waveViewRef.current;
+    if (!wv) return;
 
-      if (!res.ok || !res.data) {
-        // eslint-disable-next-line no-console
-        console.error('[NativeWaveView] Failed to create blip:', res);
-        return;
-      }
-      const newBlip = res.data as { id?: string; _id?: string };
-      const newBlipId = newBlip.id || newBlip._id;
-      if (!newBlipId) return;
+    const tempId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const parentHost = activeHostsRef.current.get(rawParentBlipId) ?? activeHostsRef.current.get(parentBlipId);
+    const parentAdapter = parentHost?.getEditor();
+    const parentRawEditor = parentAdapter?.raw;
 
-      const parentHost = activeHostsRef.current.get(parentBlipId);
-      const parentAdapter = parentHost?.getEditor();
-      const parentRawEditor = parentAdapter?.raw;
-
-      if (parentRawEditor?.commands?.insertBlipThread) {
-        parentRawEditor.commands.insertBlipThread({ threadId: newBlipId });
-      }
-
-      const wv = waveViewRef.current;
-      if (!wv) return;
-      const childView = wv.getOrCreateView(newBlipId);
-      childView.setContent(parseHtmlToContentArray('<ul><li><p></p></li></ul>'));
-
-      // Find the portal anchor inserted by BlipThreadNode
-      const parentEl = parentAdapter?.element || parentRawEditor?.options?.element;
-      const portalAnchor = parentEl?.querySelector(`[data-portal-child="${newBlipId}"]`);
-      if (portalAnchor) {
-        portalAnchor.appendChild(childView.getContainer());
-      } else {
-        const parentContainer = parentHost?.getView()?.getContainer();
-        if (parentContainer) parentContainer.appendChild(childView.getContainer());
-      }
-
-      // Mount editor on the child blip
-      mountEditor(newBlipId, childView, '<ul><li><p></p></li></ul>');
-
-      // Focus child editor
-      requestAnimationFrame(() => {
-        const pm = childView.getContainer().querySelector('.ProseMirror') as HTMLElement;
-        if (pm) {
-          pm.focus();
-        }
-      });
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[NativeWaveView] handleCreateChild error:', err);
+    if (parentRawEditor?.commands?.insertBlipThread) {
+      parentRawEditor.commands.insertBlipThread({ threadId: tempId });
     }
-  }, [rootBlipId, mountEditor]);
+
+    const childView = wv.getOrCreateView(tempId);
+    childView.setContent(parseHtmlToContentArray('<ul><li><p></p></li></ul>'));
+
+    const parentEl = parentAdapter?.element || parentRawEditor?.options?.element;
+    const portalAnchor = parentEl?.querySelector(`[data-portal-child="${tempId}"]`);
+    if (portalAnchor) {
+      portalAnchor.appendChild(childView.getContainer());
+    } else {
+      const parentContainer = (parentHost?.getView() ?? wv.getView(rawParentBlipId) ?? wv.getView(parentBlipId))?.getContainer();
+      if (parentContainer) parentContainer.appendChild(childView.getContainer());
+    }
+
+    const childHost = mountEditor(tempId, childView, '<ul><li><p></p></li></ul>');
+    const pm = childView.getContainer().querySelector('.ProseMirror') as HTMLElement | null;
+    pm?.focus();
+    childHost.getEditor()?.raw?.commands?.focus?.('end');
+
+    setIsEditing(true);
+    onEditingChange?.(true);
+
+    const createPromise = (async (): Promise<string | null> => {
+      try {
+        if (rawParentBlipId.startsWith('local-') && pendingCreateRef.current.has(rawParentBlipId)) {
+          await pendingCreateRef.current.get(rawParentBlipId);
+        }
+        const finalParentId = resolveBlipId(rawParentBlipId);
+        await ensureCsrf();
+        const resolvedParentId = finalParentId === rootBlipId ? null : finalParentId;
+        const res = await api('/api/blips', {
+          method: 'POST',
+          body: JSON.stringify({
+            waveId: rootBlipId,
+            parentId: resolvedParentId,
+            content: '<ul><li><p></p></li></ul>',
+            anchorPosition: 0,
+          }),
+        });
+
+        if (!res.ok || !res.data) {
+          // eslint-disable-next-line no-console
+          console.error('[NativeWaveView] Failed to create blip:', res);
+          return null;
+        }
+        const rawData = res.data as { id?: string; _id?: string; blip?: { id?: string; _id?: string } };
+        const realId = rawData.id || rawData._id || rawData.blip?.id || rawData.blip?._id;
+        if (!realId) return null;
+
+        idMapRef.current.set(tempId, realId);
+        activeHostsRef.current.set(realId, childHost);
+        childView.getContainer().setAttribute('data-blip-id', realId);
+
+        if (parentRawEditor && !parentRawEditor.isDestroyed) {
+          void autoSaveBlip(finalParentId, parentRawEditor.getHTML());
+        }
+
+        const currentChildHtml = childHost.getEditor()?.getHTML();
+        if (currentChildHtml) {
+          void autoSaveBlip(realId, currentChildHtml);
+        }
+        return realId;
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[NativeWaveView] handleCreateChild error:', err);
+        return null;
+      } finally {
+        pendingCreateRef.current.delete(tempId);
+      }
+    })();
+
+    pendingCreateRef.current.set(tempId, createPromise);
+    await createPromise;
+  }, [rootBlipId, mountEditor, resolveBlipId, autoSaveBlip, onEditingChange]);
 
   useEffect(() => {
     handleCreateChildRef.current = handleCreateChild;
   }, [handleCreateChild]);
 
+  const startEditRoot = useCallback(() => {
+    const wv = waveViewRef.current;
+    if (!wv || !canEditRef.current) return;
+    const rootView = wv.getView(rootBlipId);
+    if (rootView) {
+      mountEditor(rootBlipId, rootView);
+      setIsEditing(true);
+      onEditingChange?.(true);
+      requestAnimationFrame(() => {
+        const pm = rootView.getContainer().querySelector('.ProseMirror') as HTMLElement | null;
+        if (pm) pm.focus();
+      });
+    }
+  }, [rootBlipId, mountEditor, onEditingChange]);
+
+  const finishEditAll = useCallback(() => {
+    saveTimeoutsRef.current.forEach((t) => clearTimeout(t));
+    saveTimeoutsRef.current.clear();
+    activeHostsRef.current.forEach((host, blipId) => {
+      try {
+        const html = host.getEditor()?.getHTML() || '';
+        if (html) void autoSaveBlip(blipId, html);
+        host.saveAndUnmount();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('[NativeWaveView] error unmounting host for', blipId, e);
+      }
+    });
+    activeHostsRef.current.clear();
+    activeProvidersRef.current.forEach((p) => {
+      try { p.destroy(); } catch {}
+    });
+    activeProvidersRef.current.clear();
+    setIsEditing(false);
+    onEditingChange?.(false);
+  }, [autoSaveBlip, onEditingChange]);
+
   // Toggle Edit/Done
   const handleToggleEdit = useCallback(() => {
-    const wv = waveViewRef.current;
-    if (!wv) return;
-
     if (isEditing) {
-      // Done: flush pending auto-saves, unmount all active editors
-      saveTimeoutsRef.current.forEach((t) => clearTimeout(t));
-      saveTimeoutsRef.current.clear();
-      activeHostsRef.current.forEach((host, blipId) => {
-        try {
-          const html = host.getEditor()?.getHTML() || '';
-          if (html) autoSaveBlip(blipId, html);
-          host.saveAndUnmount();
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.error('[NativeWaveView] error unmounting host for', blipId, e);
-        }
-      });
-      activeHostsRef.current.clear();
-      setIsEditing(false);
+      finishEditAll();
     } else {
-      // Edit: mount editor on topic root
-      const rootView = wv.getView(rootBlipId);
-      if (rootView) {
-        mountEditor(rootBlipId, rootView);
-        setIsEditing(true);
-        requestAnimationFrame(() => {
-          const pm = rootView.getContainer().querySelector('.ProseMirror') as HTMLElement;
-          if (pm) pm.focus();
-        });
-      }
+      startEditRoot();
     }
-  }, [isEditing, rootBlipId, mountEditor, autoSaveBlip]);
+  }, [isEditing, finishEditAll, startEditRoot]);
+
+  useEffect(() => {
+    if (!editControllerRef) return;
+    editControllerRef.current = {
+      startEdit: startEditRoot,
+      finishEdit: finishEditAll,
+      toggleEdit: handleToggleEdit,
+    };
+    return () => {
+      editControllerRef.current = null;
+    };
+  }, [editControllerRef, startEditRoot, finishEditAll, handleToggleEdit]);
 
   // Mobile gestures
   usePullToRefresh(hostRef, {
@@ -237,27 +343,71 @@ export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
     },
   });
 
-  const stableLookup = useMemo(() => contentByBlipId, [contentByBlipId]);
+  const handleEditBlip = useCallback((blipId: string, view: BlipView) => {
+    if (!canEditRef.current) return;
+    mountEditor(blipId, view);
+    setIsEditing(true);
+    requestAnimationFrame(() => {
+      const pm = view.getContainer().querySelector('.ProseMirror') as HTMLElement | null;
+      pm?.focus();
+    });
+  }, [mountEditor]);
+
+  const handleEditBlipRef = useRef(handleEditBlip);
+  handleEditBlipRef.current = handleEditBlip;
+
+  const handleReplyBlip = useCallback((blipId: string) => {
+    if (!canEditRef.current) return;
+    void handleCreateChild(blipId);
+  }, [handleCreateChild]);
+
+  const handleReplyBlipRef = useRef(handleReplyBlip);
+  handleReplyBlipRef.current = handleReplyBlip;
 
   useEffect(() => {
     if (!FEATURES.RIZZOMA_NATIVE_RENDER) return;
     const host = hostRef.current;
     if (!host) return;
 
-    const wv = new WaveView({ contentByBlipId: stableLookup });
+    const topicDoc = new TopicDoc();
+    const awareness = new TopicAwareness(topicDoc);
+    if (authUser) {
+      awareness.setUser({
+        id: authUser.id,
+        name: authUser.name || authUser.email || 'User',
+        color: colorForUserId(authUser.id),
+      });
+    }
+    topicDocRef.current = topicDoc;
+    awarenessRef.current = awareness;
+
+    const wv = new WaveView({
+      contentByBlipId: (id) => contentLookupRef.current(id),
+      onOpenHistory: (id) => onOpenHistoryRef.current?.(id),
+      onEditBlip: (id, view) => handleEditBlipRef.current(id, view),
+      onReplyBlip: (id) => handleReplyBlipRef.current(id),
+    });
     waveViewRef.current = wv;
     wv.setRoot(rootBlipId);
     host.appendChild(wv.getRootContainer());
     onWaveViewReady?.(wv);
 
     return () => {
-      // Clean up timers & editors on unmount
+      // Clean up timers, editors, providers, and Yjs doc on unmount
       saveTimeoutsRef.current.forEach((t) => clearTimeout(t));
       saveTimeoutsRef.current.clear();
       activeHostsRef.current.forEach((h) => {
         try { h.unmount(); } catch {}
       });
       activeHostsRef.current.clear();
+      activeProvidersRef.current.forEach((p) => {
+        try { p.destroy(); } catch {}
+      });
+      activeProvidersRef.current.clear();
+      awareness.destroy();
+      topicDoc.destroy();
+      awarenessRef.current = null;
+      topicDocRef.current = null;
 
       const rc = wv.getRootContainer();
       if (rc.parentNode) rc.parentNode.removeChild(rc);
@@ -265,7 +415,7 @@ export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
       waveViewRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rootBlipId, stableLookup]);
+  }, [rootBlipId]);
 
   if (!FEATURES.RIZZOMA_NATIVE_RENDER) {
     return null;
@@ -273,30 +423,44 @@ export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
 
   return (
     <>
-      <div className="rizzoma-native-toolbar">
-        <button
-          className={`topic-tb-btn ${isEditing ? 'active primary' : ''}`}
-          type="button"
-          onClick={handleToggleEdit}
-          title={isEditing ? 'Done editing (changes auto-saved)' : 'Edit topic content'}
-        >
-          {isEditing ? 'Done' : 'Edit'}
-        </button>
-        <button
-          className="rizzoma-native-toolbar-btn"
-          type="button"
-          onClick={() => setShowPlayback(true)}
-          title="Wave-level playback (timeline)"
-        >
-          ▷ Playback
-        </button>
-      </div>
+      {!hideToolbar && (
+        <div className="rizzoma-native-toolbar">
+          {canEdit && (
+            <>
+              <button
+                className={`topic-tb-btn ${isEditing ? 'active primary' : ''}`}
+                type="button"
+                onClick={handleToggleEdit}
+                title={isEditing ? 'Done editing (changes auto-saved)' : 'Edit topic content'}
+              >
+                {isEditing ? 'Done' : 'Edit'}
+              </button>
+              <button
+                className="rizzoma-native-toolbar-btn"
+                type="button"
+                onClick={() => void handleCreateChild(rootBlipId)}
+                title="Write a reply under this topic"
+              >
+                + Reply
+              </button>
+            </>
+          )}
+          <button
+            className="rizzoma-native-toolbar-btn"
+            type="button"
+            onClick={() => setShowPlayback(true)}
+            title="Wave-level playback (timeline)"
+          >
+            ▷ Playback
+          </button>
+        </div>
+      )}
       <div ref={hostRef} className={className ?? 'rizzoma-native-wave-host'} />
       {showPlayback && (
         <WavePlaybackModal
           waveId={rootBlipId}
-          topicTitle="Wave playback"
-          blips={[]}
+          topicTitle={topicTitle}
+          blips={blips}
           onClose={() => setShowPlayback(false)}
         />
       )}

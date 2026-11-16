@@ -12,7 +12,17 @@ export async function collaborationProjectionHeaders(
   generation = 0,
 ): Promise<Record<string, string> | undefined> {
   if (!doc) return undefined;
-  const encodedState = Y.encodeStateAsUpdate(doc);
+  // Normalize through a fresh GC-enabled Y.Doc so deleted items retained by
+  // client-side Y.UndoManager collapse to the same GC structs as the server's
+  // headless Y.Doc cache.
+  const canonicalDoc = new Y.Doc();
+  let encodedState: Uint8Array;
+  try {
+    Y.applyUpdate(canonicalDoc, Y.encodeStateAsUpdate(doc));
+    encodedState = Y.encodeStateAsUpdate(canonicalDoc);
+  } finally {
+    canonicalDoc.destroy();
+  }
   // Copy into the active browser realm. Besides guaranteeing an exact-sized
   // buffer, this keeps jsdom/WebView implementations with strict BufferSource
   // brand checks from rejecting a Uint8Array created by the Yjs module realm.

@@ -38,10 +38,10 @@ export const FEATURES = {
   // Track G: Native fractal-render port (replace React/TipTap hybrid for the
   // parent-of-blips render layer with a direct TS port of original Rizzoma's
   // content-array + linear-walk model). See docs/NATIVE_RENDER_PORT_PLAN.md.
-  // Off by default; opt in via FEAT_RIZZOMA_NATIVE_RENDER=1. Phase-by-phase
-  // rollout — phases 1..4 leave both paths side-by-side; phase 5 deletes
-  // the React path. FEAT_ALL does NOT enable this.
-  RIZZOMA_NATIVE_RENDER: env['FEAT_RIZZOMA_NATIVE_RENDER'] === '1',
+  // Capability enabled by default (`!== '0'`); RizzomaTopicDetail keeps
+  // `?render=native` / `localStorage.rizzoma_render_mode === 'native'` opt-in
+  // until Milestone 2 browser verification completes.
+  RIZZOMA_NATIVE_RENDER: env['FEAT_RIZZOMA_NATIVE_RENDER'] !== '0',
 } as const;
 
 // Helper to check if any feature is enabled

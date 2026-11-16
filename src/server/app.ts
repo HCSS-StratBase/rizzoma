@@ -114,6 +114,11 @@ app.use('/api/tasks', tasksRouter);
 const staticDir = path.resolve(process.cwd(), 'dist', 'client');
 
 if (process.env['NODE_ENV'] === 'production') {
+  app.use('/gadgets/apps', (_req, res, next) => {
+    // Sandboxed srcdoc gadget iframes run with opaque origin `null` and load /gadgets/apps/app-shell.js
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    next();
+  });
   app.use(express.static(staticDir));
 }
 

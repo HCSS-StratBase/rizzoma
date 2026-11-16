@@ -7,25 +7,42 @@ type PollOption = { id: string; label: string; votes: number };
 const DEFAULT_POLL_LABELS = ['Yes', 'No', 'Maybe'];
 const fallbackPollLabel = (idx: number) => DEFAULT_POLL_LABELS[idx] || `Option ${idx + 1}`;
 
+const normalizePollOptions = (raw: unknown): PollOption[] => {
+  let list: unknown[] = [];
+  if (Array.isArray(raw)) {
+    list = raw;
+  } else if (typeof raw === 'string') {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (Array.isArray(parsed)) list = parsed;
+    } catch {
+      return [];
+    }
+  }
+
+  return list
+    .map((option: any, idx: number) => {
+      if (typeof option === 'string') {
+        return { id: `opt-${idx + 1}`, label: option || fallbackPollLabel(idx), votes: 0 };
+      }
+      if (!option || typeof option !== 'object') {
+        return { id: `opt-${idx + 1}`, label: '', votes: 0 };
+      }
+      return {
+        id: option.id ?? `opt-${idx + 1}`,
+        label: option.label || fallbackPollLabel(idx),
+        votes: Number.isFinite(Number(option.votes ?? 0)) ? Number(option.votes ?? 0) : 0,
+      };
+    })
+    .filter((option: PollOption) => option.label);
+};
+
 export function PollGadgetView(props: any) {
   const { node, updateAttributes, selected, editor } = props;
   const { question, options } = node.attrs;
   const isEditable = editor.isEditable;
 
-  const parsedOptions: PollOption[] = Array.isArray(options) 
-    ? options.map((option: any, idx: number) => {
-        if (typeof option === 'string') {
-          return { id: `opt-${idx + 1}`, label: option || fallbackPollLabel(idx), votes: 0 };
-        }
-        return {
-          id: option?.id ?? `opt-${idx + 1}`,
-          label: option?.label || fallbackPollLabel(idx),
-          votes: Number(option?.votes ?? 0),
-        };
-      }).filter((option: PollOption) => option.label)
-    : typeof options === 'string' 
-      ? JSON.parse(options) 
-      : [];
+  const parsedOptions: PollOption[] = normalizePollOptions(options);
 
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
 
@@ -198,7 +215,6 @@ export function PollGadgetView(props: any) {
                     {isEditable && hoveredOption === option.id ? (
                        <input 
                         value={option.label}
-                        autoFocus
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => handleLabelChange(option.id, e.target.value)}
                         style={{

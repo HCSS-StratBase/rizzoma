@@ -54,7 +54,6 @@ export const makeTipTapFactory = (opts: TipTapAdapterOptions): BlipEditorFactory
       content: initialHtml,
       extensions: opts.extensions(opts.extensionOptions),
       editorProps: opts.editorProps,
-      autofocus: 'end',
       onUpdate: opts.onUpdate,
     });
 
