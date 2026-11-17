@@ -1,10 +1,19 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { NodeViewWrapper } from '@tiptap/react';
-import { Badge, Box, Group, Text } from '@mantine/core';
+import { Badge, Box, Button, Group, Text } from '@mantine/core';
 import { LayoutDashboard } from 'lucide-react';
 import { describeSandboxedApp } from '../../../gadgets/apps/runtime';
 import { getAppManifest } from '../../../gadgets/apps/catalog';
 import { normalizeAppFrameAttrs } from '../../../gadgets/security';
+
+/**
+ * How long a gadget frame gets to complete its first host handshake. The
+ * original Rizzoma showed a loading state and then an error message with a
+ * retry button (`.gadget-loading` / `.gadget-error` in static/css/gadget.css)
+ * instead of an empty box; a frame that is blocked (CSP, CORS, CORP, 404) never
+ * runs its script and so never messages the host.
+ */
+export const GADGET_START_TIMEOUT_MS = 8_000;
 
 function parseAppData(data: unknown) {
   if (data && typeof data === 'object' && !Array.isArray(data)) {
@@ -50,6 +59,8 @@ function summarizeAppData(raw: unknown) {
 export function SandboxAppGadgetView(props: any) {
   const { node, selected, editor, getPos } = props;
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [phase, setPhase] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const [attempt, setAttempt] = useState(0);
   const manifest = useMemo(() => getAppManifest(node.attrs.appId), [node.attrs.appId]);
   const safeFrame = useMemo(() => normalizeAppFrameAttrs(node.attrs), [node.attrs]);
   const sandbox = manifest && safeFrame ? describeSandboxedApp(manifest) : null;
@@ -78,6 +89,8 @@ export function SandboxAppGadgetView(props: any) {
       if (event.source !== iframeRef.current?.contentWindow) return;
       const payload = event.data;
       if (!payload || typeof payload !== 'object' || payload.scope !== 'rizzoma-gadget') return;
+      // Any authenticated message proves the frame's script is running.
+      setPhase('ready');
 
       const reply = (response: Record<string, unknown>) => {
         iframeRef.current?.contentWindow?.postMessage(
@@ -119,6 +132,18 @@ export function SandboxAppGadgetView(props: any) {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [appData, editor, getPos, node.attrs, safeFrame, sandbox]);
+
+  // Keyed on primitives only: `sandbox` is a fresh object every render and would
+  // restart the watchdog (and reset a ready frame to "loading") on each update.
+  const frameSrc = safeFrame && sandbox ? safeFrame.src : null;
+  useEffect(() => {
+    if (!frameSrc) return;
+    setPhase('loading');
+    const timer = window.setTimeout(() => {
+      setPhase((current) => (current === 'ready' ? current : 'failed'));
+    }, GADGET_START_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [attempt, frameSrc]);
 
   useEffect(() => {
     if (!safeFrame || !sandbox) return;
@@ -190,8 +215,18 @@ export function SandboxAppGadgetView(props: any) {
             {summary}
           </Text>
 
-          <Box px="sm" pb="sm">
+          {phase === 'failed' ? (
+            <Box px="sm" pb="sm" data-testid="gadget-app-error" role="alert">
+              <Group justify="space-between" p="md" style={{ borderRadius: 16, background: 'rgba(254,226,226,0.7)' }}>
+                <Text size="sm" c="#7f1d1d">This gadget did not start. Its page could not be loaded or run.</Text>
+                <Button size="xs" variant="light" color="red" onClick={() => setAttempt((n) => n + 1)}>Retry</Button>
+              </Group>
+            </Box>
+          ) : null}
+
+          <Box px="sm" pb="sm" style={phase === 'failed' ? { display: 'none' } : undefined}>
             <iframe
+              key={attempt}
               ref={iframeRef}
               src={safeFrame.src}
               title={safeFrame.title}

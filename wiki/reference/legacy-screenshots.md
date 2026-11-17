@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: feature/native-fractal-port
-source_commit: 2a896d17
+source_branch: fix/list-font-and-kanban-gadget
+source_commit: c9e37545
 generated: true
 ---
 

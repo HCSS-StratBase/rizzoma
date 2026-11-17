@@ -105,6 +105,18 @@ with no list structure at all.)*
 - Fold/unfold **never destroys the subtree** — draft text, scroll and focus survive a
   collapse/expand cycle.
 
+### 7b. Body text has ONE size, in every blip, in read and edit mode [BOTH]
+
+Original: every text run is `default-text`, 14px normal (`original-rizzoma-src/src/static/css/blip.css:860`),
+family arial. In our app paragraphs, bullets, numbered items, nested items and bare `<li>` text are all
+**14px / 22px line-height / Arial**, on the React path and on `?render=native`, in the root blip and in child
+blips, read and edit. The three values live ONCE, as `--blip-body-font-size`, `--blip-body-line-height` and
+`--blip-body-font-family` on `:root` in `src/client/RizzomaApp.css`. Never put a literal font-size or
+line-height on a blip body-text rule (`p`, `li`, `.blip-text`, any `.ProseMirror`): use the variables.
+Regression of 2026-11-17: list items 15px vs paragraphs 14px, and editors in the app shell's `-apple-system`
+stack instead of Arial. Guards: `src/tests/client.blipBodyTypography.test.ts`, `npm run test:body-text`.
+Details: [`wiki/subsystems/gadget-apps-and-blip-typography.md`](../wiki/subsystems/gadget-apps-and-blip-typography.md).
+
 ### 7a. 🟥 Bullets, the avatar, and the top-line — match old rizzoma.com EXACTLY [NEW/[BOTH]]
 
 The one and only bullet on a line comes from the blip body's `<ul><li>`. The blip container

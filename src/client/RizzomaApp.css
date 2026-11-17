@@ -1,3 +1,19 @@
+/*
+ * ONE body-text rule for every blip (read, edit, root, nested, native render).
+ * Original Rizzoma: every text run carries class `default-text` = 14px normal
+ * (original-rizzoma-src/src/static/css/blip.css:860-863, assigned in
+ * editor/renderer.coffee:259 and :1046), font-family arial (page.css:16-17).
+ * Never set a literal font-size/line-height/font-family on blip body text
+ * (p, li, li p, .blip-text, .ProseMirror): use these variables, so list text
+ * and paragraph text cannot drift apart again (they were 15px vs 14px, and the
+ * edit surface fell back to the app's -apple-system stack instead of Arial).
+ */
+:root {
+  --blip-body-font-family: Arial, Helvetica, sans-serif;
+  --blip-body-font-size: 14px;
+  --blip-body-line-height: 22px;
+}
+
 /* Reset and base styles */
 * {
   box-sizing: border-box;

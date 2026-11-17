@@ -545,9 +545,9 @@
 
 .topic-content-edit .ProseMirror p {
   margin: 9px 0 0 0;
-  font-size: 14px;
+  font-size: var(--blip-body-font-size);
   color: #294158;
-  line-height: 1.58;
+  line-height: var(--blip-body-line-height);
 }
 
 .topic-content-edit .ProseMirror ul {
@@ -758,9 +758,9 @@
 .topic-content-view p {
   margin: 4px 0 0 0;
   padding: 0;
-  font-size: 14px;
+  font-size: var(--blip-body-font-size);
   color: #253d53;
-  line-height: 1.55;
+  line-height: var(--blip-body-line-height);
 }
 
 .topic-content-view p:first-child {
@@ -781,7 +781,8 @@
 
 .topic-content-view li {
   margin: 5px 0;
-  line-height: 1.55;
+  font-size: var(--blip-body-font-size);
+  line-height: var(--blip-body-line-height);
 }
 
 .topic-content-view li > p {
@@ -1730,7 +1731,7 @@
 
 .subblip-focus-shell .blip-text {
   padding: 0;
-  line-height: 1.58;
+  line-height: var(--blip-body-line-height);
   background: transparent;
   border-radius: 0;
   border: 0;
