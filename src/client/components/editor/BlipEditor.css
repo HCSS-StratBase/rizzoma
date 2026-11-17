@@ -16,16 +16,16 @@
 .blip-editor .ProseMirror {
   outline: none;
   min-height: 1.5rem;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 13px;
-  line-height: 22px;
+  font-family: var(--blip-body-font-family);
+  font-size: var(--blip-body-font-size);
+  line-height: var(--blip-body-line-height);
   color: #000;
 }
 
 .blip-editor .ProseMirror p {
   margin: 0;
   padding: 0;
-  line-height: 22px;
+  line-height: var(--blip-body-line-height);
 }
 
 .blip-editor .ProseMirror h1 {

@@ -147,9 +147,9 @@
 }
 
 .blip-text {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 13px;
-  line-height: 22px;
+  font-family: var(--blip-body-font-family);
+  font-size: var(--blip-body-font-size);
+  line-height: var(--blip-body-line-height);
   color: #000;
   padding: 0 4px;
   border-radius: 0;
@@ -671,6 +671,18 @@
   border-radius: 0 0 4px 4px;
 }
 
+/* Edit surface = the SAME body text as read mode, in every editor. Without
+   this the editors inherited the app shell's -apple-system stack (measured
+   2026-11-17: read = Arial, edit = -apple-system) and the 15px root size. */
+.blip-editor-container .ProseMirror,
+.tiptap.ProseMirror,
+.topic-content-edit .ProseMirror,
+.blip-editor .ProseMirror {
+  font-family: var(--blip-body-font-family);
+  font-size: var(--blip-body-font-size);
+  line-height: var(--blip-body-line-height);
+}
+
 .blip-editor-container .ProseMirror:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
@@ -1092,7 +1104,9 @@
 }
 
 .root-blip .blip-text {
-  font-size: 15px;
+  /* font-size deliberately NOT set here: it was 15px and made every nested blip
+     inside the root (and bare <li> text) 1px larger than the 14px paragraphs.
+     Body size comes from --blip-body-font-size (RizzomaApp.css). */
   padding: 8px;
 }
 

@@ -31,9 +31,18 @@ import gadgetsRouter from './routes/gadgets.js';
 import mentionsRouter from './routes/mentions.js';
 import tasksRouter from './routes/tasks.js';
 import { sessionCredentialGuard } from './middleware/sessionCredentials.js';
+import { GADGET_APPS_MOUNT, gadgetAppsRouter } from './middleware/gadgetApps.js';
 
 const app = express();
 const isProd = process.env['NODE_ENV'] === 'production';
+
+// Sandboxed gadget apps run in opaque-origin iframes. They must be mounted BEFORE
+// helmet and cors, which would otherwise reject or block their requests (CORS 500
+// for `Origin: null`, CORP same-origin, no inline script): see middleware/gadgetApps.ts.
+// Development serves /gadgets through Vite (vite.config.ts), so this is production only.
+if (isProd) {
+  app.use(GADGET_APPS_MOUNT, gadgetAppsRouter(path.resolve(process.cwd(), 'dist', 'client', 'gadgets', 'apps')));
+}
 
 // Middleware
 app.use(helmet({
@@ -114,11 +123,6 @@ app.use('/api/tasks', tasksRouter);
 const staticDir = path.resolve(process.cwd(), 'dist', 'client');
 
 if (process.env['NODE_ENV'] === 'production') {
-  app.use('/gadgets/apps', (_req, res, next) => {
-    // Sandboxed srcdoc gadget iframes run with opaque origin `null` and load /gadgets/apps/app-shell.js
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    next();
-  });
   app.use(express.static(staticDir));
 }
 
