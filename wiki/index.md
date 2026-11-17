@@ -42,6 +42,7 @@ source_commit: a4d4d583
 | [`subsystems/server-collab-and-storage.md`](subsystems/server-collab-and-storage.md) | `□` | `2026-11-06` | Express 5 backend (`src/server/app.ts`), CouchDB Mango views & 13 indexes (`src/server/lib/couch.ts`), Socket.IO + Y.js CRDT state cache (`socket.ts`, `yjsDocCache.ts`, `editorPresence.ts`), OAuth/SAML auth, unread watermarks, and ClamAV upload scanning. |
 
 | [`subsystems/legacy-visual-parity.md`](subsystems/legacy-visual-parity.md) | `□` / `▷` | `2026-11-07` | The 21 commits of 6–7 Nov: legacy chrome, blip edit mode and Done bar, TipsBox, pixel-comparison scripts. Post-change gate result not yet filed. |
+| [`subsystems/gadget-apps-and-blip-typography.md`](subsystems/gadget-apps-and-blip-typography.md) | `□` / `▷` | `2026-11-17` | Why the Kanban gadget was an empty white box in production (CSP, CORP and CORS on an opaque-origin iframe), the fix, and why list text was 15px against 14px paragraphs (one body-text rule now, measured before and after on React and native). |
 | [`reference-doc-catalog.md`](reference-doc-catalog.md) | `□` | `2026-11-07` | Every non-spine doc (features contract, QUICKSTART, VPS deployment, toolbar parity, projection ledger, worklogs, the superseded Drive repo) and how far to trust it. |
 
 ---

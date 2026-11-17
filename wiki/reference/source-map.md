@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: feature/native-fractal-port
-source_commit: 2a896d17
+source_branch: fix/list-font-and-kanban-gadget
+source_commit: c9e37545
 generated: true
 ---
 
@@ -40,7 +40,7 @@ graph LR
     P --> K["code"]
 ```
 
-## Client components (130)
+## Client components (121)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -54,19 +54,20 @@ graph LR
 | `src/client/components/Editor.tsx` | 208 | (no header comment; exports Editor) |
 | `src/client/components/EditorAdmin.tsx` | 83 | (no header comment; exports EditorAdmin) |
 | `src/client/components/EditorSearch.tsx` | 174 | (no header comment; exports EditorSearch) |
+| `src/client/components/ErrorBoundary.tsx` | 77 | (no header comment; exports ErrorBoundaryProps) |
 | `src/client/components/ExportModal.css` | 199 | — |
 | `src/client/components/ExportModal.tsx` | 177 | (no header comment; exports ExportModal) |
 | `src/client/components/FollowTheGreen.css` | 66 | — |
 | `src/client/components/FollowTheGreen.tsx` | 69 | (no header comment; exports FollowTheGreen) |
-| `src/client/components/GadgetPalette.css` | 260 | — |
+| `src/client/components/GadgetPalette.css` | 264 | — |
 | `src/client/components/GadgetPalette.tsx` | 180 | (no header comment; exports GadgetPalette) |
 | `src/client/components/GreenNavigation.tsx` | 43 | (no header comment; exports GreenNavigation) |
-| `src/client/components/InviteModal.css` | 191 | InviteModal.css - Authentic Legacy Rizzoma Member Management Popup matching 034-manage-members.png |
-| `src/client/components/InviteModal.tsx` | 243 | (no header comment; exports InviteModal) |
-| `src/client/components/InviteModal.tsx` | 243 | (no header comment; exports InviteModal) |
-| `src/client/components/InviteModal.tsx` | 243 | (no header comment; exports InviteModal) |
+| `src/client/components/InviteModal.css` | 197 | InviteModal.css - Authentic Legacy Rizzoma Member Management Popup matching 034-manage-members.png |
+| `src/client/components/InviteModal.tsx` | 249 | (no header comment; exports InviteModal) |
 | `src/client/components/MentionsList.css` | 134 | — |
 | `src/client/components/MentionsList.tsx` | 183 | (no header comment; exports MentionsList) |
+| `src/client/components/MindMapView.css` | 146 | — |
+| `src/client/components/MindMapView.tsx` | 191 | (no header comment; exports MindMapView) |
 | `src/client/components/NavigationPanel.css` | 195 | NavigationPanel.css - Authentic Legacy Rizzoma Navigation Rail |
 | `src/client/components/NavigationPanel.tsx` | 104 | (no header comment; exports NavigationPanel) |
 | `src/client/components/PWAPrompts.css` | 100 | — |
@@ -77,24 +78,16 @@ graph LR
 | `src/client/components/PublicTopicsPanel.tsx` | 104 | (no header comment; exports PublicTopicsPanel) |
 | `src/client/components/RebuildPanel.tsx` | 133 | (no header comment; exports RebuildPanel) |
 | `src/client/components/RightToolsPanel.css` | 468 | RightToolsPanel.css - Authentic Legacy Rizzoma Right Tools Panel |
-| `src/client/components/RightToolsPanel.css` | 468 | RightToolsPanel.css - Authentic Legacy Rizzoma Right Tools Panel |
-| `src/client/components/RightToolsPanel.css` | 468 | RightToolsPanel.css - Authentic Legacy Rizzoma Right Tools Panel |
-| `src/client/components/RightToolsPanel.tsx` | 504 | Custom events for insert shortcuts - these are dispatched globally |
-| `src/client/components/RightToolsPanel.tsx` | 504 | Custom events for insert shortcuts - these are dispatched globally |
-| `src/client/components/RightToolsPanel.tsx` | 504 | Custom events for insert shortcuts - these are dispatched globally |
+| `src/client/components/RightToolsPanel.tsx` | 541 | Custom events for insert shortcuts - these are dispatched globally |
 | `src/client/components/RizzomaLanding.css` | 360 | — |
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
 | `src/client/components/RizzomaLayout.css` | 423 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 567 | (no header comment; exports RizzomaLayout) |
-| `src/client/components/RizzomaTopicDetail.css` | 1755 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.css` | 1755 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.css` | 1755 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.tsx` | 2144 | (no header comment; exports shouldThrottleSocketTopicLoad) |
+| `src/client/components/RizzomaTopicDetail.css` | 1802 | RizzomaTopicDetail - Matching real Rizzoma |
+| `src/client/components/RizzomaTopicDetail.tsx` | 2334 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 225 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 353 | (no header comment; exports RizzomaTopicsList) |
 | `src/client/components/ShareModal.css` | 175 | ShareModal.css - Authentic Legacy Rizzoma Share Popover Style |
-| `src/client/components/ShareModal.tsx` | 238 | (no header comment; exports ShareModal) |
-| `src/client/components/ShareModal.tsx` | 238 | (no header comment; exports ShareModal) |
 | `src/client/components/ShareModal.tsx` | 238 | (no header comment; exports ShareModal) |
 | `src/client/components/ShellAuthControls.css` | 197 | — |
 | `src/client/components/ShellAuthControls.tsx` | 184 | (no header comment; exports ShellAuthControls) |
@@ -113,19 +106,17 @@ graph LR
 | `src/client/components/UserPresence.tsx` | 56 | (no header comment; exports UserPresence) |
 | `src/client/components/WavePlaybackModal.css` | 332 | WavePlaybackModal.css - Authentic In-Place Wave Playback matching 069-playback-ui.png |
 | `src/client/components/WavePlaybackModal.tsx` | 507 | (no header comment; exports WavePlaybackModal) |
-| `src/client/components/WavePlaybackModal.tsx` | 507 | (no header comment; exports WavePlaybackModal) |
-| `src/client/components/WavePlaybackModal.tsx` | 507 | (no header comment; exports WavePlaybackModal) |
 | `src/client/components/WaveView.tsx` | 361 | (no header comment; exports WaveView) |
 | `src/client/components/WavesList.tsx` | 79 | (no header comment; exports WavesList) |
 | `src/client/components/blip/ActiveBlipContext.tsx` | 77 | Single-active-blip invariant (BLB §18b2 three-state model): a topic shows at |
 | `src/client/components/blip/BlipHistoryModal.css` | 475 | BlipHistoryModal - Timeline Playback UI |
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
-| `src/client/components/blip/BlipMenu.css` | 672 | Authentic Legacy Rizzoma Blip Menu Styles |
-| `src/client/components/blip/BlipMenu.tsx` | 871 | (no header comment; exports BlipMenu) |
-| `src/client/components/blip/InlineHtmlRenderer.tsx` | 561 | (no header comment; exports InlineHtmlRenderOptions) |
+| `src/client/components/blip/BlipMenu.css` | 676 | Authentic Legacy Rizzoma Blip Menu Styles |
+| `src/client/components/blip/BlipMenu.tsx` | 887 | (no header comment; exports BlipMenu) |
+| `src/client/components/blip/InlineHtmlRenderer.tsx` | 622 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
-| `src/client/components/blip/RizzomaBlip.css` | 1792 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 3052 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/RizzomaBlip.css` | 1910 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.tsx` | 3136 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 105 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 73 | (no header comment; exports LocationLike) |
@@ -134,7 +125,7 @@ graph LR
 | `src/client/components/editor/BlipEditor.tsx` | 105 | (no header comment; exports BlipEditor) |
 | `src/client/components/editor/CollaborativeCursors.css` | 171 | Collaborative Cursors Styling |
 | `src/client/components/editor/CollaborativeCursors.tsx` | 223 | (no header comment; exports CursorUser) |
-| `src/client/components/editor/CollaborativeProvider.ts` | 584 | (no header comment; exports SocketIOProvider) |
+| `src/client/components/editor/CollaborativeProvider.ts` | 592 | (no header comment; exports SocketIOProvider) |
 | `src/client/components/editor/EditableBlipContent.tsx` | 68 | (no header comment; exports EditableBlipContent) |
 | `src/client/components/editor/EditorConfig.tsx` | 283 | (no header comment; exports createYjsDocument) |
 | `src/client/components/editor/EditorToolbar.css` | 239 | — |
@@ -147,7 +138,7 @@ graph LR
 | `src/client/components/editor/MentionList.css` | 92 | — |
 | `src/client/components/editor/MentionList.tsx` | 77 | (no header comment; exports MentionListProps) |
 | `src/client/components/editor/YjsDocumentManager.ts` | 98 | (no header comment; exports YjsDocumentManager) |
-| `src/client/components/editor/blbEditorInvariant.ts` | 212 | (no header comment; exports BlbEditorDocument) |
+| `src/client/components/editor/blbEditorInvariant.ts` | 221 | (no header comment; exports BlbEditorDocument) |
 | `src/client/components/editor/collaborationIdentity.ts` | 86 | (no header comment; exports CollaborationUser) |
 | `src/client/components/editor/extensions/BlipKeyboardShortcuts.ts` | 253 | (no header comment; exports BlipKeyboardShortcutsOptions) |
 | `src/client/components/editor/extensions/BlipThread.css` | 81 | BlipThread inline marker styles — authentic original Rizzoma speech bubble |
@@ -157,8 +148,8 @@ graph LR
 | `src/client/components/editor/extensions/GadgetNodes.ts` | 531 | (no header comment; exports createDefaultPollOptions) |
 | `src/client/components/editor/extensions/ImageGadget.ts` | 83 | (no header comment; exports ImageOptions) |
 | `src/client/components/editor/extensions/InlineCommentsVisibility.ts` | 39 | (no header comment; exports InlineCommentsVisibilityOptions) |
-| `src/client/components/editor/extensions/PollGadgetView.tsx` | 269 | (no header comment; exports PollGadgetView) |
-| `src/client/components/editor/extensions/SandboxAppGadgetView.tsx` | 215 | (no header comment; exports SandboxAppGadgetView) |
+| `src/client/components/editor/extensions/PollGadgetView.tsx` | 285 | (no header comment; exports PollGadgetView) |
+| `src/client/components/editor/extensions/SandboxAppGadgetView.tsx` | 250 | (no header comment; exports GADGET_START_TIMEOUT_MS) |
 | `src/client/components/editor/extensions/TagNode.tsx` | 159 | Mock tags – in production these would be extracted from topic content |
 | `src/client/components/editor/extensions/TaskWidget.css` | 46 | Task widget — turquoise pill like original Rizzoma \|☐ Name DD Mon\| |
 | `src/client/components/editor/extensions/TaskWidget.tsx` | 605 | (no header comment; exports TaskCompletion) |
@@ -167,13 +158,13 @@ graph LR
 | `src/client/components/editor/inlineCommentDecorations.ts` | 56 | (no header comment; exports CommentGroup) |
 | `src/client/components/editor/inlineCommentsVisibility.ts` | 142 | (no header comment; exports getInlineCommentsVisibility) |
 | `src/client/components/editor/useAuthenticatedCollaborationUser.ts` | 20 | Resolve the production auth context into the identity placed on Yjs |
-| `src/client/components/editor/useCollaboration.ts` | 70 | (no header comment; exports useCollaboration) |
+| `src/client/components/editor/useCollaboration.ts` | 76 | (no header comment; exports useCollaboration) |
 | `src/client/components/mobile/BottomSheet.css` | 217 | Bottom Sheet Styles |
 | `src/client/components/mobile/BottomSheet.tsx` | 239 | Whether the bottom sheet is open |
 | `src/client/components/mobile/BottomSheetMenu.css` | 174 | Bottom Sheet Menu Styles |
 | `src/client/components/mobile/BottomSheetMenu.tsx` | 280 | Unique identifier for the item |
-| `src/client/components/native/NativeWaveView.css` | 199 | Native fractal-render — minimum viable CSS for the new render path. |
-| `src/client/components/native/NativeWaveView.tsx` | 308 | Native fractal-render — React wrapper for WaveView. |
+| `src/client/components/native/NativeWaveView.css` | 205 | Native fractal-render — minimum viable CSS for the new render path. |
+| `src/client/components/native/NativeWaveView.tsx` | 472 | Native fractal-render — React wrapper for WaveView. |
 
 ## Client native render port (20)
 
@@ -190,21 +181,21 @@ graph LR
 | `src/client/native/awareness.ts` | 148 | Native fractal-render — Awareness wrapper. |
 | `src/client/native/blip-editor-host.ts` | 222 | Native fractal-render — BlipEditorHost. |
 | `src/client/native/blip-thread.ts` | 233 | Native fractal-render — BlipThread. |
-| `src/client/native/blip-view.ts` | 167 | Native fractal-render — BlipView (Phase 2 skeleton). |
+| `src/client/native/blip-view.ts` | 220 | Native fractal-render — BlipView (Phase 2 skeleton). |
 | `src/client/native/content-lookup.ts` | 82 | Native fractal-render — content lookup builder. |
 | `src/client/native/parser.ts` | 284 | Native fractal-render — HTML → ContentArray parser. |
 | `src/client/native/renderer.ts` | 234 | Native fractal-render — Renderer. |
 | `src/client/native/serializer.ts` | 210 | Native fractal-render — ContentArray → HTML serializer. |
-| `src/client/native/tiptap-adapter.ts` | 70 | Native fractal-render — BlipEditorAdapter that delegates to TipTap. |
+| `src/client/native/tiptap-adapter.ts` | 69 | Native fractal-render — BlipEditorAdapter that delegates to TipTap. |
 | `src/client/native/types.ts` | 98 | Native fractal-render — content array type definitions. |
-| `src/client/native/wave-view.ts` | 249 | Native fractal-render — WaveView. |
+| `src/client/native/wave-view.ts` | 259 | Native fractal-render — WaveView. |
 | `src/client/native/yjs-binding.ts` | 202 | Native fractal-render — Y.js CRDT binding for the ContentArray model. |
 
-## Client other (65)
+## Client other (67)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
-| `src/client/RizzomaApp.css` | 100 | Reset and base styles |
+| `src/client/RizzomaApp.css` | 116 | ONE body-text rule for every blip (read, edit, root, nested, native render). |
 | `src/client/RizzomaApp.tsx` | 95 | (no header comment; exports RizzomaApp) |
 | `src/client/TestEditorApp.tsx` | 95 | (no header comment; exports TestEditorApp) |
 | `src/client/contexts/MobileContext.tsx` | 129 | (no header comment; exports MobileContextValue) |
@@ -222,7 +213,7 @@ graph LR
 | `src/client/gadgets/registry.ts` | 140 | (no header comment; exports GADGET_REGISTRY) |
 | `src/client/gadgets/security.ts` | 69 | (no header comment; exports EmbedProvider) |
 | `src/client/gadgets/types.ts` | 76 | (no header comment; exports GadgetType) |
-| `src/client/hooks/useAuth.ts` | 210 | (no header comment; exports User) |
+| `src/client/hooks/useAuth.ts` | 212 | (no header comment; exports User) |
 | `src/client/hooks/useChangeTracking.ts` | 138 | (no header comment; exports useChangeTracking) |
 | `src/client/hooks/useCollaborationPending.ts` | 37 | Live count used by the offline shell warning. |
 | `src/client/hooks/useMediaQuery.ts` | 215 | Standard breakpoint values matching breakpoints.css |
@@ -242,23 +233,25 @@ graph LR
 | `src/client/lib/blipPagination.ts` | 35 | Collect every CouchDB bookmark page without silently losing descendants. |
 | `src/client/lib/capacitor-native.ts` | 254 | Capacitor native-shell glue for the Rizzoma Android / iOS apps. |
 | `src/client/lib/collaborationPending.ts` | 73 | In-memory accounting for Yjs updates that the collaboration server has not |
-| `src/client/lib/collaborationProjection.ts` | 29 | (no header comment; exports COLLABORATION_STATE_DIGEST_HEADER) |
+| `src/client/lib/collaborationProjection.ts` | 39 | (no header comment; exports COLLABORATION_STATE_DIGEST_HEADER) |
 | `src/client/lib/editorPersistence.ts` | 42 | (no header comment; exports REMOTE_EDITOR_UPDATE) |
 | `src/client/lib/format.ts` | 9 | (no header comment; exports formatTimestamp) |
 | `src/client/lib/fragmentSecrets.ts` | 165 | (no header comment; exports PENDING_INVITE_URL_KEY) |
 | `src/client/lib/getUserMediaAdapter.ts` | 359 | Modern getUserMedia adapter — TypeScript ES module. |
-| `src/client/lib/htmlDiff.ts` | 55 | Simple word-level diff for HTML content. |
+| `src/client/lib/htmlDiff.ts` | 67 | Simple word-level diff for HTML content. |
 | `src/client/lib/inlineChildHandoff.ts` | 18 | Decide the next step while a topic-root Ctrl+Enter child moves from the |
-| `src/client/lib/logout.ts` | 17 | Complete durable logout before changing local identity. A failed session |
+| `src/client/lib/inlineChildTypeahead.ts` | 172 | Ctrl+Enter type-ahead: keystrokes typed between Ctrl+Enter and the moment |
+| `src/client/lib/logout.ts` | 35 | Ask any active Service Worker to clear cached responses on sign-out. |
 | `src/client/lib/offlineQueue.ts` | 846 | Auth-bound offline mutation queue. |
 | `src/client/lib/performance.d.ts` | 9 | — |
 | `src/client/lib/performance.ts` | 60 | Performance monitoring utilities |
+| `src/client/lib/renderLatex.ts` | 89 | (no header comment; exports formatLatexToHtml) |
 | `src/client/lib/sanitizeRichHtml.ts` | 242 | (no header comment; exports isSafeRichUrl) |
 | `src/client/lib/sectionAttribution.ts` | 107 | Per-section author attribution for topic body blocks. |
 | `src/client/lib/socket.ts` | 290 | (no header comment; exports disconnectSocketForAuthTransition) |
 | `src/client/lib/topicExport.ts` | 184 | (no header comment; exports ExportBlip) |
 | `src/client/lib/upload.ts` | 97 | (no header comment; exports UploadResult) |
-| `src/client/main.tsx` | 441 | (no header comment; exports App) |
+| `src/client/main.tsx` | 444 | (no header comment; exports App) |
 | `src/client/rizzoma-main.tsx` | 7 | — |
 | `src/client/rizzoma.html` | 19 | — |
 | `src/client/settings.css` | 219 | settings.css - Authentic Rizzoma User Settings styling |
@@ -285,8 +278,8 @@ graph LR
 | `src/server/routes/mentions.ts` | 192 | Mentions Routes |
 | `src/server/routes/notifications.ts` | 309 | Notification Routes |
 | `src/server/routes/tasks.ts` | 287 | Tasks Routes |
-| `src/server/routes/topics.ts` | 851 | — |
-| `src/server/routes/uploads.ts` | 308 | (no header comment; exports uploadsRouter) |
+| `src/server/routes/topics.ts` | 873 | — |
+| `src/server/routes/uploads.ts` | 311 | (no header comment; exports uploadsRouter) |
 | `src/server/routes/waves.ts` | 1131 | — |
 
 ## Server lib (20)
@@ -314,11 +307,11 @@ graph LR
 | `src/server/lib/virusScan.ts` | 155 | Commands using clamd's `z` prefix are framed with one trailing NUL byte. |
 | `src/server/lib/yjsDocCache.ts` | 367 | — |
 
-## Server other (40)
+## Server other (41)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
-| `src/server/app.ts` | 209 | — |
+| `src/server/app.ts` | 218 | — |
 | `src/server/config.ts` | 25 | (no header comment; exports AppConfig) |
 | `src/server/couch_views/main/auth_by_user_id.js` | 20 | — |
 | `src/server/couch_views/main/blip.js` | 18 | — |
@@ -349,6 +342,7 @@ graph LR
 | `src/server/middleware/auth.ts` | 34 | Add user to request |
 | `src/server/middleware/csrf.ts` | 64 | Do not turn every anonymous page/API/asset request into a saved session. |
 | `src/server/middleware/error.ts` | 17 | ensure request id header is present on error paths |
+| `src/server/middleware/gadgetApps.ts` | 64 | Sandboxed gadget apps (Kanban, Planner, Focus, Notes) are static pages that |
 | `src/server/middleware/inviteRateLimit.ts` | 41 | (no header comment; exports inviteRateLimit) |
 | `src/server/middleware/noStore.ts` | 29 | Middleware that sets `Cache-Control: no-store` on the response. |
 | `src/server/middleware/requestId.ts` | 13 | attach to req and response header |
@@ -359,7 +353,7 @@ graph LR
 | `src/server/schemas/wave.ts` | 69 | (no header comment; exports CreateWaveSchema) |
 | `src/server/services/email.ts` | 435 | Email Notification Service |
 
-## Shared (11)
+## Shared (12)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -368,6 +362,7 @@ graph LR
 | `src/shared/constants/textFormatting.js` | 41 | (no header comment; exports TextLevelParams) |
 | `src/shared/constants/textFormatting.ts` | 59 | Text formatting constants from original Rizzoma |
 | `src/shared/featureFlags.ts` | 54 | Feature flags for progressive rollout of Rizzoma core features |
+| `src/shared/topicProjectionGuard.ts` | 44 | Guard against the blank-placeholder overwrite (incident 2026-11-16). |
 | `src/shared/types/blips.d.ts` | 13 | (no header comment; exports BlipHistoryEntry) |
 | `src/shared/types/blips.js` | 2 | # sourceMappingURL=blips.js.map |
 | `src/shared/types/blips.ts` | 21 | (no header comment; exports BlipHistoryEntry) |
@@ -389,18 +384,19 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (108)
+## Tests (117)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/tests/client.AnonymousTopicRoute.test.tsx` | 80 | — |
 | `src/tests/client.AuthPanelSecurity.test.tsx` | 202 | — |
 | `src/tests/client.BlipEditor.test.ts` | 114 | Warm the EditorConfig module once up-front with a generous timeout. |
-| `src/tests/client.BlipMenu.test.tsx` | 628 | — |
+| `src/tests/client.BlipMenu.test.tsx` | 620 | — |
 | `src/tests/client.EditorSearch.test.tsx` | 76 | — |
 | `src/tests/client.LazyBlipSlot.test.tsx` | 106 | — |
 | `src/tests/client.PresenceIndicator.test.tsx` | 63 | — |
 | `src/tests/client.RebuildPanel.test.tsx` | 98 | — |
+| `src/tests/client.RightToolsPanel.editMode.test.tsx` | 105 | — |
 | `src/tests/client.RightToolsPanel.followGreen.test.tsx` | 214 | — |
 | `src/tests/client.ShareModal.test.tsx` | 104 | — |
 | `src/tests/client.authCollaborationComponents.test.tsx` | 142 | — |
@@ -409,14 +405,15 @@ graph LR
 | `src/tests/client.authenticatedShellKey.test.tsx` | 134 | — |
 | `src/tests/client.blbContent.test.ts` | 124 | — |
 | `src/tests/client.blbEditorInvariant.test.ts` | 264 | — |
+| `src/tests/client.blipBodyTypography.test.ts` | 90 | Blip body text (paragraphs, list items, nested list items, .blip-text, every ProseMirror |
 | `src/tests/client.blipClipboardStore.test.ts` | 34 | — |
 | `src/tests/client.blipCreateResponse.test.ts` | 38 | — |
 | `src/tests/client.blipPagination.test.ts` | 25 | — |
 | `src/tests/client.capacitorNativeOAuth.test.ts` | 137 | — |
 | `src/tests/client.collaborationIdentity.test.ts` | 45 | — |
 | `src/tests/client.collaborationProjection.test.ts` | 47 | @vitest-environment node |
-| `src/tests/client.collaborativeProvider.test.ts` | 711 | — |
-| `src/tests/client.collapsePreferences.test.ts` | 63 | — |
+| `src/tests/client.collaborativeProvider.test.ts` | 725 | — |
+| `src/tests/client.collapsePreferences.test.ts` | 67 | — |
 | `src/tests/client.copyBlipLink.test.ts` | 35 | — |
 | `src/tests/client.editor.GadgetNodes.test.ts` | 149 | Access TipTap extension config via .config property |
 | `src/tests/client.editorPersistence.test.ts` | 68 | — |
@@ -429,14 +426,18 @@ graph LR
 | `src/tests/client.getUserMediaAdapter.test.ts` | 318 | — |
 | `src/tests/client.historyXss.test.tsx` | 63 | — |
 | `src/tests/client.inlineChildHandoff.test.ts` | 14 | — |
+| `src/tests/client.inlineChildTypeahead.test.ts` | 69 | @vitest-environment jsdom |
 | `src/tests/client.inlineCommentAnchoring.test.ts` | 94 | — |
 | `src/tests/client.inlineCommentsPopover.test.tsx` | 393 | — |
 | `src/tests/client.inlineCommentsVisibilityShortcuts.test.ts` | 21 | — |
 | `src/tests/client.inlineCommentsVisibilityStorage.test.ts` | 71 | — |
+| `src/tests/client.inlineHtmlNestedAnchor.test.tsx` | 82 | A tag row whose <li> holds a nested list: the shape a legacy topic body takes |
 | `src/tests/client.inlineHtmlTaskHydration.test.tsx` | 415 | — |
 | `src/tests/client.insertHandlers.test.ts` | 60 | Tests for features 24 (toolbar alignment CSS), 31 (smart space prefix), |
 | `src/tests/client.inviteDelivery.test.tsx` | 134 | — |
 | `src/tests/client.logoutSecurity.test.ts` | 34 | — |
+| `src/tests/client.milestone1Safety.test.tsx` | 87 | — |
+| `src/tests/client.milestone2Native.test.tsx` | 94 | — |
 | `src/tests/client.mobilePwa.test.tsx` | 346 | — |
 | `src/tests/client.mutationTransportInvariant.test.ts` | 36 | — |
 | `src/tests/client.nativeSchemeConfig.test.ts` | 17 | — |
@@ -445,10 +446,12 @@ graph LR
 | `src/tests/client.passwordResetBoot.test.tsx` | 94 | — |
 | `src/tests/client.referenceLists.test.tsx` | 94 | — |
 | `src/tests/client.richHtmlSanitizer.test.tsx` | 105 | — |
+| `src/tests/client.sandboxAppGadgetView.test.tsx` | 131 | — |
 | `src/tests/client.socketAuthIsolation.test.ts` | 206 | — |
 | `src/tests/client.socketSession.test.ts` | 107 | — |
 | `src/tests/client.taskWidgetDurability.test.ts` | 271 | — |
 | `src/tests/client.topicExport.test.ts` | 75 | — |
+| `src/tests/client.topicProjectionGuard.test.ts` | 53 | — |
 | `src/tests/client.topicRealtime.test.ts` | 22 | — |
 | `src/tests/client.uploadCancellation.test.ts` | 85 | — |
 | `src/tests/client.useWaveUnread.test.tsx` | 211 | — |
@@ -487,6 +490,7 @@ graph LR
 | `src/tests/server.contentReferences.test.ts` | 27 | — |
 | `src/tests/server.editorPresence.test.ts` | 79 | — |
 | `src/tests/server.emailTemplates.test.ts` | 57 | — |
+| `src/tests/server.gadgetApps.test.ts` | 123 | @vitest-environment node |
 | `src/tests/server.gadgetPreferences.test.ts` | 190 | — |
 | `src/tests/server.gracefulShutdown.test.ts` | 55 | — |
 | `src/tests/server.health.test.ts` | 118 | — |

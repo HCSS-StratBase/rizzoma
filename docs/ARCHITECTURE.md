@@ -106,6 +106,20 @@ the edit session — 2026-07-09).
 Toolbar parity reference: [`EDITOR_TOOLBAR_PARITY.md`](./EDITOR_TOOLBAR_PARITY.md).
 Body-structure rules (bullets are **imposed** in our app): [`BLB.md` §5](./BLB.md).
 
+## 5a. Sandboxed gadget apps (Kanban, Planner, Focus, Notes)
+
+Gadget apps are static pages in `public/gadgets/apps/<id>/` embedded as
+`<iframe sandbox="allow-scripts allow-forms allow-popups">` with **no `allow-same-origin`**, so the frame
+has an opaque origin and every request it makes is cross-origin. In production they are served by
+`src/server/middleware/gadgetApps.ts`, mounted **before** helmet and cors in `src/server/app.ts`, with
+their own headers (CORS `*` without credentials, CORP `cross-origin`, a strict CSP with
+`script-src 'self'` and `connect-src 'none'`). Rules: gadget pages keep **all script in external `.js`
+files** (inline script is blocked by design) and load only same-folder assets. A frame that does not
+start within 8 s shows "did not start" with Retry (`SandboxAppGadgetView.tsx`). A development Vite
+server cannot reproduce a gadget defect: test with `npm run test:gadgets` against a **production-mode**
+server. History: the 2026-11-17 blank Kanban box, in
+[`wiki/subsystems/gadget-apps-and-blip-typography.md`](../wiki/subsystems/gadget-apps-and-blip-typography.md).
+
 ## 6. Verification architecture
 
 Three enforcement layers — none of them optional:

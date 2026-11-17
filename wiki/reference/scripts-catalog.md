@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: feature/native-fractal-port
-source_commit: 2a896d17
+source_branch: fix/list-font-and-kanban-gadget
+source_commit: c9e37545
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 170 files in `scripts/`, 42 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 172 files in `scripts/`, 45 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -67,6 +67,9 @@ graph LR
 | `test:toolbar-inline` | `node test-toolbar-inline-smoke.mjs` |
 | `test:follow-green` | `node test-follow-green-smoke.mjs` |
 | `test:collab` | `node test-collab-smoke.mjs` |
+| `test:readmode-seed` | `node test-topic-readmode-seed-smoke.mjs` |
+| `test:gadgets` | `node test-gadget-apps-smoke.mjs` |
+| `test:body-text` | `node test-blip-body-text-smoke.mjs` |
 | `test:health` | `node node_modules/vitest ⁄ vitest.mjs run --config vitest.config.ts src/tests ⁄ server.health.test.ts src/tests ⁄ routes.comments.inlineHealth.test.ts src/test…` |
 | `perf:harness` | `node perf-harness.mjs` |
 | `perf:budget` | `node scripts ⁄ perf-budget.mjs` |
@@ -82,7 +85,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (170)
+## scripts/ (172)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -167,7 +170,7 @@ graph LR
 | `scripts/gen_status.mjs` | 141 | Generate STATUS .md — the SINGLE authoritative current-state doc. |
 | `scripts/generate-ui-exhaustive-pack.mjs` | 445 | — |
 | `scripts/git-hooks/pre-push` | — | — |
-| `scripts/handbuild_acceptance.mjs` | 276 | HAND-BUILD ACCEPTANCE — the gate for ALL Rizzoma fractal work (SDS 2026-07-14). |
+| `scripts/handbuild_acceptance.mjs` | 447 | HAND-BUILD ACCEPTANCE — the gate for ALL Rizzoma fractal work (SDS 2026-07-14). |
 | `scripts/handbuild_depth10.mjs` | 109 | HAND-BUILD a depth-10 fractal on the NEW rizzoma through the REAL UI. |
 | `scripts/insert_depth10_spine.mjs` | 123 | Insert a depth-10 spine of blips directly into CouchDB. |
 | `scripts/inspect_screenshot_155148.py` | 27 | Find all blue ribbons (#4ea0f1 -> r ~ 78, g ~ 160, b ~ 241) |
@@ -191,6 +194,7 @@ graph LR
 | `scripts/pm_native_port.py` | 638 | Native Fractal-Render Port — live TUI PM dashboard. |
 | `scripts/post_tana_daily.py` | 326 | — |
 | `scripts/probe_bullet_structure.mjs` | 44 | — |
+| `scripts/probe_ctrl_enter_handoff.mjs` | 125 | Diagnostic probe for the Ctrl+Enter hand-off (LOCAL stack only). |
 | `scripts/probe_ids.mjs` | 20 | — |
 | `scripts/probe_live_planner_iframe.cjs` | 169 | — |
 | `scripts/probe_native_depth.mjs` | 29 | a React-built hand-build d10 topic (has real depth-10 content stored) |
@@ -226,6 +230,7 @@ graph LR
 | `scripts/test-live-auth-and-topic.mjs` | 75 | — |
 | `scripts/test_edit_then_ce.mjs` | 31 | — |
 | `scripts/test_surface7_selection.mjs` | 88 | — |
+| `scripts/test_wiki_first_hook.py` | 58 | Tests for scripts ⁄ wiki_first_hook.py: wiki-first and ORIGINAL-FIRST gates. Run: python3 scripts ⁄ test_wiki_first_hook.py |
 | `scripts/verify-blb-fractal-proof.mjs` | 224 | — |
 | `scripts/verify-fixes-261108.mjs` | 172 | — |
 | `scripts/verify-full-parity-live.mjs` | 205 | — |
@@ -243,10 +248,10 @@ graph LR
 | `scripts/verify_surface4.mjs` | 124 | — |
 | `scripts/viewport_sweep_dev.mjs` | 36 | — |
 | `scripts/visual-feature-coverage.mjs` | 210 | — |
-| `scripts/visual-feature-sweep.mjs` | 1407 | — |
+| `scripts/visual-feature-sweep.mjs` | 1412 | — |
 | `scripts/visual_sanity_analyze.mjs` | 249 | Visual sanity pass on analyze.rubase.org after today's batch: |
 | `scripts/wiki_coverage.py` | 50 | Fail when the wiki does not mention (by file name) something it must cover. |
-| `scripts/wiki_first_hook.py` | 216 | Wiki-first gate for ONE repo, shared by every agent CLI that can run hooks. |
+| `scripts/wiki_first_hook.py` | 236 | Wiki-first gate for ONE repo, shared by every agent CLI that can run hooks. |
 | `scripts/wiki_generate_catalogs.py` | 326 | import json |
 | `scripts/wiki_generate_original_catalog.py` | 49 | Generate wiki/reference ⁄ original-source-map.md: every .coffee and .js file of the vendored ORIGINAL |
 | `scripts/wiki_lint.py` | 23 | Thin wrapper in /mnt/c/Rizzoma/scripts ⁄ wiki_lint.py that invokes the canonical |
