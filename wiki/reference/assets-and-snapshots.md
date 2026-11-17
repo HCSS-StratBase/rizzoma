@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: feature/native-fractal-port
-source_commit: 2a896d17
+source_branch: fix/list-font-and-kanban-gadget
+source_commit: c9e37545
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 252 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 51 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 54 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -41,10 +41,10 @@ graph LR
 |---|---:|
 | `public` | 4 |
 | `public/gadgets/apps` | 3 |
-| `public/gadgets/apps/calendar-planner` | 1 |
-| `public/gadgets/apps/focus-timer` | 1 |
-| `public/gadgets/apps/kanban-board` | 1 |
-| `public/gadgets/apps/notes-scratchpad` | 1 |
+| `public/gadgets/apps/calendar-planner` | 2 |
+| `public/gadgets/apps/focus-timer` | 2 |
+| `public/gadgets/apps/kanban-board` | 2 |
+| `public/gadgets/apps/notes-scratchpad` | 2 |
 | `public/icons` | 9 |
 | `public/landing` | 6 |
 | `public/s/img` | 136 |
@@ -109,15 +109,18 @@ graph LR
 | `perf-harness.mjs` | — |
 | `rizzoma.html` | — |
 | `test-blb-snapshots.mjs` | — |
+| `test-blip-body-text-smoke.mjs` | Computed-style smoke: every piece of blip BODY text has the same size, line-height and |
 | `test-collab-smoke.mjs` | Real-time collab smoke test (Playwright, two browser contexts). |
 | `test-editor.html` | Set feature flags before module loading |
 | `test-features.html` | — |
 | `test-follow-green-smoke.mjs` | — |
+| `test-gadget-apps-smoke.mjs` | Real insert-and-render smoke for the four sandboxed gadget apps |
 | `test-playwright-features.js` | Take screenshot of test editor |
 | `test-rizzoma-simple.mjs` | Launch browser in headed mode so you can watch |
 | `test-rizzoma.mjs` | Create a test script that playwright can run |
 | `test-standalone-editor.html` | Set feature flags before any imports |
 | `test-toolbar-inline-smoke.mjs` | — |
+| `test-topic-readmode-seed-smoke.mjs` | Read-mode topic seed smoke (Playwright). |
 | `tsconfig.json` | — |
 | `tsconfig.json.bak` | — |
 | `tsconfig.server.json` | — |
