@@ -1,12 +1,14 @@
 // N fresh topics: create through the New dialog, press Edit, type one line, report whether the root
 // editor kept the title and the typed text (regression check for the empty-root-editor defect).
 // Headed, human-paced, real input only. env: FS_BASE, FS_N, FS_STATE (storage state of a signed-in user)
-import { launch, newClient, sleep, BASE, TYPE_DELAY } from './lib.mjs';
+import { launch, newClient, sleep, BASE, TYPE_DELAY, seedUser, signInUi } from './lib.mjs';
 import { EDITOR } from './ops.mjs';
 
 const N = Number(process.env.FS_N || 10);
 const b = await launch();
-const c = await newClient(b, 'fs-alice@example.com', { storageState: process.env.FS_STATE || '/home/stephan/rizzoma-fractal-scratch/run/alice.json' });
+await seedUser('fs-alice@example.com');
+const c = await newClient(b, 'fs-alice@example.com');
+await signInUi(c);
 const p = c.page;
 let clean = 0; const rows = [];
 for (let i = 1; i <= N; i += 1) {

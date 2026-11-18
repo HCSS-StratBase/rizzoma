@@ -6,7 +6,7 @@ status: draft
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-18
 source_branch: feat/fractal-demo-fixes
-source_commit: 5a02e705
+source_commit: 309ee21a
 edges:
   - type: requires
     target: gates-sweeps-and-deployment.md
@@ -26,7 +26,7 @@ edges:
 
 ```mermaid
 graph TD
-    RUN["scripts/fractal-showcase/run-private.sh (flock, Xvfb :99, ffmpeg recording)"]
+    RUN["scripts/fractal-showcase/run-private.sh (flock, Xvfb :93, ffmpeg recording)"]
     LIB["scripts/fractal-showcase/lib.mjs (headed browser, sign-in form, read-only API)"]
     OPS["scripts/fractal-showcase/ops.mjs (typeLines, caretAt, ctrlEnterChild, buildBlip)"]
     TRIAL["scripts/fractal-showcase/trial-new-topic-editor.mjs (N fresh topics, empty-editor check)"]
@@ -54,7 +54,7 @@ graph LR
 
 ## 3. Defects found
 
-**¶5** □ DEFECT A (fixed, PR 96): new topics opened an EMPTY root editor on Edit (4 of 5 fresh topics on the base, measured with the headed driver; later trials below). Trace: the topic's collaboration provider emits `blip:join` twice about 50 ms apart; the first answer (`shouldSeed=true`) is ignored by the client until its join is acknowledged (`src/client/components/editor/CollaborativeProvider.ts:153`, `if (!this.joined) return`), and the second answer was `shouldSeed=false` because the seed lease was already owned by the same socket (`src/server/lib/socket.ts:543-551`). Nobody seeded the Y.Doc; the stored topic stayed `<h1>title</h1><ul><li><p></p></li></ul>` and typed text was lost. Fix: the lease-owner socket is granted seed authority again while the doc is empty; any other socket, including a second socket of the same user, is still refused. Tests: `src/tests/server.socketAuthorization.test.ts`, "grants seed authority again when the lease owner socket joins a second time" (fails on base, passes with the fix).
+**¶5** □ DEFECT A (fixed, PR 96): new topics opened an EMPTY root editor on Edit (measured: base 6 of 10 clean headed and 8 of 10 headless, 4 of 5 in the first hand trials; with the fix 10 of 10 clean headed and 10 of 10 headless, on a clean checkout of the fix commit). Trace: the topic's collaboration provider emits `blip:join` twice about 50 ms apart; the first answer (`shouldSeed=true`) is ignored by the client until its join is acknowledged (`src/client/components/editor/CollaborativeProvider.ts:153`, `if (!this.joined) return`), and the second answer was `shouldSeed=false` because the seed lease was already owned by the same socket (`src/server/lib/socket.ts:543-551`). Nobody seeded the Y.Doc; the stored topic stayed `<h1>title</h1><ul><li><p></p></li></ul>` and typed text was lost. Fix: the lease-owner socket is granted seed authority again while the doc is empty; any other socket, including a second socket of the same user, is still refused. Tests: `src/tests/server.socketAuthorization.test.ts`, "grants seed authority again when the lease owner socket joins a second time" (fails on base, passes with the fix).
 
 **¶6** ▷ DEFECT B (open, owned by another agent, branch `fix/root-ctrl-enter-survives-reload`): Ctrl+Enter in the topic-root editor creates a child whose editor and typed text are destroyed by a socket-triggered reload; seen locally in the first multi-line build attempt (root blank after the child was typed).
 
