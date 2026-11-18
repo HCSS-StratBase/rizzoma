@@ -14,9 +14,12 @@ if ! pgrep -f "Xvfb $DISP " >/dev/null; then
 fi
 export DISPLAY="$DISP"
 STAMP=$(date +%y%m%d-%H%M%S)
+FF=""
+if [ "${FS_NO_FFMPEG:-0}" != 1 ]; then
 ffmpeg -loglevel error -y -f x11grab -framerate 10 -video_size 1600x900 -i "$DISP" -c:v libx264 -preset ultrafast -pix_fmt yuv420p "$OUT/videos/screen-$STAMP.mp4" </dev/null 9>&- &
 FF=$!
+fi
 node "$@"
 RC=$?
-kill -INT $FF 2>/dev/null; wait $FF 2>/dev/null
+[ -n "$FF" ] && { kill -INT $FF 2>/dev/null; wait $FF 2>/dev/null; }
 exit $RC

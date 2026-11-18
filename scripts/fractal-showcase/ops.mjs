@@ -64,6 +64,7 @@ export async function caretAt(p, startText, offset) {
   await clickLine(p, startText);
   await p.keyboard.press('Home');
   for (let i = 0; i < offset; i += 1) await p.keyboard.press('ArrowRight');
+  if (globalThis.__fsTraceFocus) globalThis.__fsTraceFocus(`caret in blip ${(await focusedBlipId(p) || '-').slice(-5)} line "${startText}" offset ${offset}`);
 }
 
 /** Ctrl+Enter at the caret, then wait for a NEW blip to own the focus. Returns its id. */
@@ -71,6 +72,8 @@ export async function ctrlEnterChild(p, tries = 3) {
   const before = new Set(await blipIds(p));
   const parent = await focusedBlipId(p);
   for (let k = 0; k < tries; k += 1) {
+    globalThis.__fsCE = globalThis.__fsCE || { presses: 0, retries: 0 };
+    globalThis.__fsCE.presses += 1; if (k > 0) globalThis.__fsCE.retries += 1;
     await p.keyboard.press('Control+Enter');
     const t0 = Date.now();
     while (Date.now() - t0 < 5000) {
@@ -85,28 +88,89 @@ export async function ctrlEnterChild(p, tries = 3) {
 export async function shotPage(p, file, opts = {}) { await p.screenshot({ path: file, ...opts }); return file; }
 
 /**
- * Build one blip whose editor already has the caret. `spec` = { lines: [ {text, anchors:[{at:'word', child:spec}] } ] }.
- * `at` is the exact substring AFTER which the inline child is anchored.
- * Returns the number of blips created (children included).
+ * Put the caret in line `lineIdx` of blip `selfId` (null = the topic root editor) after `offset` characters.
+ * First anchor of a freshly built blip: the caret already is in that blip's editor (at the end of its last
+ * line), so only keys are used (ArrowUp to the line, Home, ArrowRight). After a child subtree was built the
+ * focus is deeper: the child's own Done is pressed (by buildBlip) and a REAL click on this blip's own list
+ * item brings the caret back. Markers already inserted to the left count one step each, so anchors are
+ * processed right to left.
  */
-export async function buildBlip(p, spec, log = () => {}, depth = 1) {
+export async function refocusLine(p, selfId, lineIdx, offset, nLines, returning) {
+  if (returning) {
+    // A real mouse click on this blip's own list item brings the caret back after a child subtree.
+    // (Needs the nested-pointer fix: before it, ProseMirror of the PARENT swallowed the press.)
+    const ed = selfId ? p.locator(`[data-blip-id="${selfId}"] .ProseMirror[contenteditable="true"]`).first()
+      : p.locator('.topic-content-edit .ProseMirror[contenteditable="true"]').first();
+    const li = ed.locator(':scope > ul > li').nth(lineIdx);
+    try { await li.click({ position: { x: 48, y: 8 }, timeout: 6000 }); } catch (e) {
+      if (selfId) { if (globalThis.__fsShotOnFail) await globalThis.__fsShotOnFail(); throw e; }
+      // Open defect 1 (owned by another agent): after Ctrl+Enter in the TOPIC ROOT editor the editor is torn
+      // down by a socket-triggered reload. Recover as a person would: reload, press Edit, carry on. Counted.
+      globalThis.__fsRootDestroyed = (globalThis.__fsRootDestroyed || 0) + 1;
+      if (globalThis.__fsShotOnFail) await globalThis.__fsShotOnFail();
+      await p.reload({ waitUntil: 'domcontentloaded' }); await sleep(5500);
+      await p.locator('.wave-panel [data-testid="blip-menu-edit"]').first().click(); await sleep(2000);
+      await li.click({ position: { x: 48, y: 8 }, timeout: 8000 });
+    }
+    await sleep(200);
+  } else {
+    for (let i = 0; i < nLines - 1 - lineIdx; i += 1) await p.keyboard.press('ArrowUp');
+  }
+  await p.keyboard.press('Home');
+  for (let i = 0; i < offset; i += 1) await p.keyboard.press('ArrowRight');
+  const f = await focusedBlipId(p);
+  if (selfId && f !== selfId && globalThis.__fsTraceFocus) globalThis.__fsTraceFocus(`MISFOCUS want ${selfId.slice(-5)} got ${(f || '-').slice(-5)}`);
+  if (globalThis.__fsTraceFocus) globalThis.__fsTraceFocus(`caret in blip ${(f || 'root').slice(-5)} (want ${(selfId || 'root').slice(-5)}) line ${lineIdx} offset ${offset}`);
+}
+
+/** Visible text of a line spec: `text`, or the concatenation of its `runs` ([text] or [text, shortcut]). */
+export const lineText = (l) => (l.runs ? l.runs.map((r) => r[0]).join('') : l.text);
+
+/** Type one line: plain text, or runs where a run with a shortcut is toggled on, typed, toggled off. */
+export async function typeLine(p, line, delay = TYPE_DELAY) {
+  if (!line.runs) { await p.keyboard.type(line.text, { delay }); return; }
+  for (const [t, key] of line.runs) {
+    if (key) await p.keyboard.press(key);
+    await p.keyboard.type(t, { delay });
+    if (key) await p.keyboard.press(key);
+  }
+}
+
+/**
+ * Build one blip whose editor already has the caret.
+ * spec = { lines: [ { text | runs, hook?: async (p) => {}, anchors: [ { at: 'substring', child: spec } ] } ] }.
+ * `at` is the exact substring AFTER which the inline child is anchored. A hook runs right after its line
+ * is typed (caret at the end of the line). Returns the number of blips created (children included).
+ */
+export async function buildBlip(p, spec, log = () => {}, depth = 1, selfId = null) {
   let created = 0;
   const lines = spec.lines;
-  await typeLines(p, lines.map((l) => l.text));
+  for (let i = 0; i < lines.length; i += 1) {
+    if (i > 0) await p.keyboard.press('Enter');
+    await typeLine(p, lines[i]);
+    if (lines[i].hook) { await lines[i].hook(p, { depth, log }); }
+  }
   await sleep(300);
   // anchors right-to-left, bottom line first
+  let firstAnchor = true;
   for (let li = lines.length - 1; li >= 0; li -= 1) {
+    const txt = lineText(lines[li]);
     const anchors = [...(lines[li].anchors || [])]
-      .map((a) => ({ ...a, off: lines[li].text.indexOf(a.at) + a.at.length }))
+      .map((a) => ({ ...a, off: txt.indexOf(a.at) + a.at.length }))
       .sort((x, y) => y.off - x.off);
     for (const a of anchors) {
-      if (a.off < a.at.length) throw new Error(`anchor "${a.at}" not in "${lines[li].text}"`);
-      await caretAt(p, lines[li].text.slice(0, 18), a.off);
+      if (a.off < a.at.length) throw new Error(`anchor "${a.at}" not in "${txt}"`);
+      await refocusLine(p, selfId, li, a.off, lines.length, firstAnchor ? false : true);
+      firstAnchor = false;
       const id = await ctrlEnterChild(p);
       if (!id) throw new Error(`Ctrl+Enter produced no child at depth ${depth} after "${a.at}"`);
-      log(`${'  '.repeat(depth)}+ child ${id.slice(-5)} after "${a.at}"`);
+      globalThis.__fsCreated = (globalThis.__fsCreated || 0) + 1;
+      log(`${'  '.repeat(depth)}+ #${globalThis.__fsCreated} child ${id.slice(-5)} after "${a.at}"`);
       created += 1;
-      created += await buildBlip(p, a.child, log, depth + 1);
+      created += await buildBlip(p, a.child, log, depth + 1, id);
+      // finish the child (its own Done), as a person would, so the caret can come back to this blip
+      const dn = p.locator(`[data-blip-id="${id}"] [data-testid="blip-menu-done"]`).last();
+      if (await dn.isVisible().catch(() => false)) { await dn.click(); await sleep(900); }
     }
   }
   return created;

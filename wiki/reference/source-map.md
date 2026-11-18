@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/tester-round2
-source_commit: 626b17e8
+source_branch: fix/nested-pointer-focus
+source_commit: 15a43dae
 generated: true
 ---
 
@@ -84,7 +84,7 @@ graph LR
 | `src/client/components/RizzomaLayout.css` | 423 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 567 | (no header comment; exports RizzomaLayout) |
 | `src/client/components/RizzomaTopicDetail.css` | 1802 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.tsx` | 2362 | (no header comment; exports shouldThrottleSocketTopicLoad) |
+| `src/client/components/RizzomaTopicDetail.tsx` | 2353 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 225 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 353 | (no header comment; exports RizzomaTopicsList) |
 | `src/client/components/ShareModal.css` | 175 | ShareModal.css - Authentic Legacy Rizzoma Share Popover Style |
@@ -143,7 +143,7 @@ graph LR
 | `src/client/components/editor/collaborationIdentity.ts` | 86 | (no header comment; exports CollaborationUser) |
 | `src/client/components/editor/extensions/BlipKeyboardShortcuts.ts` | 253 | (no header comment; exports BlipKeyboardShortcutsOptions) |
 | `src/client/components/editor/extensions/BlipThread.css` | 81 | BlipThread inline marker styles — authentic original Rizzoma speech bubble |
-| `src/client/components/editor/extensions/BlipThreadNode.tsx` | 161 | Insert an inline BlipThread marker at the current cursor position. |
+| `src/client/components/editor/extensions/BlipThreadNode.tsx` | 190 | True when a DOM event comes from INSIDE an inline child blip rendered in this editor's portal anchor |
 | `src/client/components/editor/extensions/CodeBlockView.css` | 128 | Enhanced Code Block — replaces bare TipTap codeBlock |
 | `src/client/components/editor/extensions/CodeBlockView.tsx` | 87 | (no header comment; exports CodeBlockView) |
 | `src/client/components/editor/extensions/GadgetNodes.ts` | 531 | (no header comment; exports createDefaultPollOptions) |
@@ -164,7 +164,7 @@ graph LR
 | `src/client/components/mobile/BottomSheet.tsx` | 239 | Whether the bottom sheet is open |
 | `src/client/components/mobile/BottomSheetMenu.css` | 174 | Bottom Sheet Menu Styles |
 | `src/client/components/mobile/BottomSheetMenu.tsx` | 280 | Unique identifier for the item |
-| `src/client/components/native/NativeWaveView.css` | 232 | Native fractal-render — minimum viable CSS for the new render path. |
+| `src/client/components/native/NativeWaveView.css` | 233 | Native fractal-render — minimum viable CSS for the new render path. |
 | `src/client/components/native/NativeWaveView.tsx` | 483 | Native fractal-render — React wrapper for WaveView. |
 
 ## Client native render port (21)
@@ -304,7 +304,7 @@ graph LR
 | `src/server/lib/saml.ts` | 137 | SAML 2.0 authentication service |
 | `src/server/lib/sectionAttribution.ts` | 137 | Server-side block text-hash + attribution stamping. |
 | `src/server/lib/sessionCredentials.ts` | 49 | (no header comment; exports CredentialVersionSession) |
-| `src/server/lib/socket.ts` | 1014 | — |
+| `src/server/lib/socket.ts` | 1019 | — |
 | `src/server/lib/unread.ts` | 174 | Simple in-memory cache for unread counts (TTL: 30 seconds) |
 | `src/server/lib/virusScan.ts` | 155 | Commands using clamd's `z` prefix are framed with one trailing NUL byte. |
 | `src/server/lib/yjsDocCache.ts` | 367 | — |
@@ -386,7 +386,7 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (120)
+## Tests (121)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -412,6 +412,7 @@ graph LR
 | `src/tests/client.blipClipboardStore.test.ts` | 34 | — |
 | `src/tests/client.blipCreateResponse.test.ts` | 38 | — |
 | `src/tests/client.blipPagination.test.ts` | 25 | — |
+| `src/tests/client.blipThreadNestedPointer.test.ts` | 29 | @vitest-environment jsdom |
 | `src/tests/client.capacitorNativeOAuth.test.ts` | 137 | — |
 | `src/tests/client.collaborationIdentity.test.ts` | 45 | — |
 | `src/tests/client.collaborationProjection.test.ts` | 47 | @vitest-environment node |
@@ -506,7 +507,7 @@ graph LR
 | `src/tests/server.samlSecurity.test.ts` | 34 | — |
 | `src/tests/server.session.test.ts` | 185 | — |
 | `src/tests/server.sessionCredentialVersion.test.ts` | 90 | — |
-| `src/tests/server.socketAuthorization.test.ts` | 1294 | — |
+| `src/tests/server.socketAuthorization.test.ts` | 1334 | — |
 | `src/tests/server.virusScan.test.ts` | 113 | — |
 | `src/tests/server.yjsDocCache.test.ts` | 537 | Mock couch module before importing yjsDocCache |
 | `src/tests/setup.ts` | 21 | Vitest <-> Jest compatibility shim so legacy jest.* tests still work. |
