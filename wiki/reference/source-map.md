@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/phone-new-topic-and-sections
-source_commit: 22eaf0c6
+source_branch: fix/root-ctrl-enter-survives-reload
+source_commit: 6a805006
 generated: true
 ---
 
@@ -84,7 +84,7 @@ graph LR
 | `src/client/components/RizzomaLayout.css` | 463 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 593 | (no header comment; exports RizzomaLayout) |
 | `src/client/components/RizzomaTopicDetail.css` | 1802 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.tsx` | 2353 | (no header comment; exports shouldThrottleSocketTopicLoad) |
+| `src/client/components/RizzomaTopicDetail.tsx` | 2399 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 225 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 353 | (no header comment; exports RizzomaTopicsList) |
 | `src/client/components/ShareModal.css` | 175 | ShareModal.css - Authentic Legacy Rizzoma Share Popover Style |
@@ -193,7 +193,7 @@ graph LR
 | `src/client/native/wave-view.ts` | 272 | Native fractal-render — WaveView. |
 | `src/client/native/yjs-binding.ts` | 202 | Native fractal-render — Y.js CRDT binding for the ContentArray model. |
 
-## Client other (67)
+## Client other (68)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -252,6 +252,7 @@ graph LR
 | `src/client/lib/sectionAttribution.ts` | 107 | Per-section author attribution for topic body blocks. |
 | `src/client/lib/socket.ts` | 290 | (no header comment; exports disconnectSocketForAuthTransition) |
 | `src/client/lib/topicExport.ts` | 184 | (no header comment; exports ExportBlip) |
+| `src/client/lib/topicLoadReconcile.ts` | 105 | Reconcile a topic reload with what THIS tab has itself written since the reload was requested. |
 | `src/client/lib/upload.ts` | 97 | (no header comment; exports UploadResult) |
 | `src/client/main.tsx` | 444 | (no header comment; exports App) |
 | `src/client/rizzoma-main.tsx` | 7 | — |
@@ -386,7 +387,7 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (121)
+## Tests (122)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -457,6 +458,7 @@ graph LR
 | `src/tests/client.socketSession.test.ts` | 107 | — |
 | `src/tests/client.taskWidgetDurability.test.ts` | 271 | — |
 | `src/tests/client.topicExport.test.ts` | 75 | — |
+| `src/tests/client.topicLoadReconcile.test.ts` | 96 | — |
 | `src/tests/client.topicProjectionGuard.test.ts` | 53 | — |
 | `src/tests/client.topicRealtime.test.ts` | 22 | — |
 | `src/tests/client.uploadCancellation.test.ts` | 85 | — |

@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/phone-new-topic-and-sections
-source_commit: 22eaf0c6
+source_branch: fix/root-ctrl-enter-survives-reload
+source_commit: 6a805006
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 187 files in `scripts/`, 49 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 188 files in `scripts/`, 50 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -70,6 +70,7 @@ graph LR
 | `test:nested-pointer` | `node test-nested-pointer-focus-smoke.mjs` |
 | `test:phone-layout` | `node test-phone-layout-smoke.mjs` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
+| `test:root-ctrl-enter` | `node scripts ⁄ test-root-ctrl-enter-survives-reload.mjs` |
 | `test:native-ctrl-enter` | `node test-native-ctrl-enter-smoke.mjs` |
 | `test:readmode-seed` | `node test-topic-readmode-seed-smoke.mjs` |
 | `test:gadgets` | `node test-gadget-apps-smoke.mjs` |
@@ -89,7 +90,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (187)
+## scripts/ (188)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -246,6 +247,7 @@ graph LR
 | `scripts/test-ctrl-enter-live.mjs` | 149 | — |
 | `scripts/test-delete-blip.mjs` | 164 | — |
 | `scripts/test-live-auth-and-topic.mjs` | 75 | — |
+| `scripts/test-root-ctrl-enter-survives-reload.mjs` | 291 | Regression gate: a NEWLY CREATED child blip must keep its editor, focus, caret and typed text |
 | `scripts/test_edit_then_ce.mjs` | 31 | — |
 | `scripts/test_recover_soft_deleted_blips.py` | 117 | Test of recover_soft_deleted_blips.py against a THROWAWAY database on a scratch CouchDB. |
 | `scripts/test_surface7_selection.mjs` | 88 | — |

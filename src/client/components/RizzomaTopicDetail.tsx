@@ -49,6 +49,16 @@ import {
 import { isCanonicalBlbDocument } from './editor/extensions/BlipKeyboardShortcuts';
 import { readCreatedBlip } from '../lib/blipCreateResponse';
 import { nextInlineChildHandoffAction } from '../lib/inlineChildHandoff';
+import {
+  createLocalWrites,
+  forgetBlip,
+  overlayLocalBlips,
+  overlayLocalTopic,
+  recordCreatedBlip,
+  recordSavedBlipContent,
+  recordSavedTopic,
+  type LocalWrites,
+} from '../lib/topicLoadReconcile';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -291,6 +301,15 @@ function RizzomaTopicDetailState({
 
   // BLB: Ref to store newly created blips for immediate access (avoids race condition with state updates)
   const pendingBlipsRef = useRef<Map<string, BlipData>>(new Map());
+  // What THIS tab wrote itself (created blips, saved bodies, saved topic) and when. A reload that was
+  // requested before such a write and answered after it must not undo it (see lib/topicLoadReconcile.ts).
+  const localWritesRef = useRef<LocalWrites>(createLocalWrites());
+  // Out-of-order guard: a reload answered after a later-started reload was already applied is older.
+  const loadSeqRef = useRef(0);
+  // Same for the topic's own saves: a save that finishes after a later-sent save must not become "the last save".
+  const topicSaveSeqRef = useRef(0);
+  const topicAppliedSaveSeqRef = useRef(0);
+  const appliedLoadSeqRef = useRef(0);
 
   // Subblip navigation state (BLB: when viewing a subblip as root)
   const [currentSubblip, setCurrentSubblip] = useState<BlipData | null>(null);
@@ -859,6 +878,8 @@ function RizzomaTopicDetailState({
 
     state.isLoading = true;
     state.lastLoadTime = now;
+    const loadSeq = ++loadSeqRef.current;
+    const requestStartedAt = Date.now();
 
     try {
       // Bug A perf fix (2026-05-11): parallelize the 3 independent fetches.
@@ -872,8 +893,14 @@ function RizzomaTopicDetailState({
         api(`/api/waves/${encodeURIComponent(id)}/participants`),
         api(`/api/blips?waveId=${encodeURIComponent(id)}&limit=${blipPageSize}`),
       ]);
+      // A reload that started before a later-started reload was already applied is older than it.
+      if (loadSeq < appliedLoadSeqRef.current) return;
+      appliedLoadSeqRef.current = loadSeq;
+      let staleAgainstLocalWrites = false;
       if (r.ok) {
-        const loadedTopic = r.data as TopicFull;
+        const topicOverlay = overlayLocalTopic(r.data as TopicFull, localWritesRef.current, requestStartedAt);
+        const loadedTopic = topicOverlay.topic;
+        if (topicOverlay.applied) staleAgainstLocalWrites = true;
         setTopic(loadedTopic);
 
         let loadedParticipants: Participant[] = [];
@@ -938,6 +965,11 @@ function RizzomaTopicDetailState({
               anchorPosition: raw.anchorPosition,
             });
           });
+          // Put back what this tab created or saved after this reload was requested (see
+          // lib/topicLoadReconcile.ts): otherwise the new child vanishes with its editor and typed text.
+          if (overlayLocalBlips(blipMap, localWritesRef.current, requestStartedAt, contributors)) {
+            staleAgainstLocalWrites = true;
+          }
           const rootBlips: BlipData[] = [];
           blipMap.forEach((blip) => {
             if (blip.parentBlipId) {
@@ -972,6 +1004,10 @@ function RizzomaTopicDetailState({
         //   try { await unreadStateRef.current.refresh(); } catch {}
         // }
         setError(null);
+        if (staleAgainstLocalWrites) {
+          // The answer predates this tab's own newest write: converge with one more reload that starts after it.
+          setTimeout(() => window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics')), 700);
+        }
       } else {
         if (r.status === 401 || r.status === 403) {
           clearLoadedTopicState();
@@ -1186,6 +1222,7 @@ function RizzomaTopicDetailState({
               ...newBlipData,
               anchorPosition: anchorPosition,
             };
+            recordCreatedBlip(localWritesRef.current, optimisticBlip);
             setBlips(prev => {
               if (prev.some(b => b.id === newBlipId)) return prev;
               return [...prev, optimisticBlip];
@@ -1341,6 +1378,7 @@ function RizzomaTopicDetailState({
     };
     w.__rizzomaTopicReload = () => load(true);
     w.__rizzomaTopicAddBlip = (blip: BlipData) => {
+      recordCreatedBlip(localWritesRef.current, blip);
       setBlips((prev) => {
         // Dedup — if already in the flat top-level list, no-op.
         if (prev.some((b) => b.id === blip.id)) return prev;
@@ -1416,7 +1454,9 @@ function RizzomaTopicDetailState({
   }, [newBlipContent, busy, isAuthed, topicCanComment, id, load]);
 
   // Handlers for RizzomaBlip component
-  const handleBlipUpdate = useCallback((_blipId: string, _content: string) => {
+  const handleBlipUpdate = useCallback((blipId: string, content: string) => {
+    // Remember the saved body: a reload that was requested before this save must not bring the old one back.
+    if (typeof content === 'string') recordSavedBlipContent(localWritesRef.current, blipId, content);
     // Blip was updated - reload to get fresh data
     load(true);
   }, [load]);
@@ -1431,6 +1471,7 @@ function RizzomaTopicDetailState({
     const r = await api(`/api/blips/${encodeURIComponent(blipId)}`, { method: 'DELETE' });
     if (r.ok) {
       toast('Deleted');
+      forgetBlip(localWritesRef.current, blipId);
       setExpandedBlips(prev => {
         const next = new Set(prev);
         next.delete(blipId);
@@ -1632,6 +1673,7 @@ function RizzomaTopicDetailState({
         !topicProjectionActiveRef.current
         || topicProjectionIdentityRef.current !== topicProjectionIdentity
       ) return;
+      const saveSeq = ++topicSaveSeqRef.current;
       const response = await api(`/api/topics/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         headers,
@@ -1642,8 +1684,12 @@ function RizzomaTopicDetailState({
           !topicProjectionActiveRef.current
           || topicProjectionIdentityRef.current !== topicProjectionIdentity
         ) return;
-        lastSavedContentRef.current = latestContent;
-        setTopic(prev => prev ? { ...prev, title: extractedTitle, content: latestContent } : prev);
+        if (saveSeq >= topicAppliedSaveSeqRef.current) {
+          topicAppliedSaveSeqRef.current = saveSeq;
+          lastSavedContentRef.current = latestContent;
+          recordSavedTopic(localWritesRef.current, extractedTitle, latestContent);
+          setTopic(prev => prev ? { ...prev, title: extractedTitle, content: latestContent } : prev);
+        }
         // Topic-root task side-documents are derived by this successful save,
         // never by the client. Refresh so a newly inserted task becomes
         // interactable in the same edit session when canToggle permits it.
