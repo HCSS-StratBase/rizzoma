@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/nested-pointer-focus
-source_commit: 15a43dae
+source_branch: fix/phone-new-topic-and-sections
+source_commit: 22eaf0c6
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 187 files in `scripts/`, 48 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 187 files in `scripts/`, 49 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -68,6 +68,7 @@ graph LR
 | `test:follow-green` | `node test-follow-green-smoke.mjs` |
 | `test:collab` | `node test-collab-smoke.mjs` |
 | `test:nested-pointer` | `node test-nested-pointer-focus-smoke.mjs` |
+| `test:phone-layout` | `node test-phone-layout-smoke.mjs` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
 | `test:native-ctrl-enter` | `node test-native-ctrl-enter-smoke.mjs` |
 | `test:readmode-seed` | `node test-topic-readmode-seed-smoke.mjs` |

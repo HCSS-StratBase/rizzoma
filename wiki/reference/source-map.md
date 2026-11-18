@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/nested-pointer-focus
-source_commit: 15a43dae
+source_branch: fix/phone-new-topic-and-sections
+source_commit: 22eaf0c6
 generated: true
 ---
 
@@ -81,8 +81,8 @@ graph LR
 | `src/client/components/RightToolsPanel.tsx` | 541 | Custom events for insert shortcuts - these are dispatched globally |
 | `src/client/components/RizzomaLanding.css` | 360 | — |
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
-| `src/client/components/RizzomaLayout.css` | 423 | dynamic viewport height — accounts for mobile address bar |
-| `src/client/components/RizzomaLayout.tsx` | 567 | (no header comment; exports RizzomaLayout) |
+| `src/client/components/RizzomaLayout.css` | 463 | dynamic viewport height — accounts for mobile address bar |
+| `src/client/components/RizzomaLayout.tsx` | 593 | (no header comment; exports RizzomaLayout) |
 | `src/client/components/RizzomaTopicDetail.css` | 1802 | RizzomaTopicDetail - Matching real Rizzoma |
 | `src/client/components/RizzomaTopicDetail.tsx` | 2353 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 225 | Authentic Legacy Rizzoma Topics List Styles |
