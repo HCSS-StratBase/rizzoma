@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/list-font-and-kanban-gadget
-source_commit: c9e37545
+source_branch: fix/tester-round2
+source_commit: 626b17e8
 generated: true
 ---
 
 # Documentation Inventory
 
-**¶1** □ GENERATED. 109 markdown files. Title is the first heading; Status is the first status/updated/verified line in the first 25 lines, if any. Authority notes are in [the doc catalog](../reference-doc-catalog.md); `docs/deprecated/` is NOT authoritative.
+**¶1** □ GENERATED. 110 markdown files. Title is the first heading; Status is the first status/updated/verified line in the first 25 lines, if any. Authority notes are in [the doc catalog](../reference-doc-catalog.md); `docs/deprecated/` is NOT authoritative.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -141,6 +141,7 @@ graph LR
 | [`docs/worklog-261107.md`](../../docs/worklog-261107.md) | Worklog: 2026-11-07 — Playback, Ctrl+Enter, Visual Parity & Canonical Karpathy LLM-Wiki |  |
 | [`docs/worklog-261108.md`](../../docs/worklog-261108.md) | Worklog — 2026-11-08 (Structural Parity & Visual Regression Elimination) |  |
 | [`public/s/img/gdrive/README.md`](../../public/s/img/gdrive/README.md) |  |  |
+| [`scripts/README_recover_soft_deleted_blips.md`](../../scripts/README_recover_soft_deleted_blips.md) | recover_soft_deleted_blips.py |  |
 | [`scripts/workflow-note-260329-canonical.md`](../../scripts/workflow-note-260329-canonical.md) |  |  |
 | [`scripts/workflow-note-260329-late.md`](../../scripts/workflow-note-260329-late.md) |  |  |
 | [`scripts/workflow-note-260330-app-runtime.md`](../../scripts/workflow-note-260330-app-runtime.md) |  |  |

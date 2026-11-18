@@ -211,7 +211,6 @@
   gap: 4px;
   float: right;
   margin: 0 0 0 8px;
-  font-size: 11px;
   color: #6b7a8a;
   line-height: 1;
 }
@@ -229,3 +228,5 @@
 }
 .rizzoma-native-mode .blip-container > .native-blip-meta .blip-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .rizzoma-native-mode .blip-container.edit-mode > .native-blip-meta { display: none; }
+
+.rizzoma-native-mode .blip-container > .native-blip-meta .blip-author-date { font-size: 11px; }
