@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/root-ctrl-enter-survives-reload
-source_commit: 6a805006
+source_branch: fix/click-caret-jump
+source_commit: 22594f0a
 generated: true
 ---
 
@@ -83,7 +83,7 @@ graph LR
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
 | `src/client/components/RizzomaLayout.css` | 463 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 593 | (no header comment; exports RizzomaLayout) |
-| `src/client/components/RizzomaTopicDetail.css` | 1802 | RizzomaTopicDetail - Matching real Rizzoma |
+| `src/client/components/RizzomaTopicDetail.css` | 1806 | RizzomaTopicDetail - Matching real Rizzoma |
 | `src/client/components/RizzomaTopicDetail.tsx` | 2399 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 225 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 353 | (no header comment; exports RizzomaTopicsList) |
@@ -116,7 +116,7 @@ graph LR
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 622 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
 | `src/client/components/blip/RizzomaBlip.css` | 1924 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 3165 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/RizzomaBlip.tsx` | 3179 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 105 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 73 | (no header comment; exports LocationLike) |
@@ -281,7 +281,7 @@ graph LR
 | `src/server/routes/mentions.ts` | 192 | Mentions Routes |
 | `src/server/routes/notifications.ts` | 309 | Notification Routes |
 | `src/server/routes/tasks.ts` | 287 | Tasks Routes |
-| `src/server/routes/topics.ts` | 873 | — |
+| `src/server/routes/topics.ts` | 875 | — |
 | `src/server/routes/uploads.ts` | 311 | (no header comment; exports uploadsRouter) |
 | `src/server/routes/waves.ts` | 1182 | — |
 
@@ -289,7 +289,7 @@ graph LR
 
 | File | Lines | Header / first fact |
 |---|---:|---|
-| `src/server/lib/access.ts` | 353 | (no header comment; exports ShareLevel) |
+| `src/server/lib/access.ts` | 388 | (no header comment; exports ShareLevel) |
 | `src/server/lib/authTickets.ts` | 74 | Short-lived one-time auth tickets used to bridge an OAuth flow that |
 | `src/server/lib/bcrypt.ts` | 21 | Wrapper around bcrypt that prefers native module when available |
 | `src/server/lib/blbYjsValidation.ts` | 75 | (no header comment; exports isBlbProsemirrorDocument) |
@@ -387,7 +387,7 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (122)
+## Tests (123)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -449,6 +449,7 @@ graph LR
 | `src/tests/client.mutationTransportInvariant.test.ts` | 36 | — |
 | `src/tests/client.nativeSchemeConfig.test.ts` | 17 | — |
 | `src/tests/client.offlineAuthIsolation.test.tsx` | 769 | — |
+| `src/tests/client.participantAvatarCss.test.ts` | 23 | A participant photo is `position: absolute; inset: 0`. Its box must be positioned, or the photo covers the |
 | `src/tests/client.participantRoster.test.tsx` | 49 | — |
 | `src/tests/client.passwordResetBoot.test.tsx` | 94 | — |
 | `src/tests/client.referenceLists.test.tsx` | 94 | — |
@@ -490,7 +491,7 @@ graph LR
 | `src/tests/routes.waves.test.ts` | 61 | — |
 | `src/tests/routes.waves.unread.test.ts` | 312 | — |
 | `src/tests/scripts.ownerRecoverySecurity.test.ts` | 17 | — |
-| `src/tests/server.access.test.ts` | 224 | — |
+| `src/tests/server.access.test.ts` | 258 | — |
 | `src/tests/server.authOauth.test.ts` | 255 | — |
 | `src/tests/server.authRegistrationSecurity.test.ts` | 224 | — |
 | `src/tests/server.authTickets.test.ts` | 22 | — |

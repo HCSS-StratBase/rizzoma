@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/root-ctrl-enter-survives-reload
-source_commit: 6a805006
+source_branch: fix/click-caret-jump
+source_commit: 22594f0a
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 188 files in `scripts/`, 50 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 188 files in `scripts/`, 51 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -68,6 +68,7 @@ graph LR
 | `test:follow-green` | `node test-follow-green-smoke.mjs` |
 | `test:collab` | `node test-collab-smoke.mjs` |
 | `test:nested-pointer` | `node test-nested-pointer-focus-smoke.mjs` |
+| `test:click-caret` | `node test-click-caret-smoke.mjs` |
 | `test:phone-layout` | `node test-phone-layout-smoke.mjs` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
 | `test:root-ctrl-enter` | `node scripts ⁄ test-root-ctrl-enter-survives-reload.mjs` |
@@ -178,7 +179,7 @@ graph LR
 | `scripts/fractal-showcase/live-access-probe.mjs` | 79 | READ-ONLY access probe as Fractal Tester 2 (no sharing with anyone): what can a brand-new user list and read? |
 | `scripts/fractal-showcase/live-cleanup.mjs` | 40 | Delete the scratch topics of a live run through the UI (gear menu, Delete, confirm), then prove with a |
 | `scripts/fractal-showcase/live-trial.mjs` | 52 | LIVE probe of the empty-root-editor fix: as Fractal Tester 1, N fresh scratch topics, each created through |
-| `scripts/fractal-showcase/liveauth.mjs` | 49 | Live sign-in helper. Credentials are read from the credential file inside this process, typed into |
+| `scripts/fractal-showcase/liveauth.mjs` | 52 | Live sign-in helper. Credentials are read from the credential file inside this process, typed into |
 | `scripts/fractal-showcase/ops.mjs` | 178 | Wait until at least one editable editor exists and the caret lives in one. |
 | `scripts/fractal-showcase/run-private.sh` | 26 | Run a showcase driver in a HEADED Chromium on a PRIVATE virtual display (Xvfb), never on the |
 | `scripts/fractal-showcase/spec.mjs` | 51 | The content of the Fractal Showcase. Labels are atomic (2 to 5 words), globally unique by their first |
