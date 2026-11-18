@@ -201,6 +201,10 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  /* The avatar photo is position:absolute; inset:0 (.topic-avatar-image). Without a positioned box here it
+     stretched over the WHOLE collaboration toolbar and swallowed every click on Invite and Share as soon as
+     a participant with a profile photo (Google avatar) was added (found 18 Nov 2026). */
+  position: relative;
   background: #CCD9E5;
   vertical-align: top;
 }
