@@ -1336,11 +1336,15 @@
   color: #888;
 }
 
-/* Expander icon position adjustment for expanded state */
+/* Expander icon position adjustment for expanded state.
+   It used to sit at left: -20px, OUTSIDE the scrolling topic panel (which clips its x overflow), so another element
+   received the click and a person could not collapse an expanded blip with its [-] control. Keep it inside the blip,
+   in the left padding below the toolbar. */
 .blip-container.expanded .blip-expander {
   position: absolute;
-  left: -20px;
+  left: 4px;
   top: 40px; /* Below the toolbar */
+  z-index: 3;
 }
 
 .blip-expander-icon {

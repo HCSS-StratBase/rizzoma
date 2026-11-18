@@ -38,6 +38,7 @@
     "test:follow-green": "node test-follow-green-smoke.mjs",
     "test:collab": "node test-collab-smoke.mjs",
     "test:select-all-edit": "node test-select-all-edit-smoke.mjs",
+    "test:collapse-control": "node test-collapse-control-smoke.mjs",
     "test:nested-pointer": "node test-nested-pointer-focus-smoke.mjs",
     "test:click-caret": "node test-click-caret-smoke.mjs",
     "test:gadgets-render": "node test-gadgets-render-smoke.mjs",
