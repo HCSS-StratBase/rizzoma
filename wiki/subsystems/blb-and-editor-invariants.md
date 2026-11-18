@@ -102,3 +102,6 @@ graph LR
 
 ### 3.5 Unverified on this page
 - **¶10** ▷ Browser behaviour of every code path above (nothing was run or screenshotted this session); whether `docs/BLB.md` should gain the single-active and folded-thread rules (currently they live in `docs/ARCHITECTURE.md:96-104` and in code); the `Enter`-creates-sibling-bullet behaviour (TipTap default, not located in repo code).
+
+### 3.6 Anchored-child visibility and Ctrl+Enter ownership (2026-11-18)
+- **¶11** □ A child with an `anchorPosition` is inline only while its `[+]` marker is in the parent HTML (or it is under 30 s old): `src/client/components/blip/inlineAnchoring.ts` (`isInlineAnchored`, tests `src/tests/client.inlineAnchoring.test.ts`); otherwise it renders as a reply row so it can never be alive but invisible. The comment-decoration plugin bookkeeping (`withCommentDecorations`, tests `src/tests/client.InlineComments.pluginKey.test.ts`) must match `plugin.spec.key`, never the string `plugin.key`.
