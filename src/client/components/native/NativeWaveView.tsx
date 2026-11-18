@@ -45,6 +45,8 @@ export interface NativeWaveViewProps {
   rootBlipId: string;
   /** Synchronous lookup: blipId → ContentArray (or null if not loaded). */
   contentByBlipId: (id: string) => ContentArray | null;
+  /** Author, avatar and date per blip, shown in view mode as in the original Rizzoma. */
+  metaByBlipId?: (id: string) => { authorName?: string; authorAvatar?: string; dateText?: string } | null;
   /** Whether the current user is authenticated and allowed to edit/reply. */
   canEdit?: boolean;
   /** Topic title for WavePlaybackModal. */
@@ -68,6 +70,7 @@ export interface NativeWaveViewProps {
 export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
   rootBlipId,
   contentByBlipId,
+  metaByBlipId,
   canEdit = true,
   topicTitle = 'Wave playback',
   blips = [],
@@ -82,6 +85,8 @@ export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
   const waveViewRef = useRef<WaveView | null>(null);
   const contentLookupRef = useRef(contentByBlipId);
   contentLookupRef.current = contentByBlipId;
+  const metaLookupRef = useRef(metaByBlipId);
+  metaLookupRef.current = metaByBlipId;
   const onOpenHistoryRef = useRef(onOpenHistory);
   onOpenHistoryRef.current = onOpenHistory;
   const canEditRef = useRef(canEdit);
@@ -383,6 +388,7 @@ export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
 
     const wv = new WaveView({
       contentByBlipId: (id) => contentLookupRef.current(id),
+      metaByBlipId: (id) => metaLookupRef.current?.(id) ?? null,
       onOpenHistory: (id) => onOpenHistoryRef.current?.(id),
       onEditBlip: (id, view) => handleEditBlipRef.current(id, view),
       onReplyBlip: (id) => handleReplyBlipRef.current(id),
@@ -416,6 +422,11 @@ export const NativeWaveView: React.FC<NativeWaveViewProps> = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rootBlipId]);
+
+  // Author/date follow the loaded blip data (a blip created or renamed after mount).
+  useEffect(() => {
+    waveViewRef.current?.refreshMeta();
+  }, [blips, metaByBlipId]);
 
   if (!FEATURES.RIZZOMA_NATIVE_RENDER) {
     return null;

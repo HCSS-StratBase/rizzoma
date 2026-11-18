@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/list-font-and-kanban-gadget
-source_commit: c9e37545
+source_branch: fix/tester-round2
+source_commit: 626b17e8
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 172 files in `scripts/`, 45 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 175 files in `scripts/`, 48 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -67,6 +67,9 @@ graph LR
 | `test:toolbar-inline` | `node test-toolbar-inline-smoke.mjs` |
 | `test:follow-green` | `node test-follow-green-smoke.mjs` |
 | `test:collab` | `node test-collab-smoke.mjs` |
+| `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
+| `test:native-ctrl-enter` | `node test-native-ctrl-enter-smoke.mjs` |
+| `test:root-ctrl-enter` | `node test-root-ctrl-enter-handoff.mjs` |
 | `test:readmode-seed` | `node test-topic-readmode-seed-smoke.mjs` |
 | `test:gadgets` | `node test-gadget-apps-smoke.mjs` |
 | `test:body-text` | `node test-blip-body-text-smoke.mjs` |
@@ -85,10 +88,11 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (172)
+## scripts/ (175)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
+| `scripts/README_recover_soft_deleted_blips.md` | — | — |
 | `scripts/analyze_bullets.py` | 50 | Focus on the left edge where bullets appear (x: 0 to 60) |
 | `scripts/append_workflow_note.py` | 25 | — |
 | `scripts/backup-bundle.sh` | 93 | Hard Gap #23 (2026-04-13): one-shot bundle + GDrive copy script. |
@@ -200,6 +204,7 @@ graph LR
 | `scripts/probe_native_depth.mjs` | 29 | a React-built hand-build d10 topic (has real depth-10 content stored) |
 | `scripts/probe_native_topdown.mjs` | 30 | top-down: click the FIRST *visible* folded thread's fold button, repeat |
 | `scripts/probe_user_topic.mjs` | 64 | — |
+| `scripts/recover_soft_deleted_blips.py` | 247 | Put the marker before the last </p>; append it when the parent has no paragraph. |
 | `scripts/repro_live_subblip_bug.mjs` | 75 | Reproduce the dead-"+" subblip bug on LIVE master (138-201-62-161.nip.io). |
 | `scripts/repro_nested_ctrl_enter.mjs` | 198 | Reproduce: Ctrl+Enter inside a NESTED blip's editor (not topic root) — user |
 | `scripts/repro_nested_cursor_ce.mjs` | 52 | Reproduce SDS's action: click into L3 label, place cursor, Ctrl+Enter (as old Rizzoma). |
@@ -229,6 +234,7 @@ graph LR
 | `scripts/test-delete-blip.mjs` | 164 | — |
 | `scripts/test-live-auth-and-topic.mjs` | 75 | — |
 | `scripts/test_edit_then_ce.mjs` | 31 | — |
+| `scripts/test_recover_soft_deleted_blips.py` | 117 | Test of recover_soft_deleted_blips.py against a THROWAWAY database on a scratch CouchDB. |
 | `scripts/test_surface7_selection.mjs` | 88 | — |
 | `scripts/test_wiki_first_hook.py` | 58 | Tests for scripts ⁄ wiki_first_hook.py: wiki-first and ORIGINAL-FIRST gates. Run: python3 scripts ⁄ test_wiki_first_hook.py |
 | `scripts/verify-blb-fractal-proof.mjs` | 224 | — |

@@ -25,6 +25,8 @@
 import { BlipView, type BlipEditHandler, type BlipReplyHandler, type HistoryOpenHandler } from './blip-view';
 import { ContentArray } from './types';
 
+export type BlipMeta = { authorName?: string; authorAvatar?: string; dateText?: string };
+
 export type WaveViewEvent =
   | 'blip-added'
   | 'blip-removed'
@@ -46,6 +48,8 @@ export interface WaveViewOptions {
   onEditBlip?: BlipEditHandler;
   /** Optional handler called when a blip's gear "reply" button is clicked. */
   onReplyBlip?: BlipReplyHandler;
+  /** Optional author and date lookup; shown on every blip in view mode. */
+  metaByBlipId?: (id: string) => BlipMeta | null;
 }
 
 export class WaveView {
@@ -58,6 +62,7 @@ export class WaveView {
   private readonly onOpenHistory: HistoryOpenHandler | null;
   private readonly onEditBlip: BlipEditHandler | null;
   private readonly onReplyBlip: BlipReplyHandler | null;
+  private readonly metaLookup: ((blipId: string) => BlipMeta | null) | null;
   /** Set of unread blip ids; updated via setUnreadSet() and reflected on
    *  each BlipView's container as `data-unread="1"` for CSS-driven green
    *  marker (Follow-the-Green semantics). */
@@ -68,6 +73,7 @@ export class WaveView {
     this.onOpenHistory = opts.onOpenHistory || null;
     this.onEditBlip = opts.onEditBlip || null;
     this.onReplyBlip = opts.onReplyBlip || null;
+    this.metaLookup = opts.metaByBlipId || null;
     this.rootContainer = document.createElement('div');
     this.rootContainer.className = opts.rootClassName || 'wave-view';
   }
@@ -106,8 +112,15 @@ export class WaveView {
     this.views.set(blipId, view);
     const content = this.contentLookup(blipId);
     if (content) view.setContent(content);
+    if (this.metaLookup) view.setMeta(this.metaLookup(blipId));
     this.emit('blip-added', view);
     return view;
+  }
+
+  /** Re-apply author and date to every existing BlipView (call after the blip data changed). */
+  refreshMeta(): void {
+    if (this.destroyed || !this.metaLookup) return;
+    this.views.forEach((view, id) => view.setMeta(this.metaLookup!(id)));
   }
 
   /** Replace the unread set + sync each BlipView's container attribute.

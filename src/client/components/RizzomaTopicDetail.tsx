@@ -13,7 +13,7 @@ import { WavePlaybackModal } from './WavePlaybackModal';
 import { MindMapView } from './MindMapView';
 import './RizzomaTopicDetail.css';
 import type { WaveUnreadState } from '../hooks/useWaveUnread';
-import { RizzomaBlip, ACTIVE_BLIP_CLAIM_EVENT, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
+import { RizzomaBlip, ACTIVE_BLIP_CLAIM_EVENT, formatRizzomaDate, type BlipData, type BlipContributor } from './blip/RizzomaBlip';
 import { BlipMenu } from './blip/BlipMenu';
 import { injectInlineMarkers } from './blip/inlineMarkers';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -2259,6 +2259,18 @@ function RizzomaTopicDetailState({
               <NativeWaveView
                 rootBlipId={topic.id}
                 contentByBlipId={nativeLookup}
+                metaByBlipId={(blipId) => {
+                  const findBlip = (list: BlipData[]): BlipData | null => {
+                    for (const b of list) {
+                      if (b.id === blipId) return b;
+                      const inner = b.childBlips?.length ? findBlip(b.childBlips) : null;
+                      if (inner) return inner;
+                    }
+                    return null;
+                  };
+                  const b = blipId === topic.id ? null : findBlip(renderedBlips);
+                  return b ? { authorName: b.authorName, authorAvatar: b.authorAvatar, dateText: formatRizzomaDate(b.createdAt) } : null;
+                }}
                 canEdit={isAuthed}
                 topicTitle={topic.title || 'Wave playback'}
                 blips={renderedBlips.map((b) => ({

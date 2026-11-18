@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/list-font-and-kanban-gadget
-source_commit: c9e37545
+source_branch: fix/tester-round2
+source_commit: 626b17e8
 generated: true
 ---
 
@@ -40,7 +40,7 @@ graph LR
     P --> K["code"]
 ```
 
-## Client components (121)
+## Client components (122)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -62,8 +62,8 @@ graph LR
 | `src/client/components/GadgetPalette.css` | 264 | — |
 | `src/client/components/GadgetPalette.tsx` | 180 | (no header comment; exports GadgetPalette) |
 | `src/client/components/GreenNavigation.tsx` | 43 | (no header comment; exports GreenNavigation) |
-| `src/client/components/InviteModal.css` | 197 | InviteModal.css - Authentic Legacy Rizzoma Member Management Popup matching 034-manage-members.png |
-| `src/client/components/InviteModal.tsx` | 249 | (no header comment; exports InviteModal) |
+| `src/client/components/InviteModal.css` | 209 | InviteModal.css - Authentic Legacy Rizzoma Member Management Popup matching 034-manage-members.png |
+| `src/client/components/InviteModal.tsx` | 392 | (no header comment; exports InviteModal) |
 | `src/client/components/MentionsList.css` | 134 | — |
 | `src/client/components/MentionsList.tsx` | 183 | (no header comment; exports MentionsList) |
 | `src/client/components/MindMapView.css` | 146 | — |
@@ -84,7 +84,7 @@ graph LR
 | `src/client/components/RizzomaLayout.css` | 423 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 567 | (no header comment; exports RizzomaLayout) |
 | `src/client/components/RizzomaTopicDetail.css` | 1802 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.tsx` | 2334 | (no header comment; exports shouldThrottleSocketTopicLoad) |
+| `src/client/components/RizzomaTopicDetail.tsx` | 2362 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 225 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 353 | (no header comment; exports RizzomaTopicsList) |
 | `src/client/components/ShareModal.css` | 175 | ShareModal.css - Authentic Legacy Rizzoma Share Popover Style |
@@ -115,13 +115,14 @@ graph LR
 | `src/client/components/blip/BlipMenu.tsx` | 887 | (no header comment; exports BlipMenu) |
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 622 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
-| `src/client/components/blip/RizzomaBlip.css` | 1910 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 3136 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/RizzomaBlip.css` | 1924 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.tsx` | 3165 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 105 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 73 | (no header comment; exports LocationLike) |
+| `src/client/components/blip/inlineAnchoring.ts` | 27 | Decides whether a child blip is rendered INLINE (behind a [+] marker inside its parent's |
 | `src/client/components/blip/inlineMarkers.ts` | 185 | (no header comment; exports stripOrphanMarkers) |
-| `src/client/components/editor/BlipEditor.css` | 244 | — |
+| `src/client/components/editor/BlipEditor.css` | 251 | — |
 | `src/client/components/editor/BlipEditor.tsx` | 105 | (no header comment; exports BlipEditor) |
 | `src/client/components/editor/CollaborativeCursors.css` | 171 | Collaborative Cursors Styling |
 | `src/client/components/editor/CollaborativeCursors.tsx` | 223 | (no header comment; exports CursorUser) |
@@ -134,7 +135,7 @@ graph LR
 | `src/client/components/editor/FloatingToolbar.tsx` | 183 | (no header comment; exports FloatingToolbar) |
 | `src/client/components/editor/FollowGreen.css` | 165 | Follow the Green - Visual indicators for unread content |
 | `src/client/components/editor/InlineComments.css` | 533 | Inline Comments Styling |
-| `src/client/components/editor/InlineComments.tsx` | 887 | (no header comment; exports InlineCommentsStatus) |
+| `src/client/components/editor/InlineComments.tsx` | 905 | (no header comment; exports InlineCommentsStatus) |
 | `src/client/components/editor/MentionList.css` | 92 | — |
 | `src/client/components/editor/MentionList.tsx` | 77 | (no header comment; exports MentionListProps) |
 | `src/client/components/editor/YjsDocumentManager.ts` | 98 | (no header comment; exports YjsDocumentManager) |
@@ -163,15 +164,16 @@ graph LR
 | `src/client/components/mobile/BottomSheet.tsx` | 239 | Whether the bottom sheet is open |
 | `src/client/components/mobile/BottomSheetMenu.css` | 174 | Bottom Sheet Menu Styles |
 | `src/client/components/mobile/BottomSheetMenu.tsx` | 280 | Unique identifier for the item |
-| `src/client/components/native/NativeWaveView.css` | 205 | Native fractal-render — minimum viable CSS for the new render path. |
-| `src/client/components/native/NativeWaveView.tsx` | 472 | Native fractal-render — React wrapper for WaveView. |
+| `src/client/components/native/NativeWaveView.css` | 232 | Native fractal-render — minimum viable CSS for the new render path. |
+| `src/client/components/native/NativeWaveView.tsx` | 483 | Native fractal-render — React wrapper for WaveView. |
 
-## Client native render port (20)
+## Client native render port (21)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/client/native/__tests__/awareness.test.ts` | 130 | Awareness tests — presence + cursor sharing across simulated clients. |
 | `src/client/native/__tests__/blip-editor-host.test.ts` | 202 | BlipEditorHost lifecycle + round-trip tests (vitest, jsdom). |
+| `src/client/native/__tests__/blip-meta.test.ts` | 44 | outside the editable body: the content array and the editor never see it |
 | `src/client/native/__tests__/content-lookup.test.ts` | 124 | Phase 1 recursion fix — the native content lookup drives full-depth render |
 | `src/client/native/__tests__/parser.test.ts` | 109 | Parser smoke test (vitest). |
 | `src/client/native/__tests__/serializer.test.ts` | 164 | Serializer + round-trip tests (vitest). |
@@ -181,14 +183,14 @@ graph LR
 | `src/client/native/awareness.ts` | 148 | Native fractal-render — Awareness wrapper. |
 | `src/client/native/blip-editor-host.ts` | 222 | Native fractal-render — BlipEditorHost. |
 | `src/client/native/blip-thread.ts` | 233 | Native fractal-render — BlipThread. |
-| `src/client/native/blip-view.ts` | 220 | Native fractal-render — BlipView (Phase 2 skeleton). |
+| `src/client/native/blip-view.ts` | 261 | Native fractal-render — BlipView (Phase 2 skeleton). |
 | `src/client/native/content-lookup.ts` | 82 | Native fractal-render — content lookup builder. |
 | `src/client/native/parser.ts` | 284 | Native fractal-render — HTML → ContentArray parser. |
 | `src/client/native/renderer.ts` | 234 | Native fractal-render — Renderer. |
 | `src/client/native/serializer.ts` | 210 | Native fractal-render — ContentArray → HTML serializer. |
 | `src/client/native/tiptap-adapter.ts` | 69 | Native fractal-render — BlipEditorAdapter that delegates to TipTap. |
 | `src/client/native/types.ts` | 98 | Native fractal-render — content array type definitions. |
-| `src/client/native/wave-view.ts` | 259 | Native fractal-render — WaveView. |
+| `src/client/native/wave-view.ts` | 272 | Native fractal-render — WaveView. |
 | `src/client/native/yjs-binding.ts` | 202 | Native fractal-render — Y.js CRDT binding for the ContentArray model. |
 
 ## Client other (67)
@@ -280,7 +282,7 @@ graph LR
 | `src/server/routes/tasks.ts` | 287 | Tasks Routes |
 | `src/server/routes/topics.ts` | 873 | — |
 | `src/server/routes/uploads.ts` | 311 | (no header comment; exports uploadsRouter) |
-| `src/server/routes/waves.ts` | 1131 | — |
+| `src/server/routes/waves.ts` | 1182 | — |
 
 ## Server lib (20)
 
@@ -384,7 +386,7 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (117)
+## Tests (120)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -393,6 +395,7 @@ graph LR
 | `src/tests/client.BlipEditor.test.ts` | 114 | Warm the EditorConfig module once up-front with a generous timeout. |
 | `src/tests/client.BlipMenu.test.tsx` | 620 | — |
 | `src/tests/client.EditorSearch.test.tsx` | 76 | — |
+| `src/tests/client.InlineComments.pluginKey.test.ts` | 44 | — |
 | `src/tests/client.LazyBlipSlot.test.tsx` | 106 | — |
 | `src/tests/client.PresenceIndicator.test.tsx` | 63 | — |
 | `src/tests/client.RebuildPanel.test.tsx` | 98 | — |
@@ -425,6 +428,7 @@ graph LR
 | `src/tests/client.gadgets.insert.test.ts` | 118 | — |
 | `src/tests/client.getUserMediaAdapter.test.ts` | 318 | — |
 | `src/tests/client.historyXss.test.tsx` | 63 | — |
+| `src/tests/client.inlineAnchoring.test.ts` | 23 | — |
 | `src/tests/client.inlineChildHandoff.test.ts` | 14 | — |
 | `src/tests/client.inlineChildTypeahead.test.ts` | 69 | @vitest-environment jsdom |
 | `src/tests/client.inlineCommentAnchoring.test.ts` | 94 | — |
@@ -435,6 +439,7 @@ graph LR
 | `src/tests/client.inlineHtmlTaskHydration.test.tsx` | 415 | — |
 | `src/tests/client.insertHandlers.test.ts` | 60 | Tests for features 24 (toolbar alignment CSS), 31 (smart space prefix), |
 | `src/tests/client.inviteDelivery.test.tsx` | 134 | — |
+| `src/tests/client.inviteMembers.test.tsx` | 114 | — |
 | `src/tests/client.logoutSecurity.test.ts` | 34 | — |
 | `src/tests/client.milestone1Safety.test.tsx` | 87 | — |
 | `src/tests/client.milestone2Native.test.tsx` | 94 | — |
