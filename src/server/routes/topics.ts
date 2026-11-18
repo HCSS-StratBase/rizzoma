@@ -15,6 +15,7 @@ import { computeWaveUnreadCounts } from '../lib/unread.js';
 import { sendInviteEmail } from '../services/email.js';
 import type { WaveParticipant } from '../schemas/wave.js';
 import {
+  activatePendingOwnEntry,
   buildAccessibleTopicSelector,
   identityFromRequest,
   normalizeSharingPolicy,
@@ -535,6 +536,7 @@ router.get('/:id', async (req, res): Promise<void> => {
     const doc = await loadLiveTopic(id);
     const access = await requireWaveAccess(req, res, id, 'read', doc);
     if (!access) return;
+    await activatePendingOwnEntry(access);
     let authorName: string | undefined;
     let authorAvatar: string | undefined;
     if (doc.authorId) {

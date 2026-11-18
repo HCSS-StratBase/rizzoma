@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { find, getDoc } from './couch.js';
+import { find, getDoc, updateDoc } from './couch.js';
 import { sortParticipantCandidates } from './invitations.js';
 
 export type ShareLevel = 'private' | 'link' | 'public';
@@ -45,6 +45,8 @@ export type WaveAccess = {
   role: WaveRole;
   policy: SharingPolicy;
   participantId?: string;
+  /** Set when access came from a PENDING entry bound to this very account: activate it on open. */
+  pendingOwnEntry?: ParticipantDoc;
   canRead: boolean;
   canComment: boolean;
   canEdit: boolean;
@@ -131,11 +133,27 @@ export function identityFromSocketRequest(request: unknown): AccessIdentity {
   };
 }
 
+/**
+ * A PENDING invitation normally grants nothing: an emailed invitation to an address proves nothing about who
+ * holds the current session, so it only becomes active when its one-time token is redeemed. The exception is
+ * an entry that was already bound to a REAL account id (not the `invite:<email>` placeholder) and whose id is
+ * the id of the authenticated session: that person IS the invited account, there is nothing left to prove, and
+ * making them click the e-mail link first locked invited users out ("You do not have access to this topic"
+ * for the owner's invitee, found 18 Nov 2026).
+ */
+export function pendingEntryIsOwnAccount(participant: ParticipantDoc, identity: AccessIdentity): boolean {
+  return participant.status === 'pending'
+    && Boolean(identity.id)
+    && participant.userId === identity.id
+    && !String(participant.userId).startsWith('invite:');
+}
+
 function roleFromParticipant(participant?: ParticipantDoc | null): WaveRole | null {
   // Pending email invitations prove nothing about the current session's
   // control of that address. Only a redeemed/accepted participant grants
-  // access; legacy records with no status remain accepted for compatibility.
-  if (!participant || participant.status === 'pending' || participant.status === 'declined') return null;
+  // access (or a pending entry bound to the signed-in account itself, see
+  // findParticipant); legacy records with no status remain accepted for compatibility.
+  if (!participant || participant.status === 'declined') return null;
   if (participant.role === 'owner') return 'owner';
   if (participant.role === 'editor') return 'editor';
   if (participant.role === 'commenter') return 'commenter';
@@ -180,9 +198,24 @@ async function findParticipant(waveId: string, identity: AccessIdentity): Promis
     candidates.push(...(result.docs || []));
   }
   return sortParticipantCandidates(
-    candidates.filter((candidate) => candidate.status !== 'pending' && candidate.status !== 'declined'),
+    candidates.filter((candidate) => (candidate.status !== 'pending' || pendingEntryIsOwnAccount(candidate, identity)) && candidate.status !== 'declined'),
     identity.id,
   )[0] || null;
+}
+
+/**
+ * The signed-in invitee opened the topic: make the entry a real, accepted participant so that the person shows
+ * in the header for everybody (non-owners only see accepted participants) and later reads need no special case.
+ * Best effort: a lost write race just leaves the entry pending, which still grants access.
+ */
+export async function activatePendingOwnEntry(access: WaveAccess): Promise<void> {
+  const entry = access.pendingOwnEntry;
+  if (!entry || entry.status !== 'pending') return;
+  try {
+    await updateDoc({ ...entry, status: 'accepted' as const, acceptedAt: Date.now() } as any);
+  } catch {
+    /* another request activated it first, or the write failed: access is unaffected */
+  }
 }
 
 export async function resolveWaveAccess(
@@ -236,7 +269,9 @@ export async function resolveWaveAccess(
     : null;
   const participantRole = roleFromParticipant(participant);
   if (participantRole) {
-    return buildAccess(waveId, identity, policy, participantRole, participant?._id);
+    const access = buildAccess(waveId, identity, policy, participantRole, participant?._id);
+    if (participant && pendingEntryIsOwnAccount(participant, identity)) access.pendingOwnEntry = participant;
+    return access;
   }
 
   return buildAccess(waveId, identity, policy, publicRole(policy, identity));
@@ -305,7 +340,7 @@ export async function listParticipantWaveIds(identity: AccessIdentity): Promise<
       .catch(() => find<ParticipantDoc>(selector, { limit: 5000 }))
       .catch(() => ({ docs: [] as ParticipantDoc[] }));
     for (const doc of result.docs || []) {
-      if (doc.status !== 'pending' && doc.status !== 'declined' && doc.waveId) waveIds.add(doc.waveId);
+      if ((doc.status !== 'pending' || pendingEntryIsOwnAccount(doc, identity)) && doc.status !== 'declined' && doc.waveId) waveIds.add(doc.waveId);
     }
   }
   return [...waveIds];

@@ -22,6 +22,7 @@ vi.mock('../server/lib/couch.js', () => ({
     if (!doc) throw new Error('404 not_found');
     return { ...doc };
   }),
+  updateDoc: vi.fn(async (doc: StoredDoc) => { state.docs.set(doc._id, { ...doc }); return { id: doc._id, rev: 'r2' }; }),
   find: vi.fn(async (selector: Record<string, any>) => ({
     docs: [...state.docs.values()].filter((doc) => matches(doc, selector)).map((doc) => ({ ...doc })),
   })),
@@ -29,6 +30,7 @@ vi.mock('../server/lib/couch.js', () => ({
 
 import {
   buildAccessibleTopicSelector,
+  activatePendingOwnEntry,
   hasWavePermission,
   normalizeSharingPolicy,
   resolveWaveAccess,
@@ -162,6 +164,38 @@ describe('central wave authorization policy', () => {
       status: 'declined',
     });
     expect((await resolveWaveAccess('wave-private', { id: 'real-user', email: 'guest@example.test' })).role).toBe('outsider');
+  });
+
+  it('lets a signed-in user open a topic they were invited to by account id, before redeeming the e-mail link', async () => {
+    // 18 Nov 2026: the owner invited an existing, signed-in user; the entry was bound to his account id but still
+    // "pending", and he got "You do not have access to this topic" until he clicked the e-mail link.
+    state.docs.set('participant-own', {
+      _id: 'participant-own',
+      type: 'participant',
+      waveId: 'wave-private',
+      userId: 'invited-user',
+      email: 'invited@example.test',
+      role: 'editor',
+      status: 'pending',
+    });
+    expect((await resolveWaveAccess('wave-private', { id: 'invited-user', email: 'invited@example.test' })).role).toBe('editor');
+    // opening the topic activates the entry, so the person is a real participant (visible to everybody)
+    const opened = await resolveWaveAccess('wave-private', { id: 'invited-user', email: 'invited@example.test' });
+    expect(opened.pendingOwnEntry?._id).toBe('participant-own');
+    await activatePendingOwnEntry(opened);
+    expect(state.docs.get('participant-own')).toMatchObject({ status: 'accepted' });
+    expect(Number(state.docs.get('participant-own')!['acceptedAt'])).toBeGreaterThan(0);
+    expect((await resolveWaveAccess('wave-private', { id: 'invited-user' })).pendingOwnEntry).toBeUndefined();
+    state.docs.set('participant-own', { ...state.docs.get('participant-own')!, status: 'pending' });
+    // another account, or no account, still gets nothing from that pending entry
+    expect((await resolveWaveAccess('wave-private', { id: 'someone-else', email: 'invited@example.test' })).role).toBe('outsider');
+    expect((await resolveWaveAccess('wave-private', { email: 'invited@example.test' })).role).toBe('outsider');
+    // the placeholder id of an invitation to an address nobody has proven yet stays denied
+    state.docs.set('participant-own', { ...state.docs.get('participant-own')!, userId: 'invite:invited@example.test' });
+    expect((await resolveWaveAccess('wave-private', { id: 'invite:invited@example.test', email: 'invited@example.test' })).role).toBe('outsider');
+    // a declined entry stays denied
+    state.docs.set('participant-own', { ...state.docs.get('participant-own')!, userId: 'invited-user', status: 'declined' });
+    expect((await resolveWaveAccess('wave-private', { id: 'invited-user' })).role).toBe('outsider');
   });
 
   it('keeps legacy missing-policy docs public-read-only but malformed explicit policy private', () => {
