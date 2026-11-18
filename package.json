@@ -39,6 +39,7 @@
     "test:collab": "node test-collab-smoke.mjs",
     "test:nested-pointer": "node test-nested-pointer-focus-smoke.mjs",
     "test:click-caret": "node test-click-caret-smoke.mjs",
+    "test:gadgets-render": "node test-gadgets-render-smoke.mjs",
     "test:phone-layout": "node test-phone-layout-smoke.mjs",
     "test:tester-feedback": "node test-tester-feedback-smoke.mjs",
     "test:root-ctrl-enter": "node scripts/test-root-ctrl-enter-survives-reload.mjs",

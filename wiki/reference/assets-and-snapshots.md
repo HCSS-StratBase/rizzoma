@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/click-caret-jump
-source_commit: 22594f0a
+source_branch: fix/gadgets-render
+source_commit: daa6ab58
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 58 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 59 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -110,6 +110,7 @@ graph LR
 | `rizzoma.html` | — |
 | `test-blb-snapshots.mjs` | — |
 | `test-blip-body-text-smoke.mjs` | Computed-style smoke: every piece of blip BODY text has the same size, line-height and |
+| `test-click-caret-smoke.mjs` | Regression smoke: a click into the MIDDLE of a view-state blip puts the caret at the clicked place, |
 | `test-collab-smoke.mjs` | Real-time collab smoke test (Playwright, two browser contexts). |
 | `test-editor.html` | Set feature flags before module loading |
 | `test-features.html` | — |
