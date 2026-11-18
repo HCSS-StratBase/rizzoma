@@ -48,6 +48,7 @@ export class BlipView {
   private onOpenHistory: HistoryOpenHandler | null = null;
   private onEditBlip: BlipEditHandler | null = null;
   private onReplyBlip: BlipReplyHandler | null = null;
+  private metaEl: HTMLElement | null = null;
 
   constructor(blipId: string) {
     this.blipId = blipId;
@@ -108,6 +109,46 @@ export class BlipView {
     gear.appendChild(historyBtn);
     this.container.appendChild(gear);
     this.gearButton = historyBtn;
+  }
+
+  /**
+   * Author avatar + creation date, shown in VIEW mode as in the original Rizzoma (and as the
+   * React path does). Lives next to the body, outside `.blip-text`, so the content array and
+   * the editor never see it. Pass null/empty to remove it.
+   */
+  setMeta(meta: { authorName?: string; authorAvatar?: string; dateText?: string } | null): void {
+    if (this.destroyed) return;
+    const has = !!meta && !!(meta.authorName || meta.dateText);
+    if (!has) {
+      if (this.metaEl) { this.metaEl.remove(); this.metaEl = null; }
+      return;
+    }
+    if (!this.metaEl) {
+      const el = document.createElement('div');
+      el.className = 'blip-contributors-info native-blip-meta';
+      el.contentEditable = 'false';
+      this.container.insertBefore(el, this.inner);
+      this.metaEl = el;
+    }
+    const el = this.metaEl;
+    while (el.firstChild) el.removeChild(el.firstChild);
+    const name = meta!.authorName || '';
+    const avatar = document.createElement('span');
+    avatar.className = 'blip-author-avatar';
+    avatar.title = name;
+    if (meta!.authorAvatar) {
+      const img = document.createElement('img');
+      img.src = meta!.authorAvatar;
+      img.alt = name;
+      avatar.appendChild(img);
+    } else {
+      avatar.textContent = (name || '?').charAt(0).toUpperCase();
+    }
+    el.appendChild(avatar);
+    const date = document.createElement('span');
+    date.className = 'blip-author-date';
+    date.textContent = meta!.dateText || '';
+    el.appendChild(date);
   }
 
   /** Wire the history modal opener. */

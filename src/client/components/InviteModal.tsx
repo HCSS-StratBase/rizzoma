@@ -10,6 +10,7 @@ interface Participant {
   email?: string;
   avatar?: string;
   role?: string;
+  status?: string;
 }
 
 interface InviteModalProps {
@@ -20,6 +21,7 @@ interface InviteModalProps {
 }
 
 type InviteRole = 'viewer' | 'commenter' | 'editor';
+const ROLE_LABELS: Record<InviteRole, string> = { editor: 'Editor', commenter: 'Commenter', viewer: 'Reader' };
 
 export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle }: InviteModalProps): JSX.Element | null {
   const [emails, setEmails] = useState('');
@@ -27,6 +29,10 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
   const [sending, setSending] = useState(false);
   const [sharingLevel, setSharingLevel] = useState<'private' | 'link' | 'public' | 'unknown'>('unknown');
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [canManage, setCanManage] = useState(false);
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [reloadTick, setReloadTick] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [contacts, setContacts] = useState<Array<{ userId: string; name: string; email: string; avatar?: string }>>([]);
 
@@ -58,15 +64,18 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
-    void api<{ participants: Participant[] }>(`/api/waves/${encodeURIComponent(topicId)}/participants`).then((res) => {
+    void api<{ participants: Participant[]; canManage?: boolean }>(`/api/waves/${encodeURIComponent(topicId)}/participants`).then((res) => {
       if (cancelled) return;
-      const list = res.ok && res.data ? (res.data as { participants?: Participant[] }).participants : undefined;
-      setParticipants(Array.isArray(list) ? list : []);
+      const body = res.ok && res.data ? (res.data as { participants?: Participant[]; canManage?: boolean }) : undefined;
+      const list = body?.participants;
+      // A removed member stays on the server as status "declined": never list it.
+      setParticipants(Array.isArray(list) ? list.filter((p) => p.status !== 'declined') : []);
+      setCanManage(body?.canManage === true);
     }).catch(() => {
       if (!cancelled) setParticipants([]);
     });
     return () => { cancelled = true; };
-  }, [isOpen, topicId]);
+  }, [isOpen, topicId, reloadTick]);
 
   if (!isOpen) return null;
 
@@ -179,6 +188,59 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
     setSelectedIds(next);
   };
 
+  // Select role / Remove act on the ticked members, owner only. The owner row is never
+  // changed or removed (the server refuses it as well).
+  const selectedMembers = participants.filter((p, idx) => selectedIds.has(p.id || String(idx)));
+  const actionable = selectedMembers.filter((p) => p.role !== 'owner' && p.id);
+  const applyRole = async (newRole: InviteRole): Promise<void> => {
+    setRoleMenuOpen(false);
+    if (actionable.length === 0) {
+      toast('The owner\'s role cannot be changed', 'error');
+      return;
+    }
+    setBusy(true);
+    try {
+      await ensureCsrf();
+      const results = await Promise.all(actionable.map((p) => api(
+        `/api/waves/${encodeURIComponent(topicId)}/participants/${encodeURIComponent(String(p.id))}`,
+        { method: 'PATCH', queueable: false, body: JSON.stringify({ role: newRole }) },
+      )));
+      const failed = results.filter((r) => !r.ok).length;
+      toast(failed ? `${failed} role change(s) failed` : `Role set to ${ROLE_LABELS[newRole]} for ${actionable.length} member(s)`, failed ? 'error' : undefined);
+      setSelectedIds(new Set());
+      setReloadTick((n) => n + 1);
+    } catch {
+      toast('Could not change the role. Please try again.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const removeSelected = async (): Promise<void> => {
+    setRoleMenuOpen(false);
+    if (actionable.length === 0) {
+      toast('The owner cannot be removed', 'error');
+      return;
+    }
+    const names = actionable.map((p) => p.name || p.email || 'member').join(', ');
+    if (!window.confirm(`Remove ${actionable.length === 1 ? names : `${actionable.length} members (${names})`} from this topic?`)) return;
+    setBusy(true);
+    try {
+      await ensureCsrf();
+      const results = await Promise.all(actionable.map((p) => api(
+        `/api/waves/${encodeURIComponent(topicId)}/participants/${encodeURIComponent(String(p.id))}`,
+        { method: 'DELETE', queueable: false },
+      )));
+      const failed = results.filter((r) => !r.ok).length;
+      toast(failed ? `${failed} removal(s) failed` : `Removed ${actionable.length} member(s)`, failed ? 'error' : undefined);
+      setSelectedIds(new Set());
+      setReloadTick((n) => n + 1);
+    } catch {
+      toast('Could not remove the members. Please try again.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const toggleSelectAll = () => {
     if (selectedIds.size === participants.length) {
       setSelectedIds(new Set());
@@ -210,7 +272,7 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
             value={role}
             onChange={(event) => setRole(event.target.value as InviteRole)}
           >
-            <option value="viewer">Viewer</option>
+            <option value="viewer">Reader</option>
             <option value="commenter">Commenter</option>
             <option value="editor">Editor</option>
           </select>
@@ -260,7 +322,7 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
                   <span className="invite-member-name">{p.name || 'Participant'}</span>
                   {p.email && <span className="invite-member-email">&lt;{p.email}&gt;</span>}
                 </div>
-                <div className="invite-member-role">{p.role || 'Member'}</div>
+                <div className="invite-member-role">{ROLE_LABELS[p.role as InviteRole] || (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1) : 'Member')}</div>
               </div>
             );
           })}
@@ -268,12 +330,41 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
 
         <div className="invite-actions-bar">
           <div className="invite-buttons-left">
-            <button type="button" className="invite-btn-secondary" disabled={selectedIds.size === 0}>
-              Select role ▾
-            </button>
-            <button type="button" className="invite-btn-secondary" disabled={selectedIds.size === 0}>
-              Remove
-            </button>
+            {canManage && (
+              <span className="invite-role-menu-wrap">
+                <button
+                  type="button"
+                  className="invite-btn-secondary"
+                  data-testid="invite-select-role"
+                  aria-haspopup="menu"
+                  aria-expanded={roleMenuOpen}
+                  disabled={selectedIds.size === 0 || busy}
+                  onClick={() => setRoleMenuOpen((open) => !open)}
+                >
+                  Select role ▾
+                </button>
+                {roleMenuOpen && (
+                  <ul className="invite-role-menu" role="menu" data-testid="invite-role-menu">
+                    {(['editor', 'commenter', 'viewer'] as InviteRole[]).map((r) => (
+                      <li key={r} role="none">
+                        <button type="button" role="menuitem" data-role={r} onClick={() => void applyRole(r)}>{ROLE_LABELS[r]}</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </span>
+            )}
+            {canManage && (
+              <button
+                type="button"
+                className="invite-btn-secondary"
+                data-testid="invite-remove"
+                disabled={selectedIds.size === 0 || busy}
+                onClick={() => void removeSelected()}
+              >
+                Remove
+              </button>
+            )}
             <button type="button" className="invite-btn-secondary" onClick={handleCopyLink}>
               Copy link
             </button>

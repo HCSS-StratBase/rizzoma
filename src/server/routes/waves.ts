@@ -605,7 +605,8 @@ router.get('/:id/participants', async (req, res) => {
         status: participant.status,
       };
     }));
-    res.json({ participants });
+    // canManage tells the Invite dialog whether to offer Select role / Remove (owner only).
+    res.json({ participants, canManage: !!access.canManage });
   } catch (error: any) {
     const message = String(error?.message || '');
     if (message.startsWith('404')) {
