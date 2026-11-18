@@ -777,6 +777,35 @@ describe('Socket.IO session-backed authorization', () => {
     }
   });
 
+  it('grants seed authority again when the lease owner socket joins a second time', async () => {
+    // Fractal showcase defect (18 Nov 2026): a provider re-joins ~50 ms after its first join. The second
+    // answer used to say shouldSeed=false because the lease was already owned by this very socket, so
+    // nobody seeded the Y.Doc and a new topic opened an EMPTY editor.
+    const blipId = 'blip-seed-same-socket-rejoin';
+    state.docs.set(blipId, {
+      _id: blipId,
+      type: 'blip',
+      waveId: 'topic-private',
+      content: '<p>Seed for the re-joining owner</p>',
+      updatedAt: 10,
+    });
+    clearBlipSeedAuthority(blipId);
+    const owner = await connectAs('owner');
+    const other = await connectAs('editor');
+    try {
+      const first = await joinCollaboration(owner, blipId);
+      expect(first.sync).toMatchObject({ shouldSeed: true });
+      const again = await joinCollaboration(owner, blipId);
+      expect(again.sync).toMatchObject({ shouldSeed: true, seedContent: '<p>Seed for the re-joining owner</p>' });
+      // a DIFFERENT socket still must not be elected while the owner holds the lease
+      const peer = await joinCollaboration(other, blipId);
+      expect(peer.sync).toMatchObject({ shouldSeed: false });
+    } finally {
+      owner.disconnect();
+      other.disconnect();
+    }
+  });
+
   it('does not release an empty seed lease when a non-seeding peer leaves', async () => {
     const blipId = 'blip-seed-non-owner-leave';
     state.docs.set(blipId, {
