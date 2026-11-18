@@ -52,6 +52,7 @@ source_commit: a4d4d583
 | Page | Modality | Last Verified | Summary |
 |---|---|---|---|
 | [`verification/gates-sweeps-and-deployment.md`](verification/gates-sweeps-and-deployment.md) | `□` | `2026-11-06` | `scripts/handbuild_acceptance.mjs` (28 checks), the 3-layer visual parity gate (`visual:sweep` → `visual:coverage` → `parity:gate`), `scripts/gen_status.mjs` → `STATUS.md`, `rizzoma-app-docs-gate.sh`, and the Hetzner VPS Prod (`:3000`/`:8000`) vs. Staging (`:3100`/`:8100`) topology. |
+| [`verification/fractal-showcase.md`](verification/fractal-showcase.md) | `□` / `▷` | `2026-11-18` | The hand-built Fractal Showcase topic: real-input driver (`scripts/fractal-showcase/lib.mjs`, `ops.mjs`, `run-private.sh`, `trial-new-topic-editor.mjs`) on a private Xvfb display, defects found (empty root editor on new topics, fixed), function table (not yet filled). |
 
 ---
 
