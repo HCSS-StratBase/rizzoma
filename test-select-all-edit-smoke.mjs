@@ -13,6 +13,8 @@ import { chromium } from 'playwright';
 const BASE = (process.env.RIZZOMA_BASE_URL || 'http://127.0.0.1:3100').replace(/\/$/, '');
 const HEADED = process.env.HEADED === '1';
 const RUN = Date.now().toString(36);
+const SHOTS = process.env.SHOTS || '';
+let shotNo = 0;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failed = 0;
 const check = (ok, label, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? ` | ${detail}` : ''}`); if (!ok) failed += 1; };
@@ -53,6 +55,7 @@ async function step(name, act, expectText) {
   await act(); await sleep(900);
   const h = await html();
   check(oneBullet(h) && h.replace(/<[^>]+>/g, '') === expectText, name, h.slice(0, 120));
+  if (SHOTS) { const fs = await import('node:fs'); fs.mkdirSync(SHOTS, { recursive: true }); shotNo += 1; await page.screenshot({ path: `${SHOTS}/${String(shotNo).padStart(2, '0')}-${name.replace(/[^a-z0-9]+/gi, '_').slice(0, 40)}.png` }); }
 }
 await step('Ctrl+A then typing replaces the whole body and keeps ONE bullet', async () => { await k.press('Control+a'); await k.type('first', { delay }); }, 'first');
 await step('Ctrl+A then Backspace empties the body but keeps the bullet', async () => { await k.press('Control+a'); await k.press('Backspace'); }, '');
