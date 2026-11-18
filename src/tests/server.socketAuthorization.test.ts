@@ -800,6 +800,17 @@ describe('Socket.IO session-backed authorization', () => {
       // a DIFFERENT socket still must not be elected while the owner holds the lease
       const peer = await joinCollaboration(other, blipId);
       expect(peer.sync).toMatchObject({ shouldSeed: false });
+      // ...and neither may a second socket of the SAME user take the lease from the owner socket
+      const sameUserOtherSocket = await connectAs('owner');
+      try {
+        const twin = await joinCollaboration(sameUserOtherSocket, blipId);
+        expect(twin.sync).toMatchObject({ shouldSeed: false });
+        // the owner socket keeps the lease on a further re-join
+        const third = await joinCollaboration(owner, blipId);
+        expect(third.sync).toMatchObject({ shouldSeed: true });
+      } finally {
+        sameUserOtherSocket.disconnect();
+      }
     } finally {
       owner.disconnect();
       other.disconnect();
