@@ -194,3 +194,7 @@
   font-size: 11px;
   color: #6b7c8c;
 }
+
+.invite-suggestions { list-style: none; margin: 6px 0 0; padding: 0; max-height: 168px; overflow-y: auto; border: 1px solid #d5dbe1; border-radius: 4px; background: #fff; }
+.invite-suggestion { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: 0; background: transparent; text-align: left; cursor: pointer; min-height: 36px; }
+.invite-suggestion:hover, .invite-suggestion:focus-visible { background: #eaf3fb; outline: none; }

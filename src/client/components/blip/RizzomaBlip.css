@@ -1907,3 +1907,17 @@
 .inline-child-expanded > .blip-container > .blip-content {
   min-height: 46px !important;
 }
+
+
+/* Images inside a rendered (view-mode) blip body: same thumbnail cap as the editor and as the
+   original Rizzoma (`.file-preview {max-height:150px; max-width:200px}`). */
+.blip-text img[src],
+.blip-content img[src],
+.blip-view-content img[src] {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 200px);
+  max-height: 150px;
+  object-fit: contain;
+}

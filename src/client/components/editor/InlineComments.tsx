@@ -25,7 +25,25 @@ interface InlineCommentsProps {
 }
 
 // Plugin key for decorations
-const commentDecorationsKey = new PluginKey('commentDecorations');
+export const commentDecorationsKey = new PluginKey('commentDecorations');
+
+/**
+ * Plugins registered under `commentDecorationsKey`, matched by the key OBJECT
+ * kept on `plugin.spec.key`. (`plugin.key` is the derived STRING 'commentDecorations$',
+ * so comparing it with the PluginKey object never matched: the old plugin was
+ * never removed and the next `reconfigure` threw "Adding different instances
+ * of a keyed plugin (commentDecorations$)", which unmounted the blip's editor
+ * mid-typing. Tester feedback 2026-11-18: text lost or moved after the second
+ * Ctrl+Enter child blip.)
+ */
+export function withoutCommentDecorations<T extends { spec?: { key?: unknown } }>(plugins: readonly T[]): T[] {
+  return plugins.filter((p) => p.spec?.key !== commentDecorationsKey);
+}
+
+/** Plugin list with exactly one comment-decoration plugin (the given one). */
+export function withCommentDecorations<T extends { spec?: { key?: unknown } }>(plugins: readonly T[], plugin: T): T[] {
+  return [...withoutCommentDecorations(plugins), plugin];
+}
 
 const getRangeKey = (range: InlineComment['range']) => `${range.start}:${range.end}`;
 
@@ -171,7 +189,7 @@ export function InlineComments({
     const removePlugin = () => {
       const state = editor.state as any;
       if (!state?.plugins || !Array.isArray(state.plugins)) return;
-      const nextPlugins = state.plugins.filter((p: any) => p.key !== commentDecorationsKey);
+      const nextPlugins = withoutCommentDecorations(state.plugins);
       editor.view.updateState(state.reconfigure({ plugins: nextPlugins }));
     };
 
@@ -205,7 +223,7 @@ export function InlineComments({
 
     const state = editor.state as any;
     if (!state?.plugins || !Array.isArray(state.plugins)) return;
-    const nextPlugins = [...state.plugins.filter((p: any) => p.key !== commentDecorationsKey), plugin];
+    const nextPlugins = withCommentDecorations(state.plugins, plugin);
     editor.view.updateState(state.reconfigure({ plugins: nextPlugins }));
 
     return () => {

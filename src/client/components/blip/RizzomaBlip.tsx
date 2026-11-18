@@ -1,3 +1,4 @@
+import { isInlineAnchored } from './inlineAnchoring';
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { beginChildTypeahead, cancelChildTypeahead, flushChildTypeahead, markHandoff } from '../../lib/inlineChildTypeahead';
@@ -1087,8 +1088,7 @@ export function RizzomaBlip({
   const childCount = blip.childBlips?.length ?? 0;
   const hasUnread = !blip.isRead || hasUnreadChildren;
   const unreadMarkerActive = hasUnread;
-  const isChildInline = (child: BlipData) =>
-    typeof child.anchorPosition === 'number' || Boolean(blip.content && blip.content.includes(child.id));
+  const isChildInline = (child: BlipData) => isInlineAnchored(child, blip.content);
   const inlineChildren = (blip.childBlips || []).filter(isChildInline);
   const listChildren = (blip.childBlips || []).filter((child) => !isChildInline(child));
   // Track which inline children are expanded locally (for this blip's inline children)
@@ -1495,12 +1495,30 @@ export function RizzomaBlip({
     }
   }, [collabActive, collabReady, editedContent, inlineEditor, persistLatestProjection]);
 
+  // Ctrl+Enter / "insert reply". In the ORIGINAL Rizzoma this works straight from the
+  // view state of the active blip (no Edit click first): the blip enters edit mode and the
+  // reply is anchored at the end of its text. Before 2026-11-18 a view-state press was
+  // silently ignored (`canMutateEditorNow()` is false until editing), which testers read as
+  // "you must be in an editor mode to create a blip".
   const handleCreateInlineChildAtCursor = useCallback(() => {
-    const editor = inlineEditorRef.current || inlineEditor;
-    if (!editor || !blip.permissions.canComment || !canMutateEditorNow()) return;
-    const { from } = editor.state.selection;
-    stableCreateInlineChildBlip(from);
-  }, [blip.permissions.canComment, canMutateEditorNow, inlineEditor, stableCreateInlineChildBlip]);
+    if (!blip.permissions.canComment) return;
+    const fromView = !isEditingRef.current;
+    if (fromView) {
+      if (!blip.permissions.canEdit) return;
+      handleStartEdit();
+    }
+    const attemptCreate = (attempt: number) => {
+      const editor = inlineEditorRef.current;
+      if (editor && !(editor as any).isDestroyed && canMutateEditorNow()) {
+        if (fromView) editor.commands['focus']('end');
+        stableCreateInlineChildBlip(editor.state.selection.from);
+        return;
+      }
+      // The editor becomes writable only after the collaboration room has synced.
+      if (attempt < 50) setTimeout(() => attemptCreate(attempt + 1), 100);
+    };
+    attemptCreate(0);
+  }, [blip.permissions.canComment, blip.permissions.canEdit, canMutateEditorNow, handleStartEdit, stableCreateInlineChildBlip]);
 
   // handleSaveEdit now just finishes editing - auto-save handles the actual saving
   const handleSaveEdit = useCallback(async () => {
@@ -1551,8 +1569,12 @@ export function RizzomaBlip({
 
   const handleDelete = async () => {
     if (isRoot || !blip.permissions.canEdit || isDeleting) return;
+    const countBelow = (b: BlipData): number => (b.childBlips || []).reduce((n, c) => n + 1 + countBelow(c), 0);
+    const below = countBelow(blip);
     const confirmed = typeof window !== 'undefined'
-      ? window.confirm('Delete this blip and its replies?')
+      ? window.confirm(below > 0
+        ? `Delete this blip AND the ${below} blip${below === 1 ? '' : 's'} under it? They will all disappear from the topic.`
+        : 'Delete this blip?')
       : true;
     if (!confirmed) return;
     setIsDeleting(true);
@@ -2044,7 +2066,7 @@ export function RizzomaBlip({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, isEditing, blip.permissions.canEdit, blip.permissions.canComment, handleFinishEdit, handleStartEdit]);
+  }, [isActive, isEditing, blip.permissions.canEdit, blip.permissions.canComment, handleFinishEdit, handleStartEdit, handleCreateInlineChildAtCursor]);
 
   // Handle insert events from RightToolsPanel
   // Listen when isActive (not just isEditing) so clicks from right panel auto-enter edit mode
@@ -2344,6 +2366,23 @@ export function RizzomaBlip({
     try {
       const waveId = blip.id.split(':')[0];
       await ensureCsrf();
+      // CUT = MOVE. The old code pasted a COPY of the blip's own HTML and then deleted the
+      // original, and the server delete cascades to every descendant: all replies and
+      // sub-blips under a cut blip were tombstoned while the pasted copy carried none of
+      // them. Re-parenting moves the blip together with its whole subtree and loses nothing.
+      if (payload.isCut && payload.blipId && payload.blipId.split(':')[0] === waveId) {
+        const moved = await api(`/api/blips/${encodeURIComponent(payload.blipId)}/reparent`, {
+          method: 'PATCH',
+          queueable: false,
+          body: JSON.stringify({ parentId: blip.id }),
+        });
+        if (!moved.ok) throw new Error('Failed to move blip');
+        clearCutState(payload.blipId);
+        toast('Blip moved');
+        setIsCutMode(false);
+        window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
+        return;
+      }
       const response = await api('/api/blips', {
         method: 'POST',
         queueable: false,
@@ -2356,20 +2395,10 @@ export function RizzomaBlip({
       if (!response.ok) {
         throw new Error('Failed to create blip');
       }
-      // If this was a cut operation, delete the original
-      if (payload.isCut && payload.blipId) {
-        try {
-          const deleteResponse = await api(`/api/blips/${encodeURIComponent(payload.blipId)}`, {
-            method: 'DELETE',
-            queueable: false,
-          });
-          if (!deleteResponse.ok) throw new Error('Failed to delete cut blip');
-          clearCutState(payload.blipId);
-        } catch (deleteError) {
-          console.warn('Failed to delete cut blip', deleteError);
-        }
-      }
-      toast(payload.isCut ? 'Blip moved' : 'Blip pasted');
+      // Cut across topics cannot be re-parented, so it stays a COPY: the original is NOT
+      // deleted, because the server delete cascades to every descendant of the original.
+      if (payload.isCut && payload.blipId) clearCutState(payload.blipId);
+      toast(payload.isCut ? 'Blip copied here; the original in the other topic was kept' : 'Blip pasted');
       setIsCutMode(false);
       window.dispatchEvent(new CustomEvent('rizzoma:refresh-topics'));
     } catch (error) {
