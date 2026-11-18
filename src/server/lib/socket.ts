@@ -540,7 +540,12 @@ export function initSocket(server: HttpServer, allowedOrigins: string[], sharedS
           // responsible for populating the Y.Doc from the blip's HTML.
           let shouldSeed = false;
           if (access.canEdit && stateArr.length === 0) {
-            if (!seedAuthorityOwnerByBlip.has(blipId)) {
+            // The same socket may legitimately join twice (a provider re-joins ~50 ms after its first
+            // join, and the first answer is ignored by the client until its join is acknowledged).
+            // The lease owner must get seed authority again, otherwise nobody ever seeds the Y.Doc and
+            // the topic editor opens EMPTY (typed text is lost). Measured 18 Nov 2026: 4 of 5 new topics.
+            const owner = seedAuthorityOwnerByBlip.get(blipId);
+            if (owner === undefined || owner === socket.id) {
               seedAuthorityOwnerByBlip.set(blipId, socket.id);
               shouldSeed = true;
               console.log(`[socket] blip:join blipId=${blipId.slice(-8)} (seed authority granted)`);
