@@ -22,6 +22,7 @@ vi.mock('../server/lib/couch.js', () => ({
     if (!doc) throw new Error('404 not_found');
     return { ...doc };
   }),
+  updateDoc: vi.fn(async (doc: StoredDoc) => { state.docs.set(doc._id, { ...doc }); return { id: doc._id, rev: 'r2' }; }),
   find: vi.fn(async (selector: Record<string, any>) => ({
     docs: [...state.docs.values()].filter((doc) => matches(doc, selector)).map((doc) => ({ ...doc })),
   })),
@@ -29,6 +30,7 @@ vi.mock('../server/lib/couch.js', () => ({
 
 import {
   buildAccessibleTopicSelector,
+  activatePendingOwnEntry,
   hasWavePermission,
   normalizeSharingPolicy,
   resolveWaveAccess,
@@ -177,6 +179,14 @@ describe('central wave authorization policy', () => {
       status: 'pending',
     });
     expect((await resolveWaveAccess('wave-private', { id: 'invited-user', email: 'invited@example.test' })).role).toBe('editor');
+    // opening the topic activates the entry, so the person is a real participant (visible to everybody)
+    const opened = await resolveWaveAccess('wave-private', { id: 'invited-user', email: 'invited@example.test' });
+    expect(opened.pendingOwnEntry?._id).toBe('participant-own');
+    await activatePendingOwnEntry(opened);
+    expect(state.docs.get('participant-own')).toMatchObject({ status: 'accepted' });
+    expect(Number(state.docs.get('participant-own')!['acceptedAt'])).toBeGreaterThan(0);
+    expect((await resolveWaveAccess('wave-private', { id: 'invited-user' })).pendingOwnEntry).toBeUndefined();
+    state.docs.set('participant-own', { ...state.docs.get('participant-own')!, status: 'pending' });
     // another account, or no account, still gets nothing from that pending entry
     expect((await resolveWaveAccess('wave-private', { id: 'someone-else', email: 'invited@example.test' })).role).toBe('outsider');
     expect((await resolveWaveAccess('wave-private', { email: 'invited@example.test' })).role).toBe('outsider');

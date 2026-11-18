@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { find, getDoc } from './couch.js';
+import { find, getDoc, updateDoc } from './couch.js';
 import { sortParticipantCandidates } from './invitations.js';
 
 export type ShareLevel = 'private' | 'link' | 'public';
@@ -45,6 +45,8 @@ export type WaveAccess = {
   role: WaveRole;
   policy: SharingPolicy;
   participantId?: string;
+  /** Set when access came from a PENDING entry bound to this very account: activate it on open. */
+  pendingOwnEntry?: ParticipantDoc;
   canRead: boolean;
   canComment: boolean;
   canEdit: boolean;
@@ -201,6 +203,21 @@ async function findParticipant(waveId: string, identity: AccessIdentity): Promis
   )[0] || null;
 }
 
+/**
+ * The signed-in invitee opened the topic: make the entry a real, accepted participant so that the person shows
+ * in the header for everybody (non-owners only see accepted participants) and later reads need no special case.
+ * Best effort: a lost write race just leaves the entry pending, which still grants access.
+ */
+export async function activatePendingOwnEntry(access: WaveAccess): Promise<void> {
+  const entry = access.pendingOwnEntry;
+  if (!entry || entry.status !== 'pending') return;
+  try {
+    await updateDoc({ ...entry, status: 'accepted' as const, acceptedAt: Date.now() } as any);
+  } catch {
+    /* another request activated it first, or the write failed: access is unaffected */
+  }
+}
+
 export async function resolveWaveAccess(
   waveId: string,
   identity: AccessIdentity,
@@ -252,7 +269,9 @@ export async function resolveWaveAccess(
     : null;
   const participantRole = roleFromParticipant(participant);
   if (participantRole) {
-    return buildAccess(waveId, identity, policy, participantRole, participant?._id);
+    const access = buildAccess(waveId, identity, policy, participantRole, participant?._id);
+    if (participant && pendingEntryIsOwnAccount(participant, identity)) access.pendingOwnEntry = participant;
+    return access;
   }
 
   return buildAccess(waveId, identity, policy, publicRole(policy, identity));
