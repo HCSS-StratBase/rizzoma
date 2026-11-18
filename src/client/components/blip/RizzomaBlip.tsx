@@ -475,6 +475,8 @@ export function RizzomaBlip({
   const pendingInsertRef = useRef<string | null>(null);
   const pendingGadgetDetailRef = useRef<GadgetInsertDetail | null>(null);
   const inlineEditorRef = useRef<Editor | null>(null);
+  // Where the person clicked in the view-state text; consumed when the editor becomes writable (see the editing effect).
+  const pendingClickCaretRef = useRef<{ x: number; y: number } | null>(null);
   const projectionActiveRef = useRef(true);
   const yjsGeneration = blip.yjsGeneration ?? 0;
   const projectionIdentity = `${blip.id}:${yjsGeneration}`;
@@ -771,9 +773,19 @@ export function RizzomaBlip({
     inlineEditor.setEditable(editable);
     if (editable) {
       requestAnimationFrame(() => {
-        if (!(inlineEditor as any).isDestroyed && isEditingRef.current) {
-          inlineEditor.commands['focus']('end');
+        if ((inlineEditor as any).isDestroyed || !isEditingRef.current) return;
+        // A click into the view-state text asked for the caret at the CLICKED place. Put it there; do not
+        // throw it to the end of the blip. And never move a caret that already sits in this editor: the editor
+        // becomes writable only after the collaboration room has synced, which can be after the person has
+        // started typing, and forcing the caret to the end then made it "jump away" mid-word (SDS, 18 Nov 2026).
+        const click = pendingClickCaretRef.current;
+        pendingClickCaretRef.current = null;
+        if (click) {
+          const hit = inlineEditor.view.posAtCoords({ left: click.x, top: click.y });
+          if (hit) { inlineEditor.chain().focus().setTextSelection(hit.pos).run(); return; }
         }
+        if (inlineEditor.isFocused) return;
+        inlineEditor.commands['focus']('end');
       });
     }
   }, [collabReady, inlineEditor, isEditing]);
@@ -1434,8 +1446,10 @@ export function RizzomaBlip({
     if ((e.target as HTMLElement).closest('a')) return;
 
     if (blip.permissions.canEdit && !isEditing) {
+      pendingClickCaretRef.current = { x: e.clientX, y: e.clientY };
       handleStartEdit();
       requestAnimationFrame(() => {
+        if (pendingClickCaretRef.current) return; // the editing effect places the caret at the clicked position
         inlineEditorRef.current?.commands.focus();
       });
     }

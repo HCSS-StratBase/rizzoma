@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/phone-new-topic-and-sections
-source_commit: 22eaf0c6
+source_branch: fix/click-caret-jump
+source_commit: 22594f0a
 generated: true
 ---
 
