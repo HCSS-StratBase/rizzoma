@@ -57,6 +57,7 @@ const plain = (h) => String(h || '')
   .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 
 let storageState = null;
+let storageState2 = null; // a SECOND session of the same account: the second client of the LOAD scenarios
 async function login(page) {
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });
   await page.evaluate(async ({ e, p }) => {
@@ -79,9 +80,10 @@ async function createTopic(page) {
 
 async function readStored(page, tid) {
   return page.evaluate(async (t) => {
-    const b = await (await fetch(`/api/blips?waveId=${t}&limit=200`, { credentials: 'include', cache: 'no-store' })).json();
+    const bres = await fetch(`/api/blips?waveId=${t}&limit=200`, { credentials: 'include', cache: 'no-store' });
+    const b = await bres.json();
     const tp = await (await fetch(`/api/topics/${t}`, { credentials: 'include', cache: 'no-store' })).json();
-    return { blips: (b.blips || []).filter((x) => !x.deleted).map((x) => ({ id: x._id || x.id, parentId: x.parentId || null, content: x.content || '' })), topicContent: tp.content || '' };
+    return { status: bres.status, blips: (b.blips || []).filter((x) => !x.deleted).map((x) => ({ id: x._id || x.id, parentId: x.parentId || null, content: x.content || '' })), topicContent: tp.content || '' };
   }, tid);
 }
 
@@ -125,7 +127,7 @@ async function runOne(browser, scenario, mode, run) {
     await page.goto(`${BASE}/?layout=rizzoma&render=react#/topic/${tid}`, { waitUntil: 'domcontentloaded' });
     await sleep(5000);
     if (LOAD) {
-      const ctx2 = await browser.newContext({ viewport: { width: 1000, height: 700 }, storageState });
+      const ctx2 = await browser.newContext({ viewport: { width: 1000, height: 700 }, storageState: storageState2 });
       const p2 = await ctx2.newPage();
       await p2.goto(`${BASE}/?layout=rizzoma&render=react#/topic/${tid}`, { waitUntil: 'domcontentloaded' });
       await sleep(2500);
@@ -214,7 +216,8 @@ async function runOne(browser, scenario, mode, run) {
     for (const [re, h] of staleRoutes) await page.unroute(re, h);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await sleep(4000);
-    const { blips, topicContent } = await readStored(page, tid);
+    const { blips, topicContent, status } = await readStored(page, tid);
+    if (status !== 200) problems.push(`read-back failed (HTTP ${status}): the session was lost`);
     const byText = (lab) => blips.filter((b) => plain(b.content).includes(lab));
     const first = {};
     for (const lab of [...labels.slice(1), ...(twiceLabels || [])]) {
@@ -259,6 +262,13 @@ const browser = await chromium.launch({ headless: process.env.HEADED !== '1', sl
   await login(p0);
   storageState = await c0.storageState();
   await c0.close();
+  if (LOAD) {
+    // own session for the second client: two tabs sharing one session cookie invalidate each other
+    const c1 = await browser.newContext();
+    await login(await c1.newPage());
+    storageState2 = await c1.storageState();
+    await c1.close();
+  }
 }
 const modes = TYPING === 'both' ? ['fast', 'slow'] : [TYPING];
 const summary = [];
