@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/tester-round2
-source_commit: 626b17e8
+source_branch: fix/nested-pointer-focus
+source_commit: 15a43dae
 generated: true
 ---
 

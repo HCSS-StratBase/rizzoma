@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/tester-round2
-source_commit: 626b17e8
+source_branch: fix/nested-pointer-focus
+source_commit: 15a43dae
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 175 files in `scripts/`, 48 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 187 files in `scripts/`, 48 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -67,9 +67,9 @@ graph LR
 | `test:toolbar-inline` | `node test-toolbar-inline-smoke.mjs` |
 | `test:follow-green` | `node test-follow-green-smoke.mjs` |
 | `test:collab` | `node test-collab-smoke.mjs` |
+| `test:nested-pointer` | `node test-nested-pointer-focus-smoke.mjs` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
 | `test:native-ctrl-enter` | `node test-native-ctrl-enter-smoke.mjs` |
-| `test:root-ctrl-enter` | `node test-root-ctrl-enter-handoff.mjs` |
 | `test:readmode-seed` | `node test-topic-readmode-seed-smoke.mjs` |
 | `test:gadgets` | `node test-gadget-apps-smoke.mjs` |
 | `test:body-text` | `node test-blip-body-text-smoke.mjs` |
@@ -88,7 +88,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (175)
+## scripts/ (187)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -170,6 +170,17 @@ graph LR
 | `scripts/firefox-smoke.mjs` | 176 | Firefox cross-browser smoke test — top 10 features. |
 | `scripts/fix-anonymous-authors.cjs` | 188 | Migration script: Fix "Anonymous" author names on blips |
 | `scripts/fix_tana_docs_mirror.py` | 34 | — |
+| `scripts/fractal-showcase/build-showcase.mjs` | 67 | Build the Fractal Showcase topic BY HAND (real keyboard / mouse) and verify it from persisted state. |
+| `scripts/fractal-showcase/count-spec.mjs` | 7 | Count the blips and the deepest level a spec will create (no browser). |
+| `scripts/fractal-showcase/lib.mjs` | 83 | Shared helpers for the hand-built "Fractal Showcase" topic. Content is entered ONLY with real |
+| `scripts/fractal-showcase/live-access-probe.mjs` | 79 | READ-ONLY access probe as Fractal Tester 2 (no sharing with anyone): what can a brand-new user list and read? |
+| `scripts/fractal-showcase/live-cleanup.mjs` | 40 | Delete the scratch topics of a live run through the UI (gear menu, Delete, confirm), then prove with a |
+| `scripts/fractal-showcase/live-trial.mjs` | 52 | LIVE probe of the empty-root-editor fix: as Fractal Tester 1, N fresh scratch topics, each created through |
+| `scripts/fractal-showcase/liveauth.mjs` | 49 | Live sign-in helper. Credentials are read from the credential file inside this process, typed into |
+| `scripts/fractal-showcase/ops.mjs` | 178 | Wait until at least one editable editor exists and the caret lives in one. |
+| `scripts/fractal-showcase/run-private.sh` | 26 | Run a showcase driver in a HEADED Chromium on a PRIVATE virtual display (Xvfb), never on the |
+| `scripts/fractal-showcase/spec.mjs` | 51 | The content of the Fractal Showcase. Labels are atomic (2 to 5 words), globally unique by their first |
+| `scripts/fractal-showcase/trial-new-topic-editor.mjs` | 32 | N fresh topics: create through the New dialog, press Edit, type one line, report whether the root |
 | `scripts/full-deploy.sh` | 141 | MASTER DEPLOYMENT SCRIPT |
 | `scripts/gen_status.mjs` | 141 | Generate STATUS .md — the SINGLE authoritative current-state doc. |
 | `scripts/generate-ui-exhaustive-pack.mjs` | 445 | — |
@@ -205,6 +216,7 @@ graph LR
 | `scripts/probe_native_topdown.mjs` | 30 | top-down: click the FIRST *visible* folded thread's fold button, repeat |
 | `scripts/probe_user_topic.mjs` | 64 | — |
 | `scripts/recover_soft_deleted_blips.py` | 247 | Put the marker before the last </p>; append it when the parent has no paragraph. |
+| `scripts/repro-root-ctrl-enter-handoff.mjs` | 71 | REPRODUCTION of an OPEN defect (not a passing gate): after Ctrl+Enter in the TOPIC ROOT editor |
 | `scripts/repro_live_subblip_bug.mjs` | 75 | Reproduce the dead-"+" subblip bug on LIVE master (138-201-62-161.nip.io). |
 | `scripts/repro_nested_ctrl_enter.mjs` | 198 | Reproduce: Ctrl+Enter inside a NESTED blip's editor (not topic root) — user |
 | `scripts/repro_nested_cursor_ce.mjs` | 52 | Reproduce SDS's action: click into L3 label, place cursor, Ctrl+Enter (as old Rizzoma). |

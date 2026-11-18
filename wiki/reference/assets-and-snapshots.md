@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/tester-round2
-source_commit: 626b17e8
+source_branch: fix/nested-pointer-focus
+source_commit: 15a43dae
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 56 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 57 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -116,6 +116,7 @@ graph LR
 | `test-follow-green-smoke.mjs` | — |
 | `test-gadget-apps-smoke.mjs` | Real insert-and-render smoke for the four sandboxed gadget apps |
 | `test-native-ctrl-enter-smoke.mjs` | Native render path (?render=native) regression smoke for the 18 Nov 2026 tester feedback: |
+| `test-nested-pointer-focus-smoke.mjs` | Regression smoke: clicking into an OPEN nested blip puts the caret in THAT blip, not in an ancestor. |
 | `test-playwright-features.js` | Take screenshot of test editor |
 | `test-rizzoma-simple.mjs` | Launch browser in headed mode so you can watch |
 | `test-rizzoma.mjs` | Create a test script that playwright can run |
