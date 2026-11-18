@@ -4,10 +4,10 @@
 import fs from 'node:fs';
 import { sleep, TYPE_DELAY } from './lib.mjs';
 
-if (!process.env.GDRIVE_ROOT && !process.env.FS_CRED_FILE) throw new Error('set GDRIVE_ROOT (or FS_CRED_FILE)');
-const ENV_FILE = process.env.FS_CRED_FILE || `${process.env.GDRIVE_ROOT}/SYSTEM_CREDENTIALS.env`;
 
 export function loadFractalCreds(n) {
+  if (!process.env.GDRIVE_ROOT && !process.env.FS_CRED_FILE) throw new Error('set GDRIVE_ROOT (or FS_CRED_FILE)');
+  const ENV_FILE = process.env.FS_CRED_FILE || `${process.env.GDRIVE_ROOT}/SYSTEM_CREDENTIALS.env`;
   const wanted = { user: `RIZZOMA_MODERN_FRACTAL${n}_USER`, pass: `RIZZOMA_MODERN_FRACTAL${n}_PASSWORD` };
   const out = {};
   for (const line of fs.readFileSync(ENV_FILE, 'utf8').split(/\r?\n/)) {

@@ -1,5 +1,19 @@
 import { Node } from '@tiptap/core';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 import './BlipThread.css';
+
+/**
+ * True when a DOM event comes from INSIDE an inline child blip rendered in this editor's portal anchor
+ * (`.inline-child-portal`). The portal sits inside the parent's contenteditable=false atom host, so
+ * ProseMirror treated a mouse press in the child as a press on the atom: it selected the marker node and
+ * moved the focus into the PARENT editor. A person clicking into a nested, open blip then typed into the
+ * wrong blip (found while hand-building the Fractal Showcase, 18 Nov 2026). The parent must ignore such
+ * presses and leave them to the browser, which focuses the child's own contenteditable.
+ */
+export function isEventInsideInlineChildPortal(target: EventTarget | null): boolean {
+  const el = target instanceof Element ? target : (target as globalThis.Node | null)?.parentElement ?? null;
+  return Boolean(el && (el as Element).closest?.('.inline-child-portal'));
+}
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -102,6 +116,21 @@ export const BlipThreadNode = Node.create({
           ...(threadId ? { 'data-portal-child': String(threadId) } : {}),
         },
       ],
+    ];
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('blipThreadNestedPointer'),
+        props: {
+          handleDOMEvents: {
+            mousedown: (_view, event) => isEventInsideInlineChildPortal(event.target),
+            mouseup: (_view, event) => isEventInsideInlineChildPortal(event.target),
+            click: (_view, event) => isEventInsideInlineChildPortal(event.target),
+          },
+        },
+      }),
     ];
   },
 
