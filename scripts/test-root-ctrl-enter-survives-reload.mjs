@@ -199,7 +199,9 @@ async function runOne(browser, scenario, mode, run) {
     if (scenario === 'twice') {
       // Back to the level-2 blip and press Ctrl+Enter a second time on it.
       await page.getByText('L2 label', { exact: false }).first().click().catch(() => undefined);
-      await sleep(800);
+      // the click opens the blip for editing; type only once its editor is live and holds the caret
+      await page.waitForFunction(() => { const ed = document.activeElement?.closest?.('.ProseMirror[contenteditable="true"]'); return !!ed && (ed.innerText || '').includes('L2 label'); }, null, { timeout: 8000 }).catch(() => undefined);
+      await sleep(600);
       await page.keyboard.press('End');
       await page.keyboard.press('Enter');
       await page.keyboard.type('L2b label', { delay: TYPE_DELAY });
@@ -219,6 +221,7 @@ async function runOne(browser, scenario, mode, run) {
     const { blips, topicContent, status } = await readStored(page, tid);
     if (status !== 200) problems.push(`read-back failed (HTTP ${status}): the session was lost`);
     const byText = (lab) => blips.filter((b) => plain(b.content).includes(lab));
+    if (process.env.DUMP) console.log('STORED', JSON.stringify({ topic: plain(topicContent).slice(0, 80), blips: blips.map((b) => [b.id.slice(-5), (b.parentId || '').slice(-5), plain(b.content).slice(0, 50)]) }));
     const first = {};
     for (const lab of [...labels.slice(1), ...(twiceLabels || [])]) {
       const hit = byText(lab);
@@ -243,6 +246,7 @@ async function runOne(browser, scenario, mode, run) {
       if (l2 && g1 && g1.parentId !== l2.id) problems.push('L3 not under L2');
       if (l2 && g2 && g2.parentId !== l2.id) problems.push('L3b not under L2 (second Ctrl+Enter on the same blip)');
     }
+    if (problems.length && process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/fail-${scenario}-${mode}-run${run}-final.png` }).catch(() => undefined);
   } catch (e) {
     problems.push(`exception: ${String(e.message || e).split('\n')[0]}`);
   } finally {
