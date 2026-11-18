@@ -306,6 +306,9 @@ function RizzomaTopicDetailState({
   const localWritesRef = useRef<LocalWrites>(createLocalWrites());
   // Out-of-order guard: a reload answered after a later-started reload was already applied is older.
   const loadSeqRef = useRef(0);
+  // Same for the topic's own saves: a save that finishes after a later-sent save must not become "the last save".
+  const topicSaveSeqRef = useRef(0);
+  const topicAppliedSaveSeqRef = useRef(0);
   const appliedLoadSeqRef = useRef(0);
 
   // Subblip navigation state (BLB: when viewing a subblip as root)
@@ -1670,6 +1673,7 @@ function RizzomaTopicDetailState({
         !topicProjectionActiveRef.current
         || topicProjectionIdentityRef.current !== topicProjectionIdentity
       ) return;
+      const saveSeq = ++topicSaveSeqRef.current;
       const response = await api(`/api/topics/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         headers,
@@ -1680,9 +1684,12 @@ function RizzomaTopicDetailState({
           !topicProjectionActiveRef.current
           || topicProjectionIdentityRef.current !== topicProjectionIdentity
         ) return;
-        lastSavedContentRef.current = latestContent;
-        recordSavedTopic(localWritesRef.current, extractedTitle, latestContent);
-        setTopic(prev => prev ? { ...prev, title: extractedTitle, content: latestContent } : prev);
+        if (saveSeq >= topicAppliedSaveSeqRef.current) {
+          topicAppliedSaveSeqRef.current = saveSeq;
+          lastSavedContentRef.current = latestContent;
+          recordSavedTopic(localWritesRef.current, extractedTitle, latestContent);
+          setTopic(prev => prev ? { ...prev, title: extractedTitle, content: latestContent } : prev);
+        }
         // Topic-root task side-documents are derived by this successful save,
         // never by the client. Refresh so a newly inserted task becomes
         // interactable in the same edit session when canToggle permits it.
