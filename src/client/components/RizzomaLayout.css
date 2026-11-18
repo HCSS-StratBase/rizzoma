@@ -420,3 +420,43 @@
     transition: none;
   }
 }
+
+/* Phone list view (original layout: "New" button + section tabs, 44 px touch targets). */
+@media (max-width: 768px) {
+  .mobile-header .mobile-new-btn {
+    min-height: 44px;
+    min-width: 56px;
+    padding: 0 10px;
+    border: 1px solid #5d7a94;
+    border-radius: 4px;
+    background: #3d566e;
+    color: #fff;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .mobile-header .mobile-tabs {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 2px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .mobile-header .mobile-tab {
+    min-height: 44px;
+    padding: 0 12px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: #c8d6e2;
+    font-size: 14px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .mobile-header .mobile-tab.active {
+    color: #fff;
+    border-bottom-color: #4ea0f1;
+    background: rgba(255, 255, 255, 0.08);
+  }
+}

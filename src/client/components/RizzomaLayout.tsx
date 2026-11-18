@@ -424,18 +424,44 @@ function RizzomaLayoutState({ isAuthed, user }: RizzomaLayoutProps) {
           <ShellAuthControls compact />
         </div>
       )}
-      {/* Mobile header - shown when viewing content on mobile */}
-      {isMobile && mobileView === 'content' && (
-        <div className="mobile-header">
-          <button className="back-btn" onClick={handleMobileBack} aria-label="Back to list">
-            ←
-          </button>
-          <span className="title">
-            {selectedTopicId ? 'Topic' : 'Rizzoma'}
-          </span>
-          <button className="menu-btn" onClick={handleNewClick} aria-label="New topic">
-            +
-          </button>
+      {/* Mobile header. Before 19 Nov 2026 it only existed in the topic content view, so on a phone the topics list had NO way
+          to create a topic ("+ New" lives in the navigation column, hidden under 768 px) and none of Mentions / Tasks /
+          Publics / Store / Teams was reachable. As in the original phone layout (original-rizzoma-src navigation/mobile.coffee,
+          legacy screenshot 090-mobile-topics-list), the list view is headed by a "New" button and a row of section tabs. */}
+      {isMobile && (
+        <div className="mobile-header" data-testid="mobile-header">
+          {mobileView === 'content' ? (
+            <>
+              <button className="back-btn" onClick={handleMobileBack} aria-label="Back to list">
+                ←
+              </button>
+              <span className="title">{selectedTopicId ? 'Topic' : 'Rizzoma'}</span>
+              <button className="menu-btn" onClick={handleNewClick} aria-label="New topic" data-testid="mobile-new-topic">
+                +
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="mobile-new-btn" onClick={handleNewClick} aria-label="New topic" data-testid="mobile-new-topic">
+                New
+              </button>
+              <div className="mobile-tabs" role="tablist" aria-label="Section" data-testid="mobile-tabs">
+                {([['topics', 'Topics'], ['mentions', 'Mentions'], ['tasks', 'Tasks'], ['publics', 'Public'], ['store', 'Store'], ['teams', 'Teams']] as Array<[TabType, string]>).map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === id}
+                    className={`mobile-tab ${activeTab === id ? 'active' : ''}`}
+                    data-testid={`mobile-tab-${id}`}
+                    onClick={() => setActiveTab(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
