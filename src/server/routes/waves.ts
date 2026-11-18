@@ -515,6 +515,49 @@ router.post('/:id/read', csrfProtect(), async (req, res) => {
 });
 
 // GET /api/waves/:id/participants — list wave participants
+// People the signed-in user already shares a topic with, for the Invite dialog (the original
+// Rizzoma lists contacts there; ours offered a bare email box that said "email or name" and
+// rejected names). Returns only users who are ACCEPTED participants of a topic the caller is
+// also an accepted participant of, never the whole user table.
+router.get('/contacts/suggest', requireAuth, noStore, async (req, res) => {
+  try {
+    const me = req.user!.id;
+    const q = String(req.query['q'] || '').trim().toLowerCase().slice(0, 80);
+    const mine = await find<WaveParticipant>({ type: 'participant', userId: me }, { limit: 400 });
+    const waveIds = [...new Set((mine.docs || [])
+      .filter((p) => p.status === 'accepted' || p.status === undefined)
+      .map((p) => p.waveId))].slice(0, 400);
+    const counts = new Map<string, number>();
+    if (waveIds.length > 0) {
+      const others = await find<WaveParticipant>(
+        { type: 'participant', waveId: { $in: waveIds } },
+        { limit: 5000 },
+      );
+      for (const p of others.docs || []) {
+        if (!p.userId || p.userId === me || String(p.userId).startsWith('invite:')) continue;
+        if (p.status !== 'accepted' && p.status !== undefined) continue;
+        counts.set(p.userId, (counts.get(p.userId) || 0) + 1);
+      }
+    }
+    const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 300);
+    const contacts: Array<{ userId: string; name: string; email: string; avatar?: string; sharedTopics: number }> = [];
+    for (const [userId, sharedTopics] of ranked) {
+      const user = await getDoc<any>(userId).catch(() => null);
+      if (!user || user.type !== 'user') continue;
+      const name = String(user.name || '').trim();
+      const email = String(user.email || '').trim().toLowerCase();
+      if (!email) continue;
+      if (q && !name.toLowerCase().includes(q) && !email.includes(q)) continue;
+      contacts.push({ userId, name, email, avatar: user.avatar || undefined, sharedTopics });
+      if (contacts.length >= 20) break;
+    }
+    res.json({ contacts });
+  } catch (error) {
+    console.error('[waves] contacts suggest failed', error);
+    res.status(500).json({ error: 'contacts_load_error', requestId: (req as any)?.id });
+  }
+});
+
 router.get('/:id/participants', async (req, res) => {
   const id = req.params.id;
   try {
@@ -537,10 +580,17 @@ router.get('/:id/participants', async (req, res) => {
         ));
     const participants = await Promise.all(visible.map(async (participant) => {
       if (access.canManage) {
+        // Owners also see the person's name and avatar (previously only the email, so the
+        // Invite dialog printed "Participant" for every member).
+        const person = String(participant.userId || '').startsWith('invite:')
+          ? null
+          : await getDoc<any>(participant.userId).catch(() => null);
         return {
           id: participant._id,
           userId: participant.userId,
           email: participant.email,
+          name: person?.name || undefined,
+          avatar: person?.avatar || undefined,
           role: participant.role,
           status: participant.status,
         };

@@ -1768,11 +1768,18 @@ function RizzomaTopicDetailState({
 
   // Topic keyboard shortcuts: Ctrl+E (toggle edit), Shift+Enter (Done)
   useEffect(() => {
+    // A child blip the user has activated (clicked / Done) owns Ctrl+E and Ctrl+Enter even
+    // when keyboard focus is on <body>, which is where it sits after Done or after a click on
+    // the blip chrome. Without this the topic root grabbed the press and created a ROOT-level
+    // blip, so text typed "into the sub-blip" landed in a new top-level blip (tester feedback
+    // 2026-11-18, items 2 and 3).
+    const childBlipIsActive = () =>
+      typeof document !== 'undefined' && !!document.querySelector('.blip-container.nested-blip.active');
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && (event.key === 'e' || event.key === 'E')) {
         const target = event.target as HTMLElement | null;
         const insideChildBlip = target?.closest('.blip-container:not(.topic-meta-blip):not(.root-blip)');
-        if (insideChildBlip) return; // Handled by child blip
+        if (insideChildBlip || childBlipIsActive()) return; // Handled by child blip
 
         event.preventDefault();
         if (isEditingTopic) {
@@ -1793,7 +1800,7 @@ function RizzomaTopicDetailState({
       if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key === 'Enter') {
         const target = event.target as HTMLElement | null;
         const insideChildBlip = target?.closest('.blip-container:not(.topic-meta-blip):not(.root-blip)');
-        if (insideChildBlip) return;
+        if (insideChildBlip || childBlipIsActive()) return;
 
         // When already editing the topic, TipTap's BlipKeyboardShortcuts extension
         // handles Mod-Enter directly. Handling it again here causes a duplicate child blip.

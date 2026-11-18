@@ -37,6 +37,7 @@
     "test:toolbar-inline": "node test-toolbar-inline-smoke.mjs",
     "test:follow-green": "node test-follow-green-smoke.mjs",
     "test:collab": "node test-collab-smoke.mjs",
+    "test:tester-feedback": "node test-tester-feedback-smoke.mjs",
     "test:readmode-seed": "node test-topic-readmode-seed-smoke.mjs",
     "test:gadgets": "node test-gadget-apps-smoke.mjs",
     "test:body-text": "node test-blip-body-text-smoke.mjs",

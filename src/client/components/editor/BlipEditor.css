@@ -231,10 +231,17 @@
   min-height: 420px;
 }
 
+/* Pasted/inserted images are thumbnails, as in the ORIGINAL Rizzoma
+   (original-rizzoma-src/src/static/css/blip.css:486 `.file-preview {max-height:150px; max-width:200px}`).
+   Until 2026-11-18 this rule set `width: min(100%, 760px)`, which blew every screenshot up to
+   760px wide and as tall as its aspect ratio demanded ("takes almost the whole page"). */
 .blip-editor .ProseMirror img[src] {
   display: block;
-  width: min(100%, 760px);
+  width: auto;
   height: auto;
+  max-width: min(100%, 200px);
+  max-height: 150px;
+  object-fit: contain;
   margin: 16px 0;
   border-radius: 18px;
   border: 1px solid rgba(139, 159, 181, 0.2);

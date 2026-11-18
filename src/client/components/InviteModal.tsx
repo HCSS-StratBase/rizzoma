@@ -28,6 +28,19 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
   const [sharingLevel, setSharingLevel] = useState<'private' | 'link' | 'public' | 'unknown'>('unknown');
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [contacts, setContacts] = useState<Array<{ userId: string; name: string; email: string; avatar?: string }>>([]);
+
+  // People the user already works with (original Rizzoma lists contacts in the Invite dialog).
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    void api<{ contacts?: Array<{ userId: string; name: string; email: string; avatar?: string }> }>('/api/waves/contacts/suggest').then((res) => {
+      if (cancelled) return;
+      const list = res.ok && res.data ? (res.data as { contacts?: typeof contacts }).contacts : undefined;
+      setContacts(Array.isArray(list) ? list : []);
+    }).catch(() => { if (!cancelled) setContacts([]); });
+    return () => { cancelled = true; };
+  }, [isOpen]);
 
   // Sharing level decides how the "copy link" action is worded (a private link does not grant access).
   useEffect(() => {
@@ -57,13 +70,38 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
 
   if (!isOpen) return null;
 
+  const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const resolveContact = (token: string): string | null => {
+    const t = token.trim().toLowerCase();
+    if (!t) return null;
+    const exact = contacts.filter((c) => c.name.toLowerCase() === t);
+    if (exact.length === 1) return exact[0]!.email;
+    const partial = contacts.filter((c) => c.name.toLowerCase().includes(t));
+    return partial.length === 1 ? partial[0]!.email : null;
+  };
+  const currentToken = emails.split(/[,;\n]/).pop()?.trim() || '';
+  const taken = new Set(emails.split(/[,;\n]/).map((e) => e.trim().toLowerCase()).filter(Boolean));
+  const memberEmails = new Set(participants.map((p) => String(p.email || '').toLowerCase()));
+  const suggestions = contacts
+    .filter((c) => !taken.has(c.email) && !memberEmails.has(c.email))
+    .filter((c) => !currentToken || c.name.toLowerCase().includes(currentToken.toLowerCase()) || c.email.includes(currentToken.toLowerCase()))
+    .slice(0, 8);
+  const pickContact = (email: string) => {
+    const parts = emails.split(/[,;\n]/);
+    parts.pop();
+    setEmails([...parts.map((p) => p.trim()).filter(Boolean), email].join(', ') + ', ');
+  };
+
   const handleInvite = async (): Promise<void> => {
-    const rawEmails = emails.split(/[,;\n]/).map((email) => email.trim().toLowerCase()).filter(Boolean);
-    const invalid = rawEmails.filter((email) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+    const rawEmails = emails.split(/[,;\n]/).map((entry) => entry.trim().toLowerCase()).filter(Boolean)
+      .map((entry) => (isEmail(entry) ? entry : (resolveContact(entry) || entry)));
+    const invalid = rawEmails.filter((email) => !isEmail(email));
     const emailList = [...new Set(rawEmails)];
 
     if (emailList.length === 0 || invalid.length > 0) {
-      toast('Please enter at least one valid email address', 'error');
+      toast(invalid.length > 0
+        ? `No contact or email address matches: ${invalid.join(', ')}. Pick a suggestion or type an email address.`
+        : 'Please enter at least one valid email address', 'error');
       return;
     }
     if (emailList.length > 20) {
@@ -177,6 +215,20 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
             <option value="editor">Editor</option>
           </select>
         </div>
+
+        {suggestions.length > 0 && (
+          <ul className="invite-suggestions" role="listbox" aria-label="Contacts" data-testid="invite-suggestions">
+            {suggestions.map((c) => (
+              <li key={c.userId} role="option" aria-selected={false}>
+                <button type="button" className="invite-suggestion" onClick={() => pickContact(c.email)}>
+                  <span className="invite-member-avatar"><span>{(c.name || c.email)[0]!.toUpperCase()}</span></span>
+                  <span className="invite-member-name">{c.name || c.email}</span>
+                  <span className="invite-member-email">&lt;{c.email}&gt;</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="invite-selection-bar">
           <input
