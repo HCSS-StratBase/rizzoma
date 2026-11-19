@@ -48,3 +48,8 @@ export function buildSpec(hooks = {}) {
     ],
   };
 }
+
+/** A small chain for probes: root > level 1 > ... > level n (n >= 3), each label atomic. */
+export function buildSmallSpec(n = 4) {
+  return { lines: [L('Probe branch goes deep', [{ at: 'Probe branch', child: chain('Probe', 1, n) }])] };
+}

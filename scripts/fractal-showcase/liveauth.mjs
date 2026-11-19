@@ -21,6 +21,9 @@ export function loadFractalCreds(n) {
 
 /** Sign in through the real form in a throwaway context; returns the storage-state path (cookies only). */
 export async function signInLive(browser, base, n, statePath) {
+  // Credential file unreachable (Drive mount down)? reuse a session state saved by an earlier real sign-in.
+  const reuse = process.env[`FS_REUSE_STATE_${n}`];
+  if (reuse && fs.existsSync(reuse)) { fs.copyFileSync(reuse, statePath); return { statePath, email: process.env[`FS_EMAIL_${n}`] || `tester${n}` }; }
   const { user, pass } = loadFractalCreds(n);
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 800 } });
   const p = await ctx.newPage();
