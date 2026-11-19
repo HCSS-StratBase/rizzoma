@@ -743,3 +743,9 @@ last_verified: 2026-11-06
 - **¶1** □ Found by the tester-scenarios suite (G09): after a select-all the replacement left a bare paragraph; `filterTransaction` in `src/client/components/editor/extensions/BlipKeyboardShortcuts.ts` rejects every local transaction that is not a canonical bulleted list (the BLB invariant), so the keystroke was dropped silently and "select all and write the new text" never worked.
 - **¶2** □ Fix: the same plugin handles typing, Backspace/Delete and paste over a selection that covers the whole body by replacing it with a canonical bulleted list (one bullet per pasted line). Nothing else changes: a selection of one word, End then typing, and the invariant are covered.
 - **¶3** □ Test: `test-select-all-edit-smoke.mjs` (`npm run test:select-all-edit`) with real keys and the real clipboard; on the base 9 of 11 checks fail, on the fix 11 of 11 pass, headed on a private Xvfb display (screenshot of the paste step read).
+
+## [2026-11-19] fix | The collapse control of an expanded blip is reachable again
+
+- **¶1** □ Found by the tester-scenarios suite (case F04) and confirmed with screenshots: in an expanded blip the collapse button (the green [-]) sat under the blip's own body, so a click on it hit the body and began editing instead of folding the blip (desktop click and phone tap).
+- **¶2** □ Fix: `src/client/components/blip/RizzomaBlip.css` raises and positions the expander of an expanded blip (`.blip-container.expanded .blip-expander`, `z-index: 3`), as the original keeps its fold control on top of the blip.
+- **¶3** □ Test: `test-collapse-control-smoke.mjs` (`npm run test:collapse-control`) clicks the control with the mouse at desktop size and taps it at 390 x 844 with touch, and asserts the row folds, the content disappears and no editor opens. It fails on the base and passes with the fix; headed on Xvfb, screenshots read.

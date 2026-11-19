@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/select-all-then-type
-source_commit: 5ad83d3d
+source_branch: fix/collapse-control-reachable
+source_commit: 4d124db5
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 62 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 63 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -112,6 +112,7 @@ graph LR
 | `test-blip-body-text-smoke.mjs` | Computed-style smoke: every piece of blip BODY text has the same size, line-height and |
 | `test-click-caret-smoke.mjs` | Regression smoke: a click into the MIDDLE of a view-state blip puts the caret at the clicked place, |
 | `test-collab-smoke.mjs` | Real-time collab smoke test (Playwright, two browser contexts). |
+| `test-collapse-control-smoke.mjs` | The [-] control of an expanded blip must be reachable: a real click (desktop 1366 x 900) and a real tap (phone 390 x 844) |
 | `test-done-flush-smoke.mjs` | Done right after typing must not lose the text (real keys, real clicks, what the person SEES after a reload). |
 | `test-editor.html` | Set feature flags before module loading |
 | `test-features.html` | — |
