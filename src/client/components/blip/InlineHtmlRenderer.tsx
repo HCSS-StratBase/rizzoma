@@ -62,6 +62,8 @@ const styleStringToObject = (str: string): Record<string, string> => {
   return out;
 };
 
+const BOOLEAN_ATTRS = new Set(['allowfullscreen', 'readonly', 'disabled', 'checked', 'autofocus', 'controls', 'loop', 'muted', 'autoplay', 'multiple', 'required']);
+
 const elementToProps = (el: Element): Record<string, unknown> => {
   const props: Record<string, unknown> = {};
   for (const attr of Array.from(el.attributes)) {
@@ -72,7 +74,9 @@ const elementToProps = (el: Element): Record<string, unknown> => {
       continue;
     }
     const reactName = ATTR_RENAMES[name] ?? (name.startsWith('data-') || name.startsWith('aria-') ? name : name);
-    props[reactName] = value;
+    // A boolean HTML attribute (allowfullscreen="true" or empty) must reach React as the boolean true: the string 'true'
+    // makes React log a console error for every embedded frame.
+    props[reactName] = BOOLEAN_ATTRS.has(name) ? value !== 'false' : value;
   }
   return props;
 };

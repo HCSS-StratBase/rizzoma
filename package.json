@@ -49,6 +49,7 @@
     "test:readmode-seed": "node test-topic-readmode-seed-smoke.mjs",
     "test:done-flush": "node test-done-flush-smoke.mjs",
     "test:upload-signature": "node test-upload-signature-smoke.mjs",
+    "test:embed-console": "node test-embed-console-smoke.mjs",
     "test:gadgets": "node test-gadget-apps-smoke.mjs",
     "test:body-text": "node test-blip-body-text-smoke.mjs",
     "test:health": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts src/tests/server.health.test.ts src/tests/routes.comments.inlineHealth.test.ts src/tests/routes.uploads.edgecases.test.ts",

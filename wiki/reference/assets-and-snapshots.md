@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/uploads-signature-check
-source_commit: 0366946e
+source_branch: fix/embed-boolean-attributes
+source_commit: be76c66c
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 64 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 65 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -115,6 +115,7 @@ graph LR
 | `test-collapse-control-smoke.mjs` | The [-] control of an expanded blip must be reachable: a real click (desktop 1366 x 900) and a real tap (phone 390 x 844) |
 | `test-done-flush-smoke.mjs` | Done right after typing must not lose the text (real keys, real clicks, what the person SEES after a reload). |
 | `test-editor.html` | Set feature flags before module loading |
+| `test-embed-console-smoke.mjs` | An embedded frame (iFrame gadget) must read back without console errors (real clicks, real keys, reload, read view). |
 | `test-features.html` | — |
 | `test-follow-green-smoke.mjs` | — |
 | `test-gadget-apps-smoke.mjs` | Real insert-and-render smoke for the four sandboxed gadget apps |
