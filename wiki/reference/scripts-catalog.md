@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/uploads-signature-check
-source_commit: 0366946e
+source_branch: fix/embed-boolean-attributes
+source_commit: be76c66c
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 206 files in `scripts/`, 56 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 206 files in `scripts/`, 57 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -79,6 +79,7 @@ graph LR
 | `test:readmode-seed` | `node test-topic-readmode-seed-smoke.mjs` |
 | `test:done-flush` | `node test-done-flush-smoke.mjs` |
 | `test:upload-signature` | `node test-upload-signature-smoke.mjs` |
+| `test:embed-console` | `node test-embed-console-smoke.mjs` |
 | `test:gadgets` | `node test-gadget-apps-smoke.mjs` |
 | `test:body-text` | `node test-blip-body-text-smoke.mjs` |
 | `test:health` | `node node_modules/vitest ⁄ vitest.mjs run --config vitest.config.ts src/tests ⁄ server.health.test.ts src/tests ⁄ routes.comments.inlineHealth.test.ts src/test…` |
