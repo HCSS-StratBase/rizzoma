@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/collapse-control-reachable
-source_commit: 4d124db5
+source_branch: fix/uploads-signature-check
+source_commit: 0366946e
 generated: true
 ---
 
@@ -284,7 +284,7 @@ graph LR
 | `src/server/routes/notifications.ts` | 309 | Notification Routes |
 | `src/server/routes/tasks.ts` | 287 | Tasks Routes |
 | `src/server/routes/topics.ts` | 875 | — |
-| `src/server/routes/uploads.ts` | 311 | (no header comment; exports uploadsRouter) |
+| `src/server/routes/uploads.ts` | 320 | (no header comment; exports uploadsRouter) |
 | `src/server/routes/waves.ts` | 1182 | — |
 
 ## Server lib (20)

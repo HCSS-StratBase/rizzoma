@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/collapse-control-reachable
-source_commit: 4d124db5
+source_branch: fix/uploads-signature-check
+source_commit: 0366946e
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 63 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 64 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -130,6 +130,7 @@ graph LR
 | `test-tester-feedback-smoke.mjs` | Regression smoke for the 18 Nov 2026 tester feedback (Liliia): editing sub-blips, a |
 | `test-toolbar-inline-smoke.mjs` | — |
 | `test-topic-readmode-seed-smoke.mjs` | Read-mode topic seed smoke (Playwright). |
+| `test-upload-signature-smoke.mjs` | Image upload through the blip toolbar: a real PNG shows as a picture, a text file that only CLAIMS to be a PNG must be refused |
 | `tsconfig.json` | — |
 | `tsconfig.json.bak` | — |
 | `tsconfig.server.json` | — |
