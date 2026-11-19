@@ -259,6 +259,7 @@ export const EmbedFrameGadget = Node.create({
     if (provider === 'youtube') {
       iframeAttrs['allow'] = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
       iframeAttrs['allowfullscreen'] = 'true';
+      iframeAttrs['sandbox'] = 'allow-scripts allow-same-origin allow-presentation allow-popups';
     }
 
     return [

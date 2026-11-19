@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/click-caret-jump
-source_commit: 22594f0a
+source_branch: fix/gadgets-render
+source_commit: daa6ab58
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 188 files in `scripts/`, 51 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 188 files in `scripts/`, 52 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -69,6 +69,7 @@ graph LR
 | `test:collab` | `node test-collab-smoke.mjs` |
 | `test:nested-pointer` | `node test-nested-pointer-focus-smoke.mjs` |
 | `test:click-caret` | `node test-click-caret-smoke.mjs` |
+| `test:gadgets-render` | `node test-gadgets-render-smoke.mjs` |
 | `test:phone-layout` | `node test-phone-layout-smoke.mjs` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
 | `test:root-ctrl-enter` | `node scripts ⁄ test-root-ctrl-enter-survives-reload.mjs` |
@@ -182,7 +183,7 @@ graph LR
 | `scripts/fractal-showcase/liveauth.mjs` | 52 | Live sign-in helper. Credentials are read from the credential file inside this process, typed into |
 | `scripts/fractal-showcase/ops.mjs` | 178 | Wait until at least one editable editor exists and the caret lives in one. |
 | `scripts/fractal-showcase/run-private.sh` | 26 | Run a showcase driver in a HEADED Chromium on a PRIVATE virtual display (Xvfb), never on the |
-| `scripts/fractal-showcase/spec.mjs` | 51 | The content of the Fractal Showcase. Labels are atomic (2 to 5 words), globally unique by their first |
+| `scripts/fractal-showcase/spec.mjs` | 56 | The content of the Fractal Showcase. Labels are atomic (2 to 5 words), globally unique by their first |
 | `scripts/fractal-showcase/trial-new-topic-editor.mjs` | 32 | N fresh topics: create through the New dialog, press Edit, type one line, report whether the root |
 | `scripts/full-deploy.sh` | 141 | MASTER DEPLOYMENT SCRIPT |
 | `scripts/gen_status.mjs` | 141 | Generate STATUS .md — the SINGLE authoritative current-state doc. |

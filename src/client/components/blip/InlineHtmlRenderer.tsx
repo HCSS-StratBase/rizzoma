@@ -39,6 +39,8 @@ const ATTR_RENAMES: Record<string, string> = {
   autofocus: 'autoFocus',
   crossorigin: 'crossOrigin',
   referrerpolicy: 'referrerPolicy',
+  allowfullscreen: 'allowFullScreen',
+  frameborder: 'frameBorder',
 };
 
 const VOID_ELEMENTS = new Set([
@@ -254,6 +256,30 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     }
     const el = node as Element;
     const tag = el.tagName.toLowerCase();
+
+    // A poll is stored as a bare <figure data-gadget-type="poll"> with data attributes only; the editor draws
+    // it with a node view. In the READ state nothing drew it, so a poll was a zero-height box (found 18 Nov 2026).
+    if (tag === 'figure' && el.getAttribute('data-gadget-type') === 'poll') {
+      let options: Array<{ id?: string; label?: string; votes?: number }> = [];
+      try { const parsed: unknown = JSON.parse(el.getAttribute('data-poll-options') || '[]'); if (Array.isArray(parsed)) options = parsed as typeof options; } catch { /* empty poll */ }
+      const total = options.reduce((n, o) => n + (Number(o.votes) || 0), 0);
+      return createElement(
+        'figure',
+        { key: nextKey(), className: 'gadget-block gadget-poll gadget-poll-read', 'data-gadget-type': 'poll' },
+        createElement('div', { className: 'gadget-header' },
+          createElement('span', { className: 'gadget-chip' }, 'Poll'),
+          createElement('span', { className: 'gadget-title' }, el.getAttribute('data-poll-question') || 'Poll question'),
+        ),
+        createElement('ul', { className: 'gadget-poll-options' }, options.map((o, i) => {
+          const votes = Number(o.votes) || 0;
+          return createElement('li', { key: o.id || String(i), className: 'gadget-poll-option' },
+            createElement('span', { className: 'gadget-poll-label' }, o.label || `Option ${i + 1}`),
+            createElement('span', { className: 'gadget-poll-count' }, `${votes} ${votes === 1 ? 'vote' : 'votes'}`),
+            createElement('span', { className: 'gadget-poll-bar' }, createElement('span', { className: 'gadget-poll-bar-fill', style: { width: `${total ? Math.round((votes / total) * 100) : 0}%` } })),
+          );
+        })),
+      );
+    }
 
     // Skip stale portal anchors from old injectInlineMarkers output.
     if (el.classList.contains('inline-child-portal')) {

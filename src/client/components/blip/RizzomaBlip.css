@@ -1921,3 +1921,13 @@
   max-height: 150px;
   object-fit: contain;
 }
+
+/* Read-state poll (InlineHtmlRenderer): the stored poll is a bare figure, draw question, options and counts. */
+.gadget-poll-read { margin: 8px 0; padding: 8px 12px; border: 1px solid #cdd7e0; border-radius: 8px; background: #f7fafc; }
+.gadget-poll-read .gadget-header { display: flex; gap: 8px; align-items: center; font-weight: 600; margin-bottom: 6px; }
+.gadget-poll-read .gadget-chip { font-size: 11px; text-transform: uppercase; background: #dbe7f3; border-radius: 10px; padding: 1px 8px; }
+.gadget-poll-options { list-style: none; margin: 0; padding: 0; }
+.gadget-poll-option { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 4px 0; }
+.gadget-poll-count { color: #5f7386; font-size: 12px; }
+.gadget-poll-bar { grid-column: 1 / -1; height: 6px; background: #e4ecf3; border-radius: 3px; overflow: hidden; }
+.gadget-poll-bar-fill { display: block; height: 100%; background: #4ea0f1; }

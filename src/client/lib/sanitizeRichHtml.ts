@@ -60,6 +60,16 @@ function sanitizeStyle(value: string): string {
   return safe.join('; ');
 }
 
+/** True for the two hosts that serve the YouTube player; their origin is never ours. */
+export function isYoutubeFrameSource(value: string): boolean {
+  try {
+    const host = new URL(value).hostname.toLowerCase();
+    return host === 'www.youtube.com' || host === 'www.youtube-nocookie.com' || host === 'youtube.com' || host === 'youtube-nocookie.com';
+  } catch {
+    return false;
+  }
+}
+
 function safeGadgetFrameSource(value: string, gadgetType: string): boolean {
   try {
     const url = new URL(value, window.location.origin);
@@ -168,9 +178,11 @@ export function sanitizeRichHtml(html: string): string {
         element.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups');
         element.setAttribute('allow', 'clipboard-read; clipboard-write; fullscreen');
       } else {
-        // Never combine scripts with allow-same-origin: a frame that reaches
-        // our origin could otherwise remove its sandbox at runtime.
-        element.setAttribute('sandbox', 'allow-scripts allow-presentation allow-popups');
+        // Never combine scripts with allow-same-origin for a frame that could be OUR origin: it could
+        // remove its own sandbox. Generic embeds are limited to absolute cross-origin URLs above, and the
+        // YouTube player needs its own origin (cookies, Cache Storage): without allow-same-origin it stays a
+        // black box ("Cache storage is disabled because the context is sandboxed"), found 18 Nov 2026.
+        element.setAttribute('sandbox', isYoutubeFrameSource(source) ? 'allow-scripts allow-same-origin allow-presentation allow-popups' : 'allow-scripts allow-presentation allow-popups');
         element.setAttribute('allow', 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share');
         element.setAttribute('allowfullscreen', 'true');
       }

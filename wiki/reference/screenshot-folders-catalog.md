@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/click-caret-jump
-source_commit: 22594f0a
+source_branch: fix/gadgets-render
+source_commit: daa6ab58
 generated: true
 ---
 

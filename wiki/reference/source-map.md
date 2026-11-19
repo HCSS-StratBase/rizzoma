@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/click-caret-jump
-source_commit: 22594f0a
+source_branch: fix/gadgets-render
+source_commit: daa6ab58
 generated: true
 ---
 
@@ -113,9 +113,9 @@ graph LR
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
 | `src/client/components/blip/BlipMenu.css` | 676 | Authentic Legacy Rizzoma Blip Menu Styles |
 | `src/client/components/blip/BlipMenu.tsx` | 887 | (no header comment; exports BlipMenu) |
-| `src/client/components/blip/InlineHtmlRenderer.tsx` | 622 | (no header comment; exports InlineHtmlRenderOptions) |
+| `src/client/components/blip/InlineHtmlRenderer.tsx` | 648 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
-| `src/client/components/blip/RizzomaBlip.css` | 1924 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.css` | 1934 | Rizzoma Blip Styles |
 | `src/client/components/blip/RizzomaBlip.tsx` | 3179 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 105 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
@@ -146,7 +146,7 @@ graph LR
 | `src/client/components/editor/extensions/BlipThreadNode.tsx` | 190 | True when a DOM event comes from INSIDE an inline child blip rendered in this editor's portal anchor |
 | `src/client/components/editor/extensions/CodeBlockView.css` | 128 | Enhanced Code Block — replaces bare TipTap codeBlock |
 | `src/client/components/editor/extensions/CodeBlockView.tsx` | 87 | (no header comment; exports CodeBlockView) |
-| `src/client/components/editor/extensions/GadgetNodes.ts` | 531 | (no header comment; exports createDefaultPollOptions) |
+| `src/client/components/editor/extensions/GadgetNodes.ts` | 532 | (no header comment; exports createDefaultPollOptions) |
 | `src/client/components/editor/extensions/ImageGadget.ts` | 83 | (no header comment; exports ImageOptions) |
 | `src/client/components/editor/extensions/InlineCommentsVisibility.ts` | 39 | (no header comment; exports InlineCommentsVisibilityOptions) |
 | `src/client/components/editor/extensions/PollGadgetView.tsx` | 285 | (no header comment; exports PollGadgetView) |
@@ -211,7 +211,7 @@ graph LR
 | `src/client/gadgets/embedAdapters/index.ts` | 21 | (no header comment; exports resolveGadgetUrl) |
 | `src/client/gadgets/embedAdapters/spreadsheet.ts` | 14 | (no header comment; exports resolveSpreadsheetEmbed) |
 | `src/client/gadgets/embedAdapters/youtube.ts` | 36 | (no header comment; exports resolveYouTubeEmbed) |
-| `src/client/gadgets/insert.ts` | 107 | (no header comment; exports insertGadget) |
+| `src/client/gadgets/insert.ts` | 129 | (no header comment; exports insertGadget) |
 | `src/client/gadgets/registry.ts` | 140 | (no header comment; exports GADGET_REGISTRY) |
 | `src/client/gadgets/security.ts` | 69 | (no header comment; exports EmbedProvider) |
 | `src/client/gadgets/types.ts` | 76 | (no header comment; exports GadgetType) |
@@ -248,7 +248,7 @@ graph LR
 | `src/client/lib/performance.d.ts` | 9 | — |
 | `src/client/lib/performance.ts` | 60 | Performance monitoring utilities |
 | `src/client/lib/renderLatex.ts` | 89 | (no header comment; exports formatLatexToHtml) |
-| `src/client/lib/sanitizeRichHtml.ts` | 242 | (no header comment; exports isSafeRichUrl) |
+| `src/client/lib/sanitizeRichHtml.ts` | 254 | (no header comment; exports isSafeRichUrl) |
 | `src/client/lib/sectionAttribution.ts` | 107 | Per-section author attribution for topic body blocks. |
 | `src/client/lib/socket.ts` | 290 | (no header comment; exports disconnectSocketForAuthTransition) |
 | `src/client/lib/topicExport.ts` | 184 | (no header comment; exports ExportBlip) |
