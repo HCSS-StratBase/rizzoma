@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/select-all-then-type
-source_commit: 5ad83d3d
+source_branch: fix/collapse-control-reachable
+source_commit: 4d124db5
 generated: true
 ---
 
@@ -115,7 +115,7 @@ graph LR
 | `src/client/components/blip/BlipMenu.tsx` | 887 | (no header comment; exports BlipMenu) |
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 652 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
-| `src/client/components/blip/RizzomaBlip.css` | 1934 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.css` | 1938 | Rizzoma Blip Styles |
 | `src/client/components/blip/RizzomaBlip.tsx` | 3228 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 105 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
