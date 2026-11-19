@@ -51,4 +51,11 @@ describe('gadgets: what the READ state actually renders', () => {
     expect(latexWidgetHtml('x^2').html).toContain('<sup>2</sup>');
     expect(latexWidgetHtml('   ').empty).toBe(true);
   });
+
+  it('keeps a bullet that holds only a poll (no text of its own) in the read view', () => {
+    const html = '<ul><li><p>Row</p></li><li><p></p><figure data-gadget-type="poll" data-poll-question="Q?" data-poll-options=\'[{"id":"a","label":"Alpha","votes":1}]\' class="gadget-block gadget-poll"></figure></li></ul>';
+    const out = render(html);
+    expect(out).toContain('Q?');
+    expect(out).toContain('Alpha');
+  });
 });
