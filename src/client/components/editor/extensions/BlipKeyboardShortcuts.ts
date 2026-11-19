@@ -1,6 +1,6 @@
 import { Extension } from '@tiptap/core';
 import { isChangeOrigin } from '@tiptap/extension-collaboration';
-import { Plugin } from '@tiptap/pm/state';
+import { Plugin, TextSelection } from '@tiptap/pm/state';
 import { getBlbListContext, selectionIsInTopicHeading } from '../blbEditorInvariant';
 
 export type BlipKeyboardShortcutsOptions = {
@@ -19,6 +19,25 @@ export type BlipKeyboardShortcutsOptions = {
   /** Topic roots allow exactly one leading H1 before their outer bullet list. */
   isTopicRoot?: boolean;
 };
+
+type BodyState = { doc: { content: { size: number } }; selection: { from: number; to: number; empty: boolean } };
+function selectionCoversWholeBody(state: BodyState): boolean {
+  const { selection, doc } = state;
+  return !selection.empty && selection.from <= 1 && selection.to >= doc.content.size - 1;
+}
+
+// Replace the whole blip body with ONE canonical bullet holding `text` (a bare paragraph is not a legal BLB body).
+function replaceWholeBody(view: { state: any; dispatch: (tr: any) => void }, text: string): void {
+  const { state } = view;
+  const schema = state.schema;
+  // one bullet per non-empty line (a pasted multi-line text becomes several bullets of the same blip)
+  const lines = text.split(/\r?\n/).filter((line) => line.length > 0);
+  const items = (lines.length ? lines : ['']).map((line) => schema.nodes['listItem'].create(null, schema.nodes['paragraph'].create(null, line ? schema.text(line) : undefined)));
+  const list = schema.nodes['bulletList'].create(null, items);
+  const tr = state.tr.replaceWith(0, state.doc.content.size, list);
+  tr.setSelection(TextSelection.near(tr.doc.resolve(Math.max(1, tr.doc.content.size - 2)), -1));
+  view.dispatch(tr.scrollIntoView());
+}
 
 export function isCanonicalBlbDocument(
   doc: {
@@ -97,6 +116,31 @@ export const BlipKeyboardShortcuts = Extension.create({
           // the Collaboration plugin can emit them to Yjs.
           if (isChangeOrigin(transaction)) return true;
           return isCanonicalBlbDocument(transaction.doc, opts.isTopicRoot);
+        },
+        props: {
+          // Select-all (Ctrl+A) and then typing, Backspace or Delete used to do NOTHING: the replacement leaves a bare
+          // paragraph (no bullet), filterTransaction above rejects every non-canonical local transaction, and the keystroke
+          // was swallowed silently. Replace the whole body with a canonical one-bullet list instead (suite case G09).
+          handleTextInput: (view, from, to, text) => {
+            if (opts.isTopicRoot || from === to || !selectionCoversWholeBody(view.state)) return false;
+            replaceWholeBody(view, text);
+            return true;
+          },
+          handlePaste: (view, event) => {
+            if (opts.isTopicRoot || !selectionCoversWholeBody(view.state)) return false;
+            const text = event.clipboardData?.getData('text/plain');
+            if (!text) return false;
+            event.preventDefault();
+            replaceWholeBody(view, text);
+            return true;
+          },
+          handleKeyDown: (view, event) => {
+            if (opts.isTopicRoot || (event.key !== 'Backspace' && event.key !== 'Delete')) return false;
+            if (!selectionCoversWholeBody(view.state)) return false;
+            replaceWholeBody(view, '');
+            event.preventDefault();
+            return true;
+          },
         },
       }),
     ];

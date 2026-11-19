@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/done-flush-typed-text
-source_commit: b44f7102
+source_branch: fix/select-all-then-type
+source_commit: 5ad83d3d
 generated: true
 ---
 
