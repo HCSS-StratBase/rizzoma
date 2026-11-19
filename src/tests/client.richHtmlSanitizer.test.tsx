@@ -93,7 +93,9 @@ describe('stored rich HTML sanitization', () => {
     expect(frames[0].getAttribute('width')).toBe('2000');
     expect(frames[0].getAttribute('height')).toBe('100');
     expect(frames[0].getAttribute('sandbox')).toContain('allow-scripts');
-    expect(frames[0].getAttribute('sandbox')).not.toContain('allow-same-origin');
+    // The YouTube player keeps ITS OWN origin (youtube.com is never ours); every other embed stays opaque
+    // (see client.gadgetRender.test.tsx). Without it the player is a black box.
+    expect(frames[0].getAttribute('sandbox')).toContain('allow-same-origin');
     expect(frames[0].hasAttribute('srcdoc')).toBe(false);
     expect(frames[0].hasAttribute('onload')).toBe(false);
     expect(frames[1].getAttribute('src')).toBe('/gadgets/apps/kanban-board/index.html');
