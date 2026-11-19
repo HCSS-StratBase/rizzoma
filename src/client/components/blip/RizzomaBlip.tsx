@@ -655,6 +655,41 @@ export function RizzomaBlip({
     }
   }, [autoSaveBlip, collabActive, projectionIdentity, ydoc, yjsGeneration]);
 
+  // Last HTML for which a debounced save is pending. When this blip unmounts (for instance the
+  // parent's Done moves an inline child from the editor portal to the view renderer) before
+  // the 300 ms debounce fires, the pending text must still reach the server: dropping it was
+  // the "my text disappeared in the sub-blip" defect (18 Nov 2026, suite case A10).
+  const pendingHtmlRef = useRef<string | null>(null);
+  const flushOnUnmountRef = useRef<() => void>();
+  flushOnUnmountRef.current = () => {
+    const html = pendingHtmlRef.current;
+    pendingHtmlRef.current = null;
+    if (!html || html === lastSavedContentRef.current) return;
+    if (collabActive && !collabReady) return;
+    const targetId = blip.id;
+    void (async () => {
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        try {
+          await ensureCsrf();
+          const headers = collabActive
+            ? await collaborationProjectionHeaders(ydoc, yjsGeneration)
+            : undefined;
+          const response = await api(`/api/blips/${encodeURIComponent(targetId)}`, {
+            method: 'PUT',
+            queueable: false,
+            headers,
+            body: JSON.stringify({ content: html }),
+          });
+          if (response.ok) return;
+          const retryable = response.status === 408 || response.status === 409
+            || response.status === 425 || response.status === 429 || response.status >= 500;
+          if (!retryable) return;
+        } catch { /* retry below */ }
+        await new Promise((resolve) => setTimeout(resolve, Math.min(2_000, 150 * (2 ** attempt))));
+      }
+    })();
+  };
+
   // Stabilize onToggleInlineComments callback for extensions memoization
   const stableToggleInlineComments = useCallback(
     (visible: boolean) => setInlineCommentsVisibility(blip.id, visible),
@@ -750,7 +785,9 @@ export function RizzomaBlip({
         if (autoSaveTimeoutRef.current) {
           clearTimeout(autoSaveTimeoutRef.current);
         }
+        pendingHtmlRef.current = html;
         autoSaveTimeoutRef.current = setTimeout(() => {
+          pendingHtmlRef.current = null;
           void persistLatestProjection(html);
         }, 300);
       },
@@ -874,6 +911,7 @@ export function RizzomaBlip({
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
         autoSaveTimeoutRef.current = null;
+        flushOnUnmountRef.current?.();
       }
     };
   }, []);
@@ -1508,6 +1546,7 @@ export function RizzomaBlip({
       clearTimeout(autoSaveTimeoutRef.current);
       autoSaveTimeoutRef.current = null;
     }
+    pendingHtmlRef.current = null;
     // Final save if content changed
     const currentContent = inlineEditor?.getHTML() || editedContent;
     if ((!collabActive || collabReady) && currentContent !== lastSavedContentRef.current) {

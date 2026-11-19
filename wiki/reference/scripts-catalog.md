@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/latex-edit-preview
-source_commit: 0ed4414f
+source_branch: fix/done-flush-typed-text
+source_commit: b44f7102
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 198 files in `scripts/`, 52 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 206 files in `scripts/`, 53 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -75,6 +75,7 @@ graph LR
 | `test:root-ctrl-enter` | `node scripts ⁄ test-root-ctrl-enter-survives-reload.mjs` |
 | `test:native-ctrl-enter` | `node test-native-ctrl-enter-smoke.mjs` |
 | `test:readmode-seed` | `node test-topic-readmode-seed-smoke.mjs` |
+| `test:done-flush` | `node test-done-flush-smoke.mjs` |
 | `test:gadgets` | `node test-gadget-apps-smoke.mjs` |
 | `test:body-text` | `node test-blip-body-text-smoke.mjs` |
 | `test:health` | `node node_modules/vitest ⁄ vitest.mjs run --config vitest.config.ts src/tests ⁄ server.health.test.ts src/tests ⁄ routes.comments.inlineHealth.test.ts src/test…` |
@@ -92,7 +93,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (198)
+## scripts/ (206)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -177,6 +178,7 @@ graph LR
 | `scripts/fractal-showcase/build-showcase.mjs` | 67 | Build the Fractal Showcase topic BY HAND (real keyboard / mouse) and verify it from persisted state. |
 | `scripts/fractal-showcase/caret-probe.mjs` | 75 | Caret probe on a scratch chain (root > Probe level 1..4) on any host: click into the level 2 blip and type, |
 | `scripts/fractal-showcase/count-spec.mjs` | 7 | Count the blips and the deepest level a spec will create (no browser). |
+| `scripts/fractal-showcase/final-look.mjs` | 51 | How does a NORMAL EDITOR see the showcase gadgets? Fresh signed-in browser context as Fractal Tester 2 (not the owner, |
 | `scripts/fractal-showcase/functions.mjs` | 53 | Registry of what was done and what persisted evidence to look for afterwards: filled by the hooks. |
 | `scripts/fractal-showcase/gadget-look.mjs` | 34 | Screenshot how each gadget of a scratch topic renders in the VIEW state (to be READ). env: FS_STATE_IN (json |
 | `scripts/fractal-showcase/gadget-render-probe.mjs` | 71 | Do the gadgets RENDER? Insert each of the 11 palette gadgets in a scratch topic with real clicks and typing, |
@@ -188,9 +190,16 @@ graph LR
 | `scripts/fractal-showcase/liveauth.mjs` | 52 | Live sign-in helper. Credentials are read from the credential file inside this process, typed into |
 | `scripts/fractal-showcase/ops.mjs` | 178 | Wait until at least one editable editor exists and the caret lives in one. |
 | `scripts/fractal-showcase/phase2-share.mjs` | 35 | Phase 2 on the built topic (live): topic-level functions as Fractal Tester 1, sharing through the REAL |
+| `scripts/fractal-showcase/promote-t2.mjs` | 24 | Owner: make Fractal Tester 2 an Editor through the real Invite dialog (select the member's checkbox, "Select role", Editor). |
 | `scripts/fractal-showcase/run-private.sh` | 26 | Run a showcase driver in a HEADED Chromium on a PRIVATE virtual display (Xvfb), never on the |
 | `scripts/fractal-showcase/share-link.mjs` | 21 | As Fractal Tester 1 (owner): open the topic, click Share, choose "Anyone with the link" + allow editing, save. |
+| `scripts/fractal-showcase/showcase-cleanup.mjs` | 49 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
+| `scripts/fractal-showcase/showcase-cleanup2.mjs` | 52 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
+| `scripts/fractal-showcase/showcase-finish.mjs` | 51 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
 | `scripts/fractal-showcase/showcase-gadgets-look.mjs` | 38 | Look at how the 11 gadget blips of the live showcase topic ACTUALLY render (a person's view): expand the |
+| `scripts/fractal-showcase/showcase-leaf-look.mjs` | 44 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
+| `scripts/fractal-showcase/showcase-poll.mjs` | 45 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
+| `scripts/fractal-showcase/showcase-refill.mjs` | 55 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
 | `scripts/fractal-showcase/spec.mjs` | 56 | The content of the Fractal Showcase. Labels are atomic (2 to 5 words), globally unique by their first |
 | `scripts/fractal-showcase/things-probe.mjs` | 63 | Probe the everyday editing things on a scratch chain (root > Probe level 1..4 (+ Extra child)), headed, real |
 | `scripts/fractal-showcase/trial-new-topic-editor.mjs` | 32 | N fresh topics: create through the New dialog, press Edit, type one line, report whether the root |

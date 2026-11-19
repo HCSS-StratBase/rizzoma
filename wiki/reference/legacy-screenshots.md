@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/latex-edit-preview
-source_commit: 0ed4414f
+source_branch: fix/done-flush-typed-text
+source_commit: b44f7102
 generated: true
 ---
 
