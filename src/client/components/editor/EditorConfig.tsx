@@ -20,6 +20,7 @@ import { InlineCommentsVisibility } from './extensions/InlineCommentsVisibility'
 import { BlipKeyboardShortcuts } from './extensions/BlipKeyboardShortcuts';
 import { AppFrameGadget, ChartGadget, EmbedFrameGadget, PollGadget } from './extensions/GadgetNodes';
 import { BlipThreadNode } from './extensions/BlipThreadNode';
+import { LatexPreview } from './extensions/LatexPreview';
 import { TagNode } from './extensions/TagNode';
 import { TaskWidgetNode } from './extensions/TaskWidget';
 import { CodeBlockView } from './extensions/CodeBlockView';
@@ -105,6 +106,7 @@ export const getEditorExtensions = (
     EmbedFrameGadget.configure({}),
     AppFrameGadget.configure({}),
     PollGadget.configure({}),
+    LatexPreview,
   ];
 
   if (options?.blipId || options?.onToggleInlineComments) {

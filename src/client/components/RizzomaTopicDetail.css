@@ -1803,3 +1803,7 @@
 .topic-avatar-small.owner {
   border-color: #4EA0F1;
 }
+
+/* LaTeX in the editor (LatexPreview): the source run is hidden while the formula shows typeset beside the caret. */
+.latex-src-hidden { display: none; }
+.rizzoma-latex-empty { color: #8a9bab; font-style: italic; border: 1px dashed #b7c4d1; border-radius: 4px; padding: 0 6px; }

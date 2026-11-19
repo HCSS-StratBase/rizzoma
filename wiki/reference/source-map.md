@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/gadgets-render
-source_commit: daa6ab58
+source_branch: fix/latex-edit-preview
+source_commit: 0ed4414f
 generated: true
 ---
 
@@ -83,7 +83,7 @@ graph LR
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
 | `src/client/components/RizzomaLayout.css` | 463 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 593 | (no header comment; exports RizzomaLayout) |
-| `src/client/components/RizzomaTopicDetail.css` | 1806 | RizzomaTopicDetail - Matching real Rizzoma |
+| `src/client/components/RizzomaTopicDetail.css` | 1810 | RizzomaTopicDetail - Matching real Rizzoma |
 | `src/client/components/RizzomaTopicDetail.tsx` | 2399 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 225 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 353 | (no header comment; exports RizzomaTopicsList) |
@@ -113,10 +113,10 @@ graph LR
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
 | `src/client/components/blip/BlipMenu.css` | 676 | Authentic Legacy Rizzoma Blip Menu Styles |
 | `src/client/components/blip/BlipMenu.tsx` | 887 | (no header comment; exports BlipMenu) |
-| `src/client/components/blip/InlineHtmlRenderer.tsx` | 648 | (no header comment; exports InlineHtmlRenderOptions) |
+| `src/client/components/blip/InlineHtmlRenderer.tsx` | 650 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
 | `src/client/components/blip/RizzomaBlip.css` | 1934 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 3179 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/RizzomaBlip.tsx` | 3189 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 105 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 73 | (no header comment; exports LocationLike) |
@@ -128,7 +128,7 @@ graph LR
 | `src/client/components/editor/CollaborativeCursors.tsx` | 223 | (no header comment; exports CursorUser) |
 | `src/client/components/editor/CollaborativeProvider.ts` | 592 | (no header comment; exports SocketIOProvider) |
 | `src/client/components/editor/EditableBlipContent.tsx` | 68 | (no header comment; exports EditableBlipContent) |
-| `src/client/components/editor/EditorConfig.tsx` | 283 | (no header comment; exports createYjsDocument) |
+| `src/client/components/editor/EditorConfig.tsx` | 285 | (no header comment; exports createYjsDocument) |
 | `src/client/components/editor/EditorToolbar.css` | 239 | — |
 | `src/client/components/editor/EditorToolbar.tsx` | 553 | (no header comment; exports EditorToolbar) |
 | `src/client/components/editor/FloatingToolbar.css` | 67 | Floating Rich Text Toolbar for Rizzoma |
@@ -193,7 +193,7 @@ graph LR
 | `src/client/native/wave-view.ts` | 272 | Native fractal-render — WaveView. |
 | `src/client/native/yjs-binding.ts` | 202 | Native fractal-render — Y.js CRDT binding for the ContentArray model. |
 
-## Client other (68)
+## Client other (69)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -234,6 +234,7 @@ graph LR
 | `src/client/lib/blipCreateResponse.ts` | 33 | (no header comment; exports CreatedBlip) |
 | `src/client/lib/blipPagination.ts` | 35 | Collect every CouchDB bookmark page without silently losing descendants. |
 | `src/client/lib/capacitor-native.ts` | 254 | Capacitor native-shell glue for the Rizzoma Android / iOS apps. |
+| `src/client/lib/clickCaret.ts` | 74 | Where the person clicked in a blip's READ view, as a number of text characters from the start of the blip's own |
 | `src/client/lib/collaborationPending.ts` | 73 | In-memory accounting for Yjs updates that the collaboration server has not |
 | `src/client/lib/collaborationProjection.ts` | 39 | (no header comment; exports COLLABORATION_STATE_DIGEST_HEADER) |
 | `src/client/lib/editorPersistence.ts` | 42 | (no header comment; exports REMOTE_EDITOR_UPDATE) |
@@ -387,7 +388,7 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (123)
+## Tests (124)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -424,6 +425,7 @@ graph LR
 | `src/tests/client.editorPersistence.test.ts` | 68 | — |
 | `src/tests/client.followGreenNavigation.test.tsx` | 209 | — |
 | `src/tests/client.fragmentSecrets.test.ts` | 81 | — |
+| `src/tests/client.gadgetRender.test.tsx` | 55 | @vitest-environment jsdom |
 | `src/tests/client.gadgets.appInstallState.test.ts` | 44 | — |
 | `src/tests/client.gadgets.appsCatalog.test.ts` | 35 | — |
 | `src/tests/client.gadgets.embedAdapters.test.ts` | 36 | — |
@@ -453,7 +455,7 @@ graph LR
 | `src/tests/client.participantRoster.test.tsx` | 49 | — |
 | `src/tests/client.passwordResetBoot.test.tsx` | 94 | — |
 | `src/tests/client.referenceLists.test.tsx` | 94 | — |
-| `src/tests/client.richHtmlSanitizer.test.tsx` | 105 | — |
+| `src/tests/client.richHtmlSanitizer.test.tsx` | 107 | — |
 | `src/tests/client.sandboxAppGadgetView.test.tsx` | 131 | — |
 | `src/tests/client.socketAuthIsolation.test.ts` | 206 | — |
 | `src/tests/client.socketSession.test.ts` | 107 | — |

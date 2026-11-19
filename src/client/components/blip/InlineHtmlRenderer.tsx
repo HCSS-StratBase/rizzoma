@@ -236,6 +236,8 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
               dangerouslySetInnerHTML: { __html: rendered },
             });
           }
+          // an empty "$$ $$" (a LaTeX gadget nobody typed into) is an empty box, never raw dollar signs
+          return createElement('span', { key: `latex-${idx}`, className: 'rizzoma-latex rizzoma-latex-empty' }, 'type a formula');
         }
         if (part.startsWith('#') && part.length > 1) {
           return createElement(

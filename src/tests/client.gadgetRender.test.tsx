@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { renderInlineHtml } from '../client/components/blip/InlineHtmlRenderer';
 import { sanitizeRichHtml, isYoutubeFrameSource } from '../client/lib/sanitizeRichHtml';
+import { latexRuns, latexWidgetHtml } from '../client/components/editor/extensions/LatexPreview';
 
 const render = (html: string): string => renderToStaticMarkup(
   renderInlineHtml({ html, inlineChildren: [], expandedSet: new Set(), renderInlineChild: () => null }) as any,
@@ -34,5 +35,20 @@ describe('gadgets: what the READ state actually renders', () => {
     const other = sanitizeRichHtml('<figure data-gadget-type="embed-frame" data-embed-src="https://example.org/" data-embed-title="x" data-embed-provider="iframe" data-embed-width="600" data-embed-height="400" class="gadget-block gadget-embed-frame"><div class="gadget-body"><iframe src="https://example.org/"></iframe></div></figure>');
     expect(other).toContain('sandbox="allow-scripts allow-presentation allow-popups"');
     expect(other).not.toContain('allow-same-origin');
+  });
+
+  it('never shows raw dollar signs for an EMPTY LaTeX gadget stored before the fix', () => {
+    const out = render('<ul><li><p>$$  $$</p></li></ul>');
+    expect(out).toContain('type a formula');
+    expect(out).not.toContain('$$');
+  });
+
+  it('finds LaTeX runs for the editor preview and typesets them', () => {
+    expect(latexRuns('see $$ x^2 $$ and $$  $$ end')).toEqual([
+      { from: 4, to: 13, formula: ' x^2 ' },
+      { from: 18, to: 24, formula: '  ' },
+    ]);
+    expect(latexWidgetHtml('x^2').html).toContain('<sup>2</sup>');
+    expect(latexWidgetHtml('   ').empty).toBe(true);
   });
 });
