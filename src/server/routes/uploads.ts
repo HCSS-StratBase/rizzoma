@@ -68,6 +68,8 @@ type UploadDoc = {
   createdAt: number;
 };
 
+const SIGNATURE_CHECKED_MIME = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf']);
+
 function sniffMime(buffer: Buffer): SniffedType | null {
   if (!buffer || buffer.length < 4) return null;
   if (buffer.slice(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))) {
@@ -180,6 +182,13 @@ uploadsRouter.post('/', requireAuth, csrfProtect(), upload.single('file'), async
     }
 
     const sniffed = sniffMime(file.buffer);
+    // A file that CLAIMS to be an image / PDF must actually start with that signature. Before
+    // 18 Nov 2026 only dangerous signatures were rejected, so plain text declared as image/png was
+    // stored and served as a PNG (suite case S11).
+    if (SIGNATURE_CHECKED_MIME.has(String(file.mimetype)) && sniffed?.mime !== file.mimetype) {
+      res.status(400).json({ error: 'invalid_file_type' });
+      return;
+    }
     const mimeType = sniffed?.mime || file.mimetype;
     if (!mimeType || !allowedMimeTypes.has(mimeType)) {
       res.status(400).json({ error: 'invalid_file_type' });
