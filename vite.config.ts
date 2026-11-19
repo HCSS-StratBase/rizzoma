@@ -66,6 +66,11 @@ export default defineConfig(({ command, mode }) => {
         target: process.env.VITE_API_TARGET || 'http://localhost:8788',
         changeOrigin: true,
       },
+      // uploaded files are served by the app server (session-guarded); the dev server must forward them like production does
+      '/uploads': {
+        target: process.env.VITE_API_TARGET || 'http://localhost:8788',
+        changeOrigin: true,
+      },
       '/socket.io': {
         target: process.env.VITE_API_TARGET || 'http://localhost:8788',
         ws: true,
