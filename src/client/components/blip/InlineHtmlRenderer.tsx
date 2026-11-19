@@ -386,7 +386,9 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     // Suppress stray empty bullet items or paragraphs in view mode (no text, no markers, no images/embeds)
     if ((tag === 'li' || tag === 'p') && expandedHere.length === 0) {
       const text = el.textContent?.trim() || '';
-      const hasMediaOrMarker = el.querySelector('img, video, iframe, [data-blip-thread], .blip-thread-marker, .blip-tag-container');
+      const hasMediaOrMarker = el.querySelector('img, video, iframe, figure, [data-blip-thread], .blip-thread-marker, .blip-tag-container');
+      // a bullet that holds only a gadget <figure> (a poll has no text of its own) is NOT stray: it used to be
+      // dropped here, so a poll inserted into its own bullet vanished in the read view (found 18 Nov 2026)
       if (text.length === 0 && !hasMediaOrMarker) {
         return null;
       }
