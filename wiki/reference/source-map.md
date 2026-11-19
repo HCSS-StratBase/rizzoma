@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/latex-edit-preview
-source_commit: 0ed4414f
+source_branch: fix/done-flush-typed-text
+source_commit: b44f7102
 generated: true
 ---
 
@@ -40,7 +40,7 @@ graph LR
     P --> K["code"]
 ```
 
-## Client components (122)
+## Client components (123)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -113,10 +113,10 @@ graph LR
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
 | `src/client/components/blip/BlipMenu.css` | 676 | Authentic Legacy Rizzoma Blip Menu Styles |
 | `src/client/components/blip/BlipMenu.tsx` | 887 | (no header comment; exports BlipMenu) |
-| `src/client/components/blip/InlineHtmlRenderer.tsx` | 650 | (no header comment; exports InlineHtmlRenderOptions) |
+| `src/client/components/blip/InlineHtmlRenderer.tsx` | 652 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
 | `src/client/components/blip/RizzomaBlip.css` | 1934 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 3189 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/RizzomaBlip.tsx` | 3228 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 105 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 73 | (no header comment; exports LocationLike) |
@@ -149,6 +149,7 @@ graph LR
 | `src/client/components/editor/extensions/GadgetNodes.ts` | 532 | (no header comment; exports createDefaultPollOptions) |
 | `src/client/components/editor/extensions/ImageGadget.ts` | 83 | (no header comment; exports ImageOptions) |
 | `src/client/components/editor/extensions/InlineCommentsVisibility.ts` | 39 | (no header comment; exports InlineCommentsVisibilityOptions) |
+| `src/client/components/editor/extensions/LatexPreview.ts` | 82 | LaTeX in the EDITOR: a `$$ formula $$` run shows TYPESET while the caret is elsewhere, and its source while the |
 | `src/client/components/editor/extensions/PollGadgetView.tsx` | 285 | (no header comment; exports PollGadgetView) |
 | `src/client/components/editor/extensions/SandboxAppGadgetView.tsx` | 250 | (no header comment; exports GADGET_START_TIMEOUT_MS) |
 | `src/client/components/editor/extensions/TagNode.tsx` | 159 | Mock tags – in production these would be extracted from topic content |
@@ -425,7 +426,7 @@ graph LR
 | `src/tests/client.editorPersistence.test.ts` | 68 | — |
 | `src/tests/client.followGreenNavigation.test.tsx` | 209 | — |
 | `src/tests/client.fragmentSecrets.test.ts` | 81 | — |
-| `src/tests/client.gadgetRender.test.tsx` | 55 | @vitest-environment jsdom |
+| `src/tests/client.gadgetRender.test.tsx` | 62 | @vitest-environment jsdom |
 | `src/tests/client.gadgets.appInstallState.test.ts` | 44 | — |
 | `src/tests/client.gadgets.appsCatalog.test.ts` | 35 | — |
 | `src/tests/client.gadgets.embedAdapters.test.ts` | 36 | — |
