@@ -14,6 +14,7 @@ import { chromium } from 'playwright';
 const BASE = (process.env.RIZZOMA_BASE_URL || 'http://127.0.0.1:3100').replace(/\/$/, '');
 const HEADED = process.env.HEADED === '1';
 const RUN = Date.now().toString(36);
+const SHOTS = process.env.SHOTS || '';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failed = 0;
 const check = (ok, label, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? ` | ${detail}` : ''}`); if (!ok) failed += 1; };
@@ -48,6 +49,7 @@ for (const [label, opts, touch] of [
     const row = page.locator('.blip-collapsed-row', { hasText: 'collapse me' }).first();
     await hit(row); await sleep(1500);
     check((await page.locator('.nested-blip.expanded').count()) === 1, `${label}: the blip is expanded`);
+    if (SHOTS) { const fs = await import('node:fs'); fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: `${SHOTS}/${label.split(' ')[0]}-expanded.png` }); }
     const exp = page.locator('[data-testid="blip-expander"]').last();
     const cover = await exp.evaluate((e) => { const r = e.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return { onScreen: r.left >= 0 && r.right <= innerWidth && r.top >= 0, ownsPoint: t === e || e.contains(t), top: t ? String(t.className).slice(0, 30) : null }; });
     check(cover.onScreen && cover.ownsPoint, `${label}: the [-] control is on screen and receives the pointer`, JSON.stringify(cover));
