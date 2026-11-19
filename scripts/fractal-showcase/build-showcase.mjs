@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { launch, newClient, signInUi, seedUser, sleep, shot, apiGet, TYPE_DELAY, OUT } from './lib.mjs';
 import { signInLive } from './liveauth.mjs';
 import { buildBlip, EDITOR, blipIds } from './ops.mjs';
-import { buildSpec, TITLE } from './spec.mjs';
+import { buildSpec, buildSmallSpec, TITLE } from './spec.mjs';
 
 const BASE = (process.env.FS_BASE || 'http://127.0.0.1:3107').replace(/\/$/, '');
 process.env.FS_BASE = BASE;
@@ -47,7 +47,7 @@ await shot(c, 'steps/02-root-editor');
 // 3. build the tree
 globalThis.__fsTraceFocus = log;
 const t0 = Date.now();
-const n = await buildBlip(p, buildSpec(), log);
+const n = await buildBlip(p, process.env.FS_SMALL ? buildSmallSpec(Number(process.env.FS_SMALL)) : buildSpec(), log);
 log(`built ${n} blips in ${Math.round((Date.now() - t0) / 1000)} s; Ctrl+Enter presses=${JSON.stringify(globalThis.__fsCE)}; root-editor torn down and recovered ${globalThis.__fsRootDestroyed || 0} time(s)`);
 await sleep(3000);
 await shot(c, 'steps/03-tree-built');

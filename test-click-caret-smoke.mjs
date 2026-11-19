@@ -64,6 +64,32 @@ for (let i = 0; i < TRIES; i += 1) {
   await p.keyboard.press('Backspace'); await sleep(800);
 }
 check(atEnd === 0, `a click inside the text puts the typed character at the clicked place, not at the end (${TRIES} tries)`, `at end or lost: ${atEnd}; last stored: ${seen.at(-1)}`);
+
+// ---- NESTED: the same click inside a blip one level DOWN (level 2). Its edit-state layout differs (the toolbar
+// moves the text), which used to make the caret fall to the end even after the top-level fix.
+await blipLi().click({ position: { x: 12, y: 8 } }); await sleep(1500);
+await p.keyboard.press('Control+End'); await p.keyboard.press('Control+Enter'); await sleep(2500);
+await p.keyboard.type('Nested brave child text here', { delay: 20 }); await sleep(1500);
+for (let i = 0; i < 4; i += 1) { const d = p.locator('[data-testid="blip-menu-done"]').filter({ visible: true }).last(); if (await d.isVisible().catch(() => false)) { await d.click(); await sleep(1200); } }
+await p.reload({ waitUntil: 'domcontentloaded' }); await sleep(6000);
+await p.locator('.blip-collapsed-row', { hasText: 'Hello brave' }).first().click(); await sleep(1500);
+await p.locator('.blip-thread-marker').filter({ visible: true }).first().click(); await sleep(1500);
+const nestedLi = () => p.locator('.blip-container.nested-blip').filter({ hasText: 'Nested brave' }).last().locator('li').first();
+let nestedAtEnd = 0; const nestedSeen = [];
+for (let i = 0; i < TRIES; i += 1) {
+  const done = p.locator('[data-testid="blip-menu-done"]').filter({ visible: true }).last();
+  if (await done.isVisible().catch(() => false)) { await done.click(); await sleep(1500); }
+  const box = await nestedLi().boundingBox();
+  await p.mouse.click(box.x + 62, box.y + 8); // inside "brave" of the level 2 blip
+  await sleep(350 + (i % 3) * 400);
+  await p.keyboard.type('Z', { delay: 40 });
+  await sleep(2500);
+  const t = await storedText(); nestedSeen.push(t);
+  const nested = t.split('|').find((x) => /Nested/.test(x)) || '';
+  if (/Z$/.test(nested.replace(/\s+$/, '')) || !nested.includes('Z')) nestedAtEnd += 1;
+  await p.keyboard.press('Backspace'); await sleep(800);
+}
+check(nestedAtEnd === 0, `a click inside a NESTED (level 2) blip also puts the character at the clicked place (${TRIES} tries)`, `at end or lost: ${nestedAtEnd}; last stored: ${nestedSeen.at(-1)}`);
 await browser.close();
 console.log(failed ? `FAILED ${failed} check(s)` : 'ALL PASSED');
 process.exit(failed ? 1 : 0);

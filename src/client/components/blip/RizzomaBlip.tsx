@@ -10,6 +10,7 @@ import type { Editor } from '@tiptap/core';
 import { isChangeOrigin } from '@tiptap/extension-collaboration';
 import { getEditorExtensions, defaultEditorProps } from '../editor/EditorConfig';
 import { TypingIndicator } from '../editor/CollaborativeCursors';
+import { caretPointFromClient, docPosForTextOffset, ownTextOffsetOfPoint } from '../../lib/clickCaret';
 import { toast } from '../Toast';
 import { copyBlipLink } from './copyBlipLink';
 import { InlineComments, InlineCommentsStatus } from '../editor/InlineComments';
@@ -476,7 +477,7 @@ export function RizzomaBlip({
   const pendingGadgetDetailRef = useRef<GadgetInsertDetail | null>(null);
   const inlineEditorRef = useRef<Editor | null>(null);
   // Where the person clicked in the view-state text; consumed when the editor becomes writable (see the editing effect).
-  const pendingClickCaretRef = useRef<{ x: number; y: number } | null>(null);
+  const pendingClickCaretRef = useRef<{ x: number; y: number; textOffset: number | null } | null>(null);
   const projectionActiveRef = useRef(true);
   const yjsGeneration = blip.yjsGeneration ?? 0;
   const projectionIdentity = `${blip.id}:${yjsGeneration}`;
@@ -781,8 +782,12 @@ export function RizzomaBlip({
         const click = pendingClickCaretRef.current;
         pendingClickCaretRef.current = null;
         if (click) {
-          const hit = inlineEditor.view.posAtCoords({ left: click.x, top: click.y });
-          if (hit) { inlineEditor.chain().focus().setTextSelection(hit.pos).run(); return; }
+          // Prefer the TEXT OFFSET taken from the read view at click time: the toolbar that appears when the editor
+          // takes over moves the text, so for deeper blips the old screen coordinates miss the editor (posAtCoords
+          // answered null, measured 18 Nov 2026) and the caret fell to the end.
+          let pos: number | null = click.textOffset != null ? docPosForTextOffset(inlineEditor.state.doc as any, click.textOffset) : null;
+          if (pos == null) pos = inlineEditor.view.posAtCoords({ left: click.x, top: click.y })?.pos ?? null;
+          if (pos != null) { inlineEditor.chain().focus().setTextSelection(pos).run(); return; }
         }
         if (inlineEditor.isFocused) return;
         inlineEditor.commands['focus']('end');
@@ -1446,7 +1451,12 @@ export function RizzomaBlip({
     if ((e.target as HTMLElement).closest('a')) return;
 
     if (blip.permissions.canEdit && !isEditing) {
-      pendingClickCaretRef.current = { x: e.clientX, y: e.clientY };
+      const point = caretPointFromClient(document, e.clientX, e.clientY);
+      pendingClickCaretRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        textOffset: point ? ownTextOffsetOfPoint(e.currentTarget as Node, point.node, point.offset) : null,
+      };
       handleStartEdit();
       requestAnimationFrame(() => {
         if (pendingClickCaretRef.current) return; // the editing effect places the caret at the clicked position

@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/gadgets-render
-source_commit: daa6ab58
+source_branch: fix/latex-edit-preview
+source_commit: 0ed4414f
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 188 files in `scripts/`, 52 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 198 files in `scripts/`, 52 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -92,7 +92,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (188)
+## scripts/ (198)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -175,16 +175,26 @@ graph LR
 | `scripts/fix-anonymous-authors.cjs` | 188 | Migration script: Fix "Anonymous" author names on blips |
 | `scripts/fix_tana_docs_mirror.py` | 34 | — |
 | `scripts/fractal-showcase/build-showcase.mjs` | 67 | Build the Fractal Showcase topic BY HAND (real keyboard / mouse) and verify it from persisted state. |
+| `scripts/fractal-showcase/caret-probe.mjs` | 75 | Caret probe on a scratch chain (root > Probe level 1..4) on any host: click into the level 2 blip and type, |
 | `scripts/fractal-showcase/count-spec.mjs` | 7 | Count the blips and the deepest level a spec will create (no browser). |
+| `scripts/fractal-showcase/functions.mjs` | 53 | Registry of what was done and what persisted evidence to look for afterwards: filled by the hooks. |
+| `scripts/fractal-showcase/gadget-look.mjs` | 34 | Screenshot how each gadget of a scratch topic renders in the VIEW state (to be READ). env: FS_STATE_IN (json |
+| `scripts/fractal-showcase/gadget-render-probe.mjs` | 71 | Do the gadgets RENDER? Insert each of the 11 palette gadgets in a scratch topic with real clicks and typing, |
 | `scripts/fractal-showcase/lib.mjs` | 83 | Shared helpers for the hand-built "Fractal Showcase" topic. Content is entered ONLY with real |
 | `scripts/fractal-showcase/live-access-probe.mjs` | 79 | READ-ONLY access probe as Fractal Tester 2 (no sharing with anyone): what can a brand-new user list and read? |
 | `scripts/fractal-showcase/live-cleanup.mjs` | 40 | Delete the scratch topics of a live run through the UI (gear menu, Delete, confirm), then prove with a |
 | `scripts/fractal-showcase/live-trial.mjs` | 52 | LIVE probe of the empty-root-editor fix: as Fractal Tester 1, N fresh scratch topics, each created through |
+| `scripts/fractal-showcase/live-verify-pending.mjs` | 52 | LIVE verification of the pending-invitee fix and the avatar-overlay fix, headed, real clicks: |
 | `scripts/fractal-showcase/liveauth.mjs` | 52 | Live sign-in helper. Credentials are read from the credential file inside this process, typed into |
 | `scripts/fractal-showcase/ops.mjs` | 178 | Wait until at least one editable editor exists and the caret lives in one. |
+| `scripts/fractal-showcase/phase2-share.mjs` | 35 | Phase 2 on the built topic (live): topic-level functions as Fractal Tester 1, sharing through the REAL |
 | `scripts/fractal-showcase/run-private.sh` | 26 | Run a showcase driver in a HEADED Chromium on a PRIVATE virtual display (Xvfb), never on the |
+| `scripts/fractal-showcase/share-link.mjs` | 21 | As Fractal Tester 1 (owner): open the topic, click Share, choose "Anyone with the link" + allow editing, save. |
+| `scripts/fractal-showcase/showcase-gadgets-look.mjs` | 38 | Look at how the 11 gadget blips of the live showcase topic ACTUALLY render (a person's view): expand the |
 | `scripts/fractal-showcase/spec.mjs` | 56 | The content of the Fractal Showcase. Labels are atomic (2 to 5 words), globally unique by their first |
+| `scripts/fractal-showcase/things-probe.mjs` | 63 | Probe the everyday editing things on a scratch chain (root > Probe level 1..4 (+ Extra child)), headed, real |
 | `scripts/fractal-showcase/trial-new-topic-editor.mjs` | 32 | N fresh topics: create through the New dialog, press Edit, type one line, report whether the root |
+| `scripts/fractal-showcase/verify-nonowner.mjs` | 20 | Load the topic link as a NON-OWNER account (Fractal Tester 2) in a headed run and report what a person sees. |
 | `scripts/full-deploy.sh` | 141 | MASTER DEPLOYMENT SCRIPT |
 | `scripts/gen_status.mjs` | 141 | Generate STATUS .md — the SINGLE authoritative current-state doc. |
 | `scripts/generate-ui-exhaustive-pack.mjs` | 445 | — |

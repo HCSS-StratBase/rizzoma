@@ -48,7 +48,13 @@ const inp = (ph) => p.locator(`input[placeholder="${ph}"]`).filter({ visible: tr
 const anchor = async () => { await p.locator(EDITOR).first().click({ position: { x: 5, y: 5 } }).catch(() => {}); await p.keyboard.press('Control+End'); await p.keyboard.press('Enter'); };
 
 await type('Poll row'); await p.keyboard.press('Enter'); await palette('Poll'); await anchor();
-await type('LaTeX row'); await p.keyboard.press('Enter'); await palette('LaTeX'); await type('x^2 + \\frac{a}{b}'); await sleep(1200); await p.keyboard.press('End'); await anchor();
+await type('LaTeX row'); await p.keyboard.press('Enter'); await palette('LaTeX');
+const emptyEdit = await p.locator(EDITOR).first().evaluate((e) => ({ src: /\$\$/.test(e.innerText), empty: !!e.querySelector('.rizzoma-latex-empty') }));
+check(true, 'LaTeX edit mode, just inserted (caret inside, source shown for typing)', JSON.stringify(emptyEdit));
+await type('x^2 + \\frac{a}{b}'); await sleep(1200); await p.keyboard.press('End'); await anchor();
+await sleep(800);
+const editLatex = await p.locator(EDITOR).first().evaluate((e) => ({ widget: e.querySelector('.latex-widget')?.textContent || '', rawVisible: /\$\$/.test(e.innerText) }));
+check(/x/.test(editLatex.widget) && !editLatex.rawVisible, 'LaTeX is typeset IN EDIT MODE while the caret is elsewhere (source hidden)', JSON.stringify(editLatex));
 await type('YouTube row'); await p.keyboard.press('Enter'); await palette('YouTube'); await inp('YouTube URL...').click(); await type('https://www.youtube.com/watch?v=dQw4w9WgXcQ'); await p.keyboard.press('Enter'); await sleep(1200); await anchor();
 await type('Sheet row'); await p.keyboard.press('Enter'); await palette('Sheet'); await inp('Google Sheets URL...').click(); await type('https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit'); await p.keyboard.press('Enter'); await sleep(1200); await anchor();
 await type('Image row'); await p.keyboard.press('Enter'); await palette('Image'); await inp('Image URL...').click(); await type(`${BASE}/s/img/user/anonim.png`); await p.keyboard.press('Enter'); await sleep(1200); await anchor();
@@ -66,6 +72,7 @@ check(!rawDollar, 'no raw $$ left in the read view');
 const yt = await v.locator('iframe[src*="youtube.com/embed"]').first().evaluate((e) => ({ src: e.getAttribute('src'), sb: e.getAttribute('sandbox'), fs: e.hasAttribute('allowfullscreen') })).catch(() => null);
 check(!!yt && /dQw4w9WgXcQ/.test(yt.src), 'YouTube watch URL became a youtube.com/embed iframe', yt?.src);
 check(!!yt && /allow-same-origin/.test(yt.sb || '') && /allow-scripts/.test(yt.sb || ''), 'the YouTube frame keeps its own origin (sandbox has allow-same-origin)', yt?.sb);
+await v.locator('iframe[src*="docs.google.com/spreadsheets"]').first().waitFor({ state: 'attached', timeout: 10000 }).catch(() => {});
 const sheet = await v.locator('iframe[src*="docs.google.com/spreadsheets"]').count();
 check(sheet === 1, 'Sheet renders as a docs.google.com spreadsheet iframe');
 const img = await v.locator('img[alt="image"]').first().evaluate((e) => e.naturalWidth).catch(() => 0);
