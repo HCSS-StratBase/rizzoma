@@ -37,6 +37,7 @@ import {
   getBlipClipboardPayload,
   setBlipClipboardPayload,
   getGlobalClipboard,
+  subscribeBlipClipboard,
   clearCutState,
 } from './clipboardStore';
 import { createUploadTask, type UploadResult, type UploadTask } from '../../lib/upload';
@@ -1958,7 +1959,9 @@ export function RizzomaBlip({
   // The Done button is used to finish editing.
 
   useEffect(() => {
-    setClipboardAvailable(!!getBlipClipboardPayload(blip.id));
+    const refresh = () => setClipboardAvailable(!!getBlipClipboardPayload(blip.id) || !!getGlobalClipboard());
+    refresh();
+    return subscribeBlipClipboard(refresh);
   }, [blip.id]);
 
   useEffect(() => {
@@ -2347,7 +2350,8 @@ export function RizzomaBlip({
       toast('You cannot reply to this blip', 'error');
       return;
     }
-    const payload = getBlipClipboardPayload(blip.id);
+    // The clipboard is global: a comment copied on ANOTHER blip must paste here (it used to look only at this blip's own entry).
+    const payload = getGlobalClipboard() || getBlipClipboardPayload(blip.id);
     if (!payload) {
       toast('Copy a comment first', 'error');
       return;
@@ -2361,7 +2365,8 @@ export function RizzomaBlip({
   };
 
   const handlePasteAtCursorFromClipboard = () => {
-    const payload = getBlipClipboardPayload(blip.id);
+    // The clipboard is global: a comment copied on ANOTHER blip must paste here (it used to look only at this blip's own entry).
+    const payload = getGlobalClipboard() || getBlipClipboardPayload(blip.id);
     if (!payload) {
       toast('Copy a comment first', 'error');
       return;

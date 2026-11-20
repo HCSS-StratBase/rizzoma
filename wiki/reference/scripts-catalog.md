@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/liliia-batch
-source_commit: 0792e06e
+source_commit: 4d252faf
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 206 files in `scripts/`, 58 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 208 files in `scripts/`, 59 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -81,6 +81,7 @@ graph LR
 | `test:done-flush` | `node test-done-flush-smoke.mjs` |
 | `test:upload-signature` | `node test-upload-signature-smoke.mjs` |
 | `test:embed-console` | `node test-embed-console-smoke.mjs` |
+| `test:clipboard-paste` | `node test-clipboard-paste-smoke.mjs` |
 | `test:gadgets` | `node test-gadget-apps-smoke.mjs` |
 | `test:body-text` | `node test-blip-body-text-smoke.mjs` |
 | `test:health` | `node node_modules/vitest ⁄ vitest.mjs run --config vitest.config.ts src/tests ⁄ server.health.test.ts src/tests ⁄ routes.comments.inlineHealth.test.ts src/test…` |
@@ -98,7 +99,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (206)
+## scripts/ (208)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -188,6 +189,8 @@ graph LR
 | `scripts/fractal-showcase/gadget-look.mjs` | 34 | Screenshot how each gadget of a scratch topic renders in the VIEW state (to be READ). env: FS_STATE_IN (json |
 | `scripts/fractal-showcase/gadget-render-probe.mjs` | 71 | Do the gadgets RENDER? Insert each of the 11 palette gadgets in a scratch topic with real clicks and typing, |
 | `scripts/fractal-showcase/lib.mjs` | 83 | Shared helpers for the hand-built "Fractal Showcase" topic. Content is entered ONLY with real |
+| `scripts/fractal-showcase/liliia-repro.mjs` | 67 | Reproduce Liliia's 19 Nov defects as a NON-OWNER in a clean context (headed, private display, real input). |
+| `scripts/fractal-showcase/liliia-repro2.mjs` | 56 | Liliia (c) insert a blip mid-blip, (d) screenshot paste into a sub-blip + delete the picture, as the NON-OWNER B. |
 | `scripts/fractal-showcase/live-access-probe.mjs` | 79 | READ-ONLY access probe as Fractal Tester 2 (no sharing with anyone): what can a brand-new user list and read? |
 | `scripts/fractal-showcase/live-cleanup.mjs` | 40 | Delete the scratch topics of a live run through the UI (gear menu, Delete, confirm), then prove with a |
 | `scripts/fractal-showcase/live-trial.mjs` | 52 | LIVE probe of the empty-root-editor fix: as Fractal Tester 1, N fresh scratch topics, each created through |

@@ -15,6 +15,15 @@ let memoryState: ClipboardState | null = null;
 
 const hasWindow = (): boolean => typeof window !== 'undefined';
 
+// Every mounted blip menu shows "Paste" only when something is on the clipboard. Before this subscription each blip read the
+// clipboard once at mount, so a Cut on one blip left the Paste items of all other already-open blips disabled (suite case C02).
+const listeners = new Set<() => void>();
+export const subscribeBlipClipboard = (listener: () => void): (() => void) => {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+};
+const notify = (): void => { listeners.forEach((l) => { try { l(); } catch { /* listener errors must not break the store */ } }); };
+
 const readFromStorage = (): ClipboardState => {
   if (!hasWindow()) return memoryState || {};
   if (memoryState) return memoryState;
@@ -55,6 +64,7 @@ export const setBlipClipboardPayload = (blipId: string, payload: Omit<BlipClipbo
   state[blipId] = next;
   memoryState = state;
   persist();
+  notify();
   return next;
 };
 
@@ -76,6 +86,7 @@ export const clearCutState = (blipId: string): void => {
     state[blipId] = { ...state[blipId], isCut: false };
     memoryState = state;
     persist();
+    notify();
   }
 };
 
@@ -90,6 +101,7 @@ export const clearBlipClipboardPayload = (blipId: string): void => {
   delete state[blipId];
   memoryState = state;
   persist();
+  notify();
 };
 
 // Test-only helper to reset in-memory + storage state.

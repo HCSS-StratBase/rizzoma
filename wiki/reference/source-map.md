@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/liliia-batch
-source_commit: 0792e06e
+source_commit: 4d252faf
 generated: true
 ---
 
@@ -116,8 +116,8 @@ graph LR
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 656 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
 | `src/client/components/blip/RizzomaBlip.css` | 1938 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 3231 | (no header comment; exports BlipContributor) |
-| `src/client/components/blip/clipboardStore.ts` | 105 | (no header comment; exports BlipClipboardPayload) |
+| `src/client/components/blip/RizzomaBlip.tsx` | 3236 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/clipboardStore.ts` | 117 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 76 | (no header comment; exports LocationLike) |
 | `src/client/components/blip/inlineAnchoring.ts` | 27 | Decides whether a child blip is rendered INLINE (behind a [+] marker inside its parent's |
