@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/clipboard-paste-menu
-source_commit: 5a3d95ac
+source_branch: fix/liliia-batch
+source_commit: 4d252faf
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 66 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 67 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -121,6 +121,7 @@ graph LR
 | `test-follow-green-smoke.mjs` | — |
 | `test-gadget-apps-smoke.mjs` | Real insert-and-render smoke for the four sandboxed gadget apps |
 | `test-gadgets-render-smoke.mjs` | Regression smoke: gadgets must RENDER, not merely be stored. Inserts Code, Poll, LaTeX, YouTube, Sheet and Image |
+| `test-liliia-smoke.mjs` | Regression smoke for two defects in Liliia's 19 Nov 2026 review, judged as a NON-OWNER in a clean context: |
 | `test-native-ctrl-enter-smoke.mjs` | Native render path (?render=native) regression smoke for the 18 Nov 2026 tester feedback: |
 | `test-nested-pointer-focus-smoke.mjs` | Regression smoke: clicking into an OPEN nested blip puts the caret in THAT blip, not in an ancestor. |
 | `test-phone-layout-smoke.mjs` | Phone layout smoke (390 x 844, 360 x 740, 430 x 932 with REAL touch taps) and the desktop guard. |

@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/clipboard-paste-menu
-source_commit: 5a3d95ac
+source_branch: fix/liliia-batch
+source_commit: 4d252faf
 generated: true
 ---
 
