@@ -11,8 +11,8 @@
 
 /* Search Header */
 .topics-header {
-  height: 50px;
-  padding: 9px 8px;
+  min-height: 50px;
+  padding: 9px 8px 2px;
   box-sizing: border-box;
   position: relative;
 }
@@ -221,4 +221,16 @@
   padding: 40px 20px;
   color: #706F6F;
   font-size: 16px;
+}
+
+.rizzoma-topics-list .topics-filter {
+  display: block;
+  margin: 6px 0 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  border: 1px solid #c3ccd6;
+  border-radius: 3px;
+  background: #fff;
+  color: #35495e;
+  max-width: 100%;
 }

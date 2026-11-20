@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../lib/api';
+import { useAuth } from '../hooks/useAuth';
 import './RizzomaTopicsList.css';
 
 interface Topic {
@@ -75,6 +76,9 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: 
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  // Inbox / All / By me, as in the original topics list (contract row 13.8).
+  const [topicFilter, setTopicFilter] = useState<'all' | 'inbox' | 'mine'>('all');
+  const { user: currentUser } = useAuth();
   const [hoveredTopicId, setHoveredTopicId] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<number | null>(null);
   // Infinite-scroll state. Before this, the list hard-coded limit=20
@@ -249,6 +253,17 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: 
           />
           <div className="search-icon" />
         </div>
+        <select
+          className="topics-filter"
+          data-testid="topics-filter"
+          aria-label="Topic filter"
+          value={topicFilter}
+          onChange={(e) => setTopicFilter(e.target.value as 'all' | 'inbox' | 'mine')}
+        >
+          <option value="all">All</option>
+          <option value="inbox">Inbox</option>
+          <option value="mine">By me</option>
+        </select>
       </div>
 
       {/* Parity fix (2026-04-13): legacy Rizzoma shows a Rizzoma logo +
@@ -263,7 +278,11 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: 
         ) : topics.length === 0 ? (
           <div className="no-topics">No topics yet</div>
         ) : (
-          topics.map((topic) => {
+          topics.filter((t) => (
+            topicFilter === 'all'
+            || (topicFilter === 'inbox' && ((t.unreadCount || 0) > 0 || !!t.isFollowed))
+            || (topicFilter === 'mine' && !!currentUser?.id && t.authorId === currentUser.id)
+          )).map((topic) => {
             const isSelected = selectedTopicId === topic.id;
             const isHovered = hoveredTopicId === topic.id;
             const showFollowButton = isSelected || isHovered;
