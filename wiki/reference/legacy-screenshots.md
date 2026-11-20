@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/embed-boolean-attributes
-source_commit: be76c66c
+source_branch: fix/liliia-batch
+source_commit: 0792e06e
 generated: true
 ---
 

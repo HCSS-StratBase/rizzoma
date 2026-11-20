@@ -14,13 +14,13 @@ describe('client: copyBlipLink helpers', () => {
   it('builds topic hash links for nested blips', () => {
     const loc = fakeLocation('https://app.example/rizzoma?layout=rizzoma');
     const link = buildBlipLink('wave123:b9', loc);
-    expect(link).toBe('https://app.example/rizzoma?layout=rizzoma#/topic/wave123?focus=wave123%3Ab9');
+    expect(link).toBe('https://app.example/rizzoma?layout=rizzoma#/topic/wave123/b9/');
   });
 
   it('builds links for root topic blips', () => {
     const loc = fakeLocation('https://demo.example/app');
     const link = buildBlipLink('wave123', loc);
-    expect(link).toBe('https://demo.example/app#/topic/wave123?focus=wave123');
+    expect(link).toBe('https://demo.example/app#/topic/wave123');
   });
 
   it('writes link text to clipboard when available', async () => {

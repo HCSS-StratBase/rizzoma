@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/embed-boolean-attributes
-source_commit: be76c66c
+source_branch: fix/liliia-batch
+source_commit: 0792e06e
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 206 files in `scripts/`, 57 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 206 files in `scripts/`, 58 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -71,6 +71,7 @@ graph LR
 | `test:collapse-control` | `node test-collapse-control-smoke.mjs` |
 | `test:nested-pointer` | `node test-nested-pointer-focus-smoke.mjs` |
 | `test:click-caret` | `node test-click-caret-smoke.mjs` |
+| `test:liliia` | `node test-liliia-smoke.mjs` |
 | `test:gadgets-render` | `node test-gadgets-render-smoke.mjs` |
 | `test:phone-layout` | `node test-phone-layout-smoke.mjs` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |

@@ -33,10 +33,13 @@ const ensureClipboard = (): ClipboardLike | null => {
 export function buildBlipLink(blipId: string, loc: LocationLike = ensureLocation()): string {
   const colonIdx = blipId.indexOf(':');
   const waveId = colonIdx >= 0 ? blipId.slice(0, colonIdx) : blipId;
+  const segment = colonIdx >= 0 ? blipId.slice(colonIdx + 1) : '';
   const base = `${loc.origin}${loc.pathname}${loc.search}`;
-  const params = new URLSearchParams();
-  params.set('focus', blipId);
-  return `${base}#/topic/${encodeURIComponent(waveId)}?${params.toString()}`;
+  // The link to ONE blip is the topic's own sub-blip route (#/topic/<wave>/<blip>/), which opens that blip. The
+  // old `?focus=` form was understood by no view and opened the whole topic (Liliia, 19 Nov 2026).
+  return segment
+    ? `${base}#/topic/${encodeURIComponent(waveId)}/${encodeURIComponent(segment)}/`
+    : `${base}#/topic/${encodeURIComponent(waveId)}`;
 }
 
 export async function copyBlipLink(

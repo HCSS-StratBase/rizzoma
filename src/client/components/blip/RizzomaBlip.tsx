@@ -2254,10 +2254,13 @@ export function RizzomaBlip({
   }, [canMutateEditorNow, collabReady, isEditing, inlineEditor]);
 
   useEffect(() => {
-    if (isRoot && !blip.isRead) {
+    // A root blip, and an INLINE child that is open on screen, count as read: opening a [+] marker shows the
+    // blip, but only the row-click path used to mark it read, so "follow the green" stayed lit after everything
+    // had been read (Liliia, 19 Nov 2026).
+    if ((isRoot || isInlineChild) && !blip.isRead) {
       onBlipRead?.(blip.id);
     }
-  }, [isRoot, blip.id, blip.isRead, onBlipRead]);
+  }, [isRoot, isInlineChild, blip.id, blip.isRead, onBlipRead]);
 
   const handleInlineCommentButton = () => {
     if (!FEATURES.INLINE_COMMENTS || !selectedRangeData) return;

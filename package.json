@@ -41,6 +41,7 @@
     "test:collapse-control": "node test-collapse-control-smoke.mjs",
     "test:nested-pointer": "node test-nested-pointer-focus-smoke.mjs",
     "test:click-caret": "node test-click-caret-smoke.mjs",
+    "test:liliia": "node test-liliia-smoke.mjs",
     "test:gadgets-render": "node test-gadgets-render-smoke.mjs",
     "test:phone-layout": "node test-phone-layout-smoke.mjs",
     "test:tester-feedback": "node test-tester-feedback-smoke.mjs",
