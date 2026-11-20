@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/topics-list-filter
-source_commit: d6daeb92
+source_branch: fix/edit-mode-avatar-date
+source_commit: 0e645b8c
 generated: true
 ---
 

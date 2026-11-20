@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/topics-list-filter
-source_commit: d6daeb92
+source_branch: fix/edit-mode-avatar-date
+source_commit: 0e645b8c
 generated: true
 ---
 
@@ -115,8 +115,8 @@ graph LR
 | `src/client/components/blip/BlipMenu.tsx` | 887 | (no header comment; exports BlipMenu) |
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 656 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
-| `src/client/components/blip/RizzomaBlip.css` | 1938 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 3236 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/RizzomaBlip.css` | 1949 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.tsx` | 3248 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 117 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 76 | (no header comment; exports LocationLike) |

@@ -2796,6 +2796,18 @@ export function RizzomaBlip({
                 {collabActive && collabProvider && (
                   <TypingIndicator provider={collabProvider} />
                 )}
+                {/* The original keeps the blip info (author avatar + date) outside the editor container, so it
+                    is shown in edit mode as well (original-rizzoma-src/src/client/blip/template.coffee:6-9). */}
+                <div className={`blip-contributors-info blip-contributors-info--editing ${isTopicRoot ? 'topic-root-contributors' : ''}`}>
+                  <BlipContributorsStack
+                    contributors={blip.contributors}
+                    fallbackAuthor={blip.authorName}
+                    fallbackAvatar={blip.authorAvatar}
+                  />
+                  <span className="blip-author-date">
+                    {formatRizzomaDate(blip.updatedAt || blip.createdAt)}
+                  </span>
+                </div>
                 {FEATURES.INLINE_COMMENTS && !isInlineChild && areCommentsVisible && (
                   <InlineComments
                     editor={inlineEditor}

@@ -774,3 +774,9 @@ last_verified: 2026-11-06
 - **¶2** □ Fix: `src/client/components/RizzomaTopicsList.tsx` adds a dropdown under the search box (All; Inbox = unread or followed; By me = authored by the signed-in user) and filters the loaded list; `RizzomaTopicsList.css` lets the header grow so the dropdown does not cover the first topic (the first version overlapped it, seen in the screenshot).
 - **¶3** ▷ Boundary: the filter works on the topics already loaded in the list (infinite scroll loads more), it is not a server-side query.
 - **¶4** □ Test: `test-topics-filter-smoke.mjs` (`npm run test:topics-filter`, local database only: the second person is seeded as a participant) creates a topic as one person, another as the second person with a reply, and asserts through the dropdown that All shows both, By me only the own topic, Inbox only the one with something unread; scratch topics deleted with proof. Fails on base (no dropdown), passes with the fix; headed on Xvfb, screenshots read.
+
+## [2026-11-19] fix | The author avatar and date also show while a blip is being edited
+
+- **¶1** □ Found by the tester-scenarios suite (case F02): a blip showed its author avatar and date in read mode but both disappeared the moment the blip went into edit mode. The original renders the blip info outside the editor container in both modes (`original-rizzoma-src/src/client/blip/template.coffee:6-9`).
+- **¶2** □ Fix: `RizzomaBlip.tsx` renders the same contributors stack and date under the editor while editing, and `RizzomaBlip.css` places it right-aligned below the text (`.blip-contributors-info--editing`).
+- **¶3** □ Test: `test-edit-meta-smoke.mjs` (`npm run test:edit-meta`) reads the avatar and date in read mode, clicks into the blip and asserts both are still visible in edit mode; scratch topic deleted with proof. Fails on base (nothing in edit mode), passes with the fix; headed on Xvfb, screenshots read.
