@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/liliia-batch
-source_commit: 4d252faf
+source_branch: fix/topics-list-filter
+source_commit: d6daeb92
 generated: true
 ---
 
@@ -85,8 +85,8 @@ graph LR
 | `src/client/components/RizzomaLayout.tsx` | 593 | (no header comment; exports RizzomaLayout) |
 | `src/client/components/RizzomaTopicDetail.css` | 1810 | RizzomaTopicDetail - Matching real Rizzoma |
 | `src/client/components/RizzomaTopicDetail.tsx` | 2399 | (no header comment; exports shouldThrottleSocketTopicLoad) |
-| `src/client/components/RizzomaTopicsList.css` | 225 | Authentic Legacy Rizzoma Topics List Styles |
-| `src/client/components/RizzomaTopicsList.tsx` | 353 | (no header comment; exports RizzomaTopicsList) |
+| `src/client/components/RizzomaTopicsList.css` | 237 | Authentic Legacy Rizzoma Topics List Styles |
+| `src/client/components/RizzomaTopicsList.tsx` | 372 | (no header comment; exports RizzomaTopicsList) |
 | `src/client/components/ShareModal.css` | 175 | ShareModal.css - Authentic Legacy Rizzoma Share Popover Style |
 | `src/client/components/ShareModal.tsx` | 238 | (no header comment; exports ShareModal) |
 | `src/client/components/ShellAuthControls.css` | 197 | — |
