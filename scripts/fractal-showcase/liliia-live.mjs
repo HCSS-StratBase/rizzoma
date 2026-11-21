@@ -1,0 +1,27 @@
+// Live check of Liliia (a)+(e) as the NON-OWNER Fractal Tester 2 on the live host, headed, real input. env FS_STATE_IN
+import fs from 'node:fs';
+import { launch, newClient, sleep, shot } from './lib.mjs';
+import { signInLive } from './liveauth.mjs';
+const st = JSON.parse(fs.readFileSync(process.env.FS_STATE_IN, 'utf8')); process.env.FS_BASE = st.base;
+const log = (m) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${m}`);
+const b = await launch();
+const s2 = await signInLive(b, st.base, 2, '/home/stephan/rizzoma-fractal-scratch/run/ll-t2.json');
+const c = await newClient(b, s2.email, { storageState: '/home/stephan/rizzoma-fractal-scratch/run/ll-t2.json' }); const p = c.page;
+await p.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: st.base }).catch(() => {});
+await p.goto(`${st.base}/?layout=rizzoma#/topic/${st.topicId}`, { waitUntil: 'domcontentloaded' }); await sleep(9000);
+await shot(c, 'steps/ll-live-topic');
+const rows = p.locator('.blip-collapsed-row'); log('collapsed rows: ' + await rows.count());
+await rows.first().click().catch(() => {}); await sleep(2500);
+await p.locator('.blip-thread-marker').filter({ visible: true }).first().click().catch(() => {}); await sleep(2500);
+const target = p.locator('.rizzoma-blip.nested-blip').filter({ visible: true }).last();
+await target.click({ position: { x: 30, y: 10 } }).catch(() => {}); await sleep(900);
+await p.locator('[data-testid="blip-menu-get-link"]').filter({ visible: true }).last().click().catch((e) => log('get-link: ' + String(e.message).split('\n')[0].slice(0, 70))); await sleep(900);
+const link = await p.evaluate(() => navigator.clipboard.readText().catch(() => 'UNREADABLE'));
+log('copied link: ' + link);
+const c2 = await newClient(b, s2.email, { storageState: '/home/stephan/rizzoma-fractal-scratch/run/ll-t2.json' });
+await c2.page.goto(link, { waitUntil: 'domcontentloaded' }); await sleep(9000);
+log('link opened: ' + (await c2.page.evaluate(() => (document.querySelector('.rizzoma-topic-detail, .wave-panel, main')?.innerText || '').replace(/\s+/g, ' ').slice(0, 160))));
+await shot(c2, 'steps/ll-live-linkopened');
+const nx = await p.evaluate(() => { const n = document.querySelector('.next-button'); return n ? n.className + ' disabled=' + n.disabled : 'none'; });
+log('next button: ' + nx);
+await c2.ctx.close(); await c.ctx.close(); await b.close();

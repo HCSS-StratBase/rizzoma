@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/edit-mode-avatar-date
-source_commit: 0e645b8c
+source_branch: fix/active-on-open
+source_commit: 02dc40e7
 generated: true
 ---
 
@@ -40,7 +40,7 @@ graph LR
     P --> K["code"]
 ```
 
-## Client components (123)
+## Client components (124)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -128,7 +128,7 @@ graph LR
 | `src/client/components/editor/CollaborativeCursors.tsx` | 223 | (no header comment; exports CursorUser) |
 | `src/client/components/editor/CollaborativeProvider.ts` | 592 | (no header comment; exports SocketIOProvider) |
 | `src/client/components/editor/EditableBlipContent.tsx` | 68 | (no header comment; exports EditableBlipContent) |
-| `src/client/components/editor/EditorConfig.tsx` | 285 | (no header comment; exports createYjsDocument) |
+| `src/client/components/editor/EditorConfig.tsx` | 288 | (no header comment; exports createYjsDocument) |
 | `src/client/components/editor/EditorToolbar.css` | 239 | — |
 | `src/client/components/editor/EditorToolbar.tsx` | 553 | (no header comment; exports EditorToolbar) |
 | `src/client/components/editor/FloatingToolbar.css` | 67 | Floating Rich Text Toolbar for Rizzoma |
@@ -148,6 +148,7 @@ graph LR
 | `src/client/components/editor/extensions/CodeBlockView.tsx` | 87 | (no header comment; exports CodeBlockView) |
 | `src/client/components/editor/extensions/GadgetNodes.ts` | 532 | (no header comment; exports createDefaultPollOptions) |
 | `src/client/components/editor/extensions/ImageGadget.ts` | 83 | (no header comment; exports ImageOptions) |
+| `src/client/components/editor/extensions/ImagePasteUpload.ts` | 87 | A picture pasted or dropped into a blip (a screenshot from the clipboard, an image file) is UPLOADED and inserted as |
 | `src/client/components/editor/extensions/InlineCommentsVisibility.ts` | 39 | (no header comment; exports InlineCommentsVisibilityOptions) |
 | `src/client/components/editor/extensions/LatexPreview.ts` | 82 | LaTeX in the EDITOR: a `$$ formula $$` run shows TYPESET while the caret is elsewhere, and its source while the |
 | `src/client/components/editor/extensions/PollGadgetView.tsx` | 285 | (no header comment; exports PollGadgetView) |
