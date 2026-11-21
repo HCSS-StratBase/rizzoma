@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/tester-found-defects
-source_commit: d17b2c46
+source_branch: fix/paste-image-upload
+source_commit: 28eb980e
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 208 files in `scripts/`, 61 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 209 files in `scripts/`, 62 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -71,6 +71,7 @@ graph LR
 | `test:collapse-control` | `node test-collapse-control-smoke.mjs` |
 | `test:nested-pointer` | `node test-nested-pointer-focus-smoke.mjs` |
 | `test:click-caret` | `node test-click-caret-smoke.mjs` |
+| `test:paste-image` | `node test-paste-image-smoke.mjs` |
 | `test:liliia` | `node test-liliia-smoke.mjs` |
 | `test:gadgets-render` | `node test-gadgets-render-smoke.mjs` |
 | `test:phone-layout` | `node test-phone-layout-smoke.mjs` |
@@ -101,7 +102,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (208)
+## scripts/ (209)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -191,6 +192,7 @@ graph LR
 | `scripts/fractal-showcase/gadget-look.mjs` | 34 | Screenshot how each gadget of a scratch topic renders in the VIEW state (to be READ). env: FS_STATE_IN (json |
 | `scripts/fractal-showcase/gadget-render-probe.mjs` | 71 | Do the gadgets RENDER? Insert each of the 11 palette gadgets in a scratch topic with real clicks and typing, |
 | `scripts/fractal-showcase/lib.mjs` | 83 | Shared helpers for the hand-built "Fractal Showcase" topic. Content is entered ONLY with real |
+| `scripts/fractal-showcase/liliia-live.mjs` | 28 | Live check of Liliia (a)+(e) as the NON-OWNER Fractal Tester 2 on the live host, headed, real input. env FS_STATE_IN |
 | `scripts/fractal-showcase/liliia-repro.mjs` | 67 | Reproduce Liliia's 19 Nov defects as a NON-OWNER in a clean context (headed, private display, real input). |
 | `scripts/fractal-showcase/liliia-repro2.mjs` | 56 | Liliia (c) insert a blip mid-blip, (d) screenshot paste into a sub-blip + delete the picture, as the NON-OWNER B. |
 | `scripts/fractal-showcase/live-access-probe.mjs` | 79 | READ-ONLY access probe as Fractal Tester 2 (no sharing with anyone): what can a brand-new user list and read? |
