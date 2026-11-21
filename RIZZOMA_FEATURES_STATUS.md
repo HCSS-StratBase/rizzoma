@@ -215,8 +215,8 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | Headings (H1-H6) | Done | — | — |
 | Bullet list / Ordered list | Done | — | — |
 | Task lists (checkboxes) | Done | — | — |
-| Code / Code block / Blockquote | Done | — | — |
-| Code block: syntax highlighting (30 languages) | Done (new) | SyntaxHighlighter 2.1.364 (2009 gadget) | `@tiptap/extension-code-block-lowlight` + React NodeView |
+| Code / Code block / Blockquote | Not in blips (by design, corrected 2026-11-19) | None: the original has no quote or code formatting (no blockquote/code in `original-rizzoma-src/src/client`; ribbon in `screenshots/260714-legacy-reference-archive/063-root-edit-mode-ribbon.md` has none) | Blip bodies are an imposed bulleted list (`docs/BLB.md` §5); the extensions exist only in the standalone `EditorToolbar`. Guarded by suite case T07 |
+| Code block: syntax highlighting (30 languages) | Done in `EditorToolbar` only (not in blips, see row above) | SyntaxHighlighter 2.1.364 (2009 gadget) | `@tiptap/extension-code-block-lowlight` + React NodeView |
 | Highlight (text background color) | Done (new) | None | `@tiptap/extension-highlight` |
 | Links (add/edit/remove) | Done | — | — |
 | Images (node extension) | Done | — | — |
@@ -472,9 +472,9 @@ Core editor tracks remain behind feature flags, and unread tracking/presence are
 | CI/CD: perf budgets job | Done | — | — |
 | Feature flags (`FEAT_ALL`, `EDITOR_ENABLE`, per-feature) | Done | — | — |
 | Backup scripts (bundle) | Done | — | — |
-| Backup automation (GDrive cadence) | Not started | — | — |
+| Backup automation (GDrive cadence) | Done outside the repo (corrected 2026-11-19) | — | CouchDB `project_rizzoma` is backed up on the VPS by `/data/backups/backup_couchdb.sh`, daily cron 21:00, Borg repo `rubase_couchdb_rizzoma_repo` (`wiki/log.md` 17 Nov, paragraph 44); the Drive bundle script remains manual |
 | getUserMedia adapter (modern constraints, permissions) | Done | — | — |
-| Legacy assets disposition (jQuery-era static) | Not started | — | — |
+| Legacy assets disposition (jQuery-era static) | Done (corrected 2026-11-19) | — | `src/static` was removed on 2026-01-18 (CLAUDE.md, Massive legacy cleanup); the vendored `original-rizzoma-src/` is a git-ignored local reference only. Guarded by suite case R06 |
 
 ### Summary: Remaining Gaps
 

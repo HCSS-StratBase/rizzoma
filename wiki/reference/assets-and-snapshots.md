@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/paste-image-upload
-source_commit: 28eb980e
+source_branch: test/tester-scenarios-suite
+source_commit: 7acd4b0f
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 70 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 73 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -94,6 +94,8 @@ graph LR
 | `README_MODERNIZATION.md.bak` | — |
 | `RIZZOMA_FEATURES_STATUS.md` | — |
 | `STATUS.md` | — |
+| `TESTERS_COVERAGE.md` | — |
+| `TESTERS_FEATURE_MATRIX.md` | — |
 | `aggregate_stats.py` | — |
 | `app.js` | coffee-script wrapper |
 | `capacitor.config.ts` | Capacitor configuration for the Rizzoma native wrappers |
@@ -133,6 +135,7 @@ graph LR
 | `test-select-all-edit-smoke.mjs` | Editing over a selection: Ctrl+A then type, Backspace, Delete and paste over a selection (real key presses, real clipboard). |
 | `test-standalone-editor.html` | Set feature flags before any imports |
 | `test-tester-feedback-smoke.mjs` | Regression smoke for the 18 Nov 2026 tester feedback (Liliia): editing sub-blips, a |
+| `test-tester-scenarios.mjs` | Tester-scenarios regression suite: behaves like a real colleague (signs in, drives the REAL UI with |
 | `test-toolbar-inline-smoke.mjs` | — |
 | `test-topic-readmode-seed-smoke.mjs` | Read-mode topic seed smoke (Playwright). |
 | `test-topics-filter-smoke.mjs` | Topics list filter: All, Inbox and By me narrow the list (real clicks on the dropdown, what the person sees). |

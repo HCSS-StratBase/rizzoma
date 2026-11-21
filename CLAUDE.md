@@ -24,6 +24,9 @@
 >
 > **UI work: look at the ORIGINAL first.** `screenshots/260714-legacy-reference-archive/` holds 126 screenshots of the original rizzoma.com, each with a `.md` description beside it; index and rules: **[`wiki/reference/legacy-screenshots.md`](wiki/reference/legacy-screenshots.md)**. Other catalogs (source map, scripts, docs, assets): `wiki/index.md` section 6. After adding files run `python3 scripts/wiki_generate_catalogs.py` then `python3 scripts/wiki_coverage.py`.
 
+>
+> **Mandatory behavioural suite (2026-11-19):** before any change to the editor, blips, invite, search, uploads or the server routes is called done, run `npm run test:tester-scenarios` (real typing, real clipboard, reload, a second user; needs a real CouchDB; React path, native UI cases are N/A by design, see [`TESTERS_COVERAGE.md`](TESTERS_COVERAGE.md)) and `npm run test:scenarios-coverage` (fails when a documented feature row has no case, writes [`TESTERS_FEATURE_MATRIX.md`](TESTERS_FEATURE_MATRIX.md)). Add the case first when a defect is reported. It sits beside `npm test`, `test:collab`, `test:follow-green`, `test:toolbar-inline`, `visual:sweep` and `handbuild_acceptance` (react and native); see [`wiki/verification/gates-sweeps-and-deployment.md`](wiki/verification/gates-sweeps-and-deployment.md) section 3.8.
+
 
 ---
 
