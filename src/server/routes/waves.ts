@@ -1077,6 +1077,17 @@ router.post('/:id/participants', requireAuth, csrfProtect(), inviteRateLimit, as
       }
       await updateDoc({ ...tokenDoc, status: 'sent', deliveredAt: Date.now() } as any).catch(() => undefined);
 
+      // Test accounts only (INVITE_MAIL_SUPPRESS_PATTERN): no mail is sent, so nobody can ever click the link. An invitation to such an
+      // address that belongs to an existing user is accepted at once, otherwise the account would stay a pending, non-collaborating invitee.
+      if (emailResult.messageId === 'suppressed-by-INVITE_MAIL_SUPPRESS_PATTERN' && !String(targetUserId).startsWith('invite:')) {
+        const fresh = await getDoc<any>(participantId).catch(() => null);
+        if (fresh) {
+          const { inviteTokenHash: _t, inviteExpiresAt: _e, ...rest } = fresh;
+          await updateDoc({ ...rest, status: 'accepted', acceptedAt: Date.now() } as any);
+          results.push({ email, ok: true, status: 'accepted' });
+          continue;
+        }
+      }
       results.push({ email, ok: true, status: 'pending' });
     } catch (err: any) {
       console.error('[waves] invite participant failed', { email, error: err.message });

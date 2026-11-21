@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/mention-participants
-source_commit: 179c07d8
+source_branch: fix/suppressed-auto-accept
+source_commit: 12ea196a
 generated: true
 ---
 
@@ -293,7 +293,7 @@ graph LR
 | `src/server/routes/tasks.ts` | 294 | Tasks Routes |
 | `src/server/routes/topics.ts` | 894 | — |
 | `src/server/routes/uploads.ts` | 320 | (no header comment; exports uploadsRouter) |
-| `src/server/routes/waves.ts` | 1183 | — |
+| `src/server/routes/waves.ts` | 1194 | — |
 
 ## Server lib (20)
 
@@ -493,7 +493,7 @@ graph LR
 | `src/tests/routes.editor.rebuild.test.ts` | 163 | Increase timeout for module loading with mocks |
 | `src/tests/routes.editor.search.test.ts` | 159 | Increase timeout for module loading with mocks |
 | `src/tests/routes.editor.test.ts` | 228 | Increase timeout for module loading with mocks |
-| `src/tests/routes.topics.authorizationMatrix.test.ts` | 1435 | — |
+| `src/tests/routes.topics.authorizationMatrix.test.ts` | 1447 | — |
 | `src/tests/routes.topics.edgecases.test.ts` | 70 | — |
 | `src/tests/routes.topics.follow.test.ts` | 196 | — |
 | `src/tests/routes.topics.test.ts` | 209 | — |

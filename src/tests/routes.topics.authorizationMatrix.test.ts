@@ -460,6 +460,18 @@ describe('authorization route matrix', () => {
     expect(state.docs.get('expired-invite')).toMatchObject({ status: 'pending' });
   });
 
+  it('accepts an invitation at once for a test address covered by INVITE_MAIL_SUPPRESS_PATTERN that belongs to an existing user', async () => {
+    state.docs.set('outsider', { _id: 'outsider', _rev: '1-user', type: 'user', email: 'outsider@example.test', passwordHash: 'credential' });
+    vi.mocked(sendInviteEmail).mockResolvedValueOnce({ success: true, messageId: 'suppressed-by-INVITE_MAIL_SUPPRESS_PATTERN' });
+    const granted = await invokeRoute(wavesRouter, 'post', '/:id/participants', {
+      identity: 'owner',
+      params: { id: 'topic-private' },
+      body: { emails: ['outsider@example.test'], role: 'editor' },
+    });
+    expect(granted.statusCode).toBe(200);
+    expect(state.docs.get('participant:wave:topic-private:user:outsider')).toMatchObject({ status: 'accepted', role: 'editor' });
+  });
+
   it('persists revocation, reuses the participant on reinvite, and never removes the owner', async () => {
     state.docs.set('outsider', {
       _id: 'outsider',

@@ -935,3 +935,8 @@ last_verified: 2026-11-06
 ## [2026-11-21] ingest | Invite contacts no longer lose recent people for heavy users
 
 - **¶1** □ `GET /api/waves/contacts/suggest` read at most 400 unordered participant docs of the caller and 5,000 of their topics' participants (src/server/routes/waves.ts), so a person with hundreds of topics, or participant docs of deleted ones, silently lost recent contacts (suite case D01 on production). Limits are now 5,000 / 2,000 topics / 30,000
+
+
+## [2026-11-21] ingest | Test-account invitations are accepted at once
+
+- **¶1** □ With `INVITE_MAIL_SUPPRESS_PATTERN` no mail is sent, so nobody can click the link and a test account stayed a pending invitee, which collaborators lists (mention and task pickers, contacts) rightly exclude. An invitation to a suppressed address that belongs to an existing user is now accepted at once (src/server/routes/waves.ts, invite loop); addresses outside the pattern and not-yet-registered addresses behave as before; regression test in src/tests/routes.topics.authorizationMatrix.test.ts
