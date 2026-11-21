@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: test/tester-scenarios-suite
-source_commit: 90c0355c
+source_branch: fix/y-gaps
+source_commit: 831a5f7c
 generated: true
 ---
 
@@ -101,8 +101,8 @@ graph LR
 | `src/client/components/TeamsPanel.css` | 186 | — |
 | `src/client/components/TeamsPanel.tsx` | 120 | (no header comment; exports TeamsPanel) |
 | `src/client/components/TipsBox.css` | 161 | TipsBox.css - Authentic Legacy Rizzoma Tips / Shortcuts Box |
-| `src/client/components/TipsBox.tsx` | 81 | (no header comment; exports TipsBox) |
-| `src/client/components/Toast.tsx` | 46 | (no header comment; exports Toast) |
+| `src/client/components/TipsBox.tsx` | 85 | There is no recorded video in this product: Play video opens the written First steps and shortcuts (the same window as Help). |
+| `src/client/components/Toast.tsx` | 52 | (no header comment; exports Toast) |
 | `src/client/components/TopicsList.tsx` | 123 | (no header comment; exports TopicsList) |
 | `src/client/components/UserPresence.css` | 60 | — |
 | `src/client/components/UserPresence.tsx` | 56 | (no header comment; exports UserPresence) |
@@ -156,8 +156,8 @@ graph LR
 | `src/client/components/editor/extensions/PollGadgetView.tsx` | 285 | (no header comment; exports PollGadgetView) |
 | `src/client/components/editor/extensions/SandboxAppGadgetView.tsx` | 250 | (no header comment; exports GADGET_START_TIMEOUT_MS) |
 | `src/client/components/editor/extensions/TagNode.tsx` | 159 | Mock tags – in production these would be extracted from topic content |
-| `src/client/components/editor/extensions/TaskWidget.css` | 46 | Task widget — turquoise pill like original Rizzoma \|☐ Name DD Mon\| |
-| `src/client/components/editor/extensions/TaskWidget.tsx` | 605 | (no header comment; exports TaskCompletion) |
+| `src/client/components/editor/extensions/TaskWidget.css` | 54 | Task widget — turquoise pill like original Rizzoma \|☐ Name DD Mon\| |
+| `src/client/components/editor/extensions/TaskWidget.tsx` | 610 | (no header comment; exports TaskCompletion) |
 | `src/client/components/editor/extensions/TextColor.ts` | 65 | (no header comment; exports TextColorOptions) |
 | `src/client/components/editor/extensions/Underline.ts` | 72 | (no header comment; exports UnderlineOptions) |
 | `src/client/components/editor/inlineCommentDecorations.ts` | 56 | (no header comment; exports CommentGroup) |
@@ -233,7 +233,7 @@ graph LR
 | `src/client/hooks/useViewTransition.ts` | 245 | Check if View Transitions API is supported |
 | `src/client/hooks/useWaveUnread.ts` | 319 | Debounce helper |
 | `src/client/index.html` | 37 | — |
-| `src/client/lib/api.ts` | 179 | Persist this mutation for offline replay. Secret redemptions must set false. |
+| `src/client/lib/api.ts` | 193 | A signed-in person whose session has gone (cookie expired or cleared) must be told, not left typing into a page that saves nothing. |
 | `src/client/lib/authSessionSignal.ts` | 24 | Announce only an epoch change — never identity, credentials, or tokens. |
 | `src/client/lib/blipCreateResponse.ts` | 33 | (no header comment; exports CreatedBlip) |
 | `src/client/lib/blipPagination.ts` | 35 | Collect every CouchDB bookmark page without silently losing descendants. |

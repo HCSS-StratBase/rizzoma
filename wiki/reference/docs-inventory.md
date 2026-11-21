@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: test/tester-scenarios-suite
-source_commit: 90c0355c
+source_branch: fix/y-gaps
+source_commit: 831a5f7c
 generated: true
 ---
 
 # Documentation Inventory
 
-**¶1** □ GENERATED. 113 markdown files. Title is the first heading; Status is the first status/updated/verified line in the first 25 lines, if any. Authority notes are in [the doc catalog](../reference-doc-catalog.md); `docs/deprecated/` is NOT authoritative.
+**¶1** □ GENERATED. 114 markdown files. Title is the first heading; Status is the first status/updated/verified line in the first 25 lines, if any. Authority notes are in [the doc catalog](../reference-doc-catalog.md); `docs/deprecated/` is NOT authoritative.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -47,6 +47,7 @@ graph LR
 | [`STATUS.md`](../../STATUS.md) | STATUS — Rizzoma (GENERATED, do not hand-edit) | STATUS — Rizzoma (GENERATED, do not hand-edit) |
 | [`TESTERS_COVERAGE.md`](../../TESTERS_COVERAGE.md) | Tester scenarios: what each of Liliia's notes maps to |  |
 | [`TESTERS_FEATURE_MATRIX.md`](../../TESTERS_FEATURE_MATRIX.md) | Feature coverage matrix (generated) | \| Row \| Feature \| Status in contract \| Cases \| |
+| [`TESTERS_NEEDS_SDS.md`](../../TESTERS_NEEDS_SDS.md) | Ledger rows that need SDS's decision |  |
 | [`deploy/systemd/README.md`](../../deploy/systemd/README.md) | Managed VPS deployment |  |
 | [`docs/APP_RUNTIME_PERSISTENCE_EXPLAINED.md`](../../docs/APP_RUNTIME_PERSISTENCE_EXPLAINED.md) | App Runtime Persistence Explained | 1. the **topic-root editor** path, which had the correct updated planner state |
 | [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) | Architecture | Status:** AUTHORITATIVE. Supersedes `deprecated ⁄ ARCHITECTURE.md`, |

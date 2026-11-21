@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: test/tester-scenarios-suite
-source_commit: 90c0355c
+source_branch: fix/y-gaps
+source_commit: 831a5f7c
 generated: true
 ---
 
