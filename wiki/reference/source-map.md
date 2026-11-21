@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/invite-login-first
-source_commit: 7ad90dc7
+source_branch: feat/original-features
+source_commit: 31450440
 generated: true
 ---
 
@@ -40,14 +40,14 @@ graph LR
     P --> K["code"]
 ```
 
-## Client components (126)
+## Client components (129)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/client/components/AnonymousTopicRoute.css` | 86 | — |
 | `src/client/components/AnonymousTopicRoute.tsx` | 78 | (no header comment; exports AnonymousTopicRoute) |
 | `src/client/components/AuthPanel.css` | 208 | — |
-| `src/client/components/AuthPanel.tsx` | 489 | (no header comment; exports AuthUser) |
+| `src/client/components/AuthPanel.tsx` | 491 | (no header comment; exports AuthUser) |
 | `src/client/components/BlipContent.tsx` | 13 | (no header comment; exports BlipContent) |
 | `src/client/components/CreateTopicModal.css` | 276 | — |
 | `src/client/components/CreateTopicModal.tsx` | 139 | (no header comment; exports CreateTopicModal) |
@@ -57,6 +57,7 @@ graph LR
 | `src/client/components/ErrorBoundary.tsx` | 77 | (no header comment; exports ErrorBoundaryProps) |
 | `src/client/components/ExportModal.css` | 199 | — |
 | `src/client/components/ExportModal.tsx` | 177 | (no header comment; exports ExportModal) |
+| `src/client/components/ExportMultipleModal.tsx` | 86 | (no header comment; exports ExportMultipleModal) |
 | `src/client/components/FollowTheGreen.css` | 66 | — |
 | `src/client/components/FollowTheGreen.tsx` | 69 | (no header comment; exports FollowTheGreen) |
 | `src/client/components/GadgetPalette.css` | 264 | — |
@@ -64,6 +65,8 @@ graph LR
 | `src/client/components/GreenNavigation.tsx` | 43 | (no header comment; exports GreenNavigation) |
 | `src/client/components/HelpOverlay.css` | 11 | — |
 | `src/client/components/HelpOverlay.tsx` | 43 | (no header comment; exports HelpOverlay) |
+| `src/client/components/IntroOverlay.css` | 14 | — |
+| `src/client/components/IntroOverlay.tsx` | 48 | Session flag set right after a person creates a new account; the overlay shows once for them. |
 | `src/client/components/InviteModal.css` | 209 | InviteModal.css - Authentic Legacy Rizzoma Member Management Popup matching 034-manage-members.png |
 | `src/client/components/InviteModal.tsx` | 392 | (no header comment; exports InviteModal) |
 | `src/client/components/MentionsList.css` | 134 | — |
@@ -85,8 +88,8 @@ graph LR
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
 | `src/client/components/RizzomaLayout.css` | 487 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 619 | (no header comment; exports RizzomaLayout) |
-| `src/client/components/RizzomaTopicDetail.css` | 1821 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.tsx` | 2409 | (no header comment; exports shouldThrottleSocketTopicLoad) |
+| `src/client/components/RizzomaTopicDetail.css` | 1828 | RizzomaTopicDetail - Matching real Rizzoma |
+| `src/client/components/RizzomaTopicDetail.tsx` | 2444 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 237 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 372 | (no header comment; exports RizzomaTopicsList) |
 | `src/client/components/ShareModal.css` | 175 | ShareModal.css - Authentic Legacy Rizzoma Share Popover Style |
@@ -197,7 +200,7 @@ graph LR
 | `src/client/native/wave-view.ts` | 272 | Native fractal-render — WaveView. |
 | `src/client/native/yjs-binding.ts` | 202 | Native fractal-render — Y.js CRDT binding for the ContentArray model. |
 
-## Client other (69)
+## Client other (70)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -259,7 +262,8 @@ graph LR
 | `src/client/lib/topicExport.ts` | 184 | (no header comment; exports ExportBlip) |
 | `src/client/lib/topicLoadReconcile.ts` | 105 | Reconcile a topic reload with what THIS tab has itself written since the reload was requested. |
 | `src/client/lib/upload.ts` | 97 | (no header comment; exports UploadResult) |
-| `src/client/main.tsx` | 466 | (no header comment; exports App) |
+| `src/client/lib/zipStore.ts` | 30 | Minimal ZIP writer (store, no compression) for the multi-topic export: enough for every unzip tool, no dependency. |
+| `src/client/main.tsx` | 470 | (no header comment; exports App) |
 | `src/client/rizzoma-main.tsx` | 7 | — |
 | `src/client/rizzoma.html` | 19 | — |
 | `src/client/settings.css` | 219 | settings.css - Authentic Rizzoma User Settings styling |
@@ -397,7 +401,7 @@ graph LR
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/tests/client.AnonymousTopicRoute.test.tsx` | 80 | — |
-| `src/tests/client.AuthPanelSecurity.test.tsx` | 202 | — |
+| `src/tests/client.AuthPanelSecurity.test.tsx` | 204 | — |
 | `src/tests/client.BlipEditor.test.ts` | 114 | Warm the EditorConfig module once up-front with a generous timeout. |
 | `src/tests/client.BlipMenu.test.tsx` | 621 | — |
 | `src/tests/client.EditorSearch.test.tsx` | 76 | — |

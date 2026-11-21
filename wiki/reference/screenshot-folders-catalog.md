@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/invite-login-first
-source_commit: 7ad90dc7
+source_branch: feat/original-features
+source_commit: 31450440
 generated: true
 ---
 
 # Screenshot Folders Catalog
 
-**¶1** □ GENERATED. `screenshots/` has 245 tracked folders and 31 loose files in git. The authority for the ORIGINAL is the [legacy archive](legacy-screenshots.md) plus the folders marked LEGACY REFERENCE or comparison below; sweep and handbuild folders are evidence about OUR build. The Kind column is a guess from the folder name only; read the folder's README/manifest where one exists.
+**¶1** □ GENERATED. `screenshots/` has 248 tracked folders and 31 loose files in git. The authority for the ORIGINAL is the [legacy archive](legacy-screenshots.md) plus the folders marked LEGACY REFERENCE or comparison below; sweep and handbuild folders are evidence about OUR build. The Kind column is a guess from the folder name only; read the folder's README/manifest where one exists.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -268,6 +268,9 @@ graph LR
 | `2611210955-feature-sweep` | 169 | 5 | our build, automated feature sweep | [manifest.md](../../screenshots/2611210955-feature-sweep/manifest.md) |
 | `2611210958-handbuild-acceptance-native` | 23 | 0 | our build, handbuild acceptance run | — |
 | `2611211004-handbuild-acceptance-react` | 23 | 0 | our build, handbuild acceptance run | — |
+| `2611211441-feature-sweep` | 169 | 5 | our build, automated feature sweep | [manifest.md](../../screenshots/2611211441-feature-sweep/manifest.md) |
+| `2611211442-handbuild-acceptance-react` | 23 | 0 | our build, handbuild acceptance run | — |
+| `2611211444-handbuild-acceptance-native` | 23 | 0 | our build, handbuild acceptance run | — |
 | `debug-blank` | 3 | 1 | other / unknown | — |
 | `depth10-fractal-260506` | 7 | 0 | other / unknown | — |
 | `native-vs-react-260506` | 9 | 0 | other / unknown | — |

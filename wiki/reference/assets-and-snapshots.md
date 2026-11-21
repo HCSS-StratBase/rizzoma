@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/invite-login-first
-source_commit: 7ad90dc7
+source_branch: feat/original-features
+source_commit: 31450440
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 83 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 84 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -134,6 +134,7 @@ graph LR
 | `test-native-ctrl-enter-smoke.mjs` | Native render path (?render=native) regression smoke for the 18 Nov 2026 tester feedback: |
 | `test-nested-insert-smoke.mjs` | Regression smoke, Liliia 19 Nov 2026 (her pictures 3 and 4): in a SUB-BLIP with three bullets, in VIEW mode, |
 | `test-nested-pointer-focus-smoke.mjs` | Regression smoke: clicking into an OPEN nested blip puts the caret in THAT blip, not in an ancestor. |
+| `test-original-features-smoke.mjs` | Regression smoke for three features of the original that the modernized app lacked (SDS ruling 21 Nov 2026): |
 | `test-paste-image-smoke.mjs` | Regression smoke, Liliia 19 Nov 2026: a screenshot pasted from the clipboard into a sub-blip must land in THAT blip, |
 | `test-phone-layout-smoke.mjs` | Phone layout smoke (390 x 844, 360 x 740, 430 x 932 with REAL touch taps) and the desktop guard. |
 | `test-playwright-features.js` | Take screenshot of test editor |

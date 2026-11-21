@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/invite-login-first
-source_commit: 7ad90dc7
+source_branch: feat/original-features
+source_commit: 31450440
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 247 files in `scripts/`, 74 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 247 files in `scripts/`, 75 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -83,6 +83,7 @@ graph LR
 | `test:shell-defects` | `node test-shell-defects-smoke.mjs` |
 | `test:link-popup` | `node test-link-popup-smoke.mjs` |
 | `test:invite-journey` | `node test-invite-journey-smoke.mjs` |
+| `test:original-features` | `node test-original-features-smoke.mjs` |
 | `test:tips-deadline-session` | `node test-tips-deadline-session-smoke.mjs` |
 | `test:public-tags` | `node test-public-tags-smoke.mjs` |
 | `test:collab-end-key` | `node test-collab-end-key-smoke.mjs` |
