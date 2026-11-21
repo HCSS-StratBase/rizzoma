@@ -865,4 +865,4 @@ last_verified: 2026-11-06
 
 ## [2026-11-21] lint | node_modules symlink removed from version control
 
-- **¶1** □ PR 130 committed a `node_modules` symlink (a worktree convenience) because `.gitignore` had only `node_modules/`, which does not match a symlink; the deploy's `npm ci` replaced it, so `verify_release` saw a dirty tree and refused release bf7ef6a2 (scripts/deploy-vps.sh:324). The symlink is now untracked and `/node_modules` is ignored
+- **¶1** □ PR 128 (the tester-scenarios suite) committed a `node_modules` symlink (a worktree convenience) because `.gitignore` had only `node_modules/`, which does not match a symlink; the deploy's `npm ci` replaced it, so `verify_release` saw a dirty tree and refused the first release built after it (bf7ef6a2) (scripts/deploy-vps.sh:324). The symlink is now untracked and `/node_modules` is ignored
