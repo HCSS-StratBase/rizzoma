@@ -9,6 +9,7 @@ import { toast } from './Toast';
 import { InviteModal } from './InviteModal';
 import { ShareModal } from './ShareModal';
 import ExportModal from './ExportModal';
+import { getInviteProblem } from '../lib/fragmentSecrets';
 import { WavePlaybackModal } from './WavePlaybackModal';
 import { MindMapView } from './MindMapView';
 import './RizzomaTopicDetail.css';
@@ -328,6 +329,12 @@ function RizzomaTopicDetailState({
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [, setInviteProblemTick] = useState(0);
+  useEffect(() => {
+    const bump = () => setInviteProblemTick((n) => n + 1);
+    window.addEventListener('rizzoma:invite-problem', bump);
+    return () => window.removeEventListener('rizzoma:invite-problem', bump);
+  }, []);
   const [showWavePlayback, setShowWavePlayback] = useState(false);
   const [showCommentsPanel, setShowCommentsPanel] = useState(true);
   const [topicViewMode, setTopicViewMode] = useState<'text' | 'mindmap'>('text');
@@ -1012,6 +1019,9 @@ function RizzomaTopicDetailState({
         if (r.status === 401 || r.status === 403) {
           clearLoadedTopicState();
           setError(r.status === 401 ? 'Sign in to view this topic' : 'You do not have access to this topic');
+        } else if (r.status === 404 || r.status === 410) {
+          clearLoadedTopicState();
+          setError('This topic no longer exists. It may have been deleted by its owner.');
         } else {
           setError('Failed to load topic');
         }
@@ -1871,7 +1881,7 @@ function RizzomaTopicDetailState({
   if (error) {
     return (
       <div className="rizzoma-topic-detail">
-        <div className="error-message">{error}<button onClick={() => load(true)}>Retry</button></div>
+        <div className="error-message">{error}{getInviteProblem() ? <div className="invite-problem" data-testid="invite-problem">{getInviteProblem()}</div> : null}<button onClick={() => load(true)}>Retry</button></div>
       </div>
     );
   }

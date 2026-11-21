@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/untrack-node-modules
-source_commit: 09b84330
+source_branch: fix/invite-journey
+source_commit: b43236d9
 generated: true
 ---
 
@@ -47,7 +47,7 @@ graph LR
 | `src/client/components/AnonymousTopicRoute.css` | 86 | — |
 | `src/client/components/AnonymousTopicRoute.tsx` | 78 | (no header comment; exports AnonymousTopicRoute) |
 | `src/client/components/AuthPanel.css` | 208 | — |
-| `src/client/components/AuthPanel.tsx` | 480 | (no header comment; exports AuthUser) |
+| `src/client/components/AuthPanel.tsx` | 487 | (no header comment; exports AuthUser) |
 | `src/client/components/BlipContent.tsx` | 13 | (no header comment; exports BlipContent) |
 | `src/client/components/CreateTopicModal.css` | 276 | — |
 | `src/client/components/CreateTopicModal.tsx` | 139 | (no header comment; exports CreateTopicModal) |
@@ -85,8 +85,8 @@ graph LR
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
 | `src/client/components/RizzomaLayout.css` | 487 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 619 | (no header comment; exports RizzomaLayout) |
-| `src/client/components/RizzomaTopicDetail.css` | 1818 | RizzomaTopicDetail - Matching real Rizzoma |
-| `src/client/components/RizzomaTopicDetail.tsx` | 2399 | (no header comment; exports shouldThrottleSocketTopicLoad) |
+| `src/client/components/RizzomaTopicDetail.css` | 1821 | RizzomaTopicDetail - Matching real Rizzoma |
+| `src/client/components/RizzomaTopicDetail.tsx` | 2409 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 237 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 372 | (no header comment; exports RizzomaTopicsList) |
 | `src/client/components/ShareModal.css` | 175 | ShareModal.css - Authentic Legacy Rizzoma Share Popover Style |
@@ -243,7 +243,7 @@ graph LR
 | `src/client/lib/collaborationProjection.ts` | 39 | (no header comment; exports COLLABORATION_STATE_DIGEST_HEADER) |
 | `src/client/lib/editorPersistence.ts` | 42 | (no header comment; exports REMOTE_EDITOR_UPDATE) |
 | `src/client/lib/format.ts` | 9 | (no header comment; exports formatTimestamp) |
-| `src/client/lib/fragmentSecrets.ts` | 165 | (no header comment; exports PENDING_INVITE_URL_KEY) |
+| `src/client/lib/fragmentSecrets.ts` | 174 | (no header comment; exports PENDING_INVITE_URL_KEY) |
 | `src/client/lib/getUserMediaAdapter.ts` | 359 | Modern getUserMedia adapter — TypeScript ES module. |
 | `src/client/lib/htmlDiff.ts` | 67 | Simple word-level diff for HTML content. |
 | `src/client/lib/inlineChildHandoff.ts` | 18 | Decide the next step while a topic-root Ctrl+Enter child moves from the |
@@ -259,7 +259,7 @@ graph LR
 | `src/client/lib/topicExport.ts` | 184 | (no header comment; exports ExportBlip) |
 | `src/client/lib/topicLoadReconcile.ts` | 105 | Reconcile a topic reload with what THIS tab has itself written since the reload was requested. |
 | `src/client/lib/upload.ts` | 97 | (no header comment; exports UploadResult) |
-| `src/client/main.tsx` | 444 | (no header comment; exports App) |
+| `src/client/main.tsx` | 466 | (no header comment; exports App) |
 | `src/client/rizzoma-main.tsx` | 7 | — |
 | `src/client/rizzoma.html` | 19 | — |
 | `src/client/settings.css` | 219 | settings.css - Authentic Rizzoma User Settings styling |

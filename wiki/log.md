@@ -866,3 +866,12 @@ last_verified: 2026-11-06
 ## [2026-11-21] lint | node_modules symlink removed from version control
 
 - **¶1** □ PR 128 (the tester-scenarios suite) committed a `node_modules` symlink (a worktree convenience) because `.gitignore` had only `node_modules/`, which does not match a symlink; the deploy's `npm ci` replaced it, so `verify_release` saw a dirty tree and refused the first release built after it (bf7ef6a2) (scripts/deploy-vps.sh:324). The symlink is now untracked and `/node_modules` is ignored
+
+
+## [2026-11-21] ingest | Invitation e-mail journey: four breaks fixed
+
+- **¶1** □ An existing user who opens an invitation link signed out landed on the "Create an account" form (a pending invitation switches `AuthPanel` to register mode) and got "Registration failed [email_in_use]"; the form now sends them to sign in with the reason (src/client/components/AuthPanel.tsx, `email_in_use` branch)
+- **¶2** □ A provider sign-in (Google) returns through the server callback, which redirects to `/?layout=rizzoma` (src/server/routes/auth.ts:796); the topic was lost, so the pending invitation never redeemed. `main.tsx` now takes a signed-in person with a pending invitation to its topic, where redemption runs
+- **¶3** □ A different signed-in address got "You do not have access to this topic" and a toast that the next toast replaced; the reason now stays in the access panel (`setInviteProblem`, `data-testid="invite-problem"`). A link for a deleted topic now says the topic no longer exists
+- **¶4** □ An invitation link pasted into an already-open tab only changes the fragment, so the token was never taken; `onHash` in main.tsx now scrubs it
+- **¶5** □ Regression test: `test-invite-journey-smoke.mjs` (`npm run test:invite-journey`, a capturing SMTP sink from the tester suite)
