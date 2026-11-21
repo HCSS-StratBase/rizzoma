@@ -1,0 +1,2207 @@
+{
+ "1.2": {
+  "at": "2026-11-21T02:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G01] last screenshot: the sign-in form after logout (the dev build pre-fills dev@example.com and a password; to be checked on the live host); login/logout asserted; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet09_F04_G01_G02_G03.png",
+  "verdict": "WORKS"
+ },
+ "1.8": {
+  "at": "2026-11-21T02:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G01] last screenshot: the sign-in form after logout (the dev build pre-fills dev@example.com and a password; to be checked on the live host); login/logout asserted; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet09_F04_G01_G02_G03.png",
+  "verdict": "WORKS"
+ },
+ "10.10": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G09] last screenshot: the blip playback modal with play, speed and Show diff controls and 'Version 3' content; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "10.11": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G09] last screenshot: the blip playback modal with play, speed and Show diff controls and 'Version 3' content; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "10.12": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G09] last screenshot: the blip playback modal with play, speed and Show diff controls and 'Version 3' content; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "10.13": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G09] last screenshot: the blip playback modal with play, speed and Show diff controls and 'Version 3' content; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "10.2": {
+  "at": "2026-11-21T02:31",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C06] last screenshot: blip U1 after undo/playback steps; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet06_C05_C06_D01_D02.png",
+  "verdict": "WORKS"
+ },
+ "10.3": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C06] last screenshot: blip U1 after undo/playback steps; passed || [case G09] last screenshot: the blip playback modal with play, speed and Show diff controls and 'Version 3' content; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "10.4": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G09] last screenshot: the blip playback modal with play, speed and Show diff controls and 'Version 3' content; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "10.5": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G09] last screenshot: the blip playback modal with play, speed and Show diff controls and 'Version 3' content; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "10.7": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G09] last screenshot: the blip playback modal with play, speed and Show diff controls and 'Version 3' content; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "10.8": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G09] last screenshot: the blip playback modal with play, speed and Show diff controls and 'Version 3' content; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "10.9": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G09] last screenshot: the blip playback modal with play, speed and Show diff controls and 'Version 3' content; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "11.2": {
+  "at": "2026-11-21T02:31",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case D02] last screenshot: topic after inviting a Viewer by e-mail through the dialog; role enforcement asserted on the server; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet06_C05_C06_D01_D02.png",
+  "verdict": "WORKS"
+ },
+ "11.4": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R02] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "12.1": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I01] last screenshot: phone (390 px) layout with header, Invite/Share/gear, ribbon and the topic title; nested typing reached the server; passed || [case I04] last screenshot: at phone width one panel (the topic) fills the screen with a back arrow and + in the header; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "12.11": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I01] last screenshot: phone (390 px) layout with header, Invite/Share/gear, ribbon and the topic title; nested typing reached the server; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "12.2": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I04] last screenshot: at phone width one panel (the topic) fills the screen with a back arrow and + in the header; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "12.3": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I03] last screenshot: the topic after the network came back (the offline indicator itself is asserted in the DOM while offline); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "12.4": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I03] last screenshot: the topic after the network came back (the offline indicator itself is asserted in the DOM while offline); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "12.5": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I04] last screenshot: at phone width one panel (the topic) fills the screen with a back arrow and + in the header; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "12.6": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I04] last screenshot: at phone width one panel (the topic) fills the screen with a back arrow and + in the header; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "12.7": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I03] last screenshot: the topic after the network came back (the offline indicator itself is asserted in the DOM while offline); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "12.8": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I03] last screenshot: the topic after the network came back (the offline indicator itself is asserted in the DOM while offline); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "12.9": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I04] last screenshot: at phone width one panel (the topic) fills the screen with a back arrow and + in the header; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "13.1": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G10] last screenshot: back in text view after the mind map round trip, row mm-parent with its marker; passed || [case I04] last screenshot: at phone width one panel (the topic) fills the screen with a back arrow and + in the header; passed || [case N01] last screenshot: the topic created through the + New wizard is open with its title; passed || [case N02] last screenshot: back on the Topics tab after cycling Mentions, Tasks, Publics, Store, Teams (each opened its panel, asserted); passed || [case Q01] last screenshot: the default URL serves the normal React view; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "13.10": {
+  "at": "2026-11-21T02:45",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] last screenshot: blip 'todo' with a highlighted assignee chip, 'buy milk' and a highlighted @mention chip; passed || [case N13] last screenshot: the mention chip in the blip 'ping'; the Mentions list rows are asserted and were seen in the parity composite 014; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "13.11": {
+  "at": "2026-11-21T02:35",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] last screenshot: blip 'todo' with a highlighted assignee chip, 'buy milk' and a highlighted @mention chip; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet10_G04_G05_G06_G07.png",
+  "verdict": "WORKS"
+ },
+ "13.12": {
+  "at": "2026-11-21T02:45",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] last screenshot: blip 'todo' with a highlighted assignee chip, 'buy milk' and a highlighted @mention chip; passed || [case N14] last screenshot: Tasks tab with the filter buttons All (0), Pending (0), Completed (0); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "13.13": {
+  "at": "2026-11-21T02:44",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case D01] last screenshot: Invite dialog with the typed address in the box, role selector, the member list (editor, owner) and Select role/Remove/Copy link/Invite; passed || [case D02] last screenshot: topic after inviting a Viewer by e-mail through the dialog; role enforcement asserted on the server; passed || [case D03] last screenshot: members dialog after Remove: only the owner is listed as a member; passed || [case D04] last screenshot: members dialog shows the invitee's role as Reader after Select role; server enforcement asserted; passed || [case N04] last screenshot: Share dialog with",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet15_N04_N05_N06_N07.png",
+  "verdict": "WORKS"
+ },
+ "13.14": {
+  "at": "2026-11-21T02:44",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case D02] last screenshot: topic after inviting a Viewer by e-mail through the dialog; role enforcement asserted on the server; passed || [case N04] last screenshot: Share dialog with the topic link, Copy link and the three sharing levels (Private selected), Cancel and Save; passed || [case N06] last screenshot: the topic with the blip text exported-blip-text that the downloaded file is checked against; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet15_N04_N05_N06_N07.png",
+  "verdict": "WORKS"
+ },
+ "13.15": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N15] last screenshot: right rail with the account avatar (TS), Logout, grey Next, hide/show replies and text view/mind map; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "13.16": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N15] last screenshot: right rail with the account avatar (TS), Logout, grey Next, hide/show replies and text view/mind map; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "13.17": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G06] last screenshot: rows f-parent (with marker) and f-other after Hide replies; passed || [case N15] last screenshot: right rail with the account avatar (TS), Logout, grey Next, hide/show replies and text view/mind map; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "13.18": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G10] last screenshot: back in text view after the mind map round trip, row mm-parent with its marker; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "13.19": {
+  "at": "2026-11-21T02:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G01] last screenshot: the sign-in form after logout (the dev build pre-fills dev@example.com and a password; to be checked on the live host); login/logout asserted; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet09_F04_G01_G02_G03.png",
+  "verdict": "WORKS"
+ },
+ "13.2": {
+  "at": "2026-11-21T02:49",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] last screenshot: blip 'todo' with a highlighted assignee chip, 'buy milk' and a highlighted @mention chip; passed || [case N02] last screenshot: back on the Topics tab after cycling Mentions, Tasks, Publics, Store, Teams (each opened its panel, asserted); passed || [case X06] last screenshot is the Publics tab ('No public topics available'); the Store catalog and search were seen in parity composites 017 and 082; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet21_X05_X06_X07_X08.png",
+  "verdict": "WORKS"
+ },
+ "13.20": {
+  "at": "2026-11-21T02:35",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G05] last screenshot: rows hide-me and stay-open as the second user sees them; passed || [case G06] last screenshot: rows f-parent (with marker) and f-other after Hide replies; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet10_G04_G05_G06_G07.png",
+  "verdict": "WORKS"
+ },
+ "13.21": {
+  "at": "2026-11-21T02:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G01] last screenshot: the sign-in form after logout (the dev build pre-fills dev@example.com and a password; to be checked on the live host); login/logout asserted; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet09_F04_G01_G02_G03.png",
+  "verdict": "WORKS"
+ },
+ "13.22": {
+  "at": "2026-11-21T02:44",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G01] last screenshot: the sign-in form after logout (the dev build pre-fills dev@example.com and a password; to be checked on the live host); login/logout asserted; passed || [case N05] last screenshot (taken after the toast timeout): the invite dialog with the invalid address still typed and no toast on screen; the toast's presence and disappearance are asserted by the case, I did not see the toast itself; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet15_N04_N05_N06_N07.png",
+  "verdict": "WORKS"
+ },
+ "13.23": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case K03] last screenshot: the shortcut panel at the foot of the list, collapsed to its title after the toggle; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "13.3": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N15] last screenshot: right rail with the account avatar (TS), Logout, grey Next, hide/show replies and text view/mind map; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "13.4": {
+  "at": "2026-11-21T02:45",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case D06] last screenshot: the invited user's view of the topic; list and badge asserted by the case; passed || [case G03] last screenshot: rows g1 g2 g3 folded after Next walked through them; passed || [case N02] last screenshot: back on the Topics tab after cycling Mentions, Tasks, Publics, Store, Teams (each opened its panel, asserted); passed || [case N03] last screenshot: after Next walked through the unread rows x1 and x2 their markers are grey and the Next button is grey; passed || [case N11] last screenshot is the topic after reading (grey marker); the green bar on the unread row is a",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "13.5": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case D06] last screenshot: the invited user's view of the topic; list and badge asserted by the case; passed || [case G07] last screenshot: a search for a word that exists nowhere shows 'No topics yet' (the matching searches are asserted); passed || [case N01] last screenshot: the topic created through the + New wizard is open with its title; passed || [case N03] last screenshot: after Next walked through the unread rows x1 and x2 their markers are grey and the Next button is grey; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet14_L06_N01_N02_N03.png",
+  "verdict": "WORKS"
+ },
+ "13.6": {
+  "at": "2026-11-21T02:45",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N10] last screenshot: the topic row shows its change time of today ('1:33 AM') at the right; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "13.7": {
+  "at": "2026-11-21T02:45",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N11] last screenshot is the topic after reading (grey marker); the green bar on the unread row is asserted by the case, I did not see it in this frame; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "13.8": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N12] live check as Fractal Tester 2 (shot /home/stephan/ledger-evidence/live-three-b/t2-3b-filter-by-me.png, read) and the local case passed: All, Inbox, By me filter the list",
+  "shot": "/home/stephan/ledger-evidence/live-three-b/t2-3b-filter-by-me.png",
+  "verdict": "WORKS"
+ },
+ "13.9": {
+  "at": "2026-11-21T02:45",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case D05] last screenshot: @mention autocomplete inserted a highlighted mention chip after 'hello'; passed || [case G04] last screenshot: blip 'todo' with a highlighted assignee chip, 'buy milk' and a highlighted @mention chip; passed || [case N13] last screenshot: the mention chip in the blip 'ping'; the Mentions list rows are asserted and were seen in the parity composite 014; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "14.1": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A06] last screenshot: five bullets B1 to B5 as folded rows with markers after reload; checks passed || [case F04] last screenshot: a collapsed row M4 with no editor; expanding behaviour asserted; passed || [case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect)",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "PARTIAL"
+ },
+ "14.10": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case L02] last screenshot: TS1 with its child TS child opened under the marker; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.11": {
+  "at": "2026-11-21T02:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A02] last screenshot: the blip row shows two inline markers (T1 + +) for its two children; checks passed || [case A03] last screenshot: the blip row shows five markers (F1 + + + + +) for its five children; checks passed || [case A04] last screenshot: two sibling blips each with its own marker (P1 +, P2 +); checks passed || [case A05] last screenshot: the child blip MIDKID opens under its ma",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "verdict": "WORKS"
+ },
+ "14.12": {
+  "at": "2026-11-21T02:28",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A07] last screenshot: the fast-typed child sits behind its marker (S1 +); text checked on the stored blip, all checks passed || [case A08] last screenshot: W1 and plus1 rows with their markers; text went only into the active blip; checks passed || [case A10] last screenshot: Z1 with its marker after Done right after typing; text checked, passed || [case A12] last screenshot: level-two blip ",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet03_B02_B03_B04_B05.png",
+  "verdict": "WORKS"
+ },
+ "14.13": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case L01] last screenshot: 'MK alpha beta' with a grey marker, child opened in place; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.14": {
+  "at": "2026-11-21T02:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G03] last screenshot: rows g1 g2 g3 folded after Next walked through them; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet09_F04_G01_G02_G03.png",
+  "verdict": "WORKS"
+ },
+ "14.15": {
+  "at": "2026-11-21T02:31",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C05] last screenshot: the marker-less blip 'Par' is still reachable as a reply row; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet06_C05_C06_D01_D02.png",
+  "verdict": "WORKS"
+ },
+ "14.16": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G06] last screenshot: rows f-parent (with marker) and f-other after Hide replies; passed || [case L05] last screenshot: three parallel branches PA/PB/PC each expanded to level 3 at the same time with avatars and times visible; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.17": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G06] last screenshot: rows f-parent (with marker) and f-other after Hide replies; passed || [case K02] last screenshot: row KP in the editor after Ctrl+Shift+Up/Down; asserted on the markers; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "14.18": {
+  "at": "2026-11-21T02:35",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G05] last screenshot: rows hide-me and stay-open as the second user sees them; passed || [case G06] last screenshot: rows f-parent (with marker) and f-other after Hide replies; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet10_G04_G05_G06_G07.png",
+  "verdict": "WORKS"
+ },
+ "14.19": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A02] last screenshot: the blip row shows two inline markers (T1 + +) for its two children; checks passed || [case A04] last screenshot: two sibling blips each with its own marker (P1 +, P2 +); checks passed || [case B06] last screenshot: D1 with an inline child Dinline opened and the separate reply row Dreply below; reply has no marker in the parent body; passed || [case L05] last screenshot: three parallel branches PA/PB/PC each expanded to level 3 at the same time with avatars and times visible; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.2": {
+  "at": "2026-11-21T02:33",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case F01] last screenshot: the blip shows its author avatar and time at the top right in view mode; passed || [case F03] last screenshot: second user sees the avatar and time of the blip M3 and of its child M3kid; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet08_E01_E02_F01_F03.png",
+  "verdict": "WORKS"
+ },
+ "14.20": {
+  "at": "2026-11-21T02:30",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A02] last screenshot: the blip row shows two inline markers (T1 + +) for its two children; checks passed || [case A03] last screenshot: the blip row shows five markers (F1 + + + + +) for its five children; checks passed || [case A05] last screenshot: the child blip MIDKID opens under its marker which sits inside the sentence (alpha [marker] beta gamma); checks passed || [case C03] last screenshot: row Q0 with thirty markers after reload (created 30, stored 30); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet05_C01_C02_C03_C04.png",
+  "verdict": "WORKS"
+ },
+ "14.21": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A04] last screenshot: two sibling blips each with its own marker (P1 +, P2 +); checks passed || [case A12] last screenshot: level-two blip shows the 20 typed characters in one run after 'level two text' and level three below, the caret did not jump; checks passed || [case F03] last screenshot: second user sees the avatar and time of the blip M3 and of its child M3kid; passed || [case I01] l",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "14.22": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect)",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "PARTIAL"
+ },
+ "14.23": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect)",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "PARTIAL"
+ },
+ "14.24": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case L05] last screenshot: three parallel branches PA/PB/PC each expanded to level 3 at the same time with avatars and times visible; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.25": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case L01] last screenshot: 'MK alpha beta' with a grey marker, child opened in place; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.26": {
+  "at": "2026-11-21T02:27",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case B01] last screenshot: row 'E1 edited' after Edit, typing and Done; content persisted, passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet02_A09_A10_A12_B01.png",
+  "verdict": "WORKS"
+ },
+ "14.3": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case F04] last screenshot: a collapsed row M4 with no editor; expanding behaviour asserted; passed || [case L01] last screenshot: 'MK alpha beta' with a grey marker, child opened in place; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.4": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case F04] last screenshot: a collapsed row M4 with no editor; expanding behaviour asserted; passed || [case L01] last screenshot: 'MK alpha beta' with a grey marker, child opened in place; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.5": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case L01] last screenshot: 'MK alpha beta' with a grey marker, child opened in place; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.6": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case L02] last screenshot: TS1 with its child TS child opened under the marker; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.7": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A08] last screenshot: W1 and plus1 rows with their markers; text went only into the active blip; checks passed || [case L02] last screenshot: TS1 with its child TS child opened under the marker; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.8": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A08] last screenshot: W1 and plus1 rows with their markers; text went only into the active blip; checks passed || [case B01] last screenshot: row 'E1 edited' after Edit, typing and Done; content persisted, passed || [case B02] last screenshot: clicking the blip text opened the editor at once (toolbar, caret in J1+j); checks passed || [case B05] last screenshot: re-entered edit mode on the same blip (C12), text kept; passed || [case L02] last screenshot: TS1 with its child TS child opened under the marker; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "14.9": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case L02] last screenshot: TS1 with its child TS child opened under the marker; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "verdict": "WORKS"
+ },
+ "15.1": {
+  "at": "2026-11-21T02:32",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case D05] last screenshot: @mention autocomplete inserted a highlighted mention chip after 'hello'; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet07_D03_D04_D05_D06.png",
+  "verdict": "WORKS"
+ },
+ "15.2": {
+  "at": "2026-11-21T02:35",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] last screenshot: blip 'todo' with a highlighted assignee chip, 'buy milk' and a highlighted @mention chip; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet10_G04_G05_G06_G07.png",
+  "verdict": "WORKS"
+ },
+ "15.3": {
+  "at": "2026-11-21T02:44",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G02] last screenshot: the link 'see docs' rendered as a blue underlined link in view mode; passed || [case G08] last screenshot: the typed #suitetag shown as a tag chip in the blip; passed || [case N07] last screenshot: the search box holds the #tag query and the list shows the one topic carrying that tag; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet15_N04_N05_N06_N07.png",
+  "verdict": "WORKS"
+ },
+ "15.4": {
+  "at": "2026-11-21T02:49",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] last screenshot: blip 'todo' with a highlighted assignee chip, 'buy milk' and a highlighted @mention chip; passed || [case G08] last screenshot: the typed #suitetag shown as a tag chip in the blip; passed || [case L06] last screenshot: clicking the rail's @ from the view state opened the editor with the toolbar on blip IE1; passed || [case X05] last screenshot: the poll gadget rendered in the editor with Yes/No/Maybe bars, Add Option and 1 total vote; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet21_X05_X06_X07_X08.png",
+  "verdict": "WORKS"
+ },
+ "15.5": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] last screenshot: blip 'todo' with a highlighted assignee chip, 'buy milk' and a highlighted @mention chip; passed || [case L06] last screenshot: clicking the rail's @ from the view state opened the editor with the toolbar on blip IE1; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet14_L06_N01_N02_N03.png",
+  "verdict": "WORKS"
+ },
+ "15.6": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case L06] last screenshot: clicking the rail's @ from the view state opened the editor with the toolbar on blip IE1; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet14_L06_N01_N02_N03.png",
+  "verdict": "WORKS"
+ },
+ "15.7": {
+  "at": "2026-11-21T02:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case T08] last screenshot: 'EXT' with an emoji and an inline-comment child viaButton; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "verdict": "WORKS"
+ },
+ "15.8": {
+  "at": "2026-11-21T02:50",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X01] last screenshot: the Kanban sandbox app rendered with its own UI (To do, Doing, Done columns with cards) inside the blip; passed || [case X02] last screenshot: the Planner app rendered (three timed milestones, a Delay final milestone button); passed || [case X03] last screenshot: the Focus Timer app rendered (session title, checklist, button); passed || [case X04] last screenshot: the Notes scratchpad app rendered (notes and checklist with ticked items); passed || [case X05] last screenshot: the poll gadget rendered in the editor with Yes/No/Maybe bars, Add Option and 1 total vote; ",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet22_X09_X10_X11.png",
+  "verdict": "PARTIAL"
+ },
+ "16.1": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R04] this case reads repo files and the database (compose, Dockerfile, indexes); its screenshot is the app shell and shows nothing about the result, so this is a config check, not a visual one",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "16.3": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R04] this case reads repo files and the database (compose, Dockerfile, indexes); its screenshot is the app shell and shows nothing about the result, so this is a config check, not a visual one",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "16.4": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R04] this case reads repo files and the database (compose, Dockerfile, indexes); its screenshot is the app shell and shows nothing about the result, so this is a config check, not a visual one",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "16.5": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R04] this case reads repo files and the database (compose, Dockerfile, indexes); its screenshot is the app shell and shows nothing about the result, so this is a config check, not a visual one",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "17.5": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R02] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "18.1": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R02] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "18.2": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R02] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "18.3": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R03] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "18.4": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R03] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "18.5": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R02] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "18.6": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R03] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "19.1": {
+  "at": "2026-11-21T02:30",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C03] last screenshot: row Q0 with thirty markers after reload (created 30, stored 30); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet05_C01_C02_C03_C04.png",
+  "verdict": "WORKS"
+ },
+ "19.5": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R05] last screenshot: the app served the sign-in form promptly; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "19.7": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R03] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "19.8": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R05] last screenshot: the app served the sign-in form promptly; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "2.1": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N01] last screenshot: the topic created through the + New wizard is open with its title; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet14_L06_N01_N02_N03.png",
+  "verdict": "WORKS"
+ },
+ "2.2": {
+  "at": "2026-11-21T02:44",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case D06] last screenshot: the invited user's view of the topic; list and badge asserted by the case; passed || [case G07] last screenshot: a search for a word that exists nowhere shows 'No topics yet' (the matching searches are asserted); passed || [case N01] last screenshot: the topic created through the + New wizard is open with its title; passed || [case N06] last screenshot: the topic with the blip text exported-blip-text that the downloaded file is checked against; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet15_N04_N05_N06_N07.png",
+  "verdict": "WORKS"
+ },
+ "2.3": {
+  "at": "2026-11-21T02:31",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C05] last screenshot: the marker-less blip 'Par' is still reachable as a reply row; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet06_C05_C06_D01_D02.png",
+  "verdict": "WORKS"
+ },
+ "2.4": {
+  "at": "2026-11-21T02:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A09] last screenshot: three roots R-one, R-two, R-three as separate rows in order; checks passed || [case C01] last screenshot: after the confirmed delete only 'Keep' remains; passed || [case C02] last screenshot: cut blip M1 re-parented under M2 with its marker, nothing lost; passed || [case C03] last screenshot: row Q0 with thirty markers after reload (created 30, stored 30); passed || [c",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "verdict": "WORKS"
+ },
+ "2.6": {
+  "at": "2026-11-21T02:30",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C01] last screenshot: after the confirmed delete only 'Keep' remains; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet05_C01_C02_C03_C04.png",
+  "verdict": "WORKS"
+ },
+ "2.7": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A09] last screenshot: three roots R-one, R-two, R-three as separate rows in order; checks passed || [case B04] last screenshot: Ctrl+Enter in the topic root added a bullet 'rootkid' in the root body, nothing broke; passed || [case C05] last screenshot: the marker-less blip 'Par' is still reachable as a reply row; passed || [case F01] last screenshot: the blip shows its author avatar and tim",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet14_L06_N01_N02_N03.png",
+  "verdict": "WORKS"
+ },
+ "2.8": {
+  "at": "2026-11-21T02:44",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case D01] last screenshot: Invite dialog with the typed address in the box, role selector, the member list (editor, owner) and Select role/Remove/Copy link/Invite; passed || [case D02] last screenshot: topic after inviting a Viewer by e-mail through the dialog; role enforcement asserted on the server; passed || [case D03] last screenshot: members dialog after Remove: only the owner is listed as a member; passed || [case D04] last screenshot: members dialog shows the invitee's role as Reader after Select role; server enforcement asserted; passed || [case N04] last screenshot: Share dialog with",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet15_N04_N05_N06_N07.png",
+  "verdict": "WORKS"
+ },
+ "20.1": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R04] this case reads repo files and the database (compose, Dockerfile, indexes); its screenshot is the app shell and shows nothing about the result, so this is a config check, not a visual one",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "20.10": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R02] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.11": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R06] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.12": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R06] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.13": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R06] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.14": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R06] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.15": {
+  "at": "2026-11-21T02:49",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X01] last screenshot: the Kanban sandbox app rendered with its own UI (To do, Doing, Done columns with cards) inside the blip; passed || [case X02] last screenshot: the Planner app rendered (three timed milestones, a Delay final milestone button); passed || [case X03] last screenshot: the Focus Timer app rendered (session title, checklist, button); passed || [case X04] last screenshot: the Notes scratchpad app rendered (notes and checklist with ticked items); passed || [case X06] last screenshot is the Publics tab ('No public topics available'); the Store catalog and search were seen in ",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet21_X05_X06_X07_X08.png",
+  "verdict": "WORKS"
+ },
+ "20.16": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R06] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.17": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N15] last screenshot: right rail with the account avatar (TS), Logout, grey Next, hide/show replies and text view/mind map; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "20.18": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N15] last screenshot: right rail with the account avatar (TS), Logout, grey Next, hide/show replies and text view/mind map; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "20.19": {
+  "at": "2026-11-21T02:45",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N10] last screenshot: the topic row shows its change time of today ('1:33 AM') at the right; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "20.2": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R04] this case reads repo files and the database (compose, Dockerfile, indexes); its screenshot is the app shell and shows nothing about the result, so this is a config check, not a visual one",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "20.20": {
+  "at": "2026-11-21T02:45",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N11] last screenshot is the topic after reading (grey marker); the green bar on the unread row is asserted by the case, I did not see it in this frame; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "20.21": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N12] live check as Fractal Tester 2 (shot /home/stephan/ledger-evidence/live-three-b/t2-3b-filter-by-me.png, read) and the local case passed: All, Inbox, By me filter the list",
+  "shot": "/home/stephan/ledger-evidence/live-three-b/t2-3b-filter-by-me.png",
+  "verdict": "WORKS"
+ },
+ "20.22": {
+  "at": "2026-11-21T02:45",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N13] last screenshot: the mention chip in the blip 'ping'; the Mentions list rows are asserted and were seen in the parity composite 014; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "20.23": {
+  "at": "2026-11-21T02:45",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N14] last screenshot: Tasks tab with the filter buttons All (0), Pending (0), Completed (0); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "20.24": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N15] last screenshot: right rail with the account avatar (TS), Logout, grey Next, hide/show replies and text view/mind map; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "20.25": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G10] last screenshot: back in text view after the mind map round trip, row mm-parent with its marker; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "20.26": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N15] last screenshot: right rail with the account avatar (TS), Logout, grey Next, hide/show replies and text view/mind map; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "20.27": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case K03] last screenshot: the shortcut panel at the foot of the list, collapsed to its title after the toggle; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "20.28": {
+  "at": "2026-11-21T02:45",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N11] last screenshot is the topic after reading (grey marker); the green bar on the unread row is asserted by the case, I did not see it in this frame; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "20.3": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R03] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.30": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I03] last screenshot: the topic after the network came back (the offline indicator itself is asserted in the DOM while offline); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "20.31": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R06] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.32": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R06] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.4": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R03] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.5": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R03] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.6": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R03] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "20.7": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R04] this case reads repo files and the database (compose, Dockerfile, indexes); its screenshot is the app shell and shows nothing about the result, so this is a config check, not a visual one",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "20.8": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R04] this case reads repo files and the database (compose, Dockerfile, indexes); its screenshot is the app shell and shows nothing about the result, so this is a config check, not a visual one",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "20.9": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R06] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "3.1": {
+  "at": "2026-11-21T02:47",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A07] last screenshot: the fast-typed child sits behind its marker (S1 +); text checked on the stored blip, all checks passed || [case T01] last screenshot: 'word-bold' drawn in bold in the editor; passed || [case T02] last screenshot: 'word-italic' drawn in italics; passed || [case T03] last screenshot: 'word-underline' drawn underlined; passed || [case T04] last screenshot: 'word-strikethrough' drawn struck through; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet18_T01_T02_T03_T04.png",
+  "verdict": "WORKS"
+ },
+ "3.10": {
+  "at": "2026-11-21T02:33",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case E01] last screenshot: the pasted PNG shows as one small blue thumbnail inside the blip; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet08_E01_E02_F01_F03.png",
+  "verdict": "WORKS"
+ },
+ "3.11": {
+  "at": "2026-11-21T02:32",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case D05] last screenshot: @mention autocomplete inserted a highlighted mention chip after 'hello'; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet07_D03_D04_D05_D06.png",
+  "verdict": "WORKS"
+ },
+ "3.12": {
+  "at": "2026-11-21T02:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case B01] last screenshot: row 'E1 edited' after Edit, typing and Done; content persisted, passed || [case T01] last screenshot: 'word-bold' drawn in bold in the editor; passed || [case T02] last screenshot: 'word-italic' drawn in italics; passed || [case T03] last screenshot: 'word-underline' drawn underlined; passed || [case T04] last screenshot: 'word-strikethrough' drawn struck through; passed || [case T06] last screenshot: 'HLT' with a yellow background in the editor; passed || [case T08] last screenshot: 'EXT' with an emoji and an inline-comment child viaButton; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "verdict": "WORKS"
+ },
+ "3.13": {
+  "at": "2026-11-21T02:27",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case B01] last screenshot: row 'E1 edited' after Edit, typing and Done; content persisted, passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet02_A09_A10_A12_B01.png",
+  "verdict": "WORKS"
+ },
+ "3.14": {
+  "at": "2026-11-21T02:50",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case E02] last screenshot: the uploaded attachment shows as a link 'docnotes.txt (29 B)' in the blip; passed || [case X01] last screenshot: the Kanban sandbox app rendered with its own UI (To do, Doing, Done columns with cards) inside the blip; passed || [case X02] last screenshot: the Planner app rendered (three timed milestones, a Delay final milestone button); passed || [case X03] last screenshot: the Focus Timer app rendered (session title, checklist, button); passed || [case X04] last screenshot: the Notes scratchpad app rendered (notes and checklist with ticked items); passed || [case X",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet22_X09_X10_X11.png",
+  "verdict": "PARTIAL"
+ },
+ "3.15": {
+  "at": "2026-11-21T02:50",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X01] last screenshot: the Kanban sandbox app rendered with its own UI (To do, Doing, Done columns with cards) inside the blip; passed || [case X02] last screenshot: the Planner app rendered (three timed milestones, a Delay final milestone button); passed || [case X03] last screenshot: the Focus Timer app rendered (session title, checklist, button); passed || [case X04] last screenshot: the Notes scratchpad app rendered (notes and checklist with ticked items); passed || [case X05] last screenshot: the poll gadget rendered in the editor with Yes/No/Maybe bars, Add Option and 1 total vote; ",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet22_X09_X10_X11.png",
+  "verdict": "PARTIAL"
+ },
+ "3.16": {
+  "at": "2026-11-21T02:46",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N15] last screenshot: right rail with the account avatar (TS), Logout, grey Next, hide/show replies and text view/mind map; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "3.2": {
+  "at": "2026-11-21T02:47",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case T01] last screenshot: 'word-bold' drawn in bold in the editor; passed || [case T02] last screenshot: 'word-italic' drawn in italics; passed || [case T03] last screenshot: 'word-underline' drawn underlined; passed || [case T04] last screenshot: 'word-strikethrough' drawn struck through; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet18_T01_T02_T03_T04.png",
+  "verdict": "WORKS"
+ },
+ "3.3": {
+  "at": "2026-11-21T02:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case T07] last screenshot: BLK, '> quoted' and a code fence stay plain bullets (no quote or code formatting), as the contract now documents; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "verdict": "WORKS"
+ },
+ "3.4": {
+  "at": "2026-11-21T02:27",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A06] last screenshot: five bullets B1 to B5 as folded rows with markers after reload; checks passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet01_A05_A06_A07_A08.png",
+  "verdict": "WORKS"
+ },
+ "3.5": {
+  "at": "2026-11-21T02:35",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] last screenshot: blip 'todo' with a highlighted assignee chip, 'buy milk' and a highlighted @mention chip; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet10_G04_G05_G06_G07.png",
+  "verdict": "WORKS"
+ },
+ "3.6": {
+  "at": "2026-11-21T02:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case T07] last screenshot: BLK, '> quoted' and a code fence stay plain bullets (no quote or code formatting), as the contract now documents; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "verdict": "WORKS"
+ },
+ "3.7": {
+  "at": "2026-11-21T02:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case T07] last screenshot: BLK, '> quoted' and a code fence stay plain bullets (no quote or code formatting), as the contract now documents; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "verdict": "WORKS"
+ },
+ "3.8": {
+  "at": "2026-11-21T02:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case T06] last screenshot: 'HLT' with a yellow background in the editor; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "verdict": "WORKS"
+ },
+ "3.9": {
+  "at": "2026-11-21T02:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G02] last screenshot: the link 'see docs' rendered as a blue underlined link in view mode; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet09_F04_G01_G02_G03.png",
+  "verdict": "WORKS"
+ },
+ "4.1": {
+  "at": "2026-11-21T02:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C04] last screenshot: eight rows AA1..BB4 from two users at once, none lost; passed || [case W01] last screenshot is the writer's topic view; the live arrival on the second user's screen is asserted by the case, not seen in this frame; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "verdict": "WORKS"
+ },
+ "4.2": {
+  "at": "2026-11-21T02:30",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C04] last screenshot: eight rows AA1..BB4 from two users at once, none lost; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet05_C01_C02_C03_C04.png",
+  "verdict": "WORKS"
+ },
+ "4.5": {
+  "at": "2026-11-21T02:33",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case F01] last screenshot: the blip shows its author avatar and time at the top right in view mode; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet08_E01_E02_F01_F03.png",
+  "verdict": "WORKS"
+ },
+ "4.6": {
+  "at": "2026-11-21T02:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C04] last screenshot: eight rows AA1..BB4 from two users at once, none lost; passed || [case W01] last screenshot is the writer's topic view; the live arrival on the second user's screen is asserted by the case, not seen in this frame; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "verdict": "WORKS"
+ },
+ "5.6": {
+  "at": "2026-11-21T02:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G03] last screenshot: rows g1 g2 g3 folded after Next walked through them; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet09_F04_G01_G02_G03.png",
+  "verdict": "WORKS"
+ },
+ "5.7": {
+  "at": "2026-11-21T02:43",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G03] last screenshot: rows g1 g2 g3 folded after Next walked through them; passed || [case N03] last screenshot: after Next walked through the unread rows x1 and x2 their markers are grey and the Next button is grey; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet14_L06_N01_N02_N03.png",
+  "verdict": "WORKS"
+ },
+ "5.8": {
+  "at": "2026-11-21T02:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G03] last screenshot: rows g1 g2 g3 folded after Next walked through them; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet09_F04_G01_G02_G03.png",
+  "verdict": "WORKS"
+ },
+ "5.9": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G03] last screenshot: rows g1 g2 g3 folded after Next walked through them; passed || [case K02] last screenshot: row KP in the editor after Ctrl+Shift+Up/Down; asserted on the markers; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "6.5": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case K02] last screenshot: row KP in the editor after Ctrl+Shift+Up/Down; asserted on the markers; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "6.6": {
+  "at": "2026-11-21T02:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case K02] last screenshot: row KP in the editor after Ctrl+Shift+Up/Down; asserted on the markers; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "verdict": "WORKS"
+ },
+ "7.1": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case E02] last screenshot: the uploaded attachment shows as a link 'docnotes.txt (29 B)' in the blip; passed || [case S11] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "7.2": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case S11] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "7.3": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case S11] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "7.4": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R02] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually || [case S11] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "7.5": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case E01] last screenshot: the pasted PNG shows as one small blue thumbnail inside the blip; passed || [case S11] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "7.6": {
+  "at": "2026-11-21T03:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R02] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
+  "shot": "",
+  "verdict": "WORKS"
+ },
+ "7.7": {
+  "at": "2026-11-21T02:33",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case E01] last screenshot: the pasted PNG shows as one small blue thumbnail inside the blip; passed || [case E02] last screenshot: the uploaded attachment shows as a link 'docnotes.txt (29 B)' in the blip; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet08_E01_E02_F01_F03.png",
+  "verdict": "WORKS"
+ },
+ "8.1": {
+  "at": "2026-11-21T02:44",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G07] last screenshot: a search for a word that exists nowhere shows 'No topics yet' (the matching searches are asserted); passed || [case N07] last screenshot: the search box holds the #tag query and the list shows the one topic carrying that tag; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet15_N04_N05_N06_N07.png",
+  "verdict": "WORKS"
+ },
+ "9.1": {
+  "at": "2026-11-21T02:29",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A09] last screenshot: three roots R-one, R-two, R-three as separate rows in order; checks passed || [case B06] last screenshot: D1 with an inline child Dinline opened and the separate reply row Dreply below; reply has no marker in the parent body; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet04_B06_B07_B08_B09.png",
+  "verdict": "WORKS"
+ },
+ "9.2": {
+  "at": "2026-11-21T02:28",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case A08] last screenshot: W1 and plus1 rows with their markers; text went only into the active blip; checks passed || [case A10] last screenshot: Z1 with its marker after Done right after typing; text checked, passed || [case A12] last screenshot: level-two blip shows the 20 typed characters in one run after 'level two text' and level three below, the caret did not jump; checks passed || [case B01] last screenshot: row 'E1 edited' after Edit, typing and Done; content persisted, passed || [case B02] last screenshot: clicking the blip text opened the editor at once (toolbar, caret in J1+j); ch",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet03_B02_B03_B04_B05.png",
+  "verdict": "WORKS"
+ },
+ "9.3": {
+  "at": "2026-11-21T02:30",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C01] last screenshot: after the confirmed delete only 'Keep' remains; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet05_C01_C02_C03_C04.png",
+  "verdict": "WORKS"
+ },
+ "9.4": {
+  "at": "2026-11-21T02:29",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case B09] last screenshot: cut-and-paste case ends with rows X1 and X2 under the topic; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet04_B06_B07_B08_B09.png",
+  "verdict": "WORKS"
+ },
+ "9.5": {
+  "at": "2026-11-21T02:30",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case B07] last screenshot: copied text pasted as a reply row 'Copyme text' under Target; passed || [case C02] last screenshot: cut blip M1 re-parented under M2 with its marker, nothing lost; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet05_C01_C02_C03_C04.png",
+  "verdict": "WORKS"
+ },
+ "9.6": {
+  "at": "2026-11-21T02:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case B08] last screenshot: the blip Linkme after Copy link; the clipboard URL is asserted by the case; passed || [case G02] last screenshot: the link 'see docs' rendered as a blue underlined link in view mode; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet09_F04_G01_G02_G03.png",
+  "verdict": "WORKS"
+ },
+ "9.7": {
+  "at": "2026-11-21T02:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C06] last screenshot: blip U1 after undo/playback steps; passed || [case G09] last screenshot: the blip playback modal with play, speed and Show diff controls and 'Version 3' content; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "verdict": "WORKS"
+ },
+ "9.8": {
+  "at": "2026-11-21T02:35",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case B07] last screenshot: copied text pasted as a reply row 'Copyme text' under Target; passed || [case B08] last screenshot: the blip Linkme after Copy link; the clipboard URL is asserted by the case; passed || [case G05] last screenshot: rows hide-me and stay-open as the second user sees them; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet10_G04_G05_G06_G07.png",
+  "verdict": "WORKS"
+ },
+ "9.9": {
+  "at": "2026-11-21T02:30",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case B07] last screenshot: copied text pasted as a reply row 'Copyme text' under Target; passed || [case C02] last screenshot: cut blip M1 re-parented under M2 with its marker, nothing lost; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets/sheet05_C01_C02_C03_C04.png",
+  "verdict": "WORKS"
+ },
+ "G-calendarApp": {
+  "at": "2026-11-21T03:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X02] Planner app UI rendered (seen)",
+  "shot": "/home/stephan/ledger-evidence/sheets/",
+  "verdict": "WORKS"
+ },
+ "G-code": {
+  "at": "2026-11-21T03:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X11] Code gadget shows const answer = 42; (seen in X11 sheet)",
+  "shot": "/home/stephan/ledger-evidence/sheets/",
+  "verdict": "WORKS"
+ },
+ "G-focusApp": {
+  "at": "2026-11-21T03:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X03] Focus Timer app UI rendered (seen)",
+  "shot": "/home/stephan/ledger-evidence/sheets/",
+  "verdict": "WORKS"
+ },
+ "G-iframe": {
+  "at": "2026-11-21T03:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X10] framed page rendered (seen)",
+  "shot": "/home/stephan/ledger-evidence/sheets/",
+  "verdict": "WORKS"
+ },
+ "G-image": {
+  "at": "2026-11-21T03:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X11] decoded Google logo picture shown (seen)",
+  "shot": "/home/stephan/ledger-evidence/sheets/",
+  "verdict": "WORKS"
+ },
+ "G-kanbanApp": {
+  "at": "2026-11-21T03:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X01] Kanban app UI rendered (seen)",
+  "shot": "/home/stephan/ledger-evidence/sheets/",
+  "verdict": "WORKS"
+ },
+ "G-latex": {
+  "at": "2026-11-21T03:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X07] typeset math rendered (seen)",
+  "shot": "/home/stephan/ledger-evidence/sheets/",
+  "verdict": "WORKS"
+ },
+ "G-notesApp": {
+  "at": "2026-11-21T03:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X04] Notes scratchpad app UI rendered (seen)",
+  "shot": "/home/stephan/ledger-evidence/sheets/",
+  "verdict": "WORKS"
+ },
+ "G-poll": {
+  "at": "2026-11-21T03:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X05] poll rendered with bars (seen)",
+  "shot": "/home/stephan/ledger-evidence/sheets/",
+  "verdict": "WORKS"
+ },
+ "G-spreadsheet": {
+  "at": "2026-11-21T03:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X09] spreadsheet preview rendered (seen)",
+  "shot": "/home/stephan/ledger-evidence/sheets/",
+  "verdict": "WORKS"
+ },
+ "G-youtube": {
+  "at": "2026-11-21T03:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X08] the YouTube player iframe loads but the test video is unavailable (see X08)",
+  "shot": "/home/stephan/ledger-evidence/sheets/",
+  "verdict": "PARTIAL"
+ },
+ "S-001-landing-logged-out": {
+  "at": "2026-11-21T00:58",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The original shows a marketing landing page (hero, Enter Rizzoma, footer links); ours goes straight to a sign-in form. Sign-in works, the public landing page does not exist.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/001-landing-logged-out-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-002-signin-form": {
+  "at": "2026-11-21T00:58",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Ours shows email and password fields, Sign In, Forgot password and Google, Facebook, Microsoft and X buttons. (The archive picture itself shows the landing page, the description says sign-in form with email/password and OAuth buttons; ours has all of those.)",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/002-signin-form-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-003-signup-form": {
+  "at": "2026-11-21T00:58",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "No sign-up form: ours says new email/password accounts require an invitation. The original offers open registration. Deliberate access policy, not a defect, but not the same surface.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/003-signup-form-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-004-anon-wall-private-topic": {
+  "at": "2026-11-21T00:58",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "A signed-out visitor on a private topic URL gets a centred card 'Sign in to open this topic' with the same sign-in options, as the original's 'Anonymous access is disabled' wall.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/004-anon-wall-private-topic-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-010-topics-list-default": {
+  "at": "2026-11-21T00:58",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Same regions as the original: left rail (Topics, Mentions, Tasks, Publics, Store, Teams, Help), search box, topic rows with title, preview, avatar and date, open topic with Invite/avatars/Share, ribbon, text and mind-map buttons, Next, shortcut legend. Not present: Pro badges, mention count badge, Follow counter.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/010-topics-list-default-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-011-topics-search-typed": {
+  "at": "2026-11-21T00:58",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The typed query sits in the search box with the search button; the list shows a loading state. The original's clear (x) and options arrow are not drawn.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/011-topics-search-typed-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-012-topics-search-results": {
+  "at": "2026-11-21T00:58",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The list narrows to the topics matching the query (two Military concepts rows).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/012-topics-search-results-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-013-topics-search-cleared": {
+  "at": "2026-11-21T00:58",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "After clearing the query the full list is back.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/013-topics-search-cleared-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-014-nav-mentions": {
+  "at": "2026-11-21T01:28",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Mentions tab lists the mention with topic title, time and text, with All and Unread filters.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/014-nav-mentions-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-015-nav-tasks": {
+  "at": "2026-11-21T01:28",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Tasks tab lists the task with a checkbox, text, assignee and All, Pending, Completed filters.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/015-nav-tasks-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-016-nav-publics": {
+  "at": "2026-11-21T02:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Publics lists the public topics (title, owner, time) under a search box. The original also has a row of tag filters (#Education, #Rizzoma ...) and avatars per row; ours has neither.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/016-nav-publics-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-017-nav-store": {
+  "at": "2026-11-21T01:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Judged by the description (gadget store tab): ours opens a Gadget Runtime catalog with search, category chips (All, Live now, Productivity, Collaboration, Visualization, Integrations) and gadget cards. The archive picture itself shows the Publics list (capture artefact).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/017-nav-store-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-018-nav-teams": {
+  "at": "2026-11-21T01:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Judged by the description (Teams management tab): ours lists 'Your Teams' with My Team (1 member, Owner), a settings gear and a New Team button. The archive picture shows the Publics list (capture artefact).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/018-nav-teams-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-019-new-topic-button": {
+  "at": "2026-11-21T01:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The new-topic button (+ New) sits at the top of the left rail.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/019-new-topic-button-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-020-settings-menu": {
+  "at": "2026-11-21T01:01",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Gear menu opens with Follow topic, Print, Export single topic, Get embed code, User settings, Wave Timeline. The original also offers 'Export multiple topics' (absent in ours; no such string in src/client) and 'Mark topic as read' (ours shows it only when something is unread) and a G+ Hangout entry (dead service).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/020-settings-menu-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-030-topic-view-default": {
+  "at": "2026-11-21T01:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Same parts: title, bulleted blips folded behind markers, avatar and time, reply box, right rail with Next, hide/show, text view and mind map. Different: ours draws each folded blip as a row with a green [+] square at the left (original: grey bubble at the end of the bullet), no boxed nesting lines in the folded state.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/030-topic-view-default-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-031-topic-header-bar": {
+  "at": "2026-11-21T01:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Header row has Invite, participant avatar, Share (lock icon) and the settings gear, as in the original; the participant drop-down arrow beside the avatars is not drawn.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/031-topic-header-bar-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-032-share-modal": {
+  "at": "2026-11-21T01:04",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Share dialog with the topic link and Copy link, three access levels (Private, Anyone with the link, Public on the web) with their explanations, Cancel and Save, as in the original (which also has social share icons).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/032-share-modal-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-033-share-modal-closed": {
+  "at": "2026-11-21T01:31",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Escape closes the Share dialog and the topic is shown again.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/033-share-modal-closed-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-034-manage-members": {
+  "at": "2026-11-21T01:28",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The Invite dialog manages members like the original panel: add-by-name box, '0 topic members selected', member rows with roles (Editor, Owner), Select role, Remove, Copy link, Done.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/034-manage-members-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-035-members-closed": {
+  "at": "2026-11-21T01:31",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Escape closes the members dialog; the topic is back.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/035-members-closed-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-036-text-view": {
+  "at": "2026-11-21T01:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Text view button active, linear rendering of the topic with its blips folded behind markers; same role as the original's Text view.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/036-text-view-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-037-mindmap-view": {
+  "at": "2026-11-21T01:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Mind map view draws the blip tree left to right with connectors and fold circles (Oneliner and Description each with a child), short/expanded switch in the right rail, as in the original. Oddity: the root node reads 'Empty blip' because the root body holds only the title.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/037-mindmap-view-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-038-mindmap-short": {
+  "at": "2026-11-21T01:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Short labels mind map, same tree layout as the original's short view; the short button is active.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/038-mindmap-short-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-039-mindmap-expanded": {
+  "at": "2026-11-21T01:08",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Expanded button is active and the mind map draws; labels equal the short ones here because the fixture labels are short.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/039-mindmap-expanded-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-040-back-to-text-view": {
+  "at": "2026-11-21T01:08",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Text view button returns to the linear topic with its rows.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/040-back-to-text-view-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-041-hide-all-comments": {
+  "at": "2026-11-21T01:08",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "After Hide replies the folded rows show only their markers (Oneliner keeps its +), no thread is open.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/041-hide-all-comments-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-042-show-all-comments": {
+  "at": "2026-11-21T01:08",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "After Show replies the inline threads are open again: Oneliner shows its child blip with avatar and time.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/042-show-all-comments-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-051-fractal-unfold-level-1": {
+  "at": "2026-11-21T01:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "One [+] unfolds in place: the child appears nested inside a boxed block under its bullet, with avatar and time; the parent marker turns into a minus.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/051-fractal-unfold-level-1-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-052-fractal-unfold-level-2": {
+  "at": "2026-11-21T01:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Second level unfolds nested and boxed; avatar and time of level three sit right at the right edge but are visible.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/052-fractal-unfold-level-2-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-053-fractal-unfold-level-3": {
+  "at": "2026-11-21T01:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/053-fractal-unfold-level-3-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-054-fractal-unfold-level-4": {
+  "at": "2026-11-21T01:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/054-fractal-unfold-level-4-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-055-fractal-unfold-level-5": {
+  "at": "2026-11-21T01:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/055-fractal-unfold-level-5-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-056-fractal-unfold-level-6": {
+  "at": "2026-11-21T01:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/056-fractal-unfold-level-6-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-057-fractal-unfold-level-7": {
+  "at": "2026-11-21T01:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/057-fractal-unfold-level-7-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-058-fractal-unfold-level-8": {
+  "at": "2026-11-21T01:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/058-fractal-unfold-level-8-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-059-fractal-refolded": {
+  "at": "2026-11-21T01:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Hide replies folds the whole tree back to its first row 'Level one +'.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/059-fractal-refolded-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-060-blip-activated-menu": {
+  "at": "2026-11-21T01:13",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Clicking a blip activates it and its bar appears on that blip only: Edit, hide/show replies, link, Hide checkbox, delete, gear; the other blip shows none.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/060-blip-activated-menu-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-061-blip-gear-menu": {
+  "at": "2026-11-21T01:13",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The gear opens a longer menu than the original (Copy comment, Paste as reply, Duplicate blip, Cut blip, Send, Copy link, Playback, Delete), a superset, but the last item is cut off at the bottom of the blip container.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/061-blip-gear-menu-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-062-gear-closed": {
+  "at": "2026-11-21T01:13",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "After pressing Escape the gear menu is still open in the screenshot; the original closes it. Dismissal by Escape does not work (click outside not yet checked).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/062-gear-closed-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-063-root-edit-mode-ribbon": {
+  "at": "2026-11-21T01:13",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Edit opens the editor with a ribbon: Done, undo, redo, link, bold, italic, underline, strike, text colour, clear format, lists, Hide, delete, gear, mention, task, emoji; a Done bar under the body.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/063-root-edit-mode-ribbon-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-064-edit-link-popup": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The link button asks for the address with a browser prompt (window.prompt 'Enter a URL', BlipMenu.tsx:190). The original opens an in-page 'Insert link' popup with Text and URL fields and Submit/Remove. Functionally works (case G02), not the same surface.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/064-edit-link-popup-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-065-link-popup-closed": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Same as 064: no in-page link popup exists to dismiss; the browser prompt is used.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/064-edit-link-popup-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-066-edit-done-back-to-view": {
+  "at": "2026-11-21T01:13",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Done returns to the view state with the blip text unchanged and the Edit bar back.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/066-edit-done-back-to-view-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-067-reply-box": {
+  "at": "2026-11-21T01:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "A 'Write a reply...' box under the active blip.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/067-reply-box-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-068-insert-reply-sidebar": {
+  "at": "2026-11-21T02:04",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The right rail shows the insert buttons for the active blip (reply, @ mention, task, # tag, Gadgets) as the original's insert sidebar.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/068-insert-reply-sidebar-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-069-playback-ui": {
+  "at": "2026-11-21T02:22",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Wave Timeline opens a playback bar with first/previous/play/next/last buttons, a time slider, Copy and Paste as reply (as the original's bar), plus speed, Diff and Close Playback, and shows the historical content with the wave state.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/069-playback-ui-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-070-playback-closed": {
+  "at": "2026-11-21T02:22",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Close Playback returns to the live topic view.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/070-playback-closed-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-080-publics-list": {
+  "at": "2026-11-21T02:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Same as 016: public topics are listed, without the tag filter row and avatars of the original.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/016-nav-publics-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-081-public-topic-view": {
+  "at": "2026-11-21T01:55",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "A signed-out visitor opens a public topic and reads it (title, bullets, avatar and time) in a read-only view with a Sign in button and the note that annotations are read-only; no topic list or rail is shown to a visitor.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/081-public-topic-view-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-082-store-catalog": {
+  "at": "2026-11-21T01:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Gadget store catalog as in the description: search, category chips and gadget cards. The archive picture shows the topics list (capture artefact).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/082-store-catalog-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-090-mobile-topics-list": {
+  "at": "2026-11-21T01:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Phone layout: top tab bar (New, Topics, Mentions, Tasks, Public), search box, topic rows with title, time and avatar, shortcut legend; one panel at a time. The floating account/Next buttons overlap the legend's right edge slightly.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/090-mobile-topics-list-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-091-mobile-topic-view": {
+  "at": "2026-11-21T01:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "At 390 px the topic view has a header with back arrow and +, Invite/avatar/Share/gear, Edit ribbon, title, rows with markers, reply box, and floating account and Next buttons; the original shows its desktop three-pane page shrunk, ours is a real phone layout.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/091-mobile-topic-view-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-092-mobile-topic-scrolled": {
+  "at": "2026-11-21T01:39",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "At 390 px the topic content stays readable and the controls stay reachable (the fixture topic is short, so little scrolls).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/092-mobile-topic-scrolled-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-093-mobile-fractal-expanded": {
+  "at": "2026-11-21T01:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "At 390 px one thread unfolds in place: Oneliner shows its child blip with avatar and time, text wraps normally (the original's phone view wraps single letters).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/093-mobile-fractal-expanded-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-100-w1280-topics-list": {
+  "at": "2026-11-21T01:35",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "At 1280 px width the rail, list, topic pane and right rail all fit; Help sits at the very bottom edge.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/100-w1280-topics-list-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-101-w1280-topic-view": {
+  "at": "2026-11-21T01:35",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "At 1280 px the topic view fits with header, ribbon, title, rows and right rail (same remarks as 030 about marker style).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/101-w1280-topic-view-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-200-crop-left-rail-full": {
+  "at": "2026-11-21T01:35",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Left rail: New, Topics, Mentions, Tasks, Publics, Store, Teams, Help in the same order and colours (seen in the 010 composite); Pro badges absent.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/010-topics-list-default-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-201-crop-new-topic-btn": {
+  "at": "2026-11-21T01:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "+ New button, same place and role as the original's New.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/201-crop-new-topic-btn-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-202-crop-mentions-tab-badge": {
+  "at": "2026-11-21T01:54",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The Mentions tab shows no unread count although the account has one unread mention (the panel itself says Unread (1)); the original draws a green count on the tab. NavigationPanel.tsx has the badge element but it is not shown. App defect.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/202-crop-mentions-tab-badge-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-203-crop-tasks-tab-pro": {
+  "at": "2026-11-21T01:54",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Tasks tab with its check icon and label; the original's 'Pro' ribbon marks a paid plan that does not exist in the modernized product.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/203-crop-tasks-tab-pro-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-204-crop-search-box": {
+  "at": "2026-11-21T01:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Search box with magnifier button; the original's small options arrow is not drawn.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/204-crop-search-box-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-205-crop-topic-row": {
+  "at": "2026-11-21T01:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic row: title, preview text, author avatar and time at the right; unread bar not shown here because the row is read.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/205-crop-topic-row-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-206-crop-shortcut-legend": {
+  "at": "2026-11-21T01:35",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The shortcut legend at the foot of the list is present: Ctrl+Enter, Ctrl+Shift+Up/Down, @ Mention, Ctrl+Space, ~ Task, with Minimize shortcuts (seen in the 010 composite).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/010-topics-list-default-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-207-crop-topic-header": {
+  "at": "2026-11-21T01:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Header strip with Invite, participant avatar, Share and the gear is present (full-page capture because the crop selector missed; the strip is visible at the top of the topic pane).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/207-crop-topic-header-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-208-crop-share-btn": {
+  "at": "2026-11-21T01:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Share button with a lock icon, same label and place.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/208-crop-share-btn-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-209-crop-blip-menu-bar": {
+  "at": "2026-11-21T01:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Edit button plus the four icons (hide/show replies, link, gear), same order as the original.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/209-crop-blip-menu-bar-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-210-crop-next-topic-btn": {
+  "at": "2026-11-21T01:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Next button with arrow at the top of the right rail; green when unread blips exist, grey otherwise, as in the original.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/210-crop-next-topic-btn-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-211-crop-text-mindmap-toggle": {
+  "at": "2026-11-21T01:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Text view and Mind map buttons stacked in the right rail.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/211-crop-text-mindmap-toggle-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-220-crop-blb-bullet-with-plus": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "A bullet with its inline marker at the end (green while unread, grey once read, as in the original where the unread one is green).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/220-crop-blb-bullet-with-plus-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-221-crop-fold-button": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The fold control of an expanded blip (small minus box) is present at its top left.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/221-crop-fold-button-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-222-crop-root-blip-body": {
+  "at": "2026-11-21T01:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Title, avatar and time, bullets with markers and a reply box are present, but folded blips are drawn as green-[+] rows, not bullets with a grey bubble at the end, and nesting is not drawn as nested boxed blocks in the folded state.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/222-crop-root-blip-body-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-223-crop-reply-box": {
+  "at": "2026-11-21T01:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "A 'Write a reply...' box at the foot of the topic, as in the original.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/223-crop-reply-box-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-224-crop-blip-avatar-date": {
+  "at": "2026-11-21T01:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Author avatar with the time under it at the top right of the blip.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/224-crop-blip-avatar-date-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-225-crop-expanded-inline-thread": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "An expanded inline thread shows the child bullet with its marker, avatar and time inside a boxed block.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/225-crop-expanded-inline-thread-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-226-crop-unfold-minus": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The unfolded state shows the minus control that folds the thread again.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/226-crop-unfold-minus-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-230-crop-ribbon-full": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Ribbon in edit mode: Done, undo, redo, link, attach, image, B, I, U, S, highlight, clear, lists, plus Hide, delete, gear, comment and emoji; same order as the original ribbon.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/230-crop-ribbon-full-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-231-crop-ribbon-bold-group": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Bold button, same blue square as the original.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/231-crop-ribbon-bold-group-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-232-crop-ribbon-lists": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Bulleted list button present.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/232-crop-ribbon-lists-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-233-crop-ribbon-link-btn": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Link button present in the ribbon.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/233-crop-ribbon-link-btn-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-234-edit-size-dropdown": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Our ribbon has no text-size dropdown. (The original archive picture shows the same ribbon with nothing open, so the original's size control is not visible there either; its description lists one.)",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/234-edit-size-dropdown-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-235-edit-format-dropdown": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Our ribbon has no format (heading) dropdown; see 234 for the caveat about the original picture.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/235-edit-format-dropdown-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-236-edit-bg-palette": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The highlight button opens a small palette of background colours under the ribbon, as the original's strip of pastel colours.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/236-edit-bg-palette-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-237-edit-color-palette": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "No separate text-colour palette; only the background highlight palette (236) exists.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/237-edit-color-palette-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-238-edit-gadget-picker": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The Gadgets button opens an Insert Gadget panel: YouTube, Code, Poll, LaTeX, iFrame, Sheet, Image, Kanban, Planner.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/238-edit-gadget-picker-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-240-topic-content-0-russian-red-lines-2026-r": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/240-topic-content-0-russian-red-lines-2026-r-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-241-topic-content-1-maneuver-position-dialec": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/241-topic-content-1-maneuver-position-dialec-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-242-topic-content-2-htu-hth-stratbase-hcss-s": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/242-topic-content-2-htu-hth-stratbase-hcss-s-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-243-topic-content-3-cossackdom-oneliner-back": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/243-topic-content-3-cossackdom-oneliner-back-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-244-topic-content-4-hcss-team-ukraine-hcsshr": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/244-topic-content-4-hcss-team-ukraine-hcsshr-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-245-topic-content-5-geomics-hcss-stratbase-g": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/245-topic-content-5-geomics-hcss-stratbase-g-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-246-topic-content-6-claude-s-rizzoma-trainin": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/246-topic-content-6-claude-s-rizzoma-trainin-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-247-topic-content-7-liliia-hudziuk-hcss-one-": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/247-topic-content-7-liliia-hudziuk-hcss-one--compare.png",
+  "verdict": "WORKS"
+ },
+ "S-248-topic-content-8--": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/248-topic-content-8---compare.png",
+  "verdict": "WORKS"
+ },
+ "S-249-topic-content-9-russian-ukrainian-war-co": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/249-topic-content-9-russian-ukrainian-war-co-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-250-topic-content-10-virtual-machinery-hcss-r": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/250-topic-content-10-virtual-machinery-hcss-r-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-251-topic-content-11-htu-licenses-creds-passw": {
+  "at": "2026-11-21T01:53",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Topic content screen: title, tag chip line, five bullets and a reply box in the same arrangement as the original, with the topic row (title, tag and preview text, avatar, time) in the list. The generated fixture bullets have no child blips, so no [+] markers are drawn here (markers are checked in 220 and 030).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/251-topic-content-11-htu-licenses-creds-passw-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-260-mindmap-real-topic": {
+  "at": "2026-11-21T01:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Mind map of a topic: tree with connectors and fold circles, short/expanded switch; the root node reads 'Empty blip' where the original shows the root bullets.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/260-mindmap-real-topic-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-261-mindmap-real-topic-short": {
+  "at": "2026-11-21T01:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Short-label mind map as 260 (same fixture; the short button is active).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/261-mindmap-real-topic-short-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-262-text-view-real-topic": {
+  "at": "2026-11-21T01:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Text view of the topic, same as 036.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/262-text-view-real-topic-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-270-crop-unread-badge": {
+  "at": "2026-11-21T01:54",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Same finding as 202: no unread-mentions count on the Mentions tab. The unread topic row does carry its green bar.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/202-crop-mentions-tab-badge-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-272-settings-open-menu": {
+  "at": "2026-11-21T01:01",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The archive picture is the same gear menu as 020; same finding: 'Export multiple topics' is missing in ours. Ours additionally has an account menu (name, email, Settings, Sign out) on the avatar.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/020-settings-menu-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-273-settings-first-page": {
+  "at": "2026-11-21T01:01",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Judged by the description (settings first page): ours opens a Rizzoma Settings page with Profile (display name, e-mail), Notifications and Appearance sections and Back to Topics. The archive picture shows the topics view (capture artefact).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/273-settings-first-page-ours.png",
+  "verdict": "WORKS"
+ },
+ "S-274-crop-ribbon-mention-task": {
+  "at": "2026-11-21T01:23",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The right-rail insert buttons (comment, @ mention, task, # tag, Gadgets) match the original's rail.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/274-crop-ribbon-mention-task-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-2801-topic-0-unfold-1": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "First unfold of a topic's thread: judged from the same one-level unfold as 051 (a generated nine-level topic stands in for the real topics of the archive): nested boxed child under its bullet with avatar and time.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/051-fractal-unfold-level-1-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-2802-topic-0-unfold-2": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Second unfold: judged from the two-level unfold of 052 (generated topic stands in for the archive's real topics): boxed nested blocks, avatars and time visible to level 3.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/052-fractal-unfold-level-2-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-2811-topic-1-unfold-1": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "First unfold of a topic's thread: judged from the same one-level unfold as 051 (a generated nine-level topic stands in for the real topics of the archive): nested boxed child under its bullet with avatar and time.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/051-fractal-unfold-level-1-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-2812-topic-1-unfold-2": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Second unfold: judged from the two-level unfold of 052 (generated topic stands in for the archive's real topics): boxed nested blocks, avatars and time visible to level 3.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/052-fractal-unfold-level-2-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-2821-topic-2-unfold-1": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "First unfold of a topic's thread: judged from the same one-level unfold as 051 (a generated nine-level topic stands in for the real topics of the archive): nested boxed child under its bullet with avatar and time.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/051-fractal-unfold-level-1-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-2822-topic-2-unfold-2": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Second unfold: judged from the two-level unfold of 052 (generated topic stands in for the archive's real topics): boxed nested blocks, avatars and time visible to level 3.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/052-fractal-unfold-level-2-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-2832-topic-3-unfold-2": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Second unfold: judged from the two-level unfold of 052 (generated topic stands in for the archive's real topics): boxed nested blocks, avatars and time visible to level 3.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/052-fractal-unfold-level-2-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-290-help-overlay": {
+  "at": "2026-11-21T01:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Clicking Help in the left rail does nothing: no overlay appears (NavigationPanel.tsx renders the Help tab without a click handler). The archive picture shows no overlay either (a topic view), so the expected content is not documented; at minimum Help must open something.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/290-help-overlay-compare.png",
+  "verdict": "BROKEN"
+ },
+ "S-300-mobile-nav-mentions": {
+  "at": "2026-11-21T01:48",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Mentions panel at phone width with All and Unread filters; empty state for this fixture user (rows are checked at desktop width, 014).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/300-mobile-nav-mentions-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-301-mobile-nav-tasks": {
+  "at": "2026-11-21T01:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Tasks tab on a phone with All, Pending, Completed filters (empty state for this user; rows are checked at desktop width, 015).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/301-mobile-nav-tasks-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-302-mobile-nav-publics": {
+  "at": "2026-11-21T02:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Public tab at 390 px lists public topics under a search box; no tag filter row (see 016).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/302-mobile-nav-publics-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-303-mobile-search": {
+  "at": "2026-11-21T01:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Search box at the top of the phone topics list with the matching topic row below.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/303-mobile-search-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-304-mobile-mindmap": {
+  "at": "2026-11-21T02:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "At 390 px the topic has no Text view / Mind map controls (the right rail with them is not shown), so the mind map cannot be opened on a phone; the original offers it.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/304-mobile-mindmap-compare.png",
+  "verdict": "BROKEN"
+ },
+ "S-305-mobile-share-modal": {
+  "at": "2026-11-21T01:04",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "At 390 px the Share dialog fills the width, readable, same three levels, Copy link, Cancel and Save, touch-sized controls.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/305-mobile-share-modal-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-310-w1280-mindmap": {
+  "at": "2026-11-21T02:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "At 1280 px the mind map draws with its short/expanded switch; the root node reads 'Empty blip' as in 037.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/310-w1280-mindmap-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-311-w1280-fractal-open": {
+  "at": "2026-11-21T01:38",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "At 1280 px the nine-level fractal fits, but the avatar and time of levels 3 and deeper are cut off at the right edge (same defect as 053).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/311-w1280-fractal-open-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-312-w1280-mentions": {
+  "at": "2026-11-21T01:54",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "At 1280 px the Mentions panel lists the mention (topic title, time, text) with All and Unread filters next to the topic pane.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/312-w1280-mentions-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-320-public-topic-2": {
+  "at": "2026-11-21T01:55",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Second public topic, same read-only view for a signed-out visitor.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/320-public-topic-2-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-321-public-topic-3": {
+  "at": "2026-11-21T02:04",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Third public topic, same read-only view for a signed-out visitor.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/321-public-topic-3-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-322-sandbox-unfold-9": {
+  "at": "2026-11-21T01:11",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Nine levels unfold, but avatar and time of the deeper levels are cut off at the right edge (same defect as levels 3 to 8).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/322-sandbox-unfold-9-compare.png",
+  "verdict": "PARTIAL"
+ },
+ "S-323-topics-list-scrolled": {
+  "at": "2026-11-21T01:35",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The list scrolls and keeps showing rows with title, preview, avatar and time (the first row slides under the search box slightly).",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/323-topics-list-scrolled-compare.png",
+  "verdict": "WORKS"
+ },
+ "S-324-store-scrolled": {
+  "at": "2026-11-21T02:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "The gadget catalog scrolls and shows more cards (Code, Poll) with their badges and capability tags.",
+  "shot": "/home/stephan/ledger-evidence/parity1/parity/324-store-scrolled-compare.png",
+  "verdict": "WORKS"
+ }
+}
