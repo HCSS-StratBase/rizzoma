@@ -88,7 +88,9 @@ describe('client AuthPanel security and recovery behavior', () => {
 
     expect(container.querySelector('.twitter-auth-btn')).toBeNull();
     expect(container.textContent).toContain('X/Twitter cannot verify the email address on this invitation');
-    expect(container.textContent).toContain('Create Account');
+    // an invitation link opens SIGN IN first; Sign up (account for the invited address) stays one click away
+    expect(container.textContent).toContain('Sign In');
+    expect(container.textContent).toContain('Sign up');
   });
 
   it('always clears busy state and shows a retryable error after a network rejection', async () => {

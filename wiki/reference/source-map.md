@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/invite-journey
-source_commit: b43236d9
+source_branch: fix/invite-login-first
+source_commit: 7ad90dc7
 generated: true
 ---
 
@@ -47,7 +47,7 @@ graph LR
 | `src/client/components/AnonymousTopicRoute.css` | 86 | — |
 | `src/client/components/AnonymousTopicRoute.tsx` | 78 | (no header comment; exports AnonymousTopicRoute) |
 | `src/client/components/AuthPanel.css` | 208 | — |
-| `src/client/components/AuthPanel.tsx` | 487 | (no header comment; exports AuthUser) |
+| `src/client/components/AuthPanel.tsx` | 489 | (no header comment; exports AuthUser) |
 | `src/client/components/BlipContent.tsx` | 13 | (no header comment; exports BlipContent) |
 | `src/client/components/CreateTopicModal.css` | 276 | — |
 | `src/client/components/CreateTopicModal.tsx` | 139 | (no header comment; exports CreateTopicModal) |

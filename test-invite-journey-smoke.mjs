@@ -94,11 +94,10 @@ const inTopic = async (p, id) => { await p.page.waitForFunction((tid) => locatio
 {
   const email = `old-${RUN}@example.com`; await seedVerifiedE2EAccount(email, PW); const id = await newTopic(`ZZ SCRATCH invite b ${RUN}`); const link = await invite(id, email);
   const p = await person('b-existing'); await p.page.goto(link, { waitUntil: 'domcontentloaded' }); await sleep(3500); await p.shot('1-link-signed-out');
-  // the link opens the sign-up form; an existing user who types the password there must be sent on to sign in, not left on an error
-  await signIn(p, email, PW); await sleep(2500); await p.shot('2-after-first-try');
-  const notice = (await p.page.locator('body').innerText()).replace(/\s+/g, ' ');
-  check(/already has an account/i.test(notice), 'b) an existing user on the sign-up form is told to sign in (not left on a registration error)', notice.slice(0, 20));
-  if (await p.page.locator('.shell-auth-logout').count() === 0) { await signIn(p, email, PW); }
+  // the link opens SIGN IN first (an existing user needs no detour)
+  const first = (await p.page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check(/Sign in to continue/i.test(first) && !/Create an account/i.test(first), 'b) an invitation link opens the sign-in form first', first.slice(0, 40));
+  await signIn(p, email, PW);
   await sleep(7000); await p.shot('3-after-sign-in');
   check(await inTopic(p, id), 'b) existing user signed out: link, sign-in, lands in the topic', p.page.url().slice(-60));
   // f1) the same link a second time (used token)
@@ -106,6 +105,17 @@ const inTopic = async (p, id) => { await p.page.waitForFunction((tid) => locatio
   await p2.page.goto(link, { waitUntil: 'domcontentloaded' }); await sleep(5000); await p2.shot('1-used-link');
   const txt = (await p2.page.locator('body').innerText()).replace(/\s+/g, ' ');
   check(await inTopic(p2, id) || /already|used|invalid|expired/i.test(txt), 'f) a used link still opens the topic for its owner or says clearly why not', txt.slice(0, 100));
+}
+// b2) an existing user who ends up on the sign-up form is sent on to sign in, not left on a registration error
+{
+  const email = `old2-${RUN}@example.com`; await seedVerifiedE2EAccount(email, PW); const id = await newTopic(`ZZ SCRATCH invite b2 ${RUN}`); const link = await invite(id, email);
+  const p = await person('b2-signup'); await p.page.goto(link, { waitUntil: 'domcontentloaded' }); await sleep(3000);
+  await p.page.getByText('Sign up').first().click(); await sleep(500);
+  await signIn(p, email, PW); await sleep(2500); await p.shot('1-after-sign-up-try');
+  const t = (await p.page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check(/already has an account/i.test(t), 'b2) an existing user on the sign-up form is told to sign in', t.slice(0, 40));
+  await signIn(p, email, PW); await sleep(7000);
+  check(await inTopic(p, id), 'b2) and lands in the topic after signing in', p.page.url().slice(-50));
 }
 // c) already signed in as the invited address
 {
