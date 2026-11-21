@@ -1,7 +1,7 @@
 // Family N: navigation panel, topics list, tabs, right tools panel, store/teams/publics, new-topic wizard,
 // export, tags. Cases for rows the contract lists as "Gap / Not started" are marked knownGap: they run, report
 // their result and do not fail the suite, so the gap stays visible instead of silently unmeasured.
-import { newUser, shareWith, plain, sleep, BASE } from '../lib.mjs';
+import { newUser, shareWith, plain, sleep, BASE, pickPerson } from '../lib.mjs';
 
 const home = async (c) => { await c.page.goto(`${BASE}/?layout=rizzoma`, { waitUntil: 'domcontentloaded' }); await sleep(4500); };
 
@@ -140,8 +140,8 @@ export default [
       const id = await ctx.topic(a, 'mention tab'); await shareWith(id, b.user, 'editor');
       await a.openTopic(id); await a.replyAtTopic('ping'); await a.ensureExpanded('ping'); await a.enterEditByClick('ping');
       await a.page.keyboard.press('End'); await a.page.keyboard.type(' @', { delay: 40 }); await sleep(1500);
-      await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 40), { delay: 40 }); await sleep(1200);
-      await a.page.keyboard.press('Enter'); await sleep(800); await a.doneAll(); await sleep(2500);
+      await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 6), { delay: 40 }); await sleep(1200);
+      await pickPerson(a.page, b.user); await sleep(800); await a.doneAll(); await sleep(2500);
       await home(b); await b.page.getByText('Mentions', { exact: true }).first().click(); await sleep(2500);
       const items = await b.page.locator('.mention-item').allInnerTexts();
       ctx.ok(items.length >= 1, 'the Mentions tab lists the mention', JSON.stringify(items));
