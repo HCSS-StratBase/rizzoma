@@ -111,13 +111,15 @@ router.patch('/comments/:id', requireAuth, csrfProtect(), async (req, res): Prom
 });
 
 // DELETE /api/comments/:id
-router.delete('/comments/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> => {
+router.delete('/comments/:id', requireAuth, csrfProtect(), async (req, res, next): Promise<void> => {
   const userId = req.user!.id;
   try {
     const id = String(req.params['id'] || '');
     const existing = await getDoc<unknown>(id);
     if (!isCommentDoc(existing)) {
-      res.status(404).json({ error: 'not_found', requestId: (req as any)?.id });
+      // Not a topic comment: the inline (selected-text) comments router mounted on the same /api prefix owns this id.
+      // Answering 404 here shadowed DELETE /api/comments/:commentId for every inline comment (suite case S15).
+      next();
       return;
     }
     const access = await requireWaveAccess(req, res, existing.topicId, 'comment');

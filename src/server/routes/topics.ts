@@ -206,6 +206,7 @@ router.get('/', noStore, async (req, res): Promise<void> => {
         return bTime - aTime;
       });
 
+  const blipSnippets = new Map<string, string>();
   const respondWithUnread = async (
     list: TopicListItem[],
     more: boolean,
@@ -258,7 +259,7 @@ router.get('/', noStore, async (req, res): Promise<void> => {
       const authorAvatar = author?.avatar || '/s/img/user/anonim.png';
       return {
         ...topic,
-        snippet: buildSnippet(topic.content),
+        snippet: (topic.id ? blipSnippets.get(topic.id) : undefined) ?? buildSnippet(topic.content),
         authorName,
         authorAvatar,
         isFollowed: userId && topic.id ? followedTopics.has(topic.id) : undefined,
@@ -280,11 +281,29 @@ router.get('/', noStore, async (req, res): Promise<void> => {
       // Server-side search: use Mango regex on title/content + createdAt sort for stable paging
       const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const qRe = `(?i).*${escapeRe(q)}.*`;
+      // The original Rizzoma search finds text inside ANY blip of a topic, not only the topic body. Collect the
+      // topics whose live blips match (bounded, best effort); the access filter in `selector` still applies to them.
+      let blipTopicIds: string[] = [];
+      try {
+        const blipHits = await find<{ waveId?: string; content?: string }>(
+          { type: 'blip', deleted: { $ne: true }, content: { $regex: qRe } },
+          { limit: 200 },
+        );
+        blipTopicIds = [...new Set((blipHits.docs || []).map((b) => String(b.waveId || '')).filter(Boolean))];
+        for (const hit of blipHits.docs || []) {
+          const wid = String(hit.waveId || '');
+          if (!wid || blipSnippets.has(wid)) continue;
+          const plain = String(hit.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          const at = plain.toLowerCase().indexOf(q);
+          if (at >= 0) blipSnippets.set(wid, plain.slice(Math.max(0, at - 40), at + q.length + 80));
+        }
+      } catch { /* title/content search still works without blip hits */ }
       const searchSelector: any = {
         ...selector,
         $or: [
           { title: { $regex: qRe } },
           { content: { $regex: qRe } },
+          ...(blipTopicIds.length ? [{ _id: { $in: blipTopicIds } }] : []),
         ],
       };
       try {

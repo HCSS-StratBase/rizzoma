@@ -175,6 +175,13 @@ router.get('/by-blip/:blipId', noStore, async (req, res): Promise<void> => {
       })),
     });
   } catch (e: any) {
+    // A deleted or missing blip is an expected answer (the client may still ask for its tasks while it
+    // unmounts), not a server error: answer 410/404 and keep the error log for real failures.
+    const gone = /^(404|410)\b/.exec(String(e?.message || ''));
+    if (gone) {
+      res.status(Number(gone[1])).json({ error: String(e?.message || '').replace(/^\d+\s*/, '') || 'blip_gone' });
+      return;
+    }
     console.error('[tasks] by-blip error', e);
     res.status(500).json({ error: e?.message || 'list_by_blip_error' });
   }
