@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: feat/original-features
-source_commit: 31450440
+source_branch: fix/toast-stack
+source_commit: 645d77d8
 generated: true
 ---
 
@@ -105,7 +105,7 @@ graph LR
 | `src/client/components/TeamsPanel.tsx` | 120 | (no header comment; exports TeamsPanel) |
 | `src/client/components/TipsBox.css` | 161 | TipsBox.css - Authentic Legacy Rizzoma Tips / Shortcuts Box |
 | `src/client/components/TipsBox.tsx` | 85 | There is no recorded video in this product: Play video opens the written First steps and shortcuts (the same window as Help). |
-| `src/client/components/Toast.tsx` | 52 | (no header comment; exports Toast) |
+| `src/client/components/Toast.tsx` | 58 | (no header comment; exports Toast) |
 | `src/client/components/TopicsList.tsx` | 123 | (no header comment; exports TopicsList) |
 | `src/client/components/UserPresence.css` | 60 | — |
 | `src/client/components/UserPresence.tsx` | 56 | (no header comment; exports UserPresence) |

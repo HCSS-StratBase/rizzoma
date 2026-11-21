@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: feat/original-features
-source_commit: 31450440
+source_branch: fix/toast-stack
+source_commit: 645d77d8
 generated: true
 ---
 

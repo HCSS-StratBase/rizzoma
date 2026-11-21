@@ -132,6 +132,7 @@ const inTopic = async (p, id) => { await p.page.waitForFunction((tid) => locatio
   await p.page.goto(link, { waitUntil: 'domcontentloaded' }); await sleep(1800); await p.shot('1-toast');
   const toast = (await p.page.locator('[data-testid="toast"]').allInnerTexts().catch(() => [])).join(' ');
   await sleep(2500); await p.shot('2-after');
+  check(/another email/i.test(toast), 'd) the notice is not replaced by a friendly "Welcome back!"', toast.slice(0, 80));
   const panel = (await p.page.locator('[data-testid="invite-problem"]').allInnerTexts().catch(() => [])).join(' ');
   check(/another email address/i.test(panel), 'd) a different address gets a clear message that stays on screen', panel.slice(0, 140) || toast.slice(0, 80));
 }
