@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/collab-stale
-source_commit: d471133f
+source_branch: test/ledger-batch5
+source_commit: a1f13ef3
 generated: true
 ---
 
@@ -320,7 +320,7 @@ graph LR
 | `scripts/tester-scenarios/cases/S-server-contract.mjs` | 323 | Family S: the server contract as a signed-in colleague (and a second user, and a stranger) meets it: |
 | `scripts/tester-scenarios/cases/T-toolbar-shortcuts.mjs` | 163 | Family T: the rich-text toolbar (every button) and the documented keyboard shortcuts, each judged by |
 | `scripts/tester-scenarios/cases/W-realtime-presence.mjs` | 62 | Family W: real-time collaboration seen from the other user's screen (presence, cursors, typing, live updates). |
-| `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 208 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
+| `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 213 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
 | `scripts/tester-scenarios/cases/Y-untested.mjs` | 199 | Family Y: behaviours of original client modules that no earlier case exercised (SDS/coordinator 21 Nov: "untested, not product decisions"). |
 | `scripts/tester-scenarios/cases/_nest.mjs` | 46 | Level-1 blip from the topic reply box, then open it and put the caret in its editor. |
 | `scripts/tester-scenarios/cases/_sh.mjs` | 12 | One-shot shell helper for contract cases: runs a command once and returns { status, out }. |
@@ -328,8 +328,8 @@ graph LR
 | `scripts/tester-scenarios/coverage-matrix.mjs` | 44 | Generates TESTERS_FEATURE_MATRIX.md (every documented feature row -> the behavioural case ids that |
 | `scripts/tester-scenarios/delay-proxy.mjs` | 19 | TCP delay proxy: reproduces a real network's latency on the local stack, for HTTP and WebSocket alike (Chromium's own latency emulation |
 | `scripts/tester-scenarios/feature-rows.mjs` | 32 | Parses the machine-readable feature contract (RIZZOMA_FEATURES_STATUS.md, "Comprehensive Feature |
-| `scripts/tester-scenarios/ledger.mjs` | 150 | FEATURE LEDGER generator. Row sources: (A) the 240-row contract RIZZOMA_FEATURES_STATUS.md, (B) every gadget in the |
-| `scripts/tester-scenarios/lib.mjs` | 399 | Shared driver for the tester-scenarios suite. A "client" is one real browser context signed in as |
+| `scripts/tester-scenarios/ledger.mjs` | 155 | FEATURE LEDGER generator. Row sources: (A) the 240-row contract RIZZOMA_FEATURES_STATUS.md, (B) every gadget in the |
+| `scripts/tester-scenarios/lib.mjs` | 411 | Shared driver for the tester-scenarios suite. A "client" is one real browser context signed in as |
 | `scripts/tester-scenarios/list-rows.mjs` | 9 | — |
 | `scripts/tester-scenarios/live-sweep.mjs` | 35 | Delete the suite's scratch topics ("ZZ SCRATCH suite ...") that the two live test accounts own on production, then prove with a |
 | `scripts/tester-scenarios/live-three.mjs` | 171 | Live check of three shipped fixes as the non-owner account Fractal Tester 2 (and Fractal Tester 1 as the topic owner for |
