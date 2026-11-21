@@ -110,16 +110,28 @@ async function recordBlipHistory(
   }
 }
 
-async function touchTopic(waveId: string): Promise<void> {
+export async function touchTopic(waveId: string): Promise<void> {
   if (!waveId) return;
-  try {
-    const topic = await getDoc<{ _id: string; _rev: string; updatedAt?: number; createdAt: number; type?: string }>(waveId);
-    if (!topic || topic.type !== 'topic') return;
-    const now = Date.now();
-    const next = { ...topic, updatedAt: now };
-    await updateDoc(next as any);
-  } catch (error) {
-    console.error('[blips] failed to touch topic for activity', { waveId, error });
+  // Two people adding blips at the same moment both read the topic and write its activity time; the
+  // slower write used to hit a CouchDB revision conflict, be logged as an error and be dropped (a stale
+  // "last activity" in the topics list). Re-read and retry a few times instead (suite case C04).
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      const topic = await getDoc<{ _id: string; _rev: string; updatedAt?: number; createdAt: number; type?: string }>(waveId);
+      if (!topic || topic.type !== 'topic') return;
+      const next = { ...topic, updatedAt: Date.now() };
+      await updateDoc(next as any);
+      return;
+    } catch (error: any) {
+      const conflict = /\b409\b/.test(String(error?.message || ''));
+      if (conflict && attempt < 4) {
+        await new Promise((resolve) => setTimeout(resolve, 20 + Math.floor(Math.random() * 60) * (attempt + 1)));
+        continue;
+      }
+      // Still conflicting after the retries means other writers keep updating the topic: its activity time is fresh anyway.
+      if (!conflict) console.error('[blips] failed to touch topic for activity', { waveId, error });
+      return;
+    }
   }
 }
 
