@@ -862,3 +862,7 @@ last_verified: 2026-11-06
 
 - **¶1** □ The text background palette (`DEFAULT_BG_COLORS`, src/shared/constants/textFormatting.ts:50) now has the original's seven swatches in one row (white clears, yellow, green, teal, blue, purple, pink), colours sampled from archive screenshot 237; before: eight different swatches in two rows of four (`.color-panel` in BlipMenu.css)
 - **¶2** □ Regression test: `client.BlipMenu.test.tsx` expects seven swatches and the new yellow; suite case Y05 opens the palette in the edit ribbon and applies a colour
+
+## [2026-11-21] lint | node_modules symlink removed from version control
+
+- **¶1** □ PR 128 (the tester-scenarios suite) committed a `node_modules` symlink (a worktree convenience) because `.gitignore` had only `node_modules/`, which does not match a symlink; the deploy's `npm ci` replaced it, so `verify_release` saw a dirty tree and refused the first release built after it (bf7ef6a2) (scripts/deploy-vps.sh:324). The symlink is now untracked and `/node_modules` is ignored

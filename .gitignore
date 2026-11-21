@@ -163,3 +163,6 @@ DerivedData/
 # Built APK output (reproducible from source — do not commit).
 dist/apk/
 .claude/
+
+# the node_modules symlink of a worktree (a trailing-slash pattern does not match a symlink)
+/node_modules
