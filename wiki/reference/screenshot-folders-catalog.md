@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/paste-image-upload
-source_commit: 28eb980e
+source_branch: test/tester-scenarios-suite
+source_commit: 7acd4b0f
 generated: true
 ---
 

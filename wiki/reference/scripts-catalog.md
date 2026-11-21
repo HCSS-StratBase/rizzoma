@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/paste-image-upload
-source_commit: 28eb980e
+source_branch: test/tester-scenarios-suite
+source_commit: 7acd4b0f
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 209 files in `scripts/`, 62 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 243 files in `scripts/`, 65 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -75,6 +75,9 @@ graph LR
 | `test:liliia` | `node test-liliia-smoke.mjs` |
 | `test:gadgets-render` | `node test-gadgets-render-smoke.mjs` |
 | `test:phone-layout` | `node test-phone-layout-smoke.mjs` |
+| `test:tester-scenarios` | `node test-tester-scenarios.mjs` |
+| `test:tester-scenarios:headed` | `bash scripts/tester-scenarios ⁄ run-headed.sh` |
+| `test:scenarios-coverage` | `node scripts/tester-scenarios ⁄ coverage-matrix.mjs --check` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
 | `test:root-ctrl-enter` | `node scripts ⁄ test-root-ctrl-enter-survives-reload.mjs` |
 | `test:native-ctrl-enter` | `node test-native-ctrl-enter-smoke.mjs` |
@@ -102,7 +105,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (209)
+## scripts/ (243)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -285,6 +288,40 @@ graph LR
 | `scripts/test_recover_soft_deleted_blips.py` | 117 | Test of recover_soft_deleted_blips.py against a THROWAWAY database on a scratch CouchDB. |
 | `scripts/test_surface7_selection.mjs` | 88 | — |
 | `scripts/test_wiki_first_hook.py` | 58 | Tests for scripts ⁄ wiki_first_hook.py: wiki-first and ORIGINAL-FIRST gates. Run: python3 scripts ⁄ test_wiki_first_hook.py |
+| `scripts/tester-scenarios/README.md` | — | — |
+| `scripts/tester-scenarios/case_sheet.py` | 26 | Contact sheets of the evidence screenshot of passing cases, for reading: case_sheet.py <results.json[,more]> <steps dir> <out dir> [case ids...] |
+| `scripts/tester-scenarios/cases/A-nesting.mjs` | 295 | Family A: nesting and typing. Every text must land in ITS OWN blip, under the right parent, |
+| `scripts/tester-scenarios/cases/B-edit-modes.mjs` | 179 | Family B: edit modes (view <-> edit, jump-in, Ctrl+Enter from view state, reply vs inline comment, |
+| `scripts/tester-scenarios/cases/C-data-safety.mjs` | 150 | Family C: data safety ("my blips disappear"). Every created blip must still exist, with the right |
+| `scripts/tester-scenarios/cases/D-invite-people.mjs` | 134 | Family D: invite and people. The tester: "I cannot invite people to the topics" and the people list |
+| `scripts/tester-scenarios/cases/E-images-files.mjs` | 104 | Family E: images and files. The tester: "screenshots work but a pasted image takes almost the whole page". |
+| `scripts/tester-scenarios/cases/F-time-authorship.mjs` | 82 | Family F: time and authorship. The tester: "the time a blip was created does not display (only while writing)". |
+| `scripts/tester-scenarios/cases/G-working-features.mjs` | 233 | Family G: the things the tester said work, which must keep working: login/logout, links, follow-the-green, |
+| `scripts/tester-scenarios/cases/I-phone-mobile.mjs` | 92 | Family I: phone viewport (390 x 844) and the mobile / PWA rows. Real touch-sized viewport, real typing. |
+| `scripts/tester-scenarios/cases/L-blb-fractal.mjs` | 127 | Family L: the BLB paradigm seen on screen: [+] markers, portal placement, nested inline expansion, deep fractal |
+| `scripts/tester-scenarios/cases/N-navigation-ui.mjs` | 157 | Family N: navigation panel, topics list, tabs, right tools panel, store/teams/publics, new-topic wizard, |
+| `scripts/tester-scenarios/cases/P-parity.mjs` | 346 | Family P: parity with the ORIGINAL Rizzoma, one ledger row per reference screenshot of |
+| `scripts/tester-scenarios/cases/Q-native-guard.mjs` | 26 | Family Q: guard for the experimental native render path. ?render=native is an opt-in, unfinished port |
+| `scripts/tester-scenarios/cases/R-contract-perf.mjs` | 105 | Family R: repository and deployment contract rows plus the 500-blip performance smoke. One-shot regression |
+| `scripts/tester-scenarios/cases/S-server-contract.mjs` | 323 | Family S: the server contract as a signed-in colleague (and a second user, and a stranger) meets it: |
+| `scripts/tester-scenarios/cases/T-toolbar-shortcuts.mjs` | 163 | Family T: the rich-text toolbar (every button) and the documented keyboard shortcuts, each judged by |
+| `scripts/tester-scenarios/cases/W-realtime-presence.mjs` | 62 | Family W: real-time collaboration seen from the other user's screen (presence, cursors, typing, live updates). |
+| `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 208 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
+| `scripts/tester-scenarios/cases/_nest.mjs` | 46 | Level-1 blip from the topic reply box, then open it and put the caret in its editor. |
+| `scripts/tester-scenarios/cases/_sh.mjs` | 12 | One-shot shell helper for contract cases: runs a command once and returns { status, out }. |
+| `scripts/tester-scenarios/cases/index.mjs` | 21 | Every cases/<family>-*.mjs file default-exports an array of case specs: |
+| `scripts/tester-scenarios/coverage-matrix.mjs` | 44 | Generates TESTERS_FEATURE_MATRIX.md (every documented feature row -> the behavioural case ids that |
+| `scripts/tester-scenarios/feature-rows.mjs` | 32 | Parses the machine-readable feature contract (RIZZOMA_FEATURES_STATUS.md, "Comprehensive Feature |
+| `scripts/tester-scenarios/ledger.mjs` | 130 | FEATURE LEDGER generator. Row sources: (A) the 240-row contract RIZZOMA_FEATURES_STATUS.md, (B) every gadget in the |
+| `scripts/tester-scenarios/lib.mjs` | 363 | Shared driver for the tester-scenarios suite. A "client" is one real browser context signed in as |
+| `scripts/tester-scenarios/list-rows.mjs` | 9 | — |
+| `scripts/tester-scenarios/live-three.mjs` | 171 | Live check of three shipped fixes as the non-owner account Fractal Tester 2 (and Fractal Tester 1 as the topic owner for |
+| `scripts/tester-scenarios/parity_compose.py` | 26 | Side-by-side composites for the parity rows: legacy reference screenshot (left) next to the modernized screen (right). |
+| `scripts/tester-scenarios/parity_sheet.py` | 19 | Stack several composites into one image for reading: parity_sheet.py <evidence dir> <out.png> key [key ...] |
+| `scripts/tester-scenarios/review.py` | 17 | Record a reading of one screenshot: review.py <row id> <WORKS\|PARTIAL\|BROKEN> "<what the screenshot shows>" [<screenshot path>] |
+| `scripts/tester-scenarios/review_case.py` | 13 | Record a reading for every ledger row a case covers: review_case.py <results.json[,more]> <case id> <WORKS\|PARTIAL\|BROKEN> "<note>" [<sheet path>] |
+| `scripts/tester-scenarios/reviews.json` | — | — |
+| `scripts/tester-scenarios/run-headed.sh` | 21 | One-shot: run the tester-scenarios suite in a REAL, HEADED Chromium on a PRIVATE virtual display (Xvfb), never on |
 | `scripts/verify-blb-fractal-proof.mjs` | 224 | — |
 | `scripts/verify-fixes-261108.mjs` | 172 | — |
 | `scripts/verify-full-parity-live.mjs` | 205 | — |
@@ -308,7 +345,7 @@ graph LR
 | `scripts/wiki_first_hook.py` | 236 | Wiki-first gate for ONE repo, shared by every agent CLI that can run hooks. |
 | `scripts/wiki_generate_catalogs.py` | 326 | import json |
 | `scripts/wiki_generate_original_catalog.py` | 49 | Generate wiki/reference ⁄ original-source-map.md: every .coffee and .js file of the vendored ORIGINAL |
-| `scripts/wiki_lint.py` | 23 | Thin wrapper in /mnt/c/Rizzoma/scripts ⁄ wiki_lint.py that invokes the canonical |
+| `scripts/wiki_lint.py` | 48 | Thin wrapper in /mnt/c/Rizzoma/scripts ⁄ wiki_lint.py that invokes the canonical |
 | `scripts/workflow-note-260329-canonical.md` | — | — |
 | `scripts/workflow-note-260329-late.md` | — | — |
 | `scripts/workflow-note-260330-app-runtime.md` | — | — |
