@@ -893,3 +893,11 @@ last_verified: 2026-11-06
 
 - **¶1** □ After sign-in the toast "Welcome back!" replaced "This invitation is invalid or belongs to another account" (the toast holds one message); `Toast` now keeps an error on screen for its 3 seconds and ignores non-error messages that arrive meanwhile (src/client/components/Toast.tsx, `shownError`)
 - **¶2** □ Regression test: `test-invite-journey-smoke.mjs` case d checks the notice text
+
+
+## [2026-11-21] ingest | Tester suite batch 4: local ledger 391 of 391, live column 148, mail guard
+
+- **¶1** □ Local column 391 WORKS after SDS's rulings (37 server-internal rows by their passing API case, 13 deliberate differences closed by decision, `byApi` / `byDecision` in scripts/tester-scenarios/reviews.json, honoured on both columns by scripts/tester-scenarios/ledger.mjs) and the three restored features
+- **¶2** □ New family Y (scripts/tester-scenarios/cases/Y-untested.mjs): Play video, task deadline, session expiry, export download, ribbon palette, hand-off timing, dead invitation link, provider landing, user card, export multiple, introduction
+- **¶3** □ Live column 148 of 391 WORKS; failures are classified in HANDOFF (fixture limits of two accounts, slow shared VPS I/O, 409 `collaboration_projection_stale` retries); `lib.mjs` allows that 409 on production only when every such save later succeeds
+- **¶4** □ Mail: live `shareWith` now refuses without `SUITE_LIVE_ALLOW_MAIL=1` (about 95 real invitation mails reached SDS's inbox); local runs use scripts/tester-scenarios/mail-sink.mjs; latency reproduction with scripts/tester-scenarios/delay-proxy.mjs; production scratch cleanup with scripts/tester-scenarios/live-sweep.mjs (zero suite topics remain)

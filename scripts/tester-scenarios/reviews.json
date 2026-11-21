@@ -1,31 +1,35 @@
 {
  "1.1": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S02 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S02 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "1.10": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S01, S07 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S01, S07 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "1.11": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S03 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S03 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "1.12": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S03 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S03 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "1.2": {
   "at": "2026-11-21T02:34",
@@ -35,39 +39,44 @@
   "verdict": "WORKS"
  },
  "1.3": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S04 passed against the running server. This row has no screen of its own: an external identity provider is involved (needs a real Google, Facebook, Microsoft, SAML or Twitter account), so only the API contract is testable here. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S04 passed against the running server. This row has no screen of its own: an external identity provider is involved (needs a real Google, Facebook, Microsoft, SAML or Twitter account), so only the API contract is testable here. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "1.4": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S04 passed against the running server. This row has no screen of its own: an external identity provider is involved (needs a real Google, Facebook, Microsoft, SAML or Twitter account), so only the API contract is testable here. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S04 passed against the running server. This row has no screen of its own: an external identity provider is involved (needs a real Google, Facebook, Microsoft, SAML or Twitter account), so only the API contract is testable here. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "1.5": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S04 passed against the running server. This row has no screen of its own: an external identity provider is involved (needs a real Google, Facebook, Microsoft, SAML or Twitter account), so only the API contract is testable here. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S04 passed against the running server. This row has no screen of its own: an external identity provider is involved (needs a real Google, Facebook, Microsoft, SAML or Twitter account), so only the API contract is testable here. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "1.6": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S04 passed against the running server. This row has no screen of its own: an external identity provider is involved (needs a real Google, Facebook, Microsoft, SAML or Twitter account), so only the API contract is testable here. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S04 passed against the running server. This row has no screen of its own: an external identity provider is involved (needs a real Google, Facebook, Microsoft, SAML or Twitter account), so only the API contract is testable here. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "1.7": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S04 passed against the running server. This row has no screen of its own: an external identity provider is involved (needs a real Google, Facebook, Microsoft, SAML or Twitter account), so only the API contract is testable here. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S04 passed against the running server. This row has no screen of its own: an external identity provider is involved (needs a real Google, Facebook, Microsoft, SAML or Twitter account), so only the API contract is testable here. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "1.8": {
   "at": "2026-11-21T02:34",
@@ -77,18 +86,20 @@
   "verdict": "WORKS"
  },
  "1.9": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S02 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S02 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "10.1": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S13 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S13 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "10.10": {
   "at": "2026-11-21T02:38",
@@ -147,11 +158,12 @@
   "verdict": "WORKS"
  },
  "10.6": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S13 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S13 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "10.7": {
   "at": "2026-11-21T02:38",
@@ -175,11 +187,12 @@
   "verdict": "WORKS"
  },
  "11.1": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "11.2": {
   "at": "2026-11-21T02:31",
@@ -189,11 +202,12 @@
   "verdict": "WORKS"
  },
  "11.3": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "11.4": {
   "at": "2026-11-21T03:16",
@@ -203,18 +217,20 @@
   "verdict": "WORKS"
  },
  "11.5": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "11.6": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "12.1": {
   "at": "2026-11-21T02:39",
@@ -700,11 +716,12 @@
   "verdict": "WORKS"
  },
  "16.2": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S05 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S05 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "16.3": {
   "at": "2026-11-21T02:46",
@@ -728,32 +745,36 @@
   "verdict": "WORKS"
  },
  "17.1": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S03 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S03 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "17.2": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S14 passed (request id, security headers, CORS). Server middleware and route files have no screen. SDS to accept.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S14 passed (request id, security headers, CORS). Server middleware and route files have no screen. SDS to accept.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "17.3": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S03 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S03 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "17.4": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S14 passed (request id, security headers, CORS). Server middleware and route files have no screen. SDS to accept.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S14 passed (request id, security headers, CORS). Server middleware and route files have no screen. SDS to accept.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "17.5": {
   "at": "2026-11-21T03:16",
@@ -889,11 +910,12 @@
   "verdict": "WORKS"
  },
  "2.5": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S06 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S06 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "2.6": {
   "at": "2026-11-21T02:30",
@@ -1295,39 +1317,44 @@
   "verdict": "WORKS"
  },
  "5.1": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S10 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S10 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "5.2": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S10 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S10 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "5.3": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S10 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S10 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "5.4": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S10 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S10 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "5.5": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S10 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S10 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "5.6": {
   "at": "2026-11-21T02:34",
@@ -1358,32 +1385,36 @@
   "verdict": "WORKS"
  },
  "6.1": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "6.2": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "6.3": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "6.4": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "6.5": {
   "at": "2026-11-21T02:39",
@@ -1407,18 +1438,20 @@
   "verdict": "WORKS"
  },
  "7.2": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S11 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S11 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "7.3": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S11 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S11 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "7.4": {
   "at": "2026-11-21T03:16",
@@ -1456,32 +1489,36 @@
   "verdict": "WORKS"
  },
  "8.2": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S12 passed: the search response carries a snippet with the matched text. The snippet is not drawn in the topics list rows (rows show the topic preview), so there is no separate screen to check. SDS to decide.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S12 passed: the search response carries a snippet with the matched text. The snippet is not drawn in the topics list rows (rows show the topic preview), so there is no separate screen to check. SDS to decide.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "8.3": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S13 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S13 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "8.4": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S13 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S13 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "8.5": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "API contract case S13 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): accepted, the passing API case counts as the check (WORKS-by-API). API contract case S13 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byApi": true
  },
  "9.1": {
   "at": "2026-11-21T02:29",
@@ -1624,18 +1661,20 @@
   "verdict": "WORKS"
  },
  "O-account_merge": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The original shows a \"Merge your accounts\" banner (join Google/Facebook account) when someone was invited under another e-mail (account_merge/index.coffee). The modernized app has no account merging at all (no such string in src/client). Missing feature, not a defect of an existing one: SDS to decide whether it is wanted.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): not wanted; closed as a deliberate difference. Original finding: The original shows a \"Merge your accounts\" banner (join Google/Facebook account) when someone was invited under another e-mail (account_merge/index.coffee). The modernized app has no account merging at all (no such string in src/client). Missing feature, not a defect of an existing one: SDS to decide whether it is wanted.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "O-account_setup_wizard": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Original wizard picks Free, Business or Team plans and requests an enterprise account (account_setup_wizard/template.coffee). The modernized product has no plans or billing; Teams panel exists (TeamsPanel.tsx). SDS to decide: commercial plan screens are not wanted, or are.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): plans, billing and account setup wizard not wanted; closed as a deliberate difference. Original finding: Original wizard picks Free, Business or Team plans and requests an enterprise account (account_setup_wizard/template.coffee). The modernized product has no plans or billing; Teams panel exists (TeamsPanel.tsx). SDS to decide: commercial plan screens are not wanted, or are.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "O-active_topic_controls": {
   "at": "2026-11-21T04:38",
@@ -1645,25 +1684,28 @@
   "verdict": "WORKS"
  },
  "O-analytics": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Ping and popup styling for Google Analytics (ping.coffee, style_for_auto_popup.coffee): no user-visible behaviour.",
+  "note": "Applied under the ruling on server-internal / no-user-visible rows (coordinator relay 21 Nov, to be confirmed by SDS for these three): Ping and popup styling for Google Analytics (ping.coffee, style_for_auto_popup.coffee): no user-visible behaviour.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "O-chrome_app_popup": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Marketing popup for the Chrome Web Store app (chrome_app_popup/template.coffee). Ours shows a one-line banner about Google Calendar and tasks at the top (seen in every screenshot) but no store popup; the product no longer ships a Chrome app. SDS to decide.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): Chrome-app popup not wanted; closed as a deliberate difference. Original finding: Marketing popup for the Chrome Web Store app (chrome_app_popup/template.coffee). Ours shows a one-line banner about Google Calendar and tasks at the top (seen in every screenshot) but no store popup; the product no longer ships a Chrome app. SDS to decide.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "O-collection": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Team/collection picker with payment errors (\"Unable to collect monthly payment\", collection/picker.coffee): billing. Ours has a Teams panel without payments (seen in parity row 018). SDS to decide.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): plans and billing not wanted; closed as a deliberate difference. Original finding: Team/collection picker with payment errors (\"Unable to collect monthly payment\", collection/picker.coffee): billing. Ours has a Teams panel without payments (seen in parity row 018). SDS to decide.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "O-contact_picker": {
   "at": "2026-11-21T04:38",
@@ -1680,46 +1722,50 @@
   "verdict": "WORKS"
  },
  "O-crowd_popup": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Marketing popup asking visitors to help the project grow (crowd_popup/template.coffee). The product has no crowd campaign; no equivalent in src/client. SDS to decide.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): crowd popup not wanted; closed as a deliberate difference. Original finding: Marketing popup asking visitors to help the project grow (crowd_popup/template.coffee). The product has no crowd campaign; no equivalent in src/client. SDS to decide.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "O-dev": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Developer performance probes (dev/perfomance): no user-visible behaviour.",
+  "note": "Applied under the ruling on server-internal / no-user-visible rows (coordinator relay 21 Nov, to be confirmed by SDS for these three): Developer performance probes (dev/perfomance): no user-visible behaviour.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "O-error_logger": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Sends browser errors to the server log (error_logger/module.coffee). Ours has no client error reporter (no window.onerror reporter in src/client) but an ErrorBoundary; no visible behaviour.",
+  "note": "Applied under the ruling on server-internal / no-user-visible rows (coordinator relay 21 Nov, to be confirmed by SDS for these three): Sends browser errors to the server log (error_logger/module.coffee). Ours has no client error reporter (no window.onerror reporter in src/client) but an ErrorBoundary; no visible behaviour.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "O-export": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T10:12",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Export dialog and processor (export/*.coffee). Ours: topic gear menu offers Export single topic and downloads a file with the topic text (case N06 passed, sheet15 read). The original also exported several topics at once (parity row 020 shows ours lacks it).",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "Topic gear menu, Export single topic, download: the file opens as a page showing the title, the conversation and the blip text 'export-text-alpha' (read: y3/yshots/Y04-downloaded-file-opened.png; case N06 also passed). Multi-topic export is absent in ours: that is the product decision in rows 020/272, not part of this row.",
+  "shot": "/home/stephan/ledger-evidence/y3/yshots/Y04-downloaded-file-opened.png",
+  "verdict": "WORKS"
  },
  "O-introduce": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T15:25",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The \"Check it later\" introduction overlay for new users (introduce/template.coffee). No equivalent in ours (only \"First steps in Rizzoma: Play video\" box, TipsBox.tsx, seen in every screenshot). SDS to decide.",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "local, PR 134: The introduction overlay: four tips, Prev tip / Next tip, progress dots, Check it later closes it (tip 3 Invite people read).",
+  "shot": "/home/stephan/ledger-evidence/features/f1/3-intro-3.png",
+  "verdict": "WORKS"
  },
  "O-linkedin_popup": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "\"Share us on LinkedIn\" marketing popup (linkedin_popup/index.coffee); ours has LinkedIn only on the landing page (RizzomaLanding.tsx). SDS to decide.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): LinkedIn popup not wanted; closed as a deliberate difference. Original finding: \"Share us on LinkedIn\" marketing popup (linkedin_popup/index.coffee); ours has LinkedIn only on the landing page (RizzomaLanding.tsx). SDS to decide.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "O-modules": {
   "at": "2026-11-21T04:38",
@@ -1729,39 +1775,39 @@
   "verdict": "WORKS"
  },
  "O-ot": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T10:22",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Operational-transform processor (ot/processor.coffee). Ours uses Yjs; the visible behaviour (live merge of two people) is case W01/W02 (W02 currently fails, see its row).",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "Two people in the same blip editor (Yjs instead of the original's operational transform): A and B each typed, the merged text 'shared A1 B1' shows on A's screen with both collaborator avatars in the bar (read: y7/out2/pass-react-W-W02.png). W01 (live update without reload) and W02 pass after the End-key fix (PR 125). Live rerun on production follows in the live column.",
+  "shot": "/home/stephan/ledger-evidence/y7/out2/pass-react-W-W02.png",
+  "verdict": "WORKS"
  },
  "O-popup": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T15:25",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Generic popup and user popup (popup/template.coffee, user_popup/). Ours has the account menu (parity row 272) and Invite/Share dialogs; the original clicking a user avatar shows a user card, which ours does not (not found in src/client). SDS to decide.",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "local, PR 134: A click on the avatar opens the user card: initials avatar, name, e-mail, role (Owner).",
+  "shot": "/home/stephan/ledger-evidence/features/f1/2-user-card.png",
+  "verdict": "WORKS"
  },
  "O-session": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T10:12",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Session expiry handling and view (session/view.coffee). Ours: logout and session persist are case G01 passed; no visible expired-session screen was tested.",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "With the session cookie cleared, the next action shows a red notice 'Your session has expired. Reloading so you can sign in again.' (read: y3/smoke/4-session-expired.png) and then the sign-in form (read: y6/yshots/Y03-after-cookie-cleared.png). Found BROKEN first (silent failure; the toast was also hidden behind the layout for every message), fixed in PR 130.",
+  "shot": "/home/stephan/ledger-evidence/y3/smoke/4-session-expired.png",
+  "verdict": "WORKS"
  },
  "O-tips_video": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T10:12",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Plays the \"First Steps in Rizzoma\" video (tips_video/index.coffee). Ours has the Play video button in the tips box (TipsBox.tsx, parity row 010) but clicking it was not tested.",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "Clicking Play video in the tips box opened a Help window with First steps and keyboard shortcuts (read: y3/yshots/Y01-after-play-video.png). Found BROKEN first (button did nothing, y1 run), fixed in PR 130. There is no recorded video in the modernized product; the window is the written equivalent.",
+  "shot": "/home/stephan/ledger-evidence/y3/yshots/Y01-after-play-video.png",
+  "verdict": "WORKS"
  },
  "O-utils": {
-  "at": "2026-11-21T04:38",
+  "at": "2026-11-21T10:12",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Browser support checks, DOM helpers, date-time picker (utils/*.coffee). The visible part is the date picker for task deadlines, which is not tested here.",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "Task deadline: choosing the assignee of a ~ task opens a Deadline dialog with a date field (read: Y02-deadline-dialog.png); after Set deadline the task shows the date (\"1 Dec\", Y02-task-with-deadline.png) and the stored task carries data-due-date. Found BROKEN first (browser prompt, no picker), fixed in PR 130.",
+  "shot": "/home/stephan/ledger-evidence/y3/yshots/Y02-task-with-deadline.png",
+  "verdict": "WORKS"
  },
  "O-widget": {
   "at": "2026-11-21T04:38",
@@ -1771,11 +1817,12 @@
   "verdict": "WORKS"
  },
  "S-001-landing-logged-out": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The original opens a marketing landing page; the modernized app opens the sign-in form (registration is by invitation). A landing page is a product decision, not a defect. SDS to decide whether one is wanted.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): landing page not wanted; closed as a deliberate difference. Original finding: The original opens a marketing landing page; the modernized app opens the sign-in form (registration is by invitation). A landing page is a product decision, not a defect. SDS to decide whether one is wanted.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "S-002-signin-form": {
   "at": "2026-11-21T00:58",
@@ -1785,11 +1832,12 @@
   "verdict": "WORKS"
  },
  "S-003-signup-form": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The original lets anyone register; the modernized app requires an invitation (shown on the sign-in form). Deliberate access policy. SDS to decide.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): open sign-up not wanted (registration by invitation); closed as a deliberate difference. Original finding: The original lets anyone register; the modernized app requires an invitation (shown on the sign-in form). Deliberate access policy. SDS to decide.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "S-004-anon-wall-private-topic": {
   "at": "2026-11-21T00:58",
@@ -1869,18 +1917,19 @@
   "verdict": "WORKS"
  },
  "S-020-settings-menu": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T15:25",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Ours lacks \"Export multiple topics\" of the original gear menu (and the Hangout entry of a retired Google service). Everything else is present. SDS to decide whether multi-topic export is wanted.",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "local, PR 134: Gear menu now has Export multiple topics (SDS ruling 21 Nov: build it); the Export topics dialog lists the topics with select all and Export selected topics, then lists the exported archive.",
+  "shot": "/home/stephan/ledger-evidence/features/f1/1-export-multiple-dialog.png",
+  "verdict": "WORKS"
  },
  "S-030-topic-view-default": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Same parts as the original (title, bullets, avatar and time, reply box, right rail). Different style of the folded marker: the original draws a grey speech bubble at the end of the bullet label, ours a green [+] square at the left of the row (and the inline marker inside a sentence is a bubble-like icon). A visual design decision; SDS to say whether the original marker style is to be restored.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): grey bubble fold-marker style not restored (SDS did not tick it); closed as a deliberate difference. Original finding: Same parts as the original (title, bullets, avatar and time, reply box, right rail). Different style of the folded marker: the original draws a grey speech bubble at the end of the bullet label, ours a green [+] square at the left of the row (and the inline marker inside a sentence is a bubble-like icon). A visual design decision; SDS to say whether the original marker style is to be restored.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "S-031-topic-header-bar": {
   "at": "2026-11-21T01:02",
@@ -2268,11 +2317,12 @@
   "verdict": "WORKS"
  },
  "S-222-crop-root-blip-body": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T13:37",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Same finding as 030 (marker style of folded blips). SDS to decide.",
+  "note": "SDS ruling 21 Nov 2026 (relayed by the coordinator): grey bubble fold-marker style not restored (SDS did not tick it); closed as a deliberate difference. Original finding: Same finding as 030 (marker style of folded blips). SDS to decide.",
   "shot": "",
-  "verdict": "NEEDS_SDS"
+  "verdict": "WORKS",
+  "byDecision": true
  },
  "S-223-crop-reply-box": {
   "at": "2026-11-21T01:03",
@@ -2331,18 +2381,18 @@
   "verdict": "WORKS"
  },
  "S-234-edit-size-dropdown": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T10:12",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The original ribbon in 230 and 063 has Done, undo, redo, link, attach, image, B, I, U, S, a highlight button, clear formatting, two list buttons and a gear, exactly the buttons of ours; the archive picture shows it with nothing open, so no size, format or text-colour control is visible in the original. Nothing to compare; SDS to decide whether such controls are wanted.",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "Original source (src/client/blip/menu/template.coffee:65-69) has exactly one colour control, 'Text background color' with 7 swatches; no font-size or format dropdown exists in the original ribbon (the archive captures 234/235 show the ribbon with nothing open). Ribbon compared button by button with archive 230/063: Done, undo, redo, link, attach, image, B, I, U, S, text background, clear formatting, two lists, gear: identical in ours (read: y5/yshots/Y05-palette-open.png). Nothing further to compare, because the original has no such dropdown.",
+  "shot": "/home/stephan/ledger-evidence/y5/yshots/Y05-palette-open.png",
+  "verdict": "WORKS"
  },
  "S-235-edit-format-dropdown": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T10:12",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The original ribbon in 230 and 063 has Done, undo, redo, link, attach, image, B, I, U, S, a highlight button, clear formatting, two list buttons and a gear, exactly the buttons of ours; the archive picture shows it with nothing open, so no size, format or text-colour control is visible in the original. Nothing to compare; SDS to decide whether such controls are wanted.",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "Original source (src/client/blip/menu/template.coffee:65-69) has exactly one colour control, 'Text background color' with 7 swatches; no font-size or format dropdown exists in the original ribbon (the archive captures 234/235 show the ribbon with nothing open). Ribbon compared button by button with archive 230/063: Done, undo, redo, link, attach, image, B, I, U, S, text background, clear formatting, two lists, gear: identical in ours (read: y5/yshots/Y05-palette-open.png). Nothing further to compare, because the original has no such dropdown.",
+  "shot": "/home/stephan/ledger-evidence/y5/yshots/Y05-palette-open.png",
+  "verdict": "WORKS"
  },
  "S-236-edit-bg-palette": {
   "at": "2026-11-21T01:23",
@@ -2352,11 +2402,11 @@
   "verdict": "WORKS"
  },
  "S-237-edit-color-palette": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T10:12",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The original ribbon in 230 and 063 has Done, undo, redo, link, attach, image, B, I, U, S, a highlight button, clear formatting, two list buttons and a gear, exactly the buttons of ours; the archive picture shows it with nothing open, so no size, format or text-colour control is visible in the original. Nothing to compare; SDS to decide whether such controls are wanted.",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "Original source (src/client/blip/menu/template.coffee:65-69) has exactly one colour control, 'Text background color' with 7 swatches; no font-size or format dropdown exists in the original ribbon (the archive captures 234/235 show the ribbon with nothing open). Ours had 8 swatches in two rows of four, other colours; fixed in PR 131 to the original's seven in one row, colours sampled from the original screenshot. Read: y5/yshots/Y05-palette-open.png (palette matches) and Y05-colour-applied.png (selection highlighted).",
+  "shot": "/home/stephan/ledger-evidence/y5/yshots/Y05-palette-open.png",
+  "verdict": "WORKS"
  },
  "S-238-edit-gadget-picker": {
   "at": "2026-11-21T01:23",
@@ -2478,11 +2528,11 @@
   "verdict": "WORKS"
  },
  "S-272-settings-open-menu": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T15:25",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Same menu as 020: \"Export multiple topics\" is absent in ours. Ours adds an account menu on the avatar. SDS to decide.",
-  "shot": "",
-  "verdict": "NEEDS_SDS"
+  "note": "local, PR 134: Same as 020: the menu offers Export multiple topics; dialog and archive line read.",
+  "shot": "/home/stephan/ledger-evidence/features/f1/1-export-multiple-dialog.png",
+  "verdict": "WORKS"
  },
  "S-273-settings-first-page": {
   "at": "2026-11-21T01:01",

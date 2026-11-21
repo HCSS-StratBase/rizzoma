@@ -22,6 +22,8 @@ const origSrc = opt('--orig', '/mnt/c/Rizzoma/original-rizzoma-src/src/client');
 const reviewsFile = opt('--reviews', path.join(repoRoot, 'scripts/tester-scenarios/reviews.json'));
 const reviews = fs.existsSync(reviewsFile) ? JSON.parse(fs.readFileSync(reviewsFile, 'utf8')) : {};
 // several results files may be given comma-separated: later files override earlier ones per (render, case id)
+const liveReviewsFile = opt('--live-reviews', path.join(repoRoot, 'scripts/tester-scenarios/reviews-live.json'));
+const liveReviews = fs.existsSync(liveReviewsFile) ? JSON.parse(fs.readFileSync(liveReviewsFile, 'utf8')) : {};
 const load = (f) => {
   if (!f) return null;
   const merged = new Map(); let first = null;
@@ -46,6 +48,9 @@ for (const m of mods) {
   const re = modMap[m];
   rows.push({ id: `O-${m}`, group: 'original client module', text: `Original client module "${m}" (${n} files): its user-visible behaviour`, source: `original-rizzoma-src/src/client/${m}/`, caseIds: null, derivedFrom: re ? contract.filter((r) => re.test(r.text)).map((r) => r.id) : [] });
 }
+// Original modules that have their own cases (family Y and N06): judged by those cases plus a read screenshot, not derived from contract rows.
+const ownCases = { introduce: ['Y11'], popup: ['Y09'], ot: ['W01', 'W02'], tips_video: ['Y01'], utils: ['Y02'], session: ['Y03'], export: ['N06', 'Y04'] };
+for (const r of rows) { const m = r.id.startsWith('O-') ? r.id.slice(2) : null; if (m && ownCases[m]) { r.caseIds = ownCases[m]; delete r.derivedFrom; } }
 let shots = [];
 try { shots = fs.readdirSync(path.join(repoRoot, 'screenshots/260714-legacy-reference-archive')).filter((f) => f.endsWith('.png')).sort(); } catch { /* none */ }
 for (const f of shots) rows.push({ id: `S-${f.replace(/\.png$/, '').slice(0, 48)}`, group: 'legacy screenshot', text: `Original screen "${f.replace(/\.png$/, '')}": ours looks and behaves like it`, source: `screenshots/260714-legacy-reference-archive/${f}`, caseIds: [], shotRow: true, shotKey: f.replace(/\.png$/, '') });
@@ -72,6 +77,12 @@ function evaluate(cs) {
 const casesFor = (res, row) => (row.shotRow ? res.filter((r) => (r.shotRows || []).includes(row.shotKey)) : row.cites ? res.filter((r) => (r.rows || []).includes(row.cites)) : (row.caseIds || []).map((id) => res.find((r) => r.id === id)).filter(Boolean));
 const rank = { BROKEN: 0, PARTIAL: 1, UNCHECKED: 2, UNREVIEWED: 2.5, NEEDS_SDS: 2.7, WORKS: 3 };
 function rowResult(res, row, byId) {
+  // SDS rulings of 21 Nov 2026 hold on both columns: a server-internal row is checked by its passing API case (run on the local stack, never on
+  // production: they register accounts and send mail), and a deliberate difference is closed by the decision itself.
+  if (res === liveRes && reviews[row.id] && (reviews[row.id].byApi || reviews[row.id].byDecision)) {
+    const r0 = reviews[row.id];
+    return { result: 'WORKS', reason: `${r0.byDecision ? 'WORKS by SDS decision' : 'WORKS by API case (local run, SDS ruling)'}: ${r0.note}`, shotCase: null, cs: [] };
+  }
   const rv0 = res === local ? reviews[row.id] : null;
   if (rv0 && (row.derivedFrom || row.shotRow) && ['NEEDS_SDS', 'WORKS', 'PARTIAL', 'BROKEN'].includes(rv0.verdict) && row.derivedFrom && !row.derivedFrom.length) return { result: rv0.verdict, reason: `${rv0.verdict === 'NEEDS_SDS' ? 'no user-visible check possible: ' : 'recorded reading: '}${rv0.note}`, shotCase: null, cs: [] };
   if (row.derivedFrom) {
@@ -86,10 +97,12 @@ function rowResult(res, row, byId) {
   if (row.shotRow && !casesFor(res, row).length) return { result: 'UNCHECKED', reason: 'no case compares this original screen with the modernized one', shotCase: null, cs: [] };
   const cs = casesFor(res, row); const e = evaluate(cs);
   // A passing case is not enough: a WORKS row also needs a person's (or agent's) recorded reading of its screenshot.
-  const rv = res === local ? reviews[row.id] : null;
+  const rv = res === local ? reviews[row.id] : res === liveRes ? liveReviews[row.id] : null;
   // NEEDS_SDS: a row with no user-visible behaviour (or none in the modernized product) that a person must accept or reject; never counts as WORKS.
+  // WORKS-by-API: SDS ruled that a passing API case is the check for a server-internal row.
+  if (rv && rv.byApi && rv.verdict === 'WORKS' && e.result !== 'BROKEN' && e.result !== 'PARTIAL' && (res === local || res === liveRes) && cs.length) return { ...e, result: 'WORKS', reason: `WORKS by API case (${cs.map((c) => c.id).join(', ')}): ${rv.note}`, cs };
   if (rv && rv.verdict === 'NEEDS_SDS' && e.result !== 'BROKEN' && e.result !== 'PARTIAL') return { ...e, result: 'NEEDS_SDS', reason: `no user-visible check possible: ${rv.note}`, cs };
-  if (res === local && e.result === 'WORKS' && !rv) return { ...e, result: 'UNREVIEWED', reason: `${e.reason}; the screenshot has not been read yet`, cs };
+  if ((res === local || res === liveRes) && e.result === 'WORKS' && !rv) return { ...e, result: 'UNREVIEWED', reason: `${e.reason}; the screenshot has not been read yet`, cs };
   if (rv && rv.verdict && rv.verdict !== 'WORKS' && e.result !== 'BROKEN') return { ...e, result: rv.verdict, reason: `screenshot review: ${rv.note}`, cs };
   if (rv && e.result === 'WORKS') return { ...e, reason: `${e.reason}; screenshot read: ${rv.note}`, cs };
   return { ...e, cs };
