@@ -1,6 +1,6 @@
 // Family T: the rich-text toolbar (every button) and the documented keyboard shortcuts, each judged by
 // what ends up STORED, not by the button being visible.
-import { newUser, plain, sleep } from '../lib.mjs';
+import { newUser, plain, sleep, BASE } from '../lib.mjs';
 
 async function blipInEdit(ctx, title, text) {
   const a = await ctx.client(await newUser('a'));
@@ -152,7 +152,7 @@ export default [
     rows: ['13.23', '20.27'],
     async run(ctx) {
       const a = await ctx.client(await newUser('a'));
-      await a.page.goto(`${process.env.RIZZOMA_BASE_URL || 'http://127.0.0.1:3100'}/?layout=rizzoma`, { waitUntil: 'domcontentloaded' }); await sleep(4000);
+      await a.page.goto(`${BASE}/?layout=rizzoma`, { waitUntil: 'domcontentloaded' }); await sleep(4000);
       const txt = await a.page.locator('.tips-box').innerText().catch(() => '');
       ctx.ok(/Ctrl\+Enter/.test(txt) && /Ctrl\+Shift/.test(txt), 'the panel lists Ctrl+Enter and Ctrl+Shift shortcuts', txt.replace(/\s+/g, ' ').slice(0, 160));
       await a.page.locator('.tips-toggle-btn').click(); await sleep(800);

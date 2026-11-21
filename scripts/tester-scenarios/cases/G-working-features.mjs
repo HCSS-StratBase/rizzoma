@@ -22,7 +22,7 @@ export default [
       await c.page.goto(`${BASE}/?layout=rizzoma`, { waitUntil: 'domcontentloaded' });
       await sleep(3500);
       await c.page.getByPlaceholder('Email address').fill(user.email);
-      await c.page.getByPlaceholder('Password', { exact: true }).fill(PASS);
+      await c.page.getByPlaceholder('Password', { exact: true }).fill(user.password || PASS);
       await c.page.locator('.submit-btn').click();
       await sleep(3500);
       ctx.ok(await c.page.locator('.shell-auth-logout').isVisible().catch(() => false), 'after typing credentials the user is signed in (Log out button visible)');
@@ -99,13 +99,13 @@ export default [
       await a.page.keyboard.press('End');
       await a.page.locator('button[title="Insert task (~)"]').first().click();
       await sleep(1200);
-      await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 40), { delay: 40 }); await sleep(1500);
+      await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 6), { delay: 40 }); await sleep(1500);
       await a.page.keyboard.press('Enter'); await sleep(800);
       await a.page.locator('[data-testid="task-deadline-set"]').waitFor({ timeout: 5000 }).then(async () => { await a.page.locator('[data-testid="task-deadline-input"]').fill('2026-12-01'); await a.page.locator('[data-testid="task-deadline-set"]').click(); }).catch(() => undefined);
       await sleep(800);
       await a.page.keyboard.type(' buy milk ', { delay: 30 });
       await a.page.keyboard.type(' @', { delay: 40 }); await sleep(1500);
-      await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 40), { delay: 40 }); await sleep(1200);
+      await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 6), { delay: 40 }); await sleep(1200);
       await a.page.keyboard.press('Enter'); await sleep(600);
       await a.doneAll(); await sleep(2500);
       const stored = (await a.blips(id)).find((x) => plain(x.content).startsWith('todo'));

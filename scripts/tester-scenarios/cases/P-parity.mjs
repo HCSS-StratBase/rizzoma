@@ -79,9 +79,9 @@ export default [
       const tid = await ctx.topic(o, 'tabs #Education #Rizzoma'); await shareWith(tid, a.user, 'editor');
       await o.openTopic(tid, 4500); await o.replyAtTopic('todo item'); await o.ensureExpanded('todo item'); await o.enterEditByClick('todo item');
       await o.page.keyboard.press('End'); await o.page.locator('button[title="Insert task (~)"]').first().click(); await sleep(1200);
-      await o.page.keyboard.type(a.user.email.split('@')[0].slice(0, 40), { delay: 40 }); await sleep(1500); await o.page.keyboard.press('Enter'); await sleep(800); await o.page.locator('[data-testid="task-deadline-skip"]').click({ timeout: 3000 }).catch(() => undefined); await sleep(500);
+      await o.page.keyboard.type(a.user.email.split('@')[0].slice(0, 6), { delay: 40 }); await sleep(1500); await o.page.keyboard.press('Enter'); await sleep(800); await o.page.locator('[data-testid="task-deadline-skip"]').click({ timeout: 3000 }).catch(() => undefined); await sleep(500);
       await o.page.keyboard.type(' buy milk ', { delay: 30 }); await o.page.keyboard.type(' @', { delay: 40 }); await sleep(1500);
-      await o.page.keyboard.type(a.user.email.split('@')[0].slice(0, 40), { delay: 40 }); await sleep(1200); await o.page.keyboard.press('Enter'); await sleep(600);
+      await o.page.keyboard.type(a.user.email.split('@')[0].slice(0, 6), { delay: 40 }); await sleep(1200); await o.page.keyboard.press('Enter'); await sleep(600);
       await o.doneAll(); await sleep(2500);
       await home(a);
       for (const [name, key] of [['Mentions', '014-nav-mentions'], ['Tasks', '015-nav-tasks'], ['Publics', '016-nav-publics'], ['Store', '017-nav-store'], ['Teams', '018-nav-teams']]) {

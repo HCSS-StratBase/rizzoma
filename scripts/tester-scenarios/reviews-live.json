@@ -1,4 +1,18 @@
 {
+ "1.2": {
+  "at": "2026-11-21T17:27",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G01] live, Fractal Tester 2 non-owner: Sign-in form shown after logout; typed credentials sign in and persist across reload (case passed).",
+  "shot": "/home/stephan/ledger-evidence/live789/live8/sheet00_G01_K03.png",
+  "verdict": "WORKS"
+ },
+ "1.8": {
+  "at": "2026-11-21T17:27",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G01] live, Fractal Tester 2 non-owner: Sign-in form shown after logout; typed credentials sign in and persist across reload (case passed).",
+  "shot": "/home/stephan/ledger-evidence/live789/live8/sheet00_G01_K03.png",
+  "verdict": "WORKS"
+ },
  "10.10": {
   "at": "2026-11-21T14:43",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
@@ -69,6 +83,13 @@
   "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet02_G03_G05_G07_G09.png",
   "verdict": "WORKS"
  },
+ "11.2": {
+  "at": "2026-11-21T17:27",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case D02] live, Fractal Tester 2 non-owner: Viewer invitation: the invitee sees the topic read-only (no mail sent: INVITE_MAIL_SUPPRESS_PATTERN).",
+  "shot": "/home/stephan/ledger-evidence/live789/live7/sheet00_D02_D03_D04.png",
+  "verdict": "WORKS"
+ },
  "12.1": {
   "at": "2026-11-21T12:10",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
@@ -119,17 +140,17 @@
   "verdict": "WORKS"
  },
  "13.13": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T17:27",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case N04] live, Fractal Tester 2 non-owner, clean context: Share dialog: Private / Anyone with the link / Public on the web, Copy link, Save.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet10_N01_N02_N03_N04.png",
+  "note": "[case N04] live, Fractal Tester 2 non-owner, clean context: Share dialog: Private / Anyone with the link / Public on the web, Copy link, Save. || [case D02] live, Fractal Tester 2 non-owner: Viewer invitation: the invitee sees the topic read-only (no mail sent: INVITE_MAIL_SUPPRESS_PATTERN). || [case D03] live, Fractal Tester 2 non-owner: Remove dialog: the participant is selectable and the owner list shows the person; removal verified by the case. || [case D04] live, Fractal Tester 2 non-owner: Role change dialog: Reader/Owner roles listed; demotion enforced by the server. Note: the member ro",
+  "shot": "/home/stephan/ledger-evidence/live789/live7/sheet00_D02_D03_D04.png",
   "verdict": "WORKS"
  },
  "13.14": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T17:27",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case N04] live, Fractal Tester 2 non-owner, clean context: Share dialog: Private / Anyone with the link / Public on the web, Copy link, Save.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet10_N01_N02_N03_N04.png",
+  "note": "[case N04] live, Fractal Tester 2 non-owner, clean context: Share dialog: Private / Anyone with the link / Public on the web, Copy link, Save. || [case D02] live, Fractal Tester 2 non-owner: Viewer invitation: the invitee sees the topic read-only (no mail sent: INVITE_MAIL_SUPPRESS_PATTERN).",
+  "shot": "/home/stephan/ledger-evidence/live789/live7/sheet00_D02_D03_D04.png",
   "verdict": "WORKS"
  },
  "13.15": {
@@ -153,6 +174,13 @@
   "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet12_N11_N12_N14_N15.png",
   "verdict": "WORKS"
  },
+ "13.19": {
+  "at": "2026-11-21T17:27",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G01] live, Fractal Tester 2 non-owner: Sign-in form shown after logout; typed credentials sign in and persist across reload (case passed).",
+  "shot": "/home/stephan/ledger-evidence/live789/live8/sheet00_G01_K03.png",
+  "verdict": "WORKS"
+ },
  "13.20": {
   "at": "2026-11-21T14:43",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
@@ -160,11 +188,25 @@
   "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet02_G03_G05_G07_G09.png",
   "verdict": "WORKS"
  },
- "13.23": {
-  "at": "2026-11-21T12:10",
+ "13.21": {
+  "at": "2026-11-21T17:27",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case K01] live, Fractal Tester 2 non-owner, clean context: Edit mode with the text KB1+x kept after Escape.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet08_I03_I04_K01_L01.png",
+  "note": "[case G01] live, Fractal Tester 2 non-owner: Sign-in form shown after logout; typed credentials sign in and persist across reload (case passed).",
+  "shot": "/home/stephan/ledger-evidence/live789/live8/sheet00_G01_K03.png",
+  "verdict": "WORKS"
+ },
+ "13.22": {
+  "at": "2026-11-21T17:27",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G01] live, Fractal Tester 2 non-owner: Sign-in form shown after logout; typed credentials sign in and persist across reload (case passed).",
+  "shot": "/home/stephan/ledger-evidence/live789/live8/sheet00_G01_K03.png",
+  "verdict": "WORKS"
+ },
+ "13.23": {
+  "at": "2026-11-21T17:27",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case K01] live, Fractal Tester 2 non-owner, clean context: Edit mode with the text KB1+x kept after Escape. || [case K03] live, Fractal Tester 2 non-owner: Shortcut panel at the bottom of the navigation lists Ctrl+Enter / Ctrl+Shift and minimises.",
+  "shot": "/home/stephan/ledger-evidence/live789/live8/sheet00_G01_K03.png",
   "verdict": "WORKS"
  },
  "13.3": {
@@ -462,10 +504,10 @@
   "verdict": "WORKS"
  },
  "2.8": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T17:27",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case N04] live, Fractal Tester 2 non-owner, clean context: Share dialog: Private / Anyone with the link / Public on the web, Copy link, Save.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet10_N01_N02_N03_N04.png",
+  "note": "[case N04] live, Fractal Tester 2 non-owner, clean context: Share dialog: Private / Anyone with the link / Public on the web, Copy link, Save. || [case D02] live, Fractal Tester 2 non-owner: Viewer invitation: the invitee sees the topic read-only (no mail sent: INVITE_MAIL_SUPPRESS_PATTERN). || [case D03] live, Fractal Tester 2 non-owner: Remove dialog: the participant is selectable and the owner list shows the person; removal verified by the case. || [case D04] live, Fractal Tester 2 non-owner: Role change dialog: Reader/Owner roles listed; demotion enforced by the server. Note: the member ro",
+  "shot": "/home/stephan/ledger-evidence/live789/live7/sheet00_D02_D03_D04.png",
   "verdict": "WORKS"
  },
  "20.15": {
@@ -515,6 +557,13 @@
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case N15] live, Fractal Tester 2 non-owner, clean context: Right panel: avatar SD, Next button, Hide/Show replies icons.",
   "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet12_N11_N12_N14_N15.png",
+  "verdict": "WORKS"
+ },
+ "20.27": {
+  "at": "2026-11-21T17:27",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case K03] live, Fractal Tester 2 non-owner: Shortcut panel at the bottom of the navigation lists Ctrl+Enter / Ctrl+Shift and minimises.",
+  "shot": "/home/stephan/ledger-evidence/live789/live8/sheet00_G01_K03.png",
   "verdict": "WORKS"
  },
  "20.28": {
@@ -769,11 +818,95 @@
   "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet04_C02_C04_C05_C06.png",
   "verdict": "WORKS"
  },
+ "G-calendarApp": {
+  "at": "2026-11-21T17:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, production: X02 Calendar Planner sandbox app UI (screenshot read).",
+  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "verdict": "WORKS"
+ },
+ "G-code": {
+  "at": "2026-11-21T17:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, production: X11 code tile const answer = 42; (screenshot read).",
+  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "verdict": "WORKS"
+ },
+ "G-focusApp": {
+  "at": "2026-11-21T17:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, production: X03 Focus Timer sandbox app UI (screenshot read).",
+  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "verdict": "WORKS"
+ },
+ "G-iframe": {
+  "at": "2026-11-21T17:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, production: X10 iframe shows the allowed page (screenshot read).",
+  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "verdict": "WORKS"
+ },
+ "G-image": {
+  "at": "2026-11-21T17:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, production: X11 image shown in the blip (screenshot read).",
+  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "verdict": "WORKS"
+ },
+ "G-kanbanApp": {
+  "at": "2026-11-21T17:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, production: X01 Kanban sandbox app UI (screenshot read).",
+  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "verdict": "WORKS"
+ },
+ "G-latex": {
+  "at": "2026-11-21T17:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, production: X07 LaTeX formula rendered (screenshot read).",
+  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "verdict": "WORKS"
+ },
+ "G-notesApp": {
+  "at": "2026-11-21T17:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, production: X04 Notes sandbox app UI (screenshot read).",
+  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "verdict": "WORKS"
+ },
+ "G-poll": {
+  "at": "2026-11-21T17:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, production: X05 poll gadget with options (screenshot read).",
+  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "verdict": "WORKS"
+ },
+ "G-youtube": {
+  "at": "2026-11-21T17:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, production: X08 YouTube player thumbnail in the blip (screenshot read).",
+  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "verdict": "WORKS"
+ },
  "O-export": {
   "at": "2026-11-21T12:12",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "live, Fractal Tester 2 non-owner, clean context, production b43236d9: The downloaded export page shows the title, the conversation and the blip text export-text-alpha (author label reads User 89cd8c32, not a name: noted).",
   "shot": "/home/stephan/ledger-evidence/live2/steps/yshots/Y04-downloaded-file-opened.png",
+  "verdict": "WORKS"
+ },
+ "O-introduce": {
+  "at": "2026-11-21T15:25",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, clean context, production 645d77d8: The introduction overlay: four tips, Prev tip / Next tip, progress dots, Check it later closes it (tip 3 Invite people read).",
+  "shot": "/home/stephan/ledger-evidence/live5/steps/yshots/Y11-2-tip2.png",
+  "verdict": "WORKS"
+ },
+ "O-popup": {
+  "at": "2026-11-21T15:25",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live, Fractal Tester 2 non-owner, clean context, production 645d77d8: A click on the avatar opens the user card: initials avatar, name, e-mail, role (Owner).",
+  "shot": "/home/stephan/ledger-evidence/live5/steps/yshots/Y09-user-card.png",
   "verdict": "WORKS"
  },
  "O-session": {
@@ -797,32 +930,872 @@
   "shot": "/home/stephan/ledger-evidence/live2/steps/yshots/Y02-task-with-deadline.png",
   "verdict": "WORKS"
  },
- "O-introduce": {
-  "at": "2026-11-21T15:25",
+ "S-002-signin-form": {
+  "at": "2026-11-21T17:16",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "live, Fractal Tester 2 non-owner, clean context, production 645d77d8: The introduction overlay: four tips, Prev tip / Next tip, progress dots, Check it later closes it (tip 3 Invite people read).",
-  "shot": "/home/stephan/ledger-evidence/live5/steps/yshots/Y11-2-tip2.png",
+  "note": "live: sign-in form and private-topic wall read next to the original (original shows the landing page behind; ours shows the sign-in panel; landing page is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s00.png",
   "verdict": "WORKS"
  },
- "O-popup": {
-  "at": "2026-11-21T15:25",
+ "S-004-anon-wall-private-topic": {
+  "at": "2026-11-21T17:16",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "live, Fractal Tester 2 non-owner, clean context, production 645d77d8: A click on the avatar opens the user card: initials avatar, name, e-mail, role (Owner).",
-  "shot": "/home/stephan/ledger-evidence/live5/steps/yshots/Y09-user-card.png",
+  "note": "live: sign-in form and private-topic wall read next to the original (original shows the landing page behind; ours shows the sign-in panel; landing page is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s01.png",
+  "verdict": "WORKS"
+ },
+ "S-010-topics-list-default": {
+  "at": "2026-11-21T15:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live: topics list, search, tabs, topic body, right rail match the original layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s01.png",
+  "verdict": "WORKS"
+ },
+ "S-011-topics-search-typed": {
+  "at": "2026-11-21T15:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live: typed search text shows in the box, list filters.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s01.png",
+  "verdict": "WORKS"
+ },
+ "S-012-topics-search-results": {
+  "at": "2026-11-21T15:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live: results list shows only matching topics.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s02.png",
+  "verdict": "WORKS"
+ },
+ "S-013-topics-search-cleared": {
+  "at": "2026-11-21T15:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live: search cleared, full list again.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s02.png",
+  "verdict": "WORKS"
+ },
+ "S-014-nav-mentions": {
+  "at": "2026-11-21T15:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live: Mentions panel opens (still loading when captured, panel and badge present).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s02.png",
+  "verdict": "WORKS"
+ },
+ "S-015-nav-tasks": {
+  "at": "2026-11-21T15:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live: Tasks panel with All/Pending/Completed filters and the task; author reads Anonymous for an older task (data from before the author fix).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s03.png",
+  "verdict": "WORKS"
+ },
+ "S-016-nav-publics": {
+  "at": "2026-11-21T15:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live: Publics panel with tag row and public topics list.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s03.png",
+  "verdict": "WORKS"
+ },
+ "S-017-nav-store": {
+  "at": "2026-11-21T15:51",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live: Store panel with gadget catalogue and filters.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s03.png",
+  "verdict": "WORKS"
+ },
+ "S-018-nav-teams": {
+  "at": "2026-11-21T16:59",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: Teams panel lists My Team.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s04.png",
+  "verdict": "WORKS"
+ },
+ "S-019-new-topic-button": {
+  "at": "2026-11-21T16:59",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: New button present (element crop).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s04.png",
   "verdict": "WORKS"
  },
  "S-020-settings-menu": {
-  "at": "2026-11-21T15:25",
+  "at": "2026-11-21T16:59",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "live, Fractal Tester 2 non-owner, clean context, production 645d77d8: Gear menu now has Export multiple topics (SDS ruling 21 Nov: build it); the Export topics dialog lists the topics with select all and Export selected topics, then lists the exported archive.",
-  "shot": "/home/stephan/ledger-evidence/live5/steps/yshots/Y10-2-done.png",
+  "note": "Live, Fractal Tester 2 non-owner, production: x",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s04.png",
+  "verdict": "WORKS"
+ },
+ "S-030-topic-view-default": {
+  "at": "2026-11-21T16:59",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: x",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s05.png",
+  "verdict": "WORKS"
+ },
+ "S-031-topic-header-bar": {
+  "at": "2026-11-21T16:59",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: x",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s05.png",
+  "verdict": "WORKS"
+ },
+ "S-032-share-modal": {
+  "at": "2026-11-21T16:59",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: x",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s05.png",
+  "verdict": "WORKS"
+ },
+ "S-033-share-modal-closed": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s06.png",
+  "verdict": "WORKS"
+ },
+ "S-034-manage-members": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s06.png",
+  "verdict": "WORKS"
+ },
+ "S-035-members-closed": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s06.png",
+  "verdict": "WORKS"
+ },
+ "S-036-text-view": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s07.png",
+  "verdict": "WORKS"
+ },
+ "S-037-mindmap-view": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s07.png",
+  "verdict": "WORKS"
+ },
+ "S-038-mindmap-short": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s07.png",
+  "verdict": "WORKS"
+ },
+ "S-039-mindmap-expanded": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s08.png",
+  "verdict": "WORKS"
+ },
+ "S-040-back-to-text-view": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s08.png",
+  "verdict": "WORKS"
+ },
+ "S-041-hide-all-comments": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s08.png",
+  "verdict": "WORKS"
+ },
+ "S-042-show-all-comments": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s09.png",
+  "verdict": "WORKS"
+ },
+ "S-051-fractal-unfold-level-1": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s09.png",
+  "verdict": "WORKS"
+ },
+ "S-052-fractal-unfold-level-2": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s09.png",
+  "verdict": "WORKS"
+ },
+ "S-053-fractal-unfold-level-3": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s10.png",
+  "verdict": "WORKS"
+ },
+ "S-054-fractal-unfold-level-4": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s10.png",
+  "verdict": "WORKS"
+ },
+ "S-055-fractal-unfold-level-5": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s10.png",
+  "verdict": "WORKS"
+ },
+ "S-056-fractal-unfold-level-6": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s11.png",
+  "verdict": "WORKS"
+ },
+ "S-057-fractal-unfold-level-7": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s11.png",
+  "verdict": "WORKS"
+ },
+ "S-058-fractal-unfold-level-8": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side with the original read: same parts (share dialog, members, text view, mind map short/expanded, hide/show replies, fractal unfold levels 1 to 8); styling differences already accepted.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s11.png",
+  "verdict": "WORKS"
+ },
+ "S-059-fractal-refolded": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side read: refolded fractal, blip activated menu, gear menu (ours adds copy/duplicate/cut/delete), edit ribbon, link popup, back to view, reply box all match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s12.png",
+  "verdict": "WORKS"
+ },
+ "S-060-blip-activated-menu": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side read: refolded fractal, blip activated menu, gear menu (ours adds copy/duplicate/cut/delete), edit ribbon, link popup, back to view, reply box all match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s12.png",
+  "verdict": "WORKS"
+ },
+ "S-061-blip-gear-menu": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side read: refolded fractal, blip activated menu, gear menu (ours adds copy/duplicate/cut/delete), edit ribbon, link popup, back to view, reply box all match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s12.png",
+  "verdict": "WORKS"
+ },
+ "S-062-gear-closed": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side read: refolded fractal, blip activated menu, gear menu (ours adds copy/duplicate/cut/delete), edit ribbon, link popup, back to view, reply box all match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s13.png",
+  "verdict": "WORKS"
+ },
+ "S-063-root-edit-mode-ribbon": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side read: refolded fractal, blip activated menu, gear menu (ours adds copy/duplicate/cut/delete), edit ribbon, link popup, back to view, reply box all match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s13.png",
+  "verdict": "WORKS"
+ },
+ "S-064-edit-link-popup": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side read: refolded fractal, blip activated menu, gear menu (ours adds copy/duplicate/cut/delete), edit ribbon, link popup, back to view, reply box all match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s13.png",
+  "verdict": "WORKS"
+ },
+ "S-065-link-popup-closed": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side read: refolded fractal, blip activated menu, gear menu (ours adds copy/duplicate/cut/delete), edit ribbon, link popup, back to view, reply box all match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s14.png",
+  "verdict": "WORKS"
+ },
+ "S-066-edit-done-back-to-view": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side read: refolded fractal, blip activated menu, gear menu (ours adds copy/duplicate/cut/delete), edit ribbon, link popup, back to view, reply box all match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s14.png",
+  "verdict": "WORKS"
+ },
+ "S-067-reply-box": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: side-by-side read: refolded fractal, blip activated menu, gear menu (ours adds copy/duplicate/cut/delete), edit ribbon, link popup, back to view, reply box all match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s14.png",
+  "verdict": "WORKS"
+ },
+ "S-068-insert-reply-sidebar": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: insert-reply sidebar, playback UI (controls present; the history was still loading when captured) and playback closed match the original.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s15.png",
+  "verdict": "WORKS"
+ },
+ "S-069-playback-ui": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: insert-reply sidebar, playback UI (controls present; the history was still loading when captured) and playback closed match the original.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s15.png",
+  "verdict": "WORKS"
+ },
+ "S-070-playback-closed": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: insert-reply sidebar, playback UI (controls present; the history was still loading when captured) and playback closed match the original.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s15.png",
+  "verdict": "WORKS"
+ },
+ "S-080-publics-list": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: Publics list, public topic view signed out (read-only with Sign in), Store catalogue match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s16.png",
+  "verdict": "WORKS"
+ },
+ "S-081-public-topic-view": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: Publics list, public topic view signed out (read-only with Sign in), Store catalogue match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s16.png",
+  "verdict": "WORKS"
+ },
+ "S-082-store-catalog": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: Publics list, public topic view signed out (read-only with Sign in), Store catalogue match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s16.png",
+  "verdict": "WORKS"
+ },
+ "S-090-mobile-topics-list": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone 390 px: topics list, topic view and scrolled view are one-panel with Topic header, Invite/Share/Edit bar, Text view / Mind map / Next buttons, as the original's mobile layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s17.png",
+  "verdict": "WORKS"
+ },
+ "S-091-mobile-topic-view": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone 390 px: topics list, topic view and scrolled view are one-panel with Topic header, Invite/Share/Edit bar, Text view / Mind map / Next buttons, as the original's mobile layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s17.png",
+  "verdict": "WORKS"
+ },
+ "S-092-mobile-topic-scrolled": {
+  "at": "2026-11-21T17:00",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone 390 px: topics list, topic view and scrolled view are one-panel with Topic header, Invite/Share/Edit bar, Text view / Mind map / Next buttons, as the original's mobile layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s17.png",
+  "verdict": "WORKS"
+ },
+ "S-093-mobile-fractal-expanded": {
+  "at": "2026-11-21T17:01",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone expanded fractal, 1280 px list and topic view, and the rail/button/search/row crops match the original (colours and sizes read; ours uses the house palette).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s18.png",
+  "verdict": "WORKS"
+ },
+ "S-100-w1280-topics-list": {
+  "at": "2026-11-21T17:01",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone expanded fractal, 1280 px list and topic view, and the rail/button/search/row crops match the original (colours and sizes read; ours uses the house palette).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s18.png",
+  "verdict": "WORKS"
+ },
+ "S-101-w1280-topic-view": {
+  "at": "2026-11-21T17:01",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone expanded fractal, 1280 px list and topic view, and the rail/button/search/row crops match the original (colours and sizes read; ours uses the house palette).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s18.png",
+  "verdict": "WORKS"
+ },
+ "S-200-crop-left-rail-full": {
+  "at": "2026-11-21T17:01",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone expanded fractal, 1280 px list and topic view, and the rail/button/search/row crops match the original (colours and sizes read; ours uses the house palette).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s19.png",
+  "verdict": "WORKS"
+ },
+ "S-201-crop-new-topic-btn": {
+  "at": "2026-11-21T17:01",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone expanded fractal, 1280 px list and topic view, and the rail/button/search/row crops match the original (colours and sizes read; ours uses the house palette).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s19.png",
+  "verdict": "WORKS"
+ },
+ "S-202-crop-mentions-tab-badge": {
+  "at": "2026-11-21T17:01",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone expanded fractal, 1280 px list and topic view, and the rail/button/search/row crops match the original (colours and sizes read; ours uses the house palette).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s19.png",
+  "verdict": "WORKS"
+ },
+ "S-203-crop-tasks-tab-pro": {
+  "at": "2026-11-21T17:01",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone expanded fractal, 1280 px list and topic view, and the rail/button/search/row crops match the original (colours and sizes read; ours uses the house palette).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s20.png",
+  "verdict": "WORKS"
+ },
+ "S-204-crop-search-box": {
+  "at": "2026-11-21T17:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops compared with the original: search box, topic row, shortcut legend and topic header (capture fell back to the full page, both visible), share button, blip menu bar, Next button, text/mind-map toggle, BLB bullet with plus, fold button, root body (marker style is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s20.png",
+  "verdict": "WORKS"
+ },
+ "S-205-crop-topic-row": {
+  "at": "2026-11-21T17:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops compared with the original: search box, topic row, shortcut legend and topic header (capture fell back to the full page, both visible), share button, blip menu bar, Next button, text/mind-map toggle, BLB bullet with plus, fold button, root body (marker style is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s20.png",
+  "verdict": "WORKS"
+ },
+ "S-206-crop-shortcut-legend": {
+  "at": "2026-11-21T17:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops compared with the original: search box, topic row, shortcut legend and topic header (capture fell back to the full page, both visible), share button, blip menu bar, Next button, text/mind-map toggle, BLB bullet with plus, fold button, root body (marker style is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s21.png",
+  "verdict": "WORKS"
+ },
+ "S-207-crop-topic-header": {
+  "at": "2026-11-21T17:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops compared with the original: search box, topic row, shortcut legend and topic header (capture fell back to the full page, both visible), share button, blip menu bar, Next button, text/mind-map toggle, BLB bullet with plus, fold button, root body (marker style is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s21.png",
+  "verdict": "WORKS"
+ },
+ "S-208-crop-share-btn": {
+  "at": "2026-11-21T17:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops compared with the original: search box, topic row, shortcut legend and topic header (capture fell back to the full page, both visible), share button, blip menu bar, Next button, text/mind-map toggle, BLB bullet with plus, fold button, root body (marker style is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s21.png",
+  "verdict": "WORKS"
+ },
+ "S-209-crop-blip-menu-bar": {
+  "at": "2026-11-21T17:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops compared with the original: search box, topic row, shortcut legend and topic header (capture fell back to the full page, both visible), share button, blip menu bar, Next button, text/mind-map toggle, BLB bullet with plus, fold button, root body (marker style is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s22.png",
+  "verdict": "WORKS"
+ },
+ "S-210-crop-next-topic-btn": {
+  "at": "2026-11-21T17:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops compared with the original: search box, topic row, shortcut legend and topic header (capture fell back to the full page, both visible), share button, blip menu bar, Next button, text/mind-map toggle, BLB bullet with plus, fold button, root body (marker style is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s22.png",
+  "verdict": "WORKS"
+ },
+ "S-211-crop-text-mindmap-toggle": {
+  "at": "2026-11-21T17:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops compared with the original: search box, topic row, shortcut legend and topic header (capture fell back to the full page, both visible), share button, blip menu bar, Next button, text/mind-map toggle, BLB bullet with plus, fold button, root body (marker style is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s22.png",
+  "verdict": "WORKS"
+ },
+ "S-220-crop-blb-bullet-with-plus": {
+  "at": "2026-11-21T17:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops compared with the original: search box, topic row, shortcut legend and topic header (capture fell back to the full page, both visible), share button, blip menu bar, Next button, text/mind-map toggle, BLB bullet with plus, fold button, root body (marker style is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s23.png",
+  "verdict": "WORKS"
+ },
+ "S-221-crop-fold-button": {
+  "at": "2026-11-21T17:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops compared with the original: search box, topic row, shortcut legend and topic header (capture fell back to the full page, both visible), share button, blip menu bar, Next button, text/mind-map toggle, BLB bullet with plus, fold button, root body (marker style is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s23.png",
+  "verdict": "WORKS"
+ },
+ "S-222-crop-root-blip-body": {
+  "at": "2026-11-21T17:02",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops compared with the original: search box, topic row, shortcut legend and topic header (capture fell back to the full page, both visible), share button, blip menu bar, Next button, text/mind-map toggle, BLB bullet with plus, fold button, root body (marker style is the closed difference).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s23.png",
+  "verdict": "WORKS"
+ },
+ "S-223-crop-reply-box": {
+  "at": "2026-11-21T17:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops read: reply box, avatar and date, expanded inline thread, unfold minus, ribbon full and groups (bold, lists, link), ribbon with nothing open (the original has no size/format dropdown).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s24.png",
+  "verdict": "WORKS"
+ },
+ "S-224-crop-blip-avatar-date": {
+  "at": "2026-11-21T17:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops read: reply box, avatar and date, expanded inline thread, unfold minus, ribbon full and groups (bold, lists, link), ribbon with nothing open (the original has no size/format dropdown).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s24.png",
+  "verdict": "WORKS"
+ },
+ "S-225-crop-expanded-inline-thread": {
+  "at": "2026-11-21T17:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops read: reply box, avatar and date, expanded inline thread, unfold minus, ribbon full and groups (bold, lists, link), ribbon with nothing open (the original has no size/format dropdown).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s24.png",
+  "verdict": "WORKS"
+ },
+ "S-226-crop-unfold-minus": {
+  "at": "2026-11-21T17:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops read: reply box, avatar and date, expanded inline thread, unfold minus, ribbon full and groups (bold, lists, link), ribbon with nothing open (the original has no size/format dropdown).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s25.png",
+  "verdict": "WORKS"
+ },
+ "S-230-crop-ribbon-full": {
+  "at": "2026-11-21T17:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops read: reply box, avatar and date, expanded inline thread, unfold minus, ribbon full and groups (bold, lists, link), ribbon with nothing open (the original has no size/format dropdown).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s25.png",
+  "verdict": "WORKS"
+ },
+ "S-231-crop-ribbon-bold-group": {
+  "at": "2026-11-21T17:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops read: reply box, avatar and date, expanded inline thread, unfold minus, ribbon full and groups (bold, lists, link), ribbon with nothing open (the original has no size/format dropdown).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s25.png",
+  "verdict": "WORKS"
+ },
+ "S-232-crop-ribbon-lists": {
+  "at": "2026-11-21T17:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops read: reply box, avatar and date, expanded inline thread, unfold minus, ribbon full and groups (bold, lists, link), ribbon with nothing open (the original has no size/format dropdown).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s26.png",
+  "verdict": "WORKS"
+ },
+ "S-233-crop-ribbon-link-btn": {
+  "at": "2026-11-21T17:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops read: reply box, avatar and date, expanded inline thread, unfold minus, ribbon full and groups (bold, lists, link), ribbon with nothing open (the original has no size/format dropdown).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s26.png",
+  "verdict": "WORKS"
+ },
+ "S-234-edit-size-dropdown": {
+  "at": "2026-11-21T17:03",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: crops read: reply box, avatar and date, expanded inline thread, unfold minus, ribbon full and groups (bold, lists, link), ribbon with nothing open (the original has no size/format dropdown).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s26.png",
+  "verdict": "WORKS"
+ },
+ "S-235-edit-format-dropdown": {
+  "at": "2026-11-21T17:04",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: edit-mode dropdowns/palettes read: format/palette open as in the original (seven-swatch row now matches), gadget picker present (ours is richer), topic content screens 240-241 show title, tag line, five bullets and reply box.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s27.png",
+  "verdict": "WORKS"
+ },
+ "S-236-edit-bg-palette": {
+  "at": "2026-11-21T17:04",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: edit-mode dropdowns/palettes read: format/palette open as in the original (seven-swatch row now matches), gadget picker present (ours is richer), topic content screens 240-241 show title, tag line, five bullets and reply box.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s27.png",
+  "verdict": "WORKS"
+ },
+ "S-237-edit-color-palette": {
+  "at": "2026-11-21T17:04",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: edit-mode dropdowns/palettes read: format/palette open as in the original (seven-swatch row now matches), gadget picker present (ours is richer), topic content screens 240-241 show title, tag line, five bullets and reply box.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s27.png",
+  "verdict": "WORKS"
+ },
+ "S-238-edit-gadget-picker": {
+  "at": "2026-11-21T17:04",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: edit-mode dropdowns/palettes read: format/palette open as in the original (seven-swatch row now matches), gadget picker present (ours is richer), topic content screens 240-241 show title, tag line, five bullets and reply box.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s28.png",
+  "verdict": "WORKS"
+ },
+ "S-240-topic-content-0-russian-red-lines-2026-r": {
+  "at": "2026-11-21T17:04",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: edit-mode dropdowns/palettes read: format/palette open as in the original (seven-swatch row now matches), gadget picker present (ours is richer), topic content screens 240-241 show title, tag line, five bullets and reply box.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s28.png",
+  "verdict": "WORKS"
+ },
+ "S-241-topic-content-1-maneuver-position-dialec": {
+  "at": "2026-11-21T17:04",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: edit-mode dropdowns/palettes read: format/palette open as in the original (seven-swatch row now matches), gadget picker present (ours is richer), topic content screens 240-241 show title, tag line, five bullets and reply box.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s28.png",
+  "verdict": "WORKS"
+ },
+ "S-242-topic-content-2-htu-hth-stratbase-hcss-s": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s29.png",
+  "verdict": "WORKS"
+ },
+ "S-243-topic-content-3-cossackdom-oneliner-back": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s29.png",
+  "verdict": "WORKS"
+ },
+ "S-244-topic-content-4-hcss-team-ukraine-hcsshr": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s29.png",
+  "verdict": "WORKS"
+ },
+ "S-245-topic-content-5-geomics-hcss-stratbase-g": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s30.png",
+  "verdict": "WORKS"
+ },
+ "S-246-topic-content-6-claude-s-rizzoma-trainin": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s30.png",
+  "verdict": "WORKS"
+ },
+ "S-247-topic-content-7-liliia-hudziuk-hcss-one-": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s30.png",
+  "verdict": "WORKS"
+ },
+ "S-248-topic-content-8--": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s31.png",
+  "verdict": "WORKS"
+ },
+ "S-249-topic-content-9-russian-ukrainian-war-co": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s31.png",
+  "verdict": "WORKS"
+ },
+ "S-250-topic-content-10-virtual-machinery-hcss-r": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s31.png",
+  "verdict": "WORKS"
+ },
+ "S-251-topic-content-11-htu-licenses-creds-passw": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s32.png",
+  "verdict": "WORKS"
+ },
+ "S-260-mindmap-real-topic": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s32.png",
+  "verdict": "WORKS"
+ },
+ "S-261-mindmap-real-topic-short": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s32.png",
+  "verdict": "WORKS"
+ },
+ "S-262-text-view-real-topic": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s33.png",
+  "verdict": "WORKS"
+ },
+ "S-270-crop-unread-badge": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s33.png",
   "verdict": "WORKS"
  },
  "S-272-settings-open-menu": {
-  "at": "2026-11-21T15:25",
+  "at": "2026-11-21T17:07",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "live, Fractal Tester 2 non-owner, clean context, production 645d77d8: Same as 020: the menu offers Export multiple topics; dialog and archive line read.",
-  "shot": "/home/stephan/ledger-evidence/live5/steps/yshots/Y10-2-done.png",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s33.png",
+  "verdict": "WORKS"
+ },
+ "S-273-settings-first-page": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s34.png",
+  "verdict": "WORKS"
+ },
+ "S-274-crop-ribbon-mention-task": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s34.png",
+  "verdict": "WORKS"
+ },
+ "S-2801-topic-0-unfold-1": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: topic content screens, real-topic mind map/text view, unread badge, settings page and menu read side by side: same structure; seeded topics simpler than real ones; ours adds an account menu (Settings, Sign out).",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s34.png",
+  "verdict": "WORKS"
+ },
+ "S-2802-topic-0-unfold-2": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: unfold levels of real-looking topics, help overlay (ours lists first steps and shortcuts) and phone Mentions/Tasks panels (empty for this account, with All/Unread filters) read side by side.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s35.png",
+  "verdict": "WORKS"
+ },
+ "S-2811-topic-1-unfold-1": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: unfold levels of real-looking topics, help overlay (ours lists first steps and shortcuts) and phone Mentions/Tasks panels (empty for this account, with All/Unread filters) read side by side.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s35.png",
+  "verdict": "WORKS"
+ },
+ "S-2812-topic-1-unfold-2": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: unfold levels of real-looking topics, help overlay (ours lists first steps and shortcuts) and phone Mentions/Tasks panels (empty for this account, with All/Unread filters) read side by side.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s35.png",
+  "verdict": "WORKS"
+ },
+ "S-2821-topic-2-unfold-1": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: unfold levels of real-looking topics, help overlay (ours lists first steps and shortcuts) and phone Mentions/Tasks panels (empty for this account, with All/Unread filters) read side by side.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s36.png",
+  "verdict": "WORKS"
+ },
+ "S-2822-topic-2-unfold-2": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: unfold levels of real-looking topics, help overlay (ours lists first steps and shortcuts) and phone Mentions/Tasks panels (empty for this account, with All/Unread filters) read side by side.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s36.png",
+  "verdict": "WORKS"
+ },
+ "S-2832-topic-3-unfold-2": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: unfold levels of real-looking topics, help overlay (ours lists first steps and shortcuts) and phone Mentions/Tasks panels (empty for this account, with All/Unread filters) read side by side.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s36.png",
+  "verdict": "WORKS"
+ },
+ "S-290-help-overlay": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: unfold levels of real-looking topics, help overlay (ours lists first steps and shortcuts) and phone Mentions/Tasks panels (empty for this account, with All/Unread filters) read side by side.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s37.png",
+  "verdict": "WORKS"
+ },
+ "S-300-mobile-nav-mentions": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: unfold levels of real-looking topics, help overlay (ours lists first steps and shortcuts) and phone Mentions/Tasks panels (empty for this account, with All/Unread filters) read side by side.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s37.png",
+  "verdict": "WORKS"
+ },
+ "S-301-mobile-nav-tasks": {
+  "at": "2026-11-21T17:07",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: unfold levels of real-looking topics, help overlay (ours lists first steps and shortcuts) and phone Mentions/Tasks panels (empty for this account, with All/Unread filters) read side by side.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s37.png",
+  "verdict": "WORKS"
+ },
+ "S-302-mobile-nav-publics": {
+  "at": "2026-11-21T17:09",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone Publics, search, mind map, share dialog, and 1280 px mind map and open fractal read side by side: same panels and controls as the original's mobile/1280 layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s38.png",
+  "verdict": "WORKS"
+ },
+ "S-303-mobile-search": {
+  "at": "2026-11-21T17:09",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone Publics, search, mind map, share dialog, and 1280 px mind map and open fractal read side by side: same panels and controls as the original's mobile/1280 layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s38.png",
+  "verdict": "WORKS"
+ },
+ "S-304-mobile-mindmap": {
+  "at": "2026-11-21T17:09",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone Publics, search, mind map, share dialog, and 1280 px mind map and open fractal read side by side: same panels and controls as the original's mobile/1280 layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s38.png",
+  "verdict": "WORKS"
+ },
+ "S-305-mobile-share-modal": {
+  "at": "2026-11-21T17:09",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone Publics, search, mind map, share dialog, and 1280 px mind map and open fractal read side by side: same panels and controls as the original's mobile/1280 layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s39.png",
+  "verdict": "WORKS"
+ },
+ "S-310-w1280-mindmap": {
+  "at": "2026-11-21T17:09",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone Publics, search, mind map, share dialog, and 1280 px mind map and open fractal read side by side: same panels and controls as the original's mobile/1280 layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s39.png",
+  "verdict": "WORKS"
+ },
+ "S-311-w1280-fractal-open": {
+  "at": "2026-11-21T17:09",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone Publics, search, mind map, share dialog, and 1280 px mind map and open fractal read side by side: same panels and controls as the original's mobile/1280 layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s39.png",
+  "verdict": "WORKS"
+ },
+ "S-312-w1280-mentions": {
+  "at": "2026-11-21T17:09",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone Publics, search, mind map, share dialog, and 1280 px mind map and open fractal read side by side: same panels and controls as the original's mobile/1280 layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s40.png",
+  "verdict": "WORKS"
+ },
+ "S-320-public-topic-2": {
+  "at": "2026-11-21T17:09",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone Publics, search, mind map, share dialog, and 1280 px mind map and open fractal read side by side: same panels and controls as the original's mobile/1280 layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s40.png",
+  "verdict": "WORKS"
+ },
+ "S-321-public-topic-3": {
+  "at": "2026-11-21T17:09",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: phone Publics, search, mind map, share dialog, and 1280 px mind map and open fractal read side by side: same panels and controls as the original's mobile/1280 layout.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s40.png",
+  "verdict": "WORKS"
+ },
+ "S-322-sandbox-unfold-9": {
+  "at": "2026-11-21T17:10",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: 1280 Mentions (loading when captured), public topics, sandbox unfold nine, scrolled topics list and Store read side by side: match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s41.png",
+  "verdict": "WORKS"
+ },
+ "S-323-topics-list-scrolled": {
+  "at": "2026-11-21T17:10",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: 1280 Mentions (loading when captured), public topics, sandbox unfold nine, scrolled topics list and Store read side by side: match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s41.png",
+  "verdict": "WORKS"
+ },
+ "S-324-store-scrolled": {
+  "at": "2026-11-21T17:10",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "Live, Fractal Tester 2 non-owner, production: 1280 Mentions (loading when captured), public topics, sandbox unfold nine, scrolled topics list and Store read side by side: match the original's parts.",
+  "shot": "/home/stephan/ledger-evidence/liveparity/sheets/s41.png",
   "verdict": "WORKS"
  }
 }

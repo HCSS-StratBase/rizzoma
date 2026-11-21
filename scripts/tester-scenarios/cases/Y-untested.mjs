@@ -132,7 +132,7 @@ export default [
       ctx.ok(!/invite=/.test(a.page.url()), 'the token is not left in the address bar');
       await a.page.getByPlaceholder('Email address').click(); await a.page.keyboard.press('Control+a'); await a.page.keyboard.type(a.user.email, { delay: 15 });
       await a.page.getByPlaceholder('Password', { exact: true }).click(); await a.page.keyboard.press('Control+a'); await a.page.keyboard.type(a.user.password || PASS, { delay: 15 });
-      await a.page.locator('.submit-btn').click(); await a.page.locator('.shell-auth-logout').waitFor({ timeout: 30000 }); await a.page.locator('[data-testid="toast"]').waitFor({ timeout: 8000 }).catch(() => undefined);
+      await a.page.locator('.submit-btn').click(); await a.page.locator('.shell-auth-logout').waitFor({ timeout: 30000 }); await a.page.waitForFunction(() => /invalid|expired|no longer/i.test(document.querySelector('[data-testid="toast"]')?.textContent || ''), null, { timeout: 8000 }).catch(() => undefined);
       await a.page.screenshot({ path: path.join(shotDir(), 'Y07-2-after-sign-in.png') });
       const txt = (await a.page.locator('body').innerText()).replace(/\s+/g, ' ');
       const toasts = (await a.page.locator('[data-testid="toast"]').allInnerTexts().catch(() => [])).join(' ');
