@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/nested-insert-typing
-source_commit: da970847
+source_branch: fix/gear-menu-clip
+source_commit: 57844a33
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 79 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 80 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -126,6 +126,7 @@ graph LR
 | `test-follow-green-smoke.mjs` | — |
 | `test-gadget-apps-smoke.mjs` | Real insert-and-render smoke for the four sandboxed gadget apps |
 | `test-gadgets-render-smoke.mjs` | Regression smoke: gadgets must RENDER, not merely be stored. Inserts Code, Poll, LaTeX, YouTube, Sheet and Image |
+| `test-gear-menu-clip-smoke.mjs` | Regression smoke (parity row 061): a blip's gear menu in a short topic was clipped by the scrolling topic body, so its last items |
 | `test-liliia-smoke.mjs` | Regression smoke for two defects in Liliia's 19 Nov 2026 review, judged as a NON-OWNER in a clean context: |
 | `test-link-popup-smoke.mjs` | Regression smoke: the ribbon's link button opens the original's in-page "Insert link" popup (Text and URL fields, Submit and Remove, |
 | `test-native-ctrl-enter-smoke.mjs` | Native render path (?render=native) regression smoke for the 18 Nov 2026 tester feedback: |
