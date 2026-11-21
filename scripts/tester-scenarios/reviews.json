@@ -2037,11 +2037,11 @@
   "verdict": "WORKS"
  },
  "S-061-blip-gear-menu": {
-  "at": "2026-11-21T01:13",
+  "at": "2026-11-21T08:35",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The gear opens a longer menu than the original (Copy comment, Paste as reply, Duplicate blip, Cut blip, Send, Copy link, Playback, Delete), a superset, but the last item is cut off at the bottom of the blip container.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/061-blip-gear-menu-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 127 (live c8018061): the gear menu shows all items (Copy comment, Paste as reply, Duplicate blip, Cut blip, Send, Copy link, Playback, Delete blip) inside the topic, a superset of the original's three (Copy comment, Copy link, Playback); nothing is cut off.",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/061-blip-gear-menu-compare.png",
+  "verdict": "WORKS"
  },
  "S-062-gear-closed": {
   "at": "2026-11-21T07:21",
