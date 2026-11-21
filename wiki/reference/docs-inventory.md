@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/density
-source_commit: 5c750e01
+source_commit: 3d54cca6
 generated: true
 ---
 
 # Documentation Inventory
 
-**¶1** □ GENERATED. 110 markdown files. Title is the first heading; Status is the first status/updated/verified line in the first 25 lines, if any. Authority notes are in [the doc catalog](../reference-doc-catalog.md); `docs/deprecated/` is NOT authoritative.
+**¶1** □ GENERATED. 113 markdown files. Title is the first heading; Status is the first status/updated/verified line in the first 25 lines, if any. Authority notes are in [the doc catalog](../reference-doc-catalog.md); `docs/deprecated/` is NOT authoritative.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -45,6 +45,8 @@ graph LR
 | [`QUICKSTART.md`](../../QUICKSTART.md) | QUICKSTART | Live/staging topology (nohup tsx + vite behind nginx) is in **`STATUS .md`**. |
 | [`RIZZOMA_FEATURES_STATUS.md`](../../RIZZOMA_FEATURES_STATUS.md) | 🚀 Rizzoma Core Features Implementation Status | Do not cite it as status** — status is generated into `STATUS .md`. |
 | [`STATUS.md`](../../STATUS.md) | STATUS — Rizzoma (GENERATED, do not hand-edit) | STATUS — Rizzoma (GENERATED, do not hand-edit) |
+| [`TESTERS_COVERAGE.md`](../../TESTERS_COVERAGE.md) | Tester scenarios: what each of Liliia's notes maps to |  |
+| [`TESTERS_FEATURE_MATRIX.md`](../../TESTERS_FEATURE_MATRIX.md) | Feature coverage matrix (generated) | \| Row \| Feature \| Status in contract \| Cases \| |
 | [`deploy/systemd/README.md`](../../deploy/systemd/README.md) | Managed VPS deployment |  |
 | [`docs/APP_RUNTIME_PERSISTENCE_EXPLAINED.md`](../../docs/APP_RUNTIME_PERSISTENCE_EXPLAINED.md) | App Runtime Persistence Explained | 1. the **topic-root editor** path, which had the correct updated planner state |
 | [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) | Architecture | Status:** AUTHORITATIVE. Supersedes `deprecated ⁄ ARCHITECTURE.md`, |
@@ -142,6 +144,7 @@ graph LR
 | [`docs/worklog-261108.md`](../../docs/worklog-261108.md) | Worklog — 2026-11-08 (Structural Parity & Visual Regression Elimination) |  |
 | [`public/s/img/gdrive/README.md`](../../public/s/img/gdrive/README.md) |  |  |
 | [`scripts/README_recover_soft_deleted_blips.md`](../../scripts/README_recover_soft_deleted_blips.md) | recover_soft_deleted_blips.py |  |
+| [`scripts/tester-scenarios/README.md`](../../scripts/tester-scenarios/README.md) | tester-scenarios | Which cases are GUI tests, which are API contract tests, the deliberate exceptions, the native-path status and the mapping of |
 | [`scripts/workflow-note-260329-canonical.md`](../../scripts/workflow-note-260329-canonical.md) |  |  |
 | [`scripts/workflow-note-260329-late.md`](../../scripts/workflow-note-260329-late.md) |  |  |
 | [`scripts/workflow-note-260330-app-runtime.md`](../../scripts/workflow-note-260330-app-runtime.md) |  |  |

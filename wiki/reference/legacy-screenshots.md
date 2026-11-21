@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/density
-source_commit: 5c750e01
+source_commit: 3d54cca6
 generated: true
 ---
 

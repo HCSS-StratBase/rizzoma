@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/density
-source_commit: 5c750e01
+source_commit: 3d54cca6
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 69 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 73 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -94,6 +94,8 @@ graph LR
 | `README_MODERNIZATION.md.bak` | — |
 | `RIZZOMA_FEATURES_STATUS.md` | — |
 | `STATUS.md` | — |
+| `TESTERS_COVERAGE.md` | — |
+| `TESTERS_FEATURE_MATRIX.md` | — |
 | `aggregate_stats.py` | — |
 | `app.js` | coffee-script wrapper |
 | `capacitor.config.ts` | Capacitor configuration for the Rizzoma native wrappers |
@@ -125,6 +127,7 @@ graph LR
 | `test-liliia-smoke.mjs` | Regression smoke for two defects in Liliia's 19 Nov 2026 review, judged as a NON-OWNER in a clean context: |
 | `test-native-ctrl-enter-smoke.mjs` | Native render path (?render=native) regression smoke for the 18 Nov 2026 tester feedback: |
 | `test-nested-pointer-focus-smoke.mjs` | Regression smoke: clicking into an OPEN nested blip puts the caret in THAT blip, not in an ancestor. |
+| `test-paste-image-smoke.mjs` | Regression smoke, Liliia 19 Nov 2026: a screenshot pasted from the clipboard into a sub-blip must land in THAT blip, |
 | `test-phone-layout-smoke.mjs` | Phone layout smoke (390 x 844, 360 x 740, 430 x 932 with REAL touch taps) and the desktop guard. |
 | `test-playwright-features.js` | Take screenshot of test editor |
 | `test-rizzoma-simple.mjs` | Launch browser in headed mode so you can watch |
@@ -132,6 +135,7 @@ graph LR
 | `test-select-all-edit-smoke.mjs` | Editing over a selection: Ctrl+A then type, Backspace, Delete and paste over a selection (real key presses, real clipboard). |
 | `test-standalone-editor.html` | Set feature flags before any imports |
 | `test-tester-feedback-smoke.mjs` | Regression smoke for the 18 Nov 2026 tester feedback (Liliia): editing sub-blips, a |
+| `test-tester-scenarios.mjs` | Tester-scenarios regression suite: behaves like a real colleague (signs in, drives the REAL UI with |
 | `test-toolbar-inline-smoke.mjs` | — |
 | `test-topic-readmode-seed-smoke.mjs` | Read-mode topic seed smoke (Playwright). |
 | `test-topics-filter-smoke.mjs` | Topics list filter: All, Inbox and By me narrow the list (real clicks on the dropdown, what the person sees). |

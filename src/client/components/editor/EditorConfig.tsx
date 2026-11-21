@@ -16,6 +16,7 @@ import { CollaborativeCursor } from './CollaborativeCursors';
 import { Underline } from './extensions/Underline';
 import { TextColor } from './extensions/TextColor';
 import { ImageGadget } from './extensions/ImageGadget';
+import { ImagePasteUpload } from './extensions/ImagePasteUpload';
 import { InlineCommentsVisibility } from './extensions/InlineCommentsVisibility';
 import { BlipKeyboardShortcuts } from './extensions/BlipKeyboardShortcuts';
 import { AppFrameGadget, ChartGadget, EmbedFrameGadget, PollGadget } from './extensions/GadgetNodes';
@@ -130,6 +131,8 @@ export const getEditorExtensions = (
         isTopicRoot: options?.isTopicRoot ?? false,
       })
     );
+    // A pasted or dropped picture is uploaded, not embedded as a data: URI (which the server refuses above 100 KB)
+    extensions.push(ImagePasteUpload.configure({ blipId: options?.blipId }));
     // BLB: Always include BlipThreadNode when blip shortcuts are enabled
     // This provides the [+] marker for inline child blips (core BLB functionality)
     extensions.push(BlipThreadNode.configure({}));
