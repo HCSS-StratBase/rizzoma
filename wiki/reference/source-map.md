@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/density
-source_commit: 3d54cca6
+source_branch: fix/deep-nesting-meta
+source_commit: 44705641
 generated: true
 ---
 
@@ -115,7 +115,7 @@ graph LR
 | `src/client/components/blip/BlipMenu.tsx` | 889 | (no header comment; exports BlipMenu) |
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 656 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
-| `src/client/components/blip/RizzomaBlip.css` | 1953 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.css` | 1955 | Rizzoma Blip Styles |
 | `src/client/components/blip/RizzomaBlip.tsx` | 3248 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 117 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |

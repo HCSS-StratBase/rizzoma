@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/density
-source_commit: 3d54cca6
+source_branch: fix/deep-nesting-meta
+source_commit: 44705641
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 73 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 74 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -116,6 +116,7 @@ graph LR
 | `test-clipboard-paste-smoke.mjs` | Copy / Cut on one blip, Paste on ANOTHER blip (real clicks on the gear menu, what the person sees). |
 | `test-collab-smoke.mjs` | Real-time collab smoke test (Playwright, two browser contexts). |
 | `test-collapse-control-smoke.mjs` | The [-] control of an expanded blip must be reachable: a real click (desktop 1366 x 900) and a real tap (phone 390 x 844) |
+| `test-deep-nesting-meta-smoke.mjs` | Regression smoke: in a deeply nested topic every expanded level stays INSIDE its parent box and its author avatar and time stay inside the |
 | `test-done-flush-smoke.mjs` | Done right after typing must not lose the text (real keys, real clicks, what the person SEES after a reload). |
 | `test-edit-meta-smoke.mjs` | Copy / Cut on one blip, Paste on ANOTHER blip (real clicks on the gear menu, what the person sees). |
 | `test-editor.html` | Set feature flags before module loading |

@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/density
-source_commit: 3d54cca6
+source_branch: fix/deep-nesting-meta
+source_commit: 44705641
 generated: true
 ---
 
