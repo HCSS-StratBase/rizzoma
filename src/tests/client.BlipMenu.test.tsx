@@ -337,13 +337,14 @@ describe('client: BlipMenu toolbar', () => {
     });
 
     const swatches = container.querySelectorAll('.color-choice');
-    expect(swatches.length).toBeGreaterThan(1);
+    // the original Rizzoma palette: seven swatches (white clears) in one row
+    expect(swatches.length).toBe(7);
 
     act(() => {
       swatches[1].dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(editor.calls).toContain('highlight:#ffd93d');
+    expect(editor.calls).toContain('highlight:#ffe066');
   });
 
   it('opens overflow and triggers playback handler', () => {

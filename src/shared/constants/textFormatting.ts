@@ -46,14 +46,13 @@ export const GadgetTypes = {
   EMBED: 'embed'
 } as const;
 
-// Default colors for text background
+// Default colors for text background: the original Rizzoma palette (seven swatches in one row, sampled from its ribbon).
 export const DEFAULT_BG_COLORS = [
   '#ffffff', // White (no color)
-  '#ffd93d', // Yellow
-  '#6bcf7f', // Green
-  '#6495ed', // Blue
-  '#e78284', // Red
-  '#ba8cff', // Purple
-  '#ff9a56', // Orange
-  '#c0c0c0', // Gray
+  '#ffe066', // Yellow
+  '#b5eb5e', // Green
+  '#8ae5d6', // Teal
+  '#aab2f2', // Blue
+  '#dab6f2', // Purple
+  '#f2a79d', // Pink
 ] as const;
