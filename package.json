@@ -42,6 +42,7 @@
     "test:nested-pointer": "node test-nested-pointer-focus-smoke.mjs",
     "test:click-caret": "node test-click-caret-smoke.mjs",
     "test:paste-image": "node test-paste-image-smoke.mjs",
+    "test:nested-insert": "node test-nested-insert-smoke.mjs",
     "test:liliia": "node test-liliia-smoke.mjs",
     "test:gadgets-render": "node test-gadgets-render-smoke.mjs",
     "test:phone-layout": "node test-phone-layout-smoke.mjs",
