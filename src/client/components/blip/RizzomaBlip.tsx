@@ -1,3 +1,4 @@
+import { getPendingCollaborationCount } from '../../lib/collaborationPending';
 import { isInlineAnchored } from './inlineAnchoring';
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
@@ -514,6 +515,10 @@ export function RizzomaBlip({
         requestTaskCompletionHydration(inlineEditorRef.current);
         // No toast - auto-save is silent for real-time experience
         return 'saved';
+      }
+      if (response.status === 409 && typeof localStorage !== 'undefined' && localStorage.getItem('rizzoma:collabTrace') === '1') {
+        const body = response.data as { error?: string } | undefined;
+        console.warn('[collab-trace] 409', JSON.stringify({ blip: blip.id.slice(-12), error: body?.error, pending: getPendingCollaborationCount(), hdr: (headers || {})['x-rizzoma-yjs-state-digest']?.slice(0, 12), t: Date.now() }));
       }
       if (
         response.status === 408
