@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/density
-source_commit: 3d54cca6
+source_branch: fix/pane-widths
+source_commit: 1d819daa
 generated: true
 ---
 
@@ -226,7 +226,7 @@ graph LR
 | `scripts/gen_status.mjs` | 141 | Generate STATUS .md — the SINGLE authoritative current-state doc. |
 | `scripts/generate-ui-exhaustive-pack.mjs` | 445 | — |
 | `scripts/git-hooks/pre-push` | — | — |
-| `scripts/handbuild_acceptance.mjs` | 462 | HAND-BUILD ACCEPTANCE — the gate for ALL Rizzoma fractal work (SDS 2026-07-14). |
+| `scripts/handbuild_acceptance.mjs` | 469 | HAND-BUILD ACCEPTANCE — the gate for ALL Rizzoma fractal work (SDS 2026-07-14). |
 | `scripts/handbuild_depth10.mjs` | 109 | HAND-BUILD a depth-10 fractal on the NEW rizzoma through the REAL UI. |
 | `scripts/insert_depth10_spine.mjs` | 123 | Insert a depth-10 spine of blips directly into CouchDB. |
 | `scripts/inspect_screenshot_155148.py` | 27 | Find all blue ribbons (#4ea0f1 -> r ~ 78, g ~ 160, b ~ 241) |

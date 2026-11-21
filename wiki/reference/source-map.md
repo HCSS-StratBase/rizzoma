@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/density
-source_commit: 3d54cca6
+source_branch: fix/pane-widths
+source_commit: 1d819daa
 generated: true
 ---
 
@@ -82,7 +82,7 @@ graph LR
 | `src/client/components/RizzomaLanding.css` | 360 | — |
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
 | `src/client/components/RizzomaLayout.css` | 463 | dynamic viewport height — accounts for mobile address bar |
-| `src/client/components/RizzomaLayout.tsx` | 593 | (no header comment; exports RizzomaLayout) |
+| `src/client/components/RizzomaLayout.tsx` | 598 | (no header comment; exports RizzomaLayout) |
 | `src/client/components/RizzomaTopicDetail.css` | 1810 | RizzomaTopicDetail - Matching real Rizzoma |
 | `src/client/components/RizzomaTopicDetail.tsx` | 2399 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 237 | Authentic Legacy Rizzoma Topics List Styles |
