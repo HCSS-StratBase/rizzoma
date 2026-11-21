@@ -901,3 +901,10 @@ last_verified: 2026-11-06
 - **¶2** □ New family Y (scripts/tester-scenarios/cases/Y-untested.mjs): Play video, task deadline, session expiry, export download, ribbon palette, hand-off timing, dead invitation link, provider landing, user card, export multiple, introduction
 - **¶3** □ Live column 148 of 391 WORKS; failures are classified in HANDOFF (fixture limits of two accounts, slow shared VPS I/O, 409 `collaboration_projection_stale` retries); `lib.mjs` allows that 409 on production only when every such save later succeeds
 - **¶4** □ Mail: live `shareWith` now refuses without `SUITE_LIVE_ALLOW_MAIL=1` (about 95 real invitation mails reached SDS's inbox); local runs use scripts/tester-scenarios/mail-sink.mjs; latency reproduction with scripts/tester-scenarios/delay-proxy.mjs; production scratch cleanup with scripts/tester-scenarios/live-sweep.mjs (zero suite topics remain)
+
+
+## [2026-11-21] ingest | Author names, and a mail-free invite option for the test accounts
+
+- **¶1** □ A session without a stored display name was stored as author "Anonymous" (src/server/middleware/auth.ts), which playback printed as "by Anonymous"; it now falls back to the e-mail. The HTML export shows a contributor name or e-mail instead of "User <id>" (src/client/lib/topicExport.ts, `authorDisplay`). Older blips keep their stored "Anonymous" and show the contributor in export
+- **¶2** □ `INVITE_MAIL_SUPPRESS_PATTERN` (src/server/services/email.ts, `sendInviteEmail`): a regular expression; matching recipients get no mail but the invitation and token are still created. For the live test accounts only
+- **¶3** □ Regression tests: src/tests/client.topicExport.authorName.test.ts, src/tests/server.auth.displayName.test.ts, src/tests/server.email.suppress.test.ts

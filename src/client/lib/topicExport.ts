@@ -115,6 +115,8 @@ export function richHtmlToPlainText(html: string): string {
 
 const authorDisplay = (blip: ExportBlipNode): string => {
   if (blip.authorName && blip.authorName !== 'Anonymous') return blip.authorName;
+  const c = (blip as { contributors?: Array<{ id?: string; name?: string; email?: string }> }).contributors?.find((x) => x.id === blip.authorId) || (blip as { contributors?: Array<{ name?: string; email?: string }> }).contributors?.[0];
+  if (c?.name || c?.email) return String(c.name || c.email);
   return blip.authorId ? `User ${blip.authorId.slice(-8)}` : 'Unknown';
 };
 

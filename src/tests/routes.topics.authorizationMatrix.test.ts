@@ -840,13 +840,13 @@ describe('authorization route matrix', () => {
     expect(second.statusCode).toBe(201);
     expect(first.body.id).not.toBe(second.body.id);
     expect(first.body.blip.authorId).toBe('editor');
-    expect(first.body.blip.authorName).toBe('Anonymous');
+    expect(first.body.blip.authorName).toBe('editor@example.test');
     expect(first.body.blip.authorName).not.toBe('Forged Owner');
     await new Promise((resolve) => setTimeout(resolve, 0));
     const histories = [...state.docs.values()].filter((doc) => doc['type'] === 'blip_history' && doc['blipId'] === first.body.id);
     expect(histories).toHaveLength(1);
     expect(histories[0]?.['authorId']).toBe('editor');
-    expect(histories[0]?.['authorName']).toBe('Anonymous');
+    expect(histories[0]?.['authorName']).toBe('editor@example.test');
   });
 
   it('rejects dangling, deleted, and cross-wave parents during blip creation', async () => {
