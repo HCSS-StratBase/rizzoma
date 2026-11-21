@@ -469,17 +469,17 @@
   "verdict": "WORKS"
  },
  "14.11": {
-  "at": "2026-11-21T02:48",
+  "at": "2026-11-21T07:58",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A02] last screenshot: the blip row shows two inline markers (T1 + +) for its two children; checks passed || [case A03] last screenshot: the blip row shows five markers (F1 + + + + +) for its five children; checks passed || [case A04] last screenshot: two sibling blips each with its own marker (P1 +, P2 +); checks passed || [case A05] last screenshot: the child blip MIDKID opens under its ma",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "shot": "/home/stephan/ledger-evidence/sheets6/sheet00_X08_A11.png",
   "verdict": "WORKS"
  },
  "14.12": {
-  "at": "2026-11-21T07:34",
+  "at": "2026-11-21T07:58",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A07] last screenshot: the fast-typed child sits behind its marker (S1 +); text checked on the stored blip, all checks passed || [case A08] last screenshot: W1 and plus1 rows with their markers; text went only into the active blip; checks passed || [case A10] last screenshot: Z1 with its marker after Done right after typing; text checked, passed || [case A12] last screenshot: level-two blip ",
-  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
+  "shot": "/home/stephan/ledger-evidence/sheets6/sheet00_X08_A11.png",
   "verdict": "WORKS"
  },
  "14.13": {
@@ -683,6 +683,13 @@
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case T08] last screenshot: 'EXT' with an emoji and an inline-comment child viaButton; passed",
   "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "verdict": "WORKS"
+ },
+ "15.8": {
+  "at": "2026-11-21T07:58",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X08] last screenshot: the YouTube gadget shows a real playing-ready player ('Me at the zoo' thumbnail with the play button) inside the blip; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets6/sheet00_X08_A11.png",
   "verdict": "WORKS"
  },
  "16.1": {
@@ -896,10 +903,10 @@
   "verdict": "WORKS"
  },
  "2.7": {
-  "at": "2026-11-21T02:43",
+  "at": "2026-11-21T07:58",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A09] last screenshot: three roots R-one, R-two, R-three as separate rows in order; checks passed || [case B04] last screenshot: Ctrl+Enter in the topic root added a bullet 'rootkid' in the root body, nothing broke; passed || [case C05] last screenshot: the marker-less blip 'Par' is still reachable as a reply row; passed || [case F01] last screenshot: the blip shows its author avatar and tim",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet14_L06_N01_N02_N03.png",
+  "shot": "/home/stephan/ledger-evidence/sheets6/sheet00_X08_A11.png",
   "verdict": "WORKS"
  },
  "2.8": {
@@ -1166,6 +1173,20 @@
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case B01] last screenshot: row 'E1 edited' after Edit, typing and Done; content persisted, passed",
   "shot": "/home/stephan/ledger-evidence/sheets/sheet02_A09_A10_A12_B01.png",
+  "verdict": "WORKS"
+ },
+ "3.14": {
+  "at": "2026-11-21T07:58",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X08] last screenshot: the YouTube gadget shows a real playing-ready player ('Me at the zoo' thumbnail with the play button) inside the blip; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets6/sheet00_X08_A11.png",
+  "verdict": "WORKS"
+ },
+ "3.15": {
+  "at": "2026-11-21T07:58",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case X08] last screenshot: the YouTube gadget shows a real playing-ready player ('Me at the zoo' thumbnail with the play button) inside the blip; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets6/sheet00_X08_A11.png",
   "verdict": "WORKS"
  },
  "3.16": {
@@ -1596,11 +1617,11 @@
   "verdict": "WORKS"
  },
  "G-youtube": {
-  "at": "2026-11-21T03:11",
+  "at": "2026-11-21T07:59",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case X08] the YouTube player iframe loads but the test video is unavailable (see X08)",
-  "shot": "/home/stephan/ledger-evidence/sheets/",
-  "verdict": "PARTIAL"
+  "note": "[case X08] the YouTube player renders with a real video thumbnail and play button (sheets6 read)",
+  "shot": "/home/stephan/ledger-evidence/sheets6/sheet00_X08_A11.png",
+  "verdict": "WORKS"
  },
  "O-account_merge": {
   "at": "2026-11-21T04:38",

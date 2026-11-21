@@ -125,6 +125,8 @@ for (const row of rows) {
   md.push(`| ${row.id} | ${row.group} | ${row.text.replace(/\|/g, '/')} (${row.source}) | ${l.result} | ${v ? v.result : 'UNCHECKED'} | ${d.old} | ${d.mode} | ${d.phone} | ${l.reason.replace(/\|/g, '/')} | ${sh ? rel(sh) : '-'} | ${(l.cs || []).map((c) => c.id).join(', ') || '-'} | suite ${when} |`);
 }
 fs.writeFileSync(path.join(outDir, 'FEATURE_LEDGER.md'), md.join('\n') + '\n');
+const sdsRows = lines.filter(({ l }) => l.result === 'NEEDS_SDS');
+fs.writeFileSync(path.join(outDir, 'LEDGER_NEEDS_SDS.md'), ['# Ledger rows that need SDS\'s decision', '', `${sdsRows.length} rows have no screen of their own or differ from the original by a product decision. Each lists the evidence; accept the API or code check, or name a visible behaviour to test, or decide that the original feature is wanted.`, '', '| Row | Feature | Evidence and question |', '|---|---|---|', ...sdsRows.map(({ row, l }) => `| ${row.id} | ${row.text.replace(/\|/g, '/').slice(0, 90)} | ${l.reason.replace(/\|/g, '/')} |`), ''].join('\n'));
 const html = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Feature ledger</title>
 <style>body{font:15px system-ui,sans-serif;margin:0 16px 40px;max-width:1100px}h1{font-size:20px}.top{background:#fff3cd;border:2px solid #b26a00;border-radius:6px;padding:8px 12px;color:#222}.row{border:1px solid #ccc;border-left:6px solid var(--c);border-radius:6px;margin:8px 0;padding:8px 10px}.res{font-weight:700;color:var(--c)}small{color:#555}img{max-width:100%;border:1px solid #ddd;margin-top:6px}.dims span{display:inline-block;margin-right:10px}
 @media(prefers-color-scheme:dark){body{background:#111;color:#eee}.row{border-color:#444}small{color:#aaa}}</style>
