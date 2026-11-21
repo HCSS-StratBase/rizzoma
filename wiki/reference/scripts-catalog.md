@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/editor-controls
-source_commit: 93eada9d
+source_branch: fix/collab-end-key
+source_commit: 06f498ab
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 246 files in `scripts/`, 69 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 246 files in `scripts/`, 70 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -82,6 +82,7 @@ graph LR
 | `test:shell-defects` | `node test-shell-defects-smoke.mjs` |
 | `test:link-popup` | `node test-link-popup-smoke.mjs` |
 | `test:public-tags` | `node test-public-tags-smoke.mjs` |
+| `test:collab-end-key` | `node test-collab-end-key-smoke.mjs` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
 | `test:root-ctrl-enter` | `node scripts ⁄ test-root-ctrl-enter-survives-reload.mjs` |
 | `test:native-ctrl-enter` | `node test-native-ctrl-enter-smoke.mjs` |

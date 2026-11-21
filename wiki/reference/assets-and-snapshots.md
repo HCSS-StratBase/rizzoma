@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/editor-controls
-source_commit: 93eada9d
+source_branch: fix/collab-end-key
+source_commit: 06f498ab
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 77 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 78 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -114,6 +114,7 @@ graph LR
 | `test-blip-body-text-smoke.mjs` | Computed-style smoke: every piece of blip BODY text has the same size, line-height and |
 | `test-click-caret-smoke.mjs` | Regression smoke: a click into the MIDDLE of a view-state blip puts the caret at the clicked place, |
 | `test-clipboard-paste-smoke.mjs` | Copy / Cut on one blip, Paste on ANOTHER blip (real clicks on the gear menu, what the person sees). |
+| `test-collab-end-key-smoke.mjs` | Regression smoke (suite case W02): two people edit the same blip; A presses End and types. Before the fix the other person's cursor label |
 | `test-collab-smoke.mjs` | Real-time collab smoke test (Playwright, two browser contexts). |
 | `test-collapse-control-smoke.mjs` | The [-] control of an expanded blip must be reachable: a real click (desktop 1366 x 900) and a real tap (phone 390 x 844) |
 | `test-deep-nesting-meta-smoke.mjs` | Regression smoke: in a deeply nested topic every expanded level stays INSIDE its parent box and its author avatar and time stay inside the |
