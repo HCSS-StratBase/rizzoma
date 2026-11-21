@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/pane-widths
-source_commit: 1d819daa
+source_commit: b0581ccb
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 246 files in `scripts/`, 65 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 246 files in `scripts/`, 70 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -78,6 +78,11 @@ graph LR
 | `test:tester-scenarios` | `node test-tester-scenarios.mjs` |
 | `test:tester-scenarios:headed` | `bash scripts/tester-scenarios ⁄ run-headed.sh` |
 | `test:scenarios-coverage` | `node scripts/tester-scenarios ⁄ coverage-matrix.mjs --check` |
+| `test:deep-nesting` | `node test-deep-nesting-meta-smoke.mjs` |
+| `test:shell-defects` | `node test-shell-defects-smoke.mjs` |
+| `test:link-popup` | `node test-link-popup-smoke.mjs` |
+| `test:public-tags` | `node test-public-tags-smoke.mjs` |
+| `test:collab-end-key` | `node test-collab-end-key-smoke.mjs` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
 | `test:root-ctrl-enter` | `node scripts ⁄ test-root-ctrl-enter-survives-reload.mjs` |
 | `test:native-ctrl-enter` | `node test-native-ctrl-enter-smoke.mjs` |

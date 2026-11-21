@@ -12,12 +12,17 @@ interface PublicTopic {
   authorName: string;
   updatedAt: number;
   blipCount?: number;
+  snippet?: string;
 }
+
+const TAG_RE = /#[\p{L}\p{N}_-]+/gu;
+const tagsOf = (t: PublicTopic): string[] => [...new Set(`${t.title} ${t.snippet || ''}`.match(TAG_RE) || [])];
 
 export function PublicTopicsPanel({ onSelectTopic }: PublicTopicsPanelProps): JSX.Element {
   const [topics, setTopics] = useState<PublicTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   useEffect(() => {
     loadPublicTopics();
@@ -39,9 +44,16 @@ export function PublicTopicsPanel({ onSelectTopic }: PublicTopicsPanelProps): JS
     }
   };
 
+  // Tag filter row at the top of the list, as in the original's Publics tab (#Education #Rizzoma ...): the tags used by the public topics,
+  // most used first; clicking one narrows the list to the topics carrying it, clicking it again clears the filter.
+  const tagCounts = new Map<string, number>();
+  topics.forEach((t) => tagsOf(t).forEach((g) => tagCounts.set(g, (tagCounts.get(g) || 0) + 1)));
+  const topTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 8).map(([g]) => g);
   const filteredTopics = topics.filter(topic =>
-    topic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    topic.authorName.toLowerCase().includes(searchQuery.toLowerCase())
+    (!activeTag || tagsOf(topic).includes(activeTag)) && (
+      topic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      topic.authorName.toLowerCase().includes(searchQuery.toLowerCase())
+    )
   );
 
   const formatDate = (timestamp: number): string => {
@@ -68,6 +80,13 @@ export function PublicTopicsPanel({ onSelectTopic }: PublicTopicsPanelProps): JS
 
   return (
     <div className="public-topics-panel">
+      {topTags.length > 0 && (
+        <div className="public-tags" data-testid="public-tags">
+          {topTags.map((g) => (
+            <button key={g} type="button" className={`public-tag${activeTag === g ? ' active' : ''}`} data-testid="public-tag" onClick={() => setActiveTag(activeTag === g ? null : g)}>{g}</button>
+          ))}
+        </div>
+      )}
       <div className="panel-search">
         <input
           type="text"

@@ -22,6 +22,7 @@ import { ShellAuthControls } from './ShellAuthControls';
 import { toast } from './Toast';
 import { useOnlineState } from '../hooks/useOnlineState';
 import { useCollaborationPendingCount } from '../hooks/useCollaborationPending';
+import { api } from '../lib/api';
 
 interface RizzomaLayoutProps {
   isAuthed: boolean;
@@ -109,12 +110,31 @@ export function RizzomaLayout(props: RizzomaLayoutProps) {
 }
 
 function RizzomaLayoutState({ isAuthed, user }: RizzomaLayoutProps) {
+  // Unread mentions badge on the Mentions tab (the original draws a green count there). Refreshed on load, every 30 s and whenever the
+  // active tab changes (the Mentions list marks mentions read), so the number follows what the person has read.
+  const [unreadMentions, setUnreadMentions] = useState(0);
+  const [mentionsTick, setMentionsTick] = useState(0);
+
   const isOnline = useOnlineState();
   const pendingCollaborationCount = useCollaborationPendingCount();
   const canMutate = isAuthed && isOnline;
+  useEffect(() => {
+    if (!isAuthed) { setUnreadMentions(0); return undefined; }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const r = await api<{ unreadCount?: number }>('/api/mentions?filter=unread&limit=1&offset=0');
+        if (!cancelled && r.ok && typeof (r.data as any)?.unreadCount === 'number') setUnreadMentions((r.data as any).unreadCount);
+      } catch { /* the badge is a convenience */ }
+    };
+    void load();
+    const t = window.setInterval(load, 30000);
+    return () => { cancelled = true; window.clearInterval(t); };
+  }, [isAuthed, mentionsTick]);
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [currentBlipPath, setCurrentBlipPath] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('topics');
+  useEffect(() => { setMentionsTick((n) => n + 1); }, [activeTab]);
   const [searchPaneCollapsed] = useState(() => readBool(LEFT_COLLAPSED_KEY));
   const [rightPaneCollapsed, setRightPaneCollapsed] = useState(() => readBool(RIGHT_COLLAPSED_KEY));
   const [leftPaneWidth, setLeftPaneWidth] = useState(() => readNumber(LEFT_WIDTH_KEY, LEFT_DEFAULT, LEFT_MIN, LEFT_MAX));
@@ -478,6 +498,7 @@ function RizzomaLayoutState({ isAuthed, user }: RizzomaLayoutProps) {
           isAuthed={isAuthed}
           onNewClick={handleNewClick}
           unreadTopicCount={unreadState?.unreadIds?.length}
+          unreadCount={unreadMentions}
         />
       </div>
 

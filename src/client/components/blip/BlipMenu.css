@@ -673,3 +673,26 @@
   left: auto !important;
   right: auto !important;
 }
+
+
+/* In-page "Insert link" popup (original: Text and URL fields, Submit and Remove). */
+.link-popup {
+  position: absolute;
+  z-index: 40;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  width: 260px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #c3ccd6;
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  font-size: 13px;
+  color: #222;
+}
+.link-popup-title { font-weight: 600; margin-bottom: 6px; }
+.link-popup label { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+.link-popup input { flex: 1; min-width: 0; padding: 3px 6px; font-size: 13px; }
+.link-popup-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+.link-popup-buttons button { min-width: 72px; min-height: 28px; cursor: pointer; }
