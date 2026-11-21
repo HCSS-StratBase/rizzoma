@@ -52,6 +52,7 @@
     "test:deep-nesting": "node test-deep-nesting-meta-smoke.mjs",
     "test:shell-defects": "node test-shell-defects-smoke.mjs",
     "test:link-popup": "node test-link-popup-smoke.mjs",
+    "test:tips-deadline-session": "node test-tips-deadline-session-smoke.mjs",
     "test:public-tags": "node test-public-tags-smoke.mjs",
     "test:collab-end-key": "node test-collab-end-key-smoke.mjs",
     "test:gear-menu-clip": "node test-gear-menu-clip-smoke.mjs",

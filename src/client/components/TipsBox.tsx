@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { HelpOverlay } from './HelpOverlay';
 import './TipsBox.css';
 
 export function TipsBox() {
   const [minimized, setMinimized] = useState(false);
+  // There is no recorded video in this product: Play video opens the written First steps and shortcuts (the same window as Help).
+  const [firstSteps, setFirstSteps] = useState(false);
 
   return (
     <div className={`tips-box ${minimized ? 'tips-hidden' : ''}`}>
@@ -39,7 +42,7 @@ export function TipsBox() {
         <div className="tips-content">
           <div className="folded-tips-video">
             <span className="folded-video-name">First steps in Rizzoma:</span>
-            <button className="folded-play-pict button" type="button">Play video</button>
+            <button className="folded-play-pict button" type="button" onClick={() => setFirstSteps(true)}>Play video</button>
           </div>
 
           <div className="tips-grid">
@@ -75,6 +78,7 @@ export function TipsBox() {
           </div>
         </div>
       )}
+      {firstSteps && <HelpOverlay onClose={() => setFirstSteps(false)} />}
     </div>
   );
 }

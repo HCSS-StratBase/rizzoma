@@ -1,4 +1,17 @@
 import { offlineQueue, type QueuedMutation } from './offlineQueue';
+import { toast } from '../components/Toast';
+
+let sessionExpiryShown = false;
+/** A signed-in person whose session has gone (cookie expired or cleared) must be told, not left typing into a page that saves nothing. */
+function announceSessionExpiry(path: string): void {
+  if (sessionExpiryShown || /^\/api\/auth(?:\/|$)/.test(path) || typeof window === 'undefined') return;
+  // only for a person who is signed in (the shell shows Logout): a signed-out visitor's 401 is the normal answer
+  if (!document.querySelector('.shell-auth-logout')) return;
+  sessionExpiryShown = true;
+  (window as unknown as { __rizzomaSessionExpired?: boolean }).__rizzomaSessionExpired = true;
+  toast('Your session has expired. Reloading so you can sign in again.', 'error');
+  window.setTimeout(() => { sessionExpiryShown = false; window.location.reload(); }, 2500);
+}
 
 export type ApiResponse<T = any> = { ok: boolean; data: T | string | null; status: number; requestId?: string; queued?: boolean };
 export type ApiRequestInit = RequestInit & {
@@ -174,5 +187,6 @@ export async function api<T = any>(path: string, init?: ApiRequestInit): Promise
       console.log('[api]', path, method, res.status, `${duration}ms`);
     }
   } catch {}
+  if (res.status === 401) announceSessionExpiry(normalizedPath);
   return { ok: res.ok, data, status: res.status, requestId };
 }

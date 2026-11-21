@@ -43,3 +43,11 @@
   color: rgba(255, 255, 255, 0.8);
   margin-left: 2px;
 }
+
+
+/* In-page deadline dialog of the task picker */
+.task-deadline-dialog { position: fixed; z-index: 10000; left: 50%; top: 30%; transform: translateX(-50%); background: #fff; color: #222; border: 1px solid #c3ccd6; border-radius: 6px; padding: 14px 16px; box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; gap: 10px; min-width: 240px; }
+.task-deadline-title { font-weight: 600; }
+.task-deadline-dialog input { padding: 4px 6px; font-size: 14px; }
+.task-deadline-buttons { display: flex; gap: 8px; justify-content: flex-end; }
+.task-deadline-buttons button { min-height: 32px; padding: 0 12px; cursor: pointer; }
