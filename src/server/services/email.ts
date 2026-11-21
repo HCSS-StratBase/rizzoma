@@ -331,6 +331,14 @@ Rizzoma - Real-time collaboration platform
 // Main email sending functions
 export async function sendInviteEmail(data: InviteEmailData): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
+    // Test-only switch: addresses matching INVITE_MAIL_SUPPRESS_PATTERN (a regular expression, e.g. the +fractal test aliases) get no mail,
+    // the invitation and its token are still created. Unset in normal operation. Added after the live test suite mailed SDS's inbox ~95 times.
+    const suppress = process.env['INVITE_MAIL_SUPPRESS_PATTERN'];
+    if (suppress) {
+      let hit = false;
+      try { hit = new RegExp(suppress, 'i').test(data.recipientEmail); } catch { hit = false; }
+      if (hit) return { success: true, messageId: 'suppressed-by-INVITE_MAIL_SUPPRESS_PATTERN' };
+    }
     const template = generateInviteEmail(data);
     const transport = getTransporter();
 

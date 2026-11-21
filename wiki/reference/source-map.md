@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: 
-source_commit: 1ff4a65d
+source_branch: fix/author-names
+source_commit: d897141a
 generated: true
 ---
 
@@ -259,7 +259,7 @@ graph LR
 | `src/client/lib/sanitizeRichHtml.ts` | 254 | (no header comment; exports isSafeRichUrl) |
 | `src/client/lib/sectionAttribution.ts` | 107 | Per-section author attribution for topic body blocks. |
 | `src/client/lib/socket.ts` | 290 | (no header comment; exports disconnectSocketForAuthTransition) |
-| `src/client/lib/topicExport.ts` | 184 | (no header comment; exports ExportBlip) |
+| `src/client/lib/topicExport.ts` | 186 | (no header comment; exports ExportBlip) |
 | `src/client/lib/topicLoadReconcile.ts` | 105 | Reconcile a topic reload with what THIS tab has itself written since the reload was requested. |
 | `src/client/lib/upload.ts` | 97 | (no header comment; exports UploadResult) |
 | `src/client/lib/zipStore.ts` | 30 | Minimal ZIP writer (store, no compression) for the multi-topic export: enough for every unzip tool, no dependency. |
@@ -351,7 +351,7 @@ graph LR
 | `src/server/couch_views/main/waves_by_creation_date.js` | 19 | — |
 | `src/server/couch_views/main/waves_by_url_2.js` | 23 | — |
 | `src/server/couch_views/operations/ot_1.js` | 22 | — |
-| `src/server/middleware/auth.ts` | 34 | Add user to request |
+| `src/server/middleware/auth.ts` | 35 | Add user to request |
 | `src/server/middleware/csrf.ts` | 64 | Do not turn every anonymous page/API/asset request into a saved session. |
 | `src/server/middleware/error.ts` | 17 | ensure request id header is present on error paths |
 | `src/server/middleware/gadgetApps.ts` | 64 | Sandboxed gadget apps (Kanban, Planner, Focus, Notes) are static pages that |
@@ -363,7 +363,7 @@ graph LR
 | `src/server/schemas/comment.ts` | 14 | (no header comment; exports CreateCommentSchema) |
 | `src/server/schemas/topic.ts` | 27 | Per-section author attribution sidecar returned to clients. Authorship is |
 | `src/server/schemas/wave.ts` | 69 | (no header comment; exports CreateWaveSchema) |
-| `src/server/services/email.ts` | 435 | Email Notification Service |
+| `src/server/services/email.ts` | 443 | Email Notification Service |
 
 ## Shared (12)
 

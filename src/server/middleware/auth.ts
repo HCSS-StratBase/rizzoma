@@ -11,7 +11,8 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   req.user = {
     id: req.session.userId,
     email: req.session.userEmail || '',
-    name: req.session.userName || 'Anonymous'
+    // A person without a stored display name is shown by e-mail, never as "Anonymous" (history, playback and export print this name).
+    name: req.session.userName || req.session.userEmail || 'Anonymous'
   };
   
   next();
