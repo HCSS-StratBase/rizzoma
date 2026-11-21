@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/collab-end-key
-source_commit: 06f498ab
+source_branch: fix/pane-widths
+source_commit: b0581ccb
 generated: true
 ---
 
