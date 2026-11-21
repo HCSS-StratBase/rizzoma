@@ -674,10 +674,15 @@ export function RizzomaBlip({
     if (collabActive && !collabReady) return;
     const targetId = blip.id;
     void (async () => {
-      for (let attempt = 0; attempt < 6; attempt += 1) {
+      // Once this blip's collaboration room has been left (the editor was unmounted), the server answers a digest-bearing save with
+      // collaboration_projection_session_missing for good, and a plain replacement is refused as collaboration_pending_projection until
+      // the server has persisted its acknowledged Y.Doc (every 30 s). So: try the digest save, switch to a plain replacement when the
+      // room is gone, and keep retrying for about a minute instead of giving up after six seconds (text lost on production, 21 Nov 2026).
+      let withDigest = true;
+      for (let attempt = 0; attempt < 16; attempt += 1) {
         try {
           await ensureCsrf();
-          const headers = collabActive
+          const headers = collabActive && withDigest
             ? await collaborationProjectionHeaders(ydoc, yjsGeneration)
             : undefined;
           const response = await api(`/api/blips/${encodeURIComponent(targetId)}`, {
@@ -687,11 +692,13 @@ export function RizzomaBlip({
             body: JSON.stringify({ content: html }),
           });
           if (response.ok) return;
+          const code = (response.data as { error?: string } | undefined)?.error;
+          if (code === 'collaboration_projection_session_missing') withDigest = false;
           const retryable = response.status === 408 || response.status === 409
             || response.status === 425 || response.status === 429 || response.status >= 500;
           if (!retryable) return;
         } catch { /* retry below */ }
-        await new Promise((resolve) => setTimeout(resolve, Math.min(2_000, 150 * (2 ** attempt))));
+        await new Promise((resolve) => setTimeout(resolve, Math.min(5_000, 300 * (2 ** attempt))));
       }
     })();
   };

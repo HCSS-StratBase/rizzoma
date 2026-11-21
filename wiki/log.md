@@ -914,3 +914,9 @@ last_verified: 2026-11-06
 
 - **¶1** □ `COLLAB_TRACE=1` (server, src/server/routes/blips.ts, stale projection branch) and `localStorage rizzoma:collabTrace=1` (client, src/client/components/blip/RizzomaBlip.tsx `autoSaveBlip`) log both sides of a `collaboration_projection_stale` 409: digests, server document size, pending collaboration updates. Off by default; used to find why production loses text
 - **¶2** □ The invite dialog named members without a display name "Participant"; it now shows the e-mail local part (src/client/components/InviteModal.tsx); regression test in src/tests/client.inviteMembers.test.tsx
+
+
+## [2026-11-21] ingest | Text typed just before Done is no longer lost on a slow link
+
+- **¶1** □ Cause (read in code, matched by production 409 bodies): when a blip's editor unmounts, its collaboration room is left (src/client/components/editor/CollaborativeProvider.ts `destroy`), after which a digest-bearing save answers `collaboration_projection_session_missing` for good (src/server/routes/blips.ts, deliberate invariant kept), and a plain replacement is refused as `collaboration_pending_projection` until the server persists its acknowledged Y.Doc, every 30 s (src/server/lib/yjsDocCache.ts `persistInterval`). The unmount flush gave up after six attempts (about 6 s), so the HTML projection never got the last text on production, where the extra round trips push the save past the unmount
+- **¶2** □ Fix: the unmount flush in src/client/components/blip/RizzomaBlip.tsx switches to a plain replacement when the room is gone and keeps retrying for about a minute (16 attempts, backoff to 5 s). The server invariants are unchanged
