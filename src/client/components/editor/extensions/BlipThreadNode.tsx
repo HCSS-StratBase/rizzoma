@@ -120,25 +120,37 @@ export const BlipThreadNode = Node.create({
   },
 
   addProseMirrorPlugins() {
+    // A nested blip's own editor is rendered INSIDE this editor's DOM (the portal in the marker atom). Whenever this
+    // editor updates its document, ProseMirror writes its state selection back to the DOM if the DOM selection lies in its
+    // DOM, which pulled the caret out of the nested editor into the end of THIS (parent) editor: the first keys typed into
+    // a freshly inserted child went to the parent ("Test 2" became "Test 2N") and the new blip stayed empty (Liliia,
+    // 19 Nov 2026, view-mode insert in a sub-blip). While the focus is inside one of our portals this editor therefore
+    // reports itself non-editable, and a non-editable view does not claim the selection (ProseMirror editorOwnsSelection).
+    // Anything that deliberately moves the focus back into THIS editor (a click, view.focus(), dom.focus()) first clears
+    // that state, so the host is writable again the moment it is wanted.
     let hostView: import('@tiptap/pm/view').EditorView | null = null;
+    let leavingNested = false;
+    const refresh = () => { try { hostView?.setProps({}); } catch { /* view not ready */ } };
     return [
       new Plugin({
         key: new PluginKey('blipThreadNestedPointer'),
-        view: (view) => { hostView = view; return { destroy() { if (hostView === view) hostView = null; } }; },
+        view: (view) => {
+          hostView = view;
+          const origFocus = view.focus.bind(view);
+          view.focus = () => { leavingNested = true; refresh(); origFocus(); };
+          const origDomFocus = view.dom.focus.bind(view.dom);
+          view.dom.focus = (opts?: FocusOptions) => { leavingNested = true; refresh(); origDomFocus(opts); };
+          return { destroy() { if (hostView === view) hostView = null; } };
+        },
         props: {
-          // While the person types in a NESTED blip's own editor (rendered inside this editor's DOM), this editor must
-          // not own the selection: ProseMirror writes its state selection back to the DOM on every update whenever the
-          // DOM selection lies inside its DOM, which pulled the caret out of the freshly inserted child into the end
-          // of this (parent) editor, so the first keys landed in the parent ("Test 2" became "Test 2N") and the new
-          // blip stayed empty (Liliia 19 Nov 2026, view-mode insert in a sub-blip). A non-editable view does not claim
-          // the selection (editorOwnsSelection).
           editable: () => {
-            if (!hostView || typeof document === 'undefined') return true;
+            if (!hostView || leavingNested || typeof document === 'undefined') return true;
             const portal = (document.activeElement as HTMLElement | null)?.closest?.('.inline-child-portal');
             return !(portal && hostView.dom.contains(portal));
           },
           handleDOMEvents: {
-            mousedown: (_view, event) => isEventInsideInlineChildPortal(event.target),
+            mousedown: (_view, event) => { const inside = isEventInsideInlineChildPortal(event.target); leavingNested = !inside; if (!inside) refresh(); return inside; },
+            focusin: (_view, event) => { leavingNested = !isEventInsideInlineChildPortal(event.target); refresh(); return false; },
             mouseup: (_view, event) => isEventInsideInlineChildPortal(event.target),
             click: (_view, event) => isEventInsideInlineChildPortal(event.target),
           },
