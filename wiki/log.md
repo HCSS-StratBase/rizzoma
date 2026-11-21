@@ -857,3 +857,8 @@ last_verified: 2026-11-06
 - **¶3** □ `api.ts` shows "Your session has expired" and reloads to the sign-in form when a signed-in person's request answers 401 (`announceSessionExpiry`)
 - **¶4** □ `Toast.tsx` had no z-index, so every toast rendered behind the Rizzoma layout and nobody ever saw it; it now sits above, with a single timer and the session notice not replaced by follow-up errors
 - **¶5** □ Regression test: `test-tips-deadline-session-smoke.mjs` (`npm run test:tips-deadline-session`), fails on base, passes on the fix
+
+## [2026-11-21] ingest | Ribbon colour palette matches the original
+
+- **¶1** □ The text background palette (`DEFAULT_BG_COLORS`, src/shared/constants/textFormatting.ts:50) now has the original's seven swatches in one row (white clears, yellow, green, teal, blue, purple, pink), colours sampled from archive screenshot 237; before: eight different swatches in two rows of four (`.color-panel` in BlipMenu.css)
+- **¶2** □ Regression test: `client.BlipMenu.test.tsx` expects seven swatches and the new yellow; suite case Y05 opens the palette in the edit ribbon and applies a colour

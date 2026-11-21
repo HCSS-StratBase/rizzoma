@@ -30,12 +30,11 @@ export const GadgetTypes = {
 };
 export const DEFAULT_BG_COLORS = [
     '#ffffff',
-    '#ffd93d',
-    '#6bcf7f',
-    '#6495ed',
-    '#e78284',
-    '#ba8cff',
-    '#ff9a56',
-    '#c0c0c0',
+    '#ffe066',
+    '#b5eb5e',
+    '#8ae5d6',
+    '#aab2f2',
+    '#dab6f2',
+    '#f2a79d',
 ];
 //# sourceMappingURL=textFormatting.js.map
