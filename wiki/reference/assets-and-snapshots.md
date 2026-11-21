@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/palette-original
-source_commit: a6274438
+source_branch: fix/untrack-node-modules
+source_commit: 09b84330
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 83 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 82 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -103,7 +103,6 @@ graph LR
 | `create-demo-topic.cjs` | Create a topic |
 | `docker-compose.yml` | — |
 | `jest.config.cjs` | — |
-| `node_modules` | — |
 | `npm-error.log` | — |
 | `open-browser-test.sh` | — |
 | `open-test-browser.sh` | — |

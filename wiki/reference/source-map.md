@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/palette-original
-source_commit: a6274438
+source_branch: fix/untrack-node-modules
+source_commit: 09b84330
 generated: true
 ---
 
