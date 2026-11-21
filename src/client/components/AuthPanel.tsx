@@ -1,3 +1,4 @@
+import { markIntroForNewAccount } from './IntroOverlay';
 import { useEffect, useState } from 'react';
 import { api, ensureCsrf } from '../lib/api';
 import { isNative, launchNativeOAuth } from '../lib/capacitor-native';
@@ -161,6 +162,7 @@ export function AuthPanel({
           setRecoveryMode(false);
         }
       } else {
+        if (kind === 'register') markIntroForNewAccount();
         if (kind === 'register' && ownerRecoveryToken) {
           clearOwnerRecoveryToken();
           setRecoveryMode(false);
