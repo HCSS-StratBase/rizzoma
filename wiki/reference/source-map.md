@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/shell-defects
-source_commit: f1ec7a4a
+source_branch: fix/editor-controls
+source_commit: 93eada9d
 generated: true
 ---
 
@@ -76,8 +76,8 @@ graph LR
 | `src/client/components/PWAPrompts.tsx` | 129 | (no header comment; exports PWAPrompts) |
 | `src/client/components/PresenceIndicator.css` | 66 | — |
 | `src/client/components/PresenceIndicator.tsx` | 54 | (no header comment; exports PresenceIndicator) |
-| `src/client/components/PublicTopicsPanel.css` | 80 | — |
-| `src/client/components/PublicTopicsPanel.tsx` | 104 | (no header comment; exports PublicTopicsPanel) |
+| `src/client/components/PublicTopicsPanel.css` | 85 | — |
+| `src/client/components/PublicTopicsPanel.tsx` | 123 | (no header comment; exports PublicTopicsPanel) |
 | `src/client/components/RebuildPanel.tsx` | 133 | (no header comment; exports RebuildPanel) |
 | `src/client/components/RightToolsPanel.css` | 468 | RightToolsPanel.css - Authentic Legacy Rizzoma Right Tools Panel |
 | `src/client/components/RightToolsPanel.tsx` | 541 | Custom events for insert shortcuts - these are dispatched globally |
@@ -113,8 +113,8 @@ graph LR
 | `src/client/components/blip/ActiveBlipContext.tsx` | 77 | Single-active-blip invariant (BLB §18b2 three-state model): a topic shows at |
 | `src/client/components/blip/BlipHistoryModal.css` | 475 | BlipHistoryModal - Timeline Playback UI |
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
-| `src/client/components/blip/BlipMenu.css` | 676 | Authentic Legacy Rizzoma Blip Menu Styles |
-| `src/client/components/blip/BlipMenu.tsx` | 896 | (no header comment; exports BlipMenu) |
+| `src/client/components/blip/BlipMenu.css` | 699 | Authentic Legacy Rizzoma Blip Menu Styles |
+| `src/client/components/blip/BlipMenu.tsx` | 935 | (no header comment; exports BlipMenu) |
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 656 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
 | `src/client/components/blip/RizzomaBlip.css` | 1956 | Rizzoma Blip Styles |

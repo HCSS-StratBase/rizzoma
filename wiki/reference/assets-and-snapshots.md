@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/shell-defects
-source_commit: f1ec7a4a
+source_branch: fix/editor-controls
+source_commit: 93eada9d
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 75 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 77 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -126,11 +126,13 @@ graph LR
 | `test-gadget-apps-smoke.mjs` | Real insert-and-render smoke for the four sandboxed gadget apps |
 | `test-gadgets-render-smoke.mjs` | Regression smoke: gadgets must RENDER, not merely be stored. Inserts Code, Poll, LaTeX, YouTube, Sheet and Image |
 | `test-liliia-smoke.mjs` | Regression smoke for two defects in Liliia's 19 Nov 2026 review, judged as a NON-OWNER in a clean context: |
+| `test-link-popup-smoke.mjs` | Regression smoke: the ribbon's link button opens the original's in-page "Insert link" popup (Text and URL fields, Submit and Remove, |
 | `test-native-ctrl-enter-smoke.mjs` | Native render path (?render=native) regression smoke for the 18 Nov 2026 tester feedback: |
 | `test-nested-pointer-focus-smoke.mjs` | Regression smoke: clicking into an OPEN nested blip puts the caret in THAT blip, not in an ancestor. |
 | `test-paste-image-smoke.mjs` | Regression smoke, Liliia 19 Nov 2026: a screenshot pasted from the clipboard into a sub-blip must land in THAT blip, |
 | `test-phone-layout-smoke.mjs` | Phone layout smoke (390 x 844, 360 x 740, 430 x 932 with REAL touch taps) and the desktop guard. |
 | `test-playwright-features.js` | Take screenshot of test editor |
+| `test-public-tags-smoke.mjs` | Regression smoke: the Publics tab shows the original's tag filter row (parity rows 016, 080, 302). A person makes two topics public, one |
 | `test-rizzoma-simple.mjs` | Launch browser in headed mode so you can watch |
 | `test-rizzoma.mjs` | Create a test script that playwright can run |
 | `test-select-all-edit-smoke.mjs` | Editing over a selection: Ctrl+A then type, Backspace, Delete and paste over a selection (real key presses, real clipboard). |
