@@ -881,3 +881,9 @@ last_verified: 2026-11-06
 
 - **¶1** □ An invitation link now opens the SIGN IN form (src/client/components/AuthPanel.tsx, initial `mode`); before it opened "Create an account", whose password rule is 12 characters, so an existing user typing a shorter password there never got further than a length error. "Sign up" below still creates the account for the invited address, and an existing address typed there is sent back to sign in
 - **¶2** □ Regression test: `test-invite-journey-smoke.mjs` cases b and b2
+## [2026-11-21] ingest | Three features of the original restored (SDS ruling): export multiple topics, user card, introduction
+
+- **¶1** □ "Export multiple topics" is back in the topic gear menu (src/client/components/RizzomaTopicDetail.tsx, `gear-export-multiple`): a dialog with select all and one checkbox per topic and "Export selected topics" (src/client/components/ExportMultipleModal.tsx), which builds one HTML file per topic and bundles them as a ZIP in the browser (src/client/lib/zipStore.ts); original: export/template.coffee, wave/settings_menu.coffee
+- **¶2** □ A click on a person's avatar opens a user card with avatar, name, e-mail and role (`TopicAvatar` in RizzomaTopicDetail.tsx, `data-testid="user-card"`); original: popup/user_popup
+- **¶3** □ A new account sees the "Check it later" introduction once: four tips, Prev tip / Next tip, progress dots (src/client/components/IntroOverlay.tsx, styles in src/client/components/IntroOverlay.css; the flag is set by `AuthPanel` after a registration); original: introduce/template.coffee
+- **¶4** □ Regression test: `test-original-features-smoke.mjs` (`npm run test:original-features`)

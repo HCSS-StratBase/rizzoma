@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import type { CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { api, ensureCsrf } from '../lib/api';
 import { beginChildTypeahead, cancelChildTypeahead, flushChildTypeahead } from '../lib/inlineChildTypeahead';
 import { isSafeRichUrl, sanitizeRichHtml } from '../lib/sanitizeRichHtml';
@@ -10,6 +11,7 @@ import { InviteModal } from './InviteModal';
 import { ShareModal } from './ShareModal';
 import ExportModal from './ExportModal';
 import { getInviteProblem } from '../lib/fragmentSecrets';
+import ExportMultipleModal from './ExportMultipleModal';
 import { WavePlaybackModal } from './WavePlaybackModal';
 import { MindMapView } from './MindMapView';
 import './RizzomaTopicDetail.css';
@@ -188,13 +190,41 @@ export function TopicAvatar({
   const pendingClass = participant?.status === 'pending' ? 'pending' : '';
   const className = `${small ? 'topic-avatar-small' : 'participant-avatar'} ${roleClass} ${pendingClass}`.trim();
 
+  const [card, setCard] = useState<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (!card) return undefined;
+    const close = () => setCard(null);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    window.addEventListener('pointerdown', close);
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('pointerdown', close); window.removeEventListener('keydown', onKey); };
+  }, [card]);
+
   return (
     <span
       className={`${className} fallback`}
-      style={style}
+      style={{ ...style, cursor: 'pointer' }}
       title={`${label}${participant?.role === 'owner' ? ' (owner)' : ''}${participant?.status === 'pending' ? ' (invited)' : ''}`}
       aria-label={label}
+      data-testid="user-avatar"
+      onClick={(event) => {
+        // The original opens a small user card (avatar, name, e-mail) on a click on a person's avatar (popup/user_popup).
+        event.stopPropagation();
+        const rect = event.currentTarget.getBoundingClientRect();
+        setCard({ x: Math.max(8, Math.min(rect.left, window.innerWidth - 280)), y: rect.bottom + 6 });
+      }}
     >
+      {card && createPortal(
+        <div className="user-card" data-testid="user-card" role="dialog" aria-label={`${label} details`} style={{ left: card.x, top: card.y }} onPointerDown={(e) => e.stopPropagation()}>
+          <div className="user-card-avatar">{avatar ? <img src={avatar} alt="" referrerPolicy="no-referrer" /> : <span>{initials}</span>}</div>
+          <div className="user-card-text">
+            <div className="user-card-name">{participant?.name || authorName || label}</div>
+            {participant?.email ? <div className="user-card-email">{participant.email}</div> : null}
+            {participant?.role ? <div className="user-card-role">{participant.role === 'owner' ? 'Owner' : participant.role}{participant?.status === 'pending' ? ' (invited)' : ''}</div> : null}
+          </div>
+        </div>,
+        document.body,
+      )}
       <span className="topic-avatar-initials">{initials}</span>
       {avatar && (
         <img
@@ -335,6 +365,7 @@ function RizzomaTopicDetailState({
     window.addEventListener('rizzoma:invite-problem', bump);
     return () => window.removeEventListener('rizzoma:invite-problem', bump);
   }, []);
+  const [showExportMultiple, setShowExportMultiple] = useState(false);
   const [showWavePlayback, setShowWavePlayback] = useState(false);
   const [showCommentsPanel, setShowCommentsPanel] = useState(true);
   const [topicViewMode, setTopicViewMode] = useState<'text' | 'mindmap'>('text');
@@ -2079,6 +2110,9 @@ function RizzomaTopicDetailState({
               <button className="gear-menu-item" onClick={handleExportTopic}>
                 Export single topic
               </button>
+              <button className="gear-menu-item" data-testid="gear-export-multiple" onClick={() => { setShowGearMenu(false); setShowExportMultiple(true); }}>
+                Export multiple topics
+              </button>
               <button className="gear-menu-item" onClick={handleCopyEmbedCode}>
                 Get embed code
               </button>
@@ -2386,6 +2420,7 @@ function RizzomaTopicDetailState({
         topicId={id}
         topicTitle={topic.title}
       />
+      <ExportMultipleModal isOpen={showExportMultiple} onClose={() => setShowExportMultiple(false)} />
       <ExportModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}

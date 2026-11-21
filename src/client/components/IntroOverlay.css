@@ -1,0 +1,13 @@
+.introduce { position: fixed; inset: 0; z-index: 20000; display: flex; align-items: center; justify-content: center; }
+.introduce-background { position: absolute; inset: 0; background: rgba(20, 35, 55, 0.62); }
+.introduce-box { position: relative; width: min(640px, 92vw); background: #fff; color: #1d2b3c; border-radius: 8px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); overflow: hidden; }
+.introduce-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #4a90e2; color: #fff; gap: 12px; }
+.introduce-nav { display: flex; align-items: center; gap: 12px; }
+.introduce-nav button, .introduce-closer { background: transparent; border: 1px solid rgba(255, 255, 255, 0.7); color: #fff; border-radius: 4px; padding: 6px 12px; cursor: pointer; min-height: 32px; }
+.introduce-nav button:disabled { opacity: 0.45; cursor: default; }
+.introduce-progress { display: flex; gap: 6px; }
+.introduce-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.45); }
+.introduce-dot.active { background: #fff; }
+.introduce-slide { padding: 24px 28px 30px; min-height: 150px; }
+.introduce-slide h3 { margin: 0 0 10px; font-size: 20px; }
+.introduce-slide p { margin: 0; font-size: 16px; line-height: 1.5; }

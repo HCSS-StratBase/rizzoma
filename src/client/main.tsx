@@ -6,6 +6,7 @@ import { AnonymousTopicRoute } from './components/AnonymousTopicRoute';
 import { TopicsList } from './components/TopicsList';
 import { WavesList } from './components/WavesList';
 import { WaveView } from './components/WaveView';
+import IntroOverlay, { introIsPending } from './components/IntroOverlay';
 import { Toast, toast } from './components/Toast';
 import { StatusBar } from './components/StatusBar';
 import { RizzomaTopicDetail } from './components/RizzomaTopicDetail';
@@ -127,6 +128,8 @@ export function App() {
   const [error] = useState<string | null>(null);
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
   const [inviteTick, setInviteTick] = useState(0);
+  const [introOpen, setIntroOpen] = useState(() => introIsPending());
+  useEffect(() => { if (me && introIsPending()) setIntroOpen(true); }, [me]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [currentBlipPath, setCurrentBlipPath] = useState<string | null>(null);
   // Check if we should use Rizzoma layout based on URL parameter
@@ -371,6 +374,7 @@ export function App() {
         ) : (
           <RizzomaLayout key={`authenticated:${me.id}`} isAuthed user={me} />
         )}
+        {me && introOpen && <IntroOverlay onClose={() => setIntroOpen(false)} />}
         <Toast />
       </div>
       </AuthProvider>
