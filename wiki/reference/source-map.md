@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: test/ledger-batch5
-source_commit: a1f13ef3
+source_branch: fix/mention-participants
+source_commit: 179c07d8
 generated: true
 ---
 
@@ -121,7 +121,7 @@ graph LR
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 656 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
 | `src/client/components/blip/RizzomaBlip.css` | 1956 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 3260 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/RizzomaBlip.tsx` | 3276 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 117 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 76 | (no header comment; exports LocationLike) |
@@ -200,7 +200,7 @@ graph LR
 | `src/client/native/wave-view.ts` | 272 | Native fractal-render — WaveView. |
 | `src/client/native/yjs-binding.ts` | 202 | Native fractal-render — Y.js CRDT binding for the ContentArray model. |
 
-## Client other (70)
+## Client other (71)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -261,6 +261,7 @@ graph LR
 | `src/client/lib/socket.ts` | 290 | (no header comment; exports disconnectSocketForAuthTransition) |
 | `src/client/lib/topicExport.ts` | 186 | (no header comment; exports ExportBlip) |
 | `src/client/lib/topicLoadReconcile.ts` | 105 | Reconcile a topic reload with what THIS tab has itself written since the reload was requested. |
+| `src/client/lib/topicRoster.ts` | 36 | (no header comment; exports RosterPerson) |
 | `src/client/lib/upload.ts` | 97 | (no header comment; exports UploadResult) |
 | `src/client/lib/zipStore.ts` | 30 | Minimal ZIP writer (store, no compression) for the multi-topic export: enough for every unzip tool, no dependency. |
 | `src/client/main.tsx` | 470 | (no header comment; exports App) |
@@ -292,7 +293,7 @@ graph LR
 | `src/server/routes/tasks.ts` | 294 | Tasks Routes |
 | `src/server/routes/topics.ts` | 894 | — |
 | `src/server/routes/uploads.ts` | 320 | (no header comment; exports uploadsRouter) |
-| `src/server/routes/waves.ts` | 1182 | — |
+| `src/server/routes/waves.ts` | 1183 | — |
 
 ## Server lib (20)
 
@@ -396,7 +397,7 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (130)
+## Tests (131)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -473,6 +474,7 @@ graph LR
 | `src/tests/client.topicLoadReconcile.test.ts` | 96 | — |
 | `src/tests/client.topicProjectionGuard.test.ts` | 53 | — |
 | `src/tests/client.topicRealtime.test.ts` | 22 | — |
+| `src/tests/client.topicRoster.test.ts` | 29 | — |
 | `src/tests/client.uploadCancellation.test.ts` | 85 | — |
 | `src/tests/client.useWaveUnread.test.tsx` | 211 | — |
 | `src/tests/client.yjsAuthIsolation.test.ts` | 109 | — |

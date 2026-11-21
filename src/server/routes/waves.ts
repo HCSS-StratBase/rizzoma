@@ -523,15 +523,16 @@ router.get('/contacts/suggest', requireAuth, noStore, async (req, res) => {
   try {
     const me = req.user!.id;
     const q = String(req.query['q'] || '').trim().toLowerCase().slice(0, 80);
-    const mine = await find<WaveParticipant>({ type: 'participant', userId: me }, { limit: 400 });
+    // Limits were 400 / 5000 and unordered: a person with hundreds of topics (or participant docs of deleted ones) silently lost recent contacts.
+    const mine = await find<WaveParticipant>({ type: 'participant', userId: me }, { limit: 5000 });
     const waveIds = [...new Set((mine.docs || [])
       .filter((p) => p.status === 'accepted' || p.status === undefined)
-      .map((p) => p.waveId))].slice(0, 400);
+      .map((p) => p.waveId))].slice(0, 2000);
     const counts = new Map<string, number>();
     if (waveIds.length > 0) {
       const others = await find<WaveParticipant>(
         { type: 'participant', waveId: { $in: waveIds } },
-        { limit: 5000 },
+        { limit: 30000 },
       );
       for (const p of others.docs || []) {
         if (!p.userId || p.userId === me || String(p.userId).startsWith('invite:')) continue;

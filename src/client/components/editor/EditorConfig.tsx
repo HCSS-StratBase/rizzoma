@@ -81,7 +81,6 @@ export const getEditorExtensions = (
   provider?: any,
   options?: EditorExtensionOptions
 ): any[] => {
-  const editorRoster = buildEditorRoster(options);
   const extensions = [
     StarterKit.configure({
       // Disable history when using Collaboration (Yjs has its own undo manager)
@@ -193,7 +192,8 @@ export const getEditorExtensions = (
         },
         suggestion: {
           items: ({ query }: { query: string }) => {
-            return editorRoster
+            // read at call time: the roster array handed in may be filled after the editor was created (topic participants arrive later)
+            return buildEditorRoster(options)
               .filter(user => 
                 user.label.toLowerCase().includes(query.toLowerCase()) ||
                 (user.email || '').toLowerCase().includes(query.toLowerCase())
