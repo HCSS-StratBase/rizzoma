@@ -70,8 +70,10 @@ function evaluate(cs) {
   return { result, reason, shotCase: failed[0] || pass.find(GUI) || cs[0] };
 }
 const casesFor = (res, row) => (row.shotRow ? res.filter((r) => (r.shotRows || []).includes(row.shotKey)) : row.cites ? res.filter((r) => (r.rows || []).includes(row.cites)) : (row.caseIds || []).map((id) => res.find((r) => r.id === id)).filter(Boolean));
-const rank = { BROKEN: 0, PARTIAL: 1, UNCHECKED: 2, UNREVIEWED: 2.5, WORKS: 3 };
+const rank = { BROKEN: 0, PARTIAL: 1, UNCHECKED: 2, UNREVIEWED: 2.5, NEEDS_SDS: 2.7, WORKS: 3 };
 function rowResult(res, row, byId) {
+  const rv0 = res === local ? reviews[row.id] : null;
+  if (rv0 && (row.derivedFrom || row.shotRow) && ['NEEDS_SDS', 'WORKS', 'PARTIAL', 'BROKEN'].includes(rv0.verdict) && row.derivedFrom && !row.derivedFrom.length) return { result: rv0.verdict, reason: `${rv0.verdict === 'NEEDS_SDS' ? 'no user-visible check possible: ' : 'recorded reading: '}${rv0.note}`, shotCase: null, cs: [] };
   if (row.derivedFrom) {
     if (!row.derivedFrom.length) return { result: 'UNCHECKED', reason: 'no contract row maps to this original module and no case exercises it', shotCase: null, cs: [] };
     const subs = row.derivedFrom.map((id) => byId.get(id)).filter(Boolean);
@@ -84,6 +86,8 @@ function rowResult(res, row, byId) {
   const cs = casesFor(res, row); const e = evaluate(cs);
   // A passing case is not enough: a WORKS row also needs a person's (or agent's) recorded reading of its screenshot.
   const rv = res === local ? reviews[row.id] : null;
+  // NEEDS_SDS: a row with no user-visible behaviour (or none in the modernized product) that a person must accept or reject; never counts as WORKS.
+  if (rv && rv.verdict === 'NEEDS_SDS' && e.result !== 'BROKEN' && e.result !== 'PARTIAL') return { ...e, result: 'NEEDS_SDS', reason: `no user-visible check possible: ${rv.note}`, cs };
   if (res === local && e.result === 'WORKS' && !rv) return { ...e, result: 'UNREVIEWED', reason: `${e.reason}; the screenshot has not been read yet`, cs };
   if (rv && rv.verdict && rv.verdict !== 'WORKS' && e.result !== 'BROKEN') return { ...e, result: rv.verdict, reason: `screenshot review: ${rv.note}`, cs };
   if (rv && e.result === 'WORKS') return { ...e, reason: `${e.reason}; screenshot read: ${rv.note}`, cs };
@@ -102,10 +106,10 @@ const dim = (row, cs) => {
   const st = (a) => (!a.length ? 'UNCHECKED' : a.every((c) => c.status === 'PASS') ? 'WORKS' : 'BROKEN');
   return { old: 'UNCHECKED', mode: st(both), phone: st(ph) };
 };
-const count = (m) => { const c = { WORKS: 0, BROKEN: 0, PARTIAL: 0, UNCHECKED: 0, UNREVIEWED: 0 }; for (const v of m.values()) c[v.result] += 1; return c; };
+const count = (m) => { const c = { WORKS: 0, BROKEN: 0, PARTIAL: 0, UNCHECKED: 0, UNREVIEWED: 0, NEEDS_SDS: 0 }; for (const v of m.values()) c[v.result] += 1; return c; };
 const cl = count(L); const total = rows.length;
-const top = `${total} rows. LOCAL: WORKS ${cl.WORKS}, BROKEN ${cl.BROKEN}, PARTIAL ${cl.PARTIAL}, **UNCHECKED ${cl.UNCHECKED}**, passed but screenshot not yet read ${cl.UNREVIEWED}` + (V ? `. LIVE: ${Object.entries(count(V)).map(([k, v]) => `${k} ${v}`).join(', ')}` : '. LIVE: not yet run, every row UNCHECKED on live');
-const colour = { WORKS: '#1b7a3a', BROKEN: '#b3261e', PARTIAL: '#b26a00', UNCHECKED: '#555', UNREVIEWED: '#2a5db0' };
+const top = `${total} rows. LOCAL: WORKS ${cl.WORKS}, BROKEN ${cl.BROKEN}, PARTIAL ${cl.PARTIAL}, **UNCHECKED ${cl.UNCHECKED}**, passed but screenshot not yet read ${cl.UNREVIEWED}, NEEDS SDS DECISION ${cl.NEEDS_SDS}` + (V ? `. LIVE: ${Object.entries(count(V)).map(([k, v]) => `${k} ${v}`).join(', ')}` : '. LIVE: not yet run, every row UNCHECKED on live');
+const colour = { WORKS: '#1b7a3a', BROKEN: '#b3261e', PARTIAL: '#b26a00', UNCHECKED: '#555', UNREVIEWED: '#2a5db0', NEEDS_SDS: '#7a3fb0' };
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const rel = (p) => (p ? path.relative(outDir, p) : '');
 const header = `Build under test: ${build}. Generated ${when}. Evidence: headed Chromium on a private Xvfb display, signed in as a seeded non-owner user. Dimensions OLD STORED STATE, EDIT+READ MODE, PHONE 390x844 default to UNCHECKED until a case covers them (old state: no fixtures yet, so UNCHECKED everywhere).`;
