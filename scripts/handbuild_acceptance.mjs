@@ -328,6 +328,16 @@ for (let i = 0; i < DEPTH + 8; i++) {
 }
 await step('fully-expanded');
 await measureLayout('view');
+// Level pitch (Liliia 19 Nov 2026, "too big and seems too close"): in the original Rizzoma, one level of a single-line
+// spine takes ~55 px, so each level's avatar and date clear the next box border; this app used 43 px.
+const pitch = await page.evaluate(() => {
+  const ys = ['L2 label', 'L3 label', 'L4 label', 'L5 label', 'L6 label'].map((t) => {
+    const li = Array.from(document.querySelectorAll('li > p')).filter((e) => e.getBoundingClientRect().height > 0 && (e.textContent || '').replace(/\u200b/g, '').trim().startsWith(t)).pop();
+    return li ? li.getBoundingClientRect().y : null;
+  });
+  return ys.slice(1).map((y, i) => (y == null || ys[i] == null ? null : Math.round(y - ys[i])));
+});
+gate('level pitch of a single-line spine is 50-60 px (original: 55 px)', pitch.length === 4 && pitch.every((v) => v !== null && v >= 50 && v <= 60), `pitches: ${pitch.join(', ')}`);
 // House rule: layout is judged by eye at 1366 and 1600 px wide as well.
 for (const w of [1366, 1600]) {
   await page.setViewportSize({ width: w, height: 950 });
