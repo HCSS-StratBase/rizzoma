@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/paste-image-upload
-source_commit: 75cbcf58
+source_commit: 28eb980e
 generated: true
 ---
 
