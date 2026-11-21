@@ -824,3 +824,9 @@ last_verified: 2026-11-06
 - **¶2** □ Fix: `BlipMenu.tsx` shows an in-page popup (Text prefilled from the selection, URL prefilled when the caret is on a link, Submit, Remove, Escape closes); `BlipMenu.css` styles it. Suite case G02 now drives the popup.
 - **¶3** □ Test: `test-link-popup-smoke.mjs` (`npm run test:link-popup`), 9 checks, fails on the base (no popup), passes on the fix. Screenshot read: `/home/stephan/ledger-evidence/link-fix/1-popup-open.png`.
 - **¶4** ◇ Evidence for rows 234, 235 and 237 (text-size dropdown, format dropdown, text-colour palette): the original ribbon in `230-crop-ribbon-full.png` and `063-root-edit-mode-ribbon.png` has Done, undo, redo, link, attach, image, B, I, U, S, a highlight button, clear formatting, two list buttons and a gear, exactly the buttons of ours; the archive pictures 234, 235, 237 show that ribbon with nothing open. No size, format or text-colour control is visible in the original ribbon, so these rows are left to SDS rather than invented.
+
+## [2026-11-21] fix | The Publics tab shows the original's tag filter row
+
+- **¶1** □ Found by the parity rows 016, 080 and 302 (screenshots read): the original lists tags (#Education, #Rizzoma, ...) above the public topics and clicking one filters; ours had only a search box.
+- **¶2** □ Fix: `PublicTopicsPanel.tsx` collects the #tags of the public topics (title and snippet), shows up to eight, most used first, and filters the list by the clicked tag (click again clears).
+- **¶3** □ Test: `test-public-tags-smoke.mjs` (`npm run test:public-tags`): fails on the base (no tag row), passes on the fix. Screenshot read: `/home/stephan/ledger-evidence/tags-fix/2-publics-filtered.png`.
