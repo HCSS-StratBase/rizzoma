@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/editor-controls
-source_commit: 93eada9d
+source_branch: fix/collab-end-key
+source_commit: 06f498ab
 generated: true
 ---
 
@@ -127,7 +127,7 @@ graph LR
 | `src/client/components/editor/BlipEditor.css` | 251 | — |
 | `src/client/components/editor/BlipEditor.tsx` | 105 | (no header comment; exports BlipEditor) |
 | `src/client/components/editor/CollaborativeCursors.css` | 171 | Collaborative Cursors Styling |
-| `src/client/components/editor/CollaborativeCursors.tsx` | 223 | (no header comment; exports CursorUser) |
+| `src/client/components/editor/CollaborativeCursors.tsx` | 227 | (no header comment; exports CursorUser) |
 | `src/client/components/editor/CollaborativeProvider.ts` | 592 | (no header comment; exports SocketIOProvider) |
 | `src/client/components/editor/EditableBlipContent.tsx` | 68 | (no header comment; exports EditableBlipContent) |
 | `src/client/components/editor/EditorConfig.tsx` | 288 | (no header comment; exports createYjsDocument) |
