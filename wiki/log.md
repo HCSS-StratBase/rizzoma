@@ -887,3 +887,9 @@ last_verified: 2026-11-06
 - **¶2** □ A click on a person's avatar opens a user card with avatar, name, e-mail and role (`TopicAvatar` in RizzomaTopicDetail.tsx, `data-testid="user-card"`); original: popup/user_popup
 - **¶3** □ A new account sees the "Check it later" introduction once: four tips, Prev tip / Next tip, progress dots (src/client/components/IntroOverlay.tsx, styles in src/client/components/IntroOverlay.css; the flag is set by `AuthPanel` after a registration); original: introduce/template.coffee
 - **¶4** □ Regression test: `test-original-features-smoke.mjs` (`npm run test:original-features`)
+
+
+## [2026-11-21] ingest | An error notice is not replaced by a friendly one
+
+- **¶1** □ After sign-in the toast "Welcome back!" replaced "This invitation is invalid or belongs to another account" (the toast holds one message); `Toast` now keeps an error on screen for its 3 seconds and ignores non-error messages that arrive meanwhile (src/client/components/Toast.tsx, `shownError`)
+- **¶2** □ Regression test: `test-invite-journey-smoke.mjs` case d checks the notice text
