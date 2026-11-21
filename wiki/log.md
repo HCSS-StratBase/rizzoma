@@ -837,3 +837,9 @@ last_verified: 2026-11-06
 - **¶1** □ Found by suite case W02 (stored blip `A1shared B1`): when two people edit the same blip the other person's cursor label was editable content at the start of the line, so A's caret sat inside it, the End key did nothing and A's text was typed at the start. Probed: after End A's selection stayed at offset 0 of `ts-b-...shared`.
 - **¶2** □ Fix: `CollaborativeCursors.tsx` makes the cursor widget `contenteditable=false`, `aria-hidden` and `ignoreSelection`; after the fix End moves the caret to offset 6 and the typed text follows the original text.
 - **¶3** □ Test: `test-collab-end-key-smoke.mjs` (`npm run test:collab-end-key`): stored `A1 shared B1` on the base (2 of 3 checks fail), `shared A1 B1` on the fix; suite case W02 covers rows 4.2 to 4.5 and 14.12.
+
+## [2026-11-21] fix | A blip's gear menu is no longer clipped in a short topic
+
+- **¶1** □ Found by parity row 061 (screenshot read): in a short topic the scrolling topic body (`.topic-blip-body`) cut off the bottom of the blip gear menu, so its last item (Delete blip) was half hidden.
+- **¶2** □ Fix: `RizzomaTopicDetail.css` gives the topic body 260 px of room below its content while a gear menu is open (`:has([data-testid="blip-menu-overflow-menu"])`).
+- **¶3** □ Test: `test-gear-menu-clip-smoke.mjs` (`npm run test:gear-menu-clip`): the last menu item lies at y 504 against a body edge of 451 on the base (fails) and 711 on the fix (passes). Screenshot read: `/home/stephan/ledger-evidence/gear-fix/gear-open.png`.
