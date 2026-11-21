@@ -930,3 +930,8 @@ last_verified: 2026-11-06
 
 - **¶1** □ The pickers listed only people who had already written in the blip (`blip.contributors`), so a collaborator who had not yet contributed could not be mentioned or assigned (suite cases G04 and N13 on production, where the second account had not written). They now also list the accepted participants of the topic, fetched once per topic (src/client/lib/topicRoster.ts) and merged in place into the roster array that src/client/components/blip/RizzomaBlip.tsx hands to the editor; `items` in src/client/components/editor/EditorConfig.tsx reads that array at call time, so the editor and its collaboration plugins are never recreated when the people arrive
 - **¶2** □ Regression test: src/tests/client.topicRoster.test.ts (accepted only, late arrivals) and the live cases G04 and N13
+
+
+## [2026-11-21] ingest | Invite contacts no longer lose recent people for heavy users
+
+- **¶1** □ `GET /api/waves/contacts/suggest` read at most 400 unordered participant docs of the caller and 5,000 of their topics' participants (src/server/routes/waves.ts), so a person with hundreds of topics, or participant docs of deleted ones, silently lost recent contacts (suite case D01 on production). Limits are now 5,000 / 2,000 topics / 30,000
