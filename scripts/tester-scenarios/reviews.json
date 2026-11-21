@@ -195,11 +195,18 @@
   "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
   "verdict": "WORKS"
  },
- "12.11": {
-  "at": "2026-11-21T02:38",
+ "12.10": {
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case I01] last screenshot: phone (390 px) layout with header, Invite/Share/gear, ribbon and the topic title; nested typing reached the server; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "note": "[case I02] last screenshot: at 390 px the topic shows header, Invite/Share, ribbon and the title with the avatar; case passed, nested tree check passed",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
+  "verdict": "WORKS"
+ },
+ "12.11": {
+  "at": "2026-11-21T05:18",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case I01] last screenshot: phone (390 px) layout with header, Invite/Share/gear, ribbon and the topic title; nested typing reached the server; passed || [case I02] last screenshot: at 390 px the topic shows header, Invite/Share, ribbon and the title with the avatar; case passed, nested tree check passed",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
   "verdict": "WORKS"
  },
  "12.2": {
@@ -364,10 +371,10 @@
   "verdict": "WORKS"
  },
  "13.23": {
-  "at": "2026-11-21T02:39",
+  "at": "2026-11-21T05:14",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case K03] last screenshot: the shortcut panel at the foot of the list, collapsed to its title after the toggle; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "note": "[case K03] last screenshot: the shortcut panel at the foot of the list, collapsed to its title after the toggle; passed || [case K01] last screenshot: the blip KB1+x after Ctrl+E/Shift+Enter/Escape, text kept; checks passed",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet00_T05_K01_F02_L03.png",
   "verdict": "WORKS"
  },
  "13.3": {
@@ -406,10 +413,10 @@
   "verdict": "WORKS"
  },
  "13.8": {
-  "at": "2026-11-21T03:16",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case N12] live check as Fractal Tester 2 (shot /home/stephan/ledger-evidence/live-three-b/t2-3b-filter-by-me.png, read) and the local case passed: All, Inbox, By me filter the list",
-  "shot": "/home/stephan/ledger-evidence/live-three-b/t2-3b-filter-by-me.png",
+  "note": "[case N12] live check as Fractal Tester 2 (shot /home/stephan/ledger-evidence/live-three-b/t2-3b-filter-by-me.png, read) and the local case passed: All, Inbox, By me filter the list || [case N12] last screenshot: the topics list with the All filter under the search box showing both topics; By me and Inbox asserted; live check read earlier",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
   "verdict": "WORKS"
  },
  "13.9": {
@@ -420,10 +427,10 @@
   "verdict": "WORKS"
  },
  "14.1": {
-  "at": "2026-11-21T02:43",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case A06] last screenshot: five bullets B1 to B5 as folded rows with markers after reload; checks passed || [case F04] last screenshot: a collapsed row M4 with no editor; expanding behaviour asserted; passed || [case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect)",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "note": "[case A06] last screenshot: five bullets B1 to B5 as folded rows with markers after reload; checks passed || [case F04] last screenshot: a collapsed row M4 with no editor; expanding behaviour asserted; passed || [case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect) || [case L04] last screenshot (master 1d819daa, before PR 120): the ten levels expand, but the avatar and time of level 4 and deeper are cut off at the right edge; fixed by PR 120 (verified on it",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
   "verdict": "PARTIAL"
  },
  "14.10": {
@@ -497,10 +504,10 @@
   "verdict": "WORKS"
  },
  "14.2": {
-  "at": "2026-11-21T02:33",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case F01] last screenshot: the blip shows its author avatar and time at the top right in view mode; passed || [case F03] last screenshot: second user sees the avatar and time of the blip M3 and of its child M3kid; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet08_E01_E02_F01_F03.png",
+  "note": "[case F01] last screenshot: the blip shows its author avatar and time at the top right in view mode; passed || [case F03] last screenshot: second user sees the avatar and time of the blip M3 and of its child M3kid; passed || [case F02] last screenshot: in edit mode the blip shows its avatar mark and time (4:50 AM) at the top right, as #113 intends || [case I02] last screenshot: at 390 px the topic shows header, Invite/Share, ribbon and the title with the avatar; case passed, nested tree check passed",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
   "verdict": "WORKS"
  },
  "14.20": {
@@ -511,24 +518,24 @@
   "verdict": "WORKS"
  },
  "14.21": {
-  "at": "2026-11-21T02:38",
+  "at": "2026-11-21T05:14",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A04] last screenshot: two sibling blips each with its own marker (P1 +, P2 +); checks passed || [case A12] last screenshot: level-two blip shows the 20 typed characters in one run after 'level two text' and level three below, the caret did not jump; checks passed || [case F03] last screenshot: second user sees the avatar and time of the blip M3 and of its child M3kid; passed || [case I01] l",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet00_T05_K01_F02_L03.png",
   "verdict": "WORKS"
  },
  "14.22": {
-  "at": "2026-11-21T02:43",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect)",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "note": "[case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect) || [case L04] last screenshot (master 1d819daa, before PR 120): the ten levels expand, but the avatar and time of level 4 and deeper are cut off at the right edge; fixed by PR 120 (verified on its stack, probe.png read), not yet merged",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
   "verdict": "PARTIAL"
  },
  "14.23": {
-  "at": "2026-11-21T02:43",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect)",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "note": "[case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect) || [case L04] last screenshot (master 1d819daa, before PR 120): the ten levels expand, but the avatar and time of level 4 and deeper are cut off at the right edge; fixed by PR 120 (verified on its stack, probe.png read), not yet merged",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
   "verdict": "PARTIAL"
  },
  "14.24": {
@@ -553,10 +560,10 @@
   "verdict": "WORKS"
  },
  "14.3": {
-  "at": "2026-11-21T02:43",
+  "at": "2026-11-21T05:14",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case F04] last screenshot: a collapsed row M4 with no editor; expanding behaviour asserted; passed || [case L01] last screenshot: 'MK alpha beta' with a grey marker, child opened in place; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet13_L01_L02_L04_L05.png",
+  "note": "[case F04] last screenshot: a collapsed row M4 with no editor; expanding behaviour asserted; passed || [case L01] last screenshot: 'MK alpha beta' with a grey marker, child opened in place; passed || [case L03] last screenshot: NI1 expanded, NI2 inside it expanded, NI3 inside that, each under its own marker, avatar and time visible",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet00_T05_K01_F02_L03.png",
   "verdict": "WORKS"
  },
  "14.4": {
@@ -756,10 +763,31 @@
   "verdict": "WORKS"
  },
  "19.1": {
-  "at": "2026-11-21T02:30",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case C03] last screenshot: row Q0 with thirty markers after reload (created 30, stored 30); passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet05_C01_C02_C03_C04.png",
+  "note": "[case C03] last screenshot: row Q0 with thirty markers after reload (created 30, stored 30); passed || [case R01] last screenshot is the app shell; the case's checks (500 blips open, query fast, no server errors) passed on master with #115; no visual claim",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet02_R01_C04.png",
+  "verdict": "WORKS"
+ },
+ "19.2": {
+  "at": "2026-11-21T05:18",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R01] last screenshot is the app shell; the case's checks (500 blips open, query fast, no server errors) passed on master with #115; no visual claim",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet02_R01_C04.png",
+  "verdict": "WORKS"
+ },
+ "19.3": {
+  "at": "2026-11-21T05:18",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R01] last screenshot is the app shell; the case's checks (500 blips open, query fast, no server errors) passed on master with #115; no visual claim",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet02_R01_C04.png",
+  "verdict": "WORKS"
+ },
+ "19.4": {
+  "at": "2026-11-21T05:18",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R01] last screenshot is the app shell; the case's checks (500 blips open, query fast, no server errors) passed on master with #115; no visual claim",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet02_R01_C04.png",
   "verdict": "WORKS"
  },
  "19.5": {
@@ -767,6 +795,13 @@
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case R05] last screenshot: the app served the sign-in form promptly; passed",
   "shot": "/home/stephan/ledger-evidence/sheets/sheet17_N15_Q01_R04_R05.png",
+  "verdict": "WORKS"
+ },
+ "19.6": {
+  "at": "2026-11-21T05:18",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case R01] last screenshot is the app shell; the case's checks (500 blips open, query fast, no server errors) passed on master with #115; no visual claim",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet02_R01_C04.png",
   "verdict": "WORKS"
  },
  "19.7": {
@@ -805,10 +840,10 @@
   "verdict": "WORKS"
  },
  "2.4": {
-  "at": "2026-11-21T02:48",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A09] last screenshot: three roots R-one, R-two, R-three as separate rows in order; checks passed || [case C01] last screenshot: after the confirmed delete only 'Keep' remains; passed || [case C02] last screenshot: cut blip M1 re-parented under M2 with its marker, nothing lost; passed || [case C03] last screenshot: row Q0 with thirty markers after reload (created 30, stored 30); passed || [c",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet02_R01_C04.png",
   "verdict": "WORKS"
  },
  "2.5": {
@@ -931,10 +966,10 @@
   "verdict": "WORKS"
  },
  "20.21": {
-  "at": "2026-11-21T03:16",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case N12] live check as Fractal Tester 2 (shot /home/stephan/ledger-evidence/live-three-b/t2-3b-filter-by-me.png, read) and the local case passed: All, Inbox, By me filter the list",
-  "shot": "/home/stephan/ledger-evidence/live-three-b/t2-3b-filter-by-me.png",
+  "note": "[case N12] live check as Fractal Tester 2 (shot /home/stephan/ledger-evidence/live-three-b/t2-3b-filter-by-me.png, read) and the local case passed: All, Inbox, By me filter the list || [case N12] last screenshot: the topics list with the All filter under the search box showing both topics; By me and Inbox asserted; live check read earlier",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
   "verdict": "WORKS"
  },
  "20.22": {
@@ -984,6 +1019,13 @@
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case N11] last screenshot is the topic after reading (grey marker); the green bar on the unread row is asserted by the case, I did not see it in this frame; passed",
   "shot": "/home/stephan/ledger-evidence/sheets/sheet16_N10_N11_N13_N14.png",
+  "verdict": "WORKS"
+ },
+ "20.29": {
+  "at": "2026-11-21T05:14",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case L03] last screenshot: NI1 expanded, NI2 inside it expanded, NI3 inside that, each under its own marker, avatar and time visible",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet00_T05_K01_F02_L03.png",
   "verdict": "WORKS"
  },
  "20.3": {
@@ -1057,17 +1099,17 @@
   "verdict": "WORKS"
  },
  "3.1": {
-  "at": "2026-11-21T02:47",
+  "at": "2026-11-21T05:14",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case A07] last screenshot: the fast-typed child sits behind its marker (S1 +); text checked on the stored blip, all checks passed || [case T01] last screenshot: 'word-bold' drawn in bold in the editor; passed || [case T02] last screenshot: 'word-italic' drawn in italics; passed || [case T03] last screenshot: 'word-underline' drawn underlined; passed || [case T04] last screenshot: 'word-strikethrough' drawn struck through; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet18_T01_T02_T03_T04.png",
+  "note": "[case A07] last screenshot: the fast-typed child sits behind its marker (S1 +); text checked on the stored blip, all checks passed || [case T01] last screenshot: 'word-bold' drawn in bold in the editor; passed || [case T02] last screenshot: 'word-italic' drawn in italics; passed || [case T03] last screenshot: 'word-underline' drawn underlined; passed || [case T04] last screenshot: 'word-strikethrough' drawn struck through; passed || [case T05] last screenshot: two bullets LST and second, no bold left after Clear formatting; checks passed on master with #117",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet00_T05_K01_F02_L03.png",
   "verdict": "WORKS"
  },
  "3.10": {
-  "at": "2026-11-21T02:33",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case E01] last screenshot: the pasted PNG shows as one small blue thumbnail inside the blip; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet08_E01_E02_F01_F03.png",
+  "note": "[case E01] last screenshot: the pasted PNG shows as one small blue thumbnail inside the blip; passed || [case E03] last screenshot: a large pasted image is shown capped (about 200 px) and the small one is not stretched; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
   "verdict": "WORKS"
  },
  "3.11": {
@@ -1078,10 +1120,10 @@
   "verdict": "WORKS"
  },
  "3.12": {
-  "at": "2026-11-21T02:48",
+  "at": "2026-11-21T05:14",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case B01] last screenshot: row 'E1 edited' after Edit, typing and Done; content persisted, passed || [case T01] last screenshot: 'word-bold' drawn in bold in the editor; passed || [case T02] last screenshot: 'word-italic' drawn in italics; passed || [case T03] last screenshot: 'word-underline' drawn underlined; passed || [case T04] last screenshot: 'word-strikethrough' drawn struck through; passed || [case T06] last screenshot: 'HLT' with a yellow background in the editor; passed || [case T08] last screenshot: 'EXT' with an emoji and an inline-comment child viaButton; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "note": "[case B01] last screenshot: row 'E1 edited' after Edit, typing and Done; content persisted, passed || [case T01] last screenshot: 'word-bold' drawn in bold in the editor; passed || [case T02] last screenshot: 'word-italic' drawn in italics; passed || [case T03] last screenshot: 'word-underline' drawn underlined; passed || [case T04] last screenshot: 'word-strikethrough' drawn struck through; passed || [case T06] last screenshot: 'HLT' with a yellow background in the editor; passed || [case T08] last screenshot: 'EXT' with an emoji and an inline-comment child viaButton; passed || [case T05] las",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet00_T05_K01_F02_L03.png",
   "verdict": "WORKS"
  },
  "3.13": {
@@ -1127,10 +1169,10 @@
   "verdict": "WORKS"
  },
  "3.4": {
-  "at": "2026-11-21T02:27",
+  "at": "2026-11-21T05:14",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case A06] last screenshot: five bullets B1 to B5 as folded rows with markers after reload; checks passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet01_A05_A06_A07_A08.png",
+  "note": "[case A06] last screenshot: five bullets B1 to B5 as folded rows with markers after reload; checks passed || [case T05] last screenshot: two bullets LST and second, no bold left after Clear formatting; checks passed on master with #117",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet00_T05_K01_F02_L03.png",
   "verdict": "WORKS"
  },
  "3.5": {
@@ -1169,17 +1211,17 @@
   "verdict": "WORKS"
  },
  "4.1": {
-  "at": "2026-11-21T02:48",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case C04] last screenshot: eight rows AA1..BB4 from two users at once, none lost; passed || [case W01] last screenshot is the writer's topic view; the live arrival on the second user's screen is asserted by the case, not seen in this frame; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "note": "[case C04] last screenshot: eight rows AA1..BB4 from two users at once, none lost; passed || [case W01] last screenshot is the writer's topic view; the live arrival on the second user's screen is asserted by the case, not seen in this frame; passed || [case C04] last screenshot: both users' blips present (AA1..BB4); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet02_R01_C04.png",
   "verdict": "WORKS"
  },
  "4.2": {
-  "at": "2026-11-21T02:30",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case C04] last screenshot: eight rows AA1..BB4 from two users at once, none lost; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet05_C01_C02_C03_C04.png",
+  "note": "[case C04] last screenshot: eight rows AA1..BB4 from two users at once, none lost; passed || [case C04] last screenshot: both users' blips present (AA1..BB4); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet02_R01_C04.png",
   "verdict": "WORKS"
  },
  "4.5": {
@@ -1190,10 +1232,10 @@
   "verdict": "WORKS"
  },
  "4.6": {
-  "at": "2026-11-21T02:48",
+  "at": "2026-11-21T05:18",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case C04] last screenshot: eight rows AA1..BB4 from two users at once, none lost; passed || [case W01] last screenshot is the writer's topic view; the live arrival on the second user's screen is asserted by the case, not seen in this frame; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
+  "note": "[case C04] last screenshot: eight rows AA1..BB4 from two users at once, none lost; passed || [case W01] last screenshot is the writer's topic view; the live arrival on the second user's screen is asserted by the case, not seen in this frame; passed || [case C04] last screenshot: both users' blips present (AA1..BB4); passed",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet02_R01_C04.png",
   "verdict": "WORKS"
  },
  "5.1": {
@@ -1267,10 +1309,10 @@
   "verdict": "WORKS"
  },
  "6.6": {
-  "at": "2026-11-21T02:39",
+  "at": "2026-11-21T05:14",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case K02] last screenshot: row KP in the editor after Ctrl+Shift+Up/Down; asserted on the markers; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
+  "note": "[case K02] last screenshot: row KP in the editor after Ctrl+Shift+Up/Down; asserted on the markers; passed || [case K01] last screenshot: the blip KB1+x after Ctrl+E/Shift+Enter/Escape, text kept; checks passed",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet00_T05_K01_F02_L03.png",
   "verdict": "WORKS"
  },
  "7.1": {
@@ -1358,10 +1400,10 @@
   "verdict": "WORKS"
  },
  "9.2": {
-  "at": "2026-11-21T02:28",
+  "at": "2026-11-21T05:14",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case A08] last screenshot: W1 and plus1 rows with their markers; text went only into the active blip; checks passed || [case A10] last screenshot: Z1 with its marker after Done right after typing; text checked, passed || [case A12] last screenshot: level-two blip shows the 20 typed characters in one run after 'level two text' and level three below, the caret did not jump; checks passed || [case B01] last screenshot: row 'E1 edited' after Edit, typing and Done; content persisted, passed || [case B02] last screenshot: clicking the blip text opened the editor at once (toolbar, caret in J1+j); ch",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet03_B02_B03_B04_B05.png",
+  "shot": "/home/stephan/ledger-evidence/sheets4/sheet00_T05_K01_F02_L03.png",
   "verdict": "WORKS"
  },
  "9.3": {
