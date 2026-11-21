@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/density
-source_commit: 02dc40e7
+source_commit: 5c750e01
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 208 files in `scripts/`, 61 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 209 files in `scripts/`, 61 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -101,7 +101,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (208)
+## scripts/ (209)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -202,6 +202,7 @@ graph LR
 | `scripts/fractal-showcase/phase2-share.mjs` | 35 | Phase 2 on the built topic (live): topic-level functions as Fractal Tester 1, sharing through the REAL |
 | `scripts/fractal-showcase/promote-t2.mjs` | 24 | Owner: make Fractal Tester 2 an Editor through the real Invite dialog (select the member's checkbox, "Select role", Editor). |
 | `scripts/fractal-showcase/run-private.sh` | 26 | Run a showcase driver in a HEADED Chromium on a PRIVATE virtual display (Xvfb), never on the |
+| `scripts/fractal-showcase/seed-one.mjs` | 5 | Seed one verified local test account: node seed-one.mjs <email> <password> (needs COUCHDB_URL / COUCHDB_DB) |
 | `scripts/fractal-showcase/share-link.mjs` | 21 | As Fractal Tester 1 (owner): open the topic, click Share, choose "Anyone with the link" + allow editing, save. |
 | `scripts/fractal-showcase/showcase-cleanup.mjs` | 49 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
 | `scripts/fractal-showcase/showcase-cleanup2.mjs` | 52 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |

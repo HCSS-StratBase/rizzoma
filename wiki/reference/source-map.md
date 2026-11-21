@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/density
-source_commit: 02dc40e7
+source_commit: 5c750e01
 generated: true
 ---
 
@@ -112,7 +112,7 @@ graph LR
 | `src/client/components/blip/BlipHistoryModal.css` | 475 | BlipHistoryModal - Timeline Playback UI |
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
 | `src/client/components/blip/BlipMenu.css` | 676 | Authentic Legacy Rizzoma Blip Menu Styles |
-| `src/client/components/blip/BlipMenu.tsx` | 887 | (no header comment; exports BlipMenu) |
+| `src/client/components/blip/BlipMenu.tsx` | 889 | (no header comment; exports BlipMenu) |
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 656 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
 | `src/client/components/blip/RizzomaBlip.css` | 1953 | Rizzoma Blip Styles |
@@ -273,8 +273,8 @@ graph LR
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/server/routes/auth.ts` | 1250 | Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable |
-| `src/server/routes/blips.ts` | 943 | — |
-| `src/server/routes/comments.ts` | 138 | — |
+| `src/server/routes/blips.ts` | 955 | (no header comment; exports touchTopic) |
+| `src/server/routes/comments.ts` | 140 | — |
 | `src/server/routes/editor.ts` | 536 | Feature flag: set EDITOR_ENABLE=1 to enable endpoints |
 | `src/server/routes/gadgets.ts` | 101 | Hard Gap #20 (2026-04-13): notes-scratchpad is the fourth real preview |
 | `src/server/routes/health.ts` | 59 | — |
@@ -282,8 +282,8 @@ graph LR
 | `src/server/routes/links.ts` | 99 | BUG #43 (2026-04-21): this router is mounted at /api/links (see app.ts). |
 | `src/server/routes/mentions.ts` | 192 | Mentions Routes |
 | `src/server/routes/notifications.ts` | 309 | Notification Routes |
-| `src/server/routes/tasks.ts` | 287 | Tasks Routes |
-| `src/server/routes/topics.ts` | 875 | — |
+| `src/server/routes/tasks.ts` | 294 | Tasks Routes |
+| `src/server/routes/topics.ts` | 894 | — |
 | `src/server/routes/uploads.ts` | 320 | (no header comment; exports uploadsRouter) |
 | `src/server/routes/waves.ts` | 1182 | — |
 
@@ -316,7 +316,7 @@ graph LR
 
 | File | Lines | Header / first fact |
 |---|---:|---|
-| `src/server/app.ts` | 218 | — |
+| `src/server/app.ts` | 220 | — |
 | `src/server/config.ts` | 25 | (no header comment; exports AppConfig) |
 | `src/server/couch_views/main/auth_by_user_id.js` | 20 | — |
 | `src/server/couch_views/main/blip.js` | 18 | — |
@@ -389,7 +389,7 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (124)
+## Tests (127)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -474,6 +474,8 @@ graph LR
 | `src/tests/routes.auth.test.ts` | 225 | Use bcryptjs in tests to avoid native binding issues |
 | `src/tests/routes.blips.history.test.ts` | 130 | — |
 | `src/tests/routes.blips.permissions.test.ts` | 438 | — |
+| `src/tests/routes.blips.touchTopic.test.ts` | 54 | — |
+| `src/tests/routes.comments.deleteFallthrough.test.ts` | 24 | — |
 | `src/tests/routes.comments.edgecases.test.ts` | 119 | — |
 | `src/tests/routes.comments.inline.test.ts` | 275 | — |
 | `src/tests/routes.comments.inlineHealth.test.ts` | 105 | — |
@@ -514,6 +516,7 @@ graph LR
 | `src/tests/server.session.test.ts` | 185 | — |
 | `src/tests/server.sessionCredentialVersion.test.ts` | 90 | — |
 | `src/tests/server.socketAuthorization.test.ts` | 1334 | — |
+| `src/tests/server.tasksByBlipGone.test.ts` | 31 | — |
 | `src/tests/server.virusScan.test.ts` | 113 | — |
 | `src/tests/server.yjsDocCache.test.ts` | 537 | Mock couch module before importing yjsDocCache |
 | `src/tests/setup.ts` | 21 | Vitest <-> Jest compatibility shim so legacy jest.* tests still work. |
