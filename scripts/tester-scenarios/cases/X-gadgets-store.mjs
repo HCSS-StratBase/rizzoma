@@ -175,7 +175,12 @@ async function embedCase(ctx, o) {
   const a = await ctx.client(await newUser('a'));
   const id = await ctx.topic(a, `${o.label} gadget`);
   const blocked = []; const frameResponses = [];
-  a.page.on('console', (m) => { const t = m.text(); if (/Content Security Policy|Refused to (frame|display)|blocked by|X-Frame-Options/i.test(t)) blocked.push(t.slice(0, 200)); });
+  a.page.on('console', (m) => { const t = m.text(); if (/Content Security Policy|Refused to (frame|display)|blocked by|X-Frame-Options/i.test(t)) {
+    // A script that docs.google.com serves INSIDE its own frame can be blocked by Google's own policy (\"script-src 'unsafe-inline'\" is Google's, ours is script-src 'self');
+    // it does not stop the viewer from loading. Reproduced neither with our sandbox nor with our page policy in isolation (21 Nov 2026), so it is third-party noise.
+    if (/docs\.google\.com\/static\//.test(t)) return;
+    blocked.push(t.slice(0, 200));
+  } });
   a.page.on('response', (r) => { if (r.url().includes(o.host)) frameResponses.push({ s: r.status(), u: r.url().slice(0, 120), dest: r.request().resourceType() }); });
   await a.openTopic(id);
   await a.page.locator('.wave-panel [data-testid="blip-menu-edit"]').first().click({ timeout: 10000 }); await sleep(1500);

@@ -1,6 +1,6 @@
 // Family G: the things the tester said work, which must keep working: login/logout, links, follow-the-green,
 // tasks, mentions, hashtags, always-hide-blips (Hide), fold/unfold all, search, playback, mind map.
-import { newUser, shareWith, plain, sleep, BASE, PASS } from '../lib.mjs';
+import { newUser, shareWith, plain, sleep, BASE, PASS, pickPerson } from '../lib.mjs';
 
 async function setup(ctx, title) {
   const a = await ctx.client(await newUser('a'));
@@ -100,13 +100,13 @@ export default [
       await a.page.locator('button[title="Insert task (~)"]').first().click();
       await sleep(1200);
       await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 6), { delay: 40 }); await sleep(1500);
-      await a.page.keyboard.press('Enter'); await sleep(800);
+      await pickPerson(a.page, b.user); await sleep(800);
       await a.page.locator('[data-testid="task-deadline-set"]').waitFor({ timeout: 5000 }).then(async () => { await a.page.locator('[data-testid="task-deadline-input"]').fill('2026-12-01'); await a.page.locator('[data-testid="task-deadline-set"]').click(); }).catch(() => undefined);
       await sleep(800);
       await a.page.keyboard.type(' buy milk ', { delay: 30 });
       await a.page.keyboard.type(' @', { delay: 40 }); await sleep(1500);
       await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 6), { delay: 40 }); await sleep(1200);
-      await a.page.keyboard.press('Enter'); await sleep(600);
+      await pickPerson(a.page, b.user); await sleep(600);
       await a.doneAll(); await sleep(2500);
       const stored = (await a.blips(id)).find((x) => plain(x.content).startsWith('todo'));
       ctx.ok(/task|checkbox|data-type="task/i.test(String(stored?.content)), 'the blip stores a task node', String(stored?.content).slice(0, 240));
