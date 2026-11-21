@@ -1809,3 +1809,9 @@
 /* LaTeX in the editor (LatexPreview): the source run is hidden while the formula shows typeset beside the caret. */
 .latex-src-hidden { display: none; }
 .rizzoma-latex-empty { color: #8a9bab; font-style: italic; border: 1px dashed #b7c4d1; border-radius: 4px; padding: 0 6px; }
+
+/* A blip's gear (overflow) menu is taller than a short topic: the scrolling topic body clipped its last items (Delete). While a menu is open
+   the body gets room below the content so the whole menu can be shown. */
+.topic-blip-body:has([data-testid="blip-menu-overflow-menu"]) {
+  padding-bottom: 260px;
+}

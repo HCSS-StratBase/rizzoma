@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/nested-insert-typing
-source_commit: da970847
+source_branch: fix/gear-menu-clip
+source_commit: 57844a33
 generated: true
 ---
 

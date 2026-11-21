@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/nested-insert-typing
-source_commit: da970847
+source_branch: fix/gear-menu-clip
+source_commit: 57844a33
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 247 files in `scripts/`, 71 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 247 files in `scripts/`, 72 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -84,6 +84,7 @@ graph LR
 | `test:link-popup` | `node test-link-popup-smoke.mjs` |
 | `test:public-tags` | `node test-public-tags-smoke.mjs` |
 | `test:collab-end-key` | `node test-collab-end-key-smoke.mjs` |
+| `test:gear-menu-clip` | `node test-gear-menu-clip-smoke.mjs` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
 | `test:root-ctrl-enter` | `node scripts ⁄ test-root-ctrl-enter-survives-reload.mjs` |
 | `test:native-ctrl-enter` | `node test-native-ctrl-enter-smoke.mjs` |

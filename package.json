@@ -54,6 +54,7 @@
     "test:link-popup": "node test-link-popup-smoke.mjs",
     "test:public-tags": "node test-public-tags-smoke.mjs",
     "test:collab-end-key": "node test-collab-end-key-smoke.mjs",
+    "test:gear-menu-clip": "node test-gear-menu-clip-smoke.mjs",
     "test:tester-feedback": "node test-tester-feedback-smoke.mjs",
     "test:root-ctrl-enter": "node scripts/test-root-ctrl-enter-survives-reload.mjs",
     "test:native-ctrl-enter": "node test-native-ctrl-enter-smoke.mjs",
