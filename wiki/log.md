@@ -908,3 +908,9 @@ last_verified: 2026-11-06
 - **¶1** □ A session without a stored display name was stored as author "Anonymous" (src/server/middleware/auth.ts), which playback printed as "by Anonymous"; it now falls back to the e-mail. The HTML export shows a contributor name or e-mail instead of "User <id>" (src/client/lib/topicExport.ts, `authorDisplay`). Older blips keep their stored "Anonymous" and show the contributor in export
 - **¶2** □ `INVITE_MAIL_SUPPRESS_PATTERN` (src/server/services/email.ts, `sendInviteEmail`): a regular expression; matching recipients get no mail but the invitation and token are still created. For the live test accounts only
 - **¶3** □ Regression tests: src/tests/client.topicExport.authorName.test.ts, src/tests/server.auth.displayName.test.ts, src/tests/server.email.suppress.test.ts
+
+
+## [2026-11-21] ingest | Collaboration 409 trace (opt-in) and member names
+
+- **¶1** □ `COLLAB_TRACE=1` (server, src/server/routes/blips.ts, stale projection branch) and `localStorage rizzoma:collabTrace=1` (client, src/client/components/blip/RizzomaBlip.tsx `autoSaveBlip`) log both sides of a `collaboration_projection_stale` 409: digests, server document size, pending collaboration updates. Off by default; used to find why production loses text
+- **¶2** □ The invite dialog named members without a display name "Participant"; it now shows the e-mail local part (src/client/components/InviteModal.tsx); regression test in src/tests/client.inviteMembers.test.tsx
