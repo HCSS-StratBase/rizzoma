@@ -1883,9 +1883,10 @@
 .inline-child-expanded .blip-view-mode > .blip-content-row > .blip-main-content .blip-text li > .inline-child-expanded,
 .rizzoma-parity .inline-child-expanded .blip-view-mode > .blip-content-row > .blip-main-content .blip-text li > .inline-child-expanded {
   /* ...but not past the parent box's own right edge (+10px: its padding). */
-  /* Measured 2026-11-21: the old value also subtracted the 54px of the base rule, so every level was 43px wider than its parent and from
+  /* Measured 2026-11-21: the old value also subtracted the 54px of the base rule, so every level was 43px wider than its parent when the list item
+     has no right padding (and flush when it has the 44px of the topic view, --li-reserve), and from
      level 3 down the box (and its absolutely positioned avatar and time) ran past the topic pane and was clipped. */
-  margin-right: calc(-46px - 48px - 2px + 10px) !important;
+  margin-right: calc(-46px - 48px - 2px + 10px - var(--li-reserve, 0px)) !important;
 }
 .inline-child-expanded > .rizzoma-blip.nested-blip {
   margin-top: 0 !important;
