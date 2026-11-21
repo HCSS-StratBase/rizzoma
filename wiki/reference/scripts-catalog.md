@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/suppressed-auto-accept
-source_commit: 12ea196a
+source_branch: test/ledger-batch6
+source_commit: fd31e06b
 generated: true
 ---
 
@@ -329,7 +329,7 @@ graph LR
 | `scripts/tester-scenarios/delay-proxy.mjs` | 19 | TCP delay proxy: reproduces a real network's latency on the local stack, for HTTP and WebSocket alike (Chromium's own latency emulation |
 | `scripts/tester-scenarios/feature-rows.mjs` | 32 | Parses the machine-readable feature contract (RIZZOMA_FEATURES_STATUS.md, "Comprehensive Feature |
 | `scripts/tester-scenarios/ledger.mjs` | 155 | FEATURE LEDGER generator. Row sources: (A) the 240-row contract RIZZOMA_FEATURES_STATUS.md, (B) every gadget in the |
-| `scripts/tester-scenarios/lib.mjs` | 411 | Shared driver for the tester-scenarios suite. A "client" is one real browser context signed in as |
+| `scripts/tester-scenarios/lib.mjs` | 412 | Shared driver for the tester-scenarios suite. A "client" is one real browser context signed in as |
 | `scripts/tester-scenarios/list-rows.mjs` | 9 | — |
 | `scripts/tester-scenarios/live-sweep.mjs` | 35 | Delete the suite's scratch topics ("ZZ SCRATCH suite ...") that the two live test accounts own on production, then prove with a |
 | `scripts/tester-scenarios/live-three.mjs` | 171 | Live check of three shipped fixes as the non-owner account Fractal Tester 2 (and Fractal Tester 1 as the topic owner for |

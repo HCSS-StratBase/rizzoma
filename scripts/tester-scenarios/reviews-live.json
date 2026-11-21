@@ -132,18 +132,32 @@
   "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet10_N01_N02_N03_N04.png",
   "verdict": "WORKS"
  },
- "13.12": {
-  "at": "2026-11-21T12:10",
+ "13.10": {
+  "at": "2026-11-21T20:16",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case N14] live, Fractal Tester 2 non-owner, clean context: Tasks tab with All, Pending and Completed filter buttons.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet12_N11_N12_N14_N15.png",
+  "note": "[case N13] live, non-owner, production fd31e06b: @sdspieg+fractal1 mention chip in the blip, mention reached the mentioned account (case passed). || [case G04] live, non-owner, production fd31e06b: task chip assigned to sdspieg+fractal1 with deadline 1 Dec, and an @mention; task listed for the assignee.",
+  "shot": "/home/stephan/ledger-evidence/live789/live16/sheet00_G04.png",
+  "verdict": "WORKS"
+ },
+ "13.11": {
+  "at": "2026-11-21T20:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] live, non-owner, production fd31e06b: task chip assigned to sdspieg+fractal1 with deadline 1 Dec, and an @mention; task listed for the assignee.",
+  "shot": "/home/stephan/ledger-evidence/live789/live16/sheet00_G04.png",
+  "verdict": "WORKS"
+ },
+ "13.12": {
+  "at": "2026-11-21T20:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N14] live, Fractal Tester 2 non-owner, clean context: Tasks tab with All, Pending and Completed filter buttons. || [case G04] live, non-owner, production fd31e06b: task chip assigned to sdspieg+fractal1 with deadline 1 Dec, and an @mention; task listed for the assignee.",
+  "shot": "/home/stephan/ledger-evidence/live789/live16/sheet00_G04.png",
   "verdict": "WORKS"
  },
  "13.13": {
-  "at": "2026-11-21T17:27",
+  "at": "2026-11-21T20:16",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case N04] live, Fractal Tester 2 non-owner, clean context: Share dialog: Private / Anyone with the link / Public on the web, Copy link, Save. || [case D02] live, Fractal Tester 2 non-owner: Viewer invitation: the invitee sees the topic read-only (no mail sent: INVITE_MAIL_SUPPRESS_PATTERN). || [case D03] live, Fractal Tester 2 non-owner: Remove dialog: the participant is selectable and the owner list shows the person; removal verified by the case. || [case D04] live, Fractal Tester 2 non-owner: Role change dialog: Reader/Owner roles listed; demotion enforced by the server. Note: the member ro",
-  "shot": "/home/stephan/ledger-evidence/live789/live7/sheet00_D02_D03_D04.png",
+  "shot": "/home/stephan/ledger-evidence/live789/live15/sheet00_D01_N13.png",
   "verdict": "WORKS"
  },
  "13.14": {
@@ -179,6 +193,13 @@
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case G01] live, Fractal Tester 2 non-owner: Sign-in form shown after logout; typed credentials sign in and persist across reload (case passed).",
   "shot": "/home/stephan/ledger-evidence/live789/live8/sheet00_G01_K03.png",
+  "verdict": "WORKS"
+ },
+ "13.2": {
+  "at": "2026-11-21T20:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] live, non-owner, production fd31e06b: task chip assigned to sdspieg+fractal1 with deadline 1 Dec, and an @mention; task listed for the assignee.",
+  "shot": "/home/stephan/ledger-evidence/live789/live16/sheet00_G04.png",
   "verdict": "WORKS"
  },
  "13.20": {
@@ -217,17 +238,17 @@
   "verdict": "WORKS"
  },
  "13.4": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case N11] live, Fractal Tester 2 non-owner, clean context: Unread topic row and the topic opened with its unread blip u.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet12_N11_N12_N14_N15.png",
+  "note": "[case N11] live, Fractal Tester 2 non-owner, clean context: Unread topic row and the topic opened with its unread blip u. || [case D06] live, non-owner, production ea644f4a/12ea196a: The invited user sees the topic in the list.",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet01_Y05_D06_X09.png",
   "verdict": "WORKS"
  },
  "13.5": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case N01] live, Fractal Tester 2 non-owner, clean context: New topic wizard created the topic; it appears in the list and opened.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet10_N01_N02_N03_N04.png",
+  "note": "[case N01] live, Fractal Tester 2 non-owner, clean context: New topic wizard created the topic; it appears in the list and opened. || [case D06] live, non-owner, production ea644f4a/12ea196a: The invited user sees the topic in the list.",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet01_Y05_D06_X09.png",
   "verdict": "WORKS"
  },
  "13.7": {
@@ -238,10 +259,10 @@
   "verdict": "WORKS"
  },
  "13.9": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T20:16",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case D05] live, Fractal Tester 2 non-owner, clean context: Mention list inserted a mention (name and e-mail chip in the text).",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet05_D05_E01_F01_F02.png",
+  "note": "[case D05] live, Fractal Tester 2 non-owner, clean context: Mention list inserted a mention (name and e-mail chip in the text). || [case N13] live, non-owner, production fd31e06b: @sdspieg+fractal1 mention chip in the blip, mention reached the mentioned account (case passed). || [case G04] live, non-owner, production fd31e06b: task chip assigned to sdspieg+fractal1 with deadline 1 Dec, and an @mention; task listed for the assignee.",
+  "shot": "/home/stephan/ledger-evidence/live789/live16/sheet00_G04.png",
   "verdict": "WORKS"
  },
  "14.1": {
@@ -259,17 +280,17 @@
   "verdict": "WORKS"
  },
  "14.11": {
-  "at": "2026-11-21T14:43",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case A02] live, Fractal Tester 2 non-owner, clean context: Two [+] markers on the one bullet T1 (two children, both kept). || [case A03] live, Fractal Tester 2 non-owner, clean context: Bullet F1 with five [+] markers (five children). || [case A05] live, Fractal Tester 2 non-owner, clean context: Marker sits inside the sentence between alpha and beta gamma; the child MIDKID is open under it. || [case B03] live, Fractal Tester 2 non-owner, clean context: Ctrl+Enter from the view state made child Vchild under V1, which carries the [+] marker. || [case B04] live, Fractal Tester 2 non-owner, clea",
-  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet00_A01_A07_B06_B08.png",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet00_A04_A10_C01_C03.png",
   "verdict": "WORKS"
  },
  "14.12": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case A08] live, Fractal Tester 2 non-owner, clean context: The blip reads W1 plus1: the text typed after switching went only into the active blip. || [case A12] live, Fractal Tester 2 non-owner, clean context: Three-level tree with level two text kept intact (abcdefghijklmnopqrst then XYZUV) and a level-3 child L3b. || [case B01] live, Fractal Tester 2 non-owner, clean context: E1 edited: view mode shows the text after Done. || [case B03] live, Fractal Tester 2 non-owner, clean context: Ctrl+Enter from the view state made child Vchild under V1, which carries the [+] marker. || [case W02] live",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet15_W01_W02_X03_X04.png",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet00_A04_A10_C01_C03.png",
   "verdict": "WORKS"
  },
  "14.13": {
@@ -308,10 +329,10 @@
   "verdict": "WORKS"
  },
  "14.19": {
-  "at": "2026-11-21T14:43",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case A02] live, Fractal Tester 2 non-owner, clean context: Two [+] markers on the one bullet T1 (two children, both kept). || [case L05] live, Fractal Tester 2 non-owner, clean context: Three level-1 blips PA, PB, PC each with a depth-3 chain expanded. || [case B06] live, Fractal Tester 2 non-owner, clean context: Inline comment D1 with its marker and child Dinline; the reply row Dreply has no marker.",
-  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet00_A01_A07_B06_B08.png",
+  "note": "[case A02] live, Fractal Tester 2 non-owner, clean context: Two [+] markers on the one bullet T1 (two children, both kept). || [case L05] live, Fractal Tester 2 non-owner, clean context: Three level-1 blips PA, PB, PC each with a depth-3 chain expanded. || [case B06] live, Fractal Tester 2 non-owner, clean context: Inline comment D1 with its marker and child Dinline; the reply row Dreply has no marker. || [case A04] live, non-owner, production ea644f4a/12ea196a: Sibling branches P1 and P2 each with its marker.",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet00_A04_A10_C01_C03.png",
   "verdict": "WORKS"
  },
  "14.2": {
@@ -322,17 +343,17 @@
   "verdict": "WORKS"
  },
  "14.20": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case A02] live, Fractal Tester 2 non-owner, clean context: Two [+] markers on the one bullet T1 (two children, both kept). || [case A03] live, Fractal Tester 2 non-owner, clean context: Bullet F1 with five [+] markers (five children). || [case A05] live, Fractal Tester 2 non-owner, clean context: Marker sits inside the sentence between alpha and beta gamma; the child MIDKID is open under it.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet00_A02_A03_A05_A06.png",
+  "note": "[case A02] live, Fractal Tester 2 non-owner, clean context: Two [+] markers on the one bullet T1 (two children, both kept). || [case A03] live, Fractal Tester 2 non-owner, clean context: Bullet F1 with five [+] markers (five children). || [case A05] live, Fractal Tester 2 non-owner, clean context: Marker sits inside the sentence between alpha and beta gamma; the child MIDKID is open under it. || [case C03] live, non-owner, production ea644f4a/12ea196a: Q0 with all 30 inline markers stored (earlier runs stored 12 to 17).",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet00_A04_A10_C01_C03.png",
   "verdict": "WORKS"
  },
  "14.21": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case A12] live, Fractal Tester 2 non-owner, clean context: Three-level tree with level two text kept intact (abcdefghijklmnopqrst then XYZUV) and a level-3 child L3b. || [case F03] live, Fractal Tester 2 non-owner, clean context: The second user sees the author and date of the nested child. || [case L03] live, Fractal Tester 2 non-owner, clean context: Nested inline expansion: NI1 with an open [+] and its child.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet09_L02_L03_L05_L06.png",
+  "note": "[case A12] live, Fractal Tester 2 non-owner, clean context: Three-level tree with level two text kept intact (abcdefghijklmnopqrst then XYZUV) and a level-3 child L3b. || [case F03] live, Fractal Tester 2 non-owner, clean context: The second user sees the author and date of the nested child. || [case L03] live, Fractal Tester 2 non-owner, clean context: Nested inline expansion: NI1 with an open [+] and its child. || [case A04] live, non-owner, production ea644f4a/12ea196a: Sibling branches P1 and P2 each with its marker.",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet00_A04_A10_C01_C03.png",
   "verdict": "WORKS"
  },
  "14.22": {
@@ -426,6 +447,13 @@
   "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet05_D05_E01_F01_F02.png",
   "verdict": "WORKS"
  },
+ "15.2": {
+  "at": "2026-11-21T20:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] live, non-owner, production fd31e06b: task chip assigned to sdspieg+fractal1 with deadline 1 Dec, and an @mention; task listed for the assignee.",
+  "shot": "/home/stephan/ledger-evidence/live789/live16/sheet00_G04.png",
+  "verdict": "WORKS"
+ },
  "15.3": {
   "at": "2026-11-21T14:43",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
@@ -434,17 +462,17 @@
   "verdict": "WORKS"
  },
  "15.4": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T20:16",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case G08] live, Fractal Tester 2 non-owner, clean context: The hashtag renders as a tag chip (#suitetag) in the blip. || [case L06] live, Fractal Tester 2 non-owner, clean context: Insert button entered edit mode by itself (IE1 with toolbar). || [case X05] live, Fractal Tester 2 non-owner, clean context: Poll gadget with Yes/No/Maybe options and Add Option.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet16_X05_X06_X07_X08.png",
+  "note": "[case G08] live, Fractal Tester 2 non-owner, clean context: The hashtag renders as a tag chip (#suitetag) in the blip. || [case L06] live, Fractal Tester 2 non-owner, clean context: Insert button entered edit mode by itself (IE1 with toolbar). || [case X05] live, Fractal Tester 2 non-owner, clean context: Poll gadget with Yes/No/Maybe options and Add Option. || [case G04] live, non-owner, production fd31e06b: task chip assigned to sdspieg+fractal1 with deadline 1 Dec, and an @mention; task listed for the assignee.",
+  "shot": "/home/stephan/ledger-evidence/live789/live16/sheet00_G04.png",
   "verdict": "WORKS"
  },
  "15.5": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T20:16",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case L06] live, Fractal Tester 2 non-owner, clean context: Insert button entered edit mode by itself (IE1 with toolbar).",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet09_L02_L03_L05_L06.png",
+  "note": "[case L06] live, Fractal Tester 2 non-owner, clean context: Insert button entered edit mode by itself (IE1 with toolbar). || [case G04] live, non-owner, production fd31e06b: task chip assigned to sdspieg+fractal1 with deadline 1 Dec, and an @mention; task listed for the assignee.",
+  "shot": "/home/stephan/ledger-evidence/live789/live16/sheet00_G04.png",
   "verdict": "WORKS"
  },
  "15.6": {
@@ -462,10 +490,17 @@
   "verdict": "WORKS"
  },
  "15.8": {
-  "at": "2026-11-21T14:43",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case X03] live, Fractal Tester 2 non-owner, clean context: Focus Timer sandbox app rendered with its own UI. || [case X04] live, Fractal Tester 2 non-owner, clean context: Notes Scratchpad sandbox app rendered with its own UI and checklist. || [case X05] live, Fractal Tester 2 non-owner, clean context: Poll gadget with Yes/No/Maybe options and Add Option. || [case X08] live, Fractal Tester 2 non-owner, clean context: YouTube gadget: embedded player with the video thumbnail. || [case X10] live, Fractal Tester 2 non-owner, clean context: iFrame gadget framed the allowed page (example domain tex",
-  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet01_Y05_D06_X09.png",
+  "verdict": "WORKS"
+ },
+ "19.1": {
+  "at": "2026-11-21T19:20",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C03] live, non-owner, production ea644f4a/12ea196a: Q0 with all 30 inline markers stored (earlier runs stored 12 to 17).",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet00_A04_A10_C01_C03.png",
   "verdict": "WORKS"
  },
  "2.1": {
@@ -476,10 +511,10 @@
   "verdict": "WORKS"
  },
  "2.2": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case N01] live, Fractal Tester 2 non-owner, clean context: New topic wizard created the topic; it appears in the list and opened.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet10_N01_N02_N03_N04.png",
+  "note": "[case N01] live, Fractal Tester 2 non-owner, clean context: New topic wizard created the topic; it appears in the list and opened. || [case D06] live, non-owner, production ea644f4a/12ea196a: The invited user sees the topic in the list.",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet01_Y05_D06_X09.png",
   "verdict": "WORKS"
  },
  "2.3": {
@@ -490,10 +525,17 @@
   "verdict": "WORKS"
  },
  "2.4": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case A09] live, Fractal Tester 2 non-owner, clean context: Three level-1 blips R-one, R-two, R-three in order. || [case C02] live, Fractal Tester 2 non-owner, clean context: Cut and paste: M2 stays with its subtree, M1 under it. || [case C04] live, Fractal Tester 2 non-owner, clean context: Two users added blips at once: AA1..AA4 and BB1..BB4 all present.",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet04_C02_C04_C05_C06.png",
+  "note": "[case A09] live, Fractal Tester 2 non-owner, clean context: Three level-1 blips R-one, R-two, R-three in order. || [case C02] live, Fractal Tester 2 non-owner, clean context: Cut and paste: M2 stays with its subtree, M1 under it. || [case C04] live, Fractal Tester 2 non-owner, clean context: Two users added blips at once: AA1..AA4 and BB1..BB4 all present. || [case C01] live, non-owner, production ea644f4a/12ea196a: Keep blip remains after cancelling the delete confirmation. || [case C03] live, non-owner, production ea644f4a/12ea196a: Q0 with all 30 inline markers stored (earlier runs stored 1",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet00_A04_A10_C01_C03.png",
+  "verdict": "WORKS"
+ },
+ "2.6": {
+  "at": "2026-11-21T19:20",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C01] live, non-owner, production ea644f4a/12ea196a: Keep blip remains after cancelling the delete confirmation.",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet00_A04_A10_C01_C03.png",
   "verdict": "WORKS"
  },
  "2.7": {
@@ -504,10 +546,10 @@
   "verdict": "WORKS"
  },
  "2.8": {
-  "at": "2026-11-21T17:27",
+  "at": "2026-11-21T20:16",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case N04] live, Fractal Tester 2 non-owner, clean context: Share dialog: Private / Anyone with the link / Public on the web, Copy link, Save. || [case D02] live, Fractal Tester 2 non-owner: Viewer invitation: the invitee sees the topic read-only (no mail sent: INVITE_MAIL_SUPPRESS_PATTERN). || [case D03] live, Fractal Tester 2 non-owner: Remove dialog: the participant is selectable and the owner list shows the person; removal verified by the case. || [case D04] live, Fractal Tester 2 non-owner: Role change dialog: Reader/Owner roles listed; demotion enforced by the server. Note: the member ro",
-  "shot": "/home/stephan/ledger-evidence/live789/live7/sheet00_D02_D03_D04.png",
+  "shot": "/home/stephan/ledger-evidence/live789/live15/sheet00_D01_N13.png",
   "verdict": "WORKS"
  },
  "20.15": {
@@ -536,6 +578,13 @@
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case N11] live, Fractal Tester 2 non-owner, clean context: Unread topic row and the topic opened with its unread blip u.",
   "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet12_N11_N12_N14_N15.png",
+  "verdict": "WORKS"
+ },
+ "20.22": {
+  "at": "2026-11-21T20:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case N13] live, non-owner, production fd31e06b: @sdspieg+fractal1 mention chip in the blip, mention reached the mentioned account (case passed).",
+  "shot": "/home/stephan/ledger-evidence/live789/live15/sheet00_D01_N13.png",
   "verdict": "WORKS"
  },
  "20.23": {
@@ -616,17 +665,17 @@
   "verdict": "WORKS"
  },
  "3.14": {
-  "at": "2026-11-21T14:43",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case X03] live, Fractal Tester 2 non-owner, clean context: Focus Timer sandbox app rendered with its own UI. || [case X04] live, Fractal Tester 2 non-owner, clean context: Notes Scratchpad sandbox app rendered with its own UI and checklist. || [case X05] live, Fractal Tester 2 non-owner, clean context: Poll gadget with Yes/No/Maybe options and Add Option. || [case X08] live, Fractal Tester 2 non-owner, clean context: YouTube gadget: embedded player with the video thumbnail. || [case X10] live, Fractal Tester 2 non-owner, clean context: iFrame gadget framed the allowed page (example domain tex",
-  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet01_Y05_D06_X09.png",
   "verdict": "WORKS"
  },
  "3.15": {
-  "at": "2026-11-21T14:43",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case X03] live, Fractal Tester 2 non-owner, clean context: Focus Timer sandbox app rendered with its own UI. || [case X04] live, Fractal Tester 2 non-owner, clean context: Notes Scratchpad sandbox app rendered with its own UI and checklist. || [case X05] live, Fractal Tester 2 non-owner, clean context: Poll gadget with Yes/No/Maybe options and Add Option. || [case X08] live, Fractal Tester 2 non-owner, clean context: YouTube gadget: embedded player with the video thumbnail. || [case X10] live, Fractal Tester 2 non-owner, clean context: iFrame gadget framed the allowed page (example domain tex",
-  "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet01_Y05_D06_X09.png",
   "verdict": "WORKS"
  },
  "3.16": {
@@ -655,6 +704,13 @@
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case A06] live, Fractal Tester 2 non-owner, clean context: Bullets B1 to B5 built with Enter/Tab, all present. || [case T05] live, Fractal Tester 2 non-owner, clean context: Bulleted list LST and second.",
   "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet14_T04_T05_T06_T08.png",
+  "verdict": "WORKS"
+ },
+ "3.5": {
+  "at": "2026-11-21T20:16",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case G04] live, non-owner, production fd31e06b: task chip assigned to sdspieg+fractal1 with deadline 1 Dec, and an @mention; task listed for the assignee.",
+  "shot": "/home/stephan/ledger-evidence/live789/live16/sheet00_G04.png",
   "verdict": "WORKS"
  },
  "3.6": {
@@ -770,10 +826,17 @@
   "verdict": "WORKS"
  },
  "9.2": {
-  "at": "2026-11-21T12:10",
+  "at": "2026-11-21T19:20",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case A08] live, Fractal Tester 2 non-owner, clean context: The blip reads W1 plus1: the text typed after switching went only into the active blip. || [case A12] live, Fractal Tester 2 non-owner, clean context: Three-level tree with level two text kept intact (abcdefghijklmnopqrst then XYZUV) and a level-3 child L3b. || [case B01] live, Fractal Tester 2 non-owner, clean context: E1 edited: view mode shows the text after Done. || [case B02] live, Fractal Tester 2 non-owner, clean context: One click on the text of an expanded blip opened edit mode (toolbar, caret in J1+j). || [case B05] live, Fr",
-  "shot": "/home/stephan/ledger-evidence/live2/sheets/sheet08_I03_I04_K01_L01.png",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet00_A04_A10_C01_C03.png",
+  "verdict": "WORKS"
+ },
+ "9.3": {
+  "at": "2026-11-21T19:20",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case C01] live, non-owner, production ea644f4a/12ea196a: Keep blip remains after cancelling the delete confirmation.",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet00_A04_A10_C01_C03.png",
   "verdict": "WORKS"
  },
  "9.4": {
@@ -879,6 +942,13 @@
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "live, Fractal Tester 2 non-owner, production: X05 poll gadget with options (screenshot read).",
   "shot": "/home/stephan/ledger-evidence/live4/sheets/sheet07_X02_X06_X07.png",
+  "verdict": "WORKS"
+ },
+ "G-spreadsheet": {
+  "at": "2026-11-21T19:20",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "live: Google Sheet renders in the blip with its data (X09 sheet read).",
+  "shot": "/home/stephan/ledger-evidence/live789/live10/sheet01_Y05_D06_X09.png",
   "verdict": "WORKS"
  },
  "G-youtube": {
