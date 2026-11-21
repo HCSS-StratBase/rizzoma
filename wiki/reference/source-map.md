@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/density
-source_commit: 3d54cca6
+source_branch: fix/nested-insert-typing
+source_commit: 1d819daa
 generated: true
 ---
 
@@ -143,7 +143,7 @@ graph LR
 | `src/client/components/editor/collaborationIdentity.ts` | 86 | (no header comment; exports CollaborationUser) |
 | `src/client/components/editor/extensions/BlipKeyboardShortcuts.ts` | 297 | (no header comment; exports BlipKeyboardShortcutsOptions) |
 | `src/client/components/editor/extensions/BlipThread.css` | 81 | BlipThread inline marker styles — authentic original Rizzoma speech bubble |
-| `src/client/components/editor/extensions/BlipThreadNode.tsx` | 190 | True when a DOM event comes from INSIDE an inline child blip rendered in this editor's portal anchor |
+| `src/client/components/editor/extensions/BlipThreadNode.tsx` | 203 | True when a DOM event comes from INSIDE an inline child blip rendered in this editor's portal anchor |
 | `src/client/components/editor/extensions/CodeBlockView.css` | 128 | Enhanced Code Block — replaces bare TipTap codeBlock |
 | `src/client/components/editor/extensions/CodeBlockView.tsx` | 87 | (no header comment; exports CodeBlockView) |
 | `src/client/components/editor/extensions/GadgetNodes.ts` | 532 | (no header comment; exports createDefaultPollOptions) |

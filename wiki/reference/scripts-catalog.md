@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/density
-source_commit: 3d54cca6
+source_branch: fix/nested-insert-typing
+source_commit: 1d819daa
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 246 files in `scripts/`, 65 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 246 files in `scripts/`, 66 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -72,6 +72,7 @@ graph LR
 | `test:nested-pointer` | `node test-nested-pointer-focus-smoke.mjs` |
 | `test:click-caret` | `node test-click-caret-smoke.mjs` |
 | `test:paste-image` | `node test-paste-image-smoke.mjs` |
+| `test:nested-insert` | `node test-nested-insert-smoke.mjs` |
 | `test:liliia` | `node test-liliia-smoke.mjs` |
 | `test:gadgets-render` | `node test-gadgets-render-smoke.mjs` |
 | `test:phone-layout` | `node test-phone-layout-smoke.mjs` |
