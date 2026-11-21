@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: test/tester-scenarios-suite
-source_commit: 7acd4b0f
+source_branch: fix/density
+source_commit: 3d54cca6
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 243 files in `scripts/`, 65 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 246 files in `scripts/`, 65 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -105,7 +105,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (243)
+## scripts/ (246)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -204,15 +204,18 @@ graph LR
 | `scripts/fractal-showcase/live-verify-pending.mjs` | 52 | LIVE verification of the pending-invitee fix and the avatar-overlay fix, headed, real clicks: |
 | `scripts/fractal-showcase/liveauth.mjs` | 52 | Live sign-in helper. Credentials are read from the credential file inside this process, typed into |
 | `scripts/fractal-showcase/ops.mjs` | 178 | Wait until at least one editable editor exists and the caret lives in one. |
+| `scripts/fractal-showcase/paste-live.mjs` | 37 | Live check of the pasted-screenshot fix: Fractal Tester 2 makes a SCRATCH topic, types a reply blip, pastes a 1600x900 |
 | `scripts/fractal-showcase/phase2-share.mjs` | 35 | Phase 2 on the built topic (live): topic-level functions as Fractal Tester 1, sharing through the REAL |
 | `scripts/fractal-showcase/promote-t2.mjs` | 24 | Owner: make Fractal Tester 2 an Editor through the real Invite dialog (select the member's checkbox, "Select role", Editor). |
 | `scripts/fractal-showcase/run-private.sh` | 26 | Run a showcase driver in a HEADED Chromium on a PRIVATE virtual display (Xvfb), never on the |
+| `scripts/fractal-showcase/seed-one.mjs` | 5 | Seed one verified local test account: node seed-one.mjs <email> <password> (needs COUCHDB_URL / COUCHDB_DB) |
 | `scripts/fractal-showcase/share-link.mjs` | 21 | As Fractal Tester 1 (owner): open the topic, click Share, choose "Anyone with the link" + allow editing, save. |
 | `scripts/fractal-showcase/showcase-cleanup.mjs` | 49 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
 | `scripts/fractal-showcase/showcase-cleanup2.mjs` | 52 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
 | `scripts/fractal-showcase/showcase-finish.mjs` | 51 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
 | `scripts/fractal-showcase/showcase-gadgets-look.mjs` | 38 | Look at how the 11 gadget blips of the live showcase topic ACTUALLY render (a person's view): expand the |
 | `scripts/fractal-showcase/showcase-leaf-look.mjs` | 44 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
+| `scripts/fractal-showcase/showcase-poll-dedupe.mjs` | 56 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
 | `scripts/fractal-showcase/showcase-poll.mjs` | 45 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
 | `scripts/fractal-showcase/showcase-refill.mjs` | 55 | Refill the LaTeX, Code and Sheet leaves of the live showcase topic BY HAND (real clicks and typing), as the owner. |
 | `scripts/fractal-showcase/spec.mjs` | 56 | The content of the Fractal Showcase. Labels are atomic (2 to 5 words), globally unique by their first |
@@ -223,7 +226,7 @@ graph LR
 | `scripts/gen_status.mjs` | 141 | Generate STATUS .md — the SINGLE authoritative current-state doc. |
 | `scripts/generate-ui-exhaustive-pack.mjs` | 445 | — |
 | `scripts/git-hooks/pre-push` | — | — |
-| `scripts/handbuild_acceptance.mjs` | 447 | HAND-BUILD ACCEPTANCE — the gate for ALL Rizzoma fractal work (SDS 2026-07-14). |
+| `scripts/handbuild_acceptance.mjs` | 462 | HAND-BUILD ACCEPTANCE — the gate for ALL Rizzoma fractal work (SDS 2026-07-14). |
 | `scripts/handbuild_depth10.mjs` | 109 | HAND-BUILD a depth-10 fractal on the NEW rizzoma through the REAL UI. |
 | `scripts/insert_depth10_spine.mjs` | 123 | Insert a depth-10 spine of blips directly into CouchDB. |
 | `scripts/inspect_screenshot_155148.py` | 27 | Find all blue ribbons (#4ea0f1 -> r ~ 78, g ~ 160, b ~ 241) |

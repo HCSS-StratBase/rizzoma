@@ -1862,7 +1862,11 @@
    (legacy: ~1 line of padding, no stacked margins). */
 .topic-content-view .inline-child-expanded,
 .rizzoma-parity .topic-content-view .inline-child-expanded {
-  margin-top: 4px !important;
+  /* Space between a label line and the open child box under it. Measured on the original
+     (screenshots/260714-legacy-reference-archive/101-w1280-topic-view.png): level pitch 55 px, label line to box edge
+     about 18 px; this app had 4 px (pitch 43 px), so every level's avatar and date ran into the next box border
+     ("too big and seems too close", Liliia 19 Nov 2026). 16 px gives a 55 px pitch. */
+  margin-top: 16px !important;
   margin-bottom: 4px !important;
   /* The list item reserves 44px on the right; the extra 10px reaches over the
      parent's own right margin + border, as original Rizzoma's .blips-container
