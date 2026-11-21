@@ -1,3 +1,4 @@
+import { fetchTopicRoster, type RosterPerson } from '../../lib/topicRoster';
 import { getPendingCollaborationCount } from '../../lib/collaborationPending';
 import { isInlineAnchored } from './inlineAnchoring';
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
@@ -709,6 +710,25 @@ export function RizzomaBlip({
     [blip.id]
   );
 
+  // Everyone who can see this topic is offered by @mention and ~task, not only the people who already wrote in this blip. The array is
+  // filled in place so the editor's extensions (and its collaboration plugins) are never recreated when the topic's people arrive.
+  const rosterRef = useRef<Array<{ id: string; label: string; email?: string | undefined }>>([]);
+  const topicPeopleRef = useRef<RosterPerson[]>([]);
+  const fillRoster = useCallback((topic: RosterPerson[] | null) => {
+    if (topic) topicPeopleRef.current = topic;
+    const merged = [
+      ...(blip.contributors || []).map((c) => ({ id: c.id, label: c.name || c.email || c.id, email: c.email })),
+      ...topicPeopleRef.current.filter((p) => !(blip.contributors || []).some((c) => c.id === p.id)),
+    ];
+    rosterRef.current.splice(0, rosterRef.current.length, ...merged);
+  }, [blip.contributors]);
+  fillRoster(null);
+  useEffect(() => {
+    let live = true;
+    void fetchTopicRoster(blip.id.split(':')[0] || '').then((people) => { if (live) fillRoster(people); });
+    return () => { live = false; };
+  }, [blip.id, fillRoster]);
+
   // Memoize extensions to prevent TipTap from recreating ProseMirror plugins on every render.
   // Without this, ySyncPlugin gets destroyed/recreated each render, preventing Y.Doc sync.
   const extensions = useMemo(
@@ -722,11 +742,7 @@ export function RizzomaBlip({
         onHideComments: stableHideComments,
         onShowComments: stableShowComments,
         currentUser: collaborationUser ? { id: collaborationUser.id, label: collaborationUser.name } : null,
-        participants: (blip.contributors || []).map((contributor) => ({
-          id: contributor.id,
-          label: contributor.name || contributor.email || contributor.id,
-          email: contributor.email,
-        })),
+        participants: rosterRef.current,
       }
     ),
     [blip.id, blip.contributors, collaborationUser?.id, collaborationUser?.name, collabActive, ydoc, collabProvider, stableToggleInlineComments, stableCreateInlineChildBlip, stableHideComments, stableShowComments]

@@ -924,3 +924,9 @@ last_verified: 2026-11-06
 
 - **¶1** □ Live column read: all 126 parity composites (scripts/tester-scenarios/case_sheet.py sheets) and the live screenshots read; D02 to D04 now run on production without mail (`INVITE_MAIL_SUPPRESS_PATTERN` in /etc/rizzoma/green.env); G01 and K03 harness defects fixed (live password, base URL) in scripts/tester-scenarios/cases/G-working-features.mjs and scripts/tester-scenarios/cases/T-toolbar-shortcuts.mjs
 - **¶2** □ Rows ruled by SDS as server-internal are checked by their local API case on both columns (scripts/tester-scenarios/ledger.mjs); remaining live failures are listed in HANDOFF with causes
+
+
+## [2026-11-21] ingest | @mention and ~task offer every participant of the topic
+
+- **¶1** □ The pickers listed only people who had already written in the blip (`blip.contributors`), so a collaborator who had not yet contributed could not be mentioned or assigned (suite cases G04 and N13 on production, where the second account had not written). They now also list the accepted participants of the topic, fetched once per topic (src/client/lib/topicRoster.ts) and merged in place into the roster array that src/client/components/blip/RizzomaBlip.tsx hands to the editor; `items` in src/client/components/editor/EditorConfig.tsx reads that array at call time, so the editor and its collaboration plugins are never recreated when the people arrive
+- **¶2** □ Regression test: src/tests/client.topicRoster.test.ts (accepted only, late arrivals) and the live cases G04 and N13
