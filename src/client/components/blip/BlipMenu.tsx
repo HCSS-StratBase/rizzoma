@@ -184,7 +184,9 @@ export function BlipMenu({
   const handleOrderedList = () => { if (editor) runBlbSafeListAction(editor, 'ordered'); };
   const handleUndo = () => editor?.chain().focus().undo().run();
   const handleRedo = () => editor?.chain().focus().redo().run();
-  const handleClearFormat = () => editor?.chain().focus().clearNodes().unsetAllMarks().run();
+  // Marks only: clearNodes() would lift the text out of its imposed bullet (BLB) and the normaliser then undid the whole step,
+  // so "clear formatting" removed nothing (suite case T05).
+  const handleClearFormat = () => editor?.chain().focus().unsetAllMarks().run();
   const handleInsertLink = () => {
     if (!editor) return;
     const href = window.prompt('Enter a URL');

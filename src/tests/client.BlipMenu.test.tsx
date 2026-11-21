@@ -154,7 +154,7 @@ describe('client: BlipMenu toolbar', () => {
       'strike',
       'bullet',
       'ordered',
-      'clearNodes',
+      // Clear formatting removes marks only: clearNodes() lifted the text out of its bullet (BLB) and was undone.
       'unsetAllMarks',
     ]);
   });

@@ -63,6 +63,8 @@ const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || 'http://localhost:3000
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true);
+    // The opaque origin of sandboxed iframes / file: pages is never a legitimate credentialed caller.
+    if (origin === 'null') return cb(null, false);
     // In dev mode, allow any origin (needed for LAN/mobile testing via IP)
     if (!isProd) return cb(null, true);
     const allowAll = allowedOrigins.includes('*');
