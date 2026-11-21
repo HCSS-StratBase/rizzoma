@@ -21,9 +21,10 @@ import { loadCases } from './scripts/tester-scenarios/cases/index.mjs';
 const renders = (process.env.RIZZOMA_RENDER || 'react') === 'both' ? ['react', 'native'] : [process.env.RIZZOMA_RENDER || 'react'];
 const famFilter = (process.env.SUITE_FAMILIES || '').split(',').filter(Boolean);
 const caseFilter = (process.env.SUITE_CASES || '').split(',').filter(Boolean);
+const skipCases = (process.env.SUITE_SKIP_CASES || '').split(',').filter(Boolean);
 const CASE_TIMEOUT = Number(process.env.SUITE_CASE_TIMEOUT_MS || 240000);
 
-const cases = (await loadCases()).filter((c) => (!famFilter.length || famFilter.includes(c.family)) && (!caseFilter.length || caseFilter.includes(c.id)));
+const cases = (await loadCases()).filter((c) => (!famFilter.length || famFilter.includes(c.family)) && (!caseFilter.length || caseFilter.includes(c.id)) && !skipCases.includes(c.id));
 fs.mkdirSync(OUT, { recursive: true });
 // Live runs: this machine's resolver drops the nip.io name now and then (ERR_NAME_NOT_RESOLVED); pin the host inside the browser only.
 const liveHost = process.env.SUITE_LIVE === '1' ? new URL(BASE).hostname : '';

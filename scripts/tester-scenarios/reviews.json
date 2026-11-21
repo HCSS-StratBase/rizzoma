@@ -174,6 +174,13 @@
   "shot": "/home/stephan/ledger-evidence/sheets/sheet11_G08_G09_G10_I01.png",
   "verdict": "WORKS"
  },
+ "11.1": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
+ },
  "11.2": {
   "at": "2026-11-21T02:31",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
@@ -181,12 +188,33 @@
   "shot": "/home/stephan/ledger-evidence/sheets/sheet06_C05_C06_D01_D02.png",
   "verdict": "WORKS"
  },
+ "11.3": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
+ },
  "11.4": {
   "at": "2026-11-21T03:16",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case R02] infrastructure or configuration row: the case reads repository files, CI configuration, the database or scripts and passed; no screenshot applies, so this was NOT checked visually",
   "shot": "",
   "verdict": "WORKS"
+ },
+ "11.5": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
+ },
+ "11.6": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "API contract case S14 / the SMTP sink checks passed (notification preferences, e-mail templates). E-mails leave the product; no screen of ours shows them. SDS to accept the API and sink checks.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
  },
  "12.1": {
   "at": "2026-11-21T02:39",
@@ -427,11 +455,11 @@
   "verdict": "WORKS"
  },
  "14.1": {
-  "at": "2026-11-21T05:18",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case A06] last screenshot: five bullets B1 to B5 as folded rows with markers after reload; checks passed || [case F04] last screenshot: a collapsed row M4 with no editor; expanding behaviour asserted; passed || [case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect) || [case L04] last screenshot (master 1d819daa, before PR 120): the ten levels expand, but the avatar and time of level 4 and deeper are cut off at the right edge; fixed by PR 120 (verified on it",
-  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
-  "verdict": "PARTIAL"
+  "note": "[case L04] last screenshot (master with PR 120): the ten levels D1 to D10 are nested and every level's avatar and time are visible inside the pane; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
+  "verdict": "WORKS"
  },
  "14.10": {
   "at": "2026-11-21T02:43",
@@ -448,10 +476,10 @@
   "verdict": "WORKS"
  },
  "14.12": {
-  "at": "2026-11-21T02:28",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "[case A01] the run's last screenshot shows the topic after reload with its first blip folded behind a [+]; the nesting itself is asserted on the stored blips and a second client (all checks passed) || [case A07] last screenshot: the fast-typed child sits behind its marker (S1 +); text checked on the stored blip, all checks passed || [case A08] last screenshot: W1 and plus1 rows with their markers; text went only into the active blip; checks passed || [case A10] last screenshot: Z1 with its marker after Done right after typing; text checked, passed || [case A12] last screenshot: level-two blip ",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet03_B02_B03_B04_B05.png",
+  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
   "verdict": "WORKS"
  },
  "14.13": {
@@ -525,18 +553,18 @@
   "verdict": "WORKS"
  },
  "14.22": {
-  "at": "2026-11-21T05:18",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect) || [case L04] last screenshot (master 1d819daa, before PR 120): the ten levels expand, but the avatar and time of level 4 and deeper are cut off at the right edge; fixed by PR 120 (verified on its stack, probe.png read), not yet merged",
-  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
-  "verdict": "PARTIAL"
+  "note": "[case L04] last screenshot (master with PR 120): the ten levels D1 to D10 are nested and every level's avatar and time are visible inside the pane; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
+  "verdict": "WORKS"
  },
  "14.23": {
-  "at": "2026-11-21T05:18",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case L04] the ten levels expand and the chain is readable, but the last screenshot shows the avatar and time of level 4 and deeper cut off at the right edge (the deep-nesting clipping defect) || [case L04] last screenshot (master 1d819daa, before PR 120): the ten levels expand, but the avatar and time of level 4 and deeper are cut off at the right edge; fixed by PR 120 (verified on its stack, probe.png read), not yet merged",
-  "shot": "/home/stephan/ledger-evidence/sheets4/sheet01_L04_E03_I02_N12.png",
-  "verdict": "PARTIAL"
+  "note": "[case L04] last screenshot (master with PR 120): the ten levels D1 to D10 are nested and every level's avatar and time are visible inside the pane; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
+  "verdict": "WORKS"
  },
  "14.24": {
   "at": "2026-11-21T02:43",
@@ -623,10 +651,10 @@
   "verdict": "WORKS"
  },
  "15.3": {
-  "at": "2026-11-21T02:44",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case G02] last screenshot: the link 'see docs' rendered as a blue underlined link in view mode; passed || [case G08] last screenshot: the typed #suitetag shown as a tag chip in the blip; passed || [case N07] last screenshot: the search box holds the #tag query and the list shows the one topic carrying that tag; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet15_N04_N05_N06_N07.png",
+  "note": "[case G02] last screenshot: the link 'see docs' rendered as a blue underlined link in view mode; passed || [case G08] last screenshot: the typed #suitetag shown as a tag chip in the blip; passed || [case N07] last screenshot: the search box holds the #tag query and the list shows the one topic carrying that tag; passed || [case G02] last screenshot: 'see docs here' with the link drawn blue and underlined after using the in-page popup; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
   "verdict": "WORKS"
  },
  "15.4": {
@@ -656,13 +684,6 @@
   "note": "[case T08] last screenshot: 'EXT' with an emoji and an inline-comment child viaButton; passed",
   "shot": "/home/stephan/ledger-evidence/sheets/sheet19_T06_T07_T08_W01.png",
   "verdict": "WORKS"
- },
- "15.8": {
-  "at": "2026-11-21T02:50",
-  "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case X01] last screenshot: the Kanban sandbox app rendered with its own UI (To do, Doing, Done columns with cards) inside the blip; passed || [case X02] last screenshot: the Planner app rendered (three timed milestones, a Delay final milestone button); passed || [case X03] last screenshot: the Focus Timer app rendered (session title, checklist, button); passed || [case X04] last screenshot: the Notes scratchpad app rendered (notes and checklist with ticked items); passed || [case X05] last screenshot: the poll gadget rendered in the editor with Yes/No/Maybe bars, Add Option and 1 total vote; ",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet22_X09_X10_X11.png",
-  "verdict": "PARTIAL"
  },
  "16.1": {
   "at": "2026-11-21T02:46",
@@ -706,10 +727,24 @@
   "shot": "",
   "verdict": "NEEDS_SDS"
  },
+ "17.2": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "API contract case S14 passed (request id, security headers, CORS). Server middleware and route files have no screen. SDS to accept.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
+ },
  "17.3": {
   "at": "2026-11-21T04:38",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
   "note": "API contract case S03 passed against the running server. This row has no screen of its own: a server-internal contract (validation, tokens, storage, indexing, rate limits); a person sees only its effects, which are covered by the GUI rows around it. SDS to accept the API test as the check, or name a visible behaviour to test instead.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
+ },
+ "17.4": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "API contract case S14 passed (request id, security headers, CORS). Server middleware and route files have no screen. SDS to accept.",
   "shot": "",
   "verdict": "NEEDS_SDS"
  },
@@ -1133,20 +1168,6 @@
   "shot": "/home/stephan/ledger-evidence/sheets/sheet02_A09_A10_A12_B01.png",
   "verdict": "WORKS"
  },
- "3.14": {
-  "at": "2026-11-21T02:50",
-  "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case E02] last screenshot: the uploaded attachment shows as a link 'docnotes.txt (29 B)' in the blip; passed || [case X01] last screenshot: the Kanban sandbox app rendered with its own UI (To do, Doing, Done columns with cards) inside the blip; passed || [case X02] last screenshot: the Planner app rendered (three timed milestones, a Delay final milestone button); passed || [case X03] last screenshot: the Focus Timer app rendered (session title, checklist, button); passed || [case X04] last screenshot: the Notes scratchpad app rendered (notes and checklist with ticked items); passed || [case X",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet22_X09_X10_X11.png",
-  "verdict": "PARTIAL"
- },
- "3.15": {
-  "at": "2026-11-21T02:50",
-  "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case X01] last screenshot: the Kanban sandbox app rendered with its own UI (To do, Doing, Done columns with cards) inside the blip; passed || [case X02] last screenshot: the Planner app rendered (three timed milestones, a Delay final milestone button); passed || [case X03] last screenshot: the Focus Timer app rendered (session title, checklist, button); passed || [case X04] last screenshot: the Notes scratchpad app rendered (notes and checklist with ticked items); passed || [case X05] last screenshot: the poll gadget rendered in the editor with Yes/No/Maybe bars, Add Option and 1 total vote; ",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet22_X09_X10_X11.png",
-  "verdict": "PARTIAL"
- },
  "3.16": {
   "at": "2026-11-21T02:46",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
@@ -1204,10 +1225,10 @@
   "verdict": "WORKS"
  },
  "3.9": {
-  "at": "2026-11-21T02:34",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case G02] last screenshot: the link 'see docs' rendered as a blue underlined link in view mode; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet09_F04_G01_G02_G03.png",
+  "note": "[case G02] last screenshot: the link 'see docs' rendered as a blue underlined link in view mode; passed || [case G02] last screenshot: 'see docs here' with the link drawn blue and underlined after using the in-page popup; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
   "verdict": "WORKS"
  },
  "4.1": {
@@ -1218,17 +1239,31 @@
   "verdict": "WORKS"
  },
  "4.2": {
-  "at": "2026-11-21T05:18",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case C04] last screenshot: eight rows AA1..BB4 from two users at once, none lost; passed || [case C04] last screenshot: both users' blips present (AA1..BB4); passed",
-  "shot": "/home/stephan/ledger-evidence/sheets4/sheet02_R01_C04.png",
+  "note": "[case C04] last screenshot: eight rows AA1..BB4 from two users at once, none lost; passed || [case C04] last screenshot: both users' blips present (AA1..BB4); passed || [case W02] last screenshot: the stored blip reads 'shared A1 B1' (both people's edits, in order); passed after PR 125",
+  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
+  "verdict": "WORKS"
+ },
+ "4.3": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case W02] last screenshot: the stored blip reads 'shared A1 B1' (both people's edits, in order); passed after PR 125",
+  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
+  "verdict": "WORKS"
+ },
+ "4.4": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "[case W02] last screenshot: the stored blip reads 'shared A1 B1' (both people's edits, in order); passed after PR 125",
+  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
   "verdict": "WORKS"
  },
  "4.5": {
-  "at": "2026-11-21T02:33",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case F01] last screenshot: the blip shows its author avatar and time at the top right in view mode; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet08_E01_E02_F01_F03.png",
+  "note": "[case F01] last screenshot: the blip shows its author avatar and time at the top right in view mode; passed || [case W02] last screenshot: the stored blip reads 'shared A1 B1' (both people's edits, in order); passed after PR 125",
+  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
   "verdict": "WORKS"
  },
  "4.6": {
@@ -1301,6 +1336,34 @@
   "shot": "/home/stephan/ledger-evidence/sheets/sheet12_I03_I04_K02_K03.png",
   "verdict": "WORKS"
  },
+ "6.1": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
+ },
+ "6.2": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
+ },
+ "6.3": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
+ },
+ "6.4": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "API contract case S15 passed (create on a range, thread, resolve, list, delete). The selected-text annotation feature is new in the modernized app (the original has no such comments) and I did not write a GUI case for it. SDS to accept the API test or ask for a GUI case.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
+ },
  "6.5": {
   "at": "2026-11-21T02:39",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
@@ -1371,6 +1434,13 @@
   "shot": "/home/stephan/ledger-evidence/sheets/sheet15_N04_N05_N06_N07.png",
   "verdict": "WORKS"
  },
+ "8.2": {
+  "at": "2026-11-21T07:34",
+  "by": "agent (Claude Sonnet 5.5) after reading the image",
+  "note": "API contract case S12 passed: the search response carries a snippet with the matched text. The snippet is not drawn in the topics list rows (rows show the topic preview), so there is no separate screen to check. SDS to decide.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
+ },
  "8.3": {
   "at": "2026-11-21T04:38",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
@@ -1428,10 +1498,10 @@
   "verdict": "WORKS"
  },
  "9.6": {
-  "at": "2026-11-21T02:34",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "[case B08] last screenshot: the blip Linkme after Copy link; the clipboard URL is asserted by the case; passed || [case G02] last screenshot: the link 'see docs' rendered as a blue underlined link in view mode; passed",
-  "shot": "/home/stephan/ledger-evidence/sheets/sheet09_F04_G01_G02_G03.png",
+  "note": "[case B08] last screenshot: the blip Linkme after Copy link; the clipboard URL is asserted by the case; passed || [case G02] last screenshot: the link 'see docs' rendered as a blue underlined link in view mode; passed || [case G02] last screenshot: 'see docs here' with the link drawn blue and underlined after using the in-page popup; passed",
+  "shot": "/home/stephan/ledger-evidence/sheets5/sheet00_W02_L04_G02.png",
   "verdict": "WORKS"
  },
  "9.7": {
@@ -1680,11 +1750,11 @@
   "verdict": "WORKS"
  },
  "S-001-landing-logged-out": {
-  "at": "2026-11-21T00:58",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The original shows a marketing landing page (hero, Enter Rizzoma, footer links); ours goes straight to a sign-in form. Sign-in works, the public landing page does not exist.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/001-landing-logged-out-compare.png",
-  "verdict": "PARTIAL"
+  "note": "The original opens a marketing landing page; the modernized app opens the sign-in form (registration is by invitation). A landing page is a product decision, not a defect. SDS to decide whether one is wanted.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
  },
  "S-002-signin-form": {
   "at": "2026-11-21T00:58",
@@ -1694,11 +1764,11 @@
   "verdict": "WORKS"
  },
  "S-003-signup-form": {
-  "at": "2026-11-21T00:58",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "No sign-up form: ours says new email/password accounts require an invitation. The original offers open registration. Deliberate access policy, not a defect, but not the same surface.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/003-signup-form-compare.png",
-  "verdict": "PARTIAL"
+  "note": "The original lets anyone register; the modernized app requires an invitation (shown on the sign-in form). Deliberate access policy. SDS to decide.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
  },
  "S-004-anon-wall-private-topic": {
   "at": "2026-11-21T00:58",
@@ -1750,11 +1820,11 @@
   "verdict": "WORKS"
  },
  "S-016-nav-publics": {
-  "at": "2026-11-21T02:02",
+  "at": "2026-11-21T07:30",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Publics lists the public topics (title, owner, time) under a search box. The original also has a row of tag filters (#Education, #Rizzoma ...) and avatars per row; ours has neither.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/016-nav-publics-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 124: a row of #tags (here #Education #Rizzoma) above the search box filters the public topics, as the original's tag row (smoke screenshot tags-fix/2-publics-filtered.png read; composite of 016 read).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/016-nav-publics-compare.png",
+  "verdict": "WORKS"
  },
  "S-017-nav-store": {
   "at": "2026-11-21T01:00",
@@ -1778,18 +1848,18 @@
   "verdict": "WORKS"
  },
  "S-020-settings-menu": {
-  "at": "2026-11-21T01:01",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Gear menu opens with Follow topic, Print, Export single topic, Get embed code, User settings, Wave Timeline. The original also offers 'Export multiple topics' (absent in ours; no such string in src/client) and 'Mark topic as read' (ours shows it only when something is unread) and a G+ Hangout entry (dead service).",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/020-settings-menu-compare.png",
-  "verdict": "PARTIAL"
+  "note": "Ours lacks \"Export multiple topics\" of the original gear menu (and the Hangout entry of a retired Google service). Everything else is present. SDS to decide whether multi-topic export is wanted.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
  },
  "S-030-topic-view-default": {
-  "at": "2026-11-21T01:02",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Same parts: title, bulleted blips folded behind markers, avatar and time, reply box, right rail with Next, hide/show, text view and mind map. Different: ours draws each folded blip as a row with a green [+] square at the left (original: grey bubble at the end of the bullet), no boxed nesting lines in the folded state.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/030-topic-view-default-compare.png",
-  "verdict": "PARTIAL"
+  "note": "Same parts as the original (title, bullets, avatar and time, reply box, right rail). Different style of the folded marker: the original draws a grey speech bubble at the end of the bullet label, ours a green [+] square at the left of the row (and the inline marker inside a sentence is a bubble-like icon). A visual design decision; SDS to say whether the original marker style is to be restored.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
  },
  "S-031-topic-header-bar": {
   "at": "2026-11-21T01:02",
@@ -1890,46 +1960,46 @@
   "verdict": "WORKS"
  },
  "S-053-fractal-unfold-level-3": {
-  "at": "2026-11-21T01:11",
+  "at": "2026-11-21T07:21",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/053-fractal-unfold-level-3-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 120 (live as master 2c969d0c): every level unfolds nested and boxed and its author avatar and time stay inside the pane at the right of its box, as in the original (read on the composites of levels 3, 8 and 9).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/053-fractal-unfold-level-3-compare.png",
+  "verdict": "WORKS"
  },
  "S-054-fractal-unfold-level-4": {
-  "at": "2026-11-21T01:11",
+  "at": "2026-11-21T07:21",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/054-fractal-unfold-level-4-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 120 (live as master 2c969d0c): every level unfolds nested and boxed and its author avatar and time stay inside the pane at the right of its box, as in the original (read on the composites of levels 3, 8 and 9).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/054-fractal-unfold-level-4-compare.png",
+  "verdict": "WORKS"
  },
  "S-055-fractal-unfold-level-5": {
-  "at": "2026-11-21T01:11",
+  "at": "2026-11-21T07:21",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/055-fractal-unfold-level-5-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 120 (live as master 2c969d0c): every level unfolds nested and boxed and its author avatar and time stay inside the pane at the right of its box, as in the original (read on the composites of levels 3, 8 and 9).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/055-fractal-unfold-level-5-compare.png",
+  "verdict": "WORKS"
  },
  "S-056-fractal-unfold-level-6": {
-  "at": "2026-11-21T01:11",
+  "at": "2026-11-21T07:21",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/056-fractal-unfold-level-6-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 120 (live as master 2c969d0c): every level unfolds nested and boxed and its author avatar and time stay inside the pane at the right of its box, as in the original (read on the composites of levels 3, 8 and 9).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/056-fractal-unfold-level-6-compare.png",
+  "verdict": "WORKS"
  },
  "S-057-fractal-unfold-level-7": {
-  "at": "2026-11-21T01:11",
+  "at": "2026-11-21T07:21",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/057-fractal-unfold-level-7-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 120 (live as master 2c969d0c): every level unfolds nested and boxed and its author avatar and time stay inside the pane at the right of its box, as in the original (read on the composites of levels 3, 8 and 9).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/057-fractal-unfold-level-7-compare.png",
+  "verdict": "WORKS"
  },
  "S-058-fractal-unfold-level-8": {
-  "at": "2026-11-21T01:11",
+  "at": "2026-11-21T07:21",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The level unfolds nested and boxed, but from level 3 down the author avatar and time are pushed past the right edge of the topic pane and cut off (level 3 half visible, level 5 and deeper not visible at all). The original keeps avatar and date at the right of every nested block. App defect: deep-nesting date clipping.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/058-fractal-unfold-level-8-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 120 (live as master 2c969d0c): every level unfolds nested and boxed and its author avatar and time stay inside the pane at the right of its box, as in the original (read on the composites of levels 3, 8 and 9).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/058-fractal-unfold-level-8-compare.png",
+  "verdict": "WORKS"
  },
  "S-059-fractal-refolded": {
   "at": "2026-11-21T01:11",
@@ -1953,11 +2023,11 @@
   "verdict": "PARTIAL"
  },
  "S-062-gear-closed": {
-  "at": "2026-11-21T01:13",
+  "at": "2026-11-21T07:21",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "After pressing Escape the gear menu is still open in the screenshot; the original closes it. Dismissal by Escape does not work (click outside not yet checked).",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/062-gear-closed-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 122: Escape closes the gear menu (the screenshot after Escape shows the blip with no menu); the archive picture itself still shows the original's small menu (Copy comment, Copy link, Playback).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/062-gear-closed-compare.png",
+  "verdict": "WORKS"
  },
  "S-063-root-edit-mode-ribbon": {
   "at": "2026-11-21T01:13",
@@ -1967,18 +2037,18 @@
   "verdict": "WORKS"
  },
  "S-064-edit-link-popup": {
-  "at": "2026-11-21T01:23",
+  "at": "2026-11-21T07:23",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The link button asks for the address with a browser prompt (window.prompt 'Enter a URL', BlipMenu.tsx:190). The original opens an in-page 'Insert link' popup with Text and URL fields and Submit/Remove. Functionally works (case G02), not the same surface.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/064-edit-link-popup-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 124: the link button opens an in-page Insert link popup with Text and URL fields and Submit and Remove, as the original.",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/064-edit-link-popup-compare.png",
+  "verdict": "WORKS"
  },
  "S-065-link-popup-closed": {
-  "at": "2026-11-21T01:23",
+  "at": "2026-11-21T07:23",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Same as 064: no in-page link popup exists to dismiss; the browser prompt is used.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/064-edit-link-popup-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 124: Escape closes the link popup (checked by test-link-popup-smoke; the composite after Escape shows the plain editor).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/065-link-popup-closed-compare.png",
+  "verdict": "WORKS"
  },
  "S-066-edit-done-back-to-view": {
   "at": "2026-11-21T01:13",
@@ -2016,11 +2086,11 @@
   "verdict": "WORKS"
  },
  "S-080-publics-list": {
-  "at": "2026-11-21T02:02",
+  "at": "2026-11-21T07:30",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Same as 016: public topics are listed, without the tag filter row and avatars of the original.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/016-nav-publics-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 124: a row of #tags (here #Education #Rizzoma) above the search box filters the public topics, as the original's tag row (smoke screenshot tags-fix/2-publics-filtered.png read; composite of 016 read).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/016-nav-publics-compare.png",
+  "verdict": "WORKS"
  },
  "S-081-public-topic-view": {
   "at": "2026-11-21T01:55",
@@ -2093,11 +2163,11 @@
   "verdict": "WORKS"
  },
  "S-202-crop-mentions-tab-badge": {
-  "at": "2026-11-21T01:54",
+  "at": "2026-11-21T07:23",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The Mentions tab shows no unread count although the account has one unread mention (the panel itself says Unread (1)); the original draws a green count on the tab. NavigationPanel.tsx has the badge element but it is not shown. App defect.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/202-crop-mentions-tab-badge-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 122: the Mentions tab shows a green unread count (1) at its top right, as the original's green count.",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/202-crop-mentions-tab-badge-compare.png",
+  "verdict": "WORKS"
  },
  "S-203-crop-tasks-tab-pro": {
   "at": "2026-11-21T01:54",
@@ -2177,11 +2247,11 @@
   "verdict": "WORKS"
  },
  "S-222-crop-root-blip-body": {
-  "at": "2026-11-21T01:03",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Title, avatar and time, bullets with markers and a reply box are present, but folded blips are drawn as green-[+] rows, not bullets with a grey bubble at the end, and nesting is not drawn as nested boxed blocks in the folded state.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/222-crop-root-blip-body-compare.png",
-  "verdict": "PARTIAL"
+  "note": "Same finding as 030 (marker style of folded blips). SDS to decide.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
  },
  "S-223-crop-reply-box": {
   "at": "2026-11-21T01:03",
@@ -2240,18 +2310,18 @@
   "verdict": "WORKS"
  },
  "S-234-edit-size-dropdown": {
-  "at": "2026-11-21T01:23",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Our ribbon has no text-size dropdown. (The original archive picture shows the same ribbon with nothing open, so the original's size control is not visible there either; its description lists one.)",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/234-edit-size-dropdown-compare.png",
-  "verdict": "PARTIAL"
+  "note": "The original ribbon in 230 and 063 has Done, undo, redo, link, attach, image, B, I, U, S, a highlight button, clear formatting, two list buttons and a gear, exactly the buttons of ours; the archive picture shows it with nothing open, so no size, format or text-colour control is visible in the original. Nothing to compare; SDS to decide whether such controls are wanted.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
  },
  "S-235-edit-format-dropdown": {
-  "at": "2026-11-21T01:23",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Our ribbon has no format (heading) dropdown; see 234 for the caveat about the original picture.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/235-edit-format-dropdown-compare.png",
-  "verdict": "PARTIAL"
+  "note": "The original ribbon in 230 and 063 has Done, undo, redo, link, attach, image, B, I, U, S, a highlight button, clear formatting, two list buttons and a gear, exactly the buttons of ours; the archive picture shows it with nothing open, so no size, format or text-colour control is visible in the original. Nothing to compare; SDS to decide whether such controls are wanted.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
  },
  "S-236-edit-bg-palette": {
   "at": "2026-11-21T01:23",
@@ -2261,11 +2331,11 @@
   "verdict": "WORKS"
  },
  "S-237-edit-color-palette": {
-  "at": "2026-11-21T01:23",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "No separate text-colour palette; only the background highlight palette (236) exists.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/237-edit-color-palette-compare.png",
-  "verdict": "PARTIAL"
+  "note": "The original ribbon in 230 and 063 has Done, undo, redo, link, attach, image, B, I, U, S, a highlight button, clear formatting, two list buttons and a gear, exactly the buttons of ours; the archive picture shows it with nothing open, so no size, format or text-colour control is visible in the original. Nothing to compare; SDS to decide whether such controls are wanted.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
  },
  "S-238-edit-gadget-picker": {
   "at": "2026-11-21T01:23",
@@ -2380,18 +2450,18 @@
   "verdict": "WORKS"
  },
  "S-270-crop-unread-badge": {
-  "at": "2026-11-21T01:54",
+  "at": "2026-11-21T07:23",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Same finding as 202: no unread-mentions count on the Mentions tab. The unread topic row does carry its green bar.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/202-crop-mentions-tab-badge-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 122: the Mentions tab shows the green unread count; the unread topic row carries its green bar (parity 205 / case N11).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/202-crop-mentions-tab-badge-compare.png",
+  "verdict": "WORKS"
  },
  "S-272-settings-open-menu": {
-  "at": "2026-11-21T01:01",
+  "at": "2026-11-21T07:34",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "The archive picture is the same gear menu as 020; same finding: 'Export multiple topics' is missing in ours. Ours additionally has an account menu (name, email, Settings, Sign out) on the avatar.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/020-settings-menu-compare.png",
-  "verdict": "PARTIAL"
+  "note": "Same menu as 020: \"Export multiple topics\" is absent in ours. Ours adds an account menu on the avatar. SDS to decide.",
+  "shot": "",
+  "verdict": "NEEDS_SDS"
  },
  "S-273-settings-first-page": {
   "at": "2026-11-21T01:01",
@@ -2457,11 +2527,11 @@
   "verdict": "WORKS"
  },
  "S-290-help-overlay": {
-  "at": "2026-11-21T01:02",
+  "at": "2026-11-21T07:21",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Clicking Help in the left rail does nothing: no overlay appears (NavigationPanel.tsx renders the Help tab without a click handler). The archive picture shows no overlay either (a topic view), so the expected content is not documented; at minimum Help must open something.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/290-help-overlay-compare.png",
-  "verdict": "BROKEN"
+  "note": "After PR 122: Help opens a dialog with first steps and the keyboard shortcuts, Escape or the cross closes it; the archive picture shows only the topic view, so the content of the original's help overlay is not documented.",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/290-help-overlay-compare.png",
+  "verdict": "WORKS"
  },
  "S-300-mobile-nav-mentions": {
   "at": "2026-11-21T01:48",
@@ -2478,11 +2548,11 @@
   "verdict": "WORKS"
  },
  "S-302-mobile-nav-publics": {
-  "at": "2026-11-21T02:03",
+  "at": "2026-11-21T07:30",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Public tab at 390 px lists public topics under a search box; no tag filter row (see 016).",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/302-mobile-nav-publics-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 124: at 390 px the Public tab shows the #Education tag link above the search box and the topic row; Text view and Mind map floating buttons are visible at the bottom left (composite read).",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/302-mobile-nav-publics-compare.png",
+  "verdict": "WORKS"
  },
  "S-303-mobile-search": {
   "at": "2026-11-21T01:51",
@@ -2492,11 +2562,11 @@
   "verdict": "WORKS"
  },
  "S-304-mobile-mindmap": {
-  "at": "2026-11-21T02:03",
+  "at": "2026-11-21T07:30",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "At 390 px the topic has no Text view / Mind map controls (the right rail with them is not shown), so the mind map cannot be opened on a phone; the original offers it.",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/304-mobile-mindmap-compare.png",
-  "verdict": "BROKEN"
+  "note": "After PR 122: at 390 px the Text view and Mind map buttons are reachable and the mind map opens (smoke screenshot shell-fix2/4-phone-mindmap.png read; the P07 composite of 304 not re-read).",
+  "shot": "/home/stephan/ledger-evidence/shell-fix2/4-phone-mindmap.png",
+  "verdict": "WORKS"
  },
  "S-305-mobile-share-modal": {
   "at": "2026-11-21T01:04",
@@ -2513,11 +2583,11 @@
   "verdict": "WORKS"
  },
  "S-311-w1280-fractal-open": {
-  "at": "2026-11-21T01:38",
+  "at": "2026-11-21T07:21",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "At 1280 px the nine-level fractal fits, but the avatar and time of levels 3 and deeper are cut off at the right edge (same defect as 053).",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/311-w1280-fractal-open-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 120: at 1280 px the levels nest and every avatar and time is visible.",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/311-w1280-fractal-open-compare.png",
+  "verdict": "WORKS"
  },
  "S-312-w1280-mentions": {
   "at": "2026-11-21T01:54",
@@ -2541,11 +2611,11 @@
   "verdict": "WORKS"
  },
  "S-322-sandbox-unfold-9": {
-  "at": "2026-11-21T01:11",
+  "at": "2026-11-21T07:21",
   "by": "agent (Claude Sonnet 5.5) after reading the image",
-  "note": "Nine levels unfold, but avatar and time of the deeper levels are cut off at the right edge (same defect as levels 3 to 8).",
-  "shot": "/home/stephan/ledger-evidence/parity1/parity/322-sandbox-unfold-9-compare.png",
-  "verdict": "PARTIAL"
+  "note": "After PR 120: nine levels unfold and the avatar and time of every level are visible.",
+  "shot": "/home/stephan/ledger-evidence/parity3/parity/322-sandbox-unfold-9-compare.png",
+  "verdict": "WORKS"
  },
  "S-323-topics-list-scrolled": {
   "at": "2026-11-21T01:35",

@@ -125,7 +125,7 @@ export default [
   {
     id: 'X08', family: 'X', title: 'YouTube gadget: URL from the palette becomes an embed player iframe that actually loads from youtube.com and is allowed to run (sandbox, CSP, size), and survives reload',
     rows: ['3.14', '3.15', '15.8'], timeoutMs: 300000, expect: [/youtube|googlevideo|ytimg|google|doubleclick|gstatic|Failed to load resource|net::ERR|ERR_BLOCKED/i],
-    async run(ctx) { await embedCase(ctx, { label: 'YouTube', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', host: 'www.youtube.com', pathRe: /^\/embed\/dQw4w9WgXcQ/, shot: 'X08-youtube', needSameOrigin: true }); },
+    async run(ctx) { await embedCase(ctx, { label: 'YouTube', url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw', host: 'www.youtube.com', pathRe: /^\/embed\/jNQXAC9IVRw/, shot: 'X08-youtube', needSameOrigin: true }); },
   },
   {
     id: 'X09', family: 'X', title: 'Sheet gadget: a Google Sheets URL becomes a /preview iframe on docs.google.com, 720x420, loads and is allowed to run',

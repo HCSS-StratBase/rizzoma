@@ -76,7 +76,7 @@ export default [
     shotRows: ['014-nav-mentions', '015-nav-tasks', '016-nav-publics', '017-nav-store', '018-nav-teams', '082-store-catalog', '080-publics-list', '202-crop-mentions-tab-badge', '203-crop-tasks-tab-pro', '324-store-scrolled', '312-w1280-mentions'],
     async run(ctx) {
       const o = await ctx.client(await newUser('o'), { ...DESK, allow409Put: true }); const a = await ctx.client(await newUser('a'), DESK);
-      const tid = await ctx.topic(o, 'tabs'); await shareWith(tid, a.user, 'editor');
+      const tid = await ctx.topic(o, 'tabs #Education #Rizzoma'); await shareWith(tid, a.user, 'editor');
       await o.openTopic(tid, 4500); await o.replyAtTopic('todo item'); await o.ensureExpanded('todo item'); await o.enterEditByClick('todo item');
       await o.page.keyboard.press('End'); await o.page.locator('button[title="Insert task (~)"]').first().click(); await sleep(1200);
       await o.page.keyboard.type(a.user.email.split('@')[0].slice(0, 6), { delay: 40 }); await sleep(1500); await o.page.keyboard.press('Enter'); await sleep(800);
@@ -305,7 +305,7 @@ export default [
     id: 'P14', family: 'P', title: 'phone layout: topics list, topic view, scrolled, fractal expanded, navigation tabs, search', client: PHONE,
     shotRows: ['090-mobile-topics-list', '091-mobile-topic-view', '092-mobile-topic-scrolled', '093-mobile-fractal-expanded', '300-mobile-nav-mentions', '301-mobile-nav-tasks', '302-mobile-nav-publics', '303-mobile-search'],
     async run(ctx) {
-      const a = await ctx.client(await newUser('a'), PHONE); const id = await ctx.topic(a, 'phone parity');
+      const a = await ctx.client(await newUser('a'), PHONE); const id = await ctx.topic(a, 'phone parity #Education');
       await a.openTopic(id, 4500);
       await a.uiRoots(['Oneliner', 'Relevant links', 'Description']); await a.uiChild('Oneliner', 'Oneliner child'); await a.reload();
       await a.parity('091-mobile-topic-view');

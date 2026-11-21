@@ -79,7 +79,8 @@ function rowResult(res, row, byId) {
     const subs = row.derivedFrom.map((id) => byId.get(id)).filter(Boolean);
     const worst = subs.reduce((a, b) => (rank[b.result] < rank[a.result] ? b : a), subs[0]);
     const allWorks = subs.every((s) => s.result === 'WORKS');
-    const result = allWorks ? 'WORKS' : (subs.some((s) => s.result === 'BROKEN' || s.result === 'PARTIAL') ? 'PARTIAL' : 'UNCHECKED');
+    const onlySds = !allWorks && subs.every((s) => s.result === 'WORKS' || s.result === 'NEEDS_SDS');
+    const result = allWorks ? 'WORKS' : onlySds ? 'NEEDS_SDS' : (subs.some((s) => s.result === 'BROKEN' || s.result === 'PARTIAL') ? 'PARTIAL' : 'UNCHECKED');
     return { result, reason: `derived from ${subs.length} contract rows (${subs.filter((s) => s.result === 'WORKS').length} WORKS, ${subs.filter((s) => s.result === 'BROKEN').length} BROKEN, ${subs.filter((s) => s.result === 'PARTIAL').length} PARTIAL, ${subs.filter((s) => s.result === 'UNCHECKED').length} UNCHECKED); worst: ${worst.id}`, shotCase: null, cs: [] };
   }
   if (row.shotRow && !casesFor(res, row).length) return { result: 'UNCHECKED', reason: 'no case compares this original screen with the modernized one', shotCase: null, cs: [] };

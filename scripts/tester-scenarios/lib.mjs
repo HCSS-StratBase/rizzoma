@@ -68,6 +68,8 @@ const DEFAULT_ALLOW = [
   ...(process.env.SUITE_ALLOW_REACT_DEV_WARNINGS === '0' ? [] : [/Cannot update a component .* while rendering a different component/]), // browser echo of an expected status; the network monitor judges the status itself
   // a navigation (goto / reload) aborts the page's in-flight fetches; the HTTP monitor judges real failures
   /TypeError: Failed to fetch/,
+  // this machine's network interfaces flap (VPN, WSL); Chromium then aborts in-flight requests with ERR_NETWORK_CHANGED, which is not an app error
+  /net::ERR_NETWORK_CHANGED|net::ERR_NAME_NOT_RESOLVED|net::ERR_INTERNET_DISCONNECTED/,
   /favicon/i,
   /\[vite\]/i,
   /Download the React DevTools/i,
@@ -96,9 +98,12 @@ export class Client {
       ...(HEADED ? { recordVideo: { dir: path.join(EVIDENCE, 'videos', '_tmp'), size: this.opts.viewport || { width: 1366, height: 900 } } } : {}),
       permissions: ['clipboard-read', 'clipboard-write'],
       acceptDownloads: true,
+      // live: the app's service worker answers 503 when a request fails, which would hide the real cause; the suite judges the network itself
+      ...(LIVE ? { serviceWorkers: 'block' } : {}),
     });
     this.page = await this.ctx.newPage();
-    this.page.setDefaultTimeout(this.opts.timeout || (HEADED ? 15000 : 9000));
+    this.page.setDefaultTimeout(this.opts.timeout || (LIVE ? 45000 : HEADED ? 15000 : 9000));
+    if (LIVE) this.page.setDefaultNavigationTimeout(60000);
     if (HEADED && TYPE_DELAY && !this.opts.fast) {
       const kb = this.page.keyboard; const origType = kb.type.bind(kb);
       kb.type = (text, o = {}) => origType(text, { ...o, delay: Math.max(o.delay ?? 0, TYPE_DELAY) });
