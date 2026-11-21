@@ -20,7 +20,7 @@ if (LIVE) {
   LIVE_ACCOUNTS.t1 = { email: vars.RIZZOMA_MODERN_FRACTAL1_USER, password: vars.RIZZOMA_MODERN_FRACTAL1_PASSWORD };
   LIVE_ACCOUNTS.t2 = { email: vars.RIZZOMA_MODERN_FRACTAL2_USER, password: vars.RIZZOMA_MODERN_FRACTAL2_PASSWORD };
 }
-const T1_TAGS = new Set(['b', 'v', 'm', 'k', 'l', 'n', 'e']);
+const T1_TAGS = new Set(['b', 'v', 'm', 'k', 'l', 'n', 'e', 'g']);
 const TOPIC_OWNER = new Map();
 
 export const BASE = (process.env.RIZZOMA_BASE_URL || (process.env.SUITE_LIVE === '1' ? 'https://138-201-62-161.nip.io' : 'http://127.0.0.1:3100')).replace(/\/$/, '');
@@ -101,6 +101,13 @@ export class Client {
     });
     this.page = await this.ctx.newPage();
     this.page.setDefaultTimeout(this.opts.timeout || (LIVE ? 45000 : HEADED ? 15000 : 9000));
+    // SUITE_LATENCY_MS=N adds N ms of network latency to every request (Chromium DevTools network emulation), to reproduce on the local stack
+    // what a person on a real network sees: the local API answers in 3 ms, production in about 90 ms, and races only show on the slower one.
+    if (Number(process.env.SUITE_LATENCY_MS || 0) > 0) {
+      const cdp = await this.ctx.newCDPSession(this.page);
+      await cdp.send('Network.enable');
+      await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: Number(process.env.SUITE_LATENCY_MS), downloadThroughput: -1, uploadThroughput: -1 });
+    }
     if (LIVE) {
       this.page.setDefaultNavigationTimeout(60000);
       // This machine's network interfaces flap now and then and Chromium then aborts the navigation with ERR_NETWORK_CHANGED; retry the
@@ -131,14 +138,20 @@ export class Client {
       this.problems.push(`console.error: ${t.slice(0, 260)}`);
     });
     this.puts = [];
-    this.page.on('response', (r) => {
+    this.page.on('response', async (r) => {
       const s = r.status();
-      if (r.request().method() === 'PUT' && /\/api\/blips\//.test(r.url())) this.puts.push({ status: s, url: r.url() });
+      let why = '';
+      // the server's own reason for a 409 (e.g. collaboration_projection_stale), so a failure names its cause
+      if (s === 409) { try { why = ` ${String((await r.json())?.error || '').slice(0, 60)}`; } catch { /* no body */ } }
+      if (r.request().method() === 'PUT' && /\/api\/blips\//.test(r.url())) this.puts.push({ status: s, url: r.url(), why: why.trim() });
       if (s < 400) return;
       const url = r.url();
       if (!url.startsWith(BASE)) return;
       if (this.allowStatus.some((a) => a.status === s && a.url.test(url) && (!a.method || a.method === r.request().method()))) return;
-      this.problems.push(`http ${s} ${r.request().method()} ${url.replace(BASE, '').slice(0, 120)}`);
+      // Production only: a save that overtakes the last collaboration updates answers 409 collaboration_projection_stale and the editor retries.
+      // That is the designed retry path, so it is not an error by itself; what must hold is that every such save later succeeded (settleProblems).
+      if (LIVE && s === 409 && r.request().method() === 'PUT' && /\/api\/blips\//.test(url) && /collaboration_projection_stale/.test(why)) { (this.stale409 ||= new Set()).add(url); return; }
+      this.problems.push(`http ${s} ${r.request().method()} ${url.replace(BASE, '').slice(0, 120)}${why}`);
     });
     this.dialogMode = 'accept';
     this.page.on('dialog', (d) => { this.lastDialog = d.message(); (this.dialogMode === 'dismiss' ? d.dismiss() : d.accept(this.promptText)).catch(() => undefined); });
@@ -319,6 +332,9 @@ export class Client {
 
 export async function shareWith(topicId, user, role = 'editor') {
   if (!LIVE) { await seedAcceptedParticipant(topicId, user.email, role, 'e2e'); return; }
+  // Production sends a REAL invitation mail to the invited address (the two test accounts are aliases of SDS's own mailbox: about 95
+  // mails landed there on 21 Nov 2026). Never do that from a suite run unless it is explicitly allowed.
+  if (process.env.SUITE_LIVE_ALLOW_MAIL !== '1') throw new Error('shareWith (live) would send a real invitation e-mail; refused (set SUITE_LIVE_ALLOW_MAIL=1 only for the invite-journey checks)');
   const owner = TOPIC_OWNER.get(topicId);
   if (!owner) throw new Error(`shareWith (live): no owner client known for topic ${topicId}`);
   if (owner.user.email === user.email) return; // the same real account plays both roles
@@ -356,6 +372,9 @@ export class Ctx {
   /** Fail the case on unexpected console errors, page errors and 4xx/5xx collected on every client. */
   settleProblems() {
     for (const c of this.clients) {
+      for (const url of c.stale409 || []) {
+        if (!c.puts.some((p) => p.url === url && p.status === 200)) c.problems.push(`http 409 PUT ${url.replace(BASE, '').slice(0, 100)} collaboration_projection_stale never recovered`);
+      }
       const probs = c.problems.filter((p) => !(this.spec.expect || []).some((re) => re.test(p)));
       this.ok(probs.length === 0, `no console/page/network errors (${c.user?.tag || 'anon'})`, probs.slice(0, 4).join(' || '));
     }

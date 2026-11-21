@@ -11,7 +11,8 @@ ids = sys.argv[4:] or sorted(i for i, r in res.items() if r['status'] == 'PASS' 
 def shot(i):
     d = os.path.join(steps, 'react-' + i)
     if not os.path.isdir(d): return None
-    fl = sorted(os.listdir(d)); return os.path.join(d, fl[-1]) if fl else None
+    fl = [os.path.join(d, f) for f in os.listdir(d) if f.endswith('.png')]  # newest by time: a folder can hold shots of older runs
+    return max(fl, key=os.path.getmtime) if fl else None
 items = [(i, shot(i)) for i in ids]; items = [(i, s) for i, s in items if s]
 n = 0
 for k in range(0, len(items), 4):

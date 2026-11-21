@@ -99,11 +99,13 @@ export default [
       await a.page.keyboard.press('End');
       await a.page.locator('button[title="Insert task (~)"]').first().click();
       await sleep(1200);
-      await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 6), { delay: 40 }); await sleep(1500);
+      await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 40), { delay: 40 }); await sleep(1500);
       await a.page.keyboard.press('Enter'); await sleep(800);
+      await a.page.locator('[data-testid="task-deadline-set"]').waitFor({ timeout: 5000 }).then(async () => { await a.page.locator('[data-testid="task-deadline-input"]').fill('2026-12-01'); await a.page.locator('[data-testid="task-deadline-set"]').click(); }).catch(() => undefined);
+      await sleep(800);
       await a.page.keyboard.type(' buy milk ', { delay: 30 });
       await a.page.keyboard.type(' @', { delay: 40 }); await sleep(1500);
-      await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 6), { delay: 40 }); await sleep(1200);
+      await a.page.keyboard.type(b.user.email.split('@')[0].slice(0, 40), { delay: 40 }); await sleep(1200);
       await a.page.keyboard.press('Enter'); await sleep(600);
       await a.doneAll(); await sleep(2500);
       const stored = (await a.blips(id)).find((x) => plain(x.content).startsWith('todo'));
