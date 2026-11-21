@@ -940,3 +940,8 @@ last_verified: 2026-11-06
 ## [2026-11-21] ingest | Test-account invitations are accepted at once
 
 - **¶1** □ With `INVITE_MAIL_SUPPRESS_PATTERN` no mail is sent, so nobody can click the link and a test account stayed a pending invitee, which collaborators lists (mention and task pickers, contacts) rightly exclude. An invitation to a suppressed address that belongs to an existing user is now accepted at once (src/server/routes/waves.ts, invite loop); addresses outside the pattern and not-yet-registered addresses behave as before; regression test in src/tests/routes.topics.authorizationMatrix.test.ts
+
+## [2026-11-22] ingest | Tester suite batch 6: live column, mail-suppress incident
+
+- **¶1** □ Live cases A04, A10, C01, C03, Y05, D01, D06, G04, N13, X09 pass on production after the unmount-flush, roster and test-account fixes (scripts/tester-scenarios/lib.mjs `pickPerson`, third account T3, scripts/tester-scenarios/cases/X-gadgets-store.mjs Google noise filter)
+- **¶2** □ README (scripts/tester-scenarios/README.md) records the three live accounts and the incident: systemd strips backslashes from an EnvironmentFile value, so a regex written with them is invalid and suppresses nothing

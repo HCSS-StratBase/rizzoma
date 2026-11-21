@@ -23,7 +23,7 @@ Production sends a real invitation mail to the invited address. The two live tes
 
 ## Live test accounts (updated 21 Nov 2026)
 
-Three accounts exist on production, all aliases of SDS's mailbox and all covered by the server setting `INVITE_MAIL_SUPPRESS_PATTERN=\+fractal[0-9]@gmail\.com$` (in `/etc/rizzoma/green.env`, so invitations to them send no mail):
+Three accounts exist on production, all aliases of SDS's mailbox and all covered by the server setting `INVITE_MAIL_SUPPRESS_PATTERN=[+]fractal[0-9]@gmail[.]com$` (in `/etc/rizzoma/green.env`; so invitations to them send no mail and, for an existing user, are accepted at once). **Write it without backslashes: systemd strips them from an EnvironmentFile value, the pattern then became an invalid regular expression and about 32 invitation mails reached SDS's inbox on 21 Nov between 16:00 and 20:00 UTC before this was noticed.** Check with `tr '\\0' '\\n' < /proc/$(systemctl show -p MainPID --value rizzoma@green)/environ | grep INVITE_MAIL`:
 - Fractal Tester 1 `sdspieg+fractal1@gmail.com` (`RIZZOMA_MODERN_FRACTAL1_*`), tags b, v, m, l, n, e, g.
 - Fractal Tester 2 `sdspieg+fractal2@gmail.com` (`RIZZOMA_MODERN_FRACTAL2_*`), every other tag; the topic owner in most cases.
 - Fractal Tester 3 `sdspieg+fractal3@gmail.com` (`RIZZOMA_MODERN_FRACTAL3_*`), created 21 Nov 2026 directly in the production database with the E2E fixture (production sign-up needs an invitation whose token is mailed; a suppressed invitation has none), tags k and x: the third distinct person (contact, stranger).

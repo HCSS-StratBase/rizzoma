@@ -403,7 +403,8 @@ export function serverLogErrors(from) {
  *  accounts share the prefix 'sdspieg+fractal', so the row that shows the person's e-mail address is clicked instead. */
 export async function pickPerson(page, user) {
   if (LIVE) {
-    const row = page.locator('.mention-item', { hasText: user.email }).first();
+    // the ~task list shows the display name only, the @mention list also the address: match on the local part, which is unique per account
+    const row = page.locator('.mention-item', { hasText: user.email.split('@')[0] }).first();
     if (await row.count()) { await row.click(); return; }
   }
   await page.keyboard.press('Enter');
