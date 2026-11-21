@@ -143,6 +143,13 @@ export function AuthPanel({
       if (!r.ok) {
         const serverMsg = typeof r.data === 'object' && r.data && 'error' in r.data ? String((r.data as any).error) : '';
         const detail = serverMsg ? ` [${serverMsg}]` : ` [HTTP ${r.status}]`;
+        if (kind === 'register' && serverMsg === 'email_in_use' && inviteToken) {
+          // An invited person who already has an account landed on the sign-up form: send them to sign in, with the reason.
+          setPassword('');
+          setMode('login');
+          setNotice('This address already has an account. Sign in with its password to join the topic.');
+          return;
+        }
         setError(kind === 'login' ? `Invalid email or password${detail}` : `Registration failed${detail}`);
         const reqId = (r as unknown as { requestId?: string | undefined }).requestId;
         const idTag = (reqId !== undefined && reqId !== '') ? ` (${reqId})` : '';

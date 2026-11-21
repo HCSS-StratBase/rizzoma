@@ -47,6 +47,7 @@ import './styles/view-transitions.css';
 import {
   clearPendingInvite,
   readPendingInvite,
+  setInviteProblem,
   scrubInviteFragment,
   scrubOwnerRecoveryFragment,
   scrubPasswordResetFragment,
@@ -125,6 +126,7 @@ export function App() {
   const [passwordResetActive, setPasswordResetActive] = useState(Boolean(passwordResetAtBoot));
   const [error] = useState<string | null>(null);
   const [route, setRoute] = useState<string>(window.location.hash || '#/');
+  const [inviteTick, setInviteTick] = useState(0);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [currentBlipPath, setCurrentBlipPath] = useState<string | null>(null);
   // Check if we should use Rizzoma layout based on URL parameter
@@ -197,7 +199,11 @@ export function App() {
   }, [passwordResetActive, perfMode]);
 
   useEffect(() => {
-    const onHash = () => setRoute(window.location.hash || '#/');
+    const onHash = () => {
+      // An invitation link pasted into a tab that is already open only changes the fragment (no reload): take its token now.
+      if (/[?&]invite=/.test(window.location.hash)) { scrubInviteFragment(); setInviteTick((n) => n + 1); }
+      setRoute(window.location.hash || '#/');
+    };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
@@ -235,6 +241,15 @@ export function App() {
     }
   }, [route]);
 
+  // A provider sign-in (Google, Facebook...) returns through the server callback, which lands on /?layout=rizzoma and not on the
+  // invited topic. The pending invitation survives in this tab, so take the person to its topic: redemption below then runs.
+  useEffect(() => {
+    const pending = readPendingInvite();
+    if (!me || !pending) return;
+    if (currentId === pending.waveId) return;
+    if (!currentId) window.location.hash = `#/topic/${encodeURIComponent(pending.waveId)}`;
+  }, [me, currentId]);
+
   // Invitation links carry a one-time token in the URL fragment.
   // Redeem only after authentication; a pending participant grants no access
   // until this succeeds and binds the invitation to the signed-in user id.
@@ -264,12 +279,19 @@ export function App() {
       }
       if (cancelled) return;
       if (response.ok) {
+        setInviteProblem(null);
         clearPendingInvite();
         window.dispatchEvent(new CustomEvent('rizzoma:access-changed', { detail: { waveId: currentId } }));
       } else {
         if ([400, 404, 410].includes(response.status)) {
           clearPendingInvite();
         }
+        setInviteProblem(response.status === 403
+          ? 'This invitation was sent to another email address. Sign out and sign in with the invited address to join.'
+          : [400, 404, 410].includes(response.status)
+            ? 'This invitation link no longer works: it was already used, has expired, or its topic was deleted.'
+            : null);
+        window.dispatchEvent(new CustomEvent('rizzoma:invite-problem'));
         window.dispatchEvent(new CustomEvent('toast', {
           detail: {
             message: response.status === 403
@@ -283,7 +305,7 @@ export function App() {
       }
     })();
     return () => { cancelled = true; };
-  }, [me, currentId]);
+  }, [me, currentId, inviteTick]);
 
   // parse hash for list filters and pass as initial props
   const parseListParams = () => {

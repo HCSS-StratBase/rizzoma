@@ -162,3 +162,12 @@ export function clearPasswordResetToken(): void {
   removeFragmentParam('passwordReset');
   try { window.sessionStorage.removeItem(PASSWORD_RESET_TOKEN_KEY); } catch {}
 }
+
+const INVITE_PROBLEM_KEY = 'rizzoma:inviteProblem';
+/** Why the last invitation could not be redeemed, kept for the access-denied panel (a toast alone is replaced by the next one). */
+export function setInviteProblem(message: string | null): void {
+  try { if (message) window.sessionStorage.setItem(INVITE_PROBLEM_KEY, message); else window.sessionStorage.removeItem(INVITE_PROBLEM_KEY); } catch {}
+}
+export function getInviteProblem(): string | null {
+  try { return window.sessionStorage.getItem(INVITE_PROBLEM_KEY); } catch { return null; }
+}

@@ -1815,3 +1815,6 @@
 .topic-blip-body:has([data-testid="blip-menu-overflow-menu"]) {
   padding-bottom: 260px;
 }
+
+.error-message .invite-problem { flex: 1 1 100%; margin-top: 6px; font-size: 14px; }
+.error-message:has(.invite-problem) { flex-wrap: wrap; }
