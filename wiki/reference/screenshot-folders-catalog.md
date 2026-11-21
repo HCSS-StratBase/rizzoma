@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: test/ledger-batch6
-source_commit: fd31e06b
+source_branch: test/ledger-batch7
+source_commit: 8bcfd944
 generated: true
 ---
 

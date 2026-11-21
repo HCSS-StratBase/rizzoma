@@ -204,7 +204,7 @@ export default [
   },
   {
     id: 'A11', family: 'A', title: 'topic-root Ctrl+Enter plus typing, 20 real-typing repetitions: the child blip survives a reload every time (failure rate must be 0 of 20)',
-    rows: ['14.11', '2.7', '14.12'], timeoutMs: 1500000,
+    rows: ['14.11', '2.7', '14.12'], timeoutMs: process.env.SUITE_LIVE === '1' ? 4500000 : 1500000,
     async run(ctx) {
       const a = await ctx.client(await newUser('a'));
       let failures = 0; const bad = [];

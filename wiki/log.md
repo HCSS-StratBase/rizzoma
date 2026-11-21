@@ -945,3 +945,7 @@ last_verified: 2026-11-06
 
 - **¶1** □ Live cases A04, A10, C01, C03, Y05, D01, D06, G04, N13, X09 pass on production after the unmount-flush, roster and test-account fixes (scripts/tester-scenarios/lib.mjs `pickPerson`, third account T3, scripts/tester-scenarios/cases/X-gadgets-store.mjs Google noise filter)
 - **¶2** □ README (scripts/tester-scenarios/README.md) records the three live accounts and the incident: systemd strips backslashes from an EnvironmentFile value, so a regex written with them is invalid and suppresses nothing
+
+## [2026-11-22] ingest | Live column complete: 391 of 391
+
+- **¶1** □ Live column on production (fd31e06b): all 391 rows WORKS (live cases read screenshot by screenshot, 126 parity composites read, server-internal rows by their API case, closed differences by SDS decision); A11 runs 20 repetitions in about 27 minutes on production, so its limit is longer when live (scripts/tester-scenarios/cases/A-nesting.mjs); derived module rows use live readings (scripts/tester-scenarios/ledger.mjs)

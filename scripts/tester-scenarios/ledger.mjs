@@ -88,7 +88,7 @@ function rowResult(res, row, byId) {
     const r0 = reviews[row.id];
     return { result: 'WORKS', reason: `${r0.byDecision ? 'WORKS by SDS decision' : 'WORKS by API case (local run, SDS ruling)'}: ${r0.note}`, shotCase: null, cs: [] };
   }
-  const rv0 = res === local ? reviews[row.id] : null;
+  const rv0 = res === local ? reviews[row.id] : res === liveRes ? liveReviews[row.id] : null;
   if (rv0 && (row.derivedFrom || row.shotRow) && ['NEEDS_SDS', 'WORKS', 'PARTIAL', 'BROKEN'].includes(rv0.verdict) && row.derivedFrom && !row.derivedFrom.length) return { result: rv0.verdict, reason: `${rv0.verdict === 'NEEDS_SDS' ? 'no user-visible check possible: ' : 'recorded reading: '}${rv0.note}`, shotCase: null, cs: [] };
   if (row.derivedFrom) {
     if (!row.derivedFrom.length) return { result: 'UNCHECKED', reason: 'no contract row maps to this original module and no case exercises it', shotCase: null, cs: [] };
