@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/nested-insert-typing
-source_commit: 1d819daa
+source_commit: ca07465c
 generated: true
 ---
 
@@ -40,7 +40,7 @@ graph LR
     P --> K["code"]
 ```
 
-## Client components (124)
+## Client components (126)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -62,6 +62,8 @@ graph LR
 | `src/client/components/GadgetPalette.css` | 264 | — |
 | `src/client/components/GadgetPalette.tsx` | 180 | (no header comment; exports GadgetPalette) |
 | `src/client/components/GreenNavigation.tsx` | 43 | (no header comment; exports GreenNavigation) |
+| `src/client/components/HelpOverlay.css` | 11 | — |
+| `src/client/components/HelpOverlay.tsx` | 43 | (no header comment; exports HelpOverlay) |
 | `src/client/components/InviteModal.css` | 209 | InviteModal.css - Authentic Legacy Rizzoma Member Management Popup matching 034-manage-members.png |
 | `src/client/components/InviteModal.tsx` | 392 | (no header comment; exports InviteModal) |
 | `src/client/components/MentionsList.css` | 134 | — |
@@ -69,21 +71,21 @@ graph LR
 | `src/client/components/MindMapView.css` | 146 | — |
 | `src/client/components/MindMapView.tsx` | 191 | (no header comment; exports MindMapView) |
 | `src/client/components/NavigationPanel.css` | 195 | NavigationPanel.css - Authentic Legacy Rizzoma Navigation Rail |
-| `src/client/components/NavigationPanel.tsx` | 104 | (no header comment; exports NavigationPanel) |
+| `src/client/components/NavigationPanel.tsx` | 108 | (no header comment; exports NavigationPanel) |
 | `src/client/components/PWAPrompts.css` | 100 | — |
 | `src/client/components/PWAPrompts.tsx` | 129 | (no header comment; exports PWAPrompts) |
 | `src/client/components/PresenceIndicator.css` | 66 | — |
 | `src/client/components/PresenceIndicator.tsx` | 54 | (no header comment; exports PresenceIndicator) |
-| `src/client/components/PublicTopicsPanel.css` | 80 | — |
-| `src/client/components/PublicTopicsPanel.tsx` | 104 | (no header comment; exports PublicTopicsPanel) |
+| `src/client/components/PublicTopicsPanel.css` | 85 | — |
+| `src/client/components/PublicTopicsPanel.tsx` | 123 | (no header comment; exports PublicTopicsPanel) |
 | `src/client/components/RebuildPanel.tsx` | 133 | (no header comment; exports RebuildPanel) |
 | `src/client/components/RightToolsPanel.css` | 468 | RightToolsPanel.css - Authentic Legacy Rizzoma Right Tools Panel |
 | `src/client/components/RightToolsPanel.tsx` | 541 | Custom events for insert shortcuts - these are dispatched globally |
 | `src/client/components/RizzomaLanding.css` | 360 | — |
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
-| `src/client/components/RizzomaLayout.css` | 463 | dynamic viewport height — accounts for mobile address bar |
-| `src/client/components/RizzomaLayout.tsx` | 593 | (no header comment; exports RizzomaLayout) |
-| `src/client/components/RizzomaTopicDetail.css` | 1810 | RizzomaTopicDetail - Matching real Rizzoma |
+| `src/client/components/RizzomaLayout.css` | 487 | dynamic viewport height — accounts for mobile address bar |
+| `src/client/components/RizzomaLayout.tsx` | 614 | (no header comment; exports RizzomaLayout) |
+| `src/client/components/RizzomaTopicDetail.css` | 1812 | RizzomaTopicDetail - Matching real Rizzoma |
 | `src/client/components/RizzomaTopicDetail.tsx` | 2399 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 237 | Authentic Legacy Rizzoma Topics List Styles |
 | `src/client/components/RizzomaTopicsList.tsx` | 372 | (no header comment; exports RizzomaTopicsList) |
@@ -111,11 +113,11 @@ graph LR
 | `src/client/components/blip/ActiveBlipContext.tsx` | 77 | Single-active-blip invariant (BLB §18b2 three-state model): a topic shows at |
 | `src/client/components/blip/BlipHistoryModal.css` | 475 | BlipHistoryModal - Timeline Playback UI |
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
-| `src/client/components/blip/BlipMenu.css` | 676 | Authentic Legacy Rizzoma Blip Menu Styles |
-| `src/client/components/blip/BlipMenu.tsx` | 889 | (no header comment; exports BlipMenu) |
+| `src/client/components/blip/BlipMenu.css` | 699 | Authentic Legacy Rizzoma Blip Menu Styles |
+| `src/client/components/blip/BlipMenu.tsx` | 935 | (no header comment; exports BlipMenu) |
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 656 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
-| `src/client/components/blip/RizzomaBlip.css` | 1953 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.css` | 1956 | Rizzoma Blip Styles |
 | `src/client/components/blip/RizzomaBlip.tsx` | 3248 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 117 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
@@ -125,7 +127,7 @@ graph LR
 | `src/client/components/editor/BlipEditor.css` | 251 | — |
 | `src/client/components/editor/BlipEditor.tsx` | 105 | (no header comment; exports BlipEditor) |
 | `src/client/components/editor/CollaborativeCursors.css` | 171 | Collaborative Cursors Styling |
-| `src/client/components/editor/CollaborativeCursors.tsx` | 223 | (no header comment; exports CursorUser) |
+| `src/client/components/editor/CollaborativeCursors.tsx` | 227 | (no header comment; exports CursorUser) |
 | `src/client/components/editor/CollaborativeProvider.ts` | 592 | (no header comment; exports SocketIOProvider) |
 | `src/client/components/editor/EditableBlipContent.tsx` | 68 | (no header comment; exports EditableBlipContent) |
 | `src/client/components/editor/EditorConfig.tsx` | 288 | (no header comment; exports createYjsDocument) |
@@ -143,7 +145,7 @@ graph LR
 | `src/client/components/editor/collaborationIdentity.ts` | 86 | (no header comment; exports CollaborationUser) |
 | `src/client/components/editor/extensions/BlipKeyboardShortcuts.ts` | 297 | (no header comment; exports BlipKeyboardShortcutsOptions) |
 | `src/client/components/editor/extensions/BlipThread.css` | 81 | BlipThread inline marker styles — authentic original Rizzoma speech bubble |
-| `src/client/components/editor/extensions/BlipThreadNode.tsx` | 203 | True when a DOM event comes from INSIDE an inline child blip rendered in this editor's portal anchor |
+| `src/client/components/editor/extensions/BlipThreadNode.tsx` | 215 | True when a DOM event comes from INSIDE an inline child blip rendered in this editor's portal anchor |
 | `src/client/components/editor/extensions/CodeBlockView.css` | 128 | Enhanced Code Block — replaces bare TipTap codeBlock |
 | `src/client/components/editor/extensions/CodeBlockView.tsx` | 87 | (no header comment; exports CodeBlockView) |
 | `src/client/components/editor/extensions/GadgetNodes.ts` | 532 | (no header comment; exports createDefaultPollOptions) |

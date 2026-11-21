@@ -728,6 +728,8 @@
 .topic-content-view li {
   position: relative;
   padding-right: 44px;
+  /* read by the nested-child rule in RizzomaBlip.css, which must also cancel this reservation */
+  --li-reserve: 44px;
 }
 
 .topic-content-view li > .topic-section-author {

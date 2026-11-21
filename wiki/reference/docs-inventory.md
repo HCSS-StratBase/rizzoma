@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/nested-insert-typing
-source_commit: 1d819daa
+source_commit: ca07465c
 generated: true
 ---
 

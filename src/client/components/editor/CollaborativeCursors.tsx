@@ -75,6 +75,10 @@ export const CollaborativeCursor = Extension.create({
                 const cursorDeco = Decoration.widget(from, () => {
                   const cursor = document.createElement('span');
                   cursor.className = 'collaboration-cursor';
+                  // The other person's cursor is not text: without this the caret of a person at the start of the line sat inside the label,
+                  // so the End key did nothing and typing after End landed at the start (suite case W02).
+                  cursor.contentEditable = 'false';
+                  cursor.setAttribute('aria-hidden', 'true');
                   cursor.style.borderColor = cursorUser.color;
                   
                   const label = document.createElement('span');
@@ -84,7 +88,7 @@ export const CollaborativeCursor = Extension.create({
                   
                   cursor.appendChild(label);
                   return cursor;
-                });
+                }, { side: -1, ignoreSelection: true });
                 decorations.push(cursorDeco);
               } else {
                 // Add selection decoration

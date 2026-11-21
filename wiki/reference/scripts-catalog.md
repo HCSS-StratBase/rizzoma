@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/nested-insert-typing
-source_commit: 1d819daa
+source_commit: ca07465c
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 246 files in `scripts/`, 66 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 247 files in `scripts/`, 71 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -79,6 +79,11 @@ graph LR
 | `test:tester-scenarios` | `node test-tester-scenarios.mjs` |
 | `test:tester-scenarios:headed` | `bash scripts/tester-scenarios ⁄ run-headed.sh` |
 | `test:scenarios-coverage` | `node scripts/tester-scenarios ⁄ coverage-matrix.mjs --check` |
+| `test:deep-nesting` | `node test-deep-nesting-meta-smoke.mjs` |
+| `test:shell-defects` | `node test-shell-defects-smoke.mjs` |
+| `test:link-popup` | `node test-link-popup-smoke.mjs` |
+| `test:public-tags` | `node test-public-tags-smoke.mjs` |
+| `test:collab-end-key` | `node test-collab-end-key-smoke.mjs` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
 | `test:root-ctrl-enter` | `node scripts ⁄ test-root-ctrl-enter-survives-reload.mjs` |
 | `test:native-ctrl-enter` | `node test-native-ctrl-enter-smoke.mjs` |
@@ -106,7 +111,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (246)
+## scripts/ (247)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -196,6 +201,7 @@ graph LR
 | `scripts/fractal-showcase/gadget-look.mjs` | 34 | Screenshot how each gadget of a scratch topic renders in the VIEW state (to be READ). env: FS_STATE_IN (json |
 | `scripts/fractal-showcase/gadget-render-probe.mjs` | 71 | Do the gadgets RENDER? Insert each of the 11 palette gadgets in a scratch topic with real clicks and typing, |
 | `scripts/fractal-showcase/lib.mjs` | 83 | Shared helpers for the hand-built "Fractal Showcase" topic. Content is entered ONLY with real |
+| `scripts/fractal-showcase/liliia-cd.mjs` | 75 | Liliia (c) and (d), her own cases (liliia-3.png, liliia-4.png): a SUB-BLIP with three bullets "blip 1/2/3". |
 | `scripts/fractal-showcase/liliia-live.mjs` | 28 | Live check of Liliia (a)+(e) as the NON-OWNER Fractal Tester 2 on the live host, headed, real input. env FS_STATE_IN |
 | `scripts/fractal-showcase/liliia-repro.mjs` | 67 | Reproduce Liliia's 19 Nov defects as a NON-OWNER in a clean context (headed, private display, real input). |
 | `scripts/fractal-showcase/liliia-repro2.mjs` | 56 | Liliia (c) insert a blip mid-blip, (d) screenshot paste into a sub-blip + delete the picture, as the NON-OWNER B. |

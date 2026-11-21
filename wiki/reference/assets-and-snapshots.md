@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/nested-insert-typing
-source_commit: 1d819daa
+source_commit: ca07465c
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 73 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 79 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -114,8 +114,10 @@ graph LR
 | `test-blip-body-text-smoke.mjs` | Computed-style smoke: every piece of blip BODY text has the same size, line-height and |
 | `test-click-caret-smoke.mjs` | Regression smoke: a click into the MIDDLE of a view-state blip puts the caret at the clicked place, |
 | `test-clipboard-paste-smoke.mjs` | Copy / Cut on one blip, Paste on ANOTHER blip (real clicks on the gear menu, what the person sees). |
+| `test-collab-end-key-smoke.mjs` | Regression smoke (suite case W02): two people edit the same blip; A presses End and types. Before the fix the other person's cursor label |
 | `test-collab-smoke.mjs` | Real-time collab smoke test (Playwright, two browser contexts). |
 | `test-collapse-control-smoke.mjs` | The [-] control of an expanded blip must be reachable: a real click (desktop 1366 x 900) and a real tap (phone 390 x 844) |
+| `test-deep-nesting-meta-smoke.mjs` | Regression smoke: in a deeply nested topic every expanded level stays INSIDE its parent box and its author avatar and time stay inside the |
 | `test-done-flush-smoke.mjs` | Done right after typing must not lose the text (real keys, real clicks, what the person SEES after a reload). |
 | `test-edit-meta-smoke.mjs` | Copy / Cut on one blip, Paste on ANOTHER blip (real clicks on the gear menu, what the person sees). |
 | `test-editor.html` | Set feature flags before module loading |
@@ -125,14 +127,18 @@ graph LR
 | `test-gadget-apps-smoke.mjs` | Real insert-and-render smoke for the four sandboxed gadget apps |
 | `test-gadgets-render-smoke.mjs` | Regression smoke: gadgets must RENDER, not merely be stored. Inserts Code, Poll, LaTeX, YouTube, Sheet and Image |
 | `test-liliia-smoke.mjs` | Regression smoke for two defects in Liliia's 19 Nov 2026 review, judged as a NON-OWNER in a clean context: |
+| `test-link-popup-smoke.mjs` | Regression smoke: the ribbon's link button opens the original's in-page "Insert link" popup (Text and URL fields, Submit and Remove, |
 | `test-native-ctrl-enter-smoke.mjs` | Native render path (?render=native) regression smoke for the 18 Nov 2026 tester feedback: |
+| `test-nested-insert-smoke.mjs` | Regression smoke, Liliia 19 Nov 2026 (her pictures 3 and 4): in a SUB-BLIP with three bullets, in VIEW mode, |
 | `test-nested-pointer-focus-smoke.mjs` | Regression smoke: clicking into an OPEN nested blip puts the caret in THAT blip, not in an ancestor. |
 | `test-paste-image-smoke.mjs` | Regression smoke, Liliia 19 Nov 2026: a screenshot pasted from the clipboard into a sub-blip must land in THAT blip, |
 | `test-phone-layout-smoke.mjs` | Phone layout smoke (390 x 844, 360 x 740, 430 x 932 with REAL touch taps) and the desktop guard. |
 | `test-playwright-features.js` | Take screenshot of test editor |
+| `test-public-tags-smoke.mjs` | Regression smoke: the Publics tab shows the original's tag filter row (parity rows 016, 080, 302). A person makes two topics public, one |
 | `test-rizzoma-simple.mjs` | Launch browser in headed mode so you can watch |
 | `test-rizzoma.mjs` | Create a test script that playwright can run |
 | `test-select-all-edit-smoke.mjs` | Editing over a selection: Ctrl+A then type, Backspace, Delete and paste over a selection (real key presses, real clipboard). |
+| `test-shell-defects-smoke.mjs` | Regression smoke for four shell defects found by the legacy-screenshot parity rows (all judged from screenshots): |
 | `test-standalone-editor.html` | Set feature flags before any imports |
 | `test-tester-feedback-smoke.mjs` | Regression smoke for the 18 Nov 2026 tester feedback (Liliia): editing sub-blips, a |
 | `test-tester-scenarios.mjs` | Tester-scenarios regression suite: behaves like a real colleague (signs in, drives the REAL UI with |
