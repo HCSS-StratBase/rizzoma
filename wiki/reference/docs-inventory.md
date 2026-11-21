@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/y-gaps
-source_commit: 831a5f7c
+source_branch: fix/palette-original
+source_commit: a6274438
 generated: true
 ---
 

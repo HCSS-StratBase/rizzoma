@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/y-gaps
-source_commit: 831a5f7c
+source_branch: fix/palette-original
+source_commit: a6274438
 generated: true
 ---
 
@@ -367,7 +367,7 @@ graph LR
 |---|---:|---|
 | `src/shared/blbContent.ts` | 268 | Canonical creation-time HTML for the Bullet-Label-Blip contract. |
 | `src/shared/constants/textFormatting.d.ts` | 42 | (no header comment; exports TextFormattingOptions) |
-| `src/shared/constants/textFormatting.js` | 41 | (no header comment; exports TextLevelParams) |
+| `src/shared/constants/textFormatting.js` | 40 | (no header comment; exports TextLevelParams) |
 | `src/shared/constants/textFormatting.ts` | 59 | Text formatting constants from original Rizzoma |
 | `src/shared/featureFlags.ts` | 54 | Feature flags for progressive rollout of Rizzoma core features |
 | `src/shared/topicProjectionGuard.ts` | 44 | Guard against the blank-placeholder overwrite (incident 2026-11-16). |
@@ -399,7 +399,7 @@ graph LR
 | `src/tests/client.AnonymousTopicRoute.test.tsx` | 80 | — |
 | `src/tests/client.AuthPanelSecurity.test.tsx` | 202 | — |
 | `src/tests/client.BlipEditor.test.ts` | 114 | Warm the EditorConfig module once up-front with a generous timeout. |
-| `src/tests/client.BlipMenu.test.tsx` | 620 | — |
+| `src/tests/client.BlipMenu.test.tsx` | 621 | — |
 | `src/tests/client.EditorSearch.test.tsx` | 76 | — |
 | `src/tests/client.InlineComments.pluginKey.test.ts` | 44 | — |
 | `src/tests/client.LazyBlipSlot.test.tsx` | 106 | — |

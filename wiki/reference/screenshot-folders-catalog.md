@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/y-gaps
-source_commit: 831a5f7c
+source_branch: fix/palette-original
+source_commit: a6274438
 generated: true
 ---
 
 # Screenshot Folders Catalog
 
-**¶1** □ GENERATED. `screenshots/` has 239 tracked folders and 31 loose files in git. The authority for the ORIGINAL is the [legacy archive](legacy-screenshots.md) plus the folders marked LEGACY REFERENCE or comparison below; sweep and handbuild folders are evidence about OUR build. The Kind column is a guess from the folder name only; read the folder's README/manifest where one exists.
+**¶1** □ GENERATED. `screenshots/` has 242 tracked folders and 31 loose files in git. The authority for the ORIGINAL is the [legacy archive](legacy-screenshots.md) plus the folders marked LEGACY REFERENCE or comparison below; sweep and handbuild folders are evidence about OUR build. The Kind column is a guess from the folder name only; read the folder's README/manifest where one exists.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -262,6 +262,9 @@ graph LR
 | `260716-native-read-acceptance` | 2 | 0 | other / unknown | — |
 | `2611092300-gates-branch` | 22 | 1 | other / unknown | — |
 | `261115-8level-stress-test` | 13 | 0 | other / unknown | — |
+| `2611210936-feature-sweep` | 169 | 5 | our build, automated feature sweep | [manifest.md](../../screenshots/2611210936-feature-sweep/manifest.md) |
+| `2611210937-handbuild-acceptance-react` | 23 | 0 | our build, handbuild acceptance run | — |
+| `2611210939-handbuild-acceptance-native` | 23 | 0 | our build, handbuild acceptance run | — |
 | `debug-blank` | 3 | 1 | other / unknown | — |
 | `depth10-fractal-260506` | 7 | 0 | other / unknown | — |
 | `native-vs-react-260506` | 9 | 0 | other / unknown | — |
