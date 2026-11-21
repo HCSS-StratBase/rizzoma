@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/nested-insert-typing
-source_commit: ca07465c
+source_commit: da970847
 generated: true
 ---
 
@@ -84,7 +84,7 @@ graph LR
 | `src/client/components/RizzomaLanding.css` | 360 | — |
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
 | `src/client/components/RizzomaLayout.css` | 487 | dynamic viewport height — accounts for mobile address bar |
-| `src/client/components/RizzomaLayout.tsx` | 614 | (no header comment; exports RizzomaLayout) |
+| `src/client/components/RizzomaLayout.tsx` | 619 | (no header comment; exports RizzomaLayout) |
 | `src/client/components/RizzomaTopicDetail.css` | 1812 | RizzomaTopicDetail - Matching real Rizzoma |
 | `src/client/components/RizzomaTopicDetail.tsx` | 2399 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 237 | Authentic Legacy Rizzoma Topics List Styles |

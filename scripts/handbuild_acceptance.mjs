@@ -343,6 +343,13 @@ const pitch = await page.evaluate(() => {
   return ys.slice(1).map((y, i) => (y == null || ys[i] == null ? null : Math.round(y - ys[i])));
 });
 if (RENDER === 'react') gate('level pitch of a single-line spine is 50-60 px (original: 55 px)', pitch.length === 4 && pitch.every((v) => v !== null && v >= 50 && v <= 60), `pitches: ${pitch.join(', ')}`);
+// Pane widths (Liliia 19 Nov 2026): original at 1280 px has a 317 px topic list and a 64 px tools column flush right;
+// this app had 296 and 104 (39 px of empty strip). Fresh context = defaults.
+const panes = await page.evaluate(() => {
+  const w = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().width) : null; };
+  return { list: w('.topics-list, [class*="topics-list"]'), right: w('.right-tools-container') };
+});
+gate('pane widths match the original (topic list 317, right tools column 64-66 px)', panes.list !== null && Math.abs(panes.list - 317) <= 2 && panes.right !== null && panes.right >= 64 && panes.right <= 66, `list=${panes.list}, right=${panes.right}`);
 // House rule: layout is judged by eye at 1366 and 1600 px wide as well.
 for (const w of [1366, 1600]) {
   await page.setViewportSize({ width: w, height: 950 });

@@ -60,15 +60,20 @@ type MobileView = 'list' | 'content';
 // Persisted layout sizes/collapse state — keyed in localStorage so
 // the user's pane layout survives reloads. Widths are clamped to
 // sane bounds on read so a corrupted value can't render a 0px pane.
-const LEFT_WIDTH_KEY = 'rizzoma:leftPaneWidth';
-const RIGHT_WIDTH_KEY = 'rizzoma:rightPaneWidth';
+// v2 keys (21 Nov 2026): every browser had already saved the old default widths (296 / 104), so changing the defaults
+// alone would reach nobody; a manual resize made before this date is reset once.
+const LEFT_WIDTH_KEY = 'rizzoma:leftPaneWidth:v2';
+const RIGHT_WIDTH_KEY = 'rizzoma:rightPaneWidth:v2';
 const LEFT_COLLAPSED_KEY = 'rizzoma:leftPaneCollapsed';
 const RIGHT_COLLAPSED_KEY = 'rizzoma:rightPaneCollapsed';
-const LEFT_DEFAULT = 296;
-const RIGHT_DEFAULT = 104;
+// Original Rizzoma at 1280 px (screenshots/260714-legacy-reference-archive/101-w1280-topic-view.png): topic list 317 px
+// (79 to 396), right tools column 64 px flush to the edge, so the blip column is 820 px. This app had 296 and 104 (the
+// extra 39 px were an empty strip beside the tools column), leaving 801 px; with 317 and 65 it is 819 px.
+const LEFT_DEFAULT = 317;
+const RIGHT_DEFAULT = 65;
 const LEFT_MIN = 180;
 const LEFT_MAX = 600;
-const RIGHT_MIN = 80;
+const RIGHT_MIN = 65;
 const RIGHT_MAX = 420;
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
