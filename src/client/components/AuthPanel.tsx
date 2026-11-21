@@ -32,7 +32,9 @@ export function AuthPanel({
   const [mode, setMode] = useState<AuthMode>(() => (
     readPasswordResetToken()
       ? 'complete-reset'
-      : (readOwnerRecoveryToken() || readPendingInvite()) ? 'register' : 'login'
+      // An invitation opens SIGN IN first: most invited people already have an account (the sign-up form wants a 12-character password,
+      // so an existing user typing theirs there hit a dead end); "Sign up" below creates the account for the invited address.
+      : readOwnerRecoveryToken() ? 'register' : 'login'
   ));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
