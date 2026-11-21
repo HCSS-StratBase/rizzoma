@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/gear-menu-clip
-source_commit: 57844a33
+source_branch: test/tester-scenarios-suite
+source_commit: 377fff2d
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 80 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 81 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -102,6 +102,7 @@ graph LR
 | `create-demo-topic.cjs` | Create a topic |
 | `docker-compose.yml` | — |
 | `jest.config.cjs` | — |
+| `node_modules` | — |
 | `npm-error.log` | — |
 | `open-browser-test.sh` | — |
 | `open-test-browser.sh` | — |

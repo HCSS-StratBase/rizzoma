@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/gear-menu-clip
-source_commit: 57844a33
+source_branch: test/tester-scenarios-suite
+source_commit: 377fff2d
 generated: true
 ---
 
@@ -307,7 +307,7 @@ graph LR
 | `scripts/tester-scenarios/cases/D-invite-people.mjs` | 134 | Family D: invite and people. The tester: "I cannot invite people to the topics" and the people list |
 | `scripts/tester-scenarios/cases/E-images-files.mjs` | 104 | Family E: images and files. The tester: "screenshots work but a pasted image takes almost the whole page". |
 | `scripts/tester-scenarios/cases/F-time-authorship.mjs` | 82 | Family F: time and authorship. The tester: "the time a blip was created does not display (only while writing)". |
-| `scripts/tester-scenarios/cases/G-working-features.mjs` | 233 | Family G: the things the tester said work, which must keep working: login/logout, links, follow-the-green, |
+| `scripts/tester-scenarios/cases/G-working-features.mjs` | 236 | Family G: the things the tester said work, which must keep working: login/logout, links, follow-the-green, |
 | `scripts/tester-scenarios/cases/I-phone-mobile.mjs` | 92 | Family I: phone viewport (390 x 844) and the mobile / PWA rows. Real touch-sized viewport, real typing. |
 | `scripts/tester-scenarios/cases/L-blb-fractal.mjs` | 127 | Family L: the BLB paradigm seen on screen: [+] markers, portal placement, nested inline expansion, deep fractal |
 | `scripts/tester-scenarios/cases/N-navigation-ui.mjs` | 157 | Family N: navigation panel, topics list, tabs, right tools panel, store/teams/publics, new-topic wizard, |
@@ -323,8 +323,8 @@ graph LR
 | `scripts/tester-scenarios/cases/index.mjs` | 21 | Every cases/<family>-*.mjs file default-exports an array of case specs: |
 | `scripts/tester-scenarios/coverage-matrix.mjs` | 44 | Generates TESTERS_FEATURE_MATRIX.md (every documented feature row -> the behavioural case ids that |
 | `scripts/tester-scenarios/feature-rows.mjs` | 32 | Parses the machine-readable feature contract (RIZZOMA_FEATURES_STATUS.md, "Comprehensive Feature |
-| `scripts/tester-scenarios/ledger.mjs` | 130 | FEATURE LEDGER generator. Row sources: (A) the 240-row contract RIZZOMA_FEATURES_STATUS.md, (B) every gadget in the |
-| `scripts/tester-scenarios/lib.mjs` | 363 | Shared driver for the tester-scenarios suite. A "client" is one real browser context signed in as |
+| `scripts/tester-scenarios/ledger.mjs` | 137 | FEATURE LEDGER generator. Row sources: (A) the 240-row contract RIZZOMA_FEATURES_STATUS.md, (B) every gadget in the |
+| `scripts/tester-scenarios/lib.mjs` | 380 | Shared driver for the tester-scenarios suite. A "client" is one real browser context signed in as |
 | `scripts/tester-scenarios/list-rows.mjs` | 9 | — |
 | `scripts/tester-scenarios/live-three.mjs` | 171 | Live check of three shipped fixes as the non-owner account Fractal Tester 2 (and Fractal Tester 1 as the topic owner for |
 | `scripts/tester-scenarios/parity_compose.py` | 26 | Side-by-side composites for the parity rows: legacy reference screenshot (left) next to the modernized screen (right). |
