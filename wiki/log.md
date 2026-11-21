@@ -780,3 +780,9 @@ last_verified: 2026-11-06
 - **¶1** □ Found by the tester-scenarios suite (case F02): a blip showed its author avatar and date in read mode but both disappeared the moment the blip went into edit mode. The original renders the blip info outside the editor container in both modes (`original-rizzoma-src/src/client/blip/template.coffee:6-9`).
 - **¶2** □ Fix: `RizzomaBlip.tsx` renders the same contributors stack and date under the editor while editing, and `RizzomaBlip.css` places it right-aligned below the text (`.blip-contributors-info--editing`).
 - **¶3** □ Test: `test-edit-meta-smoke.mjs` (`npm run test:edit-meta`) reads the avatar and date in read mode, clicks into the blip and asserts both are still visible in edit mode; scratch topic deleted with proof. Fails on base (nothing in edit mode), passes with the fix; headed on Xvfb, screenshots read.
+
+## [2026-11-21] fix | Two blips added at the same moment no longer drop the topic's activity time
+
+- **¶1** □ Found by the tester-scenarios suite (cases I02, L03 and R01 failed on their server-log check; case C04 is the two-writer scenario): every blip write also stamps the topic's "last activity" time. Two writers at once read the same topic revision, the slower write got a CouchDB 409 "Document update conflict", it was logged as an error and the stamp was silently dropped.
+- **¶2** □ Fix: `touchTopic` in `src/server/routes/blips.ts` re-reads the topic and retries up to five times with a short random pause; a conflict that persists is not an error (other writers keep updating the topic, so its activity time is fresh), any other failure is still logged.
+- **¶3** □ Test: `src/tests/routes.blips.touchTopic.test.ts` (two cases; both fail on the base, both pass on the fix). Suite cases C04, I02, L03 and R01 pass on a stack running the fix; on master they failed (409 PUT and 409 server-log lines).

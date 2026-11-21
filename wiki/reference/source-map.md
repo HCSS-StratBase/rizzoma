@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/edit-mode-avatar-date
-source_commit: 0e645b8c
+source_branch: fix/touch-topic-conflict
+source_commit: 9f7b6493
 generated: true
 ---
 
@@ -273,7 +273,7 @@ graph LR
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/server/routes/auth.ts` | 1250 | Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable |
-| `src/server/routes/blips.ts` | 943 | — |
+| `src/server/routes/blips.ts` | 955 | (no header comment; exports touchTopic) |
 | `src/server/routes/comments.ts` | 138 | — |
 | `src/server/routes/editor.ts` | 536 | Feature flag: set EDITOR_ENABLE=1 to enable endpoints |
 | `src/server/routes/gadgets.ts` | 101 | Hard Gap #20 (2026-04-13): notes-scratchpad is the fourth real preview |
@@ -389,7 +389,7 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (124)
+## Tests (125)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -474,6 +474,7 @@ graph LR
 | `src/tests/routes.auth.test.ts` | 225 | Use bcryptjs in tests to avoid native binding issues |
 | `src/tests/routes.blips.history.test.ts` | 130 | — |
 | `src/tests/routes.blips.permissions.test.ts` | 438 | — |
+| `src/tests/routes.blips.touchTopic.test.ts` | 54 | — |
 | `src/tests/routes.comments.edgecases.test.ts` | 119 | — |
 | `src/tests/routes.comments.inline.test.ts` | 275 | — |
 | `src/tests/routes.comments.inlineHealth.test.ts` | 105 | — |
