@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/editor-controls
-source_commit: b7b0a500
+source_commit: 93eada9d
 generated: true
 ---
 
@@ -114,7 +114,7 @@ graph LR
 | `src/client/components/blip/BlipHistoryModal.css` | 475 | BlipHistoryModal - Timeline Playback UI |
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
 | `src/client/components/blip/BlipMenu.css` | 699 | Authentic Legacy Rizzoma Blip Menu Styles |
-| `src/client/components/blip/BlipMenu.tsx` | 934 | (no header comment; exports BlipMenu) |
+| `src/client/components/blip/BlipMenu.tsx` | 935 | (no header comment; exports BlipMenu) |
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 656 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
 | `src/client/components/blip/RizzomaBlip.css` | 1956 | Rizzoma Blip Styles |

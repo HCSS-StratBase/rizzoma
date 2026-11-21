@@ -18,6 +18,7 @@ const check = (ok, label, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}
 await seedVerifiedE2EAccount(email, password);
 const browser = await chromium.launch({ headless: process.env.HEADED !== '1' });
 const page = await (await browser.newContext({ viewport: { width: 1440, height: 950 } })).newPage(); page.setDefaultTimeout(15000);
+const pageErrors = []; page.on('pageerror', (e) => pageErrors.push(String(e).slice(0, 160))); page.on('console', (m) => { if (m.type() === 'error' && /Rendered (more|fewer) hooks|change in the order of Hooks/i.test(m.text())) pageErrors.push(m.text().slice(0, 160)); });
 let promptSeen = false; page.on('dialog', (d) => { promptSeen = true; d.dismiss().catch(() => undefined); });
 const k = page.keyboard;
 const shot = async (n) => { if (!SHOTS) return; fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: `${SHOTS}/${n}.png` }); };
@@ -57,6 +58,9 @@ check(!/<a /.test(html2), 'Remove takes the link off', html2.slice(0, 120));
 await page.locator('[data-testid="blip-menu-insert-link"]').last().click(); await sleep(400);
 await k.press('Escape'); await sleep(400);
 check(await popup.count() === 0, 'Escape closes the popup');
+await page.locator('.ProseMirror[contenteditable="true"]').first().click(); await k.press('End'); await k.press('Control+Enter'); await sleep(2500); await k.type('kid', { delay: 30 }); await sleep(1500);
+check((await page.locator('.ProseMirror[contenteditable="true"]').allInnerTexts()).some((t) => /kid/.test(t)), 'Ctrl+Enter still creates a child and typing lands in it');
+check(pageErrors.length === 0, 'no page errors (the popup hooks must not break rendering of an inactive blip menu)', pageErrors.join(' | '));
 const del = await page.evaluate(async (id) => { const raw = document.cookie.split('; ').find((e) => e.startsWith('XSRF-TOKEN=')); const csrf = raw ? decodeURIComponent(raw.split('=')[1] || '') : ''; return (await fetch(`/api/topics/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'x-csrf-token': csrf }, credentials: 'include' })).status; }, topicId);
 check(del < 300, 'scratch topic deleted', String(del));
 await browser.close();

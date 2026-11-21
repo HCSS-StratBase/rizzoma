@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/editor-controls
-source_commit: b7b0a500
+source_commit: 93eada9d
 generated: true
 ---
 

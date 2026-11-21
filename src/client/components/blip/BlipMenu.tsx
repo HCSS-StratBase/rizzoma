@@ -181,6 +181,16 @@ export function BlipMenu({
     };
   }, [showEmojiPicker]);
 
+  // Hooks of the link popup stay above the early return below (the order of hooks must not depend on isActive).
+  const [showLinkPopup, setShowLinkPopup] = useState(false);
+  const [linkText, setLinkText] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  useEffect(() => {
+    if (!showLinkPopup) return undefined;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowLinkPopup(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showLinkPopup]);
   if (!isActive) return null;
 
   const handleBold = () => editor?.chain().focus().toggleBold().run();
@@ -195,9 +205,6 @@ export function BlipMenu({
   // so "clear formatting" removed nothing (suite case T05).
   const handleClearFormat = () => editor?.chain().focus().unsetAllMarks().run();
   // The link button opens the original's in-page "Insert link" popup (Text and URL fields, Submit and Remove) instead of a browser prompt.
-  const [showLinkPopup, setShowLinkPopup] = useState(false);
-  const [linkText, setLinkText] = useState('');
-  const [linkUrl, setLinkUrl] = useState('');
   const handleInsertLink = () => {
     if (!editor) return;
     const { from, to } = editor.state.selection;
@@ -225,12 +232,6 @@ export function BlipMenu({
     editor?.chain().focus().extendMarkRange('link').unsetLink().run();
     setShowLinkPopup(false);
   };
-  useEffect(() => {
-    if (!showLinkPopup) return undefined;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowLinkPopup(false); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [showLinkPopup]);
   const handleInsertEmoji = () => {
     if (!editor) return;
     setShowEmojiPicker(!showEmojiPicker);

@@ -830,3 +830,5 @@ last_verified: 2026-11-06
 - **¶1** □ Found by the parity rows 016, 080 and 302 (screenshots read): the original lists tags (#Education, #Rizzoma, ...) above the public topics and clicking one filters; ours had only a search box.
 - **¶2** □ Fix: `PublicTopicsPanel.tsx` collects the #tags of the public topics (title and snippet), shows up to eight, most used first, and filters the list by the clicked tag (click again clears).
 - **¶3** □ Test: `test-public-tags-smoke.mjs` (`npm run test:public-tags`): fails on the base (no tag row), passes on the fix. Screenshot read: `/home/stephan/ledger-evidence/tags-fix/2-publics-filtered.png`.
+
+- **¶4** □ Correction found by the hand-build gate (`handbuild_acceptance.mjs`: "L2: typing right after Ctrl+Enter lands in a NEW child", 41 of 41 only after the fix): the first version of the link popup declared its hooks after the early `if (!isActive) return null;` of `BlipMenu.tsx`, so the order of hooks changed when a blip became inactive and rendering broke. The hooks now sit above the early return; `test-link-popup-smoke.mjs` also checks that Ctrl+Enter still creates a child and that no hook-order error occurs.
