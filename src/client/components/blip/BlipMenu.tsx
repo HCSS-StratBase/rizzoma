@@ -194,16 +194,43 @@ export function BlipMenu({
   // Marks only: clearNodes() would lift the text out of its imposed bullet (BLB) and the normaliser then undid the whole step,
   // so "clear formatting" removed nothing (suite case T05).
   const handleClearFormat = () => editor?.chain().focus().unsetAllMarks().run();
+  // The link button opens the original's in-page "Insert link" popup (Text and URL fields, Submit and Remove) instead of a browser prompt.
+  const [showLinkPopup, setShowLinkPopup] = useState(false);
+  const [linkText, setLinkText] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
   const handleInsertLink = () => {
     if (!editor) return;
-    const href = window.prompt('Enter a URL');
-    if (!href || !editor) return;
+    const { from, to } = editor.state.selection;
+    setLinkText(from !== to ? editor.state.doc.textBetween(from, to, ' ') : '');
+    setLinkUrl((editor.getAttributes('link')?.['href'] as string) || '');
+    setShowLinkPopup(true);
+  };
+  const submitLink = () => {
+    if (!editor) return;
+    const href = linkUrl.trim();
+    if (!href) { setShowLinkPopup(false); return; }
     try {
-      editor.chain().focus().setLink({ href, target: '_blank' }).run();
+      const { from, to } = editor.state.selection;
+      if (from === to && linkText.trim()) {
+        editor.chain().focus().insertContent({ type: 'text', text: linkText.trim(), marks: [{ type: 'link', attrs: { href, target: '_blank' } }] }).run();
+      } else {
+        editor.chain().focus().setLink({ href, target: '_blank' }).run();
+      }
     } catch (error) {
       console.error('Failed to insert link', error);
     }
+    setShowLinkPopup(false);
   };
+  const removeLink = () => {
+    editor?.chain().focus().extendMarkRange('link').unsetLink().run();
+    setShowLinkPopup(false);
+  };
+  useEffect(() => {
+    if (!showLinkPopup) return undefined;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowLinkPopup(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showLinkPopup]);
   const handleInsertEmoji = () => {
     if (!editor) return;
     setShowEmojiPicker(!showEmojiPicker);
@@ -557,6 +584,17 @@ export function BlipMenu({
           >
             <div className="icon" />
           </button>
+          {showLinkPopup && (
+            <div className="link-popup" role="dialog" aria-label="Insert link" data-testid="link-popup">
+              <div className="link-popup-title">Insert link</div>
+              <label>Text<input type="text" value={linkText} onChange={(e) => setLinkText(e.target.value)} data-testid="link-popup-text" /></label>
+              <label>URL<input type="text" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} data-testid="link-popup-url" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitLink(); } }} /></label>
+              <div className="link-popup-buttons">
+                <button type="button" onClick={submitLink} data-testid="link-popup-submit">Submit</button>
+                <button type="button" onClick={removeLink} data-testid="link-popup-remove">Remove</button>
+              </div>
+            </div>
+          )}
           <button
             className="menu-btn insert-file icon-button js-insert-file"
             title={isUploading ? 'Uploading attachment…' : 'Insert attachment'}
