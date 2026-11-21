@@ -21,11 +21,14 @@ import { loadCases } from './scripts/tester-scenarios/cases/index.mjs';
 const renders = (process.env.RIZZOMA_RENDER || 'react') === 'both' ? ['react', 'native'] : [process.env.RIZZOMA_RENDER || 'react'];
 const famFilter = (process.env.SUITE_FAMILIES || '').split(',').filter(Boolean);
 const caseFilter = (process.env.SUITE_CASES || '').split(',').filter(Boolean);
+const skipCases = (process.env.SUITE_SKIP_CASES || '').split(',').filter(Boolean);
 const CASE_TIMEOUT = Number(process.env.SUITE_CASE_TIMEOUT_MS || 240000);
 
-const cases = (await loadCases()).filter((c) => (!famFilter.length || famFilter.includes(c.family)) && (!caseFilter.length || caseFilter.includes(c.id)));
+const cases = (await loadCases()).filter((c) => (!famFilter.length || famFilter.includes(c.family)) && (!caseFilter.length || caseFilter.includes(c.id)) && !skipCases.includes(c.id));
 fs.mkdirSync(OUT, { recursive: true });
-const browser = await chromium.launch({ headless: !HEADED, slowMo: SLOWMO });
+// Live runs: this machine's resolver drops the nip.io name now and then (ERR_NAME_NOT_RESOLVED); pin the host inside the browser only.
+const liveHost = process.env.SUITE_LIVE === '1' ? new URL(BASE).hostname : '';
+const browser = await chromium.launch({ headless: !HEADED, slowMo: SLOWMO, args: liveHost && /nip\.io$/.test(liveHost) ? [`--host-resolver-rules=MAP ${liveHost} ${liveHost.replace(/\.nip\.io$/, '').replace(/-/g, '.')}`] : [] });
 if (HEADED) console.log(`HEADED run: visible browser, slowMo ${SLOWMO} ms, evidence in ${process.env.SUITE_EVIDENCE || '/mnt/c/Apps/rizzoma/session-2026-11-16/screenshots/tester-scenarios-suite'}`);
 const results = [];
 const RESULTS_FILE = path.join(OUT, 'results.json');

@@ -38,7 +38,7 @@ export default [
     },
   },
   {
-    id: 'G02', family: 'G', title: 'links: create a link on selected text (prompt), it is stored as <a href>, opens in view mode, can be edited and removed',
+    id: 'G02', family: 'G', title: 'links: create a link on selected text (in-page Insert link popup), it is stored as <a href>, opens in view mode, can be edited and removed',
     rows: ['3.9', '15.3', '9.6'],
     async run(ctx) {
       const { a, id } = await setup(ctx, 'links');
@@ -50,8 +50,11 @@ export default [
       for (let i = 0; i < 8; i += 1) await a.page.keyboard.press('ArrowRight');
       await a.page.keyboard.up('Shift');
       await a.page.locator('[data-testid="blip-menu-insert-link"]').last().click();
-      await sleep(1000);
-      await a.page.keyboard.press('Control+l').catch(() => undefined);
+      await sleep(800);
+      if (await a.page.locator('[data-testid="link-popup"]').count()) {
+        await a.page.locator('[data-testid="link-popup-url"]').click(); await a.page.keyboard.type('https://example.org/one', { delay: 15 });
+        await a.page.locator('[data-testid="link-popup-submit"]').click();
+      } else { await a.page.keyboard.press('Control+l').catch(() => undefined); } // older builds asked with a browser prompt
       await sleep(800);
       await a.doneAll(); await sleep(2000);
       let stored = (await a.blips(id)).find((x) => plain(x.content).includes('see docs'));

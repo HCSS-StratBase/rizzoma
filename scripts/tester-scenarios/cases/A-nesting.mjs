@@ -203,7 +203,7 @@ export default [
     },
   },
   {
-    id: 'A11', family: 'A', knownGap: 'topic-root Ctrl+Enter child destroyed by reload race; fix pending on branch fix/root-ctrl-enter-survives-reload (remove this flag once it is merged)', title: 'topic-root Ctrl+Enter plus typing, 20 real-typing repetitions: the child blip survives a reload every time (failure rate must be 0 of 20)',
+    id: 'A11', family: 'A', title: 'topic-root Ctrl+Enter plus typing, 20 real-typing repetitions: the child blip survives a reload every time (failure rate must be 0 of 20)',
     rows: ['14.11', '2.7', '14.12'], timeoutMs: 1500000,
     async run(ctx) {
       const a = await ctx.client(await newUser('a'));

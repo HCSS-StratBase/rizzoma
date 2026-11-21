@@ -70,20 +70,25 @@ function evaluate(cs) {
   return { result, reason, shotCase: failed[0] || pass.find(GUI) || cs[0] };
 }
 const casesFor = (res, row) => (row.shotRow ? res.filter((r) => (r.shotRows || []).includes(row.shotKey)) : row.cites ? res.filter((r) => (r.rows || []).includes(row.cites)) : (row.caseIds || []).map((id) => res.find((r) => r.id === id)).filter(Boolean));
-const rank = { BROKEN: 0, PARTIAL: 1, UNCHECKED: 2, UNREVIEWED: 2.5, WORKS: 3 };
+const rank = { BROKEN: 0, PARTIAL: 1, UNCHECKED: 2, UNREVIEWED: 2.5, NEEDS_SDS: 2.7, WORKS: 3 };
 function rowResult(res, row, byId) {
+  const rv0 = res === local ? reviews[row.id] : null;
+  if (rv0 && (row.derivedFrom || row.shotRow) && ['NEEDS_SDS', 'WORKS', 'PARTIAL', 'BROKEN'].includes(rv0.verdict) && row.derivedFrom && !row.derivedFrom.length) return { result: rv0.verdict, reason: `${rv0.verdict === 'NEEDS_SDS' ? 'no user-visible check possible: ' : 'recorded reading: '}${rv0.note}`, shotCase: null, cs: [] };
   if (row.derivedFrom) {
     if (!row.derivedFrom.length) return { result: 'UNCHECKED', reason: 'no contract row maps to this original module and no case exercises it', shotCase: null, cs: [] };
     const subs = row.derivedFrom.map((id) => byId.get(id)).filter(Boolean);
     const worst = subs.reduce((a, b) => (rank[b.result] < rank[a.result] ? b : a), subs[0]);
     const allWorks = subs.every((s) => s.result === 'WORKS');
-    const result = allWorks ? 'WORKS' : (subs.some((s) => s.result === 'BROKEN' || s.result === 'PARTIAL') ? 'PARTIAL' : 'UNCHECKED');
+    const onlySds = !allWorks && subs.every((s) => s.result === 'WORKS' || s.result === 'NEEDS_SDS');
+    const result = allWorks ? 'WORKS' : onlySds ? 'NEEDS_SDS' : (subs.some((s) => s.result === 'BROKEN' || s.result === 'PARTIAL') ? 'PARTIAL' : 'UNCHECKED');
     return { result, reason: `derived from ${subs.length} contract rows (${subs.filter((s) => s.result === 'WORKS').length} WORKS, ${subs.filter((s) => s.result === 'BROKEN').length} BROKEN, ${subs.filter((s) => s.result === 'PARTIAL').length} PARTIAL, ${subs.filter((s) => s.result === 'UNCHECKED').length} UNCHECKED); worst: ${worst.id}`, shotCase: null, cs: [] };
   }
   if (row.shotRow && !casesFor(res, row).length) return { result: 'UNCHECKED', reason: 'no case compares this original screen with the modernized one', shotCase: null, cs: [] };
   const cs = casesFor(res, row); const e = evaluate(cs);
   // A passing case is not enough: a WORKS row also needs a person's (or agent's) recorded reading of its screenshot.
   const rv = res === local ? reviews[row.id] : null;
+  // NEEDS_SDS: a row with no user-visible behaviour (or none in the modernized product) that a person must accept or reject; never counts as WORKS.
+  if (rv && rv.verdict === 'NEEDS_SDS' && e.result !== 'BROKEN' && e.result !== 'PARTIAL') return { ...e, result: 'NEEDS_SDS', reason: `no user-visible check possible: ${rv.note}`, cs };
   if (res === local && e.result === 'WORKS' && !rv) return { ...e, result: 'UNREVIEWED', reason: `${e.reason}; the screenshot has not been read yet`, cs };
   if (rv && rv.verdict && rv.verdict !== 'WORKS' && e.result !== 'BROKEN') return { ...e, result: rv.verdict, reason: `screenshot review: ${rv.note}`, cs };
   if (rv && e.result === 'WORKS') return { ...e, reason: `${e.reason}; screenshot read: ${rv.note}`, cs };
@@ -102,10 +107,10 @@ const dim = (row, cs) => {
   const st = (a) => (!a.length ? 'UNCHECKED' : a.every((c) => c.status === 'PASS') ? 'WORKS' : 'BROKEN');
   return { old: 'UNCHECKED', mode: st(both), phone: st(ph) };
 };
-const count = (m) => { const c = { WORKS: 0, BROKEN: 0, PARTIAL: 0, UNCHECKED: 0, UNREVIEWED: 0 }; for (const v of m.values()) c[v.result] += 1; return c; };
+const count = (m) => { const c = { WORKS: 0, BROKEN: 0, PARTIAL: 0, UNCHECKED: 0, UNREVIEWED: 0, NEEDS_SDS: 0 }; for (const v of m.values()) c[v.result] += 1; return c; };
 const cl = count(L); const total = rows.length;
-const top = `${total} rows. LOCAL: WORKS ${cl.WORKS}, BROKEN ${cl.BROKEN}, PARTIAL ${cl.PARTIAL}, **UNCHECKED ${cl.UNCHECKED}**, passed but screenshot not yet read ${cl.UNREVIEWED}` + (V ? `. LIVE: ${Object.entries(count(V)).map(([k, v]) => `${k} ${v}`).join(', ')}` : '. LIVE: not yet run, every row UNCHECKED on live');
-const colour = { WORKS: '#1b7a3a', BROKEN: '#b3261e', PARTIAL: '#b26a00', UNCHECKED: '#555', UNREVIEWED: '#2a5db0' };
+const top = `${total} rows. LOCAL: WORKS ${cl.WORKS}, BROKEN ${cl.BROKEN}, PARTIAL ${cl.PARTIAL}, **UNCHECKED ${cl.UNCHECKED}**, passed but screenshot not yet read ${cl.UNREVIEWED}, NEEDS SDS DECISION ${cl.NEEDS_SDS}` + (V ? `. LIVE: ${Object.entries(count(V)).map(([k, v]) => `${k} ${v}`).join(', ')}` : '. LIVE: not yet run, every row UNCHECKED on live');
+const colour = { WORKS: '#1b7a3a', BROKEN: '#b3261e', PARTIAL: '#b26a00', UNCHECKED: '#555', UNREVIEWED: '#2a5db0', NEEDS_SDS: '#7a3fb0' };
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const rel = (p) => (p ? path.relative(outDir, p) : '');
 const header = `Build under test: ${build}. Generated ${when}. Evidence: headed Chromium on a private Xvfb display, signed in as a seeded non-owner user. Dimensions OLD STORED STATE, EDIT+READ MODE, PHONE 390x844 default to UNCHECKED until a case covers them (old state: no fixtures yet, so UNCHECKED everywhere).`;
@@ -120,6 +125,8 @@ for (const row of rows) {
   md.push(`| ${row.id} | ${row.group} | ${row.text.replace(/\|/g, '/')} (${row.source}) | ${l.result} | ${v ? v.result : 'UNCHECKED'} | ${d.old} | ${d.mode} | ${d.phone} | ${l.reason.replace(/\|/g, '/')} | ${sh ? rel(sh) : '-'} | ${(l.cs || []).map((c) => c.id).join(', ') || '-'} | suite ${when} |`);
 }
 fs.writeFileSync(path.join(outDir, 'FEATURE_LEDGER.md'), md.join('\n') + '\n');
+const sdsRows = lines.filter(({ l }) => l.result === 'NEEDS_SDS');
+fs.writeFileSync(path.join(outDir, 'LEDGER_NEEDS_SDS.md'), ['# Ledger rows that need SDS\'s decision', '', `${sdsRows.length} rows have no screen of their own or differ from the original by a product decision. Each lists the evidence; accept the API or code check, or name a visible behaviour to test, or decide that the original feature is wanted.`, '', '| Row | Feature | Evidence and question |', '|---|---|---|', ...sdsRows.map(({ row, l }) => `| ${row.id} | ${row.text.replace(/\|/g, '/').slice(0, 90)} | ${l.reason.replace(/\|/g, '/')} |`), ''].join('\n'));
 const html = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Feature ledger</title>
 <style>body{font:15px system-ui,sans-serif;margin:0 16px 40px;max-width:1100px}h1{font-size:20px}.top{background:#fff3cd;border:2px solid #b26a00;border-radius:6px;padding:8px 12px;color:#222}.row{border:1px solid #ccc;border-left:6px solid var(--c);border-radius:6px;margin:8px 0;padding:8px 10px}.res{font-weight:700;color:var(--c)}small{color:#555}img{max-width:100%;border:1px solid #ddd;margin-top:6px}.dims span{display:inline-block;margin-right:10px}
 @media(prefers-color-scheme:dark){body{background:#111;color:#eee}.row{border-color:#444}small{color:#aaa}}</style>

@@ -5,8 +5,8 @@ import sys, json, os, datetime
 f = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reviews.json')
 d = json.load(open(f)) if os.path.exists(f) else {}
 row, verdict, note = sys.argv[1], sys.argv[2], sys.argv[3]
-if verdict not in ('WORKS', 'PARTIAL', 'BROKEN'): sys.exit('verdict must be WORKS, PARTIAL or BROKEN')
-rank = {'BROKEN': 0, 'PARTIAL': 1, 'WORKS': 2}
+if verdict not in ('WORKS', 'PARTIAL', 'BROKEN', 'NEEDS_SDS'): sys.exit('verdict must be WORKS, PARTIAL or BROKEN')
+rank = {'BROKEN': 0, 'PARTIAL': 1, 'NEEDS_SDS': 1.5, 'WORKS': 2}
 if os.environ.get('MERGE') and row in d:
     old = d[row]
     if rank[old['verdict']] < rank[verdict]: verdict = old['verdict']
