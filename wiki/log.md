@@ -874,4 +874,4 @@ last_verified: 2026-11-06
 - **¶2** □ A provider sign-in (Google) returns through the server callback, which redirects to `/?layout=rizzoma` (src/server/routes/auth.ts:796); the topic was lost, so the pending invitation never redeemed. `main.tsx` now takes a signed-in person with a pending invitation to its topic, where redemption runs
 - **¶3** □ A different signed-in address got "You do not have access to this topic" and a toast that the next toast replaced; the reason now stays in the access panel (`setInviteProblem`, `data-testid="invite-problem"`). A link for a deleted topic now says the topic no longer exists
 - **¶4** □ An invitation link pasted into an already-open tab only changes the fragment, so the token was never taken; `onHash` in main.tsx now scrubs it
-- **¶5** □ Regression test: `test-invite-journey-smoke.mjs` (`npm run test:invite-journey`, capturing SMTP sink `scripts/tester-scenarios/mail-sink.mjs`)
+- **¶5** □ Regression test: `test-invite-journey-smoke.mjs` (`npm run test:invite-journey`, a capturing SMTP sink from the tester suite)
