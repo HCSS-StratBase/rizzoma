@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/author-names
-source_commit: d897141a
+source_branch: fix/collab-stale
+source_commit: d471133f
 generated: true
 ---
 
@@ -121,7 +121,7 @@ graph LR
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 656 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
 | `src/client/components/blip/RizzomaBlip.css` | 1956 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 3248 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/RizzomaBlip.tsx` | 3260 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 117 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 76 | (no header comment; exports LocationLike) |
@@ -280,7 +280,7 @@ graph LR
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/server/routes/auth.ts` | 1250 | Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable |
-| `src/server/routes/blips.ts` | 955 | (no header comment; exports touchTopic) |
+| `src/server/routes/blips.ts` | 962 | (no header comment; exports touchTopic) |
 | `src/server/routes/comments.ts` | 140 | — |
 | `src/server/routes/editor.ts` | 536 | Feature flag: set EDITOR_ENABLE=1 to enable endpoints |
 | `src/server/routes/gadgets.ts` | 101 | Hard Gap #20 (2026-04-13): notes-scratchpad is the fourth real preview |
@@ -396,7 +396,7 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (127)
+## Tests (130)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -451,7 +451,7 @@ graph LR
 | `src/tests/client.inlineHtmlTaskHydration.test.tsx` | 415 | — |
 | `src/tests/client.insertHandlers.test.ts` | 60 | Tests for features 24 (toolbar alignment CSS), 31 (smart space prefix), |
 | `src/tests/client.inviteDelivery.test.tsx` | 134 | — |
-| `src/tests/client.inviteMembers.test.tsx` | 114 | — |
+| `src/tests/client.inviteMembers.test.tsx` | 121 | — |
 | `src/tests/client.logoutSecurity.test.ts` | 34 | — |
 | `src/tests/client.milestone1Safety.test.tsx` | 87 | — |
 | `src/tests/client.milestone2Native.test.tsx` | 94 | — |
@@ -468,6 +468,7 @@ graph LR
 | `src/tests/client.socketAuthIsolation.test.ts` | 206 | — |
 | `src/tests/client.socketSession.test.ts` | 107 | — |
 | `src/tests/client.taskWidgetDurability.test.ts` | 271 | — |
+| `src/tests/client.topicExport.authorName.test.ts` | 14 | — |
 | `src/tests/client.topicExport.test.ts` | 75 | — |
 | `src/tests/client.topicLoadReconcile.test.ts` | 96 | — |
 | `src/tests/client.topicProjectionGuard.test.ts` | 53 | — |
@@ -504,12 +505,14 @@ graph LR
 | `src/tests/routes.waves.unread.test.ts` | 312 | — |
 | `src/tests/scripts.ownerRecoverySecurity.test.ts` | 17 | — |
 | `src/tests/server.access.test.ts` | 258 | — |
+| `src/tests/server.auth.displayName.test.ts` | 11 | — |
 | `src/tests/server.authOauth.test.ts` | 255 | — |
 | `src/tests/server.authRegistrationSecurity.test.ts` | 224 | — |
 | `src/tests/server.authTickets.test.ts` | 22 | — |
 | `src/tests/server.blbYjsValidation.test.ts` | 61 | — |
 | `src/tests/server.contentReferences.test.ts` | 27 | — |
 | `src/tests/server.editorPresence.test.ts` | 79 | — |
+| `src/tests/server.email.suppress.test.ts` | 23 | — |
 | `src/tests/server.emailTemplates.test.ts` | 57 | — |
 | `src/tests/server.gadgetApps.test.ts` | 123 | @vitest-environment node |
 | `src/tests/server.gadgetPreferences.test.ts` | 190 | — |

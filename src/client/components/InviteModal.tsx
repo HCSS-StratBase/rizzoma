@@ -319,7 +319,7 @@ export function InviteModal({ isOpen, onClose, topicId, topicTitle: _topicTitle 
                   )}
                 </div>
                 <div className="invite-member-details">
-                  <span className="invite-member-name">{p.name || 'Participant'}</span>
+                  <span className="invite-member-name">{p.name || (p.email ? p.email.split('@')[0] : 'Participant')}</span>
                   {p.email && <span className="invite-member-email">&lt;{p.email}&gt;</span>}
                 </div>
                 <div className="invite-member-role">{ROLE_LABELS[p.role as InviteRole] || (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1) : 'Member')}</div>
