@@ -1,4 +1,6 @@
 import { FEATURES } from '@shared/featureFlags';
+import { useState } from 'react';
+import { HelpOverlay } from './HelpOverlay';
 import './NavigationPanel.css';
 
 interface NavigationPanelProps {
@@ -19,6 +21,7 @@ interface NavigationPanelProps {
 }
 
 export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, unreadCount }: NavigationPanelProps) {
+  const [helpOpen, setHelpOpen] = useState(false);
   return (
     <div className="navigation-panel">
       <div className="new-topic-buttons">
@@ -93,11 +96,12 @@ export function NavigationPanel({ activeTab, onTabChange, isAuthed, onNewClick, 
       </div>
 
       <div className="help-tab">
-        <div className="tab help" title="Help">
+        <div className="tab help" title="Help" role="button" tabIndex={0} data-testid="nav-help" onClick={() => setHelpOpen(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setHelpOpen(true); }}>
           <span className="pict help-pict" />
           <span className="tab-title">Help</span>
         </div>
       </div>
+      {helpOpen && <HelpOverlay onClose={() => setHelpOpen(false)} />}
     </div>
   );
 }

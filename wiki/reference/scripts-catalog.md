@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/deep-nesting-meta
-source_commit: 44705641
+source_branch: fix/shell-defects
+source_commit: f1ec7a4a
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 246 files in `scripts/`, 66 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 246 files in `scripts/`, 67 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -79,6 +79,7 @@ graph LR
 | `test:tester-scenarios:headed` | `bash scripts/tester-scenarios ⁄ run-headed.sh` |
 | `test:scenarios-coverage` | `node scripts/tester-scenarios ⁄ coverage-matrix.mjs --check` |
 | `test:deep-nesting` | `node test-deep-nesting-meta-smoke.mjs` |
+| `test:shell-defects` | `node test-shell-defects-smoke.mjs` |
 | `test:tester-feedback` | `node test-tester-feedback-smoke.mjs` |
 | `test:root-ctrl-enter` | `node scripts ⁄ test-root-ctrl-enter-survives-reload.mjs` |
 | `test:native-ctrl-enter` | `node test-native-ctrl-enter-smoke.mjs` |

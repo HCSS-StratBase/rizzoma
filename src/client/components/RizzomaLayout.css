@@ -297,9 +297,33 @@
     background: transparent;
   }
 
-  .mobile-layout .right-tools-panel > *:not(.next-button) {
+  .mobile-layout .right-tools-panel > *:not(.next-button):not(.view-toggle) {
     display: none;
   }
+
+  /* Text view / Mind map stay reachable on a phone (they were hidden with the rest of the rail, so the mind map could not be opened). */
+  .mobile-layout .right-tools-panel > .view-toggle {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    position: fixed;
+    left: 12px;
+    bottom: 16px;
+    margin: 0;
+    width: auto;
+    z-index: 30;
+  }
+  .mobile-layout .right-tools-panel > .view-toggle .view-btn {
+    width: 64px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    border: 1px solid #c1cdd7;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.22);
+  }
+  .mobile-layout .right-tools-panel > .view-toggle .view-btn.active { background: #e6f0fa; }
 
   .mobile-layout .right-tools-panel > .next-button {
     display: flex;

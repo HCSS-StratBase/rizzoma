@@ -110,6 +110,13 @@ export function BlipMenu({
   const [showBgPalette, setShowBgPalette] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  // Escape closes the gear (overflow) menu and the colour palette, as the original's menus do.
+  useEffect(() => {
+    if (!showOverflow && !showBgPalette) return undefined;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setShowOverflow(false); setShowBgPalette(false); } };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showOverflow, showBgPalette]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const overflowRef = useRef<HTMLDivElement | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement | null>(null);
