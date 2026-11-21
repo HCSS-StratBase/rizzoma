@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: test/tester-scenarios-suite
-source_commit: 90c0355c
+source_branch: fix/y-gaps
+source_commit: 831a5f7c
 generated: true
 ---
 
 # Assets, Snapshots and Root Files
 
-**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 81 root files.
+**¶1** □ GENERATED. `public/` 256 files (original-Rizzoma sprites and images under `public/s/`), `snapshots/` 139 files, 83 root files.
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -96,6 +96,7 @@ graph LR
 | `STATUS.md` | — |
 | `TESTERS_COVERAGE.md` | — |
 | `TESTERS_FEATURE_MATRIX.md` | — |
+| `TESTERS_NEEDS_SDS.md` | — |
 | `aggregate_stats.py` | — |
 | `app.js` | coffee-script wrapper |
 | `capacitor.config.ts` | Capacitor configuration for the Rizzoma native wrappers |
@@ -144,6 +145,7 @@ graph LR
 | `test-standalone-editor.html` | Set feature flags before any imports |
 | `test-tester-feedback-smoke.mjs` | Regression smoke for the 18 Nov 2026 tester feedback (Liliia): editing sub-blips, a |
 | `test-tester-scenarios.mjs` | Tester-scenarios regression suite: behaves like a real colleague (signs in, drives the REAL UI with |
+| `test-tips-deadline-session-smoke.mjs` | Regression smoke: (1) Play video in the tips box opens the First steps window, (2) choosing an assignee for a ~ task opens an in-page |
 | `test-toolbar-inline-smoke.mjs` | — |
 | `test-topic-readmode-seed-smoke.mjs` | Read-mode topic seed smoke (Playwright). |
 | `test-topics-filter-smoke.mjs` | Topics list filter: All, Inbox and By me narrow the list (real clicks on the dropdown, what the person sees). |

@@ -144,6 +144,34 @@ function createTaskId(): string {
   return `task:${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+/** In-page "Deadline" dialog (the original opens a date-time picker): resolves with YYYY-MM-DD or '' when skipped. */
+function askDueDate(): Promise<string> {
+  return new Promise((resolve) => {
+    const box = document.createElement('div');
+    box.className = 'task-deadline-dialog';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-label', 'Task deadline');
+    box.dataset['testid'] = 'task-deadline-dialog';
+    box.innerHTML = '<div class="task-deadline-title">Deadline</div><input type="date" data-testid="task-deadline-input" /><div class="task-deadline-buttons"><button type="button" data-testid="task-deadline-set">Set deadline</button><button type="button" data-testid="task-deadline-skip">No deadline</button></div>';
+    const done = (value: string) => { document.removeEventListener('keydown', onKey, true); box.remove(); resolve(value); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); done(''); } };
+    document.addEventListener('keydown', onKey, true);
+    box.querySelector('[data-testid="task-deadline-set"]')!.addEventListener('click', () => done((box.querySelector('input') as HTMLInputElement).value));
+    box.querySelector('[data-testid="task-deadline-skip"]')!.addEventListener('click', () => done(''));
+    document.body.appendChild(box);
+    (box.querySelector('input') as HTMLInputElement).focus();
+  });
+}
+
+function insertTask(editor: any, range: any, user: TaskUser, dateStr: string): void {
+  const cleanLabel = user.label.replace(/ \(me\)$/, '');
+  // The task document is derived only after this node is durably saved with its blip. This stable client reference lets the server
+  // reconcile idempotently without creating a phantom task first.
+  const taskId = createTaskId();
+  const tempNode = { type: 'taskWidget', attrs: { assignee: cleanLabel, assigneeId: user.id, taskId, dueDate: dateStr, done: false } };
+  editor.chain().focus().insertContentAt(range, [tempNode, { type: 'text', text: ' ' }]).run();
+}
+
 export function toggleTaskOnServer(taskId: string, blipId: string): Promise<boolean | null> {
   const existing = pendingTaskMutations.get(taskId);
   if (existing) return existing.promise;
@@ -389,30 +417,7 @@ export const TaskWidgetNode = Node.create<TaskWidgetOptions>({
             .slice(0, 6);
         },
         command: ({ editor, range, props: user }: { editor: any; range: any; props: TaskUser }) => {
-          const dateStr = window.prompt('Due date (YYYY-MM-DD, or leave empty):', '') || '';
-          const cleanLabel = user.label.replace(/ \(me\)$/, '');
-          // The task document is derived only after this node is durably saved
-          // with its blip. This stable client reference lets the server
-          // reconcile idempotently without creating a phantom task first.
-          const taskId = createTaskId();
-          const tempNode = {
-            type: 'taskWidget',
-            attrs: {
-              assignee: cleanLabel,
-              assigneeId: user.id,
-              taskId,
-              dueDate: dateStr,
-              done: false,
-            },
-          };
-          editor
-            .chain()
-            .focus()
-            .insertContentAt(range, [
-              tempNode,
-              { type: 'text', text: ' ' },
-            ])
-            .run();
+          void askDueDate().then((dateStr) => insertTask(editor, range, user, dateStr));
         },
         render: () => {
           let element: HTMLDivElement | null = null;
