@@ -832,3 +832,8 @@ last_verified: 2026-11-06
 - **¶3** □ Test: `test-public-tags-smoke.mjs` (`npm run test:public-tags`): fails on the base (no tag row), passes on the fix. Screenshot read: `/home/stephan/ledger-evidence/tags-fix/2-publics-filtered.png`.
 
 - **¶4** □ Correction found by the hand-build gate (`handbuild_acceptance.mjs`: "L2: typing right after Ctrl+Enter lands in a NEW child", 41 of 41 only after the fix): the first version of the link popup declared its hooks after the early `if (!isActive) return null;` of `BlipMenu.tsx`, so the order of hooks changed when a blip became inactive and rendering broke. The hooks now sit above the early return; `test-link-popup-smoke.mjs` also checks that Ctrl+Enter still creates a child and that no hook-order error occurs.
+## [2026-11-21] fix | Typing after End in a blip another person is editing lands at the end, not at the start
+
+- **¶1** □ Found by suite case W02 (stored blip `A1shared B1`): when two people edit the same blip the other person's cursor label was editable content at the start of the line, so A's caret sat inside it, the End key did nothing and A's text was typed at the start. Probed: after End A's selection stayed at offset 0 of `ts-b-...shared`.
+- **¶2** □ Fix: `CollaborativeCursors.tsx` makes the cursor widget `contenteditable=false`, `aria-hidden` and `ignoreSelection`; after the fix End moves the caret to offset 6 and the typed text follows the original text.
+- **¶3** □ Test: `test-collab-end-key-smoke.mjs` (`npm run test:collab-end-key`): stored `A1 shared B1` on the base (2 of 3 checks fail), `shared A1 B1` on the fix; suite case W02 covers rows 4.2 to 4.5 and 14.12.
