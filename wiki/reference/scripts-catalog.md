@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: test/ledger-batch7
-source_commit: 8bcfd944
+source_branch: fix/latex-katex
+source_commit: 47a704e5
 generated: true
 ---
 
@@ -320,7 +320,7 @@ graph LR
 | `scripts/tester-scenarios/cases/S-server-contract.mjs` | 323 | Family S: the server contract as a signed-in colleague (and a second user, and a stranger) meets it: |
 | `scripts/tester-scenarios/cases/T-toolbar-shortcuts.mjs` | 163 | Family T: the rich-text toolbar (every button) and the documented keyboard shortcuts, each judged by |
 | `scripts/tester-scenarios/cases/W-realtime-presence.mjs` | 62 | Family W: real-time collaboration seen from the other user's screen (presence, cursors, typing, live updates). |
-| `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 213 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
+| `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 250 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
 | `scripts/tester-scenarios/cases/Y-untested.mjs` | 199 | Family Y: behaviours of original client modules that no earlier case exercised (SDS/coordinator 21 Nov: "untested, not product decisions"). |
 | `scripts/tester-scenarios/cases/_nest.mjs` | 46 | Level-1 blip from the topic reply box, then open it and put the caret in its editor. |
 | `scripts/tester-scenarios/cases/_sh.mjs` | 12 | One-shot shell helper for contract cases: runs a command once and returns { status, out }. |

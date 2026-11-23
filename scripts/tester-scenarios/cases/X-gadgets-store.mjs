@@ -1,5 +1,5 @@
 // Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond.
-import { newUser, plain, sleep, BASE } from '../lib.mjs';
+import { newUser, shareWith, plain, sleep, BASE } from '../lib.mjs';
 
 const APPS = [
   { label: 'Kanban', appId: 'kanban-board', title: 'Kanban Board' },
@@ -167,6 +167,43 @@ export default [
       const nat2 = await rimg.evaluate((el) => ({ w: el.naturalWidth, complete: el.complete })).catch(() => ({ w: 0, complete: false }));
       ctx.ok(nat2.complete && nat2.w > 10, 'the picture is still shown after reload', JSON.stringify(nat2));
       ctx.ok(/const answer = 42;/.test(await a.page.locator('.topic-content-view pre').first().innerText().catch(() => '')), 'the code block text is still there after reload');
+    },
+  },
+  // ---- Hryhorii (23 Nov 2026): "some elements aren't rendering correctly: formulas; polls render nicely only if you start editing the blip".
+  // X07 typed ONE easy formula as the owner. These two look at what ANOTHER person sees in the read state, with formulas people actually write.
+  {
+    id: 'X12', family: 'X', title: 'LaTeX: real formulas (fractions with roots, \\mathbb, \\text, \\left\\right, matrices) are typeset for a second person in the read view and in the editor, never as source text',
+    rows: ['3.14', '3.15', '15.8'], timeoutMs: 300000,
+    async run(ctx) {
+      const a = await ctx.client(await newUser('a'));
+      const b = await ctx.client(await newUser('b'));
+      const F = ['x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}', '\\mathbb{R}^n \\ni v', '\\text{if } x > 0', '\\left( \\frac{a}{b} \\right)', '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}'];
+      const html = `<h1>formulas</h1><ul>${F.map((f, i) => `<li><p>f${i} $$${f}$$ end</p></li>`).join('')}</ul>`;
+      const id = await ctx.topic(a, 'real formulas', html);
+      await shareWith(id, b, 'editor');
+      await b.openTopic(id, 9000);
+      await b.page.locator('.rizzoma-latex-katex').first().waitFor({ timeout: 20000 }).catch(() => undefined);
+      await sleep(1500);
+      await b.stepShot('X-gadgets', 'X12-formulas-read-second-person');
+      const read = await b.page.evaluate(() => ({
+        katex: document.querySelectorAll('.topic-content-view .rizzoma-latex-katex .katex').length,
+        mfrac: document.querySelectorAll('.topic-content-view .mfrac').length,
+        text: document.querySelector('.topic-content-view')?.innerText || '',
+      }));
+      ctx.eq(read.katex, F.length, 'every formula is typeset by KaTeX for the second person in the read view');
+      ctx.ok(read.mfrac >= 3, 'the fractions are drawn as fractions', String(read.mfrac));
+      ctx.ok(!/frac\{|mathbb\{|text\{|begin\{|\\left|\\right|\$\$/.test(read.text), 'no LaTeX source or dollar signs are visible', read.text.replace(/\n/g, '/').slice(0, 140));
+      await a.openTopic(id, 8000);
+      await a.page.locator('.wave-panel [data-testid="blip-menu-edit"]').first().click({ timeout: 10000 }); await sleep(2500);
+      await a.page.locator('.topic-content-edit .latex-widget .katex').first().waitFor({ timeout: 20000 }).catch(() => undefined);
+      await a.stepShot('X-gadgets', 'X12-formulas-edit-owner');
+      ctx.ok(await a.page.locator('.topic-content-edit .latex-widget .katex').count() >= 3, 'in the editor the formulas that the caret is not in are typeset too', String(await a.page.locator('.topic-content-edit .latex-widget .katex').count()));
+      await a.doneAll();
+      // the topic list preview is plain text: a formula there reads as symbols, not as $$ and backslashes
+      await b.page.goto(`${BASE}/?layout=rizzoma`, { waitUntil: 'domcontentloaded' }); await sleep(7000);
+      const snippet = await b.page.locator('.topics-list .item-snippet, .item-snippet').first().innerText().catch(() => '');
+      ctx.ok(!snippet.includes('$$') && !/\\[a-z]/i.test(snippet), 'the topic list preview shows no $$ and no backslash commands', snippet.slice(0, 100));
+      ctx.settleProblems();
     },
   },
 ];
