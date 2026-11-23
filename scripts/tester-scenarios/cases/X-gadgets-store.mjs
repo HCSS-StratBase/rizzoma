@@ -202,7 +202,7 @@ export default [
       // the topic list preview is plain text: a formula there reads as symbols, not as $$ and backslashes
       await b.page.goto(`${BASE}/?layout=rizzoma`, { waitUntil: 'domcontentloaded' }); await sleep(7000);
       const snippet = await b.page.locator('.topics-list .item-snippet, .item-snippet').first().innerText().catch(() => '');
-      ctx.ok(!snippet.includes('$$') && !/\\[a-z]/i.test(snippet), 'the topic list preview shows no $$ and no backslash commands', snippet.slice(0, 100));
+      ctx.ok(!snippet.includes('$$') && !/[\\{}]/.test(snippet) && /\(-b ± √\(b\^2-4ac\)\)\/\(2a\)/.test(snippet), 'the topic list preview shows the formulas as readable text: no $$, no backslash, no brace, the quadratic formula as (-b ± √(b^2-4ac))/(2a)', snippet.slice(0, 160));
       ctx.settleProblems();
     },
   },

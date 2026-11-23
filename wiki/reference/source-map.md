@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/signin-old-accounts-note
-source_commit: d0fb1270
+source_branch: fix/latex-plain-text
+source_commit: 7bc68747
 generated: true
 ---
 
@@ -257,7 +257,7 @@ graph LR
 | `src/client/lib/offlineQueue.ts` | 846 | Auth-bound offline mutation queue. |
 | `src/client/lib/performance.d.ts` | 9 | — |
 | `src/client/lib/performance.ts` | 60 | Performance monitoring utilities |
-| `src/client/lib/renderLatex.ts` | 89 | (no header comment; exports formatLatexToHtml) |
+| `src/client/lib/renderLatex.ts` | 109 | (no header comment; exports formatLatexToHtml) |
 | `src/client/lib/sanitizeRichHtml.ts` | 254 | (no header comment; exports isSafeRichUrl) |
 | `src/client/lib/sectionAttribution.ts` | 107 | Per-section author attribution for topic body blocks. |
 | `src/client/lib/socket.ts` | 290 | (no header comment; exports disconnectSocketForAuthTransition) |
