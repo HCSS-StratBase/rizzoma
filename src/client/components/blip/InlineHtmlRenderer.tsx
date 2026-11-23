@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import '../editor/extensions/BlipThread.css';
-import { formatLatexToHtml } from '../../lib/renderLatex';
+import { LatexSpan } from './LatexSpan';
 import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
 import {
   formatTaskDate,
@@ -232,13 +232,9 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
       if (parts.length <= 1) return val;
       return parts.map((part, idx) => {
         if (part.startsWith('$$') && part.endsWith('$$') && part.length > 4) {
-          const rendered = formatLatexToHtml(part.slice(2, -2));
-          if (rendered) {
-            return createElement('span', {
-              key: `latex-${idx}`,
-              className: 'rizzoma-latex',
-              dangerouslySetInnerHTML: { __html: rendered },
-            });
+          const expr = part.slice(2, -2);
+          if (expr.trim()) {
+            return createElement(LatexSpan, { key: `latex-${idx}`, expr });
           }
           // an empty "$$ $$" (a LaTeX gadget nobody typed into) is an empty box, never raw dollar signs
           return createElement('span', { key: `latex-${idx}`, className: 'rizzoma-latex rizzoma-latex-empty' }, 'type a formula');
