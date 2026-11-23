@@ -180,7 +180,7 @@ export default [
       const F = ['x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}', '\\mathbb{R}^n \\ni v', '\\text{if } x > 0', '\\left( \\frac{a}{b} \\right)', '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}'];
       const html = `<h1>formulas</h1><ul>${F.map((f, i) => `<li><p>f${i} $$${f}$$ end</p></li>`).join('')}</ul>`;
       const id = await ctx.topic(a, 'real formulas', html);
-      await shareWith(id, b, 'editor');
+      await shareWith(id, b.user, 'editor');
       await b.openTopic(id, 9000);
       await b.page.locator('.rizzoma-latex-katex').first().waitFor({ timeout: 20000 }).catch(() => undefined);
       await sleep(1500);
@@ -216,7 +216,7 @@ export default [
       const opts = JSON.stringify([{ id: 'o1', label: 'Yes', votes: 2 }, { id: 'o2', label: 'No', votes: 1 }, { id: 'o3', label: 'Maybe', votes: 0 }]).replace(/"/g, '&quot;');
       const html = `<h1>poll</h1><ul><li><p>before</p><figure data-gadget-type="poll" data-poll-question="Lunch?" data-poll-options="${opts}" data-poll-allow-multiple="false" class="gadget-block gadget-poll"></figure></li></ul>`;
       const id = await ctx.topic(a, 'poll card', html);
-      await shareWith(id, b, 'editor');
+      await shareWith(id, b.user, 'editor');
       await b.openTopic(id, 9000);
       await b.page.locator('.gadget-poll-read').first().waitFor({ timeout: 20000 }).catch(() => undefined);
       await b.stepShot('X-gadgets', 'X13-poll-read-second-person');
