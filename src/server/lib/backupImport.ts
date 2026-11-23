@@ -1,6 +1,6 @@
 // Server-side import of a topic from the HTML export of the ORIGINAL rizzoma.com (the nightly backup format,
 // /data/backups/rizzoma-backups/data/backups/*.html). Admin-only by construction: it is a library for the CLI
-// script scripts/import-rizzoma-backup.ts, which needs shell access to the server and to CouchDB; nothing here is
+// script scripts/import-rizzoma-backup.mjs, which needs shell access to the server and to CouchDB; nothing here is
 // reachable from the HTTP API.
 //
 // What it keeps: every reply as a blip with its ORIGINAL author (matched by e-mail to an existing user, otherwise a
