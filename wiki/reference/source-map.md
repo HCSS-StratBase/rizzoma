@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: test/ledger-batch7
-source_commit: 8bcfd944
+source_branch: fix/poll-read-card
+source_commit: 47a704e5
 generated: true
 ---
 
@@ -118,9 +118,9 @@ graph LR
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
 | `src/client/components/blip/BlipMenu.css` | 699 | Authentic Legacy Rizzoma Blip Menu Styles |
 | `src/client/components/blip/BlipMenu.tsx` | 935 | (no header comment; exports BlipMenu) |
-| `src/client/components/blip/InlineHtmlRenderer.tsx` | 656 | (no header comment; exports InlineHtmlRenderOptions) |
+| `src/client/components/blip/InlineHtmlRenderer.tsx` | 667 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
-| `src/client/components/blip/RizzomaBlip.css` | 1956 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.css` | 1965 | Rizzoma Blip Styles |
 | `src/client/components/blip/RizzomaBlip.tsx` | 3276 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 117 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
@@ -434,7 +434,7 @@ graph LR
 | `src/tests/client.editorPersistence.test.ts` | 68 | — |
 | `src/tests/client.followGreenNavigation.test.tsx` | 209 | — |
 | `src/tests/client.fragmentSecrets.test.ts` | 81 | — |
-| `src/tests/client.gadgetRender.test.tsx` | 62 | @vitest-environment jsdom |
+| `src/tests/client.gadgetRender.test.tsx` | 75 | @vitest-environment jsdom |
 | `src/tests/client.gadgets.appInstallState.test.ts` | 44 | — |
 | `src/tests/client.gadgets.appsCatalog.test.ts` | 35 | — |
 | `src/tests/client.gadgets.embedAdapters.test.ts` | 36 | — |

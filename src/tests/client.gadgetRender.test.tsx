@@ -19,6 +19,19 @@ describe('gadgets: what the READ state actually renders', () => {
     expect(out).toContain('gadget-poll-bar-fill');
   });
 
+  it('draws the read poll as the same card as the editor: badge, total, question, share and bar per option', () => {
+    const html = '<figure data-gadget-type="poll" data-poll-question="Lunch?" data-poll-options=\'[{"id":"a","label":"Yes","votes":2},{"id":"b","label":"No","votes":1},{"id":"c","label":"Maybe","votes":0}]\' class="gadget-block gadget-poll"></figure>';
+    const out = render(html);
+    expect(out).toContain('gadget-poll-top');
+    expect(out).toContain('Collaborative decision point');
+    expect(out).toContain('3 total votes');
+    expect(out).toContain('67%');
+    expect(out).toContain('33%');
+    expect(out).toContain('0%');
+    expect(out).toContain('width:67%');
+    expect(render(html.replace('"votes":2', '"votes":1').replace('"votes":1},{"id":"b"', '"votes":0},{"id":"b"'))).toContain('1 total vote<');
+  });
+
   it('renders the embed iframe without React attribute warnings and with allowFullScreen', () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const out = render(sanitizeRichHtml('<figure data-gadget-type="embed-frame" data-embed-src="https://www.youtube.com/embed/dQw4w9WgXcQ" data-embed-title="YouTube" data-embed-provider="youtube" data-embed-width="560" data-embed-height="315" class="gadget-block gadget-embed-frame"><div class="gadget-body"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe></div></figure>'));

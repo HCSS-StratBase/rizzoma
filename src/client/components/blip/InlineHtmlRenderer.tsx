@@ -269,19 +269,30 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
       let options: Array<{ id?: string; label?: string; votes?: number }> = [];
       try { const parsed: unknown = JSON.parse(el.getAttribute('data-poll-options') || '[]'); if (Array.isArray(parsed)) options = parsed as typeof options; } catch { /* empty poll */ }
       const total = options.reduce((n, o) => n + (Number(o.votes) || 0), 0);
+      // Same card as the editor's poll (PollGadgetView): badge, subtitle, total pill, question, one row per option with its
+      // share and a bar. Before, the read view was a plain list in another style, so a poll looked finished only while
+      // somebody was editing the blip (Hryhorii, 23 Nov 2026).
+      const question = el.getAttribute('data-poll-question') || 'Poll question';
       return createElement(
         'figure',
         { key: nextKey(), className: 'gadget-block gadget-poll gadget-poll-read', 'data-gadget-type': 'poll' },
-        createElement('div', { className: 'gadget-header' },
-          createElement('span', { className: 'gadget-chip' }, 'Poll'),
-          createElement('span', { className: 'gadget-title' }, el.getAttribute('data-poll-question') || 'Poll question'),
+        createElement('div', { className: 'gadget-poll-top' },
+          createElement('span', { className: 'gadget-poll-icon', 'aria-hidden': true }, '\u2713'),
+          createElement('div', { className: 'gadget-poll-heading' },
+            createElement('span', { className: 'gadget-chip' }, 'Poll'),
+            createElement('span', { className: 'gadget-poll-sub' }, 'Collaborative decision point'),
+          ),
+          createElement('span', { className: 'gadget-poll-total' }, `${total} total ${total === 1 ? 'vote' : 'votes'}`),
         ),
+        createElement('div', { className: 'gadget-title gadget-poll-question' }, question),
         createElement('ul', { className: 'gadget-poll-options' }, options.map((o, i) => {
           const votes = Number(o.votes) || 0;
+          const pct = total ? Math.round((votes / total) * 100) : 0;
           return createElement('li', { key: o.id || String(i), className: 'gadget-poll-option' },
             createElement('span', { className: 'gadget-poll-label' }, o.label || `Option ${i + 1}`),
             createElement('span', { className: 'gadget-poll-count' }, `${votes} ${votes === 1 ? 'vote' : 'votes'}`),
-            createElement('span', { className: 'gadget-poll-bar' }, createElement('span', { className: 'gadget-poll-bar-fill', style: { width: `${total ? Math.round((votes / total) * 100) : 0}%` } })),
+            createElement('span', { className: 'gadget-poll-pct' }, `${pct}%`),
+            createElement('span', { className: 'gadget-poll-bar' }, createElement('span', { className: 'gadget-poll-bar-fill', style: { width: `${pct}%` } })),
           );
         })),
       );
