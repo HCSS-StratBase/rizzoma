@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/poll-read-card
-source_commit: 7e9d01c3
+source_branch: fix/signin-old-accounts-note
+source_commit: d0fb1270
 generated: true
 ---
 

@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/poll-read-card
-source_commit: 7e9d01c3
+source_branch: fix/signin-old-accounts-note
+source_commit: d0fb1270
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 254 files in `scripts/`, 75 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 252 files in `scripts/`, 75 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -115,7 +115,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (254)
+## scripts/ (252)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -307,7 +307,7 @@ graph LR
 | `scripts/tester-scenarios/cases/A-nesting.mjs` | 295 | Family A: nesting and typing. Every text must land in ITS OWN blip, under the right parent, |
 | `scripts/tester-scenarios/cases/B-edit-modes.mjs` | 179 | Family B: edit modes (view <-> edit, jump-in, Ctrl+Enter from view state, reply vs inline comment, |
 | `scripts/tester-scenarios/cases/C-data-safety.mjs` | 150 | Family C: data safety ("my blips disappear"). Every created blip must still exist, with the right |
-| `scripts/tester-scenarios/cases/D-invite-people.mjs` | 134 | Family D: invite and people. The tester: "I cannot invite people to the topics" and the people list |
+| `scripts/tester-scenarios/cases/D-invite-people.mjs` | 153 | Family D: invite and people. The tester: "I cannot invite people to the topics" and the people list |
 | `scripts/tester-scenarios/cases/E-images-files.mjs` | 104 | Family E: images and files. The tester: "screenshots work but a pasted image takes almost the whole page". |
 | `scripts/tester-scenarios/cases/F-time-authorship.mjs` | 82 | Family F: time and authorship. The tester: "the time a blip was created does not display (only while writing)". |
 | `scripts/tester-scenarios/cases/G-working-features.mjs` | 238 | Family G: the things the tester said work, which must keep working: login/logout, links, follow-the-green, |
@@ -320,8 +320,6 @@ graph LR
 | `scripts/tester-scenarios/cases/S-server-contract.mjs` | 323 | Family S: the server contract as a signed-in colleague (and a second user, and a stranger) meets it: |
 | `scripts/tester-scenarios/cases/T-toolbar-shortcuts.mjs` | 163 | Family T: the rich-text toolbar (every button) and the documented keyboard shortcuts, each judged by |
 | `scripts/tester-scenarios/cases/W-realtime-presence.mjs` | 62 | Family W: real-time collaboration seen from the other user's screen (presence, cursors, typing, live updates). |
-| `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 285 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
-| `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 285 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
 | `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 285 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
 | `scripts/tester-scenarios/cases/Y-untested.mjs` | 199 | Family Y: behaviours of original client modules that no earlier case exercised (SDS/coordinator 21 Nov: "untested, not product decisions"). |
 | `scripts/tester-scenarios/cases/_nest.mjs` | 46 | Level-1 blip from the topic reply box, then open it and put the caret in its editor. |
