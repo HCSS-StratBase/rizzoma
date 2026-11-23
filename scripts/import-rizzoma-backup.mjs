@@ -7,7 +7,7 @@
  *
  *   node scripts/import-rizzoma-backup.mjs <file.html> [--dry-run] [--id-prefix scratch-] [--title-prefix "ZZ SCRATCH "]
  *                                        [--tz-offset-min 0] [--viewer email[:viewer|commenter|editor]] [--report out.json]
- *   node scripts/import-rizzoma-backup.mjs --delete <topicId>      (only a topic this importer made; removes its blips,
+ *   node scripts/import-rizzoma-backup.mjs --delete <topicId> [--with-placeholders]  (only a topic this importer made; removes its blips,
  *                                                                  participants, uploads and placeholder-free data)
  *
  * Runs against the COMPILED release (dist/server/server/...): the server has no tsx. From a release or lane directory, with the
@@ -48,7 +48,19 @@ async function deleteImported(topicId) {
     if (d.type === 'upload' && d.storageKey) { try { fs.unlinkSync(`${process.cwd()}/data/uploads/${String(d.storageKey).replace(/[^\w.-]/g, '')}`); } catch { /* already gone */ } }
     await deleteDoc(d._id, d._rev); removed++;
   }
-  console.log(JSON.stringify({ deleted: topicId, documents: removed }));
+  // placeholder users this import made are removed too, when nothing else refers to them
+  let placeholders = 0;
+  if (flag('--with-placeholders')) {
+    const ids = new Set(docs.filter((d) => d.type === 'blip' || d.type === 'participant').map((d) => d.authorId || d.userId).filter(Boolean));
+    for (const uid of ids) {
+      const u = await deps.getDoc(uid);
+      if (!u || u.type !== 'user' || !u.placeholder || u.passwordHash) continue;
+      if ((await find({ type: 'blip', authorId: uid }, { limit: 1 })).docs.length) continue;
+      if ((await find({ type: 'participant', userId: uid }, { limit: 1 })).docs.length) continue;
+      await deleteDoc(u._id, u._rev); placeholders++;
+    }
+  }
+  console.log(JSON.stringify({ deleted: topicId, documents: removed, placeholderUsersRemoved: placeholders }));
 }
 
 async function main() {
