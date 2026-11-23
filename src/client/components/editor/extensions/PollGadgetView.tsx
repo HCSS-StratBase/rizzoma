@@ -160,7 +160,7 @@ export function PollGadgetView(props: any) {
             }}
           >
             <Text size="xs" fw={700} c="dimmed">
-              {totalVotes} total votes
+              {totalVotes} total {totalVotes === 1 ? 'vote' : 'votes'}
             </Text>
           </Box>
         </Group>

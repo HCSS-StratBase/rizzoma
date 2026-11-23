@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/signin-old-accounts-note
-source_commit: 50445277
+source_commit: d0fb1270
 generated: true
 ---
 
