@@ -19,6 +19,7 @@ import { identityFromRequest, requireWaveAccess } from '../lib/access.js';
 
 const router = Router();
 
+// A poll sits in a reply (blip) or in the topic body (the root, addressed by the topic id).
 export type PollVoteDoc = {
   _id: string;
   _rev?: string;
@@ -72,7 +73,9 @@ async function loadReadableBlip(req: any, res: any, blipId: string) {
     if (String(e?.message).startsWith('404')) { res.status(404).json({ error: 'not_found', requestId: req?.id }); return null; }
     throw e;
   }
-  if (!doc || doc.type !== 'blip' || typeof doc.waveId !== 'string' || !doc.waveId) {
+  // The topic body is a synthetic root blip whose id is the topic id (same as RizzomaBlip, which reports its own id).
+  if (doc?.type === 'topic' && typeof doc._id === 'string') doc = { ...doc, waveId: doc._id };
+  else if (!doc || doc.type !== 'blip' || typeof doc.waveId !== 'string' || !doc.waveId) {
     res.status(404).json({ error: 'not_found', requestId: req?.id });
     return null;
   }

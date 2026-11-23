@@ -78,6 +78,17 @@ describe('poll votes by readers', () => {
   });
 });
 
+describe('poll votes: the topic body', () => {
+  it('a poll in the topic root is addressed by the topic id', async () => {
+    store.clear();
+    store.set('w9', { _id: 'w9', type: 'topic', authorId: 'owner', shareLevel: 'public', content: '<h1>t</h1>' + POLL });
+    const res = await invoke('post', '/:id/polls/:pollKey/vote', { params: { id: 'w9', pollKey: 'p0' }, body: { optionId: 'b' }, session: asUser('anyone') });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.poll).toEqual({ options: { a: 2, b: 1 }, mine: 'b', total: 3 });
+    expect(store.get('poll_vote:w9:p0:anyone')).toMatchObject({ waveId: 'w9', blipId: 'w9', optionId: 'b' });
+  });
+});
+
 describe('poll votes: csrf', () => {
   it('refuses a vote whose csrf token does not match the session', async () => {
     store.clear();
