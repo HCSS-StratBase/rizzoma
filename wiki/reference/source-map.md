@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: perf/static-compression-immutable
-source_commit: e84219c0
+source_branch: fix/signin-old-accounts-note
+source_commit: 35a59341
 generated: true
 ---
 
@@ -47,7 +47,7 @@ graph LR
 | `src/client/components/AnonymousTopicRoute.css` | 86 | — |
 | `src/client/components/AnonymousTopicRoute.tsx` | 78 | (no header comment; exports AnonymousTopicRoute) |
 | `src/client/components/AuthPanel.css` | 208 | — |
-| `src/client/components/AuthPanel.tsx` | 491 | (no header comment; exports AuthUser) |
+| `src/client/components/AuthPanel.tsx` | 497 | (no header comment; exports AuthUser) |
 | `src/client/components/BlipContent.tsx` | 13 | (no header comment; exports BlipContent) |
 | `src/client/components/CreateTopicModal.css` | 276 | — |
 | `src/client/components/CreateTopicModal.tsx` | 139 | (no header comment; exports CreateTopicModal) |
@@ -403,7 +403,7 @@ graph LR
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/tests/client.AnonymousTopicRoute.test.tsx` | 80 | — |
-| `src/tests/client.AuthPanelSecurity.test.tsx` | 204 | — |
+| `src/tests/client.AuthPanelSecurity.test.tsx` | 221 | — |
 | `src/tests/client.BlipEditor.test.ts` | 114 | Warm the EditorConfig module once up-front with a generous timeout. |
 | `src/tests/client.BlipMenu.test.tsx` | 621 | — |
 | `src/tests/client.EditorSearch.test.tsx` | 76 | — |

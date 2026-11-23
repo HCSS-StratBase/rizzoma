@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: perf/static-compression-immutable
-source_commit: e84219c0
+source_branch: fix/signin-old-accounts-note
+source_commit: 35a59341
 generated: true
 ---
 
@@ -307,7 +307,7 @@ graph LR
 | `scripts/tester-scenarios/cases/A-nesting.mjs` | 295 | Family A: nesting and typing. Every text must land in ITS OWN blip, under the right parent, |
 | `scripts/tester-scenarios/cases/B-edit-modes.mjs` | 179 | Family B: edit modes (view <-> edit, jump-in, Ctrl+Enter from view state, reply vs inline comment, |
 | `scripts/tester-scenarios/cases/C-data-safety.mjs` | 150 | Family C: data safety ("my blips disappear"). Every created blip must still exist, with the right |
-| `scripts/tester-scenarios/cases/D-invite-people.mjs` | 134 | Family D: invite and people. The tester: "I cannot invite people to the topics" and the people list |
+| `scripts/tester-scenarios/cases/D-invite-people.mjs` | 153 | Family D: invite and people. The tester: "I cannot invite people to the topics" and the people list |
 | `scripts/tester-scenarios/cases/E-images-files.mjs` | 104 | Family E: images and files. The tester: "screenshots work but a pasted image takes almost the whole page". |
 | `scripts/tester-scenarios/cases/F-time-authorship.mjs` | 82 | Family F: time and authorship. The tester: "the time a blip was created does not display (only while writing)". |
 | `scripts/tester-scenarios/cases/G-working-features.mjs` | 238 | Family G: the things the tester said work, which must keep working: login/logout, links, follow-the-green, |

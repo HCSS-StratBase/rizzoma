@@ -93,6 +93,23 @@ describe('client AuthPanel security and recovery behavior', () => {
     expect(container.textContent).toContain('Sign up');
   });
 
+  it('tells a person with an account of the original rizzoma.com that it was not carried over, and what to do', async () => {
+    await renderPanel();
+    const note = container.querySelector('[data-testid="auth-original-rizzoma-note"]');
+    expect(note).not.toBeNull();
+    expect(note?.textContent).toContain('original rizzoma.com');
+    expect(note?.textContent).toContain('not carried over');
+    expect(note?.textContent).toContain('invitation');
+    // it does not say whether any particular address has an account (no enumeration)
+    expect(container.textContent).not.toMatch(/no account with this/i);
+  });
+
+  it('does not show that note to a person who arrived with an invitation (they get the sign-up link instead)', async () => {
+    authState.pendingInvite = { token: 'invite-token', waveId: 'wave-1', createdAt: Date.now() };
+    await renderPanel();
+    expect(container.querySelector('[data-testid="auth-original-rizzoma-note"]')).toBeNull();
+  });
+
   it('always clears busy state and shows a retryable error after a network rejection', async () => {
     authState.api.mockImplementation(async (path: string) => {
       if (path === '/api/auth/oauth-status') return { ok: true, status: 200, data: oauthStatus };
