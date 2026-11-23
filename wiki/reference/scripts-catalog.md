@@ -5,14 +5,14 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/latex-plain-text
-source_commit: 7bc68747
+source_branch: docs/wiki-log-122
+source_commit: 7e1a937b
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 252 files in `scripts/`, 75 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 253 files in `scripts/`, 75 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -115,7 +115,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (252)
+## scripts/ (253)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -239,6 +239,7 @@ graph LR
 | `scripts/git-hooks/pre-push` | — | — |
 | `scripts/handbuild_acceptance.mjs` | 469 | HAND-BUILD ACCEPTANCE — the gate for ALL Rizzoma fractal work (SDS 2026-07-14). |
 | `scripts/handbuild_depth10.mjs` | 109 | HAND-BUILD a depth-10 fractal on the NEW rizzoma through the REAL UI. |
+| `scripts/import-rizzoma-backup.ts` | 70 | Admin-only, server-side import of ONE topic from the HTML export of the original rizzoma.com |
 | `scripts/insert_depth10_spine.mjs` | 123 | Insert a depth-10 spine of blips directly into CouchDB. |
 | `scripts/inspect_screenshot_155148.py` | 27 | Find all blue ribbons (#4ea0f1 -> r ~ 78, g ~ 160, b ~ 241) |
 | `scripts/inspect_tana_nodes.py` | 25 | — |
