@@ -206,6 +206,41 @@ export default [
       ctx.settleProblems();
     },
   },
+  // ---- Hryhorii (23 Nov 2026): polls render nicely only while the blip is being edited.
+  {
+    id: 'X13', family: 'X', title: 'poll: the read view of a second person shows the same card as the editor (badge, total votes, question, options with share and bar)',
+    rows: ['3.14', '3.15', '15.8'], timeoutMs: 300000,
+    async run(ctx) {
+      const a = await ctx.client(await newUser('a'));
+      const b = await ctx.client(await newUser('b'));
+      const opts = JSON.stringify([{ id: 'o1', label: 'Yes', votes: 2 }, { id: 'o2', label: 'No', votes: 1 }, { id: 'o3', label: 'Maybe', votes: 0 }]).replace(/"/g, '&quot;');
+      const html = `<h1>poll</h1><ul><li><p>before</p><figure data-gadget-type="poll" data-poll-question="Lunch?" data-poll-options="${opts}" data-poll-allow-multiple="false" class="gadget-block gadget-poll"></figure></li></ul>`;
+      const id = await ctx.topic(a, 'poll card', html);
+      await shareWith(id, b, 'editor');
+      await b.openTopic(id, 9000);
+      await b.page.locator('.gadget-poll-read').first().waitFor({ timeout: 20000 }).catch(() => undefined);
+      await b.stepShot('X-gadgets', 'X13-poll-read-second-person');
+      const read = await b.page.locator('.gadget-poll-read').first().evaluate((el) => ({
+        text: el.innerText.replace(/\s+/g, ' '),
+        badge: !!el.querySelector('.gadget-chip'),
+        widths: [...el.querySelectorAll('.gadget-poll-bar-fill')].map((f) => Math.round(f.getBoundingClientRect().width / (f.parentElement?.getBoundingClientRect().width || 1) * 100)),
+        radius: getComputedStyle(el).borderTopLeftRadius,
+      })).catch(() => ({ text: '', badge: false, widths: [], radius: '' }));
+      ctx.ok(/POLL/i.test(read.text) && read.badge, 'the read poll has the Poll badge', read.text.slice(0, 60));
+      ctx.ok(/3 total votes/.test(read.text), 'it shows the total number of votes', read.text.slice(0, 120));
+      ctx.ok(/Lunch\?/.test(read.text) && /Yes/.test(read.text) && /No/.test(read.text) && /Maybe/.test(read.text), 'question and all options are shown');
+      ctx.ok(/67%/.test(read.text) && /33%/.test(read.text) && /0%/.test(read.text), 'each option shows its share', read.text.slice(0, 160));
+      ctx.ok(read.widths.length === 3 && read.widths[0] > read.widths[1] && read.widths[1] > read.widths[2], 'the bars are drawn in proportion', JSON.stringify(read.widths));
+      ctx.ok(parseFloat(read.radius) >= 12, 'it is a rounded card like the editor poll, not a plain list', read.radius);
+      await a.openTopic(id, 8000);
+      await a.page.locator('.wave-panel [data-testid="blip-menu-edit"]').first().click({ timeout: 10000 }); await sleep(2500);
+      const edit = await a.page.locator('.node-pollGadget').first().innerText().catch(() => '');
+      await a.stepShot('X-gadgets', 'X13-poll-edit-owner');
+      ctx.ok(/3 total votes/.test(edit) && /67%/.test(edit), 'the editor shows the same numbers as the read view', edit.replace(/\n/g, '/').slice(0, 100));
+      await a.doneAll();
+      ctx.settleProblems();
+    },
+  },
 ];
 
 async function embedCase(ctx, o) {
