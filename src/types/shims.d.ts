@@ -12,3 +12,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   env: ImportMetaEnv;
 }
+
+// KaTeX stylesheet, loaded on demand by src/client/lib/katexRender.ts
+declare module 'katex/dist/katex.min.css';

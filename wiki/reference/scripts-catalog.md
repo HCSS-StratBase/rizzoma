@@ -6,13 +6,13 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/poll-read-card
-source_commit: 47a704e5
+source_commit: 7e9d01c3
 generated: true
 ---
 
 # Scripts Catalog
 
-**¶1** □ GENERATED. 252 files in `scripts/`, 75 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
+**¶1** □ GENERATED. 254 files in `scripts/`, 75 npm scripts, 10 project hooks in `.claude/hooks/`. Purpose text is each file's own header; `(no header comment...)` means none exists. See [gates and sweeps](../verification/gates-sweeps-and-deployment.md) and [legacy visual parity](../subsystems/legacy-visual-parity.md).
 
 ## Structure (`Continuant` — `graph TD`)
 
@@ -115,7 +115,7 @@ graph LR
 | `cap:run:android` | `node node_modules/@capacitor/cli/bin/capacitor run android` |
 | `cap:run:ios` | `node node_modules/@capacitor/cli/bin/capacitor run ios` |
 
-## scripts/ (252)
+## scripts/ (254)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -320,7 +320,9 @@ graph LR
 | `scripts/tester-scenarios/cases/S-server-contract.mjs` | 323 | Family S: the server contract as a signed-in colleague (and a second user, and a stranger) meets it: |
 | `scripts/tester-scenarios/cases/T-toolbar-shortcuts.mjs` | 163 | Family T: the rich-text toolbar (every button) and the documented keyboard shortcuts, each judged by |
 | `scripts/tester-scenarios/cases/W-realtime-presence.mjs` | 62 | Family W: real-time collaboration seen from the other user's screen (presence, cursors, typing, live updates). |
-| `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 248 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
+| `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 285 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
+| `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 285 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
+| `scripts/tester-scenarios/cases/X-gadgets-store.mjs` | 285 | Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond. |
 | `scripts/tester-scenarios/cases/Y-untested.mjs` | 199 | Family Y: behaviours of original client modules that no earlier case exercised (SDS/coordinator 21 Nov: "untested, not product decisions"). |
 | `scripts/tester-scenarios/cases/_nest.mjs` | 46 | Level-1 blip from the topic reply box, then open it and put the caret in its editor. |
 | `scripts/tester-scenarios/cases/_sh.mjs` | 12 | One-shot shell helper for contract cases: runs a command once and returns { status, out }. |

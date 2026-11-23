@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/poll-read-card
-source_commit: 47a704e5
+source_commit: 7e9d01c3
 generated: true
 ---
 

@@ -1,7 +1,7 @@
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
-import { formatLatexToHtml } from '../../../lib/renderLatex';
+import { onKatexReady, renderLatex } from '../../../lib/katexRender';
 
 /**
  * LaTeX in the EDITOR: a `$$ formula $$` run shows TYPESET while the caret is elsewhere, and its source while the
@@ -21,7 +21,7 @@ export function latexRuns(text: string): Array<{ from: number; to: number; formu
 export function latexWidgetHtml(formula: string): { html: string; empty: boolean } {
   const trimmed = formula.trim();
   if (!trimmed) return { html: '', empty: true };
-  return { html: formatLatexToHtml(trimmed), empty: false };
+  return { html: renderLatex(trimmed).html, empty: false };
 }
 
 const key = new PluginKey('latexPreview');
@@ -52,7 +52,12 @@ export const LatexPreview = Extension.create({
                   el.setAttribute('data-latex-from', String(from));
                   el.setAttribute('contenteditable', 'false');
                   if (empty) el.textContent = 'type a formula';
-                  else el.innerHTML = html;
+                  else {
+                    el.innerHTML = html;
+                    // KaTeX loads on demand: redraw this formula with it as soon as it has arrived
+                    const formula = run.formula.trim();
+                    onKatexReady(() => { el.innerHTML = renderLatex(formula).html; });
+                  }
                   return el;
                 }, { side: -1, key: `latex-${from}-${run.formula}` }));
               }
