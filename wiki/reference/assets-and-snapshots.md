@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: perf/static-compression-immutable
-source_commit: e84219c0
+source_branch: fix/latex-katex
+source_commit: a196355f
 generated: true
 ---
 
