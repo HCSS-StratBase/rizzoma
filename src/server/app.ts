@@ -23,6 +23,7 @@ import wavesRouter from './routes/waves.js';
 import editorRouter from './routes/editor.js';
 import linksRouter from './routes/links.js';
 import blipsRouter from './routes/blips.js';
+import pollVotesRouter from './routes/pollVotes.js';
 import { inlineCommentsRouter } from './routes/inlineComments.js';
 import { uploadFilesRouter, uploadsRouter } from './routes/uploads.js';
 import healthRouter from './routes/health.js';
@@ -114,6 +115,7 @@ app.use('/api/editor', editorRouter);
 // so the gear-menu "Delete blip" silently 404'd forever. Keep this mount
 // specific.
 app.use('/api/links', linksRouter);
+app.use('/api/blips', pollVotesRouter);
 app.use('/api/blips', blipsRouter);
 app.use('/api', inlineCommentsRouter);
 app.use('/api/uploads', uploadsRouter);
