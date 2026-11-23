@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/latex-katex
-source_commit: 47a704e5
+source_commit: a196355f
 generated: true
 ---
 
@@ -322,11 +322,11 @@ graph LR
 | `src/server/lib/virusScan.ts` | 155 | Commands using clamd's `z` prefix are framed with one trailing NUL byte. |
 | `src/server/lib/yjsDocCache.ts` | 367 | — |
 
-## Server other (41)
+## Server other (42)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
-| `src/server/app.ts` | 220 | — |
+| `src/server/app.ts` | 221 | — |
 | `src/server/config.ts` | 25 | (no header comment; exports AppConfig) |
 | `src/server/couch_views/main/auth_by_user_id.js` | 20 | — |
 | `src/server/couch_views/main/blip.js` | 18 | — |
@@ -363,6 +363,7 @@ graph LR
 | `src/server/middleware/requestId.ts` | 13 | attach to req and response header |
 | `src/server/middleware/session.ts` | 242 | Hard Gap #30 (2026-04-13): Redis-backed session store with MemoryStore |
 | `src/server/middleware/sessionCredentials.ts` | 56 | (no header comment; exports sessionCredentialGuard) |
+| `src/server/middleware/staticAssets.ts` | 38 | Serves the built client (dist/client) with the two things the production server was missing (measured 23 Nov 2026, |
 | `src/server/schemas/comment.ts` | 14 | (no header comment; exports CreateCommentSchema) |
 | `src/server/schemas/topic.ts` | 27 | Per-section author attribution sidecar returned to clients. Authorship is |
 | `src/server/schemas/wave.ts` | 69 | (no header comment; exports CreateWaveSchema) |
@@ -399,7 +400,7 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (132)
+## Tests (133)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -531,6 +532,7 @@ graph LR
 | `src/tests/server.session.test.ts` | 185 | — |
 | `src/tests/server.sessionCredentialVersion.test.ts` | 90 | — |
 | `src/tests/server.socketAuthorization.test.ts` | 1334 | — |
+| `src/tests/server.staticAssets.test.ts` | 88 | @vitest-environment node |
 | `src/tests/server.tasksByBlipGone.test.ts` | 31 | — |
 | `src/tests/server.virusScan.test.ts` | 113 | — |
 | `src/tests/server.yjsDocCache.test.ts` | 537 | Mock couch module before importing yjsDocCache |

@@ -32,6 +32,7 @@ import mentionsRouter from './routes/mentions.js';
 import tasksRouter from './routes/tasks.js';
 import { sessionCredentialGuard } from './middleware/sessionCredentials.js';
 import { GADGET_APPS_MOUNT, gadgetAppsRouter } from './middleware/gadgetApps.js';
+import { staticAssets } from './middleware/staticAssets.js';
 
 const app = express();
 const isProd = process.env['NODE_ENV'] === 'production';
@@ -125,7 +126,7 @@ app.use('/api/tasks', tasksRouter);
 const staticDir = path.resolve(process.cwd(), 'dist', 'client');
 
 if (process.env['NODE_ENV'] === 'production') {
-  app.use(express.static(staticDir));
+  app.use(staticAssets(staticDir));
 }
 
 // Upload bytes are guarded against the current wave role on every request.

@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: fix/latex-katex
-source_commit: 47a704e5
+source_commit: a196355f
 generated: true
 ---
 
