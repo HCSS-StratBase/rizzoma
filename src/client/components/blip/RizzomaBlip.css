@@ -1962,3 +1962,11 @@
 .gadget-poll-pct { font-size: 12px; font-weight: 700; color: #0f766e; min-width: 3ch; text-align: right; }
 .gadget-poll-bar { grid-column: 1 / -1; height: 10px; background: rgba(148,163,184,.18); border-radius: 999px; overflow: hidden; }
 .gadget-poll-bar-fill { display: block; height: 100%; background: #20c997; border-radius: 999px; }
+
+/* Poll in the read view: an option is a button anybody who may read the blip can press (23 Nov 2026) */
+.gadget-poll-option-votable { cursor: pointer; border: 1px solid transparent; transition: background .15s ease, border-color .15s ease; }
+.gadget-poll-option-votable:hover { background: #f1f8f6; border-color: #b2e5d6; }
+.gadget-poll-option-votable:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
+.gadget-poll-option-votable.is-mine { background: #e6fcf5; border-color: #20c997; }
+.gadget-poll-option-votable.is-mine .gadget-poll-label::after { content: ' \2713  your vote'; font-size: 11px; font-weight: 700; color: #099268; }
+.gadget-poll-note { position: relative; margin-top: 8px; font-size: 12px; color: #b42318; }
