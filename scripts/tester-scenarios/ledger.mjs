@@ -79,11 +79,16 @@ const rank = { BROKEN: 0, PARTIAL: 1, UNCHECKED: 2, UNREVIEWED: 2.5, NEEDS_SDS: 
 function rowResult(res, row, byId) {
   // SDS rulings of 21 Nov 2026 hold on both columns: a server-internal row is checked by its passing API case (run on the local stack, never on
   // production: they register accounts and send mail), and a deliberate difference is closed by the decision itself.
+  // SDS ruling 21 Nov: a server-internal row is checked by its passing API case (families S, R, Q run on the local stack only: they register accounts, send mail and push load).
+  if (res === liveRes && !row.derivedFrom && !row.shotRow) {
+    const lc = casesFor(local, row);
+    if (lc.length && lc.every((c) => ['S', 'R', 'Q'].includes(c.family)) && evaluate(lc).result === 'WORKS') return { result: 'WORKS', reason: `WORKS by API case (${lc.map((c) => c.id).join(', ')}, local run): SDS ruling 21 Nov 2026`, shotCase: null, cs: lc };
+  }
   if (res === liveRes && reviews[row.id] && (reviews[row.id].byApi || reviews[row.id].byDecision)) {
     const r0 = reviews[row.id];
     return { result: 'WORKS', reason: `${r0.byDecision ? 'WORKS by SDS decision' : 'WORKS by API case (local run, SDS ruling)'}: ${r0.note}`, shotCase: null, cs: [] };
   }
-  const rv0 = res === local ? reviews[row.id] : null;
+  const rv0 = res === local ? reviews[row.id] : res === liveRes ? liveReviews[row.id] : null;
   if (rv0 && (row.derivedFrom || row.shotRow) && ['NEEDS_SDS', 'WORKS', 'PARTIAL', 'BROKEN'].includes(rv0.verdict) && row.derivedFrom && !row.derivedFrom.length) return { result: rv0.verdict, reason: `${rv0.verdict === 'NEEDS_SDS' ? 'no user-visible check possible: ' : 'recorded reading: '}${rv0.note}`, shotCase: null, cs: [] };
   if (row.derivedFrom) {
     if (!row.derivedFrom.length) return { result: 'UNCHECKED', reason: 'no contract row maps to this original module and no case exercises it', shotCase: null, cs: [] };

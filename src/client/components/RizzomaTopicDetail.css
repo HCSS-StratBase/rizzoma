@@ -850,6 +850,8 @@
   display: inline-block;
 }
 
+.rizzoma-latex-katex { font-style: normal; font-family: inherit; padding: 0 5px; vertical-align: middle; }
+
 .rizzoma-latex sub,
 .rizzoma-latex sup {
   font-size: 0.72em;

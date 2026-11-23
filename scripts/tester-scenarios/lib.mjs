@@ -14,13 +14,15 @@ if (LIVE) {
   if (!process.env.GDRIVE_ROOT) throw new Error('SUITE_LIVE needs GDRIVE_ROOT');
   const vars = {};
   for (const line of fs.readFileSync(path.join(process.env.GDRIVE_ROOT, 'SYSTEM_CREDENTIALS.env'), 'utf8').split('\n')) {
-    const m = /^(RIZZOMA_MODERN_FRACTAL[12]_(?:USER|PASSWORD))=(.*)$/.exec(line.replace(/\r$/, ''));
+    const m = /^(RIZZOMA_MODERN_FRACTAL[123]_(?:USER|PASSWORD))=(.*)$/.exec(line.replace(/\r$/, ''));
     if (m) vars[m[1]] = m[2].replace(/^["']|["']$/g, '');
   }
   LIVE_ACCOUNTS.t1 = { email: vars.RIZZOMA_MODERN_FRACTAL1_USER, password: vars.RIZZOMA_MODERN_FRACTAL1_PASSWORD };
+  if (vars.RIZZOMA_MODERN_FRACTAL3_USER) LIVE_ACCOUNTS.t3 = { email: vars.RIZZOMA_MODERN_FRACTAL3_USER, password: vars.RIZZOMA_MODERN_FRACTAL3_PASSWORD };
   LIVE_ACCOUNTS.t2 = { email: vars.RIZZOMA_MODERN_FRACTAL2_USER, password: vars.RIZZOMA_MODERN_FRACTAL2_PASSWORD };
 }
-const T1_TAGS = new Set(['b', 'v', 'm', 'k', 'l', 'n', 'e', 'g']);
+const T1_TAGS = new Set(['b', 'v', 'm', 'l', 'n', 'e', 'g']);
+const T3_TAGS = new Set(['k', 'x']); // Fractal Tester 3 (created 21 Nov 2026): the third distinct person (contact / stranger)
 const TOPIC_OWNER = new Map();
 
 export const BASE = (process.env.RIZZOMA_BASE_URL || (process.env.SUITE_LIVE === '1' ? 'https://138-201-62-161.nip.io' : 'http://127.0.0.1:3100')).replace(/\/$/, '');
@@ -48,7 +50,7 @@ const POOLED = new Set(['a', 'b', 'o', 'v', 'c', 'e', 'x', 'g', 't', 'n', 'p']);
 const POOL = new Map();
 export async function newUser(tag = 'u') {
   if (LIVE) {
-    const key = T1_TAGS.has(tag) ? 't1' : 't2';
+    const key = T3_TAGS.has(tag) && LIVE_ACCOUNTS.t3 ? 't3' : T1_TAGS.has(tag) ? 't1' : 't2';
     if (!POOL.has(`live-${key}`)) POOL.set(`live-${key}`, { email: LIVE_ACCOUNTS[key].email, password: LIVE_ACCOUNTS[key].password, tag: key, live: true });
     return POOL.get(`live-${key}`);
   }
@@ -395,4 +397,15 @@ export function serverLogErrors(from) {
       && /(\berror:|\bError\b|Unhandled|unhandled|TypeError|RangeError|ECONNREFUSED|\[error\])/.test(l)
       && !/health check|couch\] indexes/i.test(l)).slice(0, 5);
   } catch { return null; }
+}
+
+/** Choose a person in the open @mention / ~task list. Locally the typed prefix is unique, so Enter picks the right one; on production the test
+ *  accounts share the prefix 'sdspieg+fractal', so the row that shows the person's e-mail address is clicked instead. */
+export async function pickPerson(page, user) {
+  if (LIVE) {
+    // the ~task list shows the display name only, the @mention list also the address: match on the local part, which is unique per account
+    const row = page.locator('.mention-item', { hasText: user.email.split('@')[0] }).first();
+    if (await row.count()) { await row.click(); return; }
+  }
+  await page.keyboard.press('Enter');
 }

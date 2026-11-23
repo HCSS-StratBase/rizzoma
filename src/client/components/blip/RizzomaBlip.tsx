@@ -1,3 +1,5 @@
+import { fetchTopicRoster, type RosterPerson } from '../../lib/topicRoster';
+import { getPendingCollaborationCount } from '../../lib/collaborationPending';
 import { isInlineAnchored } from './inlineAnchoring';
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
@@ -515,6 +517,10 @@ export function RizzomaBlip({
         // No toast - auto-save is silent for real-time experience
         return 'saved';
       }
+      if (response.status === 409 && typeof localStorage !== 'undefined' && localStorage.getItem('rizzoma:collabTrace') === '1') {
+        const body = response.data as { error?: string } | undefined;
+        console.warn('[collab-trace] 409', JSON.stringify({ blip: blip.id.slice(-12), error: body?.error, pending: getPendingCollaborationCount(), hdr: (headers || {})['x-rizzoma-yjs-state-digest']?.slice(0, 12), t: Date.now() }));
+      }
       if (
         response.status === 408
         || response.status === 409
@@ -669,10 +675,15 @@ export function RizzomaBlip({
     if (collabActive && !collabReady) return;
     const targetId = blip.id;
     void (async () => {
-      for (let attempt = 0; attempt < 6; attempt += 1) {
+      // Once this blip's collaboration room has been left (the editor was unmounted), the server answers a digest-bearing save with
+      // collaboration_projection_session_missing for good, and a plain replacement is refused as collaboration_pending_projection until
+      // the server has persisted its acknowledged Y.Doc (every 30 s). So: try the digest save, switch to a plain replacement when the
+      // room is gone, and keep retrying for about a minute instead of giving up after six seconds (text lost on production, 21 Nov 2026).
+      let withDigest = true;
+      for (let attempt = 0; attempt < 16; attempt += 1) {
         try {
           await ensureCsrf();
-          const headers = collabActive
+          const headers = collabActive && withDigest
             ? await collaborationProjectionHeaders(ydoc, yjsGeneration)
             : undefined;
           const response = await api(`/api/blips/${encodeURIComponent(targetId)}`, {
@@ -682,11 +693,13 @@ export function RizzomaBlip({
             body: JSON.stringify({ content: html }),
           });
           if (response.ok) return;
+          const code = (response.data as { error?: string } | undefined)?.error;
+          if (code === 'collaboration_projection_session_missing') withDigest = false;
           const retryable = response.status === 408 || response.status === 409
             || response.status === 425 || response.status === 429 || response.status >= 500;
           if (!retryable) return;
         } catch { /* retry below */ }
-        await new Promise((resolve) => setTimeout(resolve, Math.min(2_000, 150 * (2 ** attempt))));
+        await new Promise((resolve) => setTimeout(resolve, Math.min(5_000, 300 * (2 ** attempt))));
       }
     })();
   };
@@ -696,6 +709,25 @@ export function RizzomaBlip({
     (visible: boolean) => setInlineCommentsVisibility(blip.id, visible),
     [blip.id]
   );
+
+  // Everyone who can see this topic is offered by @mention and ~task, not only the people who already wrote in this blip. The array is
+  // filled in place so the editor's extensions (and its collaboration plugins) are never recreated when the topic's people arrive.
+  const rosterRef = useRef<Array<{ id: string; label: string; email?: string | undefined }>>([]);
+  const topicPeopleRef = useRef<RosterPerson[]>([]);
+  const fillRoster = useCallback((topic: RosterPerson[] | null) => {
+    if (topic) topicPeopleRef.current = topic;
+    const merged = [
+      ...(blip.contributors || []).map((c) => ({ id: c.id, label: c.name || c.email || c.id, email: c.email })),
+      ...topicPeopleRef.current.filter((p) => !(blip.contributors || []).some((c) => c.id === p.id)),
+    ];
+    rosterRef.current.splice(0, rosterRef.current.length, ...merged);
+  }, [blip.contributors]);
+  fillRoster(null);
+  useEffect(() => {
+    let live = true;
+    void fetchTopicRoster(blip.id.split(':')[0] || '').then((people) => { if (live) fillRoster(people); });
+    return () => { live = false; };
+  }, [blip.id, fillRoster]);
 
   // Memoize extensions to prevent TipTap from recreating ProseMirror plugins on every render.
   // Without this, ySyncPlugin gets destroyed/recreated each render, preventing Y.Doc sync.
@@ -710,11 +742,7 @@ export function RizzomaBlip({
         onHideComments: stableHideComments,
         onShowComments: stableShowComments,
         currentUser: collaborationUser ? { id: collaborationUser.id, label: collaborationUser.name } : null,
-        participants: (blip.contributors || []).map((contributor) => ({
-          id: contributor.id,
-          label: contributor.name || contributor.email || contributor.id,
-          email: contributor.email,
-        })),
+        participants: rosterRef.current,
       }
     ),
     [blip.id, blip.contributors, collaborationUser?.id, collaborationUser?.name, collabActive, ydoc, collabProvider, stableToggleInlineComments, stableCreateInlineChildBlip, stableHideComments, stableShowComments]

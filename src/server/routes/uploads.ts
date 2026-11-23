@@ -317,3 +317,34 @@ uploadsRouter.use((err: any, _req: Request, res: Response, next: NextFunction) =
   }
   next(err);
 });
+
+/**
+ * Server-side store of real image bytes for the admin import of a backup topic (lib/backupImport.ts): the same checks
+ * and the same storage as an upload through the route (signature must match an image type, virus scan, local file
+ * written with `wx`, upload document), without a session. Not reachable over HTTP.
+ */
+export async function storeImportedImageBytes(args: {
+  buffer: Buffer; originalName: string; waveId: string; blipId: string; uploaderId: string;
+}): Promise<{ id: string; url: string }> {
+  const sniffed = sniffMime(args.buffer);
+  if (!sniffed || !imageMimes.has(sniffed.mime)) throw new Error('invalid_file_type');
+  await scanBuffer(args.buffer);
+  const opaqueId = randomUUID();
+  const uploadId = `upload:${opaqueId}`;
+  const storageKey = `${opaqueId}${storageExtension(sniffed.mime, sniffed)}`;
+  const storagePath = localUploadPath(storageKey);
+  if (!storagePath) throw new Error('invalid_upload_storage_key');
+  await fs.promises.writeFile(storagePath, args.buffer, { flag: 'wx', mode: 0o600 });
+  try {
+    const metadata: UploadDoc = {
+      _id: uploadId, type: 'upload', waveId: args.waveId, blipId: args.blipId, uploaderId: args.uploaderId,
+      storage: 'local', storageKey, originalName: args.originalName || 'image', mimeType: sniffed.mime,
+      size: args.buffer.length, createdAt: Date.now(),
+    };
+    await insertDoc(metadata);
+  } catch (error) {
+    await fs.promises.unlink(storagePath).catch(() => undefined);
+    throw error;
+  }
+  return { id: uploadId, url: uploadUrl(uploadId) };
+}

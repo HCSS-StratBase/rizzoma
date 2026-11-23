@@ -23,6 +23,7 @@ import wavesRouter from './routes/waves.js';
 import editorRouter from './routes/editor.js';
 import linksRouter from './routes/links.js';
 import blipsRouter from './routes/blips.js';
+import pollVotesRouter from './routes/pollVotes.js';
 import { inlineCommentsRouter } from './routes/inlineComments.js';
 import { uploadFilesRouter, uploadsRouter } from './routes/uploads.js';
 import healthRouter from './routes/health.js';
@@ -32,6 +33,7 @@ import mentionsRouter from './routes/mentions.js';
 import tasksRouter from './routes/tasks.js';
 import { sessionCredentialGuard } from './middleware/sessionCredentials.js';
 import { GADGET_APPS_MOUNT, gadgetAppsRouter } from './middleware/gadgetApps.js';
+import { staticAssets } from './middleware/staticAssets.js';
 
 const app = express();
 const isProd = process.env['NODE_ENV'] === 'production';
@@ -113,6 +115,7 @@ app.use('/api/editor', editorRouter);
 // so the gear-menu "Delete blip" silently 404'd forever. Keep this mount
 // specific.
 app.use('/api/links', linksRouter);
+app.use('/api/blips', pollVotesRouter);
 app.use('/api/blips', blipsRouter);
 app.use('/api', inlineCommentsRouter);
 app.use('/api/uploads', uploadsRouter);
@@ -125,7 +128,7 @@ app.use('/api/tasks', tasksRouter);
 const staticDir = path.resolve(process.cwd(), 'dist', 'client');
 
 if (process.env['NODE_ENV'] === 'production') {
-  app.use(express.static(staticDir));
+  app.use(staticAssets(staticDir));
 }
 
 // Upload bytes are guarded against the current wave role on every request.

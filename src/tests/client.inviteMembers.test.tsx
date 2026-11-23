@@ -16,6 +16,7 @@ import { InviteModal } from '../client/components/InviteModal';
 const members = [
   { id: 'p-owner', name: 'Owner One', email: 'owner@example.com', role: 'owner', status: 'accepted' },
   { id: 'p-two', name: 'Member Two', email: 'two@example.com', role: 'editor', status: 'accepted' },
+  { id: 'p-nameless', name: '', email: 'nobody@example.com', role: 'editor', status: 'pending' },
   { id: 'p-gone', name: 'Gone Three', email: 'three@example.com', role: 'editor', status: 'declined' },
 ];
 
@@ -59,6 +60,12 @@ describe('Invite dialog: Select role and Remove', () => {
     await open(true);
     expect(container.textContent).toContain('Member Two');
     expect(container.textContent).not.toContain('Gone Three');
+  });
+
+  it('names a member without a display name by the e-mail local part, never "Participant"', async () => {
+    await open(true);
+    const row = Array.from(container.querySelectorAll('.invite-member-row')).find((r) => r.textContent?.includes('nobody@example.com'))!;
+    expect(row.querySelector('.invite-member-name')?.textContent).toBe('nobody');
   });
 
   it('hides Select role and Remove from anyone who is not allowed to manage members', async () => {

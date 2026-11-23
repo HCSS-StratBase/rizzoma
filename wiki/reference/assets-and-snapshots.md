@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: 
-source_commit: 1ff4a65d
+source_branch: fix/latex-plain-text
+source_commit: 7bc68747
 generated: true
 ---
 

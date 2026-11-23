@@ -1,6 +1,6 @@
 // Family D: invite and people. The tester: "I cannot invite people to the topics" and the people list
 // "appears on mention but not as in the original Rizzoma".
-import { newUser, shareWith, plain, sleep } from '../lib.mjs';
+import { newUser, shareWith, plain, sleep, BASE } from '../lib.mjs';
 
 async function ownerTopic(ctx, title) {
   const a = await ctx.client(await newUser('own'));
@@ -128,6 +128,25 @@ export default [
       const title = `invite sees list`;
       ctx.ok((await guest.page.locator('body').innerText()).includes(title), 'the invitee sees the topic title in their list');
       ctx.ok(!(await stranger.page.locator('body').innerText()).includes(title), 'a stranger does not see it');
+    },
+  },
+  {
+    id: 'D07', family: 'D', title: 'sign-in screen: a person who had an account on the original rizzoma.com is told it was not carried over and what to do (Hryhorii, 23 Nov 2026: "could not access with old credentials")',
+    rows: ['1.2', '13.19'], expect: [/http 401/],
+    async run(ctx) {
+      const c = await ctx.anon();
+      await c.page.goto(`${BASE}/?layout=rizzoma`, { waitUntil: 'domcontentloaded' }); await sleep(4500);
+      const note = c.page.locator('[data-testid="auth-original-rizzoma-note"]');
+      ctx.ok(await note.isVisible().catch(() => false), 'the sign-in screen carries the note about the original rizzoma.com');
+      const text = (await note.innerText().catch(() => '')).replace(/\s+/g, ' ');
+      ctx.ok(/original rizzoma\.com/.test(text) && /not carried over/.test(text) && /invitation/.test(text), 'it says accounts were not carried over and names the way in', text.slice(0, 160));
+      await c.page.getByPlaceholder('Email address').fill('never-registered@example.invalid');
+      await c.page.getByPlaceholder('Password', { exact: true }).fill('definitely-wrong-password');
+      await c.page.locator('.submit-btn').click(); await sleep(3000);
+      const shown = await c.page.locator('.login-footer, .auth-panel').first().innerText().catch(() => '');
+      ctx.ok(/Invalid email or password/.test(shown) && /not carried over/.test(shown), 'after a failed sign-in the error and the explanation are on the screen together');
+      await c.stepShot('D-invite-people', 'D07-signin-original-account-note');
+      ctx.settleProblems();
     },
   },
 ];

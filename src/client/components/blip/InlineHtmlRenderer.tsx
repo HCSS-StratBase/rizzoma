@@ -9,7 +9,8 @@ import {
   useState,
 } from 'react';
 import '../editor/extensions/BlipThread.css';
-import { formatLatexToHtml } from '../../lib/renderLatex';
+import { LatexSpan } from './LatexSpan';
+import { PollReadCard } from './PollReadCard';
 import { sanitizeRichHtml } from '../../lib/sanitizeRichHtml';
 import {
   formatTaskDate,
@@ -128,6 +129,8 @@ export interface InlineHtmlRenderOptions {
   toggleableTaskIds?: ReadonlySet<string>;
   /** Task IDs with a server mutation already in flight. */
   pendingTaskIds?: ReadonlySet<string>;
+  /** Id of the blip whose HTML this is; polls in it record reader votes against it. */
+  blipId?: string;
   /** Server-authoritative, non-optimistic task toggle. */
   onTaskToggle?: (taskId: string) => void;
 }
@@ -181,6 +184,7 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
   // expanded marker lives inside it, we append the child's React node as a sibling.
   let keySeq = 0;
   const nextKey = () => `n${keySeq++}`;
+  let pollSeq = 0;
   // Stable identity for every element on the path to an inline child
   // (2026-11-10). Positional keys shift whenever the parent's HTML changes
   // shape before the marker (e.g. the server's normalised copy replacing the
@@ -232,13 +236,9 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
       if (parts.length <= 1) return val;
       return parts.map((part, idx) => {
         if (part.startsWith('$$') && part.endsWith('$$') && part.length > 4) {
-          const rendered = formatLatexToHtml(part.slice(2, -2));
-          if (rendered) {
-            return createElement('span', {
-              key: `latex-${idx}`,
-              className: 'rizzoma-latex',
-              dangerouslySetInnerHTML: { __html: rendered },
-            });
+          const expr = part.slice(2, -2);
+          if (expr.trim()) {
+            return createElement(LatexSpan, { key: `latex-${idx}`, expr });
           }
           // an empty "$$ $$" (a LaTeX gadget nobody typed into) is an empty box, never raw dollar signs
           return createElement('span', { key: `latex-${idx}`, className: 'rizzoma-latex rizzoma-latex-empty' }, 'type a formula');
@@ -268,23 +268,11 @@ export function renderInlineHtml(opts: InlineHtmlRenderOptions): ReactNode {
     if (tag === 'figure' && el.getAttribute('data-gadget-type') === 'poll') {
       let options: Array<{ id?: string; label?: string; votes?: number }> = [];
       try { const parsed: unknown = JSON.parse(el.getAttribute('data-poll-options') || '[]'); if (Array.isArray(parsed)) options = parsed as typeof options; } catch { /* empty poll */ }
-      const total = options.reduce((n, o) => n + (Number(o.votes) || 0), 0);
-      return createElement(
-        'figure',
-        { key: nextKey(), className: 'gadget-block gadget-poll gadget-poll-read', 'data-gadget-type': 'poll' },
-        createElement('div', { className: 'gadget-header' },
-          createElement('span', { className: 'gadget-chip' }, 'Poll'),
-          createElement('span', { className: 'gadget-title' }, el.getAttribute('data-poll-question') || 'Poll question'),
-        ),
-        createElement('ul', { className: 'gadget-poll-options' }, options.map((o, i) => {
-          const votes = Number(o.votes) || 0;
-          return createElement('li', { key: o.id || String(i), className: 'gadget-poll-option' },
-            createElement('span', { className: 'gadget-poll-label' }, o.label || `Option ${i + 1}`),
-            createElement('span', { className: 'gadget-poll-count' }, `${votes} ${votes === 1 ? 'vote' : 'votes'}`),
-            createElement('span', { className: 'gadget-poll-bar' }, createElement('span', { className: 'gadget-poll-bar-fill', style: { width: `${total ? Math.round((votes / total) * 100) : 0}%` } })),
-          );
-        })),
-      );
+      // The card is its own component: it loads the live counts and records a reader's vote (PollReadCard). The poll's key is
+      // its position among the polls of this blip, the same count the server makes (routes/pollVotes.ts).
+      const question = el.getAttribute('data-poll-question') || 'Poll question';
+      const pollKey = `p${pollSeq++}`;
+      return createElement(PollReadCard, { key: nextKey(), blipId: opts.blipId || '', pollKey, question, options });
     }
 
     // Skip stale portal anchors from old injectInlineMarkers output.
@@ -647,6 +635,7 @@ export function InlineHtmlRenderer({ taskBlipId, ...renderOptions }: InlineHtmlR
 
   return createElement(Fragment, null, renderInlineHtml({
     ...renderOptions,
+    blipId: taskBlipId,
     taskCompletions,
     toggleableTaskIds,
     pendingTaskIds,

@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: 
-source_commit: 1ff4a65d
+source_branch: fix/latex-plain-text
+source_commit: 7bc68747
 generated: true
 ---
 
@@ -40,14 +40,14 @@ graph LR
     P --> K["code"]
 ```
 
-## Client components (129)
+## Client components (130)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/client/components/AnonymousTopicRoute.css` | 86 | — |
 | `src/client/components/AnonymousTopicRoute.tsx` | 78 | (no header comment; exports AnonymousTopicRoute) |
-| `src/client/components/AuthPanel.css` | 208 | — |
-| `src/client/components/AuthPanel.tsx` | 491 | (no header comment; exports AuthUser) |
+| `src/client/components/AuthPanel.css` | 210 | — |
+| `src/client/components/AuthPanel.tsx` | 497 | (no header comment; exports AuthUser) |
 | `src/client/components/BlipContent.tsx` | 13 | (no header comment; exports BlipContent) |
 | `src/client/components/CreateTopicModal.css` | 276 | — |
 | `src/client/components/CreateTopicModal.tsx` | 139 | (no header comment; exports CreateTopicModal) |
@@ -88,10 +88,10 @@ graph LR
 | `src/client/components/RizzomaLanding.tsx` | 115 | (no header comment; exports RizzomaLanding) |
 | `src/client/components/RizzomaLayout.css` | 487 | dynamic viewport height — accounts for mobile address bar |
 | `src/client/components/RizzomaLayout.tsx` | 619 | (no header comment; exports RizzomaLayout) |
-| `src/client/components/RizzomaTopicDetail.css` | 1828 | RizzomaTopicDetail - Matching real Rizzoma |
+| `src/client/components/RizzomaTopicDetail.css` | 1830 | RizzomaTopicDetail - Matching real Rizzoma |
 | `src/client/components/RizzomaTopicDetail.tsx` | 2444 | (no header comment; exports shouldThrottleSocketTopicLoad) |
 | `src/client/components/RizzomaTopicsList.css` | 237 | Authentic Legacy Rizzoma Topics List Styles |
-| `src/client/components/RizzomaTopicsList.tsx` | 372 | (no header comment; exports RizzomaTopicsList) |
+| `src/client/components/RizzomaTopicsList.tsx` | 378 | (no header comment; exports snippetWithFormulas) |
 | `src/client/components/ShareModal.css` | 175 | ShareModal.css - Authentic Legacy Rizzoma Share Popover Style |
 | `src/client/components/ShareModal.tsx` | 238 | (no header comment; exports ShareModal) |
 | `src/client/components/ShellAuthControls.css` | 197 | — |
@@ -118,10 +118,11 @@ graph LR
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
 | `src/client/components/blip/BlipMenu.css` | 699 | Authentic Legacy Rizzoma Blip Menu Styles |
 | `src/client/components/blip/BlipMenu.tsx` | 935 | (no header comment; exports BlipMenu) |
-| `src/client/components/blip/InlineHtmlRenderer.tsx` | 656 | (no header comment; exports InlineHtmlRenderOptions) |
+| `src/client/components/blip/InlineHtmlRenderer.tsx` | 663 | (no header comment; exports InlineHtmlRenderOptions) |
+| `src/client/components/blip/LatexSpan.tsx` | 17 | A `$$ formula $$` in the read view: typeset by KaTeX, drawn by the simple converter until KaTeX has loaded. |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
-| `src/client/components/blip/RizzomaBlip.css` | 1956 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 3248 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/RizzomaBlip.css` | 1965 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.tsx` | 3276 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 117 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 76 | (no header comment; exports LocationLike) |
@@ -155,7 +156,7 @@ graph LR
 | `src/client/components/editor/extensions/ImageGadget.ts` | 83 | (no header comment; exports ImageOptions) |
 | `src/client/components/editor/extensions/ImagePasteUpload.ts` | 87 | A picture pasted or dropped into a blip (a screenshot from the clipboard, an image file) is UPLOADED and inserted as |
 | `src/client/components/editor/extensions/InlineCommentsVisibility.ts` | 39 | (no header comment; exports InlineCommentsVisibilityOptions) |
-| `src/client/components/editor/extensions/LatexPreview.ts` | 82 | LaTeX in the EDITOR: a `$$ formula $$` run shows TYPESET while the caret is elsewhere, and its source while the |
+| `src/client/components/editor/extensions/LatexPreview.ts` | 87 | LaTeX in the EDITOR: a `$$ formula $$` run shows TYPESET while the caret is elsewhere, and its source while the |
 | `src/client/components/editor/extensions/PollGadgetView.tsx` | 285 | (no header comment; exports PollGadgetView) |
 | `src/client/components/editor/extensions/SandboxAppGadgetView.tsx` | 250 | (no header comment; exports GADGET_START_TIMEOUT_MS) |
 | `src/client/components/editor/extensions/TagNode.tsx` | 159 | Mock tags – in production these would be extracted from topic content |
@@ -200,7 +201,7 @@ graph LR
 | `src/client/native/wave-view.ts` | 272 | Native fractal-render — WaveView. |
 | `src/client/native/yjs-binding.ts` | 202 | Native fractal-render — Y.js CRDT binding for the ContentArray model. |
 
-## Client other (70)
+## Client other (72)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -251,16 +252,18 @@ graph LR
 | `src/client/lib/htmlDiff.ts` | 67 | Simple word-level diff for HTML content. |
 | `src/client/lib/inlineChildHandoff.ts` | 18 | Decide the next step while a topic-root Ctrl+Enter child moves from the |
 | `src/client/lib/inlineChildTypeahead.ts` | 172 | Ctrl+Enter type-ahead: keystrokes typed between Ctrl+Enter and the moment |
+| `src/client/lib/katexRender.ts` | 80 | Real LaTeX typesetting with KaTeX, loaded on demand. |
 | `src/client/lib/logout.ts` | 35 | Ask any active Service Worker to clear cached responses on sign-out. |
 | `src/client/lib/offlineQueue.ts` | 846 | Auth-bound offline mutation queue. |
 | `src/client/lib/performance.d.ts` | 9 | — |
 | `src/client/lib/performance.ts` | 60 | Performance monitoring utilities |
-| `src/client/lib/renderLatex.ts` | 89 | (no header comment; exports formatLatexToHtml) |
+| `src/client/lib/renderLatex.ts` | 109 | (no header comment; exports formatLatexToHtml) |
 | `src/client/lib/sanitizeRichHtml.ts` | 254 | (no header comment; exports isSafeRichUrl) |
 | `src/client/lib/sectionAttribution.ts` | 107 | Per-section author attribution for topic body blocks. |
 | `src/client/lib/socket.ts` | 290 | (no header comment; exports disconnectSocketForAuthTransition) |
-| `src/client/lib/topicExport.ts` | 184 | (no header comment; exports ExportBlip) |
+| `src/client/lib/topicExport.ts` | 186 | (no header comment; exports ExportBlip) |
 | `src/client/lib/topicLoadReconcile.ts` | 105 | Reconcile a topic reload with what THIS tab has itself written since the reload was requested. |
+| `src/client/lib/topicRoster.ts` | 36 | (no header comment; exports RosterPerson) |
 | `src/client/lib/upload.ts` | 97 | (no header comment; exports UploadResult) |
 | `src/client/lib/zipStore.ts` | 30 | Minimal ZIP writer (store, no compression) for the multi-topic export: enough for every unzip tool, no dependency. |
 | `src/client/main.tsx` | 470 | (no header comment; exports App) |
@@ -280,7 +283,7 @@ graph LR
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/server/routes/auth.ts` | 1250 | Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable |
-| `src/server/routes/blips.ts` | 955 | (no header comment; exports touchTopic) |
+| `src/server/routes/blips.ts` | 962 | (no header comment; exports touchTopic) |
 | `src/server/routes/comments.ts` | 140 | — |
 | `src/server/routes/editor.ts` | 536 | Feature flag: set EDITOR_ENABLE=1 to enable endpoints |
 | `src/server/routes/gadgets.ts` | 101 | Hard Gap #20 (2026-04-13): notes-scratchpad is the fourth real preview |
@@ -292,7 +295,7 @@ graph LR
 | `src/server/routes/tasks.ts` | 294 | Tasks Routes |
 | `src/server/routes/topics.ts` | 894 | — |
 | `src/server/routes/uploads.ts` | 320 | (no header comment; exports uploadsRouter) |
-| `src/server/routes/waves.ts` | 1182 | — |
+| `src/server/routes/waves.ts` | 1194 | — |
 
 ## Server lib (20)
 
@@ -319,11 +322,11 @@ graph LR
 | `src/server/lib/virusScan.ts` | 155 | Commands using clamd's `z` prefix are framed with one trailing NUL byte. |
 | `src/server/lib/yjsDocCache.ts` | 367 | — |
 
-## Server other (41)
+## Server other (42)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
-| `src/server/app.ts` | 220 | — |
+| `src/server/app.ts` | 221 | — |
 | `src/server/config.ts` | 25 | (no header comment; exports AppConfig) |
 | `src/server/couch_views/main/auth_by_user_id.js` | 20 | — |
 | `src/server/couch_views/main/blip.js` | 18 | — |
@@ -351,7 +354,7 @@ graph LR
 | `src/server/couch_views/main/waves_by_creation_date.js` | 19 | — |
 | `src/server/couch_views/main/waves_by_url_2.js` | 23 | — |
 | `src/server/couch_views/operations/ot_1.js` | 22 | — |
-| `src/server/middleware/auth.ts` | 34 | Add user to request |
+| `src/server/middleware/auth.ts` | 35 | Add user to request |
 | `src/server/middleware/csrf.ts` | 64 | Do not turn every anonymous page/API/asset request into a saved session. |
 | `src/server/middleware/error.ts` | 17 | ensure request id header is present on error paths |
 | `src/server/middleware/gadgetApps.ts` | 64 | Sandboxed gadget apps (Kanban, Planner, Focus, Notes) are static pages that |
@@ -360,10 +363,11 @@ graph LR
 | `src/server/middleware/requestId.ts` | 13 | attach to req and response header |
 | `src/server/middleware/session.ts` | 242 | Hard Gap #30 (2026-04-13): Redis-backed session store with MemoryStore |
 | `src/server/middleware/sessionCredentials.ts` | 56 | (no header comment; exports sessionCredentialGuard) |
+| `src/server/middleware/staticAssets.ts` | 38 | Serves the built client (dist/client) with the two things the production server was missing (measured 23 Nov 2026, |
 | `src/server/schemas/comment.ts` | 14 | (no header comment; exports CreateCommentSchema) |
 | `src/server/schemas/topic.ts` | 27 | Per-section author attribution sidecar returned to clients. Authorship is |
 | `src/server/schemas/wave.ts` | 69 | (no header comment; exports CreateWaveSchema) |
-| `src/server/services/email.ts` | 435 | Email Notification Service |
+| `src/server/services/email.ts` | 443 | Email Notification Service |
 
 ## Shared (12)
 
@@ -389,19 +393,19 @@ graph LR
 | `src/types/bcryptjs.d.ts` | 3 | — |
 | `src/types/connect-redis.d.ts` | 12 | (no header comment; exports RedisStore) |
 | `src/types/express-session.d.ts` | 22 | — |
-| `src/types/shims.d.ts` | 15 | — |
+| `src/types/shims.d.ts` | 18 | — |
 | `src/types/tiptap-collaboration.d.ts` | 11 | (no header comment; exports isChangeOrigin) |
 | `src/types/tiptap-react.d.ts` | 16 | (no header comment; exports useEditor) |
 | `src/types/tiptap-starter-kit.d.ts` | 9 | — |
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (127)
+## Tests (133)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/tests/client.AnonymousTopicRoute.test.tsx` | 80 | — |
-| `src/tests/client.AuthPanelSecurity.test.tsx` | 204 | — |
+| `src/tests/client.AuthPanelSecurity.test.tsx` | 221 | — |
 | `src/tests/client.BlipEditor.test.ts` | 114 | Warm the EditorConfig module once up-front with a generous timeout. |
 | `src/tests/client.BlipMenu.test.tsx` | 621 | — |
 | `src/tests/client.EditorSearch.test.tsx` | 76 | — |
@@ -433,7 +437,7 @@ graph LR
 | `src/tests/client.editorPersistence.test.ts` | 68 | — |
 | `src/tests/client.followGreenNavigation.test.tsx` | 209 | — |
 | `src/tests/client.fragmentSecrets.test.ts` | 81 | — |
-| `src/tests/client.gadgetRender.test.tsx` | 62 | @vitest-environment jsdom |
+| `src/tests/client.gadgetRender.test.tsx` | 75 | @vitest-environment jsdom |
 | `src/tests/client.gadgets.appInstallState.test.ts` | 44 | — |
 | `src/tests/client.gadgets.appsCatalog.test.ts` | 35 | — |
 | `src/tests/client.gadgets.embedAdapters.test.ts` | 36 | — |
@@ -451,7 +455,8 @@ graph LR
 | `src/tests/client.inlineHtmlTaskHydration.test.tsx` | 415 | — |
 | `src/tests/client.insertHandlers.test.ts` | 60 | Tests for features 24 (toolbar alignment CSS), 31 (smart space prefix), |
 | `src/tests/client.inviteDelivery.test.tsx` | 134 | — |
-| `src/tests/client.inviteMembers.test.tsx` | 114 | — |
+| `src/tests/client.inviteMembers.test.tsx` | 121 | — |
+| `src/tests/client.katexRender.test.tsx` | 112 | @vitest-environment jsdom |
 | `src/tests/client.logoutSecurity.test.ts` | 34 | — |
 | `src/tests/client.milestone1Safety.test.tsx` | 87 | — |
 | `src/tests/client.milestone2Native.test.tsx` | 94 | — |
@@ -468,10 +473,12 @@ graph LR
 | `src/tests/client.socketAuthIsolation.test.ts` | 206 | — |
 | `src/tests/client.socketSession.test.ts` | 107 | — |
 | `src/tests/client.taskWidgetDurability.test.ts` | 271 | — |
+| `src/tests/client.topicExport.authorName.test.ts` | 14 | — |
 | `src/tests/client.topicExport.test.ts` | 75 | — |
 | `src/tests/client.topicLoadReconcile.test.ts` | 96 | — |
 | `src/tests/client.topicProjectionGuard.test.ts` | 53 | — |
 | `src/tests/client.topicRealtime.test.ts` | 22 | — |
+| `src/tests/client.topicRoster.test.ts` | 29 | — |
 | `src/tests/client.uploadCancellation.test.ts` | 85 | — |
 | `src/tests/client.useWaveUnread.test.tsx` | 211 | — |
 | `src/tests/client.yjsAuthIsolation.test.ts` | 109 | — |
@@ -490,7 +497,7 @@ graph LR
 | `src/tests/routes.editor.rebuild.test.ts` | 163 | Increase timeout for module loading with mocks |
 | `src/tests/routes.editor.search.test.ts` | 159 | Increase timeout for module loading with mocks |
 | `src/tests/routes.editor.test.ts` | 228 | Increase timeout for module loading with mocks |
-| `src/tests/routes.topics.authorizationMatrix.test.ts` | 1435 | — |
+| `src/tests/routes.topics.authorizationMatrix.test.ts` | 1447 | — |
 | `src/tests/routes.topics.edgecases.test.ts` | 70 | — |
 | `src/tests/routes.topics.follow.test.ts` | 196 | — |
 | `src/tests/routes.topics.test.ts` | 209 | — |
@@ -504,12 +511,14 @@ graph LR
 | `src/tests/routes.waves.unread.test.ts` | 312 | — |
 | `src/tests/scripts.ownerRecoverySecurity.test.ts` | 17 | — |
 | `src/tests/server.access.test.ts` | 258 | — |
+| `src/tests/server.auth.displayName.test.ts` | 11 | — |
 | `src/tests/server.authOauth.test.ts` | 255 | — |
 | `src/tests/server.authRegistrationSecurity.test.ts` | 224 | — |
 | `src/tests/server.authTickets.test.ts` | 22 | — |
 | `src/tests/server.blbYjsValidation.test.ts` | 61 | — |
 | `src/tests/server.contentReferences.test.ts` | 27 | — |
 | `src/tests/server.editorPresence.test.ts` | 79 | — |
+| `src/tests/server.email.suppress.test.ts` | 23 | — |
 | `src/tests/server.emailTemplates.test.ts` | 57 | — |
 | `src/tests/server.gadgetApps.test.ts` | 123 | @vitest-environment node |
 | `src/tests/server.gadgetPreferences.test.ts` | 190 | — |
@@ -523,6 +532,7 @@ graph LR
 | `src/tests/server.session.test.ts` | 185 | — |
 | `src/tests/server.sessionCredentialVersion.test.ts` | 90 | — |
 | `src/tests/server.socketAuthorization.test.ts` | 1334 | — |
+| `src/tests/server.staticAssets.test.ts` | 88 | @vitest-environment node |
 | `src/tests/server.tasksByBlipGone.test.ts` | 31 | — |
 | `src/tests/server.virusScan.test.ts` | 113 | — |
 | `src/tests/server.yjsDocCache.test.ts` | 537 | Mock couch module before importing yjsDocCache |

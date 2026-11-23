@@ -446,6 +446,13 @@ router.put('/:id', requireAuth, csrfProtect(), async (req, res): Promise<void> =
           collaborationProjection.digest,
           currentGeneration,
         )) {
+          if (process.env['COLLAB_TRACE'] === '1') {
+            const st = yjsDocCache.getState(id);
+            console.warn('[collab-trace] stale projection', JSON.stringify({
+              blip: id.slice(-12), clientDigest: collaborationProjection.digest.slice(0, 12),
+              serverBytes: st ? st.length : null, hasEntry: !!st, gen: currentGeneration, t: Date.now(),
+            }));
+          }
           throw new Error('collaboration_projection_stale');
         }
         // Snapshot the exact accepted CRDT before materializing its HTML. A

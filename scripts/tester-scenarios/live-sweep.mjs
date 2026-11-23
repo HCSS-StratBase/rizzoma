@@ -8,7 +8,7 @@ import { Client, newUser, sleep } from './lib.mjs';
 const PREFIX = process.env.SWEEP_PREFIX || 'ZZ SCRATCH suite';
 const browser = await chromium.launch({ headless: false, args: [] });
 let allGone = true;
-for (const tag of ['a', 'b']) {
+for (const tag of ['a', 'b', 'k']) {
   const user = await newUser(tag);
   const c = await new Client(browser, user, {}).open();
   await c.page.goto(`${process.env.RIZZOMA_BASE_URL || 'https://138-201-62-161.nip.io'}/?layout=rizzoma`, { waitUntil: 'domcontentloaded' }); await sleep(3000);

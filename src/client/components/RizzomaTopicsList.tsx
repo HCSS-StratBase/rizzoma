@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
+import { formatLatexToPlain } from '../lib/renderLatex';
 import './RizzomaTopicsList.css';
 
 interface Topic {
@@ -51,6 +52,11 @@ function formatSmartDate(timestamp: number): string {
       month: 'short'
     });
   }
+}
+
+/** The list snippet is plain text; a `$$ formula $$` in it shows as readable symbols, not as dollar signs and backslashes. */
+export function snippetWithFormulas(snippet: string): string {
+  return snippet.replace(/\$\$([^$]+)\$\$/g, (_m, expr: string) => formatLatexToPlain(expr));
 }
 
 const SHOW_FOLLOW_BUTTON_DELAY = 500; // ms, same as original
@@ -312,7 +318,7 @@ export function RizzomaTopicsList({ onTopicSelect, selectedTopicId, isAuthed }: 
                     {topic.snippet && (
                       <>
                         <br />
-                        <span className="item-snippet">{topic.snippet}</span>
+                        <span className="item-snippet">{snippetWithFormulas(topic.snippet)}</span>
                       </>
                     )}
                   </div>

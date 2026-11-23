@@ -1944,12 +1944,29 @@
   position: static;
   width: auto;
 }
-/* Read-state poll (InlineHtmlRenderer): the stored poll is a bare figure, draw question, options and counts. */
-.gadget-poll-read { margin: 8px 0; padding: 8px 12px; border: 1px solid #cdd7e0; border-radius: 8px; background: #f7fafc; }
-.gadget-poll-read .gadget-header { display: flex; gap: 8px; align-items: center; font-weight: 600; margin-bottom: 6px; }
-.gadget-poll-read .gadget-chip { font-size: 11px; text-transform: uppercase; background: #dbe7f3; border-radius: 10px; padding: 1px 8px; }
-.gadget-poll-options { list-style: none; margin: 0; padding: 0; }
-.gadget-poll-option { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 4px 0; }
-.gadget-poll-count { color: #5f7386; font-size: 12px; }
-.gadget-poll-bar { grid-column: 1 / -1; height: 6px; background: #e4ecf3; border-radius: 3px; overflow: hidden; }
-.gadget-poll-bar-fill { display: block; height: 100%; background: #4ea0f1; }
+/* Read-state poll (InlineHtmlRenderer): the same card as the editor's PollGadgetView (Mantine teal), drawn from the stored figure. */
+.gadget-poll-read { position: relative; display: block; margin: 8px 0; padding: 12px; border: 1px solid #d7dfeb; border-radius: 14px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(248,251,255,.98) 0%, #fff 70%); box-shadow: 0 8px 18px rgba(15,23,42,.06); }
+.gadget-poll-read::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at top right, rgba(32,201,151,.14), transparent 32%); }
+.gadget-poll-top { position: relative; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.gadget-poll-icon { width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; background: rgba(18,184,134,.14); color: #099268; font-weight: 700; font-size: 14px; }
+.gadget-poll-heading { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.gadget-poll-read .gadget-chip { align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #099268; background: #e6fcf5; border-radius: 4px; padding: 2px 8px; }
+.gadget-poll-sub { font-size: 10px; color: #868e96; margin-top: 2px; }
+.gadget-poll-total { font-size: 12px; font-weight: 700; color: #868e96; background: rgba(15,23,42,.05); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+.gadget-poll-read .gadget-poll-question { position: relative; margin: 0 0 10px; font-size: 18px; font-weight: 700; line-height: 1.2; color: #10233a; }
+.gadget-poll-options { position: relative; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.gadget-poll-option { display: grid; grid-template-columns: 1fr auto auto; align-items: baseline; column-gap: 10px; row-gap: 6px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,.7); }
+.gadget-poll-label { font-size: 15px; font-weight: 600; color: #132238; }
+.gadget-poll-count { color: #868e96; font-size: 11px; }
+.gadget-poll-pct { font-size: 12px; font-weight: 700; color: #0f766e; min-width: 3ch; text-align: right; }
+.gadget-poll-bar { grid-column: 1 / -1; height: 10px; background: rgba(148,163,184,.18); border-radius: 999px; overflow: hidden; }
+.gadget-poll-bar-fill { display: block; height: 100%; background: #20c997; border-radius: 999px; }
+
+/* Poll in the read view: an option is a button anybody who may read the blip can press (23 Nov 2026) */
+.gadget-poll-option-votable { cursor: pointer; border: 1px solid transparent; transition: background .15s ease, border-color .15s ease; }
+.gadget-poll-option-votable:hover { background: #f1f8f6; border-color: #b2e5d6; }
+.gadget-poll-option-votable:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
+.gadget-poll-option-votable.is-mine { background: #e6fcf5; border-color: #20c997; }
+.gadget-poll-option-votable.is-mine .gadget-poll-label::after { content: ' \2713  your vote'; font-size: 11px; font-weight: 700; color: #099268; }
+.gadget-poll-note { position: relative; margin-top: 8px; font-size: 12px; color: #b42318; }

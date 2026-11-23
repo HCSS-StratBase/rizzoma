@@ -464,7 +464,13 @@ export function AuthPanel({
               >
                 Sign up
               </a>
-            </> : <span>New email/password accounts require an invitation. Sign in with an existing password or an available provider.</span>}
+            </> : <>
+              <span>New email/password accounts require an invitation. Sign in with an existing password or an available provider.</span>
+              <span className="auth-original-note" data-testid="auth-original-rizzoma-note">
+                {' '}This is the new Rizzoma, a separate site: accounts and passwords of the original rizzoma.com were not carried over, and its topics are not here yet.
+                Sign in with Google, Facebook or Microsoft, or ask the person you work with for an invitation.
+              </span>
+            </>}
             </div>
           </>
         ) : (

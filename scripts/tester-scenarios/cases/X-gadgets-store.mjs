@@ -1,5 +1,5 @@
 // Family X: gadgets, store, teams, publics. Every sandbox app must render AND respond.
-import { newUser, plain, sleep, BASE } from '../lib.mjs';
+import { newUser, shareWith, plain, sleep, BASE } from '../lib.mjs';
 
 const APPS = [
   { label: 'Kanban', appId: 'kanban-board', title: 'Kanban Board' },
@@ -169,13 +169,90 @@ export default [
       ctx.ok(/const answer = 42;/.test(await a.page.locator('.topic-content-view pre').first().innerText().catch(() => '')), 'the code block text is still there after reload');
     },
   },
+  // ---- Hryhorii (23 Nov 2026): "some elements aren't rendering correctly: formulas; polls render nicely only if you start editing the blip".
+  // X07 typed ONE easy formula as the owner. These two look at what ANOTHER person sees in the read state, with formulas people actually write.
+  {
+    id: 'X12', family: 'X', title: 'LaTeX: real formulas (fractions with roots, \\mathbb, \\text, \\left\\right, matrices) are typeset for a second person in the read view and in the editor, never as source text',
+    rows: ['3.14', '3.15', '15.8'], timeoutMs: 300000,
+    async run(ctx) {
+      const a = await ctx.client(await newUser('a'));
+      const b = await ctx.client(await newUser('b'));
+      const F = ['x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}', '\\mathbb{R}^n \\ni v', '\\text{if } x > 0', '\\left( \\frac{a}{b} \\right)', '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}'];
+      const html = `<h1>formulas</h1><ul>${F.map((f, i) => `<li><p>f${i} $$${f}$$ end</p></li>`).join('')}</ul>`;
+      const id = await ctx.topic(a, 'real formulas', html);
+      await shareWith(id, b.user, 'editor');
+      await b.openTopic(id, 9000);
+      await b.page.locator('.rizzoma-latex-katex').first().waitFor({ timeout: 20000 }).catch(() => undefined);
+      await sleep(1500);
+      await b.stepShot('X-gadgets', 'X12-formulas-read-second-person');
+      const read = await b.page.evaluate(() => ({
+        katex: document.querySelectorAll('.topic-content-view .rizzoma-latex-katex .katex').length,
+        mfrac: document.querySelectorAll('.topic-content-view .mfrac').length,
+        text: document.querySelector('.topic-content-view')?.innerText || '',
+      }));
+      ctx.eq(read.katex, F.length, 'every formula is typeset by KaTeX for the second person in the read view');
+      ctx.ok(read.mfrac >= 2, 'the two fractions (quadratic formula, the bracketed a over b) are drawn as fractions', String(read.mfrac));
+      ctx.ok(!/frac\{|mathbb\{|text\{|begin\{|\\left|\\right|\$\$/.test(read.text), 'no LaTeX source or dollar signs are visible', read.text.replace(/\n/g, '/').slice(0, 140));
+      await a.openTopic(id, 8000);
+      await a.page.locator('.wave-panel [data-testid="blip-menu-edit"]').first().click({ timeout: 10000 }); await sleep(2500);
+      await a.page.locator('.topic-content-edit .latex-widget .katex').first().waitFor({ timeout: 20000 }).catch(() => undefined);
+      await a.stepShot('X-gadgets', 'X12-formulas-edit-owner');
+      ctx.ok(await a.page.locator('.topic-content-edit .latex-widget .katex').count() >= 3, 'in the editor the formulas that the caret is not in are typeset too', String(await a.page.locator('.topic-content-edit .latex-widget .katex').count()));
+      await a.doneAll();
+      // the topic list preview is plain text: a formula there reads as symbols, not as $$ and backslashes
+      await b.page.goto(`${BASE}/?layout=rizzoma`, { waitUntil: 'domcontentloaded' }); await sleep(7000);
+      const snippet = await b.page.locator('.topics-list .item-snippet, .item-snippet').first().innerText().catch(() => '');
+      ctx.ok(!snippet.includes('$$') && !/[\\{}]/.test(snippet) && /\(-b ± √\(b\^2-4ac\)\)\/\(2a\)/.test(snippet), 'the topic list preview shows the formulas as readable text: no $$, no backslash, no brace, the quadratic formula as (-b ± √(b^2-4ac))/(2a)', snippet.slice(0, 160));
+      ctx.settleProblems();
+    },
+  },
+  // ---- Hryhorii (23 Nov 2026): polls render nicely only while the blip is being edited.
+  {
+    id: 'X13', family: 'X', title: 'poll: the read view of a second person shows the same card as the editor (badge, total votes, question, options with share and bar)',
+    rows: ['3.14', '3.15', '15.8'], timeoutMs: 300000,
+    async run(ctx) {
+      const a = await ctx.client(await newUser('a'));
+      const b = await ctx.client(await newUser('b'));
+      const opts = JSON.stringify([{ id: 'o1', label: 'Yes', votes: 2 }, { id: 'o2', label: 'No', votes: 1 }, { id: 'o3', label: 'Maybe', votes: 0 }]).replace(/"/g, '&quot;');
+      const html = `<h1>poll</h1><ul><li><p>before</p><figure data-gadget-type="poll" data-poll-question="Lunch?" data-poll-options="${opts}" data-poll-allow-multiple="false" class="gadget-block gadget-poll"></figure></li></ul>`;
+      const id = await ctx.topic(a, 'poll card', html);
+      await shareWith(id, b.user, 'editor');
+      await b.openTopic(id, 9000);
+      await b.page.locator('.gadget-poll-read').first().waitFor({ timeout: 20000 }).catch(() => undefined);
+      await b.stepShot('X-gadgets', 'X13-poll-read-second-person');
+      const read = await b.page.locator('.gadget-poll-read').first().evaluate((el) => ({
+        text: el.innerText.replace(/\s+/g, ' '),
+        badge: !!el.querySelector('.gadget-chip'),
+        widths: [...el.querySelectorAll('.gadget-poll-bar-fill')].map((f) => Math.round(f.getBoundingClientRect().width / (f.parentElement?.getBoundingClientRect().width || 1) * 100)),
+        radius: getComputedStyle(el).borderTopLeftRadius,
+      })).catch(() => ({ text: '', badge: false, widths: [], radius: '' }));
+      ctx.ok(/POLL/i.test(read.text) && read.badge, 'the read poll has the Poll badge', read.text.slice(0, 60));
+      ctx.ok(/3 total votes/.test(read.text), 'it shows the total number of votes', read.text.slice(0, 120));
+      ctx.ok(/Lunch\?/.test(read.text) && /Yes/.test(read.text) && /No/.test(read.text) && /Maybe/.test(read.text), 'question and all options are shown');
+      ctx.ok(/67%/.test(read.text) && /33%/.test(read.text) && /0%/.test(read.text), 'each option shows its share', read.text.slice(0, 160));
+      ctx.ok(read.widths.length === 3 && read.widths[0] > read.widths[1] && read.widths[1] > read.widths[2], 'the bars are drawn in proportion', JSON.stringify(read.widths));
+      ctx.ok(parseFloat(read.radius) >= 12, 'it is a rounded card like the editor poll, not a plain list', read.radius);
+      await a.openTopic(id, 8000);
+      await a.page.locator('.wave-panel [data-testid="blip-menu-edit"]').first().click({ timeout: 10000 }); await sleep(2500);
+      const edit = await a.page.locator('.node-pollGadget').first().innerText().catch(() => '');
+      await a.stepShot('X-gadgets', 'X13-poll-edit-owner');
+      ctx.ok(/3 total votes/.test(edit) && /67%/.test(edit), 'the editor shows the same numbers as the read view', edit.replace(/\n/g, '/').slice(0, 100));
+      await a.doneAll();
+      ctx.settleProblems();
+    },
+  },
 ];
 
 async function embedCase(ctx, o) {
   const a = await ctx.client(await newUser('a'));
   const id = await ctx.topic(a, `${o.label} gadget`);
   const blocked = []; const frameResponses = [];
-  a.page.on('console', (m) => { const t = m.text(); if (/Content Security Policy|Refused to (frame|display)|blocked by|X-Frame-Options/i.test(t)) blocked.push(t.slice(0, 200)); });
+  a.page.on('console', (m) => { const t = m.text(); if (/Content Security Policy|Refused to (frame|display)|blocked by|X-Frame-Options/i.test(t)) {
+    // A script that docs.google.com serves INSIDE its own frame can be blocked by Google's own policy (\"script-src 'unsafe-inline'\" is Google's, ours is script-src 'self');
+    // it does not stop the viewer from loading. Reproduced neither with our sandbox nor with our page policy in isolation (21 Nov 2026), so it is third-party noise.
+    if (/docs\.google\.com\/static\//.test(t)) return;
+    blocked.push(t.slice(0, 200));
+  } });
   a.page.on('response', (r) => { if (r.url().includes(o.host)) frameResponses.push({ s: r.status(), u: r.url().slice(0, 120), dest: r.request().resourceType() }); });
   await a.openTopic(id);
   await a.page.locator('.wave-panel [data-testid="blip-menu-edit"]').first().click({ timeout: 10000 }); await sleep(1500);

@@ -523,15 +523,16 @@ router.get('/contacts/suggest', requireAuth, noStore, async (req, res) => {
   try {
     const me = req.user!.id;
     const q = String(req.query['q'] || '').trim().toLowerCase().slice(0, 80);
-    const mine = await find<WaveParticipant>({ type: 'participant', userId: me }, { limit: 400 });
+    // Limits were 400 / 5000 and unordered: a person with hundreds of topics (or participant docs of deleted ones) silently lost recent contacts.
+    const mine = await find<WaveParticipant>({ type: 'participant', userId: me }, { limit: 5000 });
     const waveIds = [...new Set((mine.docs || [])
       .filter((p) => p.status === 'accepted' || p.status === undefined)
-      .map((p) => p.waveId))].slice(0, 400);
+      .map((p) => p.waveId))].slice(0, 2000);
     const counts = new Map<string, number>();
     if (waveIds.length > 0) {
       const others = await find<WaveParticipant>(
         { type: 'participant', waveId: { $in: waveIds } },
-        { limit: 5000 },
+        { limit: 30000 },
       );
       for (const p of others.docs || []) {
         if (!p.userId || p.userId === me || String(p.userId).startsWith('invite:')) continue;
@@ -1076,6 +1077,17 @@ router.post('/:id/participants', requireAuth, csrfProtect(), inviteRateLimit, as
       }
       await updateDoc({ ...tokenDoc, status: 'sent', deliveredAt: Date.now() } as any).catch(() => undefined);
 
+      // Test accounts only (INVITE_MAIL_SUPPRESS_PATTERN): no mail is sent, so nobody can ever click the link. An invitation to such an
+      // address that belongs to an existing user is accepted at once, otherwise the account would stay a pending, non-collaborating invitee.
+      if (emailResult.messageId === 'suppressed-by-INVITE_MAIL_SUPPRESS_PATTERN' && !String(targetUserId).startsWith('invite:')) {
+        const fresh = await getDoc<any>(participantId).catch(() => null);
+        if (fresh) {
+          const { inviteTokenHash: _t, inviteExpiresAt: _e, ...rest } = fresh;
+          await updateDoc({ ...rest, status: 'accepted', acceptedAt: Date.now() } as any);
+          results.push({ email, ok: true, status: 'accepted' });
+          continue;
+        }
+      }
       results.push({ email, ok: true, status: 'pending' });
     } catch (err: any) {
       console.error('[waves] invite participant failed', { email, error: err.message });
