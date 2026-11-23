@@ -1,6 +1,6 @@
 // Family D: invite and people. The tester: "I cannot invite people to the topics" and the people list
 // "appears on mention but not as in the original Rizzoma".
-import { newUser, shareWith, plain, sleep } from '../lib.mjs';
+import { newUser, shareWith, plain, sleep, BASE } from '../lib.mjs';
 
 async function ownerTopic(ctx, title) {
   const a = await ctx.client(await newUser('own'));
