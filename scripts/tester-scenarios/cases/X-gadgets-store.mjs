@@ -191,7 +191,7 @@ export default [
         text: document.querySelector('.topic-content-view')?.innerText || '',
       }));
       ctx.eq(read.katex, F.length, 'every formula is typeset by KaTeX for the second person in the read view');
-      ctx.ok(read.mfrac >= 3, 'the fractions are drawn as fractions', String(read.mfrac));
+      ctx.ok(read.mfrac >= 2, 'the two fractions (quadratic formula, the bracketed a over b) are drawn as fractions', String(read.mfrac));
       ctx.ok(!/frac\{|mathbb\{|text\{|begin\{|\\left|\\right|\$\$/.test(read.text), 'no LaTeX source or dollar signs are visible', read.text.replace(/\n/g, '/').slice(0, 140));
       await a.openTopic(id, 8000);
       await a.page.locator('.wave-panel [data-testid="blip-menu-edit"]').first().click({ timeout: 10000 }); await sleep(2500);
