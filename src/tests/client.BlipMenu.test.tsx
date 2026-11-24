@@ -85,6 +85,7 @@ describe('client: BlipMenu toolbar', () => {
     onStartEdit: vi.fn(),
     onFinishEdit: vi.fn(),
     onSend: vi.fn(),
+    onSendTo: vi.fn(),
     onToggleComments: vi.fn(),
     onHideComments: vi.fn(),
     onShowComments: vi.fn(),
@@ -384,6 +385,16 @@ describe('client: BlipMenu toolbar', () => {
     });
 
     expect(baseProps.onSend).toHaveBeenCalled();
+  });
+
+  it('offers Send to… in overflow and calls its handler', () => {
+    const gear = container.querySelector('[data-testid="blip-menu-overflow-toggle"]');
+    act(() => { gear!.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    const btn = container.querySelector('[data-testid="blip-menu-send-to"]') as HTMLButtonElement | null;
+    expect(btn).toBeTruthy();
+    expect(btn!.textContent).toBe('Send to…');
+    act(() => { btn!.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    expect(baseProps.onSendTo).toHaveBeenCalled();
   });
 
   it('exposes copy link and delete actions inside overflow', () => {
