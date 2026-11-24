@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feat/blip-send-to
-source_commit: 3e3fae75
+source_commit: 5e361825
 generated: true
 ---
 

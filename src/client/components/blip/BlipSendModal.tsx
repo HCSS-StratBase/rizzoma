@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../../lib/api';
 import { toast } from '../Toast';
 import './BlipSendModal.css';
@@ -54,7 +55,7 @@ export function BlipSendModal({ blipId, onClose }: { blipId: string; onClose: ()
       const myId = (me as any)?.data?.id;
       const list = ((parts as any)?.data?.participants || [])
         .filter((p: any) => p.userId && !String(p.userId).startsWith('invite:') && p.userId !== myId && (p.status === 'accepted' || p.status === undefined))
-        .map((p: any) => ({ userId: p.userId, name: p.name, email: p.email }));
+        .map((p: any) => ({ userId: p.userId, name: p.name || p.email || 'Unnamed person', email: p.name ? p.email : undefined }));
       setPeople(list);
       setLoading(false);
     })();
@@ -94,7 +95,8 @@ export function BlipSendModal({ blipId, onClose }: { blipId: string; onClose: ()
     loadHistory();
   };
 
-  return (
+  // Rendered into document.body: inside a blip, an ancestor's transform/overflow clipped the dialog to the blip's box.
+  return createPortal(
     <div className="blip-send-overlay" role="dialog" aria-modal="true" aria-label="Send this blip" data-testid="blip-send-modal" onClick={onClose}>
       <div className="blip-send-card" onClick={(e) => e.stopPropagation()}>
         <div className="blip-send-head">
@@ -156,6 +158,7 @@ export function BlipSendModal({ blipId, onClose }: { blipId: string; onClose: ()
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

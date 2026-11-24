@@ -6,7 +6,7 @@ status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
 source_branch: feat/blip-send-to
-source_commit: 3e3fae75
+source_commit: 5e361825
 generated: true
 ---
 
@@ -40,7 +40,7 @@ graph LR
     P --> K["code"]
 ```
 
-## Client components (131)
+## Client components (133)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -118,6 +118,8 @@ graph LR
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
 | `src/client/components/blip/BlipMenu.css` | 699 | Authentic Legacy Rizzoma Blip Menu Styles |
 | `src/client/components/blip/BlipMenu.tsx` | 954 | (no header comment; exports BlipMenu) |
+| `src/client/components/blip/BlipSendModal.css` | 26 | — |
+| `src/client/components/blip/BlipSendModal.tsx` | 165 | (no header comment; exports describeRecipient) |
 | `src/client/components/blip/InlineHtmlRenderer.tsx` | 645 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LatexSpan.tsx` | 17 | A `$$ formula $$` in the read view: typeset by KaTeX, drawn by the simple converter until KaTeX has loaded. |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
@@ -279,11 +281,12 @@ graph LR
 | `src/client/test-editor.html` | 395 | — |
 | `src/client/types/tiptap-react-nodeview.d.ts` | 26 | Type augmentation for @tiptap/react NodeView exports |
 
-## Server routes (15)
+## Server routes (16)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/server/routes/auth.ts` | 1250 | Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable |
+| `src/server/routes/blipSend.ts` | 200 | "Send to…" on a blip. |
 | `src/server/routes/blips.ts` | 966 | (no header comment; exports touchTopic) |
 | `src/server/routes/comments.ts` | 140 | — |
 | `src/server/routes/editor.ts` | 536 | Feature flag: set EDITOR_ENABLE=1 to enable endpoints |
@@ -403,14 +406,14 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (137)
+## Tests (138)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/tests/client.AnonymousTopicRoute.test.tsx` | 80 | — |
 | `src/tests/client.AuthPanelSecurity.test.tsx` | 221 | — |
 | `src/tests/client.BlipEditor.test.ts` | 114 | Warm the EditorConfig module once up-front with a generous timeout. |
-| `src/tests/client.BlipMenu.test.tsx` | 621 | — |
+| `src/tests/client.BlipMenu.test.tsx` | 632 | — |
 | `src/tests/client.EditorSearch.test.tsx` | 76 | — |
 | `src/tests/client.InlineComments.pluginKey.test.ts` | 44 | — |
 | `src/tests/client.LazyBlipSlot.test.tsx` | 106 | — |
@@ -523,6 +526,7 @@ graph LR
 | `src/tests/server.authTickets.test.ts` | 22 | — |
 | `src/tests/server.backupImport.test.ts` | 130 | — |
 | `src/tests/server.blbYjsValidation.test.ts` | 61 | — |
+| `src/tests/server.blipSend.test.ts` | 100 | — |
 | `src/tests/server.contentReferences.test.ts` | 27 | — |
 | `src/tests/server.editorPresence.test.ts` | 79 | — |
 | `src/tests/server.email.suppress.test.ts` | 23 | — |
