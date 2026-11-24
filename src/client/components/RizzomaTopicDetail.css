@@ -32,7 +32,9 @@
   box-sizing: border-box;
   flex-shrink: 0;
   position: relative;
-  z-index: 4;
+  /* Above the topic-root blip toolbar (BlipMenu z-index 10 to 40), or the gear dropdown's first item, "Mark topic as
+     read", is painted over and cannot be seen or clicked (found live as a non-owner, 24 Nov 2026). */
+  z-index: 50;
 }
 
 .topic-attribution-avatar {

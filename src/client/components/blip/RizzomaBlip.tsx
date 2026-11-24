@@ -3,6 +3,7 @@ import { getPendingCollaborationCount } from '../../lib/collaborationPending';
 import { isInlineAnchored } from './inlineAnchoring';
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { shouldMarkReadOnRender } from '../../lib/readRule';
 import { beginChildTypeahead, cancelChildTypeahead, flushChildTypeahead, markHandoff } from '../../lib/inlineChildTypeahead';
 import type { CSSProperties, ReactNode } from 'react';
 import { BlipMenu } from './BlipMenu';
@@ -1547,9 +1548,7 @@ export function RizzomaBlip({
     if (!next) {
       onToggleCollapse?.(blip.id);
     }
-    if (!blip.isRead) {
-      onBlipRead?.(blip.id);
-    }
+    // Unfolding alone does not mark the blip read (SDS rule, 4 Jul 2022); Next, a click inside it, or an edit does.
   };
 
   const handleCollapse = () => {
@@ -2285,13 +2284,12 @@ export function RizzomaBlip({
   }, [canMutateEditorNow, collabReady, isEditing, inlineEditor]);
 
   useEffect(() => {
-    // A root blip, and an INLINE child that is open on screen, count as read: opening a [+] marker shows the
-    // blip, but only the row-click path used to mark it read, so "follow the green" stayed lit after everything
-    // had been read (Liliia, 19 Nov 2026).
-    if ((isRoot || isInlineChild) && !blip.isRead) {
+    // Only the topic's own root blip counts as read on render. Opening a [+] row or an inline [+] marker does NOT
+    // (SDS, 4 Jul 2022: merely opening a green blip leaves it green; Next, a click inside it, or an edit ungreens it).
+    if (shouldMarkReadOnRender({ isRoot, isRead: blip.isRead })) {
       onBlipRead?.(blip.id);
     }
-  }, [isRoot, isInlineChild, blip.id, blip.isRead, onBlipRead]);
+  }, [isRoot, blip.id, blip.isRead, onBlipRead]);
 
   const handleInlineCommentButton = () => {
     if (!FEATURES.INLINE_COMMENTS || !selectedRangeData) return;

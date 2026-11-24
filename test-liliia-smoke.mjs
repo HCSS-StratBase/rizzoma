@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * Regression smoke for two defects in Liliia's 19 Nov 2026 review, judged as a NON-OWNER in a clean context:
- *  (a) "follow the green" stayed lit after every blip had been read: a blip opened through its inline [+] marker was
- *      never marked read.  Check: after opening everything, the server has no unread blip and Next is disabled.
+ *  (a) "follow the green" stayed lit after every blip had been read.  SDS's rule (4 Jul 2022): merely OPENING a green blip
+ *      leaves it green; Next ungreens the blip it lands on.  Check: opening everything leaves unread blips, and pressing
+ *      Next until it stops leaves the server with no unread blip and Next disabled (an inline child included).
  *  (e) "copy blip link" gave the link to the whole topic.  Check: the copied link opens THAT blip (breadcrumb and text).
  *   RIZZOMA_BASE_URL=http://127.0.0.1:3000 node test-liliia-smoke.mjs      (needs COUCHDB_URL)
  */
@@ -51,9 +52,19 @@ const { ctx: cb, page: p } = await signedIn(B);
 await p.goto(`${BASE}/?layout=rizzoma#/topic/${topicId}`, { waitUntil: 'domcontentloaded' }); await sleep(8000);
 for (const t of ['First blip', 'Second blip']) { await p.locator('.blip-collapsed-row', { hasText: t }).first().click().catch(() => {}); await sleep(1500); }
 await p.locator('.blip-thread-marker').filter({ visible: true }).first().click().catch(() => {}); await sleep(5000);
-const unread = await p.evaluate(async (id) => { const r = await fetch(`/api/waves/${id}/unread`, { credentials: 'include' }); return (await r.json()).unread || []; }, topicId);
-const next = await p.evaluate(() => { const n = document.querySelector('.next-button'); return { disabled: !!n?.disabled, cls: n?.className || '' }; });
-check(unread.length === 0, '(a) every opened blip, including the inline child, is marked read on the server', `unread=${unread.length}`);
+const getUnread = () => p.evaluate(async (id) => { const r = await fetch(`/api/waves/${id}/unread`, { credentials: 'include' }); return (await r.json()).unread || []; }, topicId);
+const getNext = () => p.evaluate(() => { const n = document.querySelector('.next-button'); return { disabled: !!n?.disabled, cls: n?.className || '' }; });
+const opened = await getUnread();
+check(opened.length > 0, '(a) merely opening blips (no click inside, no edit) leaves them green', `unread=${opened.length}`);
+for (let i = 0; i < 6; i += 1) {
+  if ((await getUnread()).length === 0) break;
+  const btn = p.locator('button.next-button').first();
+  if (await btn.isDisabled().catch(() => true)) break;
+  await btn.click(); await sleep(2500);
+}
+const unread = await getUnread();
+const next = await getNext();
+check(unread.length === 0, '(a) following the green with Next ungreens every blip, the inline child included', `unread=${unread.length}`);
 check(next.disabled && !/has-unread/.test(next.cls), '(a) follow-the-green is grey once everything is read', next.cls);
 // (e)
 await p.locator('.rizzoma-blip').filter({ hasText: 'Nested child text' }).last().click({ position: { x: 30, y: 10 } }).catch(() => {}); await sleep(900);
