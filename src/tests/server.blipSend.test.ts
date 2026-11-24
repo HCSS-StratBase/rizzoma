@@ -3,7 +3,7 @@ import express from 'express';
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 
-const sendMail = vi.fn(async () => ({ messageId: 'real-id' }));
+const sendMail = vi.fn(async (_message?: any) => ({ messageId: 'real-id' }));
 vi.mock('nodemailer', () => ({ default: { createTransport: () => ({ sendMail }) }, createTransport: () => ({ sendMail }) }));
 
 const docs = new Map<string, any>();
@@ -61,7 +61,7 @@ describe('POST /api/blips/:id/send', () => {
     const mention = [...docs.values()].find((d) => d.type === 'mention');
     expect(mention).toMatchObject({ mentionedUserId: 'u-member', blipId: 'w1:b1', topicId: 'w1', source: 'send', isRead: false, authorName: 'Sender' });
     expect(sendMail).toHaveBeenCalledTimes(1);
-    const mail = sendMail.mock.calls[0][0] as any;
+    const mail = sendMail.mock.calls[0]![0] as any;
     expect(mail.to).toBe('member@example.org');
     expect(mail.text).toContain('#/topic/w1/b1/');
     expect(mail.text).toContain('Hello world');
