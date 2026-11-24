@@ -20,6 +20,7 @@ import {
 import { readCollaborationProjection } from '../lib/collaborationProjection.js';
 import { yjsDocCache } from '../lib/yjsDocCache.js';
 import { ensureBlbHtml, isBlbHtml } from '../../shared/blbContent.js';
+import blipSendRouter from './blipSend.js';
 
 const CONTENT_REFERENCE_ERRORS = new Set([
   'invalid_mention_target',
@@ -297,6 +298,9 @@ async function moveBlip(req: any, res: any, requestedParentId: unknown): Promise
     res.status(500).json({ error: code || 'move_blip_error', requestId: req.id });
   }
 }
+
+// "Send to…": POST /:id/send, GET /:id/sends
+router.use('/', blipSendRouter);
 
 // PATCH /api/blips/:id/reparent { parentId }
 router.patch('/:id/reparent', requireAuth, csrfProtect(), async (req, res): Promise<void> => {

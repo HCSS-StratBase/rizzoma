@@ -62,6 +62,7 @@ import {
   seedEmptyBlbYdoc,
   setBlbEditorBaseline,
 } from '../editor/blbEditorInvariant';
+import { BlipSendModal } from './BlipSendModal';
 import { isCanonicalBlbDocument } from '../editor/extensions/BlipKeyboardShortcuts';
 // Performance measurement is available via import { measureRender } from '../../lib/performance'
 
@@ -453,6 +454,7 @@ export function RizzomaBlip({
   const [isCutMode, setIsCutMode] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
   const [uploadState, setUploadState] = useState<UploadUiState | null>(null);
   const uploadTaskRef = useRef<UploadTask | null>(null);
   const lastUploadRef = useRef<{
@@ -2741,6 +2743,7 @@ export function RizzomaBlip({
               onCollapse={!isRoot && !isTopicRoot ? handleCollapse : undefined}
               onExpand={handleExpand}
               onSend={handleSendFromToolbar}
+              onSendTo={isRoot || isTopicRoot ? undefined : () => setShowSendModal(true)}
               onGetLink={handleCopyLink}
               onToggleComments={handleToggleCommentsVisibility}
               onShowComments={handleShowComments}
@@ -3262,6 +3265,10 @@ export function RizzomaBlip({
             </button>
           </div>
         </div>
+      )}
+
+      {showSendModal && (
+        <BlipSendModal blipId={blip.id} onClose={() => setShowSendModal(false)} />
       )}
 
       {showHistoryModal && (

@@ -366,7 +366,7 @@ describe('client: BlipMenu toolbar', () => {
     expect(baseProps.onShowHistory).toHaveBeenCalled();
   });
 
-  it('invokes send handler from overflow', () => {
+  it('invokes the save handler (formerly labelled Send) from overflow', () => {
     const gear = container.querySelector('[data-testid="blip-menu-overflow-toggle"]');
     expect(gear).toBeTruthy();
 
@@ -375,7 +375,7 @@ describe('client: BlipMenu toolbar', () => {
     });
 
     const sendBtn = Array.from(container.querySelectorAll('.list-menu-button button')).find(
-      (btn) => btn.textContent === 'Send'
+      (btn) => btn.textContent === 'Save'
     ) as HTMLButtonElement | undefined;
     expect(sendBtn).toBeTruthy();
 
