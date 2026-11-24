@@ -2741,7 +2741,7 @@ export function RizzomaBlip({
               onCollapse={!isRoot && !isTopicRoot ? handleCollapse : undefined}
               onExpand={handleExpand}
               onSend={handleSendFromToolbar}
-              onSendTo={isRoot || isTopicRoot ? undefined : () => setShowSendModal(true)}
+              onSendTo={isTopicRoot ? undefined : () => setShowSendModal(true)}
               onGetLink={handleCopyLink}
               onToggleComments={handleToggleCommentsVisibility}
               onShowComments={handleShowComments}
