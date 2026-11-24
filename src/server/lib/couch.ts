@@ -118,6 +118,7 @@ const ALL_INDEXES: Array<{ fields: string[]; name: string }> = [
   { fields: ['type', 'mentionedUserId', 'isRead'], name: 'idx_mention_user_isRead' },
   { fields: ['type', 'mentionedUserId', 'isRead', 'createdAt'], name: 'idx_mention_user_isRead_createdAt' },
   { fields: ['type', 'blipId'], name: 'idx_mention_blip' },
+  { fields: ['type', 'blipId', 'senderId'], name: 'idx_blip_send_blip_sender' },
   { fields: ['type', 'assigneeId', 'createdAt'], name: 'idx_task_assignee_createdAt' },
   { fields: ['type', 'assigneeId', 'isCompleted'], name: 'idx_task_assignee_isCompleted' },
   { fields: ['type', 'assigneeId', 'isCompleted', 'createdAt'], name: 'idx_task_assignee_isCompleted_createdAt' },

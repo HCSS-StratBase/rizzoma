@@ -196,7 +196,8 @@ export async function reconcileStoredContentReferences(
       } as MentionDoc);
     }
   }
-  for (const stale of existingMentions.docs.filter((doc) => !desiredMentionIds.has(doc._id))) {
+  // Mentions created by "Send to…" are not in the text, so they must survive a save.
+  for (const stale of existingMentions.docs.filter((doc) => !desiredMentionIds.has(doc._id) && (doc as any).source !== 'send')) {
     if (stale._rev) await deleteDoc(stale._id, stale._rev);
   }
 

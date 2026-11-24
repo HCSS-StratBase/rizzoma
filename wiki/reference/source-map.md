@@ -5,8 +5,8 @@ version: 1.0.0
 status: active
 owner: Stephan De Spiegeleire (SDS)
 last_verified: 2026-11-07
-source_branch: fix/latex-plain-text
-source_commit: 7bc68747
+source_branch: feat/blip-send-to
+source_commit: 3e3fae75
 generated: true
 ---
 
@@ -40,7 +40,7 @@ graph LR
     P --> K["code"]
 ```
 
-## Client components (130)
+## Client components (131)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -117,12 +117,13 @@ graph LR
 | `src/client/components/blip/BlipHistoryModal.css` | 475 | BlipHistoryModal - Timeline Playback UI |
 | `src/client/components/blip/BlipHistoryModal.tsx` | 323 | (no header comment; exports BlipHistoryModal) |
 | `src/client/components/blip/BlipMenu.css` | 699 | Authentic Legacy Rizzoma Blip Menu Styles |
-| `src/client/components/blip/BlipMenu.tsx` | 935 | (no header comment; exports BlipMenu) |
-| `src/client/components/blip/InlineHtmlRenderer.tsx` | 663 | (no header comment; exports InlineHtmlRenderOptions) |
+| `src/client/components/blip/BlipMenu.tsx` | 954 | (no header comment; exports BlipMenu) |
+| `src/client/components/blip/InlineHtmlRenderer.tsx` | 645 | (no header comment; exports InlineHtmlRenderOptions) |
 | `src/client/components/blip/LatexSpan.tsx` | 17 | A `$$ formula $$` in the read view: typeset by KaTeX, drawn by the simple converter until KaTeX has loaded. |
 | `src/client/components/blip/LazyBlipSlot.tsx` | 121 | Lazy-mount slot for top-level child blips under the topic root. |
-| `src/client/components/blip/RizzomaBlip.css` | 1965 | Rizzoma Blip Styles |
-| `src/client/components/blip/RizzomaBlip.tsx` | 3276 | (no header comment; exports BlipContributor) |
+| `src/client/components/blip/PollReadCard.tsx` | 103 | The poll card of the READ view, with voting for anybody who may read the blip (23 Nov 2026). |
+| `src/client/components/blip/RizzomaBlip.css` | 1973 | Rizzoma Blip Styles |
+| `src/client/components/blip/RizzomaBlip.tsx` | 3283 | (no header comment; exports BlipContributor) |
 | `src/client/components/blip/clipboardStore.ts` | 117 | (no header comment; exports BlipClipboardPayload) |
 | `src/client/components/blip/collapsePreferences.ts` | 140 | (no header comment; exports getCollapsePreference) |
 | `src/client/components/blip/copyBlipLink.ts` | 76 | (no header comment; exports LocationLike) |
@@ -171,7 +172,7 @@ graph LR
 | `src/client/components/mobile/BottomSheet.css` | 217 | Bottom Sheet Styles |
 | `src/client/components/mobile/BottomSheet.tsx` | 239 | Whether the bottom sheet is open |
 | `src/client/components/mobile/BottomSheetMenu.css` | 174 | Bottom Sheet Menu Styles |
-| `src/client/components/mobile/BottomSheetMenu.tsx` | 280 | Unique identifier for the item |
+| `src/client/components/mobile/BottomSheetMenu.tsx` | 290 | Unique identifier for the item |
 | `src/client/components/native/NativeWaveView.css` | 233 | Native fractal-render — minimum viable CSS for the new render path. |
 | `src/client/components/native/NativeWaveView.tsx` | 483 | Native fractal-render — React wrapper for WaveView. |
 
@@ -257,7 +258,7 @@ graph LR
 | `src/client/lib/offlineQueue.ts` | 846 | Auth-bound offline mutation queue. |
 | `src/client/lib/performance.d.ts` | 9 | — |
 | `src/client/lib/performance.ts` | 60 | Performance monitoring utilities |
-| `src/client/lib/renderLatex.ts` | 109 | (no header comment; exports formatLatexToHtml) |
+| `src/client/lib/renderLatex.ts` | 469 | LaTeX command (without the backslash) to the Unicode text that stands for it. Styling and spacing words map to "" or " ". |
 | `src/client/lib/sanitizeRichHtml.ts` | 254 | (no header comment; exports isSafeRichUrl) |
 | `src/client/lib/sectionAttribution.ts` | 107 | Per-section author attribution for topic body blocks. |
 | `src/client/lib/socket.ts` | 290 | (no header comment; exports disconnectSocketForAuthTransition) |
@@ -278,12 +279,12 @@ graph LR
 | `src/client/test-editor.html` | 395 | — |
 | `src/client/types/tiptap-react-nodeview.d.ts` | 26 | Type augmentation for @tiptap/react NodeView exports |
 
-## Server routes (14)
+## Server routes (15)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/server/routes/auth.ts` | 1250 | Use a wrapper that prefers native bcrypt but falls back to bcryptjs when native build is unavailable |
-| `src/server/routes/blips.ts` | 962 | (no header comment; exports touchTopic) |
+| `src/server/routes/blips.ts` | 966 | (no header comment; exports touchTopic) |
 | `src/server/routes/comments.ts` | 140 | — |
 | `src/server/routes/editor.ts` | 536 | Feature flag: set EDITOR_ENABLE=1 to enable endpoints |
 | `src/server/routes/gadgets.ts` | 101 | Hard Gap #20 (2026-04-13): notes-scratchpad is the fourth real preview |
@@ -292,22 +293,24 @@ graph LR
 | `src/server/routes/links.ts` | 99 | BUG #43 (2026-04-21): this router is mounted at /api/links (see app.ts). |
 | `src/server/routes/mentions.ts` | 192 | Mentions Routes |
 | `src/server/routes/notifications.ts` | 309 | Notification Routes |
+| `src/server/routes/pollVotes.ts` | 164 | Reader votes on poll gadgets (23 Nov 2026, Hryhorii's report). |
 | `src/server/routes/tasks.ts` | 294 | Tasks Routes |
 | `src/server/routes/topics.ts` | 894 | — |
-| `src/server/routes/uploads.ts` | 320 | (no header comment; exports uploadsRouter) |
+| `src/server/routes/uploads.ts` | 351 | (no header comment; exports uploadsRouter) |
 | `src/server/routes/waves.ts` | 1194 | — |
 
-## Server lib (20)
+## Server lib (21)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
 | `src/server/lib/access.ts` | 388 | (no header comment; exports ShareLevel) |
 | `src/server/lib/authTickets.ts` | 74 | Short-lived one-time auth tickets used to bridge an OAuth flow that |
+| `src/server/lib/backupImport.ts` | 338 | .html). Admin-only by construction: it is a library for the CLI |
 | `src/server/lib/bcrypt.ts` | 21 | Wrapper around bcrypt that prefers native module when available |
 | `src/server/lib/blbYjsValidation.ts` | 75 | (no header comment; exports isBlbProsemirrorDocument) |
 | `src/server/lib/collaborationProjection.ts` | 41 | (no header comment; exports COLLABORATION_STATE_DIGEST_HEADER) |
-| `src/server/lib/contentReferences.ts` | 244 | (no header comment; exports parseStoredContentReferences) |
-| `src/server/lib/couch.ts` | 194 | (no header comment; exports couchDbInfo) |
+| `src/server/lib/contentReferences.ts` | 245 | (no header comment; exports parseStoredContentReferences) |
+| `src/server/lib/couch.ts` | 195 | (no header comment; exports couchDbInfo) |
 | `src/server/lib/editorPresence.ts` | 132 | (no header comment; exports EditorPresenceManager) |
 | `src/server/lib/gracefulShutdown.ts` | 25 | Stop realtime ingress, then drain HTTP sessions and persist collaborative |
 | `src/server/lib/invitations.ts` | 101 | (no header comment; exports INVITE_TOKEN_TTL_MS) |
@@ -326,7 +329,7 @@ graph LR
 
 | File | Lines | Header / first fact |
 |---|---:|---|
-| `src/server/app.ts` | 221 | — |
+| `src/server/app.ts` | 223 | — |
 | `src/server/config.ts` | 25 | (no header comment; exports AppConfig) |
 | `src/server/couch_views/main/auth_by_user_id.js` | 20 | — |
 | `src/server/couch_views/main/blip.js` | 18 | — |
@@ -367,7 +370,7 @@ graph LR
 | `src/server/schemas/comment.ts` | 14 | (no header comment; exports CreateCommentSchema) |
 | `src/server/schemas/topic.ts` | 27 | Per-section author attribution sidecar returned to clients. Authorship is |
 | `src/server/schemas/wave.ts` | 69 | (no header comment; exports CreateWaveSchema) |
-| `src/server/services/email.ts` | 443 | Email Notification Service |
+| `src/server/services/email.ts` | 513 | Email Notification Service |
 
 ## Shared (12)
 
@@ -400,7 +403,7 @@ graph LR
 | `src/types/vitest.d.ts` | 4 | Minimal global types for vitest when typechecking test files |
 | `src/types/winston.d.ts` | 6 | — |
 
-## Tests (133)
+## Tests (137)
 
 | File | Lines | Header / first fact |
 |---|---:|---|
@@ -411,6 +414,7 @@ graph LR
 | `src/tests/client.EditorSearch.test.tsx` | 76 | — |
 | `src/tests/client.InlineComments.pluginKey.test.ts` | 44 | — |
 | `src/tests/client.LazyBlipSlot.test.tsx` | 106 | — |
+| `src/tests/client.PollReadCard.test.tsx` | 50 | @vitest-environment jsdom |
 | `src/tests/client.PresenceIndicator.test.tsx` | 63 | — |
 | `src/tests/client.RebuildPanel.test.tsx` | 98 | — |
 | `src/tests/client.RightToolsPanel.editMode.test.tsx` | 105 | — |
@@ -457,6 +461,7 @@ graph LR
 | `src/tests/client.inviteDelivery.test.tsx` | 134 | — |
 | `src/tests/client.inviteMembers.test.tsx` | 121 | — |
 | `src/tests/client.katexRender.test.tsx` | 112 | @vitest-environment jsdom |
+| `src/tests/client.latexPlain.test.ts` | 103 | The topic list preview and the Mind Map show formulas as plain text. Hryhorii (23 Nov 2026) saw formulas as source; |
 | `src/tests/client.logoutSecurity.test.ts` | 34 | — |
 | `src/tests/client.milestone1Safety.test.tsx` | 87 | — |
 | `src/tests/client.milestone2Native.test.tsx` | 94 | — |
@@ -488,6 +493,7 @@ graph LR
 | `src/tests/routes.auth.test.ts` | 225 | Use bcryptjs in tests to avoid native binding issues |
 | `src/tests/routes.blips.history.test.ts` | 130 | — |
 | `src/tests/routes.blips.permissions.test.ts` | 438 | — |
+| `src/tests/routes.blips.pollVotes.test.ts` | 102 | In-memory stand-in for CouchDB: getDoc / insertDoc / updateDoc / find over a Map. |
 | `src/tests/routes.blips.touchTopic.test.ts` | 54 | — |
 | `src/tests/routes.comments.deleteFallthrough.test.ts` | 24 | — |
 | `src/tests/routes.comments.edgecases.test.ts` | 119 | — |
@@ -515,6 +521,7 @@ graph LR
 | `src/tests/server.authOauth.test.ts` | 255 | — |
 | `src/tests/server.authRegistrationSecurity.test.ts` | 224 | — |
 | `src/tests/server.authTickets.test.ts` | 22 | — |
+| `src/tests/server.backupImport.test.ts` | 130 | — |
 | `src/tests/server.blbYjsValidation.test.ts` | 61 | — |
 | `src/tests/server.contentReferences.test.ts` | 27 | — |
 | `src/tests/server.editorPresence.test.ts` | 79 | — |

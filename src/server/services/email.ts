@@ -52,6 +52,16 @@ export interface InviteEmailData {
   message?: string;
 }
 
+export interface BlipSendEmailData {
+  senderName: string;
+  recipientEmail: string;
+  recipientName?: string;
+  topicTitle: string;
+  blipPreview: string;
+  blipUrl: string;
+  message?: string;
+}
+
 export interface NotificationEmailData {
   userName: string;
   userEmail: string;
@@ -354,6 +364,66 @@ export async function sendInviteEmail(data: InviteEmailData): Promise<{ success:
     return { success: true, messageId: result.messageId };
   } catch (error: any) {
     console.error('[email] Failed to send invite', { to: data.recipientEmail, error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+export function generateBlipSendEmail(data: BlipSendEmailData): EmailTemplate {
+  const sender = cleanText(data.senderName, 200) || 'A Rizzoma user';
+  const topicTitle = cleanText(data.topicTitle, 300) || 'Untitled Topic';
+  const preview = cleanText(data.blipPreview, 400);
+  const message = cleanText(data.message, 2_000);
+  const url = safeEmailUrl(data.blipUrl);
+  const greeting = cleanText(data.recipientName, 200) ? `Hi ${cleanText(data.recipientName, 200)},` : 'Hi,';
+  const messageBlock = message ? `<p style="color:#555;font-style:italic;border-left:3px solid #2c3e50;padding-left:12px;margin:16px 0;">"${escapeHtml(message)}"</p>` : '';
+  const previewBlock = preview ? `<p style="color:#333;margin:8px 0 0 0;">${escapeHtml(preview)}</p>` : '';
+  return {
+    subject: `${sender} sent you a message in "${topicTitle}" on Rizzoma`,
+    text: `${greeting}
+
+${sender} sent you a blip in "${topicTitle}".
+${message ? `\nMessage: "${message}"\n` : ''}${preview ? `\nThe blip starts: ${preview}\n` : ''}
+Open it here: ${url}
+
+---
+Rizzoma
+`,
+    html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;">
+  <div style="background:#2c3e50;color:white;padding:20px;border-radius:8px 8px 0 0;"><h1 style="margin:0;font-size:24px;">Rizzoma</h1></div>
+  <div style="background:#f9f9f9;padding:24px;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
+    <p style="margin-top:0;">${escapeHtml(greeting)}</p>
+    <p><strong>${escapeHtml(sender)}</strong> sent you a blip in <strong>${escapeHtml(topicTitle)}</strong>.</p>
+    ${messageBlock}
+    <div style="background:white;border:1px solid #ddd;border-radius:6px;padding:12px 16px;margin:16px 0;">${previewBlock || '<span style="color:#888;">(no text)</span>'}</div>
+    <a href="${escapeHtml(url)}" style="display:inline-block;background:#3498db;color:white;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:500;">Open the blip</a>
+    <p style="color:#888;font-size:12px;margin:24px 0 0 0;"><a href="${escapeHtml(url)}" style="color:#3498db;">${escapeHtml(url)}</a></p>
+  </div>
+</body></html>`,
+  };
+}
+
+export async function sendBlipSendEmail(data: BlipSendEmailData): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    // Same test-account switch as invitations: matching addresses get no mail.
+    const suppress = process.env['INVITE_MAIL_SUPPRESS_PATTERN'];
+    if (suppress) {
+      let hit = false;
+      try { hit = new RegExp(suppress, 'i').test(data.recipientEmail); } catch { hit = false; }
+      if (hit) return { success: true, messageId: 'suppressed-by-INVITE_MAIL_SUPPRESS_PATTERN' };
+    }
+    const template = generateBlipSendEmail(data);
+    const result = await getTransporter().sendMail({
+      from: EMAIL_CONFIG.from,
+      to: safeEmailAddress(data.recipientEmail),
+      subject: template.subject,
+      text: template.text,
+      html: template.html,
+    });
+    console.log('[email] Blip send sent', { to: data.recipientEmail, messageId: result.messageId });
+    return { success: true, messageId: result.messageId };
+  } catch (error: any) {
+    console.error('[email] Failed to send blip', { to: data.recipientEmail, error: error.message });
     return { success: false, error: error.message };
   }
 }

@@ -117,6 +117,7 @@ export function createBlipMenuItems(options: {
   onInsertAttachment?: () => void;
   onInsertImage?: () => void;
   onSend?: () => void;
+  onSendTo?: () => void;
 }): MenuEntry[] {
   const items: MenuEntry[] = [];
 
@@ -125,7 +126,7 @@ export function createBlipMenuItems(options: {
     if (options.onFinishEdit) {
       items.push({
         id: 'done',
-        label: options.isSending ? 'Sending...' : 'Done',
+        label: options.isSending ? 'Saving...' : 'Done',
         icon: '✓',
         disabled: options.isSending,
         onClick: options.onFinishEdit,
@@ -135,7 +136,7 @@ export function createBlipMenuItems(options: {
     if (options.onSend) {
       items.push({
         id: 'send',
-        label: options.isSending ? 'Sending...' : 'Send',
+        label: options.isSending ? 'Saving...' : 'Save',
         icon: '📤',
         disabled: options.isSending,
         onClick: options.onSend,
@@ -245,6 +246,15 @@ export function createBlipMenuItems(options: {
   }
 
   // Common items for both modes
+  if (options.onSendTo) {
+    items.push({
+      id: 'send-to',
+      label: 'Send to…',
+      icon: '📤',
+      onClick: options.onSendTo,
+    });
+  }
+
   if (options.onShowHistory) {
     items.push({
       id: 'history',

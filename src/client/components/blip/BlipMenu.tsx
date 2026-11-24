@@ -37,6 +37,7 @@ interface BlipMenuProps {
   isUploading?: boolean;
   uploadProgress?: number | null;
   onSend?: () => void;
+  onSendTo?: () => void;
   isSending?: boolean;
   isDeleting?: boolean;
   inlineCommentsNotice?: string | null;
@@ -84,6 +85,7 @@ export function BlipMenu({
   clipboardAvailable = false,
   onShowHistory,
   onSend,
+  onSendTo,
   isSending = false,
   isDeleting = false,
   onInsertAttachment,
@@ -291,6 +293,7 @@ export function BlipMenu({
     onShowHistory,
     onInsertAttachment,
     onInsertImage,
+    onSendTo,
   });
 
   const mobileMenu = (
@@ -474,6 +477,22 @@ export function BlipMenu({
           </button>
         </div>
       )}
+      {onSendTo && (
+        <div className="list-menu-button">
+          <button
+            type="button"
+            role="menuitem"
+            className="js-send-to-button"
+            data-testid="blip-menu-send-to"
+            onClick={() => {
+              onSendTo?.();
+              setShowOverflow(false);
+            }}
+          >
+            Send to…
+          </button>
+        </div>
+      )}
       {onSend && (
         <div className="list-menu-button">
           <button
@@ -485,7 +504,7 @@ export function BlipMenu({
               setShowOverflow(false);
             }}
           >
-            {isSending ? 'Sending…' : 'Send'}
+            {isSending ? 'Saving…' : 'Save'}
           </button>
         </div>
       )}
