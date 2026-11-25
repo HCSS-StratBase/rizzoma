@@ -62,6 +62,7 @@ import {
   recordSavedTopic,
   type LocalWrites,
 } from '../lib/topicLoadReconcile';
+import { contributorsForAuthor } from '../lib/blipContributors';
 
 // Global state to track loading per topic to prevent infinite loops
 // Uses window property to persist across Vite HMR reloads
@@ -950,8 +951,9 @@ function RizzomaTopicDetailState({
         setParticipants(loadedParticipants);
 
         // Convert participants to contributor format for blips
+        // Roster used only to look up an author's name and avatar. Every blip shows ITS OWN author (see
+        // lib/blipContributors.ts); it no longer shows the whole roster with the owner on top.
         const contributors: BlipContributor[] = loadedParticipants
-          .filter((participant) => participant.status === 'accepted' || !participant.status)
           .filter((participant) => !participant.userId.startsWith('invite:'))
           .map(p => ({
           id: p.userId,
@@ -997,15 +999,15 @@ function RizzomaTopicDetailState({
                 canComment: loadedTopic.permissions?.canComment ?? false,
                 canRead: loadedTopic.permissions?.canRead ?? false,
               },
-              // Attach topic participants as contributors to each blip
-              contributors: contributors,
+              // The blip's own author (not every topic participant)
+              contributors: contributorsForAuthor(raw.authorId, raw.authorName, contributors),
               // BLB: If blip has anchorPosition, it's inline (shown as [+] marker, not in list)
               anchorPosition: raw.anchorPosition,
             });
           });
           // Put back what this tab created or saved after this reload was requested (see
           // lib/topicLoadReconcile.ts): otherwise the new child vanishes with its editor and typed text.
-          if (overlayLocalBlips(blipMap, localWritesRef.current, requestStartedAt, contributors)) {
+          if (overlayLocalBlips(blipMap, localWritesRef.current, requestStartedAt, (b) => contributorsForAuthor(b.authorId, b.authorName, contributors, b.authorAvatar))) {
             staleAgainstLocalWrites = true;
           }
           const rootBlips: BlipData[] = [];
