@@ -69,7 +69,7 @@ export function overlayLocalBlips(
   blipMap: Map<string, BlipData>,
   writes: LocalWrites,
   requestStartedAt: number,
-  fallbackContributors: BlipData['contributors'] = [],
+  fallbackContributors: BlipData['contributors'] | ((blip: BlipData) => BlipData['contributors']) = [],
 ): boolean {
   let applied = false;
   for (const [id, w] of writes.created) {
@@ -77,7 +77,9 @@ export function overlayLocalBlips(
     blipMap.set(id, {
       ...w.blip,
       childBlips: [],
-      contributors: w.blip.contributors && w.blip.contributors.length ? w.blip.contributors : fallbackContributors,
+      contributors: w.blip.contributors && w.blip.contributors.length
+        ? w.blip.contributors
+        : (typeof fallbackContributors === 'function' ? fallbackContributors(w.blip) : fallbackContributors),
     });
     applied = true;
   }
