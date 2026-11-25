@@ -15,9 +15,17 @@ export function contributorsForAuthor(
   authorAvatar?: string,
 ): BlipContributor[] {
   const id = String(authorId || '');
-  const known = id ? roster.find((p) => p.id === id) : undefined;
-  if (known) return [known];
   const label = String(authorName || '').trim();
+  // Prefer a roster entry that has a readable name (a person can appear twice, once as an unnamed invitation record).
+  const matches = id ? roster.filter((p) => p.id === id) : [];
+  const readable = matches.find((p) => (p.email || '').trim() || ((p.name || '').trim() && p.name !== p.id));
+  const known = readable ?? matches[0];
+  if (known) {
+    const unnamed = !(known.email || '').trim() && (!(known.name || '').trim() || known.name === known.id);
+    if (!unnamed || !label) return [known];
+    // The roster only has an id for this person: show the name saved with the blip instead of a raw id.
+    return [{ ...known, email: label.includes('@') ? label : known.email, name: label.includes('@') ? label.split('@')[0] : label }];
+  }
   if (!id && !label) return [];
   return [{
     id: id || `name:${label}`,

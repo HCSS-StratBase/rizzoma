@@ -31,6 +31,18 @@ describe('blip avatar stack shows the blip\'s own author (Liliia: "Stephan is sh
   });
 });
 
+describe('roster entries that only carry an id never reach the screen as a raw id', () => {
+  it('shows the name saved with the blip when the roster has only the id', () => {
+    const idOnly: BlipContributor = { id: 'user:email:abc', email: '', name: 'user:email:abc', role: 'editor' };
+    const shown = contributorsForAuthor('user:email:abc', 'sdspieg+fractal1@gmail.com', [owner, idOnly]);
+    expect(shown[0]).toMatchObject({ id: 'user:email:abc', name: 'sdspieg+fractal1' });
+  });
+  it('prefers the readable roster entry when a person appears twice', () => {
+    const idOnly: BlipContributor = { id: 'u-guest', email: '', name: 'u-guest', role: 'editor' };
+    expect(contributorsForAuthor('u-guest', 'x', [idOnly, guest])).toEqual([guest]);
+  });
+});
+
 describe('a blip put back by the reload overlay keeps its own author too', () => {
   it('uses the per-blip fallback, not the whole roster', () => {
     const w = createLocalWrites();

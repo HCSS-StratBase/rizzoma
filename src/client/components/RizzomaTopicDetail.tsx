@@ -951,9 +951,10 @@ function RizzomaTopicDetailState({
         setParticipants(loadedParticipants);
 
         // Convert participants to contributor format for blips
-        // Roster used only to look up an author's name and avatar. Every blip shows ITS OWN author (see
-        // lib/blipContributors.ts); it no longer shows the whole roster with the owner on top.
+        // Accepted people of the topic (the topic header uses this list as before). A blip no longer shows all of
+        // them: it shows its own author, looked up here for the avatar (see lib/blipContributors.ts).
         const contributors: BlipContributor[] = loadedParticipants
+          .filter((participant) => participant.status === 'accepted' || !participant.status)
           .filter((participant) => !participant.userId.startsWith('invite:'))
           .map(p => ({
           id: p.userId,
